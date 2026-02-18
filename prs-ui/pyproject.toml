@@ -1,0 +1,20 @@
+[project]
+name = "prs-ui"
+version = "0.1.0"
+description = "Reflex web UI for browsing PGS Catalog metadata and scoring files"
+requires-python = ">=3.14"
+dependencies = [
+    "just-prs",
+    "reflex>=0.8.27",
+    "reflex-mui-datagrid>=0.1.0",
+]
+
+[project.scripts]
+prs-ui = "prs_ui.prs_ui:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv.sources]
+just-prs = { workspace = true }

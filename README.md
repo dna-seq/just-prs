@@ -411,12 +411,29 @@ results = compute_prs_batch(
 
 An interactive [Reflex](https://reflex.dev/) web application for browsing PGS Catalog data and computing PRS scores.
 
+![PRS Compute UI — upload VCF, select scores, compute PRS](images/PRS_screenshot.jpg)
+
+### Running the UI
+
 ```bash
+# From the workspace root — install all packages first
+uv sync --all-packages
+
+# Then launch the UI
 cd prs-ui
 uv run reflex run
 ```
 
-The UI has three tabs:
+The UI opens at http://localhost:3000 and has three tabs:
+
+### Compute PRS (default tab)
+
+End-to-end PRS computation workflow:
+
+1. **Upload a VCF** — drag-and-drop or browse; genome build is auto-detected from `##reference` and `##contig` headers
+2. **Load Scores** — fetches the PGS Catalog scores metadata, pre-filtered by the detected (or manually selected) genome build. Scores are shown in a searchable table
+3. **Select scores** — use checkboxes to pick individual scores, or "Select Filtered" to select everything matching the current filter
+4. **Compute** — click **Compute PRS** to run PRS for each selected score against the uploaded VCF. Results show PRS score, match rate, matched/total variants, effect sizes, and classification metrics from PGS Catalog evaluation studies
 
 ### Metadata Sheets
 
@@ -426,16 +443,7 @@ Browse all 7 PGS Catalog metadata sheets (Scores, Publications, EFO Traits, etc.
 
 Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it in the grid. Select the genome build (GRCh37 / GRCh38) before loading.
 
-### Compute PRS
-
-End-to-end PRS computation workflow:
-
-1. **Upload a VCF** — drag-and-drop or browse; genome build is auto-detected from `##reference` and `##contig` headers
-2. **Load Scores** — fetches the PGS Catalog scores metadata, pre-filtered by the detected (or manually selected) genome build. Scores are shown in a paginated, searchable table
-3. **Select scores** — use checkboxes to pick individual scores, or "Select All" to select everything matching the current search
-4. **Compute** — runs PRS for each selected score against the uploaded VCF and shows results with match rates, effect sizes, and classification metrics from PGS Catalog evaluation studies
-
-Configuration:
+### Configuration
 
 | Environment variable | Default | Description |
 |---------------------|---------|-------------|

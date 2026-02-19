@@ -1,5 +1,7 @@
 # just-prs
 
+[![PyPI version](https://badge.fury.io/py/just-prs.svg)](https://badge.fury.io/py/just-prs)
+
 A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (PRS)** from the [PGS Catalog](https://www.pgscatalog.org/).
 
 ## Features
@@ -35,11 +37,23 @@ uv run pytest tests/test_plink.py -v
 
 Requires Python ≥ 3.14. Uses [uv](https://github.com/astral-sh/uv) for dependency management.
 
+**From PyPI:**
+
+```bash
+uv add just-prs
+# or
+pip install just-prs
+```
+
+**From source:**
+
 ```bash
 git clone https://github.com/antonkulaga/just-prs
 cd just-prs
 uv sync
 ```
+
+For the optional web UI: `pip install just-prs[ui]` or `uv sync --all-packages` when developing from source.
 
 The CLI is available as both `just-prs` and `prs`.
 

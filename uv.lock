@@ -501,7 +501,7 @@ wheels = [
 
 [[package]]
 name = "just-prs"
-version = "0.1.0"
+version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "eliot" },
@@ -509,11 +509,15 @@ dependencies = [
     { name = "httpx" },
     { name = "huggingface-hub" },
     { name = "polars-bio" },
-    { name = "prs-ui" },
     { name = "pycomfort" },
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "typer" },
+]
+
+[package.optional-dependencies]
+ui = [
+    { name = "prs-ui" },
 ]
 
 [package.dev-dependencies]
@@ -528,12 +532,13 @@ requires-dist = [
     { name = "httpx", specifier = ">=0.28.0" },
     { name = "huggingface-hub", specifier = ">=0.28.0" },
     { name = "polars-bio", specifier = ">=0.23.0" },
-    { name = "prs-ui", editable = "prs-ui" },
+    { name = "prs-ui", marker = "extra == 'ui'", editable = "prs-ui" },
     { name = "pycomfort", specifier = ">=0.0.18" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
     { name = "typer", extras = ["all"], specifier = ">=0.15.0" },
 ]
+provides-extras = ["ui"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9.0.2" }]

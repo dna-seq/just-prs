@@ -1,6 +1,6 @@
 [project]
 name = "just-prs"
-version = "0.1.0"
+version = "0.2.0"
 description = "Polars-bio based tool to compute polygenic risk scores from PGS Catalog"
 readme = "README.md"
 authors = [
@@ -17,21 +17,22 @@ dependencies = [
     "fsspec[http]>=2026.2.0",
     "huggingface-hub>=0.28.0",
     "python-dotenv>=1.1.0",
-    "prs-ui",
 ]
+
+[project.optional-dependencies]
+ui = ["prs-ui"]
 
 [project.scripts]
 just-prs = "just_prs.cli:run"
 prs = "just_prs.cli:run"
 ui = "just_prs.cli:launch_ui"
 
-[tool.uv.sources]
-prs-ui = { workspace = true }
-
-
 [build-system]
 requires = ["uv_build>=0.10.0,<0.11.0"]
 build-backend = "uv_build"
+
+[tool.uv.sources]
+prs-ui = { workspace = true }
 
 [tool.uv.workspace]
 members = ["prs-ui"]

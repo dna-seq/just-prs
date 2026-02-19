@@ -2,15 +2,33 @@
 
 import gzip
 import io
+import os
 from pathlib import Path
 
 import httpx
 import polars as pl
 from eliot import start_action
+from platformdirs import user_cache_dir
 
 from just_prs.catalog import PGSCatalogClient
 
-DEFAULT_CACHE_DIR = Path.home() / ".cache" / "just-prs" / "scores"
+_APP_CACHE_DIR = Path(user_cache_dir("just-prs", appauthor=False))
+
+
+def resolve_cache_dir() -> Path:
+    """Return the root cache directory, respecting PRS_CACHE_DIR env var.
+
+    Resolution order: PRS_CACHE_DIR env var > platformdirs user cache dir.
+    On Linux: ``~/.cache/just-prs``, macOS: ``~/Library/Caches/just-prs``,
+    Windows: ``%LOCALAPPDATA%/just-prs/Cache``.
+    """
+    raw = os.environ.get("PRS_CACHE_DIR", "")
+    if raw:
+        return Path(raw)
+    return _APP_CACHE_DIR
+
+
+DEFAULT_CACHE_DIR = resolve_cache_dir() / "scores"
 
 
 def download_scoring_file(
@@ -107,6 +125,8 @@ def parse_scoring_file(path: Path) -> pl.LazyFrame:
             cast_map["hm_chr"] = pl.Utf8
         if "hm_pos" in columns:
             cast_map["hm_pos"] = pl.Int64
+        if "allelefrequency_effect" in columns:
+            cast_map["allelefrequency_effect"] = pl.Float64
 
         if cast_map:
             df = df.cast(cast_map)

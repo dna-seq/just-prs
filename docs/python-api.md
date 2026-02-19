@@ -1,5 +1,53 @@
 # Python API
 
+## VCF normalization (`just_prs.normalize`)
+
+`normalize_vcf()` reads a VCF file via polars-bio, normalizes column names, strips the `chr` prefix from chromosomes, computes a sorted `genotype` List[Str] from the GT field, applies configurable quality filters, and writes a zstd-compressed Parquet file. The result can be used directly for PRS computation via the `genotypes_lf` parameter of `compute_prs()`.
+
+```python
+from pathlib import Path
+from just_prs import normalize_vcf, VcfFilterConfig
+
+# Basic normalization with PASS filter
+config = VcfFilterConfig(pass_filters=["PASS", "."])
+normalize_vcf(Path("sample.vcf.gz"), Path("sample.parquet"), config=config)
+
+# Full quality filtering
+config = VcfFilterConfig(
+    pass_filters=["PASS", "."],
+    min_depth=10,
+    min_qual=30.0,
+    sex="Female",  # warns if chrY variants exist
+)
+output = normalize_vcf(
+    Path("sample.vcf.gz"),
+    Path("filtered.parquet"),
+    config=config,
+    format_fields=["GT", "DP", "GQ"],
+)
+
+# Use the normalized parquet for PRS computation
+import polars as pl
+from just_prs.prs import compute_prs
+
+genotypes_lf = pl.scan_parquet(output)
+result = compute_prs(
+    vcf_path="sample.vcf.gz",
+    scoring_file="PGS000001",
+    genome_build="GRCh38",
+    genotypes_lf=genotypes_lf,  # skips re-reading the VCF
+)
+```
+
+`VcfFilterConfig` fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `pass_filters` | `list[str] \| None` | Keep rows where FILTER is in this list (e.g. `["PASS", "."]`) |
+| `min_depth` | `int \| None` | Keep rows where DP >= this value |
+| `min_qual` | `float \| None` | Keep rows where QUAL >= this value |
+| `sex` | `str \| None` | Sample sex (`"Male"` / `"Female"`). When Female, warns if chrY variants exist |
+
 ## PRSCatalog — search, compute, and percentile (`just_prs.prs_catalog`)
 
 `PRSCatalog` is the recommended high-level interface. It persists 3 cleaned parquet files locally and loads them on access using a 3-tier fallback chain: local files -> HuggingFace pull -> raw FTP download + cleanup. All lookups, searches, and PRS computations use cleaned data with no per-score REST API calls.
@@ -7,7 +55,7 @@
 ```python
 from just_prs import PRSCatalog
 
-catalog = PRSCatalog()  # uses ~/.cache/just-prs by default
+catalog = PRSCatalog()  # uses platformdirs user cache dir by default
 
 # Browse cleaned scores (genome builds normalized, snake_case columns)
 scores_df = catalog.scores(genome_build="GRCh38").collect()
@@ -42,6 +90,23 @@ paths = catalog.build_cleaned_parquets(output_dir=Path("./output/pgs_metadata"))
 # Push cleaned parquets to HuggingFace
 catalog.push_to_hf()  # token from .env / HF_TOKEN
 catalog.push_to_hf(token="hf_...", repo_id="my-org/my-dataset")
+```
+
+### Genotype expression helper
+
+`genotype_expr()` builds a Polars expression that resolves GT indices (e.g. `"0/1"`) into actual allele strings using REF/ALT columns, returning a sorted `List[Utf8]`. This is used internally by `normalize_vcf()` but can also be applied to any DataFrame with GT/ref/alt columns:
+
+```python
+from just_prs.normalize import genotype_expr
+import polars as pl
+
+df = pl.DataFrame({
+    "GT": ["0/1", "1/1", "./."],
+    "ref": ["A", "C", "G"],
+    "alt": ["T", "G", "A"],
+})
+df = df.with_columns(genotype_expr())
+# genotype: [["A","T"], ["G","G"], []]
 ```
 
 ## Low-level PRS computation (`just_prs.prs`)

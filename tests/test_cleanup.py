@@ -4,8 +4,6 @@ Uses real downloaded PGS Catalog metadata (auto-cached) to validate
 cleanup transforms, search, and percentile computation.
 """
 
-from pathlib import Path
-
 import polars as pl
 import pytest
 
@@ -19,26 +17,28 @@ from just_prs.cleanup import (
 )
 from just_prs.ftp import download_metadata_sheet
 from just_prs.prs_catalog import PRSCatalog
+from just_prs.scoring import resolve_cache_dir
 
-CACHE_DIR = Path.home() / ".cache" / "just-prs"
+CACHE_DIR = resolve_cache_dir()
 METADATA_DIR = CACHE_DIR / "metadata"
+RAW_METADATA_DIR = METADATA_DIR / "raw"
 
 
 @pytest.fixture(scope="module")
 def raw_scores_df() -> pl.DataFrame:
-    cache_path = METADATA_DIR / "scores.parquet"
+    cache_path = RAW_METADATA_DIR / "scores.parquet"
     return download_metadata_sheet("scores", cache_path)
 
 
 @pytest.fixture(scope="module")
 def raw_perf_df() -> pl.DataFrame:
-    cache_path = METADATA_DIR / "performance_metrics.parquet"
+    cache_path = RAW_METADATA_DIR / "performance_metrics.parquet"
     return download_metadata_sheet("performance_metrics", cache_path)
 
 
 @pytest.fixture(scope="module")
 def raw_eval_df() -> pl.DataFrame:
-    cache_path = METADATA_DIR / "evaluation_sample_sets.parquet"
+    cache_path = RAW_METADATA_DIR / "evaluation_sample_sets.parquet"
     return download_metadata_sheet("evaluation_sample_sets", cache_path)
 
 

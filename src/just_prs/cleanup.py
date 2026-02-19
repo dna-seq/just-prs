@@ -89,8 +89,13 @@ def rename_score_columns(lf: pl.LazyFrame) -> pl.LazyFrame:
     """Rename raw PGS Catalog score columns to short snake_case names.
 
     Only keeps columns present in _SCORES_COLUMN_RENAME; drops everything else.
+    Idempotent: if columns are already in snake_case target form, passes through unchanged.
     """
     current_cols = set(lf.collect_schema().names())
+    target_cols = set(_SCORES_COLUMN_RENAME.values())
+    already_renamed = target_cols & current_cols
+    if already_renamed and not (set(_SCORES_COLUMN_RENAME.keys()) & current_cols):
+        return lf.select([pl.col(c) for c in _SCORES_COLUMN_RENAME.values() if c in current_cols])
     rename_map = {k: v for k, v in _SCORES_COLUMN_RENAME.items() if k in current_cols}
     return lf.select([pl.col(old).alias(new) for old, new in rename_map.items()])
 

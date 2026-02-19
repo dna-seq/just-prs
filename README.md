@@ -13,10 +13,13 @@ An interactive [Reflex](https://reflex.dev/) web application for browsing PGS Ca
 ### Setup
 
 ```bash
-# From the workspace root — install all packages first
+# From the workspace root — install all packages (including prs-ui)
 uv sync --all-packages
 
-# Then launch the UI
+# Launch the UI (shortcut defined in pyproject.toml)
+uv run ui
+
+# Or equivalently, from the prs-ui directory:
 cd prs-ui
 uv run reflex run
 ```
@@ -25,10 +28,11 @@ The UI opens at http://localhost:3000 with three tabs:
 
 ### Compute PRS (default tab)
 
-1. **Upload a VCF** — drag-and-drop or browse; genome build is auto-detected from `##reference` and `##contig` headers
+1. **Upload a VCF** — drag-and-drop or browse; genome build is auto-detected from `##reference` and `##contig` headers. VCF is normalized (chr prefix stripped, genotype computed, quality filtered) with a visible progress bar and a green callout on completion showing variant count
 2. **Load Scores** — fetches PGS Catalog scores metadata, pre-filtered by detected (or manually selected) genome build
 3. **Select scores** — use checkboxes to pick individual scores, or "Select Filtered" to select everything matching the current filter
-4. **Compute** — click **Compute PRS** to run PRS for each selected score. Results show PRS score, match rate, matched/total variants, effect sizes, and classification metrics
+4. **Compute** — click **Compute PRS** to run PRS for each selected score. A progress bar tracks completion across scores. Results table shows PRS score, AUROC (model accuracy), quality assessment, evaluation population/ancestry, match rate, matched/total variants, and effect sizes. Each result includes an interpretation card with a plain-English summary of model quality
+5. **Download CSV** — export all computed results to a CSV file via the **Download CSV** button above the results table
 
 ### Metadata Sheets
 
@@ -40,11 +44,14 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 
 | Environment variable | Default | Description |
 |---------------------|---------|-------------|
-| `PRS_CACHE_DIR` | `~/.cache/just-prs` | Root directory for cached metadata and scoring files |
+| `PRS_CACHE_DIR` | OS-dependent (via `platformdirs`) | Root directory for cached metadata and scoring files |
 
 ## Features
 
-- **`PRSCatalog`** — search scores, compute PRS, and estimate percentiles using cleaned bulk metadata (no REST API calls needed)
+- **`PRSCatalog`** — search scores, compute PRS, and look up evaluation performance using cleaned bulk metadata (no REST API calls needed)
+- **VCF normalization** — `normalize_vcf()` strips chr prefix, renames id→rsid, computes genotype from GT, applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, and writes zstd-compressed Parquet
+- **Quality assessment** — PRS results include AUROC-based model quality labels, effect sizes (OR/HR/Beta), classification metrics (AUROC/C-index), and plain-English interpretation summaries
+- **CSV export** — download computed PRS results as CSV from the web UI or programmatically
 - **Cleanup pipeline** — normalizes genome builds, renames columns to snake_case, parses performance metrics into structured numeric fields
 - **HuggingFace sync** — cleaned metadata parquets published to [just-dna-seq/polygenic_risk_scores](https://huggingface.co/datasets/just-dna-seq/polygenic_risk_scores) and auto-downloaded on first use
 - **Bulk download** the entire PGS Catalog metadata (~5,000+ scores) via EBI FTP
@@ -85,6 +92,9 @@ prs compute --vcf sample.vcf.gz --pgs-id PGS000001
 # Multiple scores at once
 prs compute --vcf sample.vcf.gz --pgs-id PGS000001,PGS000002,PGS000003
 
+# Normalize a VCF to Parquet (strip chr prefix, compute genotype, quality filter)
+prs normalize --vcf sample.vcf.gz --pass-filters "PASS,." --min-depth 10
+
 # Search the catalog
 prs catalog scores search --term "breast cancer"
 ```
@@ -92,10 +102,14 @@ prs catalog scores search --term "breast cancer"
 ### Python
 
 ```python
-from just_prs import PRSCatalog
+from just_prs import PRSCatalog, normalize_vcf, VcfFilterConfig
 from pathlib import Path
 
 catalog = PRSCatalog()
+
+# Normalize a VCF to Parquet (strip chr prefix, compute genotype, quality filters)
+config = VcfFilterConfig(pass_filters=["PASS", "."], min_depth=10)
+normalize_vcf(Path("sample.vcf.gz"), Path("sample.parquet"), config=config)
 
 # Search for scores
 results = catalog.search("type 2 diabetes", genome_build="GRCh38").collect()
@@ -110,14 +124,38 @@ results = catalog.compute_prs_batch(
     pgs_ids=["PGS000001", "PGS000002", "PGS000003"],
 )
 
-# Percentile estimation
-pct = catalog.percentile(prs_score=result.score, pgs_id="PGS000001")
+# Look up best evaluation performance for a score
+best = catalog.best_performance(pgs_id="PGS000001").collect()
 ```
+
+## Testing
+
+The project includes an extensive integration test suite that runs against real genomic data and external tools -- no mocked data or synthetic fixtures. All tests are reproducible on any Linux, macOS, or Windows machine.
+
+```bash
+uv run pytest tests/ -v
+```
+
+| Test suite | What it validates | Data source |
+|---|---|---|
+| `test_plink.py` | PRS scores match [PLINK2](https://www.cog-genomics.org/plink/2.0/) `--score` within floating-point precision for 5 GRCh38 scores | Real whole-genome VCF from Zenodo; PLINK2 auto-downloaded |
+| `test_percentile.py` | Theoretical mean/SD from allele frequencies, percentile computation, and cross-validation against PLINK2 for 5 scores with allele frequency data | Real PGS scoring files with `allelefrequency_effect` |
+| `test_prs.py` | End-to-end PRS computation (single and batch) on a real VCF | Zenodo test VCF |
+| `test_cleanup.py` | Full cleanup pipeline: column renaming, genome build normalization, metric string parsing, performance flattening, `PRSCatalog` search/percentile on live catalog data | Real PGS Catalog bulk metadata (~5,000+ scores) via EBI FTP |
+| `test_scoring.py` | Scoring file download, parsing, and caching | Real PGS000001 harmonized scoring file |
+| `test_catalog.py` | REST API client: score lookup, trait search, download URL resolution | Live PGS Catalog REST API |
+
+Key properties of the test suite:
+
+- **PLINK2 cross-validation** -- scores are compared against the gold-standard PLINK2 `--score` command with relative differences below 5e-7 ([details](docs/validation.md))
+- **Real data throughout** -- test VCF auto-downloaded from Zenodo, PLINK2 binary auto-downloaded for the host platform, scoring files fetched from EBI FTP
+- **Percentile verification** -- theoretical statistics computed from allele frequencies are validated against manual row-by-row computation, and percentiles are checked for mathematical consistency (CDF symmetry, known quantiles)
+- **No mocking** -- all tests run real pipelines against real data to catch integration issues
 
 ## Documentation
 
-- [CLI Reference](docs/cli.md) — full command-line usage for `prs compute`, `prs catalog`, and bulk downloads
-- [Python API](docs/python-api.md) — `PRSCatalog`, FTP downloads, REST client, cleanup pipeline, HuggingFace sync
+- [CLI Reference](docs/cli.md) — full command-line usage for `prs compute`, `prs normalize`, `prs catalog`, and bulk downloads
+- [Python API](docs/python-api.md) — `PRSCatalog`, VCF normalization, FTP downloads, REST client, cleanup pipeline, HuggingFace sync
 - [PLINK2 Validation](docs/validation.md) — accuracy benchmarks against PLINK2 `--score`
 - [Cleanup Pipeline](docs/cleanup-pipeline.md) — genome build normalization, column renaming, metric parsing
 

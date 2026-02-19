@@ -14,6 +14,7 @@ from just_prs.catalog import PGSCatalogClient
 from just_prs.ftp import METADATA_FILES, bulk_download_scoring_parquets, download_all_metadata, download_metadata_sheet, list_all_pgs_ids
 from just_prs.hf import pull_cleaned_parquets
 from just_prs.models import PRSResult
+from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs import compute_prs, compute_prs_batch
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.scoring import DEFAULT_CACHE_DIR, download_scoring_file
@@ -489,6 +490,72 @@ def compute(
         data = [r.model_dump() for r in results]
         output.write_text(json.dumps(data, indent=2))
         console.print(f"[green]Results saved to {output}[/green]")
+
+
+@app.command("normalize")
+def normalize(
+    vcf: Annotated[Path, typer.Option("--vcf", "-v", help="Path to VCF file (.vcf or .vcf.gz)")],
+    output: Annotated[
+        Optional[Path],
+        typer.Option("--output", "-o", help="Output Parquet path. Defaults to data/output/results/<stem>.parquet"),
+    ] = None,
+    pass_filters: Annotated[
+        Optional[str],
+        typer.Option("--pass-filters", help='Comma-separated FILTER values to keep (e.g. "PASS,.")'),
+    ] = None,
+    min_depth: Annotated[
+        Optional[int],
+        typer.Option("--min-depth", help="Minimum DP (read depth) to keep a variant"),
+    ] = None,
+    min_qual: Annotated[
+        Optional[float],
+        typer.Option("--min-qual", help="Minimum QUAL score to keep a variant"),
+    ] = None,
+    sex: Annotated[
+        Optional[str],
+        typer.Option("--sex", help='Sample sex ("Male" or "Female"). Warns if Female has chrY variants.'),
+    ] = None,
+    format_fields_str: Annotated[
+        Optional[str],
+        typer.Option("--format-fields", help='Comma-separated FORMAT fields to include (default "GT,DP")'),
+    ] = None,
+) -> None:
+    """Normalize a VCF file: strip chr prefix, compute genotype, apply quality filters, write Parquet."""
+    if output is None:
+        output = Path("data/output/results") / (vcf.stem.removesuffix(".vcf") + ".parquet")
+
+    config = VcfFilterConfig(
+        pass_filters=[f.strip() for f in pass_filters.split(",") if f.strip()] if pass_filters else None,
+        min_depth=min_depth,
+        min_qual=min_qual,
+        sex=sex,
+    )
+
+    format_fields: list[str] | None = None
+    if format_fields_str is not None:
+        format_fields = [f.strip() for f in format_fields_str.split(",") if f.strip()]
+
+    console.print(f"Normalizing [cyan]{vcf}[/cyan] → {output} ...")
+    if config.pass_filters:
+        console.print(f"  FILTER keep: {config.pass_filters}")
+    if config.min_depth is not None:
+        console.print(f"  Min DP: {config.min_depth}")
+    if config.min_qual is not None:
+        console.print(f"  Min QUAL: {config.min_qual}")
+    if config.sex:
+        console.print(f"  Sex: {config.sex}")
+
+    result_path = normalize_vcf(vcf, output, config=config, format_fields=format_fields)
+
+    df = pl.read_parquet(result_path)
+    console.print(f"[green]Wrote {df.height:,} variants ({len(df.columns)} columns) to {result_path}[/green]")
+
+    table = Table(title="Normalized VCF Summary")
+    table.add_column("Column", style="cyan")
+    table.add_column("Type", style="green")
+    for col_name, col_type in zip(df.columns, df.dtypes):
+        table.add_row(col_name, str(col_type))
+    console.print(table)
 
 
 @app.command("ui")

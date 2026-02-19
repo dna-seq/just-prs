@@ -5,8 +5,37 @@ The CLI is available as both `just-prs` and `prs`.
 ```
 prs --help
 prs compute --help
+prs normalize --help
 prs catalog --help
 ```
+
+---
+
+## `prs normalize` — Normalize a VCF to Parquet
+
+Reads a VCF file, strips chr prefix from chromosomes, renames the id column to rsid, computes genotype from GT indices, applies configurable quality filters (FILTER values, minimum depth, minimum QUAL), and writes a zstd-compressed Parquet file.
+
+```bash
+prs normalize --vcf sample.vcf.gz
+prs normalize --vcf sample.vcf.gz --output normalized.parquet
+prs normalize --vcf sample.vcf.gz --pass-filters "PASS,." --min-depth 10 --min-qual 30
+prs normalize --vcf sample.vcf.gz --sex Female
+prs normalize --vcf sample.vcf.gz --format-fields "GT,DP,GQ"
+```
+
+Options:
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--vcf / -v` | — | Path to VCF file (required) |
+| `--output / -o` | `data/output/results/<stem>.parquet` | Output Parquet path |
+| `--pass-filters` | — | Comma-separated FILTER values to keep (e.g. `"PASS,."`) |
+| `--min-depth` | — | Minimum DP (read depth) to keep a variant |
+| `--min-qual` | — | Minimum QUAL score to keep a variant |
+| `--sex` | — | Sample sex (`"Male"` or `"Female"`). Warns if Female has chrY variants |
+| `--format-fields` | `GT,DP` | Comma-separated FORMAT fields to include |
+
+Output columns: `chrom`, `pos`, `rsid`, `ref`, `alt`, `qual`, `filter`, `GT`, `DP`, `genotype` (List[Str] of resolved alleles, alphabetically sorted).
 
 ---
 
@@ -25,7 +54,7 @@ Options:
 | `--vcf / -v` | — | Path to VCF file (required) |
 | `--pgs-id / -p` | — | Comma-separated PGS ID(s) (required) |
 | `--build / -b` | `GRCh38` | Genome build |
-| `--cache-dir` | `~/.cache/just-prs/scores` | Cache directory for scoring files |
+| `--cache-dir` | OS cache dir / `just-prs/scores` | Cache directory for scoring files |
 | `--output / -o` | — | Save results as JSON |
 
 ---

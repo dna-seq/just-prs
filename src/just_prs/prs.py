@@ -1,9 +1,10 @@
 """Core PRS computation engine: variant matching, dosage computation, weighted sum."""
 
+import math
 from pathlib import Path
 
 import polars as pl
-from eliot import start_action
+from eliot import log_message, start_action
 
 from just_prs.models import PRSResult
 from just_prs.scoring import DEFAULT_CACHE_DIR, load_scoring, parse_scoring_file
@@ -65,7 +66,63 @@ def _normalize_scoring_columns(scoring_lf: pl.LazyFrame) -> pl.LazyFrame:
     if "other_allele" in columns:
         rename_exprs.append(pl.col("other_allele").cast(pl.Utf8))
 
+    if "allelefrequency_effect" in columns:
+        rename_exprs.append(
+            pl.col("allelefrequency_effect").cast(pl.Float64, strict=False)
+        )
+
     return scoring_lf.select(rename_exprs)
+
+
+def _compute_theoretical_stats(
+    scoring_df: pl.DataFrame,
+) -> tuple[float, float, int] | None:
+    """Compute theoretical PRS mean and SD from allele frequencies in the scoring file.
+
+    Under Hardy-Weinberg equilibrium and independent loci:
+      E[dosage_i] = 2 * p_i
+      Var[dosage_i] = 2 * p_i * (1 - p_i)
+      E[PRS] = sum(w_i * 2 * p_i)
+      Var[PRS] = sum(w_i^2 * 2 * p_i * (1 - p_i))
+
+    Returns (mean, std, n_variants_with_freq) or None if allelefrequency_effect
+    column is absent or has no valid values.
+    """
+    if "allelefrequency_effect" not in scoring_df.columns:
+        return None
+
+    valid = scoring_df.filter(
+        pl.col("allelefrequency_effect").is_not_null()
+        & pl.col("effect_weight").is_not_null()
+        & (pl.col("allelefrequency_effect") > 0.0)
+        & (pl.col("allelefrequency_effect") < 1.0)
+    )
+    if valid.height == 0:
+        return None
+
+    agg = valid.select(
+        (pl.col("effect_weight") * 2.0 * pl.col("allelefrequency_effect"))
+        .sum()
+        .alias("mean"),
+        (
+            pl.col("effect_weight").pow(2)
+            * 2.0
+            * pl.col("allelefrequency_effect")
+            * (1.0 - pl.col("allelefrequency_effect"))
+        )
+        .sum()
+        .alias("variance"),
+    )
+    row = agg.row(0, named=True)
+    mean = float(row["mean"])
+    variance = float(row["variance"])
+    std = math.sqrt(variance) if variance > 0 else 0.0
+    return mean, std, valid.height
+
+
+def _norm_cdf(x: float) -> float:
+    """Standard normal CDF using math.erfc (no scipy dependency)."""
+    return 0.5 * math.erfc(-x / math.sqrt(2))
 
 
 def compute_prs(
@@ -75,6 +132,7 @@ def compute_prs(
     cache_dir: Path = DEFAULT_CACHE_DIR,
     pgs_id: str = "unknown",
     trait_reported: str | None = None,
+    genotypes_lf: pl.LazyFrame | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score for a single VCF against a scoring file.
 
@@ -85,17 +143,24 @@ def compute_prs(
     4. Inner join on (chrom == chr_name, pos == chr_position)
     5. Compute dosage of effect allele from GT
     6. PRS = sum(effect_weight * dosage)
+    7. If allelefrequency_effect is present, compute theoretical mean/SD
+       and estimate population percentile.
 
     Args:
-        vcf_path: Path to VCF file
+        vcf_path: Path to VCF file (ignored when *genotypes_lf* is provided)
         scoring_file: Path to scoring file, PGS ID string, or pre-loaded LazyFrame
         genome_build: Genome build for downloading scoring files
         cache_dir: Cache directory for downloaded scoring files
         pgs_id: PGS ID for result labeling
         trait_reported: Trait name for result labeling
+        genotypes_lf: Pre-built genotypes LazyFrame with columns
+            ``chrom, pos, ref, alt, GT``.  When provided, *vcf_path* is not
+            read — useful for passing a normalized parquet via
+            ``pl.scan_parquet()``.
 
     Returns:
-        PRSResult with computed score and match statistics
+        PRSResult with computed score, match statistics, and optionally
+        theoretical distribution stats and percentile.
     """
     with start_action(
         action_type="prs:compute",
@@ -103,14 +168,16 @@ def compute_prs(
         pgs_id=pgs_id,
         genome_build=genome_build,
     ):
-        genotypes_lf = read_genotypes(vcf_path)
+        if genotypes_lf is None:
+            genotypes_lf = read_genotypes(vcf_path)
         scoring_lf = _resolve_scoring(scoring_file, genome_build, cache_dir)
         scoring_norm = _normalize_scoring_columns(scoring_lf)
 
-        variants_total = scoring_norm.select(pl.len()).collect().item()
+        scoring_df = scoring_norm.collect()
+        variants_total = scoring_df.height
 
         joined = genotypes_lf.join(
-            scoring_norm,
+            scoring_df.lazy(),
             left_on=["chrom", "pos"],
             right_on=["chr_name_norm", "chr_pos_norm"],
             how="inner",
@@ -141,6 +208,30 @@ def compute_prs(
 
         match_rate = variants_matched / variants_total if variants_total > 0 else 0.0
 
+        has_freqs = False
+        theoretical_mean: float | None = None
+        theoretical_std: float | None = None
+        percentile: float | None = None
+
+        stats = _compute_theoretical_stats(scoring_df)
+        if stats is not None:
+            mean, std, n_with_freq = stats
+            has_freqs = True
+            theoretical_mean = mean
+            theoretical_std = std
+            if std > 0:
+                z = (float(prs_score) - mean) / std
+                percentile = round(_norm_cdf(z) * 100.0, 2)
+            log_message(
+                message_type="prs:theoretical_stats",
+                pgs_id=pgs_id,
+                variants_with_frequency=n_with_freq,
+                variants_total=variants_total,
+                theoretical_mean=mean,
+                theoretical_std=std,
+                percentile=percentile,
+            )
+
         return PRSResult(
             pgs_id=pgs_id,
             score=float(prs_score),
@@ -148,6 +239,10 @@ def compute_prs(
             variants_total=int(variants_total),
             match_rate=float(match_rate),
             trait_reported=trait_reported,
+            has_allele_frequencies=has_freqs,
+            theoretical_mean=theoretical_mean,
+            theoretical_std=theoretical_std,
+            percentile=percentile,
         )
 
 

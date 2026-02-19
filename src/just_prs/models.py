@@ -101,3 +101,19 @@ class PRSResult(BaseModel):
     performance: PerformanceInfo | None = Field(
         default=None, description="Best available performance metric from PGS Catalog"
     )
+    has_allele_frequencies: bool = Field(
+        default=False,
+        description="Whether the scoring file contained allelefrequency_effect data",
+    )
+    theoretical_mean: float | None = Field(
+        default=None,
+        description="Theoretical population mean PRS computed from allele frequencies: sum(w_i * 2 * p_i)",
+    )
+    theoretical_std: float | None = Field(
+        default=None,
+        description="Theoretical population SD of PRS: sqrt(sum(w_i^2 * 2 * p_i * (1-p_i)))",
+    )
+    percentile: float | None = Field(
+        default=None,
+        description="Estimated population percentile (0-100) from theoretical distribution",
+    )

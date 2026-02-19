@@ -9,8 +9,10 @@ from pathlib import Path
 import httpx
 import pytest
 
+from just_prs.scoring import resolve_cache_dir
+
 TEST_VCF_URL = "https://zenodo.org/records/18370498/files/antonkulaga.vcf?download=1"
-TEST_CACHE_DIR = Path.home() / ".cache" / "just-prs" / "test-data"
+TEST_CACHE_DIR = resolve_cache_dir() / "test-data"
 
 PLINK2_BASE_URL = "https://s3.amazonaws.com/plink2-assets"
 PLINK2_VERSION_DATE = "20260110"
@@ -92,4 +94,4 @@ def plink2_path() -> Path:
     system_plink2 = shutil.which("plink2")
     if system_plink2 is not None:
         return Path(system_plink2)
-    return _download_plink2(Path.home() / ".cache" / "just-prs" / "plink2")
+    return _download_plink2(resolve_cache_dir() / "plink2")

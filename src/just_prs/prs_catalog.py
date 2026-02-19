@@ -9,7 +9,6 @@ Loading priority: local cleaned parquet -> HF pull -> raw FTP download + cleanup
 
 import logging
 import math
-import os
 from pathlib import Path
 
 import polars as pl
@@ -24,16 +23,9 @@ from just_prs.ftp import download_metadata_sheet
 from just_prs.hf import pull_cleaned_parquets, push_cleaned_parquets
 from just_prs.models import PRSResult
 from just_prs.prs import compute_prs
-from just_prs.scoring import DEFAULT_CACHE_DIR
+from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
 logger = logging.getLogger(__name__)
-
-
-def _resolve_cache_dir() -> Path:
-    raw = os.environ.get("PRS_CACHE_DIR", "")
-    if raw:
-        return Path(raw)
-    return Path.home() / ".cache" / "just-prs"
 
 
 class PRSCatalog:
@@ -49,7 +41,7 @@ class PRSCatalog:
     """
 
     def __init__(self, cache_dir: Path | None = None) -> None:
-        self._cache_dir = cache_dir or _resolve_cache_dir()
+        self._cache_dir = cache_dir or resolve_cache_dir()
         self._scores_lf: pl.LazyFrame | None = None
         self._perf_lf: pl.LazyFrame | None = None
         self._best_perf_lf: pl.LazyFrame | None = None

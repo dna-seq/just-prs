@@ -13,6 +13,24 @@ A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (
 - Stream harmonized scoring files directly from EBI FTP without storing intermediate `.gz` files
 - All data saved as **Parquet** for fast, efficient downstream analysis with Polars
 
+## Validation against PLINK2
+
+Our PRS computation is validated against [PLINK2](https://www.cog-genomics.org/plink/2.0/) `--score` on real genomic data. The integration test suite downloads a whole-genome VCF from Zenodo, computes PRS for multiple GRCh38 scores using both `just-prs` and PLINK2, and asserts agreement:
+
+| PGS ID | just-prs | PLINK2 | Relative diff | Variants matched |
+|--------|----------|--------|---------------|-----------------|
+| PGS000001 | 0.030123 | 0.030123 | 6.5e-7 | 51 / 77 |
+| PGS000002 | -0.137089 | -0.137089 | 1.1e-7 | 51 / 77 |
+| PGS000003 | 0.588127 | 0.588127 | 8.1e-9 | 51 / 77 |
+| PGS000004 | -0.7158 | -0.7158 | 3.1e-16 | 170 / 313 |
+| PGS000005 | -0.8903 | -0.8903 | 5.0e-16 | 170 / 313 |
+
+All differences are within floating-point precision. PLINK2 is auto-downloaded if not already installed, so the tests run on any Linux, macOS, or Windows machine:
+
+```bash
+uv run pytest tests/test_plink.py -v
+```
+
 ## Installation
 
 Requires Python ≥ 3.14. Uses [uv](https://github.com/astral-sh/uv) for dependency management.
@@ -94,7 +112,7 @@ Downloads the PGS Catalog bulk metadata CSVs and converts each to a parquet file
 The full catalog (~5,000+ scores) downloads in seconds as a single HTTP request per sheet.
 
 ```bash
-# Download all 7 metadata sheets → ./pgs_metadata/*.parquet
+# Download all 7 metadata sheets → ./output/pgs_metadata/*.parquet
 prs catalog bulk metadata
 
 # Download only the scores sheet
@@ -120,7 +138,7 @@ Options:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--output-dir / -o` | `./pgs_metadata` | Directory for parquet output |
+| `--output-dir / -o` | `./output/pgs_metadata` | Directory for parquet output |
 | `--sheet / -s` | all sheets | Single sheet name to download |
 | `--overwrite` | `False` | Re-download existing files |
 
@@ -130,7 +148,7 @@ Streams each harmonized scoring file from EBI FTP and saves it as a parquet file
 (with an added `pgs_id` column). No intermediate `.gz` files are written to disk.
 
 ```bash
-# Download ALL ~5,000+ scoring files (GRCh38) → ./pgs_scores/PGS######.parquet
+# Download ALL ~5,000+ scoring files (GRCh38) → ./output/pgs_scores/PGS######.parquet
 prs catalog bulk scores
 
 # Download a specific subset
@@ -147,7 +165,7 @@ Options:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--output-dir / -o` | `./pgs_scores` | Directory for parquet output |
+| `--output-dir / -o` | `./output/pgs_scores` | Directory for parquet output |
 | `--build / -b` | `GRCh38` | Genome build (`GRCh37` or `GRCh38`) |
 | `--ids` | all | Comma-separated PGS IDs to download |
 | `--overwrite` | `False` | Re-download existing parquet files |
@@ -157,7 +175,7 @@ Options:
 Downloads raw metadata from EBI FTP, runs the cleanup pipeline (genome build normalization, column renaming, metric parsing, performance flattening), and saves three cleaned parquet files.
 
 ```bash
-# Build cleaned parquets → ./pgs_metadata/
+# Build cleaned parquets → ./output/pgs_metadata/
 prs catalog bulk clean-metadata
 
 # Custom output directory
@@ -176,7 +194,7 @@ Options:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--output-dir / -o` | `./pgs_metadata` | Directory for cleaned parquet output |
+| `--output-dir / -o` | `./output/pgs_metadata` | Directory for cleaned parquet output |
 
 #### `prs catalog bulk push-hf` — Push cleaned parquets to HuggingFace
 
@@ -194,7 +212,7 @@ Options:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--output-dir / -o` | `./pgs_metadata` | Directory containing cleaned parquets |
+| `--output-dir / -o` | `./output/pgs_metadata` | Directory containing cleaned parquets |
 | `--repo / -r` | `just-dna-seq/polygenic_risk_scores` | HuggingFace dataset repo ID |
 
 #### `prs catalog bulk pull-hf` — Pull cleaned parquets from HuggingFace
@@ -213,7 +231,7 @@ Options:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--output-dir / -o` | `./pgs_metadata` | Directory to save pulled parquets |
+| `--output-dir / -o` | `./output/pgs_metadata` | Directory to save pulled parquets |
 | `--repo / -r` | `just-dna-seq/polygenic_risk_scores` | HuggingFace dataset repo ID |
 
 #### `prs catalog bulk ids` — List all PGS IDs
@@ -246,20 +264,20 @@ from pathlib import Path
 ids = list_all_pgs_ids()  # ['PGS000001', 'PGS000002', ...]
 
 # All score metadata as a Polars DataFrame, saved to parquet
-df = download_metadata_sheet("scores", Path("scores.parquet"))
+df = download_metadata_sheet("scores", Path("./output/pgs_metadata/scores.parquet"))
 
 # All 7 sheets at once
-sheets = download_all_metadata(Path("./pgs_metadata"))
+sheets = download_all_metadata(Path("./output/pgs_metadata"))
 
 # Stream a scoring file as a LazyFrame (no local .gz written)
 lf = stream_scoring_file("PGS000001", genome_build="GRCh38")
 
 # Download one scoring file as parquet (adds pgs_id column)
-path = download_scoring_as_parquet("PGS000001", Path("./scores"))
+path = download_scoring_as_parquet("PGS000001", Path("./output/pgs_scores"))
 
 # Bulk download a list (or all) scoring files as parquet
-paths = bulk_download_scoring_parquets(Path("./scores"), pgs_ids=["PGS000001", "PGS000002"])
-paths = bulk_download_scoring_parquets(Path("./scores"))  # all ~5000+
+paths = bulk_download_scoring_parquets(Path("./output/pgs_scores"), pgs_ids=["PGS000001", "PGS000002"])
+paths = bulk_download_scoring_parquets(Path("./output/pgs_scores"))  # all ~5000+
 ```
 
 ### REST API client (`just_prs.catalog`)
@@ -311,8 +329,8 @@ pct = catalog.percentile(prs_score=1.5, pgs_id="PGS000014")
 pct = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", mean=0.0, std=1.0)
 
 # Build cleaned parquets explicitly (download from FTP + cleanup)
-paths = catalog.build_cleaned_parquets(output_dir=Path("./pgs_metadata"))
-# {'scores': Path('pgs_metadata/scores.parquet'), 'performance': ..., 'best_performance': ...}
+paths = catalog.build_cleaned_parquets(output_dir=Path("./output/pgs_metadata"))
+# {'scores': Path('output/pgs_metadata/scores.parquet'), 'performance': ..., 'best_performance': ...}
 
 # Push cleaned parquets to HuggingFace
 catalog.push_to_hf()  # token from .env / HF_TOKEN
@@ -326,7 +344,7 @@ from just_prs.hf import push_cleaned_parquets, pull_cleaned_parquets
 from pathlib import Path
 
 # Push cleaned parquets to HF dataset repo
-push_cleaned_parquets(Path("./pgs_metadata"))  # default: just-dna-seq/polygenic_risk_scores
+push_cleaned_parquets(Path("./output/pgs_metadata"))  # default: just-dna-seq/polygenic_risk_scores
 
 # Pull cleaned parquets from HF
 downloaded = pull_cleaned_parquets(Path("./local_cache"))
@@ -343,7 +361,7 @@ from just_prs.ftp import download_metadata_sheet
 from pathlib import Path
 
 # Clean scores: rename columns, normalize genome builds
-raw_df = download_metadata_sheet("scores", Path("scores.parquet"))
+raw_df = download_metadata_sheet("scores", Path("./output/pgs_metadata/scores_raw.parquet"))
 cleaned_lf = clean_scores(raw_df)  # LazyFrame with snake_case columns
 
 # Parse a metric string
@@ -351,8 +369,8 @@ parse_metric_string("1.55 [1.52,1.58]")
 # {'estimate': 1.55, 'ci_lower': 1.52, 'ci_upper': 1.58, 'se': None}
 
 # Clean performance metrics: parse strings, join with evaluation samples
-perf_df = download_metadata_sheet("performance_metrics", Path("perf.parquet"))
-eval_df = download_metadata_sheet("evaluation_sample_sets", Path("eval.parquet"))
+perf_df = download_metadata_sheet("performance_metrics", Path("./output/pgs_metadata/perf.parquet"))
+eval_df = download_metadata_sheet("evaluation_sample_sets", Path("./output/pgs_metadata/eval.parquet"))
 cleaned_perf_lf = clean_performance_metrics(perf_df, eval_df)
 ```
 

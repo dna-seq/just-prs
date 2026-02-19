@@ -43,14 +43,63 @@ Cleaned metadata parquets are synced to/from the HuggingFace dataset repo `just-
 
 ### UI architecture notes
 
-- The app uses a single `AppState` class that inherits `LazyFrameGridMixin` from `reflex-mui-datagrid`. This means there is **one MUI DataGrid** shared across the Metadata and Scoring tabs.
-- The Compute PRS tab uses its own paginated table (not the MUI DataGrid) to avoid conflicts with the shared grid state. Score rows are stored as `list[dict[str, str]]` in `compute_scores_rows` with server-side search and pagination.
+- **Three state classes** with two independent MUI DataGrids via `LazyFrameGridMixin` (which uses `mixin=True`). Each concrete mixin subclass gets its own independent set of reactive grid vars:
+  - `AppState(rx.State)` — shared vars: `active_tab`, `genome_build`, `cache_dir`, `status_message`, `pgs_id_input`
+  - `MetadataGridState(LazyFrameGridMixin, AppState)` — metadata browser + scoring file viewer grid
+  - `ComputeGridState(LazyFrameGridMixin, AppState)` — compute PRS score selection grid
+  - **Important**: `AppState` must NOT inherit from `LazyFrameGridMixin` — otherwise substates that also list the mixin create an unresolvable MRO diamond.
 - The Metadata tab shows **raw** PGS Catalog columns for general-purpose browsing of all 7 sheets.
-- The Compute tab uses **cleaned** data from `PRSCatalog` with normalized genome builds and snake_case column names. Genome build filtering happens at the data level (canonical builds), not via alias lists.
+- The Compute tab (default tab) uses **cleaned** data from `PRSCatalog` with normalized genome builds and snake_case column names. Scores are loaded into the MUI DataGrid with server-side virtual scrolling — no manual pagination.
+- `lazyframe_grid()` already sets `pagination=False` and `hide_footer=True` internally — do NOT pass them again or you get a duplicate kwarg error.
+
+### Reflex-specific patterns (CRITICAL)
+
+- **State var mixin classes MUST use `rx.State` with `mixin=True`**: Declare mixins as `class MyMixin(rx.State, mixin=True)` so vars are injected independently into each concrete subclass. Each subclass must also inherit from `rx.State` (or another non-mixin state class). `LazyFrameGridMixin` already uses `mixin=True`, so `AppState` and `ComputeGridState` each get their own `lf_grid_rows`, `lf_grid_loaded`, etc.
+- **No keyword-only arguments in mixin event handler methods**: Reflex's `_copy_fn` copies `__defaults__` but not `__kwdefaults__`. Always use regular positional arguments with defaults in mixin event handlers.
+- **`pagination=False` for scrollable grids**: `WrappedDataGrid` defaults to `pagination=True`. You MUST pass `pagination=False` and `hide_footer=True` to get a continuously scrollable grid. NOTE: `lazyframe_grid()` already does this internally — only pass these when using `data_grid()` directly.
 
 ### polars-bio caveats
 
 - `polars-bio` uses DataFusion as its query engine for VCF reading. Multi-column aggregations on DataFusion-backed LazyFrames can fail with "all columns in a record batch must have the same length". **Always `.collect()` the joined LazyFrame first**, then compute aggregations on the materialized DataFrame.
+
+---
+
+## Data Directory Conventions
+
+**Data must be strictly separated from code.** Generated data, downloaded files, and computation outputs must NEVER be written to the project root or source tree.
+
+### Output directory (`output/`)
+
+All CLI commands that produce data default to writing under `./output/`:
+
+| Subdirectory | Contents |
+|---|---|
+| `output/pgs_metadata/` | Bulk metadata parquets (raw and cleaned) from FTP / HF |
+| `output/pgs_scores/` | Bulk-downloaded per-score parquet files |
+| `output/scores/` | Individual scoring file downloads |
+
+The `output/` directory is gitignored. **Never commit generated data to the repository.**
+
+### Cache directory (`~/.cache/just-prs/`)
+
+Long-lived cached data used by `PRSCatalog` and tests goes to the user-level cache:
+
+| Subdirectory | Contents |
+|---|---|
+| `~/.cache/just-prs/metadata/` | Cleaned parquets (auto-populated by `PRSCatalog`) |
+| `~/.cache/just-prs/metadata/raw/` | Raw FTP parquets cached by `PRSCatalog` |
+| `~/.cache/just-prs/scores/` | Cached scoring files for PRS computation |
+| `~/.cache/just-prs/test-data/` | Test VCF files and fixtures |
+| `~/.cache/just-prs/plink2/` | Auto-downloaded PLINK2 binary |
+
+Override with `PRS_CACHE_DIR` environment variable.
+
+### Rules
+
+- **CLI defaults** must always point to `./output/<subdir>`, never `./` or `./pgs_metadata/` etc.
+- **Library code** (`PRSCatalog`, `scoring.py`) must use `~/.cache/just-prs/` or accept explicit paths.
+- **Tests** must use `~/.cache/just-prs/test-data/`, never write to the project tree.
+- **Never add data directories** (parquet, CSV, VCF, gz) to git. The `.gitignore` blocks `output/`, `pgs_metadata/`, `pgs_scores/`, and `scores/`.
 
 ---
 

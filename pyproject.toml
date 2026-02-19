@@ -17,11 +17,17 @@ dependencies = [
     "fsspec[http]>=2026.2.0",
     "huggingface-hub>=0.28.0",
     "python-dotenv>=1.1.0",
+    "prs-ui",
 ]
 
 [project.scripts]
 just-prs = "just_prs.cli:run"
 prs = "just_prs.cli:run"
+ui = "just_prs.cli:launch_ui"
+
+[tool.uv.sources]
+prs-ui = { workspace = true }
+
 
 [build-system]
 requires = ["uv_build>=0.10.0,<0.11.0"]

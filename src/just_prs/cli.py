@@ -227,7 +227,7 @@ def bulk_metadata(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", "-o", help="Directory to write parquet files"),
-    ] = Path("./pgs_metadata"),
+    ] = Path("./output/pgs_metadata"),
     sheet: Annotated[
         Optional[str],
         typer.Option(
@@ -274,7 +274,7 @@ def bulk_scores(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", "-o", help="Directory to write per-score parquet files"),
-    ] = Path("./pgs_scores"),
+    ] = Path("./output/pgs_scores"),
     build: Annotated[
         str, typer.Option("--build", "-b", help="Genome build (GRCh37 or GRCh38)")
     ] = "GRCh38",
@@ -329,7 +329,7 @@ def bulk_clean_metadata(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", "-o", help="Directory to write cleaned parquet files"),
-    ] = Path("./pgs_metadata"),
+    ] = Path("./output/pgs_metadata"),
 ) -> None:
     """Download raw metadata from EBI FTP, run the cleanup pipeline, and save cleaned parquets.
 
@@ -355,7 +355,7 @@ def bulk_push_hf(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", "-o", help="Directory containing cleaned parquets to push"),
-    ] = Path("./pgs_metadata"),
+    ] = Path("./output/pgs_metadata"),
     repo_id: Annotated[
         str,
         typer.Option("--repo", "-r", help="HuggingFace dataset repo ID"),
@@ -382,7 +382,7 @@ def bulk_pull_hf(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", "-o", help="Directory to save pulled parquet files"),
-    ] = Path("./pgs_metadata"),
+    ] = Path("./output/pgs_metadata"),
     repo_id: Annotated[
         str,
         typer.Option("--repo", "-r", help="HuggingFace dataset repo ID"),
@@ -411,7 +411,7 @@ def catalog_download(
     pgs_id: Annotated[str, typer.Argument(help="PGS score ID (e.g. PGS000001)")],
     output_dir: Annotated[
         Path, typer.Option("--output-dir", "-o", help="Output directory")
-    ] = Path("./scores"),
+    ] = Path("./output/scores"),
     build: Annotated[
         str, typer.Option("--build", "-b", help="Genome build")
     ] = "GRCh38",
@@ -489,6 +489,31 @@ def compute(
         data = [r.model_dump() for r in results]
         output.write_text(json.dumps(data, indent=2))
         console.print(f"[green]Results saved to {output}[/green]")
+
+
+@app.command("ui")
+def ui() -> None:
+    """Launch the PRS web UI (Reflex app)."""
+    launch_ui()
+
+
+def launch_ui() -> None:
+    """Start the Reflex dev server for prs-ui."""
+    import os
+    from importlib.util import find_spec
+
+    if find_spec("prs_ui") is None:
+        console.print(
+            "[red]prs-ui package not installed. "
+            "Install it with: uv sync --all-packages[/red]"
+        )
+        raise typer.Exit(code=1)
+
+    prs_ui_dir = Path(find_spec("prs_ui").origin).resolve().parent.parent  # type: ignore[union-attr]
+    console.print(f"Starting PRS UI from {prs_ui_dir} ...")
+    os.chdir(prs_ui_dir)
+    from reflex.reflex import cli as reflex_cli
+    reflex_cli(["run"])
 
 
 def run() -> None:

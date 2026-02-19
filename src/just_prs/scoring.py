@@ -85,8 +85,12 @@ def parse_scoring_file(path: Path) -> pl.LazyFrame:
             null_values=["", "NA", "None"],
         )
 
-        cast_map: dict[str, pl.DataType] = {}
         columns = df.columns
+        if "rsID" not in columns and "id" in columns:
+            df = df.rename({"id": "rsID"})
+            columns = df.columns
+
+        cast_map: dict[str, pl.DataType] = {}
         if "chr_name" in columns:
             cast_map["chr_name"] = pl.Utf8
         if "chr_position" in columns:

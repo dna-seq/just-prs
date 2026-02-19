@@ -97,7 +97,7 @@ def read_genotypes(vcf_path: Path | str) -> pl.LazyFrame:
             use_zero_based=False,
         )
         lf = lf.select([
-            pl.col("chrom").cast(pl.Utf8).str.replace("^chr", "").alias("chrom"),
+            pl.col("chrom").cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chrom"),
             pl.col("start").cast(pl.Int64).alias("pos"),
             pl.col("ref").cast(pl.Utf8),
             pl.col("alt").cast(pl.Utf8),
@@ -142,20 +142,26 @@ def compute_dosage_expr(
     allele_1 = gt_normalized.str.split("/").list.get(0)
     allele_2 = gt_normalized.str.split("/").list.get(1)
 
+    allele_1_int = allele_1.cast(pl.Int64, strict=False)
+    allele_2_int = allele_2.cast(pl.Int64, strict=False)
+
+    is_missing = allele_1_int.is_null() | allele_2_int.is_null()
     effect_is_alt = effect == alt
     effect_is_ref = effect == ref
 
     dosage_when_alt = (
-        allele_1.cast(pl.Int64).eq(1).cast(pl.Int64)
-        + allele_2.cast(pl.Int64).eq(1).cast(pl.Int64)
+        allele_1_int.eq(1).cast(pl.Int64).fill_null(0)
+        + allele_2_int.eq(1).cast(pl.Int64).fill_null(0)
     )
     dosage_when_ref = (
-        allele_1.cast(pl.Int64).eq(0).cast(pl.Int64)
-        + allele_2.cast(pl.Int64).eq(0).cast(pl.Int64)
+        allele_1_int.eq(0).cast(pl.Int64).fill_null(0)
+        + allele_2_int.eq(0).cast(pl.Int64).fill_null(0)
     )
 
     return (
-        pl.when(effect_is_alt)
+        pl.when(is_missing)
+        .then(pl.lit(0))
+        .when(effect_is_alt)
         .then(dosage_when_alt)
         .when(effect_is_ref)
         .then(dosage_when_ref)

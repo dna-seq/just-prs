@@ -1,32 +1,32 @@
-"""Scoring file viewer: PGS ID input, genome build selector, and grid."""
+"""Scoring file viewer: PGS ID input, genome build selector, and scrollable grid."""
 
 import reflex as rx
 from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
 
-from prs_ui.state import AppState
+from prs_ui.state import MetadataGridState
 
 
 def scoring_panel() -> rx.Component:
-    """Scoring file browsing panel: PGS ID input + genome build + grid."""
+    """Scoring file browsing panel: PGS ID input + genome build + scrollable grid."""
     return rx.vstack(
         rx.hstack(
             rx.input(
-                value=AppState.pgs_id_input,
-                on_change=AppState.set_pgs_id,
+                value=MetadataGridState.pgs_id_input,
+                on_change=MetadataGridState.set_pgs_id,
                 placeholder="PGS000001",
                 width="200px",
                 size="2",
             ),
             rx.select(
                 ["GRCh37", "GRCh38"],
-                value=AppState.genome_build,
-                on_change=AppState.set_genome_build,
+                value=MetadataGridState.genome_build,
+                on_change=MetadataGridState.set_genome_build,
                 size="2",
             ),
             rx.button(
                 "Load Scoring File",
-                on_click=AppState.load_scoring,
-                loading=AppState.lf_grid_loading,
+                on_click=MetadataGridState.load_scoring,
+                loading=MetadataGridState.lf_grid_loading,
                 color_scheme="green",
                 size="2",
             ),
@@ -34,11 +34,11 @@ def scoring_panel() -> rx.Component:
             align="center",
         ),
         rx.cond(
-            AppState.lf_grid_loaded,
+            MetadataGridState.lf_grid_loaded,
             rx.vstack(
-                lazyframe_grid_stats_bar(AppState),
+                lazyframe_grid_stats_bar(MetadataGridState),
                 lazyframe_grid(
-                    AppState,
+                    MetadataGridState,
                     height="calc(100vh - 260px)",
                     density="compact",
                     column_header_height=56,
@@ -47,7 +47,7 @@ def scoring_panel() -> rx.Component:
                 spacing="2",
             ),
             rx.cond(
-                AppState.lf_grid_loading,
+                MetadataGridState.lf_grid_loading,
                 rx.center(rx.spinner(size="3"), padding="60px"),
                 rx.center(
                     rx.text(

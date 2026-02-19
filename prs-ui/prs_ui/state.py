@@ -1,4 +1,13 @@
-"""Application state for the PRS UI, built on LazyFrameGridMixin."""
+"""Application state for the PRS UI.
+
+Three state classes:
+- AppState(rx.State): shared vars (active_tab, genome_build, cache_dir, etc.)
+- MetadataGridState(LazyFrameGridMixin, AppState): metadata browser + scoring viewer grid
+- ComputeGridState(LazyFrameGridMixin, AppState): compute PRS score selection grid
+
+Both grid states inherit LazyFrameGridMixin (mixin=True) and AppState, so each
+gets its own independent set of reactive grid vars while sharing AppState vars.
+"""
 
 import os
 from pathlib import Path
@@ -7,6 +16,7 @@ from typing import Any
 import polars as pl
 import reflex as rx
 from reflex_mui_datagrid import LazyFrameGridMixin
+from reflex_mui_datagrid.lazyframe_grid import _get_cache, apply_filter_model
 
 from just_prs.ftp import (
     METADATA_FILES,
@@ -41,47 +51,33 @@ def _resolve_cache_dir() -> Path:
 _catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
 
 
-class AppState(LazyFrameGridMixin):
-    """Reactive state for browsing PGS Catalog metadata and scoring files."""
+class AppState(rx.State):
+    """Shared app state: tab selection, genome build, cache dir."""
 
     selected_sheet: str = "scores"
     cache_dir: str = str(_resolve_cache_dir())
     status_message: str = ""
     pgs_id_input: str = "PGS000001"
     genome_build: str = "GRCh38"
-    active_tab: str = "metadata"
-    selected_pgs_ids: list[str] = []
+    active_tab: str = "compute"
 
-    vcf_filename: str = ""
-    detected_build: str = ""
-    build_detection_message: str = ""
-    prs_results: list[dict] = []
-    prs_computing: bool = False
-    low_match_warning: bool = False
+    def set_pgs_id(self, value: str) -> None:
+        self.pgs_id_input = value
 
-    compute_scores_rows: list[dict[str, str]] = []
-    compute_scores_loaded: bool = False
-    compute_search_term: str = ""
-    compute_total_count: int = 0
-    compute_page: int = 0
-    compute_page_size: int = 50
+    def set_genome_build(self, value: str) -> None:
+        self.genome_build = value
 
-    _scores_initialized: bool = False
-    _vcf_path: str = ""
-    _compute_filtered_lf: pl.LazyFrame | None = None
+    def set_active_tab(self, value: str) -> None:
+        self.active_tab = value
 
-    def initialize(self) -> Any:
-        """Load the scores sheet once per session; skip on subsequent on_load calls."""
-        if self._scores_initialized:
-            return
-        self._scores_initialized = True
-        yield from self.load_sheet("scores")
+
+class MetadataGridState(LazyFrameGridMixin, AppState):
+    """Grid state for the metadata browser + scoring file viewer."""
+
+    metadata_selected_ids: list[str] = []
 
     def load_sheet(self, sheet: str) -> Any:
-        """Download (or load cached) a metadata sheet and display in the grid.
-
-        The metadata tab shows raw PGS Catalog columns for general browsing.
-        """
+        """Download (or load cached) a metadata sheet and display in the metadata grid."""
         self.selected_sheet = sheet
         self.status_message = f"Loading {SHEET_LABELS.get(sheet, sheet)}..."
         cache_path = Path(self.cache_dir) / "metadata" / f"{sheet}.parquet"
@@ -91,7 +87,7 @@ class AppState(LazyFrameGridMixin):
         self.status_message = f"Loaded {SHEET_LABELS.get(sheet, sheet)} ({df.height} rows)"
 
     def load_scoring(self) -> Any:
-        """Stream a scoring file for the given PGS ID and display in the grid."""
+        """Stream a scoring file for the given PGS ID and display in the metadata grid."""
         pgs_id = self.pgs_id_input.strip().upper()
         if not pgs_id:
             self.status_message = "Please enter a PGS ID."
@@ -103,105 +99,8 @@ class AppState(LazyFrameGridMixin):
         row_count = lf.select(pl.len()).collect().item()
         self.status_message = f"Loaded {pgs_id} ({row_count} variants)"
 
-    def set_pgs_id(self, value: str) -> None:
-        self.pgs_id_input = value
-
-    def set_genome_build(self, value: str) -> Any:
-        self.genome_build = value
-        if self.compute_scores_loaded:
-            yield from self.load_compute_scores()
-
-    def set_active_tab(self, value: str) -> None:
-        self.active_tab = value
-
-    def _apply_search_filter(self, lf: pl.LazyFrame) -> pl.LazyFrame:
-        """Apply text search filter across key cleaned columns."""
-        term = self.compute_search_term.strip().lower()
-        if not term:
-            return lf
-        return lf.filter(
-            pl.col("pgs_id").str.to_lowercase().str.contains(term, literal=True)
-            | pl.col("name").str.to_lowercase().str.contains(term, literal=True)
-            | pl.col("trait_reported").str.to_lowercase().str.contains(term, literal=True)
-            | pl.col("trait_efo").str.to_lowercase().str.contains(term, literal=True)
-        )
-
-    def _lf_to_rows(self, df: pl.DataFrame) -> list[dict[str, str]]:
-        rows: list[dict[str, str]] = []
-        for row in df.iter_rows(named=True):
-            rows.append({
-                "pgs_id": str(row.get("pgs_id", "")),
-                "name": str(row.get("name", "")),
-                "trait": str(row.get("trait_reported", "")),
-                "build": str(row.get("genome_build", "")),
-                "variants": str(row.get("n_variants", "")),
-            })
-        return rows
-
-    def _refresh_compute_page(self) -> None:
-        """Re-apply search filter and pagination, update visible rows."""
-        if self._compute_filtered_lf is None:
-            return
-        searched = self._apply_search_filter(self._compute_filtered_lf)
-        searched_df = searched.collect()
-        self.compute_total_count = searched_df.height
-        offset = self.compute_page * self.compute_page_size
-        page_df = searched_df.slice(offset, self.compute_page_size)
-        self.compute_scores_rows = self._lf_to_rows(page_df)
-
-    def load_compute_scores(self) -> Any:
-        """Load cleaned scores metadata filtered by the current genome build."""
-        self.status_message = "Loading scores for selection..."
-        yield
-        self._compute_filtered_lf = _catalog.scores(genome_build=self.genome_build)
-        self.compute_scores_loaded = True
-        self.selected_pgs_ids = []
-        self.compute_page = 0
-        self.compute_search_term = ""
-        self._refresh_compute_page()
-        self.status_message = f"Found {self.compute_total_count} scores for {self.genome_build}"
-
-    def set_compute_search_term(self, value: str) -> None:
-        self.compute_search_term = value
-        self.compute_page = 0
-        self._refresh_compute_page()
-
-    def compute_next_page(self) -> None:
-        max_page = max(0, (self.compute_total_count - 1) // self.compute_page_size)
-        if self.compute_page < max_page:
-            self.compute_page += 1
-            self._refresh_compute_page()
-
-    def compute_prev_page(self) -> None:
-        if self.compute_page > 0:
-            self.compute_page -= 1
-            self._refresh_compute_page()
-
-    def toggle_compute_score(self, pgs_id: str) -> None:
-        """Toggle selection of a PGS ID in the compute scores list."""
-        if pgs_id in self.selected_pgs_ids:
-            self.selected_pgs_ids = [p for p in self.selected_pgs_ids if p != pgs_id]
-        else:
-            self.selected_pgs_ids = [*self.selected_pgs_ids, pgs_id]
-
-    def select_all_visible_scores(self) -> None:
-        """Select all scores matching the current search filter (all pages)."""
-        if self._compute_filtered_lf is None:
-            return
-        searched = self._apply_search_filter(self._compute_filtered_lf)
-        ids = searched.select("pgs_id").collect()["pgs_id"].to_list()
-        self.selected_pgs_ids = ids
-
-    def deselect_all_scores(self) -> None:
-        self.selected_pgs_ids = []
-
-    def handle_scores_row_selection(self, model: dict) -> None:
-        """Track selected PGS IDs when rows are checked in the scores grid.
-
-        MUI DataGrid v8 passes { type: 'include'|'exclude', ids: [GridRowId, ...] }.
-        GridRowId values may be strings even when the underlying data is integers,
-        so we normalise both sides to int before comparing.
-        """
+    def handle_metadata_row_selection(self, model: dict) -> None:
+        """Track selected PGS IDs from metadata grid checkbox selection."""
         selection_type: str = model.get("type", "include")
         raw_ids: list = model.get("ids", [])
         selected_row_ids: set[int] = {int(i) for i in raw_ids}
@@ -216,22 +115,121 @@ class AppState(LazyFrameGridMixin):
                 pgs_id = row.get("Polygenic Score (PGS) ID")
                 if pgs_id:
                     pgs_ids.append(str(pgs_id))
-        self.selected_pgs_ids = pgs_ids
+        self.metadata_selected_ids = pgs_ids
 
     def download_selected_scoring_files(self) -> Any:
         """Download scoring files for selected PGS IDs to the local cache."""
-        if not self.selected_pgs_ids:
+        if not self.metadata_selected_ids:
             self.status_message = "No scores selected."
             return
-        total = len(self.selected_pgs_ids)
+        total = len(self.metadata_selected_ids)
         output_dir = Path(self.cache_dir) / "scoring" / self.genome_build
         self.status_message = f"Saving {total} scoring file(s) to cache..."
         yield
-        for i, pgs_id in enumerate(self.selected_pgs_ids, start=1):
+        for i, pgs_id in enumerate(self.metadata_selected_ids, start=1):
             self.status_message = f"Saving {i}/{total}: {pgs_id}..."
             yield
             download_scoring_as_parquet(pgs_id, output_dir, genome_build=self.genome_build)
         self.status_message = f"Saved {total} scoring file(s) to {output_dir}"
+
+
+class ComputeGridState(LazyFrameGridMixin, AppState):
+    """Independent grid state for the Compute PRS tab.
+
+    Inherits shared vars (genome_build, cache_dir, status_message) from AppState.
+    Gets its own independent LazyFrameGridMixin vars (lf_grid_rows, lf_grid_loaded, etc.)
+    because LazyFrameGridMixin uses mixin=True.
+    """
+
+    selected_pgs_ids: list[str] = []
+    vcf_filename: str = ""
+    detected_build: str = ""
+    build_detection_message: str = ""
+    prs_results: list[dict] = []
+    prs_computing: bool = False
+    low_match_warning: bool = False
+    compute_scores_loaded: bool = False
+
+    _scores_initialized: bool = False
+    _vcf_path: str = ""
+    _compute_scores_lf: pl.LazyFrame | None = None
+
+    def initialize(self) -> Any:
+        """Auto-load cleaned scores on first page visit."""
+        if self._scores_initialized:
+            return
+        self._scores_initialized = True
+        yield from self.load_compute_scores()
+
+    def set_genome_build(self, value: str) -> Any:
+        """Set genome build and reload compute scores if already loaded."""
+        self.genome_build = value
+        if self.compute_scores_loaded:
+            yield from self.load_compute_scores()
+
+    def load_compute_scores(self) -> Any:
+        """Load cleaned scores into the compute grid, filtered by genome build."""
+        self.status_message = "Loading scores for selection..."
+        yield
+        lf = _catalog.scores(genome_build=self.genome_build)
+        self._compute_scores_lf = lf
+        self.compute_scores_loaded = True
+        self.selected_pgs_ids = []
+        yield from self.set_lazyframe(lf, chunk_size=500)
+        total = lf.select(pl.len()).collect().item()
+        self.status_message = f"Loaded {total} scores for {self.genome_build}"
+
+    def handle_compute_row_selection(self, model: dict) -> None:
+        """Track selected PGS IDs from compute grid checkbox selection.
+
+        Handles MUI DataGrid v8 selection model:
+        - {type: "include", ids: [...]} — only listed rows are selected
+        - {type: "exclude", ids: [...]} — all rows EXCEPT listed are selected
+        - {type: "exclude", ids: []} — all rows selected (header checkbox)
+        """
+        self.status_message = f"Selection event: {model}"
+
+        selection_type: str = model.get("type", "include")
+        raw_ids: list = model.get("ids", [])
+        selected_row_ids: set[int] = {int(i) for i in raw_ids}
+
+        if selection_type == "exclude" and not selected_row_ids:
+            self.select_filtered_scores()
+            return
+        if selection_type == "include" and not selected_row_ids:
+            self.selected_pgs_ids = []
+            return
+
+        pgs_ids: list[str] = []
+        for row in self.lf_grid_rows:
+            row_id = row.get("__row_id__")
+            in_set = (int(row_id) in selected_row_ids) if row_id is not None else False
+            if (selection_type == "include" and in_set) or (
+                selection_type == "exclude" and not in_set
+            ):
+                pgs_id = row.get("pgs_id")
+                if pgs_id:
+                    pgs_ids.append(str(pgs_id))
+        self.selected_pgs_ids = pgs_ids
+        self.status_message = f"Selected {len(pgs_ids)} scores (from {len(self.lf_grid_rows)} loaded rows)"
+
+    def select_filtered_scores(self) -> None:
+        """Select PGS IDs matching the current grid filter (or all if no filter active)."""
+        if self._compute_scores_lf is None:
+            return
+        lf = self._compute_scores_lf
+        if self._lf_grid_filter and self._lf_grid_filter.get("items"):
+            cache = _get_cache(self._lf_grid_cache_id) if self._lf_grid_cache_id else None
+            schema = cache.schema if cache else None
+            lf = apply_filter_model(lf, self._lf_grid_filter, schema)
+        ids = lf.select("pgs_id").collect()["pgs_id"].to_list()
+        self.selected_pgs_ids = ids
+        self.status_message = f"Selected {len(ids)} scores"
+
+    def deselect_all_scores(self) -> None:
+        """Clear all selected PGS IDs."""
+        self.selected_pgs_ids = []
+        self.status_message = ""
 
     async def handle_vcf_upload(self, files: list[rx.UploadFile]) -> None:
         """Save an uploaded VCF file and attempt genome build detection."""

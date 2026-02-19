@@ -5,7 +5,7 @@ import reflex as rx
 from prs_ui.pages.compute import compute_panel
 from prs_ui.pages.metadata import metadata_panel
 from prs_ui.pages.scoring import scoring_panel
-from prs_ui.state import AppState
+from prs_ui.state import AppState, ComputeGridState
 
 
 def index() -> rx.Component:
@@ -23,8 +23,6 @@ def index() -> rx.Component:
             rx.separator(),
             rx.tabs.root(
                 rx.tabs.list(
-                    rx.tabs.trigger("Metadata Sheets", value="metadata"),
-                    rx.tabs.trigger("Scoring File", value="scoring"),
                     rx.tabs.trigger(
                         rx.hstack(
                             rx.icon("calculator", size=14),
@@ -34,6 +32,12 @@ def index() -> rx.Component:
                         ),
                         value="compute",
                     ),
+                    rx.tabs.trigger("Metadata Sheets", value="metadata"),
+                    rx.tabs.trigger("Scoring File", value="scoring"),
+                ),
+                rx.tabs.content(
+                    rx.box(compute_panel(), padding_top="12px"),
+                    value="compute",
                 ),
                 rx.tabs.content(
                     rx.box(metadata_panel(), padding_top="12px"),
@@ -42,10 +46,6 @@ def index() -> rx.Component:
                 rx.tabs.content(
                     rx.box(scoring_panel(), padding_top="12px"),
                     value="scoring",
-                ),
-                rx.tabs.content(
-                    rx.box(compute_panel(), padding_top="12px"),
-                    value="compute",
                 ),
                 value=AppState.active_tab,
                 on_change=AppState.set_active_tab,  # type: ignore[arg-type]
@@ -63,16 +63,14 @@ def index() -> rx.Component:
 app = rx.App(
     theme=rx.theme(appearance="light", accent_color="blue"),
 )
-app.add_page(index, title="PGS Catalog Browser", on_load=AppState.initialize)
+app.add_page(index, title="PGS Catalog Browser", on_load=ComputeGridState.initialize)
 
 
 def main() -> None:
     """CLI entrypoint: launch the Reflex dev server."""
-    import subprocess
-    import sys
+    import os
+    from pathlib import Path
 
-    subprocess.run(
-        [sys.executable, "-m", "reflex", "run"],
-        cwd=str(__import__("pathlib").Path(__file__).resolve().parent.parent),
-        check=True,
-    )
+    os.chdir(Path(__file__).resolve().parent.parent)
+    from reflex.reflex import cli
+    cli(["run"])

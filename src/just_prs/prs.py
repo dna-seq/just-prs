@@ -40,12 +40,12 @@ def _normalize_scoring_columns(scoring_lf: pl.LazyFrame) -> pl.LazyFrame:
 
     if "hm_chr" in columns and "hm_pos" in columns:
         rename_exprs.append(
-            pl.col("hm_chr").cast(pl.Utf8).str.replace("^chr", "").alias("chr_name_norm")
+            pl.col("hm_chr").cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chr_name_norm")
         )
         rename_exprs.append(pl.col("hm_pos").cast(pl.Int64).alias("chr_pos_norm"))
     elif "chr_name" in columns and "chr_position" in columns:
         rename_exprs.append(
-            pl.col("chr_name").cast(pl.Utf8).str.replace("^chr", "").alias("chr_name_norm")
+            pl.col("chr_name").cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chr_name_norm")
         )
         rename_exprs.append(pl.col("chr_position").cast(pl.Int64).alias("chr_pos_norm"))
     else:

@@ -6,7 +6,7 @@ requires-python = ">=3.14"
 dependencies = [
     "just-prs",
     "reflex>=0.8.27",
-    "reflex-mui-datagrid>=0.1.0",
+    "reflex-mui-datagrid>=0.1.8",
 ]
 
 [project.scripts]

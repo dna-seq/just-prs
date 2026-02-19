@@ -52,6 +52,63 @@ Cleaned metadata parquets are synced to/from the HuggingFace dataset repo `just-
 - The Compute tab (default tab) uses **cleaned** data from `PRSCatalog` with normalized genome builds and snake_case column names. Scores are loaded into the MUI DataGrid with server-side virtual scrolling — no manual pagination.
 - `lazyframe_grid()` already sets `pagination=False` and `hide_footer=True` internally — do NOT pass them again or you get a duplicate kwarg error.
 
+### Running the UI
+
+The web UI is a Reflex app in the `prs-ui/` workspace member. To start it:
+
+```bash
+cd prs-ui
+uv run reflex run
+```
+
+This launches a local web server (default http://localhost:3000). If `prs-ui` is not installed, run `uv sync --all-packages` from the workspace root first.
+
+### Computing PRS on a custom VCF
+
+**Via CLI:**
+
+```bash
+# Single score
+prs compute --vcf /path/to/your/sample.vcf.gz --pgs-id PGS000001
+
+# Multiple scores at once
+prs compute --vcf /path/to/your/sample.vcf.gz --pgs-id PGS000001,PGS000002,PGS000003
+
+# Explicit genome build + JSON output
+prs compute --vcf /path/to/your/sample.vcf.gz --pgs-id PGS000001 --build GRCh37 --output results.json
+```
+
+**Via Python API (recommended for scripting):**
+
+```python
+from just_prs import PRSCatalog
+from pathlib import Path
+
+catalog = PRSCatalog()
+
+# Search for scores related to a trait
+scores = catalog.search("type 2 diabetes", genome_build="GRCh38").collect()
+print(scores.select("pgs_id", "name", "trait_reported"))
+
+# Compute PRS for a single score
+result = catalog.compute_prs(vcf_path=Path("/path/to/your/sample.vcf.gz"), pgs_id="PGS000001")
+print(f"Score: {result.score:.6f}, Match rate: {result.match_rate:.1%}")
+
+# Batch computation for multiple scores
+results = catalog.compute_prs_batch(
+    vcf_path=Path("/path/to/your/sample.vcf.gz"),
+    pgs_ids=["PGS000001", "PGS000002", "PGS000003"],
+)
+for r in results:
+    print(f"{r.pgs_id}: score={r.score:.6f}, matched={r.variants_matched}/{r.variants_total}")
+
+# Estimate percentile
+pct = catalog.percentile(prs_score=result.score, pgs_id="PGS000001")
+print(f"Percentile: {pct:.1f}%")
+```
+
+**Via Web UI:** Open the Compute tab, upload your VCF (drag-and-drop), select genome build, load scores, check the ones you want, and click Compute.
+
 ### Reflex-specific patterns (CRITICAL)
 
 - **State var mixin classes MUST use `rx.State` with `mixin=True`**: Declare mixins as `class MyMixin(rx.State, mixin=True)` so vars are injected independently into each concrete subclass. Each subclass must also inherit from `rx.State` (or another non-mixin state class). `LazyFrameGridMixin` already uses `mixin=True`, so `AppState` and `ComputeGridState` each get their own `lf_grid_rows`, `lf_grid_loaded`, etc.
@@ -66,19 +123,31 @@ Cleaned metadata parquets are synced to/from the HuggingFace dataset repo `just-
 
 ## Data Directory Conventions
 
-**Data must be strictly separated from code.** Generated data, downloaded files, and computation outputs must NEVER be written to the project root or source tree.
+**Data must be strictly separated from code.** Generated data, downloaded files, uploaded files, and computation outputs must NEVER be written to the project root or source tree. This project works with genomic data (VCF files, scoring files) that can be hundreds of megabytes — committing them to git will break pushes to GitHub (100 MB limit) and bloat the repository permanently.
 
-### Output directory (`output/`)
+### Input data (`data/input/`)
 
-All CLI commands that produce data default to writing under `./output/`:
+User-provided input files (VCF uploads, custom scoring files, etc.) go to `data/input/`. This directory is gitignored. The Reflex UI must write uploaded files here, never to `prs-ui/uploaded_files/` or any directory inside the source tree.
 
 | Subdirectory | Contents |
 |---|---|
-| `output/pgs_metadata/` | Bulk metadata parquets (raw and cleaned) from FTP / HF |
-| `output/pgs_scores/` | Bulk-downloaded per-score parquet files |
-| `output/scores/` | Individual scoring file downloads |
+| `data/input/vcf/` | User-uploaded VCF files |
+| `data/input/scoring/` | User-provided custom scoring files |
 
-The `output/` directory is gitignored. **Never commit generated data to the repository.**
+### Output data (`data/output/`)
+
+All CLI commands that produce data default to writing under `data/output/`:
+
+| Subdirectory | Contents |
+|---|---|
+| `data/output/pgs_metadata/` | Bulk metadata parquets (raw and cleaned) from FTP / HF |
+| `data/output/pgs_scores/` | Bulk-downloaded per-score parquet files |
+| `data/output/scores/` | Individual scoring file downloads |
+| `data/output/results/` | PRS computation results |
+
+### Legacy output directory (`output/`)
+
+For backward compatibility, `output/` is also gitignored. New code should prefer `data/output/`.
 
 ### Cache directory (`~/.cache/just-prs/`)
 
@@ -96,10 +165,12 @@ Override with `PRS_CACHE_DIR` environment variable.
 
 ### Rules
 
-- **CLI defaults** must always point to `./output/<subdir>`, never `./` or `./pgs_metadata/` etc.
+- **NEVER commit large data files.** VCF (`.vcf`, `.vcf.gz`), parquet (`.parquet`), gzipped data (`.gz`, `.bgz`), FASTA (`.fa`, `.fasta`), and BAM/CRAM files must NEVER be added to git. GitHub rejects files > 100 MB and large files in history are extremely difficult to remove.
+- **CLI defaults** must always point to `data/output/<subdir>` (or `./output/<subdir>` for legacy), never `./` or `./pgs_metadata/` etc.
 - **Library code** (`PRSCatalog`, `scoring.py`) must use `~/.cache/just-prs/` or accept explicit paths.
 - **Tests** must use `~/.cache/just-prs/test-data/`, never write to the project tree.
-- **Never add data directories** (parquet, CSV, VCF, gz) to git. The `.gitignore` blocks `output/`, `pgs_metadata/`, `pgs_scores/`, and `scores/`.
+- **UI uploaded files** must go to `data/input/`, never inside `prs-ui/` or any source directory.
+- **Never add data directories** (parquet, CSV, VCF, gz) to git. The `.gitignore` blocks `data/`, `output/`, `pgs_metadata/`, `pgs_scores/`, `scores/`, and `**/uploaded_files/`.
 
 ---
 

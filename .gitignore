@@ -206,8 +206,28 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 
-# Data outputs (CLI-generated data must live under output/, never in project root)
+# Data directories (all data must live outside the source tree)
+data/
 output/
 pgs_metadata/
 pgs_scores/
 scores/
+
+# Uploaded files (UI uploads must go to data/input/, never source dirs)
+**/uploaded_files/
+
+# Large data files (NEVER commit these — GitHub rejects files > 100 MB)
+*.vcf
+*.vcf.gz
+*.vcf.bgz
+*.parquet
+*.fa
+*.fasta
+*.fa.gz
+*.fasta.gz
+*.bam
+*.cram
+*.bai
+*.crai
+*.bgz
+*.tbi

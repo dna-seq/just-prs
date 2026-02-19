@@ -11,20 +11,42 @@ This project has two packages managed by a single uv workspace:
 
 | Module | Purpose |
 |--------|---------|
+| `just_prs.prs_catalog` | **`PRSCatalog`** — high-level class for search, PRS computation, and percentile estimation using cleaned bulk metadata (no REST API calls). Persists cleaned parquets locally with HuggingFace sync. |
+| `just_prs.cleanup` | Pure-function pipeline: genome build normalization, column renaming, metric string parsing, performance metric cleanup |
+| `just_prs.hf` | HuggingFace Hub integration: `push_cleaned_parquets()` / `pull_cleaned_parquets()` for syncing cleaned metadata parquets to/from `just-dna-seq/polygenic_risk_scores` |
 | `just_prs.prs` | `compute_prs()` / `compute_prs_batch()` — core PRS engine |
 | `just_prs.vcf` | VCF reading via `polars-bio`, genome build detection, dosage computation |
 | `just_prs.scoring` | Download and parse PGS scoring files (gzipped TSV with `#` header) |
-| `just_prs.ftp` | Bulk FTP/HTTPS downloads of metadata sheets and scoring files via `fsspec` |
-| `just_prs.catalog` | Synchronous REST API client (`PGSCatalogClient`) for PGS Catalog |
+| `just_prs.ftp` | Bulk FTP/HTTPS downloads of raw metadata sheets and scoring files via `fsspec` |
+| `just_prs.catalog` | Synchronous REST API client (`PGSCatalogClient`) for PGS Catalog — used for individual lookups, not for bulk metadata |
 | `just_prs.models` | Pydantic v2 models (`ScoreInfo`, `PRSResult`, `PerformanceInfo`, etc.) |
-| `prs_ui.state` | Reflex `AppState` — single state class inheriting `LazyFrameGridMixin` |
+| `prs_ui.state` | Reflex `AppState` — uses `PRSCatalog` for cleaned data in the Compute tab |
 | `prs_ui.pages.*` | UI panels: `metadata` (grid browser), `scoring` (file viewer), `compute` (PRS workflow) |
+
+### Cleanup pipeline (`just_prs.cleanup`)
+
+Raw PGS Catalog CSVs have data quality issues that `cleanup.py` fixes:
+- **Genome build normalization**: 9 raw variants (hg19, hg37, hg38, NCBI36, hg18, NCBI35, GRCh37, GRCh38, NR) are mapped to canonical `GRCh37`, `GRCh38`, `GRCh36`, or `NR` via `BUILD_NORMALIZATION` dict.
+- **Column renaming**: Verbose PGS column names (e.g. `Polygenic Score (PGS) ID`) become snake_case (`pgs_id`). The full mapping is `_SCORES_COLUMN_RENAME` / `_PERF_COLUMN_RENAME` / `_EVAL_COLUMN_RENAME`.
+- **Metric string parsing**: Performance metrics stored as strings like `"1.55 [1.52,1.58]"` or `"-0.7 (0.15)"` are parsed into `{estimate, ci_lower, ci_upper, se}` via `parse_metric_string()`.
+- **Performance flattening**: `clean_performance_metrics()` joins with evaluation sample sets and produces numeric columns for OR, HR, Beta, AUROC, and C-index. `best_performance_per_score()` selects one row per PGS ID (largest sample, European-preferred).
+
+### PRSCatalog class (`just_prs.prs_catalog`)
+
+`PRSCatalog` is the primary interface for working with PGS Catalog data. It produces and persists 3 cleaned parquet files (`scores.parquet`, `performance.parquet`, `best_performance.parquet`) and loads them as LazyFrames. Loading uses a 3-tier fallback chain: local cleaned parquets -> HuggingFace pull -> raw FTP download + cleanup. Raw FTP parquets are cached separately in a `raw/` subdirectory to avoid collision with cleaned files.
+
+Key methods: `scores()`, `search()`, `best_performance()`, `compute_prs()`, `percentile()`, `build_cleaned_parquets()`, `push_to_hf()`.
+
+### HuggingFace sync (`just_prs.hf`)
+
+Cleaned metadata parquets are synced to/from the HuggingFace dataset repo `just-dna-seq/polygenic_risk_scores` under the `data/` prefix. The HF token is resolved from: explicit argument > `.env` file (via `python-dotenv`) > `HF_TOKEN` environment variable. CLI commands: `just-prs catalog bulk clean-metadata`, `push-hf`, `pull-hf`.
 
 ### UI architecture notes
 
 - The app uses a single `AppState` class that inherits `LazyFrameGridMixin` from `reflex-mui-datagrid`. This means there is **one MUI DataGrid** shared across the Metadata and Scoring tabs.
 - The Compute PRS tab uses its own paginated table (not the MUI DataGrid) to avoid conflicts with the shared grid state. Score rows are stored as `list[dict[str, str]]` in `compute_scores_rows` with server-side search and pagination.
-- Genome build filtering uses `BUILD_ALIASES` to map `GRCh38 → [GRCh38, hg38]` and `GRCh37 → [GRCh37, hg19, hg37]`, plus always including `NR` (not reported) entries.
+- The Metadata tab shows **raw** PGS Catalog columns for general-purpose browsing of all 7 sheets.
+- The Compute tab uses **cleaned** data from `PRSCatalog` with normalized genome builds and snake_case column names. Genome build filtering happens at the data level (canonical builds), not via alias lists.
 
 ### polars-bio caveats
 

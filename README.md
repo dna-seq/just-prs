@@ -4,6 +4,9 @@ A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (
 
 ## Features
 
+- **`PRSCatalog`** — high-level class for searching scores, computing PRS, and estimating percentiles using cleaned bulk metadata (no REST API calls needed)
+- **Cleanup pipeline** — normalizes genome builds (hg19/hg38/NCBI36 → GRCh37/GRCh38/GRCh36), renames columns to snake_case, parses performance metric strings into structured numeric fields
+- **HuggingFace sync** — cleaned metadata parquets are published to [just-dna-seq/polygenic_risk_scores](https://huggingface.co/datasets/just-dna-seq/polygenic_risk_scores) and auto-downloaded on first use
 - Compute PRS for one or many scores against a VCF file
 - Search and inspect PGS Catalog scores and traits via the REST API
 - **Bulk download** the entire PGS Catalog metadata (all ~5,000+ scores) via EBI FTP — one HTTP request per sheet, not hundreds of API pages
@@ -113,14 +116,6 @@ Available sheets:
 | `evaluation_sample_sets` | Evaluation sample set descriptions |
 | `cohorts` | Cohort information |
 
-The `scores` sheet automatically parses the three ancestry distribution columns
-(`Ancestry Distribution (%) - Source of Variant Associations (GWAS)`,
-`Ancestry Distribution (%) - Score Development/Training`,
-`Ancestry Distribution (%) - PGS Evaluation`) from their raw
-`Population:percent|Population:percent` string encoding into proper
-`List(Struct({population: String, percent: Float64}))` Polars columns,
-enabling direct filtering and aggregation without string manipulation.
-
 Options:
 
 | Flag | Default | Description |
@@ -156,6 +151,70 @@ Options:
 | `--build / -b` | `GRCh38` | Genome build (`GRCh37` or `GRCh38`) |
 | `--ids` | all | Comma-separated PGS IDs to download |
 | `--overwrite` | `False` | Re-download existing parquet files |
+
+#### `prs catalog bulk clean-metadata` — Build cleaned metadata parquets
+
+Downloads raw metadata from EBI FTP, runs the cleanup pipeline (genome build normalization, column renaming, metric parsing, performance flattening), and saves three cleaned parquet files.
+
+```bash
+# Build cleaned parquets → ./pgs_metadata/
+prs catalog bulk clean-metadata
+
+# Custom output directory
+prs catalog bulk clean-metadata --output-dir /data/cleaned
+```
+
+Output files:
+
+| File | Contents |
+|------|----------|
+| `scores.parquet` | All PGS scores with snake_case columns, normalized genome builds |
+| `performance.parquet` | Performance metrics joined with evaluation samples, parsed numeric columns |
+| `best_performance.parquet` | One best row per PGS ID (largest sample, European-preferred) |
+
+Options:
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--output-dir / -o` | `./pgs_metadata` | Directory for cleaned parquet output |
+
+#### `prs catalog bulk push-hf` — Push cleaned parquets to HuggingFace
+
+Uploads cleaned metadata parquets to a HuggingFace dataset repository. Builds them first if not already present. Token is read from `.env` file or `HF_TOKEN` environment variable.
+
+```bash
+# Push to default repo (just-dna-seq/polygenic_risk_scores)
+prs catalog bulk push-hf
+
+# Push from a custom directory to a custom repo
+prs catalog bulk push-hf --output-dir /data/cleaned --repo my-org/my-dataset
+```
+
+Options:
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--output-dir / -o` | `./pgs_metadata` | Directory containing cleaned parquets |
+| `--repo / -r` | `just-dna-seq/polygenic_risk_scores` | HuggingFace dataset repo ID |
+
+#### `prs catalog bulk pull-hf` — Pull cleaned parquets from HuggingFace
+
+Downloads cleaned metadata parquets from a HuggingFace dataset repository. Useful for bootstrapping a local cache without running the cleanup pipeline.
+
+```bash
+# Pull to default directory
+prs catalog bulk pull-hf
+
+# Pull to custom directory from custom repo
+prs catalog bulk pull-hf --output-dir /data/cleaned --repo my-org/my-dataset
+```
+
+Options:
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--output-dir / -o` | `./pgs_metadata` | Directory to save pulled parquets |
+| `--repo / -r` | `just-dna-seq/polygenic_risk_scores` | HuggingFace dataset repo ID |
 
 #### `prs catalog bulk ids` — List all PGS IDs
 
@@ -216,7 +275,88 @@ with PGSCatalogClient() as client:
         print(score.id, score.trait_reported)
 ```
 
-### PRS computation (`just_prs.prs`)
+### PRSCatalog — search, compute, and percentile (`just_prs.prs_catalog`)
+
+`PRSCatalog` is the recommended high-level interface. It persists 3 cleaned parquet files locally and loads them on access using a 3-tier fallback chain: local files -> HuggingFace pull -> raw FTP download + cleanup. All lookups, searches, and PRS computations use cleaned data with no per-score REST API calls.
+
+```python
+from just_prs import PRSCatalog
+
+catalog = PRSCatalog()  # uses ~/.cache/just-prs by default
+
+# Browse cleaned scores (genome builds normalized, snake_case columns)
+scores_df = catalog.scores(genome_build="GRCh38").collect()
+
+# Search across pgs_id, name, trait_reported, and trait_efo
+results = catalog.search("breast cancer", genome_build="GRCh38").collect()
+
+# Get cleaned metadata for a single score
+info = catalog.score_info_row("PGS000001")  # dict or None
+
+# Best performance metric per score (largest sample, European-preferred)
+best = catalog.best_performance(pgs_id="PGS000001").collect()
+
+# Compute PRS (trait lookup from cached metadata, not REST API)
+result = catalog.compute_prs(vcf_path="sample.vcf.gz", pgs_id="PGS000001")
+print(result.score, result.match_rate)
+
+# Batch computation
+results = catalog.compute_prs_batch(
+    vcf_path="sample.vcf.gz",
+    pgs_ids=["PGS000001", "PGS000002"],
+)
+
+# Percentile estimation (AUROC-based or explicit mean/std)
+pct = catalog.percentile(prs_score=1.5, pgs_id="PGS000014")
+pct = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", mean=0.0, std=1.0)
+
+# Build cleaned parquets explicitly (download from FTP + cleanup)
+paths = catalog.build_cleaned_parquets(output_dir=Path("./pgs_metadata"))
+# {'scores': Path('pgs_metadata/scores.parquet'), 'performance': ..., 'best_performance': ...}
+
+# Push cleaned parquets to HuggingFace
+catalog.push_to_hf()  # token from .env / HF_TOKEN
+catalog.push_to_hf(token="hf_...", repo_id="my-org/my-dataset")
+```
+
+### HuggingFace sync (`just_prs.hf`)
+
+```python
+from just_prs.hf import push_cleaned_parquets, pull_cleaned_parquets
+from pathlib import Path
+
+# Push cleaned parquets to HF dataset repo
+push_cleaned_parquets(Path("./pgs_metadata"))  # default: just-dna-seq/polygenic_risk_scores
+
+# Pull cleaned parquets from HF
+downloaded = pull_cleaned_parquets(Path("./local_cache"))
+# [Path('local_cache/scores.parquet'), Path('local_cache/performance.parquet'), ...]
+```
+
+### Cleanup pipeline (`just_prs.cleanup`)
+
+The cleanup functions can be used independently of `PRSCatalog`:
+
+```python
+from just_prs.cleanup import clean_scores, clean_performance_metrics, parse_metric_string
+from just_prs.ftp import download_metadata_sheet
+from pathlib import Path
+
+# Clean scores: rename columns, normalize genome builds
+raw_df = download_metadata_sheet("scores", Path("scores.parquet"))
+cleaned_lf = clean_scores(raw_df)  # LazyFrame with snake_case columns
+
+# Parse a metric string
+parse_metric_string("1.55 [1.52,1.58]")
+# {'estimate': 1.55, 'ci_lower': 1.52, 'ci_upper': 1.58, 'se': None}
+
+# Clean performance metrics: parse strings, join with evaluation samples
+perf_df = download_metadata_sheet("performance_metrics", Path("perf.parquet"))
+eval_df = download_metadata_sheet("evaluation_sample_sets", Path("eval.parquet"))
+cleaned_perf_lf = clean_performance_metrics(perf_df, eval_df)
+```
+
+### Low-level PRS computation (`just_prs.prs`)
 
 ```python
 from pathlib import Path
@@ -276,3 +416,4 @@ Configuration:
 - PGS Catalog REST API: <https://www.pgscatalog.org/rest/>
 - EBI FTP bulk downloads: <https://ftp.ebi.ac.uk/pub/databases/spot/pgs/>
 - PGS Catalog download documentation: <https://www.pgscatalog.org/downloads/>
+- Cleaned metadata parquets on HuggingFace: <https://huggingface.co/datasets/just-dna-seq/polygenic_risk_scores>

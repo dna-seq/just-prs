@@ -8,7 +8,6 @@ import polars as pl
 import reflex as rx
 from reflex_mui_datagrid import LazyFrameGridMixin
 
-from just_prs.catalog import PGSCatalogClient
 from just_prs.ftp import (
     METADATA_FILES,
     download_metadata_sheet,
@@ -16,6 +15,7 @@ from just_prs.ftp import (
     stream_scoring_file,
 )
 from just_prs.prs import compute_prs
+from just_prs.prs_catalog import PRSCatalog
 from just_prs.vcf import detect_genome_build
 
 SHEET_NAMES: list[str] = list(METADATA_FILES.keys())
@@ -30,17 +30,15 @@ SHEET_LABELS: dict[str, str] = {
     "cohorts": "Cohorts",
 }
 
-BUILD_ALIASES: dict[str, list[str]] = {
-    "GRCh38": ["GRCh38", "hg38"],
-    "GRCh37": ["GRCh37", "hg19", "hg37"],
-}
-
 
 def _resolve_cache_dir() -> Path:
     raw = os.environ.get("PRS_CACHE_DIR", "")
     if raw:
         return Path(raw)
     return Path.home() / ".cache" / "just-prs"
+
+
+_catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
 
 
 class AppState(LazyFrameGridMixin):
@@ -70,8 +68,7 @@ class AppState(LazyFrameGridMixin):
 
     _scores_initialized: bool = False
     _vcf_path: str = ""
-    _compute_scores_df: pl.DataFrame | None = None
-    _compute_filtered_df: pl.DataFrame | None = None
+    _compute_filtered_lf: pl.LazyFrame | None = None
 
     def initialize(self) -> Any:
         """Load the scores sheet once per session; skip on subsequent on_load calls."""
@@ -81,7 +78,10 @@ class AppState(LazyFrameGridMixin):
         yield from self.load_sheet("scores")
 
     def load_sheet(self, sheet: str) -> Any:
-        """Download (or load cached) a metadata sheet and display in the grid."""
+        """Download (or load cached) a metadata sheet and display in the grid.
+
+        The metadata tab shows raw PGS Catalog columns for general browsing.
+        """
         self.selected_sheet = sheet
         self.status_message = f"Loading {SHEET_LABELS.get(sheet, sheet)}..."
         cache_path = Path(self.cache_dir) / "metadata" / f"{sheet}.parquet"
@@ -114,57 +114,46 @@ class AppState(LazyFrameGridMixin):
     def set_active_tab(self, value: str) -> None:
         self.active_tab = value
 
-    def _load_scores_df(self) -> pl.DataFrame:
-        if self._compute_scores_df is not None:
-            return self._compute_scores_df
-        cache_path = Path(self.cache_dir) / "metadata" / "scores.parquet"
-        df = download_metadata_sheet("scores", cache_path)
-        self._compute_scores_df = df
-        return df
-
-    def _apply_search_filter(self, df: pl.DataFrame) -> pl.DataFrame:
-        """Apply text search filter across key columns."""
+    def _apply_search_filter(self, lf: pl.LazyFrame) -> pl.LazyFrame:
+        """Apply text search filter across key cleaned columns."""
         term = self.compute_search_term.strip().lower()
         if not term:
-            return df
-        return df.filter(
-            pl.col("Polygenic Score (PGS) ID").cast(pl.Utf8).str.to_lowercase().str.contains(term, literal=True)
-            | pl.col("PGS Name").cast(pl.Utf8).str.to_lowercase().str.contains(term, literal=True)
-            | pl.col("Reported Trait").cast(pl.Utf8).str.to_lowercase().str.contains(term, literal=True)
+            return lf
+        return lf.filter(
+            pl.col("pgs_id").str.to_lowercase().str.contains(term, literal=True)
+            | pl.col("name").str.to_lowercase().str.contains(term, literal=True)
+            | pl.col("trait_reported").str.to_lowercase().str.contains(term, literal=True)
+            | pl.col("trait_efo").str.to_lowercase().str.contains(term, literal=True)
         )
 
-    def _df_to_rows(self, df: pl.DataFrame) -> list[dict[str, str]]:
+    def _lf_to_rows(self, df: pl.DataFrame) -> list[dict[str, str]]:
         rows: list[dict[str, str]] = []
         for row in df.iter_rows(named=True):
             rows.append({
-                "pgs_id": str(row.get("Polygenic Score (PGS) ID", "")),
-                "name": str(row.get("PGS Name", "")),
-                "trait": str(row.get("Reported Trait", "")),
-                "build": str(row.get("Original Genome Build", "")),
-                "variants": str(row.get("Number of Variants", "")),
+                "pgs_id": str(row.get("pgs_id", "")),
+                "name": str(row.get("name", "")),
+                "trait": str(row.get("trait_reported", "")),
+                "build": str(row.get("genome_build", "")),
+                "variants": str(row.get("n_variants", "")),
             })
         return rows
 
     def _refresh_compute_page(self) -> None:
         """Re-apply search filter and pagination, update visible rows."""
-        if self._compute_filtered_df is None:
+        if self._compute_filtered_lf is None:
             return
-        searched = self._apply_search_filter(self._compute_filtered_df)
-        self.compute_total_count = searched.height
+        searched = self._apply_search_filter(self._compute_filtered_lf)
+        searched_df = searched.collect()
+        self.compute_total_count = searched_df.height
         offset = self.compute_page * self.compute_page_size
-        page_df = searched.slice(offset, self.compute_page_size)
-        self.compute_scores_rows = self._df_to_rows(page_df)
+        page_df = searched_df.slice(offset, self.compute_page_size)
+        self.compute_scores_rows = self._lf_to_rows(page_df)
 
     def load_compute_scores(self) -> Any:
-        """Load scores metadata filtered by the current genome build."""
+        """Load cleaned scores metadata filtered by the current genome build."""
         self.status_message = "Loading scores for selection..."
         yield
-        df = self._load_scores_df()
-        aliases = BUILD_ALIASES.get(self.genome_build, [self.genome_build])
-        self._compute_filtered_df = df.filter(
-            pl.col("Original Genome Build").is_in(aliases)
-            | pl.col("Original Genome Build").eq("NR")
-        )
+        self._compute_filtered_lf = _catalog.scores(genome_build=self.genome_build)
         self.compute_scores_loaded = True
         self.selected_pgs_ids = []
         self.compute_page = 0
@@ -197,10 +186,10 @@ class AppState(LazyFrameGridMixin):
 
     def select_all_visible_scores(self) -> None:
         """Select all scores matching the current search filter (all pages)."""
-        if self._compute_filtered_df is None:
+        if self._compute_filtered_lf is None:
             return
-        searched = self._apply_search_filter(self._compute_filtered_df)
-        ids = searched["Polygenic Score (PGS) ID"].cast(pl.Utf8).to_list()
+        searched = self._apply_search_filter(self._compute_filtered_lf)
+        ids = searched.select("pgs_id").collect()["pgs_id"].to_list()
         self.selected_pgs_ids = ids
 
     def deselect_all_scores(self) -> None:
@@ -274,7 +263,11 @@ class AppState(LazyFrameGridMixin):
         self.status_message = f"Uploaded {filename}"
 
     def compute_selected_prs(self) -> Any:
-        """Compute PRS for uploaded VCF against all selected PGS IDs."""
+        """Compute PRS for uploaded VCF against all selected PGS IDs.
+
+        Uses PRSCatalog for metadata lookup (no REST API calls) and for
+        performance metrics from pre-downloaded bulk metadata.
+        """
         if not self._vcf_path:
             self.status_message = "Please upload a VCF file first."
             return
@@ -293,62 +286,87 @@ class AppState(LazyFrameGridMixin):
         results: list[dict] = []
         any_low_match = False
 
-        with PGSCatalogClient() as client:
-            for i, pgs_id in enumerate(self.selected_pgs_ids, start=1):
-                self.status_message = f"Computing {i}/{total}: {pgs_id}..."
-                yield
+        best_perf_df = _catalog.best_performance().collect()
 
-                score_info = client.get_score(pgs_id)
-                result = compute_prs(
-                    vcf_path=self._vcf_path,
-                    scoring_file=pgs_id,
-                    genome_build=self.genome_build,
-                    cache_dir=cache,
-                    pgs_id=pgs_id,
-                    trait_reported=score_info.trait_reported,
-                )
+        for i, pgs_id in enumerate(self.selected_pgs_ids, start=1):
+            self.status_message = f"Computing {i}/{total}: {pgs_id}..."
+            yield
 
-                match_pct = round(result.match_rate * 100, 1)
-                if match_pct < 10:
-                    match_color = "red"
-                elif match_pct < 50:
-                    match_color = "orange"
-                else:
-                    match_color = "green"
+            info = _catalog.score_info_row(pgs_id)
+            trait = info["trait_reported"] if info else None
 
-                row: dict[str, Any] = {
-                    "pgs_id": result.pgs_id,
-                    "trait": result.trait_reported or "",
-                    "score": round(result.score, 6),
-                    "match_rate": match_pct,
-                    "match_color": match_color,
-                    "variants_matched": result.variants_matched,
-                    "variants_total": result.variants_total,
-                    "effect_size": "",
-                    "classification": "",
-                }
+            result = compute_prs(
+                vcf_path=self._vcf_path,
+                scoring_file=pgs_id,
+                genome_build=self.genome_build,
+                cache_dir=cache,
+                pgs_id=pgs_id,
+                trait_reported=trait,
+            )
 
-                if result.match_rate < 0.1:
-                    any_low_match = True
+            match_pct = round(result.match_rate * 100, 1)
+            if match_pct < 10:
+                match_color = "red"
+            elif match_pct < 50:
+                match_color = "orange"
+            else:
+                match_color = "green"
 
-                perf = client.get_performance_metrics(pgs_id)
-                if perf is not None:
-                    if perf.effect_sizes:
-                        es = perf.effect_sizes[0]
-                        ci = ""
-                        if es.ci_lower is not None and es.ci_upper is not None:
-                            ci = f" [{es.ci_lower:.2f}-{es.ci_upper:.2f}]"
-                        row["effect_size"] = f"{es.name_short}={es.estimate:.2f}{ci}"
-                    if perf.class_acc:
-                        ca = perf.class_acc[0]
-                        ci = ""
-                        if ca.ci_lower is not None and ca.ci_upper is not None:
-                            ci = f" [{ca.ci_lower:.3f}-{ca.ci_upper:.3f}]"
-                        row["classification"] = f"{ca.name_short}={ca.estimate:.3f}{ci}"
+            row: dict[str, Any] = {
+                "pgs_id": result.pgs_id,
+                "trait": result.trait_reported or "",
+                "score": round(result.score, 6),
+                "match_rate": match_pct,
+                "match_color": match_color,
+                "variants_matched": result.variants_matched,
+                "variants_total": result.variants_total,
+                "effect_size": "",
+                "classification": "",
+            }
 
-                results.append(row)
+            if result.match_rate < 0.1:
+                any_low_match = True
+
+            perf_rows = best_perf_df.filter(pl.col("pgs_id") == pgs_id)
+            if perf_rows.height > 0:
+                p = perf_rows.row(0, named=True)
+                row["effect_size"] = _format_effect_size(p)
+                row["classification"] = _format_classification(p)
+
+            results.append(row)
 
         self.prs_results = results
         self.low_match_warning = any_low_match
         self.prs_computing = False
         self.status_message = f"Computed {total} PRS score(s)"
+
+
+def _format_effect_size(perf_row: dict[str, Any]) -> str:
+    """Format the best available effect size metric from a cleaned performance row."""
+    for prefix, label in [("or", "OR"), ("hr", "HR"), ("beta", "Beta")]:
+        est = perf_row.get(f"{prefix}_estimate")
+        if est is not None:
+            ci_lo = perf_row.get(f"{prefix}_ci_lower")
+            ci_hi = perf_row.get(f"{prefix}_ci_upper")
+            se = perf_row.get(f"{prefix}_se")
+            result = f"{label}={est:.2f}"
+            if ci_lo is not None and ci_hi is not None:
+                result += f" [{ci_lo:.2f}-{ci_hi:.2f}]"
+            elif se is not None:
+                result += f" (SE={se:.2f})"
+            return result
+    return ""
+
+
+def _format_classification(perf_row: dict[str, Any]) -> str:
+    """Format the best available classification metric from a cleaned performance row."""
+    for prefix, label in [("auroc", "AUROC"), ("cindex", "C-index")]:
+        est = perf_row.get(f"{prefix}_estimate")
+        if est is not None:
+            ci_lo = perf_row.get(f"{prefix}_ci_lower")
+            ci_hi = perf_row.get(f"{prefix}_ci_upper")
+            result = f"{label}={est:.3f}"
+            if ci_lo is not None and ci_hi is not None:
+                result += f" [{ci_lo:.3f}-{ci_hi:.3f}]"
+            return result
+    return ""

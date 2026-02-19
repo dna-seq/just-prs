@@ -8,10 +8,14 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+import polars as pl
+
 from just_prs.catalog import PGSCatalogClient
 from just_prs.ftp import METADATA_FILES, bulk_download_scoring_parquets, download_all_metadata, download_metadata_sheet, list_all_pgs_ids
+from just_prs.hf import pull_cleaned_parquets
 from just_prs.models import PRSResult
 from just_prs.prs import compute_prs, compute_prs_batch
+from just_prs.prs_catalog import PRSCatalog
 from just_prs.scoring import DEFAULT_CACHE_DIR, download_scoring_file
 
 app = typer.Typer(
@@ -318,6 +322,88 @@ def bulk_ids() -> None:
     for pgs_id in ids:
         console.print(pgs_id)
     console.print(f"\n[dim]Total: {len(ids):,} scores[/dim]")
+
+
+@bulk_app.command("clean-metadata")
+def bulk_clean_metadata(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", "-o", help="Directory to write cleaned parquet files"),
+    ] = Path("./pgs_metadata"),
+) -> None:
+    """Download raw metadata from EBI FTP, run the cleanup pipeline, and save cleaned parquets.
+
+    Produces three files: scores.parquet, performance.parquet, best_performance.parquet.
+    These contain normalized genome builds, snake_case columns, and parsed numeric metrics.
+    """
+    console.print(f"Building cleaned metadata parquets → {output_dir} ...")
+    catalog = PRSCatalog()
+    paths = catalog.build_cleaned_parquets(output_dir=output_dir)
+
+    table = Table(title="Cleaned PGS Metadata")
+    table.add_column("Table", style="cyan")
+    table.add_column("Rows", justify="right", style="green")
+    table.add_column("Parquet", style="dim")
+    for name, path in paths.items():
+        df = pl.read_parquet(path)
+        table.add_row(name, f"{df.height:,}", str(path))
+    console.print(table)
+
+
+@bulk_app.command("push-hf")
+def bulk_push_hf(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", "-o", help="Directory containing cleaned parquets to push"),
+    ] = Path("./pgs_metadata"),
+    repo_id: Annotated[
+        str,
+        typer.Option("--repo", "-r", help="HuggingFace dataset repo ID"),
+    ] = "just-dna-seq/polygenic_risk_scores",
+) -> None:
+    """Push cleaned metadata parquets to a HuggingFace dataset repository.
+
+    Builds cleaned parquets first if they don't exist in output-dir.
+    Token is read from .env file or HF_TOKEN environment variable.
+    """
+    catalog = PRSCatalog()
+    if not all((output_dir / f).exists() for f in ("scores.parquet", "performance.parquet", "best_performance.parquet")):
+        console.print(f"Cleaned parquets not found in {output_dir}, building them first...")
+        catalog.build_cleaned_parquets(output_dir=output_dir)
+
+    console.print(f"Pushing cleaned parquets to [cyan]{repo_id}[/cyan] ...")
+    from just_prs.hf import push_cleaned_parquets
+    push_cleaned_parquets(output_dir, repo_id=repo_id)
+    console.print(f"[green]Pushed to https://huggingface.co/datasets/{repo_id}[/green]")
+
+
+@bulk_app.command("pull-hf")
+def bulk_pull_hf(
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", "-o", help="Directory to save pulled parquet files"),
+    ] = Path("./pgs_metadata"),
+    repo_id: Annotated[
+        str,
+        typer.Option("--repo", "-r", help="HuggingFace dataset repo ID"),
+    ] = "just-dna-seq/polygenic_risk_scores",
+) -> None:
+    """Pull cleaned metadata parquets from a HuggingFace dataset repository.
+
+    Downloads scores.parquet, performance.parquet, and best_performance.parquet
+    from the data/ folder of the HF repo into the output directory.
+    """
+    console.print(f"Pulling cleaned parquets from [cyan]{repo_id}[/cyan] → {output_dir} ...")
+    downloaded = pull_cleaned_parquets(output_dir, repo_id=repo_id)
+
+    table = Table(title="Pulled from HuggingFace")
+    table.add_column("File", style="cyan")
+    table.add_column("Rows", justify="right", style="green")
+    table.add_column("Path", style="dim")
+    for path in downloaded:
+        df = pl.read_parquet(path)
+        table.add_row(path.name, f"{df.height:,}", str(path))
+    console.print(table)
 
 
 @catalog_app.command("download")

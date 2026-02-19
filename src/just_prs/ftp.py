@@ -33,34 +33,6 @@ METADATA_FILES: dict[str, str] = {
     "cohorts": "pgs_all_metadata_cohorts.csv",
 }
 
-# Columns in the 'scores' sheet that use "Population:percent|Population:percent" encoding.
-ANCESTRY_COLS: list[str] = [
-    "Ancestry Distribution (%) - Source of Variant Associations (GWAS)",
-    "Ancestry Distribution (%) - Score Development/Training",
-    "Ancestry Distribution (%) - PGS Evaluation",
-]
-
-
-def _parse_ancestry_columns(df: pl.DataFrame) -> pl.DataFrame:
-    """Parse ancestry distribution columns from 'Pop:pct|Pop:pct' strings to List[Struct].
-
-    Each column becomes ``List[Struct({population: String, percent: Float64})]``,
-    which Polars can filter/explode/group without string manipulation downstream.
-    Null values are propagated as-is.
-    """
-    exprs = [
-        pl.col(col)
-        .str.split("|")
-        .list.eval(
-            pl.element()
-            .str.extract_groups(r"^(?P<population>.+?):(?P<percent>[\d.]+)$")
-            .struct.with_fields(pl.field("percent").cast(pl.Float64))
-        )
-        .alias(col)
-        for col in ANCESTRY_COLS
-        if col in df.columns
-    ]
-    return df.with_columns(exprs) if exprs else df
 
 
 def list_all_pgs_ids() -> list[str]:
@@ -101,9 +73,6 @@ def download_metadata_sheet(
 
         with fsspec.open(url, "rt") as f:
             df = pl.read_csv(f, infer_schema_length=10000, null_values=["", "NA", "None"])
-
-        if sheet == "scores":
-            df = _parse_ancestry_columns(df)
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         df.write_parquet(output_path)

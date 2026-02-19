@@ -1,6 +1,8 @@
 # just-prs
 
-[![PyPI version](https://badge.fury.io/py/just-prs.svg)](https://badge.fury.io/py/just-prs)
+[![PyPI version](https://badge.fury.io/py/just-prs.svg)](https://pypi.org/project/just-prs/)
+[![PyPI version](https://badge.fury.io/py/prs-ui.svg)](https://pypi.org/project/prs-ui/)
+[![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
 
 A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (PRS)** from the [PGS Catalog](https://www.pgscatalog.org/).
 
@@ -49,8 +51,9 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 ## Features
 
 - **`PRSCatalog`** — search scores, compute PRS, and look up evaluation performance using cleaned bulk metadata (no REST API calls needed)
+- **Reusable Reflex UI components** — `prs_section()` and sub-components (`prs_scores_selector`, `prs_results_table`, etc.) can be embedded in any Reflex app via `PRSComputeStateMixin`
 - **VCF normalization** — `normalize_vcf()` strips chr prefix, renames id→rsid, computes genotype from GT, applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, and writes zstd-compressed Parquet
-- **Quality assessment** — PRS results include AUROC-based model quality labels, effect sizes (OR/HR/Beta), classification metrics (AUROC/C-index), and plain-English interpretation summaries
+- **Quality assessment** — `just_prs.quality` provides pure-logic helpers (`classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`) usable from any UI or script
 - **CSV export** — download computed PRS results as CSV from the web UI or programmatically
 - **Cleanup pipeline** — normalizes genome builds, renames columns to snake_case, parses performance metrics into structured numeric fields
 - **HuggingFace sync** — cleaned metadata parquets published to [just-dna-seq/polygenic_risk_scores](https://huggingface.co/datasets/just-dna-seq/polygenic_risk_scores) and auto-downloaded on first use
@@ -102,20 +105,30 @@ prs catalog scores search --term "breast cancer"
 ### Python
 
 ```python
+import polars as pl
 from just_prs import PRSCatalog, normalize_vcf, VcfFilterConfig
+from just_prs.prs import compute_prs
 from pathlib import Path
 
 catalog = PRSCatalog()
 
-# Normalize a VCF to Parquet (strip chr prefix, compute genotype, quality filters)
+# 1. Normalize VCF to Parquet (recommended as a first step)
 config = VcfFilterConfig(pass_filters=["PASS", "."], min_depth=10)
-normalize_vcf(Path("sample.vcf.gz"), Path("sample.parquet"), config=config)
+parquet_path = normalize_vcf(Path("sample.vcf.gz"), Path("sample.parquet"), config=config)
+
+# 2. Load as a LazyFrame — memory-efficient, reusable across multiple PRS computations
+genotypes_lf = pl.scan_parquet(parquet_path)
 
 # Search for scores
 results = catalog.search("type 2 diabetes", genome_build="GRCh38").collect()
 
-# Compute PRS
-result = catalog.compute_prs(vcf_path=Path("sample.vcf.gz"), pgs_id="PGS000001")
+# Compute PRS using a LazyFrame (avoids re-reading the VCF for each score)
+result = compute_prs(
+    vcf_path="sample.vcf.gz",
+    scoring_file="PGS000001",
+    genome_build="GRCh38",
+    genotypes_lf=genotypes_lf,
+)
 print(f"Score: {result.score:.6f}, Match rate: {result.match_rate:.1%}")
 
 # Batch computation
@@ -127,6 +140,36 @@ results = catalog.compute_prs_batch(
 # Look up best evaluation performance for a score
 best = catalog.best_performance(pgs_id="PGS000001").collect()
 ```
+
+## Embedding PRS UI in Another Reflex App
+
+The PRS computation UI is packaged as reusable [Reflex](https://reflex.dev/) components. Install `prs-ui` (which pulls in `just-prs` automatically), mix `PRSComputeStateMixin` into your state, provide a normalized genotypes LazyFrame, and render the section:
+
+```python
+import polars as pl
+import reflex as rx
+from reflex_mui_datagrid import LazyFrameGridMixin
+from prs_ui import PRSComputeStateMixin, prs_section
+
+
+class MyAppState(rx.State):
+    genome_build: str = "GRCh38"
+    cache_dir: str = ""
+    status_message: str = ""
+
+
+class PRSState(PRSComputeStateMixin, LazyFrameGridMixin, MyAppState):
+    def load_genotypes(self, parquet_path: str) -> None:
+        lf = pl.scan_parquet(parquet_path)
+        self.set_prs_genotypes_lf(lf)
+        self.prs_genotypes_path = parquet_path
+
+
+def prs_page() -> rx.Component:
+    return prs_section(PRSState)
+```
+
+The preferred input method is a polars LazyFrame via `set_prs_genotypes_lf()` -- this is memory-efficient and avoids re-reading VCF files on each computation. Individual sub-components (`prs_scores_selector`, `prs_results_table`, `prs_compute_button`, `prs_progress_section`, `prs_build_selector`) can be used independently for custom layouts.
 
 ## Testing
 

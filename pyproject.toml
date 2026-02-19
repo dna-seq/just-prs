@@ -1,6 +1,6 @@
 [project]
 name = "just-prs"
-version = "0.2.0"
+version = "0.3.0"
 description = "Polars-bio based tool to compute polygenic risk scores from PGS Catalog"
 readme = "README.md"
 authors = [

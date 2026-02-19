@@ -187,7 +187,7 @@ class TestPRSCatalog:
         df_37 = catalog.scores(genome_build="GRCh37").collect()
         assert df_38.height < df_37.height
         builds_38 = set(df_38["genome_build"].unique().to_list())
-        assert builds_38 <= {"GRCh38", "NR"}
+        assert builds_38 == {"GRCh38"}
 
     def test_search_by_trait(self, catalog: PRSCatalog) -> None:
         results = catalog.search("diabetes").collect()

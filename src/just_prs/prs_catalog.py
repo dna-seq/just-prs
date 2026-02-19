@@ -206,7 +206,7 @@ class PRSCatalog:
 
         Args:
             genome_build: If provided, filter to scores matching this canonical build
-                          (GRCh37, GRCh38, GRCh36). Scores with build=NR are always included.
+                          (GRCh37, GRCh38, GRCh36). Scores with build=NR are excluded.
 
         Returns:
             Cleaned LazyFrame with columns: pgs_id, name, trait_reported, trait_efo,
@@ -215,9 +215,7 @@ class PRSCatalog:
         """
         lf = self._ensure_scores()
         if genome_build is not None:
-            lf = lf.filter(
-                pl.col("genome_build").eq(genome_build) | pl.col("genome_build").eq("NR")
-            )
+            lf = lf.filter(pl.col("genome_build").eq(genome_build))
         return lf
 
     def performance(self, pgs_id: str | None = None) -> pl.LazyFrame:

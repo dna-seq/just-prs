@@ -1,17 +1,21 @@
 """Application state for the PRS UI.
 
-Four state classes:
+State hierarchy:
 - AppState(rx.State): shared vars (active_tab, genome_build, cache_dir, etc.)
 - MetadataGridState(LazyFrameGridMixin, AppState): metadata browser + scoring viewer grid
-- ComputeGridState(LazyFrameGridMixin, AppState): compute PRS score selection grid
 - GenomicGridState(LazyFrameGridMixin, AppState): normalized VCF genomic data grid
+- PRSComputeStateMixin(rx.State, mixin=True): reusable PRS computation logic
+- ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState): standalone compute page
 
-All grid states inherit LazyFrameGridMixin (mixin=True) and AppState, so each
-gets its own independent set of reactive grid vars while sharing AppState vars.
+PRSComputeStateMixin is designed for reuse: any Reflex app can inherit it
+into a concrete state class, provide genotype data via ``set_prs_genotypes_lf()``
+(preferred, pass a polars LazyFrame) or ``prs_genotypes_path`` (fallback, string
+path), and get full PRS computation with quality assessment.
 """
 
 import csv
 import io
+import os
 from pathlib import Path
 from typing import Any
 
@@ -29,6 +33,12 @@ from just_prs.ftp import (
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs import compute_prs
 from just_prs.prs_catalog import PRSCatalog
+from just_prs.quality import (
+    classify_model_quality,
+    format_classification,
+    format_effect_size,
+    interpret_prs_result,
+)
 from just_prs.scoring import resolve_cache_dir
 from just_prs.vcf import detect_genome_build
 
@@ -45,14 +55,21 @@ SHEET_LABELS: dict[str, str] = {
 }
 
 
-_catalog = PRSCatalog(cache_dir=resolve_cache_dir())
+def _resolve_cache_dir() -> Path:
+    raw = os.environ.get("PRS_CACHE_DIR", "")
+    if raw:
+        return Path(raw)
+    return resolve_cache_dir()
+
+
+_catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
 
 
 class AppState(rx.State):
     """Shared app state: tab selection, genome build, cache dir."""
 
     selected_sheet: str = "scores"
-    cache_dir: str = str(resolve_cache_dir())
+    cache_dir: str = str(_resolve_cache_dir())
     status_message: str = ""
     pgs_id_input: str = "PGS000001"
     genome_build: str = "GRCh38"
@@ -179,62 +196,82 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
         self.status_message = f"VCF normalized: {row_count:,} variants"
 
 
-class ComputeGridState(LazyFrameGridMixin, AppState):
-    """Independent grid state for the Compute PRS tab.
+class PRSComputeStateMixin(rx.State, mixin=True):
+    """Reusable mixin for PRS score selection, computation, and result display.
 
-    Inherits shared vars (genome_build, cache_dir, status_message) from AppState.
-    Gets its own independent LazyFrameGridMixin vars (lf_grid_rows, lf_grid_loaded, etc.)
-    because LazyFrameGridMixin uses mixin=True.
+    Designed for inheritance: any Reflex state class that also inherits
+    ``LazyFrameGridMixin`` can mix this in to get the full PRS workflow.
+
+    Input contract -- the host app must provide genotype data via one of
+    (in order of preference):
+    1. **LazyFrame (recommended)** -- call ``set_prs_genotypes_lf(lf)`` with a
+       ``pl.scan_parquet()`` LazyFrame.  Memory-efficient and avoids redundant
+       I/O when computing multiple scores.
+    2. **Parquet path (fallback)** -- set ``prs_genotypes_path`` to a string.
+       The mixin calls ``pl.scan_parquet()`` internally if no LazyFrame is set.
+
+    The mixin reads ``genome_build``, ``cache_dir``, and ``status_message``
+    from whatever parent state provides them (e.g. AppState).
     """
 
     selected_pgs_ids: list[str] = []
-    vcf_filename: str = ""
-    detected_build: str = ""
-    build_detection_message: str = ""
     prs_results: list[dict] = []
     prs_computing: bool = False
     prs_progress: int = 0
     low_match_warning: bool = False
     compute_scores_loaded: bool = False
+    prs_genotypes_path: str = ""
 
     _scores_initialized: bool = False
-    _vcf_path: str = ""
     _compute_scores_lf: pl.LazyFrame | None = None
+    _prs_genotypes_lf: pl.LazyFrame | None = None
 
-    def initialize(self) -> Any:
-        """Auto-load cleaned scores on first page visit."""
+    def set_prs_genotypes_lf(self, lf: pl.LazyFrame) -> None:
+        """Provide a pre-loaded genotypes LazyFrame for PRS computation."""
+        self._prs_genotypes_lf = lf
+
+    def _get_genotypes_lf(self) -> pl.LazyFrame | None:
+        """Resolve genotypes: explicit LazyFrame first, then parquet path."""
+        if self._prs_genotypes_lf is not None:
+            return self._prs_genotypes_lf
+        if self.prs_genotypes_path and Path(self.prs_genotypes_path).exists():
+            return pl.scan_parquet(self.prs_genotypes_path)
+        return None
+
+    def initialize_prs(self) -> Any:
+        """Auto-load cleaned scores on first access."""
         if self._scores_initialized:
             return
         self._scores_initialized = True
         yield from self.load_compute_scores()
 
-    def set_genome_build(self, value: str) -> Any:
+    def set_prs_genome_build(self, value: str) -> Any:
         """Set genome build and reload compute scores if already loaded."""
-        self.genome_build = value
+        self.genome_build = value  # type: ignore[attr-defined]
         if self.compute_scores_loaded:
             yield from self.load_compute_scores()
 
     def load_compute_scores(self) -> Any:
         """Load cleaned scores into the compute grid, filtered by genome build."""
-        self.status_message = "Loading scores for selection..."
+        self.status_message = "Loading scores for selection..."  # type: ignore[attr-defined]
         yield
-        lf = _catalog.scores(genome_build=self.genome_build)
+        lf = _catalog.scores(genome_build=self.genome_build)  # type: ignore[attr-defined]
         self._compute_scores_lf = lf
         self.compute_scores_loaded = True
         self.selected_pgs_ids = []
-        yield from self.set_lazyframe(lf, chunk_size=500)
+        yield from self.set_lazyframe(lf, chunk_size=500)  # type: ignore[attr-defined]
         total = lf.select(pl.len()).collect().item()
-        self.status_message = f"Loaded {total} scores for {self.genome_build}"
+        self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
 
     def handle_compute_row_selection(self, model: dict) -> None:
         """Track selected PGS IDs from compute grid checkbox selection.
 
         Handles MUI DataGrid v8 selection model:
-        - {type: "include", ids: [...]} — only listed rows are selected
-        - {type: "exclude", ids: [...]} — all rows EXCEPT listed are selected
-        - {type: "exclude", ids: []} — all rows selected (header checkbox)
+        - {type: "include", ids: [...]} -- only listed rows are selected
+        - {type: "exclude", ids: [...]} -- all rows EXCEPT listed are selected
+        - {type: "exclude", ids: []} -- all rows selected (header checkbox)
         """
-        self.status_message = f"Selection event: {model}"
+        self.status_message = f"Selection event: {model}"  # type: ignore[attr-defined]
 
         selection_type: str = model.get("type", "include")
         raw_ids: list = model.get("ids", [])
@@ -248,7 +285,7 @@ class ComputeGridState(LazyFrameGridMixin, AppState):
             return
 
         pgs_ids: list[str] = []
-        for row in self.lf_grid_rows:
+        for row in self.lf_grid_rows:  # type: ignore[attr-defined]
             row_id = row.get("__row_id__")
             in_set = (int(row_id) in selected_row_ids) if row_id is not None else False
             if (selection_type == "include" and in_set) or (
@@ -258,104 +295,65 @@ class ComputeGridState(LazyFrameGridMixin, AppState):
                 if pgs_id:
                     pgs_ids.append(str(pgs_id))
         self.selected_pgs_ids = pgs_ids
-        self.status_message = f"Selected {len(pgs_ids)} scores (from {len(self.lf_grid_rows)} loaded rows)"
+        self.status_message = f"Selected {len(pgs_ids)} scores (from {len(self.lf_grid_rows)} loaded rows)"  # type: ignore[attr-defined]
 
     def select_filtered_scores(self) -> None:
         """Select PGS IDs matching the current grid filter (or all if no filter active)."""
         if self._compute_scores_lf is None:
             return
         lf = self._compute_scores_lf
-        if self._lf_grid_filter and self._lf_grid_filter.get("items"):
-            cache = _get_cache(self._lf_grid_cache_id) if self._lf_grid_cache_id else None
+        if self._lf_grid_filter and self._lf_grid_filter.get("items"):  # type: ignore[attr-defined]
+            cache = _get_cache(self._lf_grid_cache_id) if self._lf_grid_cache_id else None  # type: ignore[attr-defined]
             schema = cache.schema if cache else None
-            lf = apply_filter_model(lf, self._lf_grid_filter, schema)
+            lf = apply_filter_model(lf, self._lf_grid_filter, schema)  # type: ignore[attr-defined]
         ids = lf.select("pgs_id").collect()["pgs_id"].to_list()
         self.selected_pgs_ids = ids
-        self.status_message = f"Selected {len(ids)} scores"
+        self.status_message = f"Selected {len(ids)} scores"  # type: ignore[attr-defined]
 
     def deselect_all_scores(self) -> None:
         """Clear all selected PGS IDs."""
         self.selected_pgs_ids = []
-        self.status_message = ""
+        self.status_message = ""  # type: ignore[attr-defined]
 
-    async def handle_vcf_upload(self, files: list[rx.UploadFile]) -> None:
-        """Save an uploaded VCF file and attempt genome build detection."""
-        if not files:
-            return
-        upload_file = files[0]
-        filename = upload_file.filename or "uploaded.vcf"
-        upload_dir = rx.get_upload_dir()
-        dest = upload_dir / filename
-        contents = await upload_file.read()
-        dest.write_bytes(contents)
-
-        self._vcf_path = str(dest)
-        self.vcf_filename = filename
-
-        detected = detect_genome_build(dest)
-        if detected is not None:
-            self.detected_build = detected
-            self.genome_build = detected
-            self.build_detection_message = f"Detected genome build: {detected}"
-        else:
-            self.detected_build = ""
-            self.build_detection_message = (
-                "Could not detect genome build from VCF header. "
-                "Please select it manually."
-            )
-        self.prs_results = []
-        self.low_match_warning = False
-        self.status_message = f"Uploaded {filename}"
-
-        return GenomicGridState.normalize_uploaded_vcf(str(dest))
-
-    async def compute_selected_prs(self) -> Any:
-        """Compute PRS for uploaded VCF against all selected PGS IDs.
+    def compute_selected_prs(self) -> Any:
+        """Compute PRS for all selected PGS IDs using available genotype data.
 
         Uses PRSCatalog for metadata lookup (no REST API calls) and for
         performance metrics from pre-downloaded bulk metadata.
-        When a normalized parquet exists (from GenomicGridState), uses it
-        as a pre-filtered genotypes source instead of re-reading the raw VCF.
         """
-        if not self._vcf_path:
-            self.status_message = "Please upload a VCF file first."
-            return
         if not self.selected_pgs_ids:
-            self.status_message = "No PGS scores selected. Load and select scores above."
+            self.status_message = "No PGS scores selected. Load and select scores above."  # type: ignore[attr-defined]
             return
+
+        pre_genotypes = self._get_genotypes_lf()
 
         total = len(self.selected_pgs_ids)
         self.prs_computing = True
         self.prs_progress = 0
         self.prs_results = []
         self.low_match_warning = False
-        self.status_message = f"Computing PRS for {total} score(s)..."
+        self.status_message = f"Computing PRS for {total} score(s)..."  # type: ignore[attr-defined]
         yield
 
-        cache = Path(self.cache_dir) / "scores"
+        cache = Path(self.cache_dir) / "scores"  # type: ignore[attr-defined]
         results: list[dict] = []
         any_low_match = False
-
-        genomic_state = await self.get_state(GenomicGridState)
-        normalized_path = genomic_state.normalized_parquet_path
-        pre_genotypes: pl.LazyFrame | None = None
-        if normalized_path and Path(normalized_path).exists():
-            pre_genotypes = pl.scan_parquet(normalized_path)
 
         best_perf_df = _catalog.best_performance().collect()
 
         for i, pgs_id in enumerate(self.selected_pgs_ids, start=1):
             self.prs_progress = round(i / total * 100)
-            self.status_message = f"Computing {i}/{total}: {pgs_id}..."
+            self.status_message = f"Computing {i}/{total}: {pgs_id}..."  # type: ignore[attr-defined]
             yield
 
             info = _catalog.score_info_row(pgs_id)
             trait = info["trait_reported"] if info else None
 
+            vcf_path = self.prs_genotypes_path or ""
             result = compute_prs(
-                vcf_path=self._vcf_path,
+                vcf_path=vcf_path,
                 scoring_file=pgs_id,
-                genome_build=self.genome_build,
+                genome_build=self.genome_build,  # type: ignore[attr-defined]
                 cache_dir=cache,
                 pgs_id=pgs_id,
                 trait_reported=trait,
@@ -378,13 +376,13 @@ class ComputeGridState(LazyFrameGridMixin, AppState):
             classification_str = ""
             if perf_rows.height > 0:
                 p = perf_rows.row(0, named=True)
-                effect_size_str = _format_effect_size(p)
-                classification_str = _format_classification(p)
+                effect_size_str = format_effect_size(p)
+                classification_str = format_classification(p)
                 auroc_val = p.get("auroc_estimate")
                 ancestry_str = p.get("ancestry_broad") or ""
                 n_individuals = p.get("n_individuals")
 
-            interp = _interpret_prs_result(result.percentile, result.match_rate, auroc_val)
+            interp = interpret_prs_result(result.percentile, result.match_rate, auroc_val)
 
             row: dict[str, Any] = {
                 "pgs_id": result.pgs_id,
@@ -415,7 +413,7 @@ class ComputeGridState(LazyFrameGridMixin, AppState):
         self.low_match_warning = any_low_match
         self.prs_computing = False
         self.prs_progress = 100
-        self.status_message = f"Computed {total} PRS score(s)"
+        self.status_message = f"Computed {total} PRS score(s)"  # type: ignore[attr-defined]
 
     def download_prs_results_csv(self) -> Any:
         """Build a CSV from prs_results and trigger a browser download."""
@@ -435,105 +433,80 @@ class ComputeGridState(LazyFrameGridMixin, AppState):
         return rx.download(data=buf.getvalue(), filename="prs_results.csv")
 
 
-def _format_effect_size(perf_row: dict[str, Any]) -> str:
-    """Format the best available effect size metric from a cleaned performance row."""
-    for prefix, label in [("or", "OR"), ("hr", "HR"), ("beta", "Beta")]:
-        est = perf_row.get(f"{prefix}_estimate")
-        if est is not None:
-            ci_lo = perf_row.get(f"{prefix}_ci_lower")
-            ci_hi = perf_row.get(f"{prefix}_ci_upper")
-            se = perf_row.get(f"{prefix}_se")
-            result = f"{label}={est:.2f}"
-            if ci_lo is not None and ci_hi is not None:
-                result += f" [{ci_lo:.2f}-{ci_hi:.2f}]"
-            elif se is not None:
-                result += f" (SE={se:.2f})"
-            return result
-    return ""
+class ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
+    """Concrete state for the standalone Compute PRS page.
 
-
-def _format_classification(perf_row: dict[str, Any]) -> str:
-    """Format the best available classification metric from a cleaned performance row."""
-    for prefix, label in [("auroc", "AUROC"), ("cindex", "C-index")]:
-        est = perf_row.get(f"{prefix}_estimate")
-        if est is not None:
-            ci_lo = perf_row.get(f"{prefix}_ci_lower")
-            ci_hi = perf_row.get(f"{prefix}_ci_upper")
-            result = f"{label}={est:.3f}"
-            if ci_lo is not None and ci_hi is not None:
-                result += f" [{ci_lo:.3f}-{ci_hi:.3f}]"
-            return result
-    return ""
-
-
-def _classify_model_quality(
-    match_rate: float,
-    auroc: float | None,
-) -> tuple[str, str]:
-    """Classify overall model quality from match rate and AUROC.
-
-    Returns (label, color) for the quality badge.
+    Adds VCF-upload-specific behavior on top of PRSComputeStateMixin.
+    Inherits shared vars from AppState and grid vars from LazyFrameGridMixin.
     """
-    if match_rate < 0.1:
-        return "Very Low", "red"
-    if auroc is not None:
-        if match_rate >= 0.5 and auroc >= 0.7:
-            return "High", "green"
-        if match_rate >= 0.5 and auroc >= 0.6:
-            return "Moderate", "yellow"
-    if match_rate >= 0.5:
-        return "Moderate", "yellow"
-    return "Low", "orange"
 
+    vcf_filename: str = ""
+    detected_build: str = ""
+    build_detection_message: str = ""
 
-def _interpret_prs_result(
-    percentile: float | None,
-    match_rate: float,
-    auroc: float | None,
-) -> dict[str, str]:
-    """Produce human-readable interpretation of a single PRS result.
+    _vcf_path: str = ""
 
-    Returns a dict with keys: quality_label, quality_color, summary.
+    def initialize(self) -> Any:
+        """Auto-load cleaned scores on first page visit."""
+        yield from self.initialize_prs()
 
-    When a theoretical percentile is available (computed from allele frequencies
-    in the scoring file), it is included in the summary as an approximate
-    population position.
-    """
-    quality_label, quality_color = _classify_model_quality(match_rate, auroc)
+    def set_genome_build(self, value: str) -> Any:
+        """Set genome build and reload compute scores if already loaded."""
+        yield from self.set_prs_genome_build(value)
 
-    parts: list[str] = []
+    async def handle_vcf_upload(self, files: list[rx.UploadFile]) -> None:
+        """Save an uploaded VCF file and attempt genome build detection."""
+        if not files:
+            return
+        upload_file = files[0]
+        filename = upload_file.filename or "uploaded.vcf"
+        upload_dir = rx.get_upload_dir()
+        dest = upload_dir / filename
+        contents = await upload_file.read()
+        dest.write_bytes(contents)
 
-    if percentile is not None:
-        parts.append(
-            f"Estimated percentile: {percentile:.1f}% "
-            f"(theoretical, from allele frequencies in the scoring file)."
-        )
+        self._vcf_path = str(dest)
+        self.vcf_filename = filename
+        self.prs_genotypes_path = str(dest)
 
-    if auroc is not None:
-        if auroc >= 0.7:
-            parts.append(f"Good predictive model (AUROC={auroc:.3f}).")
-        elif auroc >= 0.6:
-            parts.append(f"Moderate predictive model (AUROC={auroc:.3f}).")
+        detected = detect_genome_build(dest)
+        needs_score_reload = False
+        if detected is not None:
+            self.detected_build = detected
+            if detected != self.genome_build:
+                needs_score_reload = self.compute_scores_loaded
+            self.genome_build = detected
+            self.build_detection_message = f"Detected genome build: {detected}"
         else:
-            parts.append(f"Weak predictive model (AUROC={auroc:.3f}).")
-    else:
-        parts.append("No AUROC available to assess model accuracy.")
+            self.detected_build = ""
+            self.build_detection_message = (
+                "Could not detect genome build from VCF header. "
+                "Please select it manually."
+            )
+        self.prs_results = []
+        self.low_match_warning = False
+        self.status_message = f"Uploaded {filename}"
 
-    if match_rate < 0.1:
-        parts.append(f"Only {match_rate * 100:.0f}% of scoring variants matched — results may be unreliable.")
-    elif match_rate < 0.5:
-        parts.append(f"{match_rate * 100:.0f}% of scoring variants matched — interpret with caution.")
-    else:
-        parts.append(f"{match_rate * 100:.0f}% of scoring variants matched.")
+        events: list = [GenomicGridState.normalize_uploaded_vcf(str(dest))]
+        if needs_score_reload:
+            events.append(ComputeGridState.load_compute_scores)
+        return events
 
-    if percentile is None:
-        parts.append(
-            "No allele frequencies in scoring file — percentile not available. "
-            "Compare your score to a matched reference cohort for meaningful interpretation."
-        )
+    async def compute_selected_prs(self) -> Any:
+        """Override to resolve genotypes from GenomicGridState, then delegate."""
+        if not self._vcf_path:
+            self.status_message = "Please upload a VCF file first."
+            return
 
-    return {
-        "quality_label": quality_label,
-        "quality_color": quality_color,
-        "summary": " ".join(parts),
-    }
+        genomic_state = await self.get_state(GenomicGridState)
+        normalized_path = genomic_state.normalized_parquet_path
+        if normalized_path and Path(normalized_path).exists():
+            self.prs_genotypes_path = normalized_path
+            self._prs_genotypes_lf = pl.scan_parquet(normalized_path)
+        else:
+            self.prs_genotypes_path = self._vcf_path
+
+        gen = PRSComputeStateMixin.compute_selected_prs(self)
+        if gen is not None:
+            for event in gen:
+                yield event

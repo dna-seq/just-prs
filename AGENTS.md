@@ -21,8 +21,10 @@ This project has two packages managed by a single uv workspace:
 | `just_prs.ftp` | Bulk FTP/HTTPS downloads of raw metadata sheets and scoring files via `fsspec` |
 | `just_prs.catalog` | Synchronous REST API client (`PGSCatalogClient`) for PGS Catalog — used for individual lookups, not for bulk metadata |
 | `just_prs.models` | Pydantic v2 models (`ScoreInfo`, `PRSResult`, `PerformanceInfo`, etc.) |
-| `prs_ui.state` | Reflex `AppState` + 3 grid states: `MetadataGridState`, `ComputeGridState`, `GenomicGridState` (normalized VCF viewer). Uses `PRSCatalog` for cleaned data in the Compute tab. Includes quality assessment helpers (`_interpret_prs_result`, `_classify_model_quality`, `_format_effect_size`, `_format_classification`) and CSV export (`download_prs_results_csv`). |
-| `prs_ui.pages.*` | UI panels: `metadata` (grid browser), `scoring` (file viewer), `compute` (PRS workflow + genomic data grid + results table with quality badges + interpretation cards + CSV download) |
+| `just_prs.quality` | Pure-logic quality assessment helpers: `classify_model_quality()`, `interpret_prs_result()`, `format_effect_size()`, `format_classification()`. No Reflex dependency -- shared between core library and UI. |
+| `prs_ui.state` | Reflex `AppState` + grid states + `PRSComputeStateMixin(rx.State, mixin=True)`. The mixin encapsulates all PRS computation logic (score loading, selection, batch compute, CSV export) and is designed for reuse in any Reflex app. `ComputeGridState` subclasses it with VCF-upload-specific behavior for the standalone app. |
+| `prs_ui.components` | **Reusable UI components**: `prs_section(state)`, `prs_scores_selector(state)`, `prs_results_table(state)`, `prs_progress_section(state)`, `prs_build_selector(state)`, `prs_compute_button(state)`. Each takes a state class parameter so the same components work with any concrete state inheriting `PRSComputeStateMixin`. |
+| `prs_ui.pages.*` | UI panels: `metadata` (grid browser), `scoring` (file viewer), `compute` (standalone PRS workflow using reusable components + VCF upload + genomic data grid) |
 
 ### Cleanup pipeline (`just_prs.cleanup`)
 
@@ -38,7 +40,9 @@ Raw PGS Catalog CSVs have data quality issues that `cleanup.py` fixes:
 
 Key methods: `scores()`, `search()`, `best_performance()`, `score_info_row()`, `compute_prs()`, `compute_prs_batch()`, `percentile()`, `build_cleaned_parquets()`, `push_to_hf()`.
 
-The package public API (`just_prs.__init__`) exports: `PRSCatalog`, `normalize_vcf`, `VcfFilterConfig`, `resolve_cache_dir`, `__version__`, `__package_name__`.
+The package public API (`just_prs.__init__`) exports: `PRSCatalog`, `normalize_vcf`, `VcfFilterConfig`, `resolve_cache_dir`, `classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`, `__version__`, `__package_name__`.
+
+The `prs-ui` package public API (`prs_ui.__init__`) exports: `PRSComputeStateMixin`, `prs_section`, `prs_scores_selector`, `prs_results_table`, `prs_progress_section`, `prs_build_selector`, `prs_compute_button`.
 
 ### HuggingFace sync (`just_prs.hf`)
 
@@ -46,12 +50,14 @@ Cleaned metadata parquets are synced to/from the HuggingFace dataset repo `just-
 
 ### UI architecture notes
 
-- **Four state classes** with three independent MUI DataGrids via `LazyFrameGridMixin` (which uses `mixin=True`). Each concrete mixin subclass gets its own independent set of reactive grid vars:
+- **Five state classes** with three independent MUI DataGrids via `LazyFrameGridMixin` (which uses `mixin=True`). Each concrete mixin subclass gets its own independent set of reactive grid vars:
   - `AppState(rx.State)` — shared vars: `active_tab`, `genome_build`, `cache_dir`, `status_message`, `pgs_id_input`
   - `MetadataGridState(LazyFrameGridMixin, AppState)` — metadata browser + scoring file viewer grid
   - `GenomicGridState(LazyFrameGridMixin, AppState)` — normalized VCF genomic data grid. After VCF upload, runs `normalize_vcf()` (strip chr prefix, compute genotype, apply PASS filter) and loads the resulting parquet into a browsable DataGrid. The normalized parquet path is also used by `ComputeGridState` for PRS computation.
-  - `ComputeGridState(LazyFrameGridMixin, AppState)` — compute PRS score selection grid. Uses `GenomicGridState.normalized_parquet_path` when available to avoid re-reading raw VCF.
+  - `PRSComputeStateMixin(rx.State, mixin=True)` — **reusable** PRS computation mixin: score loading via `PRSCatalog`, row selection, batch PRS computation, quality assessment, CSV export. Accepts genotypes via LazyFrame (preferred, via `set_prs_genotypes_lf()`) or parquet path (`prs_genotypes_path`). Designed for embedding in any Reflex app.
+  - `ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState)` — concrete state for the standalone Compute PRS page. Adds VCF upload + genome build detection on top of the mixin.
   - **Important**: `AppState` must NOT inherit from `LazyFrameGridMixin` — otherwise substates that also list the mixin create an unresolvable MRO diamond.
+- **Reusable components** (`prs_ui.components`): Each component function accepts a `state` class parameter, so the same UI works with any concrete state inheriting `PRSComputeStateMixin`. The primary entry point is `prs_section(state)` which composes build selector, score grid, compute button, progress bar, and results table.
 - The Metadata tab shows **raw** PGS Catalog columns for general-purpose browsing of all 7 sheets.
 - The Compute tab (default tab) uses **cleaned** data from `PRSCatalog` with normalized genome builds and snake_case column names. Scores are loaded into the MUI DataGrid with server-side virtual scrolling — no manual pagination.
 - VCF upload triggers automatic normalization via `GenomicGridState.normalize_uploaded_vcf()` which runs `normalize_vcf()` (strip chr prefix, compute genotype, PASS filter) and shows the result in a browsable genomic data grid. The normalized parquet is reused by `ComputeGridState` for PRS computation.
@@ -127,6 +133,44 @@ best = catalog.best_performance(pgs_id="PGS000001").collect()
 ```
 
 **Via Web UI:** Open the Compute tab, upload your VCF (drag-and-drop), select genome build, load scores, check the ones you want, and click Compute.
+
+### Embedding the PRS UI in another Reflex app (e.g. just-dna-lite)
+
+The PRS computation UI is packaged as reusable Reflex components. A host app adds `prs-ui` (and `just-prs`) as dependencies, creates a concrete state class that mixes in `PRSComputeStateMixin`, provides a normalized genotypes LazyFrame, and renders the section. The preferred input method is a polars LazyFrame (memory-efficient, avoids redundant I/O):
+
+```python
+import polars as pl
+import reflex as rx
+from reflex_mui_datagrid import LazyFrameGridMixin
+from prs_ui import PRSComputeStateMixin, prs_section
+
+
+class MyAppState(rx.State):
+    genome_build: str = "GRCh38"
+    cache_dir: str = "/path/to/cache"
+    status_message: str = ""
+
+
+class PRSState(PRSComputeStateMixin, LazyFrameGridMixin, MyAppState):
+    """Concrete PRS state for the host app."""
+
+    def on_vcf_ready(self, parquet_path: str) -> None:
+        """Called after the host app normalizes a VCF."""
+        lf = pl.scan_parquet(parquet_path)
+        self.set_prs_genotypes_lf(lf)
+        self.prs_genotypes_path = parquet_path
+
+
+def prs_page() -> rx.Component:
+    return prs_section(PRSState)
+```
+
+Key integration points:
+- **LazyFrame is the preferred input** -- call `set_prs_genotypes_lf(lf)` with a `pl.scan_parquet()` LazyFrame. This is memory-efficient and avoids re-reading the file on each PRS computation.
+- `prs_genotypes_path` is the fallback string path. Set it alongside the LazyFrame so the mixin can pass it to `compute_prs()` if needed.
+- The host app's state must provide `genome_build`, `cache_dir`, and `status_message` vars (inherited from a shared parent or defined directly).
+- Call `initialize_prs()` on page load to auto-load PGS Catalog scores into the grid.
+- Individual sub-components (`prs_scores_selector`, `prs_results_table`, `prs_compute_button`, etc.) can be used independently for custom layouts.
 
 ### Reflex-specific patterns (CRITICAL)
 

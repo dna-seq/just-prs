@@ -96,40 +96,37 @@ def parse_scoring_file(path: Path) -> pl.LazyFrame:
                     data_lines.append(line)
 
         tsv_content = "".join(data_lines)
+
+        # Columns that must be read as strings — chr_name/hm_chr contain
+        # "X", "Y", "MT" which Polars mis-infers as i64 from numeric-only
+        # leading rows.  Overrides are silently ignored for missing columns.
+        _STR_OVERRIDES: dict[str, pl.DataType] = {
+            "chr_name": pl.Utf8,
+            "chr_position": pl.Int64,
+            "effect_weight": pl.Float64,
+            "effect_allele": pl.Utf8,
+            "other_allele": pl.Utf8,
+            "rsID": pl.Utf8,
+            "hm_chr": pl.Utf8,
+            "hm_pos": pl.Int64,
+            "allelefrequency_effect": pl.Float64,
+        }
+
+        # Only override columns actually present in the header row.
+        header_line = data_lines[0] if data_lines else ""
+        present_cols = {c.strip() for c in header_line.split("\t")}
+        overrides = {k: v for k, v in _STR_OVERRIDES.items() if k in present_cols}
+
         df = pl.read_csv(
             io.StringIO(tsv_content),
             separator="\t",
             infer_schema_length=10000,
             null_values=["", "NA", "None"],
+            schema_overrides=overrides,
         )
 
-        columns = df.columns
-        if "rsID" not in columns and "id" in columns:
+        if "rsID" not in df.columns and "id" in df.columns:
             df = df.rename({"id": "rsID"})
-            columns = df.columns
-
-        cast_map: dict[str, pl.DataType] = {}
-        if "chr_name" in columns:
-            cast_map["chr_name"] = pl.Utf8
-        if "chr_position" in columns:
-            cast_map["chr_position"] = pl.Int64
-        if "effect_weight" in columns:
-            cast_map["effect_weight"] = pl.Float64
-        if "effect_allele" in columns:
-            cast_map["effect_allele"] = pl.Utf8
-        if "other_allele" in columns:
-            cast_map["other_allele"] = pl.Utf8
-        if "rsID" in columns:
-            cast_map["rsID"] = pl.Utf8
-        if "hm_chr" in columns:
-            cast_map["hm_chr"] = pl.Utf8
-        if "hm_pos" in columns:
-            cast_map["hm_pos"] = pl.Int64
-        if "allelefrequency_effect" in columns:
-            cast_map["allelefrequency_effect"] = pl.Float64
-
-        if cast_map:
-            df = df.cast(cast_map)
 
         return df.lazy()
 

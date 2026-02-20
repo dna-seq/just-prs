@@ -136,6 +136,8 @@ def normalize_vcf(
 
         select_exprs: list[pl.Expr] = [
             pl.col("chrom").cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chrom"),
+            pl.col("start").cast(pl.Int64),
+            pl.col("end").cast(pl.Int64),
             pl.col("start").cast(pl.Int64).alias("pos"),
         ]
 

@@ -2,7 +2,7 @@
 name = "just-prs"
 version = "0.3.2"
 description = "Polars-bio based tool to compute polygenic risk scores from PGS Catalog"
-readme = "../README.md"
+readme = "README.md"
 authors = [
     { name = "antonkulaga", email = "antonkulaga@gmail.com" }
 ]

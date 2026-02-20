@@ -425,19 +425,22 @@ def prs_section(state: type[rx.State]) -> rx.Component:
         from prs_ui.components import prs_section
         prs_section(MyPRSState)
     """
-    return rx.vstack(
-        rx.hstack(
-            prs_build_selector(state),
-            rx.separator(orientation="vertical", size="2"),
-            prs_ancestry_selector(state),
+    return rx.theme(
+        rx.vstack(
+            rx.hstack(
+                prs_build_selector(state),
+                rx.separator(orientation="vertical", size="2"),
+                prs_ancestry_selector(state),
+                spacing="4",
+                align="center",
+                wrap="wrap",
+            ),
+            prs_scores_selector(state),
+            prs_compute_button(state),
+            prs_progress_section(state),
+            prs_results_table(state),
+            width="100%",
             spacing="4",
-            align="center",
-            wrap="wrap",
         ),
-        prs_scores_selector(state),
-        prs_compute_button(state),
-        prs_progress_section(state),
-        prs_results_table(state),
-        width="100%",
-        spacing="4",
+        has_background=False,
     )

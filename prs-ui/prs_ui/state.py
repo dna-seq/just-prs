@@ -65,6 +65,21 @@ def _resolve_cache_dir() -> Path:
 _catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
 
 
+def _normalize_genotypes_lf(lf: pl.LazyFrame) -> pl.LazyFrame:
+    """Return a copy of *lf* with polars-bio interval columns mapped to VCF convention.
+
+    ``start`` → ``pos`` (if ``pos`` is absent) and ``end`` is dropped.
+    The original LazyFrame is never mutated.
+    """
+    cols = lf.collect_schema().names()
+    if "pos" not in cols and "start" in cols:
+        lf = lf.rename({"start": "pos"})
+        cols = lf.collect_schema().names()
+    if "end" in cols:
+        lf = lf.drop("end")
+    return lf
+
+
 class AppState(rx.State):
     """Shared app state: tab selection, genome build, cache dir."""
 
@@ -232,15 +247,26 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.selected_ancestry = value
 
     def set_prs_genotypes_lf(self, lf: pl.LazyFrame) -> None:
-        """Provide a pre-loaded genotypes LazyFrame for PRS computation."""
+        """Provide a pre-loaded genotypes LazyFrame for PRS computation.
+
+        The LazyFrame is stored as-is (not mutated) so that callers who share
+        it with other components (e.g. a genomic data grid) are not affected.
+        Column normalization (``start`` → ``pos``, dropping ``end``) is applied
+        lazily inside ``_get_genotypes_lf()`` on a copy.
+        """
         self._prs_genotypes_lf = lf
 
     def _get_genotypes_lf(self) -> pl.LazyFrame | None:
-        """Resolve genotypes: explicit LazyFrame first, then parquet path."""
+        """Resolve genotypes: explicit LazyFrame first, then parquet path.
+
+        Returns a normalized copy with ``pos`` column (renamed from ``start``
+        if needed) and without ``end``.  The original LazyFrame stored by
+        ``set_prs_genotypes_lf()`` is never modified.
+        """
         if self._prs_genotypes_lf is not None:
-            return self._prs_genotypes_lf
+            return _normalize_genotypes_lf(self._prs_genotypes_lf)
         if self.prs_genotypes_path and Path(self.prs_genotypes_path).exists():
-            return pl.scan_parquet(self.prs_genotypes_path)
+            return _normalize_genotypes_lf(pl.scan_parquet(self.prs_genotypes_path))
         return None
 
     def initialize_prs(self) -> Any:

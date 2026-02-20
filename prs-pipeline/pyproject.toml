@@ -17,6 +17,7 @@ dependencies = [
 
 [project.scripts]
 prs-pipeline = "prs_pipeline.definitions:main"
+pipeline = "prs_pipeline.cli:launch"
 
 [build-system]
 requires = ["hatchling"]

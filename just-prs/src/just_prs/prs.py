@@ -11,6 +11,19 @@ from just_prs.scoring import DEFAULT_CACHE_DIR, load_scoring, parse_scoring_file
 from just_prs.vcf import compute_dosage_expr, read_genotypes
 
 
+def _normalize_genotype_columns(lf: pl.LazyFrame) -> pl.LazyFrame:
+    """Ensure genotype LazyFrame has the columns expected by compute_prs.
+
+    polars-bio produces ``start`` while compute_prs joins on ``pos``.
+    This renames ``start`` → ``pos`` when the caller passes an external
+    LazyFrame that hasn't been through ``read_genotypes()``.
+    """
+    cols = lf.collect_schema().names()
+    if "pos" not in cols and "start" in cols:
+        lf = lf.rename({"start": "pos"})
+    return lf
+
+
 def _resolve_scoring(
     scoring_file: Path | pl.LazyFrame | str,
     genome_build: str,
@@ -154,8 +167,9 @@ def compute_prs(
         pgs_id: PGS ID for result labeling
         trait_reported: Trait name for result labeling
         genotypes_lf: Pre-built genotypes LazyFrame with columns
-            ``chrom, pos, ref, alt, GT``.  When provided, *vcf_path* is not
-            read — useful for passing a normalized parquet via
+            ``chrom, pos, ref, alt, GT`` (``start`` is accepted as an
+            alias for ``pos``).  When provided, *vcf_path* is not read —
+            useful for passing a normalized parquet via
             ``pl.scan_parquet()``.
 
     Returns:
@@ -170,6 +184,8 @@ def compute_prs(
     ):
         if genotypes_lf is None:
             genotypes_lf = read_genotypes(vcf_path)
+        else:
+            genotypes_lf = _normalize_genotype_columns(genotypes_lf)
         scoring_lf = _resolve_scoring(scoring_file, genome_build, cache_dir)
         scoring_norm = _normalize_scoring_columns(scoring_lf)
 

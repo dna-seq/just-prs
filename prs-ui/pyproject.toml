@@ -1,6 +1,6 @@
 [project]
 name = "prs-ui"
-version = "0.1.1"
+version = "0.1.2"
 description = "Reusable Reflex UI components for Polygenic Risk Score computation with PGS Catalog"
 readme = "README.md"
 authors = [
@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 prs-ui = "prs_ui.prs_ui:main"
+ui = "prs_ui.cli:launch_ui"
 
 [build-system]
 requires = ["hatchling"]

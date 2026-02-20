@@ -6,6 +6,18 @@
 
 A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (PRS)** from the [PGS Catalog](https://www.pgscatalog.org/).
 
+## Project Structure
+
+This is a **uv workspace** with three subprojects:
+
+| Package | Directory | Description |
+|---|---|---|
+| **just-prs** | `just-prs/` | Core library: PRS computation, PGS Catalog client, VCF normalization, scoring files. Published to PyPI. |
+| **prs-ui** | `prs-ui/` | Reflex web UI for interactive PRS computation. Published to PyPI. |
+| **prs-pipeline** | `prs-pipeline/` | Dagster pipeline for computing reference distributions from the 1000G panel. |
+
+The workspace root is a non-published wrapper that depends on all three subprojects and provides convenience scripts (`uv run ui`, `uv run pipeline`).
+
 ## Web UI
 
 An interactive [Reflex](https://reflex.dev/) web application for browsing PGS Catalog data and computing PRS scores.
@@ -72,15 +84,15 @@ Requires Python >= 3.14. Uses [uv](https://github.com/astral-sh/uv) for dependen
 pip install just-prs
 ```
 
-**From source:**
+**From source (development):**
 
 ```bash
 git clone https://github.com/antonkulaga/just-prs
 cd just-prs
-uv sync
+uv sync --all-packages   # installs all three subprojects + dev deps
 ```
 
-For the optional web UI: `pip install just-prs[ui]` or `uv sync --all-packages` when developing from source.
+To install only the core library without UI or pipeline: `cd just-prs/just-prs && uv sync`.
 
 The CLI is available as both `just-prs` and `prs`.
 
@@ -176,7 +188,7 @@ The preferred input method is a polars LazyFrame via `set_prs_genotypes_lf()` --
 The project includes an extensive integration test suite that runs against real genomic data and external tools -- no mocked data or synthetic fixtures. All tests are reproducible on any Linux, macOS, or Windows machine.
 
 ```bash
-uv run pytest tests/ -v
+uv run pytest just-prs/tests/ -v
 ```
 
 | Test suite | What it validates | Data source |

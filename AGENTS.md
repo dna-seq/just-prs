@@ -2,10 +2,13 @@
 
 ## Project Architecture
 
-This project has two packages managed by a single uv workspace:
+This project is a **uv workspace** with a non-published root wrapper and three subprojects:
 
-- **`src/just_prs/`** — Core library: PRS computation, PGS Catalog REST API client, FTP downloads, VCF reading, scoring file parsing. CLI entrypoint via Typer.
-- **`prs-ui/`** — Reflex web app for interactive PRS computation. Has its own `pyproject.toml` and depends on `just_prs`. Run from inside `prs-ui/` with `uv run reflex run`.
+- **`just-prs/src/just_prs/`** — Core library: PRS computation, PGS Catalog REST API client, FTP downloads, VCF reading, scoring file parsing. CLI entrypoint via Typer. Published to PyPI as `just-prs`.
+- **`prs-ui/`** — Reflex web app for interactive PRS computation. Has its own `pyproject.toml` and depends on `just_prs`. Run with `uv run ui` from workspace root or `uv run reflex run` from inside `prs-ui/`. Published to PyPI as `prs-ui`.
+- **`prs-pipeline/`** — Dagster pipeline for computing PRS reference distributions from the 1000G panel. Has its own `pyproject.toml` and depends on `just_prs`. Run with `uv run pipeline` from workspace root.
+
+The workspace root (`pyproject.toml` at repo root) is a non-published wrapper named `just-prs-workspace`. It depends on all three subprojects and provides convenience scripts: `uv run ui` and `uv run pipeline`. Tests live in `just-prs/tests/`.
 
 ### Key modules
 
@@ -66,7 +69,7 @@ Cleaned metadata parquets are synced to/from the HuggingFace dataset repo `just-
 
 ### Running the UI
 
-The web UI is a Reflex app in the `prs-ui/` workspace member. Since `prs-ui` is an optional workspace dependency, you must install all packages first:
+The web UI is a Reflex app in the `prs-ui/` workspace member:
 
 ```bash
 uv sync --all-packages
@@ -80,7 +83,7 @@ cd prs-ui
 uv run reflex run
 ```
 
-This launches a local web server (default http://localhost:3000). The `ui` script entry point is defined in the root `pyproject.toml` and calls `just_prs.cli:launch_ui`, which checks that `prs-ui` is installed before starting the Reflex server.
+This launches a local web server (default http://localhost:3000). The `ui` script entry point is defined in both the root `pyproject.toml` (convenience) and `prs-ui/pyproject.toml`, pointing to `prs_ui.cli:launch_ui`.
 
 ### Computing PRS on a custom VCF
 

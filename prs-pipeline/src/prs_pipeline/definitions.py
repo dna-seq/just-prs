@@ -18,25 +18,50 @@ from prs_pipeline.metadata_assets import (
     raw_pgs_metadata,
 )
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource, Plink2Resource
+from prs_pipeline.sensors import build_pipeline_sensors
+
+download_reference_data = dg.define_asset_job(
+    name="download_reference_data",
+    selection=[
+        "reference_panel",
+        "pgs_id_partitions",
+    ],
+    description=(
+        "Step 1: Download the 1000G reference panel and register PGS ID partitions. "
+        "The score_all_partitions_sensor will automatically trigger scoring for all partitions."
+    ),
+)
+
+per_pgs_scores_job = dg.define_asset_job(
+    name="per_pgs_scores_job",
+    selection=["per_pgs_scores"],
+    partitions_def=PGS_IDS_PARTITIONS,
+    description=(
+        "Step 2 (auto-triggered by sensor): Run PLINK2 --score for PGS ID partitions. "
+        "Triggered automatically after download_reference_data succeeds."
+    ),
+)
+
+aggregate_and_push = dg.define_asset_job(
+    name="aggregate_and_push",
+    selection=["reference_distributions", "hf_prs_percentiles"],
+    description=(
+        "Step 3 (auto-triggered by sensor): Aggregate all per-PGS scores into "
+        "reference distributions and push to HuggingFace."
+    ),
+)
 
 defs = dg.Definitions(
     assets=[
-        # External source assets (EBI FTP data)
         ebi_reference_panel,
         ebi_pgs_catalog,
-        # Download — reference panel pipeline
         reference_panel,
         pgs_id_partitions,
-        # Compute — reference panel pipeline
         per_pgs_scores,
         reference_distributions,
-        # Upload — reference panel pipeline
         hf_prs_percentiles,
-        # Download — metadata pipeline
         raw_pgs_metadata,
-        # Compute — metadata pipeline
         cleaned_pgs_metadata,
-        # Upload — metadata pipeline
         hf_polygenic_risk_scores,
     ],
     resources={
@@ -45,31 +70,9 @@ defs = dg.Definitions(
         "hf_resource": HuggingFaceResource(),
     },
     jobs=[
-        dg.define_asset_job(
-            name="download_reference_data",
-            selection=[
-                "reference_panel",
-                "pgs_id_partitions",
-            ],
-            description=(
-                "Download the 1000G reference panel and register PGS ID partitions. "
-                "Run this first, then launch per_pgs_scores via backfill."
-            ),
-        ),
-        dg.define_asset_job(
-            name="per_pgs_scores_job",
-            selection=["per_pgs_scores"],
-            partitions_def=PGS_IDS_PARTITIONS,
-            description=(
-                "Run PLINK2 --score for selected PGS ID partitions. "
-                "Launch as a backfill to process multiple partitions."
-            ),
-        ),
-        dg.define_asset_job(
-            name="aggregate_and_push",
-            selection=["reference_distributions", "hf_prs_percentiles"],
-            description="Re-aggregate already-computed per-PGS scores and push to HuggingFace.",
-        ),
+        download_reference_data,
+        per_pgs_scores_job,
+        aggregate_and_push,
         dg.define_asset_job(
             name="metadata_pipeline",
             selection=["raw_pgs_metadata", "cleaned_pgs_metadata", "hf_polygenic_risk_scores"],
@@ -87,6 +90,7 @@ defs = dg.Definitions(
             ),
         ),
     ],
+    sensors=build_pipeline_sensors(per_pgs_scores_job, aggregate_and_push),
 )
 
 

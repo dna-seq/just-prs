@@ -1,0 +1,30 @@
+[project]
+name = "just-prs"
+version = "0.3.2"
+description = "Polars-bio based tool to compute polygenic risk scores from PGS Catalog"
+readme = "../README.md"
+authors = [
+    { name = "antonkulaga", email = "antonkulaga@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "polars-bio>=0.23.0",
+    "pycomfort>=0.0.18",
+    "typer[all]>=0.15.0",
+    "httpx>=0.28.0",
+    "pydantic>=2.0",
+    "eliot>=1.15.0",
+    "fsspec[http]>=2026.2.0",
+    "huggingface-hub>=0.28.0",
+    "python-dotenv>=1.1.0",
+    "platformdirs>=4.9.2",
+    "zstandard>=0.23.0",
+]
+
+[project.scripts]
+just-prs = "just_prs.cli:run"
+prs = "just_prs.cli:run"
+
+[build-system]
+requires = ["uv_build>=0.10.0,<0.11.0"]
+build-backend = "uv_build"

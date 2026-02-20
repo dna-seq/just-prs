@@ -1,0 +1,29 @@
+[project]
+name = "prs-pipeline"
+version = "0.1.0"
+description = "Dagster pipeline for computing PRS reference distributions from the 1000G panel"
+readme = "README.md"
+authors = [
+    { name = "antonkulaga", email = "antonkulaga@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "just-prs>=0.3.0",
+    "dagster>=1.12.0",
+    "dagster-webserver>=1.12.0",
+    "dagster-polars>=0.26.0",
+    "python-dotenv>=1.1.0",
+]
+
+[project.scripts]
+prs-pipeline = "prs_pipeline.definitions:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/prs_pipeline"]
+
+[tool.uv.sources]
+just-prs = { workspace = true }

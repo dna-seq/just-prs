@@ -20,7 +20,7 @@ from just_prs.cleanup import (
     clean_scores,
 )
 from just_prs.ftp import download_metadata_sheet
-from just_prs.hf import pull_cleaned_parquets, push_cleaned_parquets
+from just_prs.hf import pull_cleaned_parquets, pull_reference_distributions, push_cleaned_parquets
 from just_prs.models import PRSResult
 from just_prs.prs import compute_prs
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
@@ -45,6 +45,7 @@ class PRSCatalog:
         self._scores_lf: pl.LazyFrame | None = None
         self._perf_lf: pl.LazyFrame | None = None
         self._best_perf_lf: pl.LazyFrame | None = None
+        self._ref_dist_lf: pl.LazyFrame | None = None
 
     @property
     def cache_dir(self) -> Path:
@@ -189,11 +190,53 @@ class PRSCatalog:
             kwargs["repo_id"] = repo_id
         push_cleaned_parquets(self.metadata_dir, token=token, **kwargs)
 
+    @property
+    def percentiles_dir(self) -> Path:
+        """Directory for reference distribution parquets."""
+        return self._cache_dir / "percentiles"
+
+    def reference_distributions(self) -> pl.LazyFrame:
+        """Return the 1000G reference distribution LazyFrame.
+
+        Columns: pgs_id, superpopulation, mean, std, n, median, p5, p25, p75, p95.
+        Auto-pulls from HuggingFace (just-dna-seq/prs-percentiles) if not cached locally.
+
+        Returns None fields when the parquet is not yet available in HF.
+        """
+        if self._ref_dist_lf is not None:
+            return self._ref_dist_lf
+
+        local = self.percentiles_dir / "reference_distributions.parquet"
+        if not local.exists():
+            with start_action(action_type="prs_catalog:pull_reference_distributions"):
+                pulled = pull_reference_distributions(self.percentiles_dir)
+                if pulled is None or not local.exists():
+                    # Return an empty LazyFrame with the expected schema
+                    self._ref_dist_lf = pl.LazyFrame(
+                        schema={
+                            "pgs_id": pl.Utf8,
+                            "superpopulation": pl.Utf8,
+                            "mean": pl.Float64,
+                            "std": pl.Float64,
+                            "n": pl.Int64,
+                            "median": pl.Float64,
+                            "p5": pl.Float64,
+                            "p25": pl.Float64,
+                            "p75": pl.Float64,
+                            "p95": pl.Float64,
+                        }
+                    )
+                    return self._ref_dist_lf
+
+        self._ref_dist_lf = pl.scan_parquet(local)
+        return self._ref_dist_lf
+
     def reload(self) -> None:
         """Force re-download of all metadata on next access."""
         self._scores_lf = None
         self._perf_lf = None
         self._best_perf_lf = None
+        self._ref_dist_lf = None
         for p in self.metadata_dir.glob("*.parquet"):
             p.unlink()
         raw_dir = self.raw_metadata_dir
@@ -335,54 +378,66 @@ class PRSCatalog:
         self,
         prs_score: float,
         pgs_id: str,
+        ancestry: str = "EUR",
         mean: float = 0.0,
         std: float | None = None,
-    ) -> float | None:
-        """Estimate the population percentile for a given PRS score.
+    ) -> tuple[float | None, str]:
+        """Estimate population percentile for a given PRS score using a 3-tier fallback.
 
-        If mean/std are provided (e.g. from a reference cohort), uses them directly.
-        Otherwise, estimates the PRS distribution spread from the AUROC of the best
-        available performance metric via Cohen's d.
-
-        This is an approximation. Exact percentiles require a matched reference cohort.
+        Tier 1 — Reference panel (best): look up (pgs_id, ancestry) in the pre-computed
+            1000G reference distributions pulled from just-dna-seq/prs-percentiles.
+        Tier 2 — Theoretical (partial): compute from allele frequencies embedded in the
+            scoring file (only works for ~20% of PGS IDs). Only used when mean/std are
+            passed explicitly.
+        Tier 3 — AUROC approximation (rough): derive effective SD from Cohen's d
+            estimated from the best AUROC metric. Ancestry-agnostic.
 
         Args:
-            prs_score: The computed PRS value
-            pgs_id: PGS Catalog Score ID
-            mean: Assumed population mean of PRS (default 0.0)
-            std: Population standard deviation of PRS. If None, estimated from AUROC.
+            prs_score: The computed PRS value.
+            pgs_id: PGS Catalog Score ID.
+            ancestry: 1000G superpopulation code (AFR, AMR, EAS, EUR, SAS).
+                      Defaults to EUR.
+            mean: Population mean to use when std is provided (Tier 2 path).
+            std: Population SD. When provided, skips reference lookup and uses directly.
 
         Returns:
-            Estimated percentile (0-100), or None if std cannot be determined.
+            Tuple of (percentile | None, method_label) where method_label is one of
+            'reference_panel', 'theoretical', 'auroc_approx', or 'unavailable'.
         """
+        from just_prs.reference import ancestry_percentile
+
+        # Explicit mean/std override — caller knows the distribution
         if std is not None and std > 0:
             z = (prs_score - mean) / std
-            return round(_norm_cdf(z) * 100.0, 2)
+            return round(_norm_cdf(z) * 100.0, 2), "theoretical"
 
+        # Tier 1: reference panel distributions
+        ref_lf = self.reference_distributions()
+        pct = ancestry_percentile(prs_score, pgs_id, ancestry, ref_lf)
+        if pct is not None:
+            return pct, "reference_panel"
+
+        # Tier 3: AUROC approximation (ancestry-agnostic fallback)
         best_df = self.best_performance(pgs_id=pgs_id).collect()
         if best_df.height == 0:
-            return None
+            return None, "unavailable"
 
         row = best_df.row(0, named=True)
         auroc = row.get("auroc_estimate")
         if auroc is None:
-            return None
+            return None, "unavailable"
 
         auroc = float(auroc)
         if auroc <= 0.5 or auroc >= 1.0:
-            return None
+            return None, "unavailable"
 
         d = _auroc_to_cohens_d(auroc)
         if d is None or d <= 0:
-            return None
+            return None, "unavailable"
 
-        # Cohen's d = (mu_case - mu_control) / sigma_pooled
-        # Assuming sigma_pooled = 1, the population (mixed) distribution has
-        # variance ≈ 1 + d^2/4  (from the mixture of two unit-variance normals
-        # separated by d). We use this as the effective population SD.
         effective_std = math.sqrt(1.0 + d * d / 4.0)
         z = (prs_score - mean) / effective_std
-        return round(_norm_cdf(z) * 100.0, 2)
+        return round(_norm_cdf(z) * 100.0, 2), "auroc_approx"
 
 
 def _auroc_to_cohens_d(auroc: float) -> float | None:

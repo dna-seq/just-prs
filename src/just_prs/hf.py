@@ -10,6 +10,7 @@ from eliot import start_action
 from huggingface_hub import HfApi, hf_hub_download
 
 DEFAULT_HF_REPO = "just-dna-seq/polygenic_risk_scores"
+DEFAULT_HF_PERCENTILES_REPO = "just-dna-seq/prs-percentiles"
 HF_DATA_PREFIX = "data"
 
 CLEANED_PARQUET_FILES = [
@@ -17,6 +18,8 @@ CLEANED_PARQUET_FILES = [
     "performance.parquet",
     "best_performance.parquet",
 ]
+
+REFERENCE_DISTRIBUTIONS_FILE = "reference_distributions.parquet"
 
 
 def _resolve_token(token: str | None = None) -> str | None:
@@ -168,6 +171,73 @@ def push_cleaned_parquets(
             repo_id=repo_id,
             repo_type="dataset",
             allow_patterns="*.parquet",
+        )
+
+
+def pull_reference_distributions(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+) -> Path | None:
+    """Download reference_distributions.parquet from the prs-percentiles HF dataset repo.
+
+    Args:
+        local_dir: Directory to save the downloaded parquet file.
+        repo_id: HuggingFace dataset repository ID for percentiles.
+        token: HF API token. If None, loaded from .env / HF_TOKEN env var.
+
+    Returns:
+        Path to the downloaded file, or None if not available in the repo yet.
+    """
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:pull_reference_distributions", repo_id=repo_id):
+        local_dir.mkdir(parents=True, exist_ok=True)
+        filename = f"{HF_DATA_PREFIX}/{REFERENCE_DISTRIBUTIONS_FILE}"
+        try:
+            path = hf_hub_download(
+                repo_id=repo_id,
+                filename=filename,
+                repo_type="dataset",
+                local_dir=local_dir,
+                token=resolved_token,
+            )
+        except (EntryNotFoundError, RepositoryNotFoundError) as exc:
+            import logging
+            logging.getLogger(__name__).debug(
+                "Reference distributions not yet on HF (%s): %s", repo_id, exc
+            )
+            return None
+        target = local_dir / REFERENCE_DISTRIBUTIONS_FILE
+        hf_cached = Path(path)
+        if hf_cached != target:
+            import shutil
+            shutil.copy2(hf_cached, target)
+        return target
+
+
+def push_reference_distributions(
+    parquet_path: Path,
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+) -> None:
+    """Upload reference_distributions.parquet to the prs-percentiles HF dataset repo.
+
+    Args:
+        parquet_path: Local path to reference_distributions.parquet.
+        repo_id: HuggingFace dataset repository ID for percentiles.
+        token: HF API token. If None, loaded from .env / HF_TOKEN env var.
+    """
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:push_reference_distributions", repo_id=repo_id):
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        api.upload_file(
+            path_or_fileobj=str(parquet_path),
+            path_in_repo=f"{HF_DATA_PREFIX}/{REFERENCE_DISTRIBUTIONS_FILE}",
+            repo_id=repo_id,
+            repo_type="dataset",
         )
 
 

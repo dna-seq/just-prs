@@ -221,10 +221,15 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     low_match_warning: bool = False
     compute_scores_loaded: bool = False
     prs_genotypes_path: str = ""
+    selected_ancestry: str = "EUR"
 
     _scores_initialized: bool = False
     _compute_scores_lf: pl.LazyFrame | None = None
     _prs_genotypes_lf: pl.LazyFrame | None = None
+
+    def set_selected_ancestry(self, value: str) -> None:
+        """Set the ancestry superpopulation for percentile lookup."""
+        self.selected_ancestry = value
 
     def set_prs_genotypes_lf(self, lf: pl.LazyFrame) -> None:
         """Provide a pre-loaded genotypes LazyFrame for PRS computation."""
@@ -382,13 +387,22 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 ancestry_str = p.get("ancestry_broad") or ""
                 n_individuals = p.get("n_individuals")
 
-            interp = interpret_prs_result(result.percentile, result.match_rate, auroc_val)
+            # Ancestry-aware percentile: try reference panel first, then fall back
+            pct_value = result.percentile
+            pct_method = result.percentile_method or ("theoretical" if result.has_allele_frequencies else "")
+            if pct_value is None:
+                pct_value, pct_method = _catalog.percentile(
+                    result.score, pgs_id, ancestry=self.selected_ancestry
+                )
+
+            interp = interpret_prs_result(pct_value, result.match_rate, auroc_val)
 
             row: dict[str, Any] = {
                 "pgs_id": result.pgs_id,
                 "trait": result.trait_reported or "",
                 "score": round(result.score, 6),
-                "percentile": f"{result.percentile:.1f}" if result.percentile is not None else "",
+                "percentile": f"{pct_value:.1f}" if pct_value is not None else "",
+                "percentile_method": pct_method or "",
                 "has_allele_frequencies": result.has_allele_frequencies,
                 "match_rate": match_pct,
                 "match_color": match_color,
@@ -401,6 +415,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "quality_color": interp["quality_color"],
                 "summary": interp["summary"],
                 "ancestry": ancestry_str,
+                "selected_ancestry": self.selected_ancestry,
                 "n_individuals": n_individuals if n_individuals is not None else 0,
             }
 

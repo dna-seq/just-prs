@@ -1,12 +1,12 @@
 [project]
 name = "just-prs"
-version = "0.3.0"
+version = "0.3.1"
 description = "Polars-bio based tool to compute polygenic risk scores from PGS Catalog"
 readme = "README.md"
 authors = [
     { name = "antonkulaga", email = "antonkulaga@gmail.com" }
 ]
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
     "polars-bio>=0.23.0",
     "pycomfort>=0.0.18",
@@ -18,6 +18,7 @@ dependencies = [
     "huggingface-hub>=0.28.0",
     "python-dotenv>=1.1.0",
     "platformdirs>=4.9.2",
+    "zstandard>=0.23.0",
 ]
 
 [project.optional-dependencies]
@@ -34,9 +35,10 @@ build-backend = "uv_build"
 
 [tool.uv.sources]
 prs-ui = { workspace = true }
+prs-pipeline = { workspace = true }
 
 [tool.uv.workspace]
-members = ["prs-ui"]
+members = ["prs-ui", "prs-pipeline"]
 
 [dependency-groups]
 dev = [

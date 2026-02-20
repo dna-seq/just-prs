@@ -38,6 +38,31 @@ def prs_build_selector(state: type[rx.State]) -> rx.Component:
     )
 
 
+def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
+    """Ancestry superpopulation selector for 1000G-based percentile lookup."""
+    return rx.hstack(
+        rx.text("Ancestry (for percentile):", size="2", weight="medium"),
+        rx.select(
+            ["AFR", "AMR", "EAS", "EUR", "SAS"],
+            value=state.selected_ancestry,
+            on_change=state.set_selected_ancestry,
+            size="2",
+        ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "Select your ancestry group for percentile estimation. "
+                "AFR=African, AMR=American, EAS=East Asian, EUR=European, SAS=South Asian. "
+                "Percentiles are computed relative to 1000 Genomes reference individuals "
+                "in the selected group. When reference data is unavailable, "
+                "a theoretical or AUROC-based approximation is used."
+            ),
+        ),
+        spacing="2",
+        align="center",
+    )
+
+
 def prs_scores_selector(state: type[rx.State]) -> rx.Component:
     """Score selection using MUI DataGrid with server-side virtual scrolling."""
     return rx.vstack(
@@ -171,18 +196,28 @@ def _result_row(row: dict) -> rx.Component:  # type: ignore[type-arg]
         rx.table.cell(
             rx.cond(
                 row["percentile"] != "",
-                rx.hstack(
-                    rx.badge(
-                        rx.text(row["percentile"], "%"),
-                        color_scheme="iris",
-                        size="2",
-                        variant="solid",
-                    ),
-                    rx.text("*", size="1", color="iris", weight="bold"),
-                    spacing="1",
-                    align="center",
+                rx.badge(
+                    rx.text(row["percentile"], "%"),
+                    color_scheme="iris",
+                    size="2",
+                    variant="solid",
                 ),
                 rx.text("\u2014", size="2", color="gray"),
+            ),
+        ),
+        rx.table.cell(
+            rx.cond(
+                row["percentile_method"] == "reference_panel",
+                rx.badge("1000G ref", color_scheme="green", size="1", variant="soft"),
+                rx.cond(
+                    row["percentile_method"] == "theoretical",
+                    rx.badge("theoretical", color_scheme="blue", size="1", variant="soft"),
+                    rx.cond(
+                        row["percentile_method"] == "auroc_approx",
+                        rx.badge("AUROC est.", color_scheme="orange", size="1", variant="soft"),
+                        rx.text("\u2014", size="2", color="gray"),
+                    ),
+                ),
             ),
         ),
         rx.table.cell(
@@ -295,10 +330,11 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 width="100%",
             ),
             rx.callout(
-                "Percentiles marked with a star are computed from allele "
-                "frequencies reported in the scoring file (theoretical population "
-                "distribution under HWE). They are approximate and assume "
-                "independent loci.",
+                "Percentiles are estimated using 1000 Genomes reference distributions "
+                "(matched to your selected ancestry group) when available. "
+                "For scores without reference data, a theoretical distribution from "
+                "allele frequencies or an AUROC-based approximation is used. "
+                "The method is shown in the Percentile Method column.",
                 icon="info",
                 color_scheme="iris",
                 size="1",
@@ -339,6 +375,7 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                             rx.table.column_header_cell("Trait"),
                             rx.table.column_header_cell("PRS Score"),
                             rx.table.column_header_cell("Percentile"),
+                            rx.table.column_header_cell("Pct. Method"),
                             rx.table.column_header_cell("AUROC"),
                             rx.table.column_header_cell("Quality"),
                             rx.table.column_header_cell("Population"),
@@ -389,7 +426,14 @@ def prs_section(state: type[rx.State]) -> rx.Component:
         prs_section(MyPRSState)
     """
     return rx.vstack(
-        prs_build_selector(state),
+        rx.hstack(
+            prs_build_selector(state),
+            rx.separator(orientation="vertical", size="2"),
+            prs_ancestry_selector(state),
+            spacing="4",
+            align="center",
+            wrap="wrap",
+        ),
         prs_scores_selector(state),
         prs_compute_button(state),
         prs_progress_section(state),

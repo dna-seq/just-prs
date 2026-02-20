@@ -312,3 +312,263 @@ Override with the `PRS_CACHE_DIR` environment variable (or set it in `.env`).
 - Hardcoding expected values that drift from the source data.
 - Ignoring edge cases (nulls, empty strings, boundary values, malformed data).
 - Redundant tests (e.g., checking `len()` if you are already checking set equality).
+
+
+1. Dagster 1.12.x+ API Notes & Gotchas
+Many older Dagster tutorials use deprecated APIs. Keep these rules in mind for modern Dagster versions:
+Context Access: get_dagster_context() does NOT exist. You must pass context: AssetExecutionContext explicitly to your functions.
+Metadata Logging: context.log.info() does NOT accept a metadata keyword argument. Use context.add_output_metadata() separately.
+Run Logs: EventRecordsFilter does NOT have a run_ids parameter. Instead, use instance.all_logs(run_id, of_type=...).
+Asset Materializations: Use EventLogEntry.asset_materialization (which returns Optional[AssetMaterialization]), not DagsterEvent.asset_materialization.
+Job Hooks: The hooks parameter in define_asset_job must be a set, not a list (e.g., hooks={my_hook}).
+Asset Resolution: Use defs.resolve_all_asset_specs() instead of the deprecated defs.get_all_asset_specs().
+Asset Job Config: Asset job config uses the "ops" key, not "assets". Using "assets" causes a DagsterInvalidConfigError.
+2. Best Practices for Assets & IO
+Declarative Assets: Prioritize Software-Defined Assets (SDA) over imperative ops. Include all assets in Definitions(assets=[...]) for complete lineage visibility in the UI.
+Polars Integration: Use dagster-polars with PolarsParquetIOManager for pl.LazyFrame assets to automatically get schema and row counts in the Dagster UI.
+Large Data / Streaming: Use lazy_frame.sink_parquet() and NEVER .collect().write_parquet() on large data to avoid out-of-memory errors.
+Path Assets: When returning a Path from an asset, add "dagster/column_schema": polars_schema_to_table_schema(path) to ensure schema visibility in the UI.
+Asset Checks: Use @asset_check for validation and include them in your job via AssetSelection.checks_for_assets(...).
+3. Execution & Concurrency Patterns
+Concurrency Limits: Use op_tags={"dagster/concurrency_key": "name"} to limit parallel execution for resource-intensive assets.
+Timestamps: Timestamps are on RunRecord, not DagsterRun. run.start_time will raise an AttributeError. Retrieve instance.get_run_records() and use record.start_time/record.end_time (Unix floats) or record.create_timestamp (datetime).
+Partition Keys for Runs: create_run_for_job doesn't accept a direct partition_key parameter. Pass it via tags instead: tags={"dagster/partition": partition_key}.
+Dynamic Partitions Pattern:
+Create partition def: PARTS = DynamicPartitionsDefinition(name="files")
+Discovery asset registers partitions: context.instance.add_dynamic_partitions(PARTS.name, keys)
+Partitioned assets use: partitions_def=PARTS and access context.partition_key
+Collector depends on partitioned output via deps=[partitioned_asset] and scans the filesystem/storage for results.
+4. Web UI / Asynchronous Execution Pattern
+If you are running Dagster alongside a Web UI (like Reflex, FastAPI, etc.), use the Try-Daemon-With-Fallback pattern:
+Submission vs Execution:
+Attempt to submit the run to the daemon first: instance.submit_run(run_id, workspace=None). If this fails (e.g., due to missing ExternalPipelineOrigin in web contexts), fall back to job.execute_in_process().
+Rust/PyO3 Thread Safety:
+NEVER use asyncio.to_thread() or asyncio.create_task() with Dagster objects (it causes PyO3 panics: "Cannot drop pointer into Python heap without the thread being attached"). Use loop.run_in_executor(None, sync_execution_function, ...) for thread-safe background execution that doesn't block your UI.
+Orphaned Run Cleanup:
+If you use execute_in_process inside a web server process, runs will be abandoned (stuck in STARTED status) if the server restarts.
+Add startup cleanup logic targeting DagsterRunStatus.NOT_STARTED.
+Use atexit or signal handlers (SIGTERM/SIGINT) to mark active in-process runs as CANCELED on graceful server shutdown.
+5. Common Anti-Patterns to Avoid
+Using dagster job execute CLI: This is deprecated.
+Hardcoding asset names: Resolve them dynamically using defs.
+Suspended jobs holding locks: If a job crashes while querying local DBs (like DuckDB/SQLite), it can hold file locks. Handle connections properly via context managers or resources.
+Processing failures in exception handlers: Keep business logic out of exception handlers when executing runs. Catch the exception, register the failure, and cleanly proceed to your fallback mechanism.
+
+---
+
+## Dagster Asset Lineage Rules (CRITICAL)
+
+Incomplete lineage is a recurring mistake. Every time you write a Dagster asset, apply ALL of the rules below before finishing.
+
+### 1. SourceAssets for every external data source
+
+Any data that Dagster **downloads but does not produce** — an FTP tarball, a remote API, a HuggingFace dataset, an S3 bucket — must be declared as a `SourceAsset`. This gives it a visible node in the lineage graph.
+
+```python
+from dagster import SourceAsset
+
+ebi_reference_panel = SourceAsset(
+    key="ebi_reference_panel",
+    group_name="external",
+    description="1000G reference panel tarball at EBI FTP (~7 GB).",
+    metadata={"url": REFERENCE_PANEL_URL},
+)
+```
+
+Register every `SourceAsset` in `Definitions(assets=[...])`. Without this, the left edge of the graph is a dangling node with no visible origin.
+
+### 1b. NEVER put SourceAsset keys in computed asset `deps` when using AutomationCondition
+
+`AutomationCondition.eager()` expands to include `~any_deps_missing`. Dagster treats `SourceAsset`s as **always missing** (they're never materialized by Dagster). If a computed asset lists a SourceAsset in its `deps`, the `any_deps_missing` check will be permanently True, and `eager()` will **never fire**.
+
+```python
+# WRONG — ebi_reference_panel is a SourceAsset → blocks eager() forever
+@asset(deps=["ebi_reference_panel"], automation_condition=AutomationCondition.eager())
+def reference_panel(...): ...
+
+# CORRECT — no SourceAsset in deps; document the source URL in output metadata instead
+@asset(automation_condition=AutomationCondition.eager())
+def reference_panel(context, ...):
+    ...
+    context.add_output_metadata({"source_url": REFERENCE_PANEL_URL})
+```
+
+SourceAssets remain in `Definitions(assets=[...])` as standalone lineage nodes. The computed-to-computed dep chain (`a → b → c`) is all that automation needs. SourceAssets become "orphan" visualization nodes in the UI — that is acceptable since each computed asset documents its download URL in output metadata.
+
+### 2. Always declare `deps` when an asset reads filesystem side effects of another asset
+
+If an asset scans a directory that was populated by another asset (common pattern: partitioned writer → non-partitioned aggregator), it MUST declare a `deps` relationship. Without `deps`, Dagster draws NO edge between them even though there is a real data dependency.
+
+```python
+from dagster import AssetDep, asset
+
+@asset(
+    deps=[AssetDep("per_pgs_scores")],   # <-- REQUIRED for lineage even if no data is loaded via AssetIn
+    ...
+)
+def reference_distributions(...):
+    # scans cache_dir/reference_scores/**/*.parquet populated by per_pgs_scores partitions
+    ...
+```
+
+Rule: if you write "scan for parquets produced by X" anywhere in a docstring or comment, you MUST add `deps=[AssetDep("X")]` to the decorator.
+
+### 3. Use `AssetIn` only when data is passed through the IOManager
+
+`AssetIn` means "load the output of asset X via the IOManager and inject it as a function argument". Use it when:
+- The upstream returns a `pl.DataFrame` / `pl.LazyFrame` and you use `PolarsParquetIOManager`
+- The upstream returns a picklable Python object and the default IOManager is acceptable
+
+Do NOT use `AssetIn` with `Path` or `Output[Path]` unless you have a custom `UPathIOManager`. Passing a `Path` via the default IOManager only works within the same Python process (in-memory pickle) and will silently break across runs or when using a persistent IOManager.
+
+For `Path`-based data flow, use `deps` for lineage and reconstruct the path inside the downstream asset from a shared resource (e.g. `CacheDirResource`).
+
+### 4. Separate assets into named groups by pipeline stage
+
+Every `@asset` and `SourceAsset` must have a `group_name`. Use a consistent stage-based taxonomy so the Dagster UI shows a clear left-to-right graph:
+
+| group_name | What belongs here |
+|---|---|
+| `external` | `SourceAsset`s for remote data (FTP, HF, S3, API) |
+| `download` | Assets that fetch external data into local cache |
+| `compute` | Transformation / scoring / aggregation assets |
+| `upload` | Assets that push results to external destinations (HF, S3, DB) |
+
+The final upload asset (e.g. `hf_prs_percentiles`) IS the representation of the remote dataset in the lineage — name it after the destination, not after the action.
+
+### 5. SourceAssets must be registered in `Definitions`
+
+```python
+defs = dg.Definitions(
+    assets=[
+        ebi_reference_panel,   # SourceAsset — must be listed
+        ebi_pgs_catalog,       # SourceAsset — must be listed
+        reference_panel,
+        per_pgs_scores,
+        reference_distributions,
+        hf_prs_percentiles,
+    ],
+    ...
+)
+```
+
+Omitting a `SourceAsset` from `Definitions` makes it invisible in the UI even if assets declare `deps` on it.
+
+### Quick checklist before finishing any Dagster asset file
+
+- [ ] Every remote data origin has a `SourceAsset` with `group_name="external"` and a `metadata={"url": ...}`.
+- [ ] Every `SourceAsset` is listed in `Definitions(assets=[...])`.
+- [ ] Every asset that scans a directory written by another asset has `deps=[AssetDep("that_asset")]`.
+- [ ] No `AssetIn` is used with `Output[Path]` unless a `UPathIOManager` is configured.
+- [ ] Every `@asset` has `group_name` set (never omit it).
+- [ ] The final destination asset (HF upload, S3 push, DB write) is named after the destination, not the action.
+
+---
+
+## Dagster Single-Command Startup Pattern (CRITICAL)
+
+When building a CLI command that launches Dagster (`dagster dev`) AND auto-runs the pipeline, follow this exact sequence. **Never use `subprocess.run()` or `subprocess.Popen()` for Dagster itself.**
+
+### Full pre-flight before `os.execvp`
+
+```python
+def launch_pipeline(host: str = "0.0.0.0", port: int = 3010) -> None:
+    import os, signal, time, sys
+    from pathlib import Path
+
+    # 1. Set DAGSTER_HOME to a project-relative path (never default ~/.dagster)
+    project_root = _find_project_root()
+    dagster_home = project_root / "data" / "output" / "dagster"
+    dagster_home.mkdir(parents=True, exist_ok=True)
+    os.environ["DAGSTER_HOME"] = str(dagster_home)
+
+    # 2. Generate dagster.yaml if missing
+    _ensure_dagster_yaml(dagster_home)
+
+    # 3. Kill any orphaned process holding the port
+    _kill_port(port)
+
+    # 4. Cancel stuck runs from previous sessions
+    _cancel_orphaned_runs()
+
+    # 5. Replace this process with dagster dev — NEVER use subprocess.run/Popen here
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, ["dagster", "dev", "-m", "my_pkg.definitions",
+                            "--host", host, "--port", str(port)])
+```
+
+### Why `os.execvp` (not `subprocess.run` or `Popen`)
+
+Dagster's daemon uses complex internal signal handling. When trapped inside a `subprocess.run()` or `Popen()`, SIGINT/SIGTERM do not propagate correctly and the daemon does not shut down cleanly. `os.execvp` **replaces** the current Python process with `dagster`, so Dagster becomes the primary process and owns all signal handling. Ctrl+C works correctly.
+
+### Why `AutomationCondition` (not job submission after startup)
+
+Because `os.execvp` replaces the current process, there is no opportunity to submit a job "after dagster starts". Instead, mark assets with automation conditions. The `AssetDaemon` (enabled by `auto_materialize: enabled: true` in `dagster.yaml`) picks them up automatically — no timing hacks, no subprocess coordination, no SQLite conflicts.
+
+### `on_missing()` for root assets, `eager()` for downstream assets (CRITICAL)
+
+`AutomationCondition.eager()` fires when upstream dependencies are updated OR the asset is "newly missing". However, for **root assets** (no deps), `eager()` does NOT fire on startup because its `SinceCondition` is reset by `InitialEvaluationCondition` on the same tick as the `newly_missing` trigger — they cancel out.
+
+Use `AutomationCondition.on_missing()` for root assets (assets with no upstream deps). It reliably fires on the first daemon evaluation tick when the asset has never been materialized. Use `AutomationCondition.eager()` for all downstream assets (assets with deps) — it fires when any upstream dependency is updated.
+
+```python
+from dagster import AutomationCondition, asset
+
+@asset(automation_condition=AutomationCondition.on_missing())
+def root_download_asset(...): ...
+
+@asset(
+    deps=["root_download_asset"],
+    automation_condition=AutomationCondition.eager(),
+)
+def downstream_compute_asset(...): ...
+```
+
+**Never use `eager()` on root assets** — it will silently do nothing and the pipeline won't start.
+
+`SourceAsset`s (external data) must NOT have an automation condition — they are always considered fresh. Also never put SourceAsset keys in computed asset `deps` (see lineage rules above).
+
+### `dagster.yaml` template (telemetry off, auto_materialize on)
+
+```yaml
+telemetry:
+  enabled: false
+
+auto_materialize:
+  enabled: true
+```
+
+Generate this file at `{DAGSTER_HOME}/dagster.yaml` if it does not exist. The `telemetry: enabled: false` setting prevents `RotatingFileHandler` crashes in Dagster's event log writer.
+
+### Port cleanup helper
+
+```python
+def _kill_port(port: int) -> None:
+    import subprocess, signal, time, os
+    result = subprocess.run(["lsof", "-t", f"-iTCP:{port}"], capture_output=True, text=True)
+    pids = [int(p) for p in result.stdout.strip().splitlines() if p.strip()]
+    for pid in pids:
+        os.kill(pid, signal.SIGTERM)
+    if pids:
+        time.sleep(1)
+        result2 = subprocess.run(["lsof", "-t", f"-iTCP:{port}"], capture_output=True, text=True)
+        for pid in [int(p) for p in result2.stdout.strip().splitlines() if p.strip()]:
+            os.kill(pid, signal.SIGKILL)
+```
+
+### Orphaned run cleanup helper
+
+```python
+def _cancel_orphaned_runs() -> None:
+    from dagster import DagsterInstance, DagsterRunStatus, RunsFilter
+    with DagsterInstance.get() as instance:
+        stuck = instance.get_run_records(
+            filters=RunsFilter(statuses=[DagsterRunStatus.STARTED, DagsterRunStatus.NOT_STARTED])
+        )
+        for record in stuck:
+            instance.report_run_canceled(record.dagster_run, message="Orphaned run from previous session")
+```
+
+### Thread-safety note for Web UI contexts
+
+If a Web UI (Reflex, FastAPI) needs to trigger a Dagster job in the background, **never use `asyncio.to_thread()`**. Dagster's Rust/PyO3 internals panic when the GIL is released across asyncio threads. Use `loop.run_in_executor(None, sync_func)` instead.

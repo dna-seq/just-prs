@@ -1,6 +1,7 @@
 from importlib.metadata import metadata
 
 from prs_ui.components.prs_section import (
+    prs_ancestry_selector,
     prs_build_selector,
     prs_compute_button,
     prs_progress_section,
@@ -16,6 +17,7 @@ __package_name__: str = _meta["Name"]
 
 __all__ = [
     "PRSComputeStateMixin",
+    "prs_ancestry_selector",
     "prs_build_selector",
     "prs_compute_button",
     "prs_progress_section",

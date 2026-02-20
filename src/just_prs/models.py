@@ -89,6 +89,21 @@ class PerformanceInfo(BaseModel):
     covariates: str | None = Field(default=None, description="Covariates used in evaluation")
 
 
+class ReferenceDistribution(BaseModel):
+    """Per-superpopulation PRS distribution statistics from the 1000G reference panel."""
+
+    pgs_id: str = Field(description="PGS Catalog Score ID")
+    superpopulation: str = Field(description="1000G superpopulation code (AFR, AMR, EAS, EUR, SAS)")
+    mean: float = Field(description="Mean PRS in this ancestry group")
+    std: float = Field(description="Standard deviation of PRS in this ancestry group")
+    n: int = Field(description="Number of reference individuals in this group")
+    median: float | None = Field(default=None, description="Median PRS")
+    p5: float | None = Field(default=None, description="5th percentile PRS")
+    p25: float | None = Field(default=None, description="25th percentile PRS")
+    p75: float | None = Field(default=None, description="75th percentile PRS")
+    p95: float | None = Field(default=None, description="95th percentile PRS")
+
+
 class PRSResult(BaseModel):
     """Result of a polygenic risk score computation."""
 
@@ -116,4 +131,12 @@ class PRSResult(BaseModel):
     percentile: float | None = Field(
         default=None,
         description="Estimated population percentile (0-100) from theoretical distribution",
+    )
+    ancestry: str | None = Field(
+        default=None,
+        description="Ancestry superpopulation used for percentile (AFR, AMR, EAS, EUR, SAS)",
+    )
+    percentile_method: str | None = Field(
+        default=None,
+        description="Method used to compute percentile: 'reference_panel', 'theoretical', or 'auroc_approx'",
     )

@@ -1,6 +1,7 @@
 """Reusable PRS UI components for Reflex applications."""
 
 from prs_ui.components.prs_section import (
+    prs_ancestry_selector,
     prs_build_selector,
     prs_compute_button,
     prs_progress_section,
@@ -10,6 +11,7 @@ from prs_ui.components.prs_section import (
 )
 
 __all__ = [
+    "prs_ancestry_selector",
     "prs_build_selector",
     "prs_compute_button",
     "prs_progress_section",

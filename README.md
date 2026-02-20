@@ -2,7 +2,7 @@
 
 [![PyPI version](https://badge.fury.io/py/just-prs.svg)](https://pypi.org/project/just-prs/)
 [![PyPI version](https://badge.fury.io/py/prs-ui.svg)](https://pypi.org/project/prs-ui/)
-[![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 
 A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (PRS)** from the [PGS Catalog](https://www.pgscatalog.org/).
 
@@ -76,7 +76,7 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 
 ## Installation
 
-Requires Python >= 3.14. Uses [uv](https://github.com/astral-sh/uv) for dependency management.
+Requires Python >= 3.13. Uses [uv](https://github.com/astral-sh/uv) for dependency management.
 
 **From PyPI:**
 

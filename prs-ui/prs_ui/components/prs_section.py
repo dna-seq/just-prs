@@ -261,15 +261,23 @@ def _result_row(row: dict) -> rx.Component:  # type: ignore[type-arg]
 
 def _result_interpretation_card(row: dict) -> rx.Component:  # type: ignore[type-arg]
     """Interpretation card for a single PRS result."""
-    return rx.cond(
-        row["summary"] != "",
-        rx.card(
+    return rx.card(
+        rx.vstack(
             rx.hstack(
                 rx.badge(
                     row["pgs_id"],
                     color_scheme="gray",
                     size="1",
                     variant="outline",
+                ),
+                rx.cond(
+                    row["risk_level"] != "",
+                    rx.badge(
+                        row["risk_level"],
+                        color_scheme=row["risk_level_color"],
+                        size="1",
+                        variant="solid",
+                    ),
                 ),
                 rx.badge(
                     rx.text("Quality: ", row["quality_label"]),
@@ -298,9 +306,97 @@ def _result_interpretation_card(row: dict) -> rx.Component:  # type: ignore[type
                 spacing="2",
                 wrap="wrap",
             ),
-            rx.text(row["summary"], size="2", color="var(--gray-11)"),
+            rx.text(row["risk_hint"], size="2", weight="medium"),
+            rx.cond(
+                row["summary"] != "",
+                rx.text(row["summary"], size="2", color="var(--gray-11)"),
+            ),
+            spacing="2",
             width="100%",
-            size="1",
+        ),
+        width="100%",
+        size="1",
+    )
+
+
+def _prs_interpretation_guide() -> rx.Component:
+    """Collapsible guide explaining how to read PRS percentiles and risk levels."""
+    return rx.el.details(
+        rx.el.summary(
+            rx.text(
+                "How to interpret PRS results",
+                size="2",
+                weight="medium",
+                style={"cursor": "pointer"},
+            ),
+        ),
+        rx.vstack(
+            rx.text(
+                "The raw PRS score (e.g. 0.098) is model-specific and unitless — "
+                "it cannot be read as 'protective' or 'risky' on its own, and scores "
+                "from different PGS models cannot be compared to each other.",
+                size="2",
+            ),
+            rx.text(
+                "The percentile is the key number. It shows where your score falls "
+                "relative to a reference population of the same ancestry. "
+                "For virtually all standard PRS models, higher percentile = more "
+                "genetic variants associated with increased risk for that trait.",
+                size="2",
+            ),
+            rx.hstack(
+                rx.badge("< 25th", color_scheme="blue", size="1", variant="soft"),
+                rx.text("Below average predisposition", size="2"),
+                spacing="2", align="center",
+            ),
+            rx.hstack(
+                rx.badge("25th – 75th", color_scheme="gray", size="1", variant="soft"),
+                rx.text("Average predisposition", size="2"),
+                spacing="2", align="center",
+            ),
+            rx.hstack(
+                rx.badge("75th – 90th", color_scheme="orange", size="1", variant="soft"),
+                rx.text("Above average predisposition", size="2"),
+                spacing="2", align="center",
+            ),
+            rx.hstack(
+                rx.badge("> 90th", color_scheme="red", size="1", variant="soft"),
+                rx.text("High predisposition", size="2"),
+                spacing="2", align="center",
+            ),
+            rx.text(
+                "PRS captures only inherited genetic variants — not lifestyle, "
+                "environment, or treatment. Most people with a high PRS never develop "
+                "the condition, and many with a low PRS do. This is a research tool, "
+                "not a diagnostic test.",
+                size="2",
+                color="var(--gray-11)",
+            ),
+            spacing="2",
+            padding_top="8px",
+            padding_x="4px",
+        ),
+    )
+
+
+def _sortable_header(state: type[rx.State], label: str, field: str) -> rx.Component:
+    return rx.table.column_header_cell(
+        rx.flex(
+            rx.text(label, size="2"),
+            rx.cond(
+                state.prs_results_sort_field == field,
+                rx.cond(
+                    state.prs_results_sort_asc,
+                    rx.text("↑", size="1"),
+                    rx.text("↓", size="1"),
+                ),
+                rx.text("↕", size="1", color="gray"),
+            ),
+            direction="row",
+            gap="1",
+            align="center",
+            on_click=state.set_prs_results_sort(field),
+            style={"cursor": "pointer"},
         ),
     )
 
@@ -367,26 +463,48 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 spacing="2",
                 width="100%",
             ),
+            _prs_interpretation_guide(),
+            rx.hstack(
+                rx.input(
+                    placeholder="Filter… (space-separated words are ANDed, e.g. blood european)",
+                    value=state.prs_results_filter,
+                    on_change=state.set_prs_results_filter,
+                    size="2",
+                    width="320px",
+                ),
+                rx.spacer(),
+                rx.cond(
+                    state.prs_results_filter != "",
+                    rx.text(
+                        state.prs_filtered_result_count, " / ", state.prs_result_count, " results",
+                        size="2", color="gray",
+                    ),
+                    rx.text(state.prs_result_count, " results", size="2", color="gray"),
+                ),
+                align="center",
+                spacing="2",
+                width="100%",
+            ),
             rx.box(
                 rx.table.root(
                     rx.table.header(
                         rx.table.row(
-                            rx.table.column_header_cell("PGS ID"),
-                            rx.table.column_header_cell("Trait"),
-                            rx.table.column_header_cell("PRS Score"),
-                            rx.table.column_header_cell("Percentile"),
+                            _sortable_header(state, "PGS ID", "pgs_id"),
+                            _sortable_header(state, "Trait", "trait"),
+                            _sortable_header(state, "PRS Score", "score"),
+                            _sortable_header(state, "Percentile", "percentile"),
                             rx.table.column_header_cell("Pct. Method"),
-                            rx.table.column_header_cell("AUROC"),
-                            rx.table.column_header_cell("Quality"),
-                            rx.table.column_header_cell("Population"),
-                            rx.table.column_header_cell("Match Rate"),
+                            _sortable_header(state, "AUROC", "auroc"),
+                            _sortable_header(state, "Quality", "quality_label"),
+                            _sortable_header(state, "Population", "ancestry"),
+                            _sortable_header(state, "Match Rate", "match_rate"),
                             rx.table.column_header_cell("Matched / Total"),
                             rx.table.column_header_cell("Effect Size"),
                         ),
                     ),
                     rx.table.body(
                         rx.foreach(
-                            state.prs_results,
+                            state.prs_filtered_results,
                             _result_row,
                         ),
                     ),
@@ -396,8 +514,12 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 overflow_x="auto",
                 width="100%",
             ),
+            rx.cond(
+                state.prs_filtered_result_count == 0,
+                rx.text("No results match the current filter.", size="2", color="gray"),
+            ),
             rx.foreach(
-                state.prs_results,
+                state.prs_filtered_results,
                 _result_interpretation_card,
             ),
             rx.text(

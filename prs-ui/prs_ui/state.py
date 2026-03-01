@@ -238,6 +238,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     prs_genotypes_path: str = ""
     selected_ancestry: str = "EUR"
 
+    # Filter / sort state
+    prs_results_filter: str = ""
+    prs_results_sort_field: str = ""
+    prs_results_sort_asc: bool = True
+
     _scores_initialized: bool = False
     _compute_scores_lf: pl.LazyFrame | None = None
     _prs_genotypes_lf: pl.LazyFrame | None = None
@@ -245,6 +250,57 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     def set_selected_ancestry(self, value: str) -> None:
         """Set the ancestry superpopulation for percentile lookup."""
         self.selected_ancestry = value
+
+    def set_prs_results_filter(self, value: str) -> None:
+        self.prs_results_filter = value
+
+    def set_prs_results_sort(self, field: str) -> None:
+        if self.prs_results_sort_field == field:
+            if self.prs_results_sort_asc:
+                self.prs_results_sort_asc = False
+            else:
+                self.prs_results_sort_field = ""
+                self.prs_results_sort_asc = True
+        else:
+            self.prs_results_sort_field = field
+            self.prs_results_sort_asc = True
+
+    @rx.var
+    def prs_filtered_results(self) -> list[dict]:
+        results = self.prs_results
+        q = self.prs_results_filter.strip().lower()
+        if q:
+            terms = q.split()
+            def matches_all(r: dict) -> bool:
+                fields = [
+                    r.get("pgs_id", "").lower(),
+                    r.get("trait", "").lower(),
+                    r.get("quality_label", "").lower(),
+                    r.get("ancestry", "").lower(),
+                ]
+                return all(any(term in field for field in fields) for term in terms)
+            results = [r for r in results if matches_all(r)]
+        field = self.prs_results_sort_field
+        if field and results:
+            numeric_fields = {"score", "match_rate", "percentile", "auroc"}
+            def sort_key(r: dict) -> Any:
+                v = r.get(field, "")
+                if field in numeric_fields:
+                    try:
+                        return float(v) if v not in ("", None) else -999.0
+                    except (TypeError, ValueError):
+                        return -999.0
+                return str(v).lower()
+            results = sorted(results, key=sort_key, reverse=not self.prs_results_sort_asc)
+        return results
+
+    @rx.var
+    def prs_result_count(self) -> int:
+        return len(self.prs_results)
+
+    @rx.var
+    def prs_filtered_result_count(self) -> int:
+        return len(self.prs_filtered_results)
 
     def set_prs_genotypes_lf(self, lf: pl.LazyFrame) -> None:
         """Provide a pre-loaded genotypes LazyFrame for PRS computation.
@@ -423,6 +479,46 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
             interp = interpret_prs_result(pct_value, result.match_rate, auroc_val)
 
+            # Risk level from percentile
+            if pct_value is not None:
+                if pct_value >= 90:
+                    risk_level = "High predisposition"
+                    risk_level_color = "red"
+                elif pct_value >= 75:
+                    risk_level = "Above average predisposition"
+                    risk_level_color = "orange"
+                elif pct_value >= 25:
+                    risk_level = "Average predisposition"
+                    risk_level_color = "gray"
+                else:
+                    risk_level = "Below average predisposition"
+                    risk_level_color = "blue"
+            else:
+                risk_level = ""
+                risk_level_color = "gray"
+
+            # Human-readable interpretation hint
+            trait_name = result.trait_reported or pgs_id
+            pop_label = ancestry_str or self.selected_ancestry or "the reference population"  # type: ignore[attr-defined]
+            if pct_value is not None:
+                pct_int = int(pct_value)
+                sfx = "th"
+                if pct_int % 100 not in (11, 12, 13):
+                    sfx = {1: "st", 2: "nd", 3: "rd"}.get(pct_int % 10, "th")
+                risk_hint = (
+                    f"Your PRS for {trait_name} is at the {pct_int}{sfx} percentile — "
+                    f"{risk_level.lower()} compared to the {pop_label} reference population. "
+                    "For standard PRS models, higher percentile = more genetic variants "
+                    "associated with increased risk."
+                )
+            else:
+                risk_hint = (
+                    f"No reference percentile is available for {trait_name}. "
+                    "The raw score is model-specific and cannot be read as protective or risky "
+                    "without a population reference. Try selecting a different ancestry or "
+                    "checking whether a reference panel exists for this score."
+                )
+
             row: dict[str, Any] = {
                 "pgs_id": result.pgs_id,
                 "trait": result.trait_reported or "",
@@ -441,8 +537,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "quality_color": interp["quality_color"],
                 "summary": interp["summary"],
                 "ancestry": ancestry_str,
-                "selected_ancestry": self.selected_ancestry,
+                "selected_ancestry": self.selected_ancestry,  # type: ignore[attr-defined]
                 "n_individuals": n_individuals if n_individuals is not None else 0,
+                "risk_level": risk_level,
+                "risk_level_color": risk_level_color,
+                "risk_hint": risk_hint,
             }
 
             if result.match_rate < 0.1:

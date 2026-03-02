@@ -3,8 +3,10 @@
 import dagster as dg
 
 from prs_pipeline.assets import (
+    ebi_reference_panel_fingerprint,
     ebi_pgs_catalog_reference_panel,
     ebi_pgs_catalog_scoring_files,
+    ebi_scoring_files_fingerprint,
     hf_prs_percentiles,
     reference_panel,
     reference_scores,
@@ -20,7 +22,7 @@ from prs_pipeline.utils import resource_summary_hook
 
 download_reference_data = dg.define_asset_job(
     name="download_reference_data",
-    selection=["reference_panel"],
+    selection=["ebi_reference_panel_fingerprint", "reference_panel"],
     description="Download the reference panel from the EBI FTP server.",
     hooks={resource_summary_hook},
 )
@@ -28,6 +30,7 @@ download_reference_data = dg.define_asset_job(
 score_and_push = dg.define_asset_job(
     name="score_and_push",
     selection=[
+        "ebi_scoring_files_fingerprint",
         "reference_scores",
         "raw_pgs_metadata", "cleaned_pgs_metadata",
         "hf_prs_percentiles",
@@ -42,6 +45,7 @@ score_and_push = dg.define_asset_job(
 full_pipeline = dg.define_asset_job(
     name="full_pipeline",
     selection=[
+        "ebi_reference_panel_fingerprint", "ebi_scoring_files_fingerprint",
         "reference_panel", "reference_scores",
         "raw_pgs_metadata", "cleaned_pgs_metadata",
         "hf_prs_percentiles",
@@ -59,6 +63,8 @@ defs = dg.Definitions(
     assets=[
         ebi_pgs_catalog_reference_panel,
         ebi_pgs_catalog_scoring_files,
+        ebi_reference_panel_fingerprint,
+        ebi_scoring_files_fingerprint,
         reference_panel,
         reference_scores,
         hf_prs_percentiles,
@@ -77,7 +83,10 @@ defs = dg.Definitions(
         full_pipeline,
         dg.define_asset_job(
             name="metadata_pipeline",
-            selection=["raw_pgs_metadata", "cleaned_pgs_metadata", "hf_polygenic_risk_scores"],
+            selection=[
+                "ebi_scoring_files_fingerprint",
+                "raw_pgs_metadata", "cleaned_pgs_metadata", "hf_polygenic_risk_scores",
+            ],
             description=(
                 "End-to-end metadata pipeline: download raw PGS Catalog sheets from EBI FTP, "
                 "run cleanup pipeline, push cleaned parquets to HuggingFace."

@@ -25,14 +25,16 @@ This pipeline computes population-level Polygenic Risk Score (PRS) distributions
 Asset lineage (left to right):
 
 ```text
-[external]                        [download]       [compute]              [upload]
-ebi_pgs_catalog_reference_panel → reference_panel → reference_scores ──→ hf_prs_percentiles
-ebi_pgs_catalog_scoring_files  ──────────────────↗                     ↗
-                                  raw_pgs_metadata → cleaned_pgs_metadata
+[external]                        [download]                         [compute]              [upload]
+ebi_pgs_catalog_reference_panel    ebi_reference_panel_fingerprint → reference_panel → reference_scores ──→ hf_prs_percentiles
+ebi_pgs_catalog_scoring_files  →   ebi_scoring_files_fingerprint  ──────────────────────↗                     ↗
+                                                                         raw_pgs_metadata → cleaned_pgs_metadata
 ```
 
 - **`ebi_pgs_catalog_reference_panel`** (SourceAsset): The remote reference panel tarball on the EBI PGS Catalog FTP server.
 - **`ebi_pgs_catalog_scoring_files`** (SourceAsset): Remote PGS Catalog scoring files and metadata on the EBI FTP server.
+- **`ebi_reference_panel_fingerprint`**: Materialized remote fingerprint for the reference panel URL (HTTP metadata hash). Downstream assets depend on this, not directly on the SourceAsset.
+- **`ebi_scoring_files_fingerprint`**: Materialized remote fingerprint for `pgs_scores_list.txt` (HTTP metadata + body hash). Used as a freshness dependency for scoring/metadata assets.
 - **`reference_panel`**: Downloads and extracts the reference panel binary files to local cache.
 - **`reference_scores`**: Scores all PGS IDs against the reference panel in a single batch using `compute_reference_prs_batch()`. This replaces the previous partitioned approach (one Dagster partition per PGS ID + sensor orchestration). The batch function iterates in-process, tracks failures, and produces aggregated distributions.
 - **`hf_prs_percentiles`**: Enriches the raw distribution statistics with cleaned PGS Catalog metadata (trait names, EFO terms, performance metrics like AUROC/OR/C-index, ancestry) via `enrich_distributions()`, then uploads the enriched parquet to HuggingFace (`just-dna-seq/prs-percentiles`). This creates a cross-pipeline dependency on `cleaned_pgs_metadata`, ensuring the published distributions parquet is self-contained.
@@ -86,7 +88,14 @@ The pipeline is operated via the `prs-pipeline` CLI (or `uv run pipeline` from t
   ```bash
   uv run pipeline launch
   ```
-  Starts the Dagster dev server. An `AutomationConditionSensorDefinition` (with `default_status=RUNNING`) automatically materializes assets in dependency order: `reference_panel` (on_missing) → `reference_scores` (eager) → `hf_prs_percentiles` (eager). No manual triggering needed — the sensor evaluates every ~30 seconds.
+  Starts the Dagster dev server. The startup sensor (`run_pipeline_on_startup`) is a **bootstrap trigger**, not a freshness policy: it submits `full_pipeline` on startup (by default via `--run-now`) and avoids duplicate in-flight runs.
+
+  For freshness in proper production pipelines, keep a **separate recompute sensor/schedule** that re-triggers when upstream lineage is newer than downstream outputs. Do not rely on "assets exist" checks alone.
+
+  To only start the UI without submitting a startup run:
+  ```bash
+  uv run pipeline launch --no-run-now
+  ```
 
   To test with a subset of PGS IDs:
   ```bash
@@ -164,6 +173,7 @@ my_job = define_asset_job(
 
 ## Data Flow Principles
 
-- **SourceAssets**: Any data Dagster observes but does not create (e.g., FTP files, reference tarballs) is explicitly modeled as a `SourceAsset`.
+- **SourceAssets + Fingerprints**: External origins are modeled as `SourceAsset`s for provenance, while downstream freshness dependencies use materialized fingerprint assets to avoid "missing forever" behavior.
 - **Batch over Partitions**: The `reference_scores` asset uses `compute_reference_prs_batch()` which iterates in-process rather than creating one Dagster run per PGS ID. Failures are tracked in the returned `BatchScoringResult` and persisted as a quality parquet.
 - **Resource Configurations**: Environment settings (cache directories, HuggingFace tokens) are handled via Dagster Resources (`CacheDirResource`, `HuggingFaceResource`).
+- **Freshness over Presence**: "Materialized" does not imply "up-to-date." If upstream assets are newer, downstream compute/upload assets must be recomputed by sensor/schedule policy.

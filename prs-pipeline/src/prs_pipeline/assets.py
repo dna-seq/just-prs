@@ -7,10 +7,10 @@ end-users compare their personal PRS against a global reference.
 
 Asset lineage (left to right):
 
-  [external]                        [download]       [compute]              [upload]
-  ebi_pgs_catalog_reference_panel → reference_panel → reference_scores ──→ hf_prs_percentiles
-  ebi_pgs_catalog_scoring_files  ──────────────────↗                     ↗
-                                    raw_pgs_metadata → cleaned_pgs_metadata
+  [external]                        [download]                         [compute]              [upload]
+  ebi_pgs_catalog_reference_panel    ebi_reference_panel_fingerprint → reference_panel → reference_scores ──→ hf_prs_percentiles
+  ebi_pgs_catalog_scoring_files  →   ebi_scoring_files_fingerprint  ──────────────────────↗                     ↗
+                                                                             raw_pgs_metadata → cleaned_pgs_metadata
 
 hf_prs_percentiles enriches the raw distribution statistics with cleaned
 PGS Catalog metadata (trait names, EFO terms, performance metrics) before
@@ -23,6 +23,7 @@ data Dagster observes but does not create.
 
 import os
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 from dagster import (
@@ -34,7 +35,7 @@ from dagster import (
     asset,
 )
 
-from just_prs.ftp import PGS_FTP_BASE, list_all_pgs_ids
+from just_prs.ftp import PGS_FTP_BASE, PGS_SCORES_LIST_URL, list_all_pgs_ids
 from just_prs.hf import DEFAULT_HF_PERCENTILES_REPO, push_reference_distributions
 from just_prs.reference import (
     DEFAULT_PANEL,
@@ -44,6 +45,7 @@ from just_prs.reference import (
     download_reference_panel,
     enrich_distributions,
 )
+from prs_pipeline.fingerprint import fingerprint_http_resource
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
 from prs_pipeline.runtime import resource_tracker
 
@@ -78,12 +80,46 @@ ebi_pgs_catalog_scoring_files = SourceAsset(
     metadata={"url": PGS_FTP_BASE},
 )
 
+
+@asset(
+    group_name="download",
+    description=(
+        "Computes a stable fingerprint for the remote reference panel tarball "
+        "from HTTP metadata (ETag / Last-Modified / Content-Length). "
+        "Downstream assets depend on this fingerprint for freshness checks "
+        "without depending directly on SourceAssets."
+    ),
+)
+def ebi_reference_panel_fingerprint(context: AssetExecutionContext) -> Output[str]:
+    """Fingerprint the remote reference panel artifact for dependency tracking."""
+    panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+    panel_url = REFERENCE_PANELS[panel]["url"]
+    fingerprint, metadata = fingerprint_http_resource(panel_url)
+    context.add_output_metadata({"panel": panel, **metadata})
+    return Output(fingerprint)
+
+
+@asset(
+    group_name="download",
+    description=(
+        "Computes a fingerprint for the remote PGS scoring manifest "
+        "(pgs_scores_list.txt) using HTTP metadata plus body SHA256. "
+        "Used as a freshness dependency for metadata/scoring assets."
+    ),
+)
+def ebi_scoring_files_fingerprint(context: AssetExecutionContext) -> Output[str]:
+    """Fingerprint the remote scoring index for downstream freshness dependencies."""
+    fingerprint, metadata = fingerprint_http_resource(PGS_SCORES_LIST_URL, include_body_hash=True)
+    context.add_output_metadata(metadata)
+    return Output(fingerprint)
+
 # ---------------------------------------------------------------------------
 # Download asset — fetch reference panel into local cache
 # ---------------------------------------------------------------------------
 
 @asset(
     group_name="download",
+    deps=[AssetDep("ebi_reference_panel_fingerprint")],
     description=(
         "Downloads the reference panel from the EBI FTP server and extracts the "
         "binary genotype files (.pgen/.pvar/.psam) into the local cache. "
@@ -118,6 +154,7 @@ def reference_panel(
 @asset(
     group_name="compute",
     ins={"ref_dir": AssetIn("reference_panel")},
+    deps=[AssetDep("ebi_scoring_files_fingerprint")],
     description=(
         "Scores all PGS IDs (or a test subset) against the reference panel in a "
         "single process using pgenlib + polars. Failures are logged and tracked "
@@ -133,12 +170,15 @@ def reference_scores(
 ) -> Output[pl.DataFrame]:
     """Score all PGS IDs against the reference panel and aggregate distributions."""
     import random
+    import psutil
 
     cache_dir = cache_dir_resource.get_path()
     panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
     test_spec = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
 
+    context.log.info("Fetching PGS ID list from EBI FTP...")
     all_pgs_ids = list_all_pgs_ids()
+    context.log.info(f"Fetched {len(all_pgs_ids)} PGS IDs from EBI catalog.")
 
     if test_spec:
         if test_spec.startswith("random:"):
@@ -162,8 +202,66 @@ def reference_scores(
 
     is_test = bool(test_spec)
     output_subdir = "test" if is_test else None
+    progress_every_raw = os.environ.get("PRS_PIPELINE_PROGRESS_EVERY", "10").strip()
+    progress_every = max(int(progress_every_raw), 1) if progress_every_raw else 10
+    process = psutil.Process(os.getpid())
+    process.cpu_percent(interval=None)
+    peak_rss_mb = process.memory_info().rss / (1024 * 1024)
 
-    context.log.info(f"Batch scoring {len(pgs_ids)} PGS IDs against {panel} panel.")
+    scores_dir = cache_dir / "reference_scores" / panel
+    existing_cached = 0
+    if scores_dir.exists():
+        existing_cached = sum(1 for p in scores_dir.rglob("scores.parquet") if p.is_file())
+
+    context.log.info(
+        f"Batch scoring {len(pgs_ids)} PGS IDs against {panel} panel. "
+        f"Found {existing_cached} already cached scores on disk."
+    )
+
+    def _dagster_progress(payload: dict[str, Any]) -> None:
+        nonlocal peak_rss_mb
+        processed = int(payload.get("processed", 0))
+        total = int(payload.get("total", 0))
+        if total <= 0:
+            return
+
+        rss_mb = process.memory_info().rss / (1024 * 1024)
+        peak_rss_mb = max(peak_rss_mb, rss_mb)
+        cpu_percent = process.cpu_percent(interval=None)
+        last_status = str(payload.get("last_status", "n/a"))
+
+        if last_status == "panel_resolved":
+            panel_sec = payload.get("panel_resolve_sec", "?")
+            pvar_variants = payload.get("pvar_variants", "?")
+            n_samples = payload.get("n_samples", "?")
+            context.log.info(
+                f"Panel resolved in {panel_sec}s: "
+                f"{pvar_variants} variants, {n_samples} samples. "
+                f"rss={rss_mb:.1f}MB, cpu={cpu_percent:.1f}%. "
+                f"Starting scoring loop for {total} PGS IDs..."
+            )
+            return
+
+        percent = 100.0 * processed / total
+        ok = int(payload.get("ok", 0))
+        failed = int(payload.get("failed", 0))
+        problematic = int(payload.get("problematic", 0))
+        cached = int(payload.get("cached", 0))
+        rate_per_sec = float(payload.get("rate_per_sec", 0.0))
+        eta_sec = payload.get("eta_sec")
+        eta_text = "unknown"
+        if isinstance(eta_sec, (int, float)):
+            eta_text = f"{int(eta_sec)}s"
+        recent_ids: list[str] = payload.get("recent_ids", [])
+        ids_text = ",".join(recent_ids) if recent_ids else str(payload.get("last_pgs_id", "n/a"))
+        context.log.info(
+            "Scoring progress: "
+            f"{processed}/{total} ({percent:.1f}%), "
+            f"ok={ok}, failed={failed}, problematic={problematic}, cached={cached}, "
+            f"rate={rate_per_sec:.2f}/s, eta={eta_text}, "
+            f"rss={rss_mb:.1f}MB, peak_rss={peak_rss_mb:.1f}MB, cpu={cpu_percent:.1f}%, "
+            f"ids=[{ids_text}] ({last_status})"
+        )
 
     with resource_tracker("reference_scores", context=context):
         result = compute_reference_prs_batch(
@@ -174,6 +272,8 @@ def reference_scores(
             panel=panel,
             skip_existing=True,
             output_subdir=output_subdir,
+            progress_callback=_dagster_progress,
+            progress_every=progress_every,
         )
 
     n_ok = sum(1 for o in result.outcomes if o.status == "ok")

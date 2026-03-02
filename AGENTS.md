@@ -467,7 +467,7 @@ Many older Dagster tutorials use deprecated APIs. Keep these rules in mind for m
 
 **CLI deprecation:** `dagster dev` is superseded by `dg dev`. The old command still works but emits a `SupersessionWarning`.
 
-**Automation (CRITICAL — DO NOT USE `AutomationCondition`):** `AutomationCondition.on_missing()` and `.eager()` are **broken** for triggering initial materializations in Dagster 1.12. `on_missing()` on root assets silently produces 0 runs on every tick due to `InitialEvaluationCondition` canceling `SinceCondition`. `eager()` on root assets never fires (no upstream updates). `AutomationConditionSensorDefinition` starts `STOPPED` by default, and even when forced to `RUNNING`, the underlying conditions still produce 0 runs. The `dagster.yaml` `auto_materialize: enabled: true` is the legacy daemon and has no effect on the sensor system. **The only reliable pattern for hands-free pipeline launch is a run-once sensor** (`@dg.sensor` with `default_status=RUNNING`) that checks `instance.get_latest_materialization_event()` and submits a `RunRequest` with a `run_key` for deduplication. See the "Dagster Single-Command Startup Pattern" section below.
+**Automation (CRITICAL — DO NOT USE `AutomationCondition`):** `AutomationCondition.on_missing()` and `.eager()` are **broken** for triggering initial materializations in Dagster 1.12. `on_missing()` on root assets silently produces 0 runs on every tick due to `InitialEvaluationCondition` canceling `SinceCondition`. `eager()` on root assets never fires (no upstream updates). `AutomationConditionSensorDefinition` starts `STOPPED` by default, and even when forced to `RUNNING`, the underlying conditions still produce 0 runs. The `dagster.yaml` `auto_materialize: enabled: true` is the legacy daemon and has no effect on the sensor system. **For startup, use a run-once bootstrap sensor** (`@dg.sensor` with `default_status=RUNNING`) that checks `instance.get_latest_materialization_event()` and submits a `RunRequest` with a `run_key` for deduplication. **For ongoing correctness, add a separate recompute sensor that triggers when upstream assets are newer than downstream outputs.** See the "Dagster Single-Command Startup Pattern" section below.
 
 ### Resource Tracking (MANDATORY)
 
@@ -559,6 +559,7 @@ If you use `execute_in_process` inside a web server process, runs will be abando
 - **NEVER use `AutomationCondition` for hands-free pipeline launch.** `on_missing()` silently produces 0 runs on root assets, `eager()` never fires on root assets, and `AutomationConditionSensorDefinition` doesn't fix either issue. Use a run-once `@dg.sensor` instead.
 - **NEVER use `auto_materialize: enabled: true` in `dagster.yaml`.** This is the legacy daemon and has no effect on `AutomationCondition` or sensors.
 - **NEVER use `AutomationConditionSensorDefinition`** as a fix for the above — the underlying `AutomationCondition` logic is what's broken, not the sensor wrapper.
+- **NEVER rely on "missing-only" startup checks for production freshness.** If upstream assets/materializations change, your pipeline must re-run dependent compute/upload assets.
 
 For a detailed overview of the pipelines in this project, see [Dagster Pipelines Documentation](docs/DAGSTER.md).
 
@@ -680,6 +681,7 @@ Omitting a `SourceAsset` from `Definitions` makes it invisible in the UI even if
 - [ ] The final destination asset (HF upload, S3 push, DB write) is named after the destination, not the action.
 - [ ] A run-once sensor with `default_status=RUNNING` is registered in `Definitions(sensors=[...])` to auto-submit the pipeline job on startup.
 - [ ] The sensor uses `run_key` to prevent duplicate submissions across ticks.
+- [ ] A recompute sensor/schedule exists to trigger runs when upstream materializations are newer than downstream assets.
 - [ ] Every compute-heavy asset is wrapped with `resource_tracker(name, context=context)`.
 - [ ] Every job has `hooks={resource_summary_hook}` for run-level resource aggregation.
 
@@ -690,6 +692,7 @@ Omitting a `SourceAsset` from `Definitions` makes it invisible in the UI even if
 - **Assets vs. Jobs Separation**: Use Software-Defined Assets (`@asset`) for the declarative data graph and lineage. Use Jobs (`define_asset_job` / `ops`) strictly as operational entry points (for sensors, schedules, CLI, or UI triggers).
 - **Abstracted Storage (IO Managers & Resources)**: Avoid hardcoding paths inside asset logic. Either return a value and let an IO Manager write it, or reconstruct the path from a shared resource (like `CacheDirResource`). This prevents path conflicts and separates business logic from storage concerns.
 - **Rich Metadata**: Always add meaningful output metadata (`context.add_output_metadata(...)`), such as row counts, file sizes, schema details, or external URLs. This turns Dagster into an inspectable data catalog rather than just a task runner.
+- **Freshness Over Presence**: "Asset exists" is not sufficient. Sensors/schedules must compare upstream vs downstream materialization recency and trigger recompute when lineage indicates stale outputs.
 
 ---
 
@@ -730,7 +733,7 @@ def launch_pipeline(host: str = "0.0.0.0", port: int = 3010) -> None:
 
 Dagster's daemon uses complex internal signal handling. When trapped inside a `subprocess.run()` or `Popen()`, SIGINT/SIGTERM do not propagate correctly and the daemon does not shut down cleanly. `os.execvp` **replaces** the current Python process with `dagster`, so Dagster becomes the primary process and owns all signal handling. Ctrl+C works correctly.
 
-### Why a run-once sensor (DO NOT use `AutomationCondition`)
+### Why startup sensor + recompute sensor (DO NOT use `AutomationCondition`)
 
 Because `os.execvp` replaces the current process, there is no opportunity to submit a job "after dagster starts". **Do NOT use `AutomationCondition`** (`on_missing()`, `eager()`, or `AutomationConditionSensorDefinition`) for hands-free pipeline launch — they are broken for initial materialization in Dagster 1.12:
 
@@ -739,7 +742,7 @@ Because `os.execvp` replaces the current process, there is no opportunity to sub
 - `AutomationConditionSensorDefinition` starts `STOPPED` by default. Even when forced to `RUNNING` with `default_status=DefaultSensorStatus.RUNNING`, the conditions above still produce 0 runs.
 - `dagster.yaml` `auto_materialize: enabled: true` is the legacy daemon — it has no effect on the `AutomationCondition` sensor system.
 
-**The only reliable pattern is a run-once sensor** that checks materialization status and submits a job:
+**Reliable pattern for startup is a run-once bootstrap sensor** that checks materialization status and submits a job:
 
 ```python
 import dagster as dg
@@ -763,9 +766,42 @@ def run_pipeline_on_startup(context: dg.SensorEvaluationContext) -> dg.SensorRes
     return dg.SkipReason("All pipeline assets already materialized.")
 ```
 
-The sensor fires once on startup (because assets are unmaterialized), submits the `full_pipeline` job which materializes all three assets in dependency order, and then skips on subsequent ticks because all assets are now present. The `run_key="pipeline_startup"` prevents duplicate submissions — Dagster deduplicates `RunRequest`s with the same `run_key`.
+The bootstrap sensor fires once on startup (because assets are unmaterialized), submits the `full_pipeline` job which materializes all three assets in dependency order, and then skips on subsequent ticks because all assets are now present. The `run_key="pipeline_startup"` prevents duplicate submissions — Dagster deduplicates `RunRequest`s with the same `run_key`.
 
-Register the sensor in `Definitions(sensors=[run_pipeline_on_startup])` — it must have `default_status=RUNNING` to start automatically.
+Register the bootstrap sensor in `Definitions(sensors=[run_pipeline_on_startup])` — it must have `default_status=RUNNING` to start automatically.
+
+### Recompute sensor pattern (MANDATORY for real pipelines)
+
+Startup-only automation is not enough. Add a second sensor that re-runs the job when upstream lineage changes make downstream assets stale.
+
+```python
+import dagster as dg
+
+@dg.sensor(job_name="full_pipeline", default_status=dg.DefaultSensorStatus.RUNNING)
+def recompute_when_upstream_newer(
+    context: dg.SensorEvaluationContext,
+) -> dg.SensorResult | dg.SkipReason:
+    watched_upstream = [dg.AssetKey("reference_panel"), dg.AssetKey("raw_pgs_metadata")]
+    watched_downstream = [dg.AssetKey("reference_scores"), dg.AssetKey("hf_prs_percentiles")]
+
+    upstream_events = [context.instance.get_latest_materialization_event(k) for k in watched_upstream]
+    downstream_events = [context.instance.get_latest_materialization_event(k) for k in watched_downstream]
+
+    if any(e is None for e in upstream_events):
+        return dg.SkipReason("Upstream not fully materialized yet.")
+    if any(e is None for e in downstream_events):
+        return dg.SensorResult(run_requests=[dg.RunRequest(run_key="recompute_missing_downstream")])
+
+    newest_upstream = max(e.storage_id for e in upstream_events if e is not None)
+    oldest_downstream = min(e.storage_id for e in downstream_events if e is not None)
+    if newest_upstream > oldest_downstream:
+        return dg.SensorResult(
+            run_requests=[dg.RunRequest(run_key=f"recompute_after_{newest_upstream}")],
+        )
+    return dg.SkipReason("Downstream is up-to-date with upstream lineage.")
+```
+
+This keeps outputs synchronized with lineage changes and avoids the "all materialized so skip forever" failure mode.
 
 ### `dagster.yaml` template
 

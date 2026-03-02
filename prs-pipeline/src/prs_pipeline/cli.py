@@ -146,14 +146,25 @@ def launch(
     test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
     test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
+    run_now: Annotated[
+        bool,
+        typer.Option(
+            "--run-now/--no-run-now",
+            help=(
+                "Request an immediate full_pipeline run on startup even if assets are "
+                "already materialized."
+            ),
+        ),
+    ] = True,
 ) -> None:
     """Start the Dagster UI webserver with auto-triggered pipeline.
 
     \b
     Launches the Dagster dev server with full monitoring UI.
-    The run_pipeline_on_startup sensor auto-submits the full_pipeline
-    job when assets are unmaterialized. You can also trigger jobs
-    manually from the UI, or use ``pipeline run`` for headless execution.
+    By default, launch requests one immediate ``full_pipeline`` run via
+    the startup sensor. Use ``--no-run-now`` to only start the UI without
+    submitting a run. You can also trigger jobs manually from the UI, or
+    use ``pipeline run`` for headless execution.
     """
     if test and test_ids:
         console.print("[red]Cannot use --test and --test-ids together.[/red]")
@@ -161,6 +172,12 @@ def launch(
 
     dagster_home = _setup_dagster_home()
     _set_pipeline_env(panel, test, test_ids)
+    if run_now:
+        os.environ["PRS_PIPELINE_FORCE_RUN_ON_STARTUP"] = "1"
+        os.environ["PRS_PIPELINE_STARTUP_RUN_KEY"] = f"pipeline_startup_{int(time.time())}"
+        console.print("[yellow]Launch will force one full_pipeline run on startup.[/yellow]")
+    else:
+        os.environ["PRS_PIPELINE_FORCE_RUN_ON_STARTUP"] = "0"
     _kill_port(port)
     _cancel_orphaned_runs()
 

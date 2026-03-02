@@ -23,7 +23,7 @@ import subprocess
 import tarfile
 import time
 from pathlib import Path
-from typing import Any, TYPE_CHECKING
+from typing import Any, Callable, TYPE_CHECKING
 
 import httpx
 import polars as pl
@@ -1014,41 +1014,60 @@ def compute_reference_prs_polars(
 
         t0 = time.monotonic()
         variant_indices = matched["variant_idx"].cast(pl.UInt32).to_numpy()
+        n_samples = panel.psam_df.height
+        t_geno = 0.0
 
-        geno_ordered = read_pgen_genotypes(
-            pgen_path=panel.pgen_path,
-            pvar_zst_path=panel.pvar_zst_path,
-            variant_indices=variant_indices,
-            n_samples=panel.psam_df.height,
-            pvar_variant_ct=panel.pvar_variant_ct,
-        )
-        n_samples = geno_ordered.shape[1]
-        t_geno = time.monotonic() - t0
+        t0 = time.monotonic()
+        if variants_matched == 0:
+            raise ReferencePanelError(f"[{pgs_id}] No variants matched between scoring file and reference panel.")
+
+        weights = matched["effect_weight"].to_numpy()
+        is_alt = matched["effect_is_alt"].to_numpy()
+        del matched
+
+        chunk_size = 5000
+        prs_sum = np.zeros(n_samples, dtype=np.float64)
+        for start in range(0, variants_matched, chunk_size):
+            end = min(start + chunk_size, variants_matched)
+            batch_indices = variant_indices[start:end]
+            batch_weights = weights[start:end]
+            batch_is_alt = is_alt[start:end]
+
+            geno_t0 = time.monotonic()
+            geno_batch = read_pgen_genotypes(
+                pgen_path=panel.pgen_path,
+                pvar_zst_path=panel.pvar_zst_path,
+                variant_indices=batch_indices,
+                n_samples=n_samples,
+                pvar_variant_ct=panel.pvar_variant_ct,
+            )
+            t_geno += time.monotonic() - geno_t0
+
+            missing_mask = geno_batch == -9
+            geno_float = geno_batch.astype(np.float64)
+            del geno_batch
+
+            ref_effect_mask = np.logical_not(batch_is_alt)
+            if ref_effect_mask.any():
+                geno_float[ref_effect_mask, :] = 2.0 - geno_float[ref_effect_mask, :]
+            geno_float[missing_mask] = 0.0
+            del missing_mask
+
+            prs_sum += (geno_float * batch_weights[:, np.newaxis]).sum(axis=0)
+            del geno_float, batch_indices, batch_weights, batch_is_alt
+
+        del variant_indices, weights, is_alt
+        allele_ct = 2 * variants_matched
+        prs_avg = prs_sum / allele_ct
+        t_compute = time.monotonic() - t0
         log_message(
             message_type="reference:polars_phase_genotypes",
             pgs_id=pgs_id,
             elapsed_sec=round(t_geno, 3),
             n_samples=n_samples,
-            n_variants_read=len(variant_indices),
+            n_variants_read=variants_matched,
+            genotype_batch_size=chunk_size,
         )
-
-        t0 = time.monotonic()
-        weights = matched["effect_weight"].to_numpy()
-        is_alt = matched["effect_is_alt"].to_numpy()
-        missing_mask = geno_ordered == -9
-        geno_float = geno_ordered.astype(np.float64)
-        del geno_ordered
-
-        dosage = np.where(is_alt[:, np.newaxis], geno_float, 2.0 - geno_float)
-        del geno_float
-        dosage = np.where(missing_mask, 0.0, dosage)
-        del missing_mask
-
-        prs_sum = (dosage * weights[:, np.newaxis]).sum(axis=0)
-        del dosage, weights, is_alt, matched
-        allele_ct = 2 * variants_matched
-        prs_avg = prs_sum / allele_ct
-        t_compute = time.monotonic() - t0
         log_message(
             message_type="reference:polars_phase_compute",
             pgs_id=pgs_id,
@@ -1130,6 +1149,8 @@ def compute_reference_prs_batch(
     skip_existing: bool = True,
     match_rate_threshold: float = 0.1,
     output_subdir: str | None = None,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
+    progress_every: int = 0,
 ) -> BatchScoringResult:
     """Score multiple PGS IDs against a reference panel in a single process.
 
@@ -1152,6 +1173,9 @@ def compute_reference_prs_batch(
         match_rate_threshold: Flag scores with match rate below this as ``low_match``.
         output_subdir: Optional subdirectory under ``percentiles/`` for output isolation
             (e.g. ``"test"`` to avoid overwriting full-panel results).
+        progress_callback: Optional callback invoked with throttled progress payloads.
+        progress_every: Emit callback every N processed IDs (0 disables periodic emits;
+            final completion event is still emitted when callback is provided).
 
     Returns:
         ``BatchScoringResult`` with aggregated distributions, per-ID outcomes,
@@ -1163,10 +1187,65 @@ def compute_reference_prs_batch(
     scores_cache = cache_dir / "scores"
     scores_cache.mkdir(parents=True, exist_ok=True)
 
+    t_resolve_start = time.monotonic()
     resolved = _ResolvedRefPanel(ref_dir, genome_build)
+    t_resolve = time.monotonic() - t_resolve_start
+
+    if progress_callback is not None:
+        progress_callback({
+            "processed": 0,
+            "total": len(pgs_ids),
+            "ok": 0, "failed": 0, "problematic": 0, "cached": 0,
+            "last_pgs_id": "panel_init",
+            "last_status": "panel_resolved",
+            "elapsed_sec": t_resolve,
+            "eta_sec": None,
+            "rate_per_sec": 0.0,
+            "is_complete": False,
+            "recent_ids": [],
+            "panel_resolve_sec": round(t_resolve, 2),
+            "pvar_variants": resolved.pvar_variant_ct,
+            "n_samples": resolved.psam_df.height,
+        })
 
     outcomes: list[ScoringOutcome] = []
     dist_parts: list[pl.DataFrame] = []
+    total = len(pgs_ids)
+    started_at = time.monotonic()
+    n_processed = 0
+    n_ok = 0
+    n_failed = 0
+    n_problematic = 0
+    n_cached = 0
+    recent_ids: list[str] = []
+
+    def _emit_progress(last_pgs_id: str, last_status: str, force: bool = False) -> None:
+        nonlocal n_processed, n_ok, n_failed, n_problematic, n_cached, recent_ids
+        if progress_callback is None:
+            return
+        if not force and progress_every > 0 and (n_processed % progress_every != 0):
+            return
+
+        elapsed_sec = time.monotonic() - started_at
+        rate_per_sec = (n_processed / elapsed_sec) if elapsed_sec > 0 else 0.0
+        remaining = max(total - n_processed, 0)
+        eta_sec = (remaining / rate_per_sec) if rate_per_sec > 0 else None
+        progress_callback({
+            "processed": n_processed,
+            "total": total,
+            "ok": n_ok,
+            "failed": n_failed,
+            "problematic": n_problematic,
+            "cached": n_cached,
+            "last_pgs_id": last_pgs_id,
+            "last_status": last_status,
+            "elapsed_sec": elapsed_sec,
+            "eta_sec": eta_sec,
+            "rate_per_sec": rate_per_sec,
+            "is_complete": n_processed >= total,
+            "recent_ids": list(recent_ids),
+        })
+        recent_ids = []
 
     with start_action(
         action_type="reference:batch_score",
@@ -1184,11 +1263,16 @@ def compute_reference_prs_batch(
                 if dist is not None:
                     dist_parts.append(dist.df)
                     outcomes.append(dist.outcome)
+                    n_processed += 1
+                    n_ok += 1
+                    n_cached += 1
+                    recent_ids.append(pgs_id)
                     log_message(
                         message_type="reference:batch_skip_cached",
                         pgs_id=pgs_id,
                         progress=f"{i + 1}/{len(pgs_ids)}",
                     )
+                    _emit_progress(last_pgs_id=pgs_id, last_status="cached")
                     continue
 
             t0 = time.monotonic()
@@ -1221,6 +1305,10 @@ def compute_reference_prs_batch(
                     elapsed_sec=elapsed,
                     error=str(exc),
                 ))
+                n_processed += 1
+                n_failed += 1
+                recent_ids.append(pgs_id)
+                _emit_progress(last_pgs_id=pgs_id, last_status="failed")
                 continue
 
             elapsed = round(time.monotonic() - t0, 3)
@@ -1246,6 +1334,15 @@ def compute_reference_prs_batch(
                 score_std=std_val,
                 elapsed_sec=elapsed,
             ))
+            n_processed += 1
+            recent_ids.append(pgs_id)
+            if status == "failed":
+                n_failed += 1
+            elif status in ("low_match", "zero_variance"):
+                n_problematic += 1
+                n_ok += 1
+            else:
+                n_ok += 1
 
             log_message(
                 message_type="reference:batch_score_done",
@@ -1255,6 +1352,7 @@ def compute_reference_prs_batch(
                 elapsed_sec=elapsed,
                 progress=f"{i + 1}/{len(pgs_ids)}",
             )
+            _emit_progress(last_pgs_id=pgs_id, last_status=status)
 
         quality_rows = [o.model_dump() for o in outcomes]
         quality_df = pl.DataFrame(quality_rows) if quality_rows else pl.DataFrame(
@@ -1287,6 +1385,7 @@ def compute_reference_prs_batch(
         n_failed = sum(1 for o in outcomes if o.status == "failed")
         n_low = sum(1 for o in outcomes if o.status == "low_match")
         n_zero = sum(1 for o in outcomes if o.status == "zero_variance")
+        _emit_progress(last_pgs_id="batch", last_status="complete", force=True)
         log_message(
             message_type="reference:batch_complete",
             panel=panel,

@@ -31,6 +31,7 @@ from prs_pipeline.runtime import resource_tracker
 
 @asset(
     group_name="download",
+    deps=[AssetDep("ebi_scoring_files_fingerprint")],
     description=(
         "Downloads three bulk metadata CSV sheets from the PGS Catalog FTP server "
         "and converts them to Parquet: scores (what each PGS measures), "

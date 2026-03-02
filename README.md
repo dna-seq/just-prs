@@ -14,7 +14,7 @@ This is a **uv workspace** with three subprojects:
 |---|---|---|
 | **just-prs** | `just-prs/` | Core library: PRS computation, PGS Catalog client, VCF normalization, scoring files. Published to PyPI. |
 | **prs-ui** | `prs-ui/` | Reflex web UI for interactive PRS computation. Published to PyPI. |
-| **prs-pipeline** | `prs-pipeline/` | Dagster pipeline for computing reference distributions from the 1000G panel. |
+| **prs-pipeline** | `prs-pipeline/` | Dagster pipeline for computing reference distributions from population panels (1000G, HGDP+1kGP). |
 
 The workspace root is a non-published wrapper that depends on all three subprojects and provides convenience scripts (`uv run ui`, `uv run pipeline`).
 
@@ -62,17 +62,20 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 
 ## Features
 
+- **Pure Python alternative to PLINK2** for PRS scoring, genotype extraction, and variant file operations — see [Why not PLINK2?](#why-not-plink2) below
 - **`PRSCatalog`** — search scores, compute PRS, and look up evaluation performance using cleaned bulk metadata (no REST API calls needed)
+- **pgen operations** — read `.pgen`, `.pvar.zst`, `.psam` files, extract genotypes, match variants, and score PGS IDs directly in Python via `pgenlib` + polars + numpy
 - **Reusable Reflex UI components** — `prs_section()` and sub-components (`prs_scores_selector`, `prs_results_table`, etc.) can be embedded in any Reflex app via `PRSComputeStateMixin`
 - **VCF normalization** — `normalize_vcf()` strips chr prefix, renames id→rsid, computes genotype from GT, applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, and writes zstd-compressed Parquet
 - **Quality assessment** — `just_prs.quality` provides pure-logic helpers (`classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`) usable from any UI or script
 - **CSV export** — download computed PRS results as CSV from the web UI or programmatically
 - **Cleanup pipeline** — normalizes genome builds, renames columns to snake_case, parses performance metrics into structured numeric fields
-- **HuggingFace sync** — cleaned metadata parquets published to [just-dna-seq/polygenic_risk_scores](https://huggingface.co/datasets/just-dna-seq/polygenic_risk_scores) and auto-downloaded on first use
+- **Batch reference scoring** — `compute_reference_prs_batch()` scores all ~5,000+ PGS IDs against a reference panel in one call with error tracking, quality flags, and panel-aware output
+- **HuggingFace sync** — cleaned metadata parquets published to [just-dna-seq/polygenic_risk_scores](https://huggingface.co/datasets/just-dna-seq/polygenic_risk_scores), reference distributions to [just-dna-seq/prs-percentiles](https://huggingface.co/datasets/just-dna-seq/prs-percentiles) — auto-downloaded on first use
 - **Bulk download** the entire PGS Catalog metadata (~5,000+ scores) via EBI FTP
 - Compute PRS for one or many scores against a VCF file
 - All data saved as **Parquet** for fast downstream analysis with Polars
-- [Validated against PLINK2](docs/validation.md) with floating-point precision agreement
+- [Validated against PLINK2](docs/validation.md) — produces identical results (Pearson r = 1.0, relative differences < 5e-7)
 
 ## Installation
 
@@ -153,6 +156,51 @@ results = catalog.compute_prs_batch(
 best = catalog.best_performance(pgs_id="PGS000001").collect()
 ```
 
+## Why not PLINK2?
+
+[PLINK2](https://www.cog-genomics.org/plink/2.0/) is the gold-standard tool for whole-genome association analysis, and its `--score` command is widely used for PRS computation. `just-prs` provides a pure Python alternative that produces **identical results** (validated with Pearson r = 1.0 across 3,202 samples, relative per-sample differences < 5e-7 — see [validation details](docs/validation.md)) while offering several practical advantages:
+
+| | PLINK2 | just-prs |
+|---|---|---|
+| **Installation** | Platform-specific binary; manual download or conda | `pip install just-prs` — pure Python, works everywhere |
+| **Integration** | Shell subprocess with text file I/O | Native Python API — returns polars DataFrames directly |
+| **Composability** | Fixed CLI pipeline; parse .sscore/.log outputs | Modular functions: parse variants, read genotypes, match alleles, compute scores — mix and match |
+| **Intermediate formats** | Must write temporary score input files | Operates on in-memory DataFrames and numpy arrays |
+| **Dependencies** | External binary + system libraries | Only Python packages (pgenlib, polars, numpy) |
+| **Debugging** | Parse log files for match stats | Structured Eliot logging with full variant-level visibility |
+| **Batch scoring** | One subprocess per PGS ID | Reuses parsed `.pvar` and genotype caches across scores |
+
+The core building blocks — `parse_pvar()`, `parse_psam()`, `read_pgen_genotypes()`, `match_scoring_to_pvar()`, and `compute_reference_prs_polars()` — are all public API and can be used independently for any analysis involving PLINK2 binary format files.
+
+### Quick example: score a PGS against any .pgen dataset
+
+```python
+from just_prs import compute_reference_prs_polars
+from pathlib import Path
+
+scores_df = compute_reference_prs_polars(
+    pgs_id="PGS000001",
+    scoring_file=Path("PGS000001_hmPOS_GRCh38.txt.gz"),
+    ref_dir=Path("/path/to/pgen_dir"),  # any dir with .pgen/.pvar.zst/.psam
+    out_dir=Path("/tmp/output"),
+    genome_build="GRCh38",
+)
+# Returns a polars DataFrame: iid, superpop, population, score, pgs_id
+```
+
+```bash
+# Or from the CLI:
+prs pgen score PGS000001 /path/to/pgen_dir/
+prs reference score PGS000001  # single PGS ID against 1000G panel
+
+# Batch score all PGS IDs to build population distributions:
+prs reference score-batch                              # all PGS IDs
+prs reference score-batch --pgs-ids PGS000001,PGS000002
+prs reference score-batch --limit 50 --panel hgdp_1kg  # HGDP+1kGP panel
+```
+
+For cross-validation against PLINK2, use `prs reference compare PGS000001` which runs both engines and reports per-sample correlation and timing.
+
 ## Embedding PRS UI in Another Reflex App
 
 The PRS computation UI is packaged as reusable [Reflex](https://reflex.dev/) components. Install `prs-ui` (which pulls in `just-prs` automatically), mix `PRSComputeStateMixin` into your state, provide a normalized genotypes LazyFrame, and render the section:
@@ -195,6 +243,7 @@ uv run pytest just-prs/tests/ -v
 |---|---|---|
 | `test_plink.py` | PRS scores match [PLINK2](https://www.cog-genomics.org/plink/2.0/) `--score` within floating-point precision for 5 GRCh38 scores | Real whole-genome VCF from Zenodo; PLINK2 auto-downloaded |
 | `test_percentile.py` | Theoretical mean/SD from allele frequencies, percentile computation, and cross-validation against PLINK2 for 5 scores with allele frequency data | Real PGS scoring files with `allelefrequency_effect` |
+| `test_reference_plink2.py` | Reference panel PLINK2 scoring: variant ID construction, allele matching, end-to-end scoring of 4 PGS IDs across 3,202 samples, superpopulation coverage, distribution aggregation | 1000G reference panel + PLINK2 binary (both auto-downloaded) |
 | `test_prs.py` | End-to-end PRS computation (single and batch) on a real VCF | Zenodo test VCF |
 | `test_cleanup.py` | Full cleanup pipeline: column renaming, genome build normalization, metric string parsing, performance flattening, `PRSCatalog` search/percentile on live catalog data | Real PGS Catalog bulk metadata (~5,000+ scores) via EBI FTP |
 | `test_scoring.py` | Scoring file download, parsing, and caching | Real PGS000001 harmonized scoring file |
@@ -202,16 +251,17 @@ uv run pytest just-prs/tests/ -v
 
 Key properties of the test suite:
 
-- **PLINK2 cross-validation** -- scores are compared against the gold-standard PLINK2 `--score` command with relative differences below 5e-7 ([details](docs/validation.md))
-- **Real data throughout** -- test VCF auto-downloaded from Zenodo, PLINK2 binary auto-downloaded for the host platform, scoring files fetched from EBI FTP
-- **Percentile verification** -- theoretical statistics computed from allele frequencies are validated against manual row-by-row computation, and percentiles are checked for mathematical consistency (CDF symmetry, known quantiles)
-- **No mocking** -- all tests run real pipelines against real data to catch integration issues
+- **PLINK2 cross-validation** — our pgenlib + polars engine produces identical results to PLINK2 `--score` (Pearson r = 1.0 across 3,202 samples, relative per-sample differences < 5e-7). Both VCF-level PRS and reference panel scoring are validated ([details](docs/validation.md))
+- **Real data throughout** — test VCF auto-downloaded from Zenodo, PLINK2 binary auto-downloaded for the host platform, scoring files fetched from EBI FTP
+- **Percentile verification** — theoretical statistics computed from allele frequencies are validated against manual row-by-row computation, and percentiles are checked for mathematical consistency (CDF symmetry, known quantiles)
+- **No mocking** — all tests run real pipelines against real data to catch integration issues
 
 ## Documentation
 
-- [CLI Reference](docs/cli.md) — full command-line usage for `prs compute`, `prs normalize`, `prs catalog`, and bulk downloads
-- [Python API](docs/python-api.md) — `PRSCatalog`, VCF normalization, FTP downloads, REST client, cleanup pipeline, HuggingFace sync
-- [PLINK2 Validation](docs/validation.md) — accuracy benchmarks against PLINK2 `--score`
+- [CLI Reference](docs/cli.md) — full command-line usage for `prs compute`, `prs normalize`, `prs pgen`, `prs reference`, `prs catalog`, and bulk downloads
+- [Python API](docs/python-api.md) — `PRSCatalog`, pgen operations, VCF normalization, reference panel scoring, FTP downloads, REST client, cleanup pipeline, HuggingFace sync
+- [Dagster Pipelines](docs/dagster.md) — architecture and orchestration of the reference panel and metadata pipelines
+- [Validation](docs/validation.md) — accuracy benchmarks against PLINK2 `--score` (individual VCF and reference panel)
 - [Cleanup Pipeline](docs/cleanup-pipeline.md) — genome build normalization, column renaming, metric parsing
 
 ## Data sources

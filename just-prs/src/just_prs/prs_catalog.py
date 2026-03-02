@@ -20,7 +20,7 @@ from just_prs.cleanup import (
     clean_scores,
 )
 from just_prs.ftp import download_metadata_sheet
-from just_prs.hf import pull_cleaned_parquets, pull_reference_distributions, push_cleaned_parquets
+from just_prs.hf import distributions_filename, pull_cleaned_parquets, pull_reference_distributions, push_cleaned_parquets
 from just_prs.models import PRSResult
 from just_prs.prs import compute_prs
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
@@ -45,7 +45,7 @@ class PRSCatalog:
         self._scores_lf: pl.LazyFrame | None = None
         self._perf_lf: pl.LazyFrame | None = None
         self._best_perf_lf: pl.LazyFrame | None = None
-        self._ref_dist_lf: pl.LazyFrame | None = None
+        self._ref_dist_cache: dict[str, pl.LazyFrame] = {}
 
     @property
     def cache_dir(self) -> Path:
@@ -195,48 +195,59 @@ class PRSCatalog:
         """Directory for reference distribution parquets."""
         return self._cache_dir / "percentiles"
 
-    def reference_distributions(self) -> pl.LazyFrame:
-        """Return the 1000G reference distribution LazyFrame.
+    def reference_distributions(self, panel: str = "1000g") -> pl.LazyFrame:
+        """Return a reference distribution LazyFrame for the given panel.
 
         Columns: pgs_id, superpopulation, mean, std, n, median, p5, p25, p75, p95.
         Auto-pulls from HuggingFace (just-dna-seq/prs-percentiles) if not cached locally.
 
-        Returns None fields when the parquet is not yet available in HF.
+        Falls back to the legacy ``reference_distributions.parquet`` filename for
+        backward compatibility when the panel-aware file is not found locally.
+
+        Args:
+            panel: Reference panel identifier (e.g. ``1000g``, ``hgdp_1kg``).
         """
-        if self._ref_dist_lf is not None:
-            return self._ref_dist_lf
+        if panel in self._ref_dist_cache:
+            return self._ref_dist_cache[panel]
 
-        local = self.percentiles_dir / "reference_distributions.parquet"
+        panel_file = distributions_filename(panel)
+        local = self.percentiles_dir / panel_file
+        legacy = self.percentiles_dir / "reference_distributions.parquet"
+
         if not local.exists():
-            with start_action(action_type="prs_catalog:pull_reference_distributions"):
-                pulled = pull_reference_distributions(self.percentiles_dir)
-                if pulled is None or not local.exists():
-                    # Return an empty LazyFrame with the expected schema
-                    self._ref_dist_lf = pl.LazyFrame(
-                        schema={
-                            "pgs_id": pl.Utf8,
-                            "superpopulation": pl.Utf8,
-                            "mean": pl.Float64,
-                            "std": pl.Float64,
-                            "n": pl.Int64,
-                            "median": pl.Float64,
-                            "p5": pl.Float64,
-                            "p25": pl.Float64,
-                            "p75": pl.Float64,
-                            "p95": pl.Float64,
-                        }
-                    )
-                    return self._ref_dist_lf
+            if panel == "1000g" and legacy.exists():
+                local = legacy
+            else:
+                with start_action(action_type="prs_catalog:pull_reference_distributions", panel=panel):
+                    pulled = pull_reference_distributions(self.percentiles_dir, panel=panel)
+                    if pulled is None or not local.exists():
+                        empty = pl.LazyFrame(
+                            schema={
+                                "pgs_id": pl.Utf8,
+                                "superpopulation": pl.Utf8,
+                                "mean": pl.Float64,
+                                "std": pl.Float64,
+                                "n": pl.Int64,
+                                "median": pl.Float64,
+                                "p5": pl.Float64,
+                                "p25": pl.Float64,
+                                "p75": pl.Float64,
+                                "p95": pl.Float64,
+                            }
+                        )
+                        self._ref_dist_cache[panel] = empty
+                        return empty
 
-        self._ref_dist_lf = pl.scan_parquet(local)
-        return self._ref_dist_lf
+        lf = pl.scan_parquet(local)
+        self._ref_dist_cache[panel] = lf
+        return lf
 
     def reload(self) -> None:
         """Force re-download of all metadata on next access."""
         self._scores_lf = None
         self._perf_lf = None
         self._best_perf_lf = None
-        self._ref_dist_lf = None
+        self._ref_dist_cache.clear()
         for p in self.metadata_dir.glob("*.parquet"):
             p.unlink()
         raw_dir = self.raw_metadata_dir
@@ -381,11 +392,12 @@ class PRSCatalog:
         ancestry: str = "EUR",
         mean: float = 0.0,
         std: float | None = None,
+        panel: str = "1000g",
     ) -> tuple[float | None, str]:
         """Estimate population percentile for a given PRS score using a 3-tier fallback.
 
         Tier 1 — Reference panel (best): look up (pgs_id, ancestry) in the pre-computed
-            1000G reference distributions pulled from just-dna-seq/prs-percentiles.
+            reference distributions pulled from just-dna-seq/prs-percentiles.
         Tier 2 — Theoretical (partial): compute from allele frequencies embedded in the
             scoring file (only works for ~20% of PGS IDs). Only used when mean/std are
             passed explicitly.
@@ -399,6 +411,7 @@ class PRSCatalog:
                       Defaults to EUR.
             mean: Population mean to use when std is provided (Tier 2 path).
             std: Population SD. When provided, skips reference lookup and uses directly.
+            panel: Reference panel identifier for Tier 1 lookup.
 
         Returns:
             Tuple of (percentile | None, method_label) where method_label is one of
@@ -406,18 +419,15 @@ class PRSCatalog:
         """
         from just_prs.reference import ancestry_percentile
 
-        # Explicit mean/std override — caller knows the distribution
         if std is not None and std > 0:
             z = (prs_score - mean) / std
             return round(_norm_cdf(z) * 100.0, 2), "theoretical"
 
-        # Tier 1: reference panel distributions
-        ref_lf = self.reference_distributions()
+        ref_lf = self.reference_distributions(panel=panel)
         pct = ancestry_percentile(prs_score, pgs_id, ancestry, ref_lf)
         if pct is not None:
             return pct, "reference_panel"
 
-        # Tier 3: AUROC approximation (ancestry-agnostic fallback)
         best_df = self.best_performance(pgs_id=pgs_id).collect()
         if best_df.height == 0:
             return None, "unavailable"

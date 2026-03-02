@@ -1,45 +1,10 @@
 """Dagster resources for the PRS reference panel pipeline."""
 
 import os
-import subprocess
 from pathlib import Path
 
 from dagster import ConfigurableResource
 from dotenv import load_dotenv
-
-
-class Plink2Resource(ConfigurableResource):
-    """Manages the PLINK2 binary.
-
-    Resolves the binary path from config, a ``PLINK2_BIN`` env var, or
-    the just-prs cache directory where ``just_prs.plink`` auto-downloads it.
-    """
-
-    plink2_bin: str = ""
-
-    def get_bin(self) -> Path:
-        """Return the resolved Path to the plink2 binary."""
-        if self.plink2_bin:
-            return Path(self.plink2_bin)
-        env_bin = os.environ.get("PLINK2_BIN", "")
-        if env_bin:
-            return Path(env_bin)
-        # Fall back to the just-prs auto-downloaded plink2
-        from just_prs.scoring import resolve_cache_dir
-        cached = resolve_cache_dir() / "plink2" / "plink2"
-        if cached.exists():
-            return cached
-        # Last resort: assume it is on PATH
-        return Path("plink2")
-
-    def check_available(self) -> bool:
-        """Return True if plink2 is available and executable."""
-        result = subprocess.run(
-            [str(self.get_bin()), "--version"],
-            capture_output=True,
-            text=True,
-        )
-        return result.returncode == 0
 
 
 class CacheDirResource(ConfigurableResource):

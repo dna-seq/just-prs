@@ -228,6 +228,7 @@ def compute_prs(
         theoretical_mean: float | None = None
         theoretical_std: float | None = None
         percentile: float | None = None
+        percentile_method: str | None = None
 
         stats = _compute_theoretical_stats(scoring_df)
         if stats is not None:
@@ -238,6 +239,7 @@ def compute_prs(
             if std > 0:
                 z = (float(prs_score) - mean) / std
                 percentile = round(_norm_cdf(z) * 100.0, 2)
+                percentile_method = "theoretical"
             log_message(
                 message_type="prs:theoretical_stats",
                 pgs_id=pgs_id,
@@ -259,6 +261,7 @@ def compute_prs(
             theoretical_mean=theoretical_mean,
             theoretical_std=theoretical_std,
             percentile=percentile,
+            percentile_method=percentile_method,
         )
 
 

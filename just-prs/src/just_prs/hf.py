@@ -19,7 +19,12 @@ CLEANED_PARQUET_FILES = [
     "best_performance.parquet",
 ]
 
-REFERENCE_DISTRIBUTIONS_FILE = "reference_distributions.parquet"
+REFERENCE_DISTRIBUTIONS_FILE = "reference_distributions.parquet"  # legacy fallback
+
+
+def distributions_filename(panel: str = "1000g") -> str:
+    """Return the panel-aware filename for a reference distributions parquet."""
+    return f"{panel}_distributions.parquet"
 
 
 def _resolve_token(token: str | None = None) -> str | None:
@@ -178,64 +183,82 @@ def pull_reference_distributions(
     local_dir: Path,
     repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
     token: str | None = None,
+    panel: str = "1000g",
 ) -> Path | None:
-    """Download reference_distributions.parquet from the prs-percentiles HF dataset repo.
+    """Download a panel-aware distributions parquet from the prs-percentiles HF dataset repo.
+
+    Tries the panel-aware filename first (e.g. ``1000g_distributions.parquet``),
+    then falls back to the legacy ``reference_distributions.parquet`` for
+    backward compatibility.
 
     Args:
         local_dir: Directory to save the downloaded parquet file.
         repo_id: HuggingFace dataset repository ID for percentiles.
         token: HF API token. If None, loaded from .env / HF_TOKEN env var.
+        panel: Reference panel identifier (e.g. ``1000g``, ``hgdp_1kg``).
 
     Returns:
         Path to the downloaded file, or None if not available in the repo yet.
     """
+    import logging
     from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
 
     resolved_token = _resolve_token(token)
-    with start_action(action_type="hf:pull_reference_distributions", repo_id=repo_id):
+    panel_file = distributions_filename(panel)
+
+    with start_action(action_type="hf:pull_reference_distributions", repo_id=repo_id, panel=panel):
         local_dir.mkdir(parents=True, exist_ok=True)
-        filename = f"{HF_DATA_PREFIX}/{REFERENCE_DISTRIBUTIONS_FILE}"
-        try:
-            path = hf_hub_download(
-                repo_id=repo_id,
-                filename=filename,
-                repo_type="dataset",
-                local_dir=local_dir,
-                token=resolved_token,
-            )
-        except (EntryNotFoundError, RepositoryNotFoundError) as exc:
-            import logging
-            logging.getLogger(__name__).debug(
-                "Reference distributions not yet on HF (%s): %s", repo_id, exc
-            )
-            return None
-        target = local_dir / REFERENCE_DISTRIBUTIONS_FILE
-        hf_cached = Path(path)
-        if hf_cached != target:
-            import shutil
-            shutil.copy2(hf_cached, target)
-        return target
+
+        for candidate in [panel_file, REFERENCE_DISTRIBUTIONS_FILE]:
+            hf_path = f"{HF_DATA_PREFIX}/{candidate}"
+            try:
+                path = hf_hub_download(
+                    repo_id=repo_id,
+                    filename=hf_path,
+                    repo_type="dataset",
+                    local_dir=local_dir,
+                    token=resolved_token,
+                )
+            except (EntryNotFoundError, RepositoryNotFoundError):
+                continue
+
+            target = local_dir / panel_file
+            hf_cached = Path(path)
+            if hf_cached != target:
+                import shutil
+                shutil.copy2(hf_cached, target)
+            return target
+
+        logging.getLogger(__name__).debug(
+            "Reference distributions not found on HF (%s) for panel %s", repo_id, panel,
+        )
+        return None
 
 
 def push_reference_distributions(
     parquet_path: Path,
     repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
     token: str | None = None,
+    panel: str = "1000g",
 ) -> None:
-    """Upload reference_distributions.parquet to the prs-percentiles HF dataset repo.
+    """Upload a distributions parquet to the prs-percentiles HF dataset repo.
+
+    The file is uploaded as ``data/{panel}_distributions.parquet``.
 
     Args:
-        parquet_path: Local path to reference_distributions.parquet.
+        parquet_path: Local path to the distributions parquet file.
         repo_id: HuggingFace dataset repository ID for percentiles.
         token: HF API token. If None, loaded from .env / HF_TOKEN env var.
+        panel: Reference panel identifier (e.g. ``1000g``, ``hgdp_1kg``).
     """
     resolved_token = _resolve_token(token)
-    with start_action(action_type="hf:push_reference_distributions", repo_id=repo_id):
+    panel_file = distributions_filename(panel)
+    with start_action(action_type="hf:push_reference_distributions", repo_id=repo_id, panel=panel):
         api = HfApi(token=resolved_token)
         api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
         api.upload_file(
             path_or_fileobj=str(parquet_path),
-            path_in_repo=f"{HF_DATA_PREFIX}/{REFERENCE_DISTRIBUTIONS_FILE}",
+            path_in_repo=f"{HF_DATA_PREFIX}/{panel_file}",
             repo_id=repo_id,
             repo_type="dataset",
         )

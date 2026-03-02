@@ -1,16 +1,17 @@
-"""CLI for prs-pipeline: launch the Dagster reference-panel pipeline."""
+"""CLI for prs-pipeline: launch or run the Dagster reference-panel pipeline."""
 
 import os
 import signal
-import socket
 import subprocess
 import sys
-import threading
 import time
 from pathlib import Path
+from typing import Annotated, Optional
 
+import typer
 from rich.console import Console
 
+app = typer.Typer(help="PRS reference-panel pipeline (Dagster)")
 console = Console()
 
 
@@ -24,24 +25,23 @@ def _find_project_root() -> Path:
     return current
 
 
-def _ensure_dagster_yaml(dagster_home: Path) -> None:
-    """Write dagster.yaml with telemetry disabled and sensors enabled."""
+def _setup_dagster_home() -> Path:
+    """Set DAGSTER_HOME to a project-relative path and create dagster.yaml."""
+    project_root = _find_project_root()
+    dagster_home = project_root / "data" / "output" / "dagster"
+    dagster_home.mkdir(parents=True, exist_ok=True)
+    os.environ["DAGSTER_HOME"] = str(dagster_home)
+
     yaml_path = dagster_home / "dagster.yaml"
-    if yaml_path.exists():
-        return
-    yaml_path.write_text(
-        "telemetry:\n"
-        "  enabled: false\n"
-        "\n"
-        "sensors:\n"
-        "  use_threads: true\n"
-        "  num_workers: 4\n"
-    )
-    console.print(f"[dim]Created {yaml_path}[/dim]")
+    if not yaml_path.exists():
+        yaml_path.write_text("telemetry:\n  enabled: false\n")
+        console.print(f"[dim]Created {yaml_path}[/dim]")
+
+    return dagster_home
 
 
 def _kill_port(port: int) -> None:
-    """Kill any process listening on the given TCP port (SIGTERM, then SIGKILL)."""
+    """Kill any process listening on the given TCP port."""
     result = subprocess.run(
         ["lsof", "-t", f"-iTCP:{port}"],
         capture_output=True, text=True,
@@ -78,83 +78,199 @@ def _cancel_orphaned_runs() -> None:
             )
 
 
-def _wait_for_port(host: str, port: int, timeout: int = 60) -> bool:
-    """Block until a TCP connection to host:port succeeds, or timeout expires."""
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        try:
-            with socket.create_connection((host, port), timeout=2):
-                return True
-        except OSError:
-            time.sleep(1)
+def _set_pipeline_env(
+    panel: str,
+    test: int = 0,
+    test_ids: str | None = None,
+) -> bool:
+    """Set PRS_PIPELINE_* env vars. Returns True if in test mode."""
+    os.environ["PRS_PIPELINE_PANEL"] = panel
+    if test > 0:
+        os.environ["PRS_PIPELINE_TEST_IDS"] = f"random:{test}"
+        console.print(f"[yellow]TEST MODE: will score {test} randomly selected PGS IDs.[/yellow]")
+        return True
+    if test_ids:
+        os.environ["PRS_PIPELINE_TEST_IDS"] = test_ids
+        ids = [s.strip() for s in test_ids.split(",") if s.strip()]
+        console.print(f"[yellow]TEST MODE: will score {len(ids)} specified PGS IDs: {ids}[/yellow]")
+        return True
     return False
 
 
-def _run_job_in_background(job_name: str) -> None:
-    """Execute a named asset job in a background thread via execute_in_process."""
-    from dagster import DagsterInstance
-    from prs_pipeline.definitions import defs
+@app.command()
+def run(
+    test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
+    test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
+    panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
+    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, metadata_pipeline.")] = "full_pipeline",
+) -> None:
+    """Execute a pipeline job directly in-process (no Dagster UI).
 
-    job_def = defs.get_job_def(job_name)
-
-    def _execute() -> None:
-        with DagsterInstance.get() as instance:
-            console.print(f"[green]Starting job '{job_name}' in background...[/green]")
-            result = job_def.execute_in_process(instance=instance)
-            if result.success:
-                console.print(f"[green]Job '{job_name}' completed successfully.[/green]")
-            else:
-                console.print(f"[red]Job '{job_name}' failed.[/red]")
-
-    thread = threading.Thread(target=_execute, daemon=True)
-    thread.start()
-
-
-def launch(host: str = "0.0.0.0", port: int = 3010) -> None:
-    """Start Dagster and run the full reference panel pipeline end-to-end.
-
-    One command triggers the entire Map-Reduce flow:
-      1. Start Dagster dev server with sensors enabled.
-      2. Submit ``download_reference_data`` (downloads reference panel + registers PGS IDs).
-      3. ``score_all_partitions_sensor`` auto-triggers per_pgs_scores for all ~5000 PGS IDs.
-      4. ``aggregate_when_done_sensor`` auto-triggers aggregation + HuggingFace upload when done.
-
-    The Dagster UI at http://{host}:{port} shows live progress for all stages.
+    This is the simplest way to run the pipeline. It materializes assets
+    in dependency order, skipping any that are already up-to-date on disk.
     """
-    project_root = _find_project_root()
-    dagster_home = project_root / "data" / "output" / "dagster"
-    dagster_home.mkdir(parents=True, exist_ok=True)
-    os.environ["DAGSTER_HOME"] = str(dagster_home)
+    if test and test_ids:
+        console.print("[red]Cannot use --test and --test-ids together.[/red]")
+        raise typer.Exit(code=1)
+
+    dagster_home = _setup_dagster_home()
+    is_test = _set_pipeline_env(panel, test, test_ids)
+    _cancel_orphaned_runs()
+
     console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
 
-    _ensure_dagster_yaml(dagster_home)
+    from prs_pipeline.definitions import defs
+
+    resolved_job = defs.get_job_def(job)
+    console.print(f"\n[bold]Running job: {job}[/bold]")
+    console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+    result = resolved_job.execute_in_process(
+        instance=__import__("dagster").DagsterInstance.get(),
+    )
+
+    if result.success:
+        console.print(f"\n[green bold]Job '{job}' completed successfully.[/green bold]")
+    else:
+        console.print(f"\n[red bold]Job '{job}' failed.[/red bold]")
+        for event in result.all_events:
+            if event.is_failure:
+                console.print(f"  [red]{event.message}[/red]")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def launch(
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver.")] = "0.0.0.0",
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver.")] = 3010,
+    test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
+    test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
+    panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
+) -> None:
+    """Start the Dagster UI webserver with auto-triggered pipeline.
+
+    \b
+    Launches the Dagster dev server with full monitoring UI.
+    The run_pipeline_on_startup sensor auto-submits the full_pipeline
+    job when assets are unmaterialized. You can also trigger jobs
+    manually from the UI, or use ``pipeline run`` for headless execution.
+    """
+    if test and test_ids:
+        console.print("[red]Cannot use --test and --test-ids together.[/red]")
+        raise typer.Exit(code=1)
+
+    dagster_home = _setup_dagster_home()
+    _set_pipeline_env(panel, test, test_ids)
     _kill_port(port)
     _cancel_orphaned_runs()
 
+    console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold]Dagster UI:[/bold] http://{host}:{port}")
+    console.print(f"[dim]Use the UI to trigger jobs, or run 'pipeline run' in another terminal.[/dim]\n")
+
     dagster_bin = str(Path(sys.executable).parent / "dagster")
-    console.print(f"Starting Dagster dev at http://{host}:{port} ...")
-    proc = subprocess.Popen(
-        [dagster_bin, "dev", "-m", "prs_pipeline.definitions",
-         "--host", host, "--port", str(port)],
-    )
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])
 
-    def _forward_signal(sig: int, _frame: object) -> None:
-        proc.send_signal(sig)
 
-    signal.signal(signal.SIGINT, _forward_signal)
-    signal.signal(signal.SIGTERM, _forward_signal)
+@app.command()
+def clean(
+    dagster_home: Annotated[Optional[str], typer.Option(help="Override DAGSTER_HOME path.")] = None,
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Show what would be cleaned without doing it.")] = False,
+) -> None:
+    """Cancel stuck runs from the Dagster DB."""
+    from dagster import DagsterInstance, DagsterRunStatus, RunsFilter
 
-    connect_host = "127.0.0.1" if host == "0.0.0.0" else host
-    if _wait_for_port(connect_host, port, timeout=90):
-        console.print(f"[green]Dagster UI ready at http://{host}:{port}[/green]")
-        console.print(
-            "[bold]Full pipeline flow:[/bold]\n"
-            "  1. download_reference_data  -> downloads 1000G panel + registers PGS IDs\n"
-            "  2. score_all_partitions_sensor -> auto-launches ~5000 PLINK2 scoring runs\n"
-            "  3. aggregate_when_done_sensor  -> auto-aggregates + pushes to HuggingFace\n"
+    project_root = _find_project_root()
+    home = Path(dagster_home) if dagster_home else project_root / "data" / "output" / "dagster"
+    os.environ["DAGSTER_HOME"] = str(home)
+
+    with DagsterInstance.get() as instance:
+        cancel_statuses = [
+            DagsterRunStatus.QUEUED,
+            DagsterRunStatus.NOT_STARTED,
+            DagsterRunStatus.STARTED,
+        ]
+        cancelled = 0
+        for status in cancel_statuses:
+            records = instance.get_run_records(
+                filters=RunsFilter(statuses=[status]),
+            )
+            for rec in records:
+                if not dry_run:
+                    instance.report_run_canceled(
+                        rec.dagster_run,
+                        message="Cancelled by pipeline clean command",
+                    )
+                cancelled += 1
+
+        if cancelled:
+            label = "Would cancel" if dry_run else "Cancelled"
+            console.print(f"[yellow]{label} {cancelled} queued/in-progress runs.[/yellow]")
+        else:
+            console.print("[green]No stuck runs found.[/green]")
+
+        if dry_run:
+            console.print("\n[dim]Run without --dry-run to execute cleanup.[/dim]")
+
+
+@app.command()
+def status(
+    panel: Annotated[str, typer.Option("--panel", help="Reference panel to check.")] = "1000g",
+    cache_dir: Annotated[Optional[str], typer.Option("--cache-dir", help="Override cache directory.")] = None,
+    test: Annotated[bool, typer.Option("--test", help="Show status of test run outputs.")] = False,
+) -> None:
+    """Show scoring status by reading the quality report parquet."""
+    import polars as pl
+    from prs_pipeline.resources import CacheDirResource
+
+    resource = CacheDirResource(cache_dir=cache_dir or "")
+    base = resource.get_path()
+    percentiles_dir = base / "percentiles"
+    if test:
+        percentiles_dir = percentiles_dir / "test"
+    quality_path = percentiles_dir / f"{panel}_quality.parquet"
+
+    if not quality_path.exists():
+        console.print(f"[yellow]No quality report found at {quality_path}.[/yellow]")
+        if test:
+            console.print("Run 'pipeline run --test N' first.")
+        else:
+            console.print("Run 'pipeline run' or 'prs reference score-batch' first.")
+        raise typer.Exit(code=1)
+
+    df = pl.read_parquet(quality_path)
+    dist_path = percentiles_dir / f"{panel}_distributions.parquet"
+    scores_dir = base / "reference_scores" / panel
+
+    label = f"panel {panel} — TEST" if test else f"panel {panel}"
+    console.print(f"\n[bold]Scoring status for {label} ({df.height} PGS IDs):[/bold]")
+    console.print(f"  Quality report:  {quality_path}")
+    console.print(f"  Distributions:   {dist_path}")
+    console.print(f"  Per-PGS scores:  {scores_dir}/{{PGS_ID}}/scores.parquet\n")
+
+    status_counts = df.group_by("status").len().sort("len", descending=True)
+    for row in status_counts.iter_rows(named=True):
+        style = {"ok": "green", "failed": "red", "low_match": "yellow", "zero_variance": "yellow"}.get(
+            row["status"], "dim"
         )
-        _run_job_in_background("download_reference_data")
-    else:
-        console.print("[yellow]Timed out waiting for Dagster webserver -- UI may still be starting.[/yellow]")
+        console.print(f"  [{style}]{row['status']}:[/{style}] {row['len']}")
 
-    proc.wait()
+    failed = df.filter(pl.col("status") == "failed")
+    if failed.height > 0:
+        console.print(f"\n[red bold]Failed IDs ({failed.height}):[/red bold]")
+        for row in failed.head(30).iter_rows(named=True):
+            err = (row.get("error") or "unknown")[:100]
+            console.print(f"  {row['pgs_id']}  [dim]{err}[/dim]")
+        if failed.height > 30:
+            console.print(f"  [dim]... and {failed.height - 30} more[/dim]")
+
+        all_failed_ids = failed["pgs_id"].to_list()
+        console.print(f"\n[dim]Failed IDs for --pgs-ids:[/dim]")
+        console.print(f"  {','.join(all_failed_ids[:20])}")
+        if len(all_failed_ids) > 20:
+            console.print(f"  [dim]... ({len(all_failed_ids)} total)[/dim]")

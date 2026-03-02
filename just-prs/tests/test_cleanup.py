@@ -230,21 +230,22 @@ class TestPRSCatalog:
         assert with_auroc.height > 0
 
         pgs_id = with_auroc["pgs_id"][0]
-        pct_zero = catalog.percentile(0.0, pgs_id)
+        pct_zero, method = catalog.percentile(0.0, pgs_id)
         assert pct_zero is not None
         assert pct_zero == pytest.approx(50.0, abs=0.5)
 
-        pct_pos = catalog.percentile(1.0, pgs_id)
-        pct_neg = catalog.percentile(-1.0, pgs_id)
+        pct_pos, _ = catalog.percentile(1.0, pgs_id)
+        pct_neg, _ = catalog.percentile(-1.0, pgs_id)
         assert pct_pos is not None and pct_neg is not None
         assert pct_pos > pct_zero
         assert pct_neg < pct_zero
 
     def test_percentile_with_explicit_std(self, catalog: PRSCatalog) -> None:
-        pct = catalog.percentile(0.0, "PGS000001", mean=0.0, std=1.0)
+        pct, method = catalog.percentile(0.0, "PGS000001", mean=0.0, std=1.0)
         assert pct == pytest.approx(50.0, abs=0.1)
+        assert method == "theoretical"
 
-        pct_high = catalog.percentile(1.96, "PGS000001", mean=0.0, std=1.0)
+        pct_high, _ = catalog.percentile(1.96, "PGS000001", mean=0.0, std=1.0)
         assert pct_high is not None
         assert pct_high == pytest.approx(97.5, abs=0.5)
 
@@ -252,5 +253,5 @@ class TestPRSCatalog:
         best = catalog.best_performance(pgs_id="PGS000001").collect()
         auroc = best["auroc_estimate"][0] if best.height > 0 else None
         if auroc is None:
-            pct = catalog.percentile(1.0, "PGS000001")
+            pct, method = catalog.percentile(1.0, "PGS000001")
             assert pct is None

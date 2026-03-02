@@ -11,7 +11,7 @@ dependencies = [
 
 [project.scripts]
 ui = "prs_ui.cli:launch_ui"
-pipeline = "prs_pipeline.cli:launch"
+pipeline = "prs_pipeline.cli:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -22,6 +22,10 @@ packages = ["just_prs_workspace"]
 
 [tool.uv]
 managed = true
+override-dependencies = [
+    "grpcio==1.78.0",
+    "grpcio-health-checking==1.78.0",
+]
 
 [tool.uv.workspace]
 members = ["just-prs", "prs-ui", "prs-pipeline"]

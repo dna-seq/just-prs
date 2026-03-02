@@ -113,8 +113,13 @@ results = catalog.compute_prs_batch(
 )
 
 # Percentile estimation (AUROC-based or explicit mean/std)
-pct = catalog.percentile(prs_score=1.5, pgs_id="PGS000014")
-pct = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", mean=0.0, std=1.0)
+pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014")
+pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", panel="1000g")
+pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", mean=0.0, std=1.0)
+
+# Reference distributions (panel-aware)
+dist_lf = catalog.reference_distributions(panel="1000g")
+dist_lf = catalog.reference_distributions(panel="hgdp_1kg")
 
 # Build cleaned parquets explicitly (download from FTP + cleanup)
 paths = catalog.build_cleaned_parquets(output_dir=Path("./output/pgs_metadata"))
@@ -140,6 +145,202 @@ df = pl.DataFrame({
 })
 df = df.with_columns(genotype_expr())
 # genotype: [["A","T"], ["G","G"], []]
+```
+
+## PLINK2 binary format operations (`just_prs.reference`)
+
+Pure Python functions for reading PLINK2 binary files (.pgen/.pvar.zst/.psam), matching scoring variants, and computing PRS using `pgenlib` + polars + numpy. These functions replace common PLINK2 CLI operations while producing identical results (validated with Pearson r = 1.0 across 3,202 samples — see [validation](validation.md)).
+
+**Advantages over PLINK2 CLI:**
+- No external binary to install — works anywhere Python runs
+- Returns polars DataFrames directly instead of text files
+- Modular — use individual functions (`parse_pvar`, `read_pgen_genotypes`, `match_scoring_to_pvar`) independently for custom analyses
+- Caches parsed `.pvar.zst` as parquet for ~14x faster subsequent reads (~0.5s vs ~7s)
+- Reuses caches across multiple PGS IDs in batch scoring
+
+All functions raise `ReferencePanelError` (importable from `just_prs`) when required files are missing.
+
+### Parse variant files (`.pvar.zst`)
+
+```python
+from just_prs import parse_pvar
+
+# Decompresses .pvar.zst and caches as parquet (~0.5s on subsequent reads)
+pvar_df = parse_pvar(Path("/path/to/panel.pvar.zst"))
+# DataFrame: variant_idx (u32), chrom (str), POS (i64), REF (str), ALT (str)
+
+print(f"{pvar_df.height:,} variants loaded")
+print(pvar_df.filter(pl.col("chrom") == "11").head())
+```
+
+### Parse sample files (`.psam`)
+
+```python
+from just_prs import parse_psam
+
+psam_df = parse_psam(Path("/path/to/panel.psam"))
+# DataFrame: iid (str), superpop (str), population (str)
+
+print(psam_df.group_by("superpop").len())
+```
+
+### Read genotypes from `.pgen` files
+
+```python
+from just_prs import parse_pvar, parse_psam, read_pgen_genotypes
+from pathlib import Path
+import polars as pl
+
+pvar_df = parse_pvar(Path("panel.pvar.zst"))
+psam_df = parse_psam(Path("panel.psam"))
+
+# Select variants of interest (e.g. chromosome 11, position range)
+region = pvar_df.filter(
+    (pl.col("chrom") == "11")
+    & (pl.col("POS").is_between(69000000, 70000000))
+)
+
+# Read genotypes — returns int8 numpy array (variants x samples)
+# Values: 0=hom-ref, 1=het, 2=hom-alt, -9=missing
+geno = read_pgen_genotypes(
+    pgen_path=Path("panel.pgen"),
+    pvar_zst_path=Path("panel.pvar.zst"),
+    variant_indices=region["variant_idx"].cast(pl.UInt32).to_numpy(),
+    n_samples=psam_df.height,
+)
+print(f"Shape: {geno.shape}")  # (n_variants, n_samples)
+```
+
+### Match scoring file variants to `.pvar`
+
+```python
+from just_prs import parse_pvar, match_scoring_to_pvar
+from just_prs.prs import _normalize_scoring_columns
+from just_prs.scoring import parse_scoring_file
+
+pvar_df = parse_pvar(Path("panel.pvar.zst"))
+scoring_lf = parse_scoring_file(Path("PGS000001_hmPOS_GRCh38.txt.gz"))
+scoring_df = _normalize_scoring_columns(scoring_lf).collect()
+
+matched = match_scoring_to_pvar(pvar_df, scoring_df)
+# DataFrame with effect_is_alt column indicating allele orientation
+print(f"Matched {matched.height} of {scoring_df.height} scoring variants")
+```
+
+### Score a PGS against any .pgen dataset
+
+```python
+from just_prs import compute_reference_prs_polars
+from pathlib import Path
+
+scores_df = compute_reference_prs_polars(
+    pgs_id="PGS000001",
+    scoring_file=Path("PGS000001_hmPOS_GRCh38.txt.gz"),
+    ref_dir=Path("/path/to/pgen_dir"),  # any dir with .pgen/.pvar.zst/.psam
+    out_dir=Path("/tmp/output"),
+    genome_build="GRCh38",
+)
+# DataFrame: iid, superpop, population, score, pgs_id
+```
+
+### Aggregate into population distributions
+
+```python
+from just_prs import aggregate_distributions
+
+dist_df = aggregate_distributions(scores_df)
+# DataFrame: pgs_id, superpopulation, mean, std, n, median, p5, p25, p75, p95
+```
+
+### Batch reference scoring (`compute_reference_prs_batch`)
+
+Score multiple PGS IDs against a reference panel in a single call. Downloads scoring files, computes PRS for each, tracks failures and quality flags, and produces aggregated distributions:
+
+```python
+from pathlib import Path
+from just_prs import compute_reference_prs_batch, reference_panel_dir
+from just_prs.scoring import resolve_cache_dir
+
+cache_dir = resolve_cache_dir()
+ref_dir = reference_panel_dir(cache_dir, panel="1000g")
+
+result = compute_reference_prs_batch(
+    pgs_ids=["PGS000001", "PGS000002", "PGS000003"],
+    ref_dir=ref_dir,
+    cache_dir=cache_dir,
+    genome_build="GRCh38",
+    panel="1000g",
+    skip_existing=True,
+    match_rate_threshold=0.1,
+)
+
+# Inspect outcomes per PGS ID
+for o in result.outcomes:
+    print(f"{o.pgs_id}: {o.status} (n={o.n_samples}, mean={o.score_mean})")
+
+# Aggregated distributions DataFrame
+print(result.distributions_df)
+# pgs_id, superpopulation, mean, std, n, median, p5, p25, p75, p95
+
+# Quality report DataFrame
+print(result.quality_df)
+# pgs_id, status, n_samples, score_mean, score_std, elapsed_sec, error
+
+# Files are also written to cache:
+#   cache_dir/percentiles/1000g_distributions.parquet
+#   cache_dir/percentiles/1000g_quality.parquet
+#   cache_dir/reference_scores/1000g/{pgs_id}/scores.parquet
+```
+
+`BatchScoringResult` fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `panel` | `str` | Reference panel identifier |
+| `scores_df` | `pl.DataFrame` | All successful per-individual scores concatenated |
+| `distributions_df` | `pl.DataFrame` | Aggregated per-superpopulation distribution stats |
+| `outcomes` | `list[ScoringOutcome]` | Per-PGS-ID status, variant counts, timing, errors |
+| `quality_df` | `pl.DataFrame` | Same data as outcomes but as a polars DataFrame |
+
+Quality status values: `ok`, `failed`, `low_match`, `zero_variance`.
+
+### Ancestry-matched percentile estimation
+
+```python
+from just_prs import ancestry_percentile
+import polars as pl
+
+distributions_lf = pl.scan_parquet("1000g_distributions.parquet")
+pct = ancestry_percentile(
+    prs_score=0.00123,
+    pgs_id="PGS000001",
+    superpopulation="EUR",
+    distributions_lf=distributions_lf,
+)
+print(f"Percentile: {pct}%")
+```
+
+### Download and manage reference panels
+
+Two reference panels are supported:
+
+| Panel ID | Description |
+|----------|-------------|
+| `1000g` (default) | 1000 Genomes Project (3,202 individuals, 5 superpopulations) |
+| `hgdp_1kg` | HGDP + 1000 Genomes merged panel |
+
+```python
+from just_prs import download_reference_panel, reference_panel_dir, REFERENCE_PANELS
+
+# List available panels
+for name, info in REFERENCE_PANELS.items():
+    print(f"{name}: {info['description']}")
+
+# Check where a panel would be stored
+panel_dir = reference_panel_dir(panel="1000g")
+
+# Download if not present (~7 GB for 1000g, ~15 GB for hgdp_1kg)
+dest = download_reference_panel(panel="1000g")
 ```
 
 ## Low-level PRS computation (`just_prs.prs`)

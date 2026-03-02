@@ -26,6 +26,6 @@ Then open http://localhost:3000 in your browser.
 |-------|-------------|
 | `pgs_id_partitions` | Discover all PGS IDs and register as dynamic partitions |
 | `reference_panel` | Download + extract `pgsc_1000G_v1.tar.zst` (~7 GB, once) |
-| `per_pgs_scores` | PLINK2 `--score` on reference panel for each PGS ID (partitioned) |
+| `per_pgs_scores` | Score reference panel for each PGS ID via pgenlib + polars (partitioned) |
 | `reference_distributions` | Aggregate per-individual scores to per-superpopulation stats |
 | `push_distributions_to_hf` | Upload to `just-dna-seq/prs-percentiles` on HuggingFace |

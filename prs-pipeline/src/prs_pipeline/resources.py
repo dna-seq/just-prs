@@ -33,6 +33,7 @@ class HuggingFaceResource(ConfigurableResource):
     token: str = ""
     percentiles_repo: str = "just-dna-seq/prs-percentiles"
     metadata_repo: str = "just-dna-seq/polygenic_risk_scores"
+    catalog_repo: str = "just-dna-seq/pgs-catalog"
 
     def get_token(self) -> str | None:
         """Return the resolved HF token."""

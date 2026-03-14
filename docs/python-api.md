@@ -343,6 +343,51 @@ panel_dir = reference_panel_dir(panel="1000g")
 dest = download_reference_panel(panel="1000g")
 ```
 
+## Scoring file parquet cache (`just_prs.scoring`)
+
+PGS scoring files (`.txt.gz`) are transparently cached as parquet on first parse, with [PGS Catalog spec](https://www.pgscatalog.org/downloads/#dl_ftp_scoring)-driven schema overrides and embedded header metadata. Subsequent reads are 5-60x faster (no gzip decompression) and files are ~17% smaller with zstd-9 compression.
+
+The cache is shared between the pipeline and individual `compute_prs()` / `load_scoring()` calls — whoever creates the parquet first wins, and all subsequent consumers benefit. When a parquet cache exists, `load_scoring()` skips the `.txt.gz` download entirely.
+
+```python
+from pathlib import Path
+from just_prs.scoring import (
+    SCORING_FILE_SCHEMA,
+    parse_scoring_file,
+    scoring_parquet_path,
+    read_scoring_header,
+    load_scoring,
+)
+
+# SCORING_FILE_SCHEMA: dict of column name → pl.DataType for all 30+ PGS Catalog columns
+# Used automatically by parse_scoring_file() and stream_scoring_file()
+
+# Parse a scoring file (creates parquet cache on first call)
+lf = parse_scoring_file(Path("PGS000001_hmPOS_GRCh38.txt.gz"))
+# Subsequent calls return pl.scan_parquet() on the cached parquet (fast path)
+
+# Also works with a .parquet path directly
+lf = parse_scoring_file(Path("PGS000001_hmPOS_GRCh38.parquet"))
+
+# Check where the parquet cache would live for a PGS ID
+pq_path = scoring_parquet_path("PGS000001", Path("~/.cache/just-prs/scores"), "GRCh38")
+# Path('~/.cache/just-prs/scores/PGS000001_hmPOS_GRCh38.parquet')
+
+# Read PGS Catalog header metadata (instant from parquet, fallback to .txt.gz)
+header = read_scoring_header(Path("PGS000001_hmPOS_GRCh38.parquet"))
+# {'pgs_id': 'PGS000001', 'trait_reported': 'Breast cancer', 'genome_build': 'GRCh38', ...}
+
+# load_scoring() checks parquet cache first, skips .txt.gz download if cached
+lf = load_scoring("PGS000001")  # no network I/O if parquet already exists
+```
+
+Cache layout in `<cache>/scores/`:
+
+```text
+PGS000001_hmPOS_GRCh38.txt.gz     # original download (may be deleted by pipeline)
+PGS000001_hmPOS_GRCh38.parquet    # parquet cache with embedded header metadata
+```
+
 ## Low-level PRS computation (`just_prs.prs`)
 
 ```python

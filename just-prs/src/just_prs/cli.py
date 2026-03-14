@@ -321,11 +321,18 @@ def bulk_scores(
     else:
         console.print(f"Downloading [cyan]{len(ids)}[/cyan] score(s) → {output_dir}")
 
+    def _cli_progress(payload: dict[str, int]) -> None:
+        completed = payload["completed"]
+        total = payload["total"]
+        percent = (completed / total) * 100 if total > 0 else 0
+        console.print(f"Progress: [cyan]{completed}/{total}[/cyan] ([yellow]{percent:.1f}%[/yellow])")
+
     paths = bulk_download_scoring_parquets(
         output_dir=output_dir,
         genome_build=build,
         pgs_ids=ids,
         overwrite=overwrite,
+        progress_callback=_cli_progress,
     )
     console.print(f"[green]Done. {len(paths):,} parquet files in {output_dir}[/green]")
 
@@ -390,6 +397,152 @@ def bulk_push_hf(
     from just_prs.hf import push_cleaned_parquets
     push_cleaned_parquets(output_dir, repo_id=repo_id)
     console.print(f"[green]Pushed to https://huggingface.co/datasets/{repo_id}[/green]")
+
+
+@bulk_app.command("push-catalog")
+def bulk_push_catalog(
+    repo_id: Annotated[
+        str,
+        typer.Option("--repo", "-r", help="HuggingFace dataset repo ID"),
+    ] = "just-dna-seq/pgs-catalog",
+    build: Annotated[
+        str,
+        typer.Option("--build", "-b", help="Genome build for scoring files"),
+    ] = "GRCh38",
+    ids: Annotated[
+        Optional[str],
+        typer.Option("--ids", help="Comma-separated PGS IDs (default: all from PGS Catalog)"),
+    ] = None,
+    skip_download: Annotated[
+        bool,
+        typer.Option("--skip-download", help="Skip downloading, only convert and upload what is cached"),
+    ] = False,
+    delete_gz: Annotated[
+        bool,
+        typer.Option("--delete-gz", help="Delete .txt.gz files after verified parquet conversion"),
+    ] = False,
+) -> None:
+    """Download, convert, and upload PGS Catalog scoring files + metadata to HuggingFace.
+
+    \b
+    Full pipeline in one command:
+    1. Download all scoring .txt.gz files from EBI FTP (skips existing)
+    2. Convert each .txt.gz to parquet (skips existing)
+    3. Build cleaned metadata parquets if missing
+    4. Upload everything to the HF dataset repo
+
+    Token is read from .env file or HF_TOKEN environment variable.
+    """
+    from just_prs.ftp import bulk_download_scoring_files
+    from just_prs.hf import push_pgs_catalog
+    from just_prs.scoring import _scoring_parquet_cache_path, parse_scoring_file
+
+    cache = resolve_cache_dir()
+    scores_dir = cache / "scores"
+    scores_dir.mkdir(parents=True, exist_ok=True)
+    metadata_dir = cache / "metadata"
+
+    pgs_ids: list[str]
+    if ids is not None:
+        pgs_ids = [p.strip() for p in ids.split(",") if p.strip()]
+        console.print(f"Using {len(pgs_ids)} specified PGS IDs")
+    else:
+        console.print("Fetching full PGS ID list from EBI FTP...")
+        pgs_ids = list_all_pgs_ids()
+        console.print(f"Found [cyan]{len(pgs_ids):,}[/cyan] PGS IDs in catalog")
+
+    if not skip_download:
+        console.print(f"\n[bold]Step 1/4:[/bold] Downloading scoring files ({build})...")
+        
+        def _download_progress(payload: dict[str, int]) -> None:
+            completed = payload["completed"]
+            total = payload["total"]
+            downloaded = payload["downloaded"]
+            cached = payload["cached"]
+            percent = (completed / total) * 100 if total > 0 else 0
+            console.print(
+                f"Progress: [cyan]{completed}/{total}[/cyan] ([yellow]{percent:.1f}%[/yellow]) "
+                f"dl={downloaded} cached={cached}"
+            )
+        
+        result = bulk_download_scoring_files(
+            pgs_ids=pgs_ids,
+            output_dir=scores_dir,
+            genome_build=build,
+            progress_callback=_download_progress,
+        )
+        console.print(
+            f"  downloaded={result.downloaded}, cached={result.cached}, "
+            f"failed={result.failed}"
+        )
+
+    console.print(f"\n[bold]Step 2/4:[/bold] Converting .txt.gz to parquet...")
+    gz_files = sorted(scores_dir.glob("*_hmPOS_*.txt.gz"))
+    converted = 0
+    already_cached = 0
+    failed = 0
+    deleted = 0
+    
+    import time
+    last_log_time = time.monotonic()
+    total_gz = len(gz_files)
+    
+    for i, gz_path in enumerate(gz_files):
+        parquet_path = _scoring_parquet_cache_path(gz_path)
+        if parquet_path.exists():
+            already_cached += 1
+            if delete_gz:
+                gz_path.unlink()
+                deleted += 1
+        else:
+            try:
+                lf = parse_scoring_file(gz_path)
+                lf.select(pl.len()).collect()
+                if parquet_path.exists():
+                    converted += 1
+                    if delete_gz:
+                        gz_path.unlink()
+                        deleted += 1
+                else:
+                    failed += 1
+            except Exception as exc:
+                failed += 1
+                console.print(f"  [red]{gz_path.name}: {exc}[/red]")
+                
+        current_time = time.monotonic()
+        if (i + 1) % 500 == 0 or (current_time - last_log_time > 15.0) or (i + 1) == total_gz:
+            last_log_time = current_time
+            percent = ((i + 1) / total_gz) * 100 if total_gz > 0 else 0
+            console.print(f"  Parquet conversion: [cyan]{i + 1}/{total_gz}[/cyan] ([yellow]{percent:.1f}%[/yellow]) "
+                          f"converted={converted} cached={already_cached} failed={failed}")
+    console.print(
+        f"  converted={converted}, already_cached={already_cached}, "
+        f"failed={failed}, deleted_gz={deleted}"
+    )
+
+    console.print(f"\n[bold]Step 3/4:[/bold] Building cleaned metadata...")
+    if not all((metadata_dir / f).exists() for f in ("scores.parquet", "performance.parquet", "best_performance.parquet")):
+        catalog = PRSCatalog()
+        catalog.build_cleaned_parquets(output_dir=metadata_dir)
+        console.print("  Built cleaned metadata parquets")
+    else:
+        console.print("  Cleaned metadata already exists, skipping")
+
+    scoring_parquets = [
+        p for p in scores_dir.glob("*_hmPOS_*.parquet")
+        if p.name != "conversion_failures.parquet"
+    ]
+    console.print(
+        f"\n[bold]Step 4/4:[/bold] Uploading to [cyan]{repo_id}[/cyan]...\n"
+        f"  metadata: {metadata_dir} (3 parquets)\n"
+        f"  scores:   {scores_dir} ({len(scoring_parquets):,} parquets)"
+    )
+    push_pgs_catalog(
+        metadata_dir=metadata_dir,
+        scores_dir=scores_dir,
+        repo_id=repo_id,
+    )
+    console.print(f"\n[green]Done. Pushed to https://huggingface.co/datasets/{repo_id}[/green]")
 
 
 @bulk_app.command("pull-hf")

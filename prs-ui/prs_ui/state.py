@@ -39,6 +39,7 @@ from just_prs.quality import (
     format_effect_size,
     interpret_prs_result,
 )
+from just_prs.reference import SUPERPOPULATIONS
 from just_prs.scoring import resolve_cache_dir
 from just_prs.vcf import detect_genome_build
 
@@ -237,6 +238,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     compute_scores_loaded: bool = False
     prs_genotypes_path: str = ""
     selected_ancestry: str = "EUR"
+    compute_all_populations: bool = False
 
     # Filter / sort state
     prs_results_filter: str = ""
@@ -250,6 +252,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     def set_selected_ancestry(self, value: str) -> None:
         """Set the ancestry superpopulation for percentile lookup."""
         self.selected_ancestry = value
+
+    def set_compute_all_populations(self, value: bool) -> None:
+        """Enable/disable percentile lookup for all available superpopulations."""
+        self.compute_all_populations = bool(value)
 
     def set_prs_results_filter(self, value: str) -> None:
         self.prs_results_filter = value
@@ -324,6 +330,19 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         if self.prs_genotypes_path and Path(self.prs_genotypes_path).exists():
             return _normalize_genotypes_lf(pl.scan_parquet(self.prs_genotypes_path))
         return None
+
+    def _reference_percentiles_all_populations(
+        self,
+        prs_score: float,
+        pgs_id: str,
+    ) -> dict[str, float]:
+        """Return available 1000G reference percentiles for all superpopulations."""
+        values: dict[str, float] = {}
+        for superpop in SUPERPOPULATIONS:
+            pct, method = _catalog.percentile(prs_score, pgs_id, ancestry=superpop)
+            if pct is not None and method == "reference_panel":
+                values[superpop] = round(pct, 1)
+        return values
 
     def initialize_prs(self) -> Any:
         """Auto-load cleaned scores on first access."""
@@ -477,6 +496,39 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     result.score, pgs_id, ancestry=self.selected_ancestry
                 )
 
+            all_pop_values: dict[str, float] = {}
+            all_pop_text = ""
+            if self.compute_all_populations:
+                all_pop_values = self._reference_percentiles_all_populations(
+                    result.score, pgs_id
+                )
+                if all_pop_values:
+                    all_pop_text = ", ".join(
+                        f"{sp}: {pct:.1f}%"
+                        for sp, pct in sorted(all_pop_values.items())
+                    )
+
+            # Reference status should be computed AFTER percentile lookups, because
+            # those lookups can trigger an HF refresh-on-miss and change availability.
+            ref_status = _catalog.reference_data_status(pgs_id, panel="1000g")
+            ref_superpops = list(ref_status["available_superpopulations"])
+            ref_has_data = bool(ref_status["has_reference_data"])
+            ref_source_label = str(ref_status["source_label"])
+            ref_source_code = str(ref_status["source_code"])
+
+            # If multi-pop lookup just found concrete reference_panel percentiles,
+            # reflect those as precomputed populations in status immediately.
+            if all_pop_values:
+                ref_has_data = True
+                merged = sorted(set(ref_superpops) | set(all_pop_values.keys()))
+                ref_superpops = merged
+
+            ref_status_text = (
+                f"precomputed ({', '.join(ref_superpops)})"
+                if ref_has_data
+                else "not precomputed"
+            )
+
             interp = interpret_prs_result(pct_value, result.match_rate, auroc_val)
 
             # Risk level from percentile
@@ -511,12 +563,30 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "For standard PRS models, higher percentile = more genetic variants "
                     "associated with increased risk."
                 )
+                if all_pop_text:
+                    risk_hint += f" Available 1000G population percentiles: {all_pop_text}."
             else:
                 risk_hint = (
                     f"No reference percentile is available for {trait_name}. "
                     "The raw score is model-specific and cannot be read as protective or risky "
                     "without a population reference. Try selecting a different ancestry or "
                     "checking whether a reference panel exists for this score."
+                )
+                if self.compute_all_populations:
+                    risk_hint += (
+                        " All-population lookup is enabled, but no 1000G reference "
+                        "distribution is currently available for this PGS ID."
+                    )
+            if ref_has_data:
+                risk_hint += (
+                    f" Reference distributions source: {ref_source_label}. "
+                    "These are precomputed from reference panel scoring and are not "
+                    "provided directly by the PGS Catalog API."
+                )
+            else:
+                risk_hint += (
+                    f" Reference distributions source status: {ref_source_label}. "
+                    "Percentile falls back to theoretical/AUROC approximation when available."
                 )
 
             row: dict[str, Any] = {
@@ -542,6 +612,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "risk_level": risk_level,
                 "risk_level_color": risk_level_color,
                 "risk_hint": risk_hint,
+                "all_population_percentiles": all_pop_text,
+                "reference_status": ref_status_text,
+                "reference_source": ref_source_label,
+                "reference_source_code": ref_source_code,
             }
 
             if result.match_rate < 0.1:
@@ -564,6 +638,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             "match_rate", "variants_matched", "variants_total",
             "effect_size", "classification", "ancestry",
             "n_individuals", "summary",
+            "all_population_percentiles",
+            "reference_status",
+            "reference_source",
         ]
         buf = io.StringIO()
         writer = csv.DictWriter(buf, fieldnames=columns, extrasaction="ignore")

@@ -69,6 +69,7 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 - **CSV export** — download computed PRS results as CSV from the web UI or programmatically
 - **Cleanup pipeline** — normalizes genome builds, renames columns to snake_case, parses performance metrics into structured numeric fields
 - **HuggingFace sync** — cleaned metadata parquets published to [just-dna-seq/polygenic_risk_scores](https://huggingface.co/datasets/just-dna-seq/polygenic_risk_scores) and auto-downloaded on first use
+- **Scoring file parquet cache** — scoring files are transparently cached as zstd-9 compressed parquet with spec-driven schema overrides and embedded PGS header metadata (5-60x faster reads, ~17% smaller than `.txt.gz`)
 - **Bulk download** the entire PGS Catalog metadata (~5,000+ scores) via EBI FTP
 - Compute PRS for one or many scores against a VCF file
 - All data saved as **Parquet** for fast downstream analysis with Polars
@@ -198,6 +199,7 @@ uv run pytest just-prs/tests/ -v
 | `test_prs.py` | End-to-end PRS computation (single and batch) on a real VCF | Zenodo test VCF |
 | `test_cleanup.py` | Full cleanup pipeline: column renaming, genome build normalization, metric string parsing, performance flattening, `PRSCatalog` search/percentile on live catalog data | Real PGS Catalog bulk metadata (~5,000+ scores) via EBI FTP |
 | `test_scoring.py` | Scoring file download, parsing, and caching | Real PGS000001 harmonized scoring file |
+| `test_scoring_parquet_cache.py` | Parquet cache roundtrip: schema/value fidelity, header metadata preservation, skip-download when cached, PRS equivalence between `.txt.gz` and parquet | 4 real PGS scoring files (PGS000001/2/10/13) + test VCF |
 | `test_catalog.py` | REST API client: score lookup, trait search, download URL resolution | Live PGS Catalog REST API |
 
 Key properties of the test suite:

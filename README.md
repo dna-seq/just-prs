@@ -70,6 +70,7 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 - **Quality assessment** — `just_prs.quality` provides pure-logic helpers (`classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`) usable from any UI or script
 - **CSV export** — download computed PRS results as CSV from the web UI or programmatically
 - **Cleanup pipeline** — normalizes genome builds, renames columns to snake_case, parses performance metrics into structured numeric fields
+- **Scoring file parquet cache** — `parse_scoring_file()` transparently caches PGS scoring files as zstd-9 compressed parquet with [PGS Catalog spec](https://www.pgscatalog.org/downloads/#dl_ftp_scoring)-driven schema overrides and embedded header metadata, giving 5-60x faster reads and ~17% smaller files than `.txt.gz`
 - **Batch reference scoring** — `compute_reference_prs_batch()` scores all ~5,000+ PGS IDs against a reference panel in one call with error tracking, quality flags, and panel-aware output
 - **HuggingFace sync** — cleaned metadata parquets published to [just-dna-seq/polygenic_risk_scores](https://huggingface.co/datasets/just-dna-seq/polygenic_risk_scores), reference distributions to [just-dna-seq/prs-percentiles](https://huggingface.co/datasets/just-dna-seq/prs-percentiles) — auto-downloaded on first use
 - **Bulk download** the entire PGS Catalog metadata (~5,000+ scores) via EBI FTP
@@ -247,6 +248,7 @@ uv run pytest just-prs/tests/ -v
 | `test_prs.py` | End-to-end PRS computation (single and batch) on a real VCF | Zenodo test VCF |
 | `test_cleanup.py` | Full cleanup pipeline: column renaming, genome build normalization, metric string parsing, performance flattening, `PRSCatalog` search/percentile on live catalog data | Real PGS Catalog bulk metadata (~5,000+ scores) via EBI FTP |
 | `test_scoring.py` | Scoring file download, parsing, and caching | Real PGS000001 harmonized scoring file |
+| `test_scoring_parquet_cache.py` | Parquet cache roundtrip: schema/value fidelity, header metadata preservation, skip-download when cached, PRS equivalence between `.txt.gz` and parquet | 4 real PGS scoring files (PGS000001/2/10/13) + test VCF |
 | `test_catalog.py` | REST API client: score lookup, trait search, download URL resolution | Live PGS Catalog REST API |
 
 Key properties of the test suite:

@@ -54,9 +54,16 @@ def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
                 "Select your ancestry group for percentile estimation. "
                 "AFR=African, AMR=American, EAS=East Asian, EUR=European, SAS=South Asian. "
                 "Percentiles are computed relative to 1000 Genomes reference individuals "
-                "in the selected group. When reference data is unavailable, "
+                "in the selected group. Enable all populations to compute percentiles "
+                "for every available 1000G superpopulation. When reference data is unavailable, "
                 "a theoretical or AUROC-based approximation is used."
             ),
+        ),
+        rx.checkbox(
+            "All available populations",
+            checked=state.compute_all_populations,
+            on_change=state.set_compute_all_populations,
+            size="2",
         ),
         spacing="2",
         align="center",
@@ -243,6 +250,20 @@ def _result_row(row: dict) -> rx.Component:  # type: ignore[type-arg]
             ),
         ),
         rx.table.cell(
+            rx.cond(
+                row["reference_status"] != "",
+                rx.text(row["reference_status"], size="2"),
+                rx.text("N/A", size="2", color="gray"),
+            ),
+        ),
+        rx.table.cell(
+            rx.cond(
+                row["reference_source"] != "",
+                rx.text(row["reference_source"], size="2"),
+                rx.text("N/A", size="2", color="gray"),
+            ),
+        ),
+        rx.table.cell(
             rx.badge(
                 rx.text(row["match_rate"], "%"),
                 color_scheme=row["match_color"],
@@ -303,6 +324,15 @@ def _result_interpretation_card(row: dict) -> rx.Component:  # type: ignore[type
                         variant="outline",
                     ),
                 ),
+                rx.cond(
+                    row["reference_status"] != "",
+                    rx.badge(
+                        rx.text("Ref: ", row["reference_status"]),
+                        color_scheme="blue",
+                        size="1",
+                        variant="outline",
+                    ),
+                ),
                 spacing="2",
                 wrap="wrap",
             ),
@@ -310,6 +340,25 @@ def _result_interpretation_card(row: dict) -> rx.Component:  # type: ignore[type
             rx.cond(
                 row["summary"] != "",
                 rx.text(row["summary"], size="2", color="var(--gray-11)"),
+            ),
+            rx.cond(
+                row["all_population_percentiles"] != "",
+                rx.text(
+                    "All populations (1000G): ",
+                    row["all_population_percentiles"],
+                    size="2",
+                    color="var(--gray-11)",
+                ),
+            ),
+            rx.cond(
+                row["reference_source"] != "",
+                rx.text(
+                    "Reference source: ",
+                    row["reference_source"],
+                    ". These precomputed distributions are generated from reference panel scoring (not direct PGS Catalog score API percentiles).",
+                    size="2",
+                    color="var(--gray-11)",
+                ),
             ),
             spacing="2",
             width="100%",
@@ -430,7 +479,9 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 "(matched to your selected ancestry group) when available. "
                 "For scores without reference data, a theoretical distribution from "
                 "allele frequencies or an AUROC-based approximation is used. "
-                "The method is shown in the Percentile Method column.",
+                "The method is shown in the Percentile Method column. "
+                "Reference Data/Reference Source columns indicate whether precomputed "
+                "population distributions exist and where they were loaded from.",
                 icon="info",
                 color_scheme="iris",
                 size="1",
@@ -497,6 +548,8 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                             _sortable_header(state, "AUROC", "auroc"),
                             _sortable_header(state, "Quality", "quality_label"),
                             _sortable_header(state, "Population", "ancestry"),
+                            rx.table.column_header_cell("Reference Data"),
+                            rx.table.column_header_cell("Reference Source"),
                             _sortable_header(state, "Match Rate", "match_rate"),
                             rx.table.column_header_cell("Matched / Total"),
                             rx.table.column_header_cell("Effect Size"),

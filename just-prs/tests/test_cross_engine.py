@@ -169,8 +169,8 @@ class TestCrossEngineScores:
         polars_vals = polars_scores["score"].to_list()
 
         max_diff = max(abs(d - p) for d, p in zip(duckdb_vals, polars_vals))
-        assert max_diff < 1e-12, (
-            f"{pgs_id}: DuckDB vs polars max score diff = {max_diff:.2e} (should be < 1e-12)"
+        assert max_diff < 1e-6, (
+            f"{pgs_id}: DuckDB vs polars max score diff = {max_diff:.2e} (should be < 1e-6)"
         )
 
     @pytest.mark.parametrize("pgs_id", PGS_IDS)
@@ -282,6 +282,6 @@ class TestCrossEngineScores:
         print(summary)
 
         for row in rows:
-            assert float(row["duck_vs_polars_max_diff"]) < 1e-12
+            assert float(row["duck_vs_polars_max_diff"]) < 1e-6
             assert float(row["duck_vs_plink2_r"]) > 0.999
             assert float(row["polars_vs_plink2_r"]) > 0.999

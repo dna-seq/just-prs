@@ -17,6 +17,7 @@ cross-validation against the PLINK2 binary via ``prs reference compare``.
 
 from __future__ import annotations
 
+import gc
 import math
 import re as _re
 import subprocess
@@ -941,6 +942,82 @@ class _ResolvedRefPanel:
         return result
 
 
+_DEFAULT_MEMORY_SAFETY_PERCENT = 10
+_DEFAULT_MEMORY_SAFETY_MIN_MB = 512
+_BYTES_PER_VARIANT_SAMPLE = 13
+
+
+def _memory_safety_floor_bytes() -> int:
+    """Return the memory safety floor in bytes, respecting env overrides."""
+    import os
+    import psutil
+
+    total = psutil.virtual_memory().total
+    pct_str = os.environ.get("PRS_MEMORY_SAFETY_PERCENT", "").strip()
+    pct = int(pct_str) if pct_str else _DEFAULT_MEMORY_SAFETY_PERCENT
+    min_str = os.environ.get("PRS_MEMORY_SAFETY_MIN_MB", "").strip()
+    min_mb = int(min_str) if min_str else _DEFAULT_MEMORY_SAFETY_MIN_MB
+    return max(int(total * pct / 100), min_mb * 1024 * 1024)
+
+
+def _resolve_geno_chunk_size(n_samples: int, variants_remaining: int) -> int:
+    """Determine genotype chunk size based on env var or available memory.
+
+    Per-chunk peak memory accounts for all arrays alive simultaneously:
+      - geno_buf:       chunk × n_samples × 1 byte   (int8, freed after cast)
+      - geno_float:     chunk × n_samples × 4 bytes  (float32)
+      - missing_mask:   chunk × n_samples × 1 byte   (bool)
+      - multiply temp:  chunk × n_samples × 4 bytes  (float32, broadcast result)
+    Peak ≈ chunk × n_samples × 10 bytes (after geno_buf is freed, before
+    multiply temp is reduced by .sum()).  We use 13 bytes as a conservative
+    estimate to cover numpy internal temporaries.
+
+    When ``PRS_GENO_CHUNK_SIZE`` is set, that value is used directly.
+    Otherwise, we auto-size to use up to 50% of currently free RAM
+    (always keeping a safety floor of ``_MEMORY_SAFETY_PERCENT`` % of
+    total RAM, minimum ``_MEMORY_SAFETY_MIN_MB``), clamped to
+    [10_000, variants_remaining].
+
+    This function is called **before each chunk** so the budget adapts
+    to live memory pressure from other processes.
+    """
+    import os
+
+    env_val = os.environ.get("PRS_GENO_CHUNK_SIZE", "").strip()
+    if env_val:
+        return min(max(int(env_val), 1000), variants_remaining)
+
+    import psutil
+
+    available_bytes = psutil.virtual_memory().available
+    safety_floor = _memory_safety_floor_bytes()
+    usable_bytes = max(available_bytes - safety_floor, 0)
+    budget_bytes = usable_bytes // 2
+    bytes_per_variant = n_samples * _BYTES_PER_VARIANT_SAMPLE
+    auto_chunk = max(budget_bytes // bytes_per_variant, 10_000)
+    return min(auto_chunk, variants_remaining)
+
+
+def _check_memory_pressure(pgs_id: str) -> None:
+    """Raise ``MemoryError`` if available RAM drops below the safety floor.
+
+    The safety floor is ``PRS_MEMORY_SAFETY_PERCENT`` % of total RAM
+    (minimum ``PRS_MEMORY_SAFETY_MIN_MB``).  Called before each chunk so
+    the process exits cleanly instead of letting the OOM killer strike.
+    """
+    import psutil
+
+    floor_bytes = _memory_safety_floor_bytes()
+    floor_mb = floor_bytes / (1024 * 1024)
+    available_mb = psutil.virtual_memory().available / (1024 * 1024)
+    if available_mb < floor_mb:
+        raise MemoryError(
+            f"Available RAM ({available_mb:.0f} MB) dropped below safety floor "
+            f"({floor_mb:.0f} MB) while scoring {pgs_id}. "
+            f"Aborting to avoid OOM-killing other processes."
+        )
+
+
 def compute_reference_prs_polars(
     pgs_id: str,
     scoring_file: Path,
@@ -971,6 +1048,8 @@ def compute_reference_prs_polars(
     Returns:
         DataFrame with columns: iid, superpop, population, score, pgs_id
     """
+    import os
+
     import numpy as np
 
     from just_prs.prs import _normalize_scoring_columns
@@ -994,7 +1073,7 @@ def compute_reference_prs_polars(
         variants_total = scoring_df.height
         t_scoring = time.monotonic() - t0
         log_message(
-            message_type="reference:polars_phase_scoring",
+            message_type="reference:phase_parse_scoring",
             pgs_id=pgs_id,
             elapsed_sec=round(t_scoring, 3),
             variants_total=variants_total,
@@ -1006,7 +1085,7 @@ def compute_reference_prs_polars(
         variants_matched = matched.height
         t_pvar = time.monotonic() - t0
         log_message(
-            message_type="reference:polars_phase_pvar",
+            message_type="reference:phase_duckdb_match",
             pgs_id=pgs_id,
             elapsed_sec=round(t_pvar, 3),
             variants_matched=variants_matched,
@@ -1021,47 +1100,67 @@ def compute_reference_prs_polars(
         if variants_matched == 0:
             raise ReferencePanelError(f"[{pgs_id}] No variants matched between scoring file and reference panel.")
 
-        weights = matched["effect_weight"].to_numpy()
+        weights = matched["effect_weight"].to_numpy().astype(np.float32)
         is_alt = matched["effect_is_alt"].to_numpy()
         del matched
 
-        chunk_size = 5000
+        import pgenlib
+
+        sort_order = np.argsort(variant_indices)
+        sorted_all = variant_indices[sort_order]
+        weights_sorted = weights[sort_order]
+        is_alt_sorted = is_alt[sort_order]
+        del weights, is_alt, variant_indices
+
+        offsets_cache = _allele_offsets_cache_path(panel.pvar_zst_path)
+        if not offsets_cache.exists():
+            _build_allele_offsets_cache(panel.pvar_zst_path)
+        allele_offsets = _load_allele_idx_offsets(offsets_cache, variant_ct=panel.pvar_variant_ct)
+
         prs_sum = np.zeros(n_samples, dtype=np.float64)
-        for start in range(0, variants_matched, chunk_size):
-            end = min(start + chunk_size, variants_matched)
-            batch_indices = variant_indices[start:end]
-            batch_weights = weights[start:end]
-            batch_is_alt = is_alt[start:end]
 
-            geno_t0 = time.monotonic()
-            geno_batch = read_pgen_genotypes(
-                pgen_path=panel.pgen_path,
-                pvar_zst_path=panel.pvar_zst_path,
-                variant_indices=batch_indices,
-                n_samples=n_samples,
-                pvar_variant_ct=panel.pvar_variant_ct,
-            )
-            t_geno += time.monotonic() - geno_t0
+        geno_t0 = time.monotonic()
+        with pgenlib.PgenReader(
+            str(panel.pgen_path).encode("utf-8"),
+            raw_sample_ct=n_samples,
+            variant_ct=panel.pvar_variant_ct,
+            allele_idx_offsets=allele_offsets,
+        ) as greader:
+            actual_samples = greader.get_raw_sample_ct()
+            start = 0
+            while start < variants_matched:
+                _check_memory_pressure(pgs_id)
+                chunk_size = _resolve_geno_chunk_size(n_samples, variants_matched - start)
+                end = min(start + chunk_size, variants_matched)
+                batch_indices = sorted_all[start:end]
+                batch_weights = weights_sorted[start:end]
+                batch_is_alt = is_alt_sorted[start:end]
 
-            missing_mask = geno_batch == -9
-            geno_float = geno_batch.astype(np.float64)
-            del geno_batch
+                geno_buf = np.empty((end - start, actual_samples), dtype=np.int8)
+                greader.read_list(batch_indices, geno_buf)
 
-            ref_effect_mask = np.logical_not(batch_is_alt)
-            if ref_effect_mask.any():
-                geno_float[ref_effect_mask, :] = 2.0 - geno_float[ref_effect_mask, :]
-            geno_float[missing_mask] = 0.0
-            del missing_mask
+                missing_mask = geno_buf == -9
+                geno_float = geno_buf.astype(np.float32)
+                del geno_buf
 
-            prs_sum += (geno_float * batch_weights[:, np.newaxis]).sum(axis=0)
-            del geno_float, batch_indices, batch_weights, batch_is_alt
+                ref_effect_mask = np.logical_not(batch_is_alt)
+                if ref_effect_mask.any():
+                    geno_float[ref_effect_mask, :] = np.float32(2.0) - geno_float[ref_effect_mask, :]
+                geno_float[missing_mask] = 0.0
+                del missing_mask
 
-        del variant_indices, weights, is_alt
+                prs_sum += (geno_float * batch_weights[:, np.newaxis]).sum(axis=0)
+                del geno_float, batch_indices, batch_weights, batch_is_alt
+                start = end
+
+        t_geno = time.monotonic() - geno_t0
+
+        del sorted_all, weights_sorted, is_alt_sorted, allele_offsets
         allele_ct = 2 * variants_matched
         prs_avg = prs_sum / allele_ct
         t_compute = time.monotonic() - t0
         log_message(
-            message_type="reference:polars_phase_genotypes",
+            message_type="reference:phase_pgen_read",
             pgs_id=pgs_id,
             elapsed_sec=round(t_geno, 3),
             n_samples=n_samples,
@@ -1069,7 +1168,7 @@ def compute_reference_prs_polars(
             genotype_batch_size=chunk_size,
         )
         log_message(
-            message_type="reference:polars_phase_compute",
+            message_type="reference:phase_numpy_compute",
             pgs_id=pgs_id,
             elapsed_sec=round(t_compute, 3),
             variants_matched=variants_matched,
@@ -1087,7 +1186,7 @@ def compute_reference_prs_polars(
         t_total = time.monotonic() - t_total_start
 
         log_message(
-            message_type="reference:polars_score_done",
+            message_type="reference:score_done",
             pgs_id=pgs_id,
             n_samples=result.height,
             variants_total=variants_total,
@@ -1109,25 +1208,56 @@ class _SinglePgsAgg(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
+class _CorruptParquet(Exception):
+    """Raised when a cached parquet file is found to be corrupted."""
+
+
 def _aggregate_single_pgs(parquet_path: Path, pgs_id: str) -> _SinglePgsAgg | None:
     """Read a cached per-PGS scores parquet, aggregate distributions, discard raw scores.
 
     Returns None if the parquet is empty or unreadable.
+    Raises _CorruptParquet if the file exists but cannot be parsed at any stage
+    (truncated write, invalid thrift header, corrupt row-group data, etc.).
+    collect_schema() only reads the footer metadata — actual data corruption is
+    only detected when collect() reads the row groups.  The entire read sequence
+    is therefore wrapped so any polars read error triggers delete-and-recompute.
+    The caller should delete the file and fall through to recompute.
     """
-    lf = pl.scan_parquet(parquet_path)
-    schema = lf.collect_schema()
-    if "score" not in schema.names():
-        return None
-    stats = lf.select(
-        pl.col("score").mean().alias("mean"),
-        pl.col("score").std().alias("std"),
-        pl.len().alias("n"),
-    ).collect()
+    try:
+        lf = pl.scan_parquet(parquet_path)
+        schema = lf.collect_schema()
+        if "score" not in schema.names():
+            return None
+        # Run all aggregations lazily — group_by + quantiles are fully supported
+        # in the lazy engine so we never materialise the full per-sample frame.
+        agg_lf = (
+            lf.group_by(["pgs_id", "superpop"])
+            .agg(
+                pl.col("score").mean().alias("mean"),
+                pl.col("score").std().alias("std"),
+                pl.col("score").count().alias("n"),
+                pl.col("score").median().alias("median"),
+                pl.col("score").quantile(0.05).alias("p5"),
+                pl.col("score").quantile(0.25).alias("p25"),
+                pl.col("score").quantile(0.75).alias("p75"),
+                pl.col("score").quantile(0.95).alias("p95"),
+            )
+            .rename({"superpop": "superpopulation"})
+            .sort(["pgs_id", "superpopulation"])
+        )
+        # Also need overall n / mean / std for ScoringOutcome — derive lazily.
+        stats_lf = lf.select(
+            pl.col("score").mean().alias("mean"),
+            pl.col("score").std().alias("std"),
+            pl.len().alias("n"),
+        )
+        dist, stats = pl.collect_all([agg_lf, stats_lf])
+    except _CorruptParquet:
+        raise
+    except Exception as exc:
+        raise _CorruptParquet(str(exc)) from exc
     if stats["n"][0] == 0:
         return None
-    df = lf.collect()
-    dist = aggregate_distributions(df)
-    del df
     return _SinglePgsAgg(
         df=dist,
         outcome=ScoringOutcome(
@@ -1182,7 +1312,7 @@ def compute_reference_prs_batch(
         and a quality DataFrame.  Raw per-sample scores are NOT held in
         memory — they are written to disk per PGS ID and discarded.
     """
-    from just_prs.scoring import download_scoring_file
+    from just_prs.scoring import download_scoring_file, scoring_parquet_path
 
     scores_cache = cache_dir / "scores"
     scores_cache.mkdir(parents=True, exist_ok=True)
@@ -1210,6 +1340,7 @@ def compute_reference_prs_batch(
 
     outcomes: list[ScoringOutcome] = []
     dist_parts: list[pl.DataFrame] = []
+    _DIST_FLUSH_EVERY = 200  # compact dist_parts every N IDs to release small frames
     total = len(pgs_ids)
     started_at = time.monotonic()
     n_processed = 0
@@ -1223,10 +1354,21 @@ def compute_reference_prs_batch(
         nonlocal n_processed, n_ok, n_failed, n_problematic, n_cached, recent_ids
         if progress_callback is None:
             return
-        if not force and progress_every > 0 and (n_processed % progress_every != 0):
+        
+        current_time = time.monotonic()
+        # Hack to attach last_log_time to the function object to persist state across calls
+        if not hasattr(_emit_progress, "last_log_time"):
+            _emit_progress.last_log_time = started_at
+            
+        time_elapsed = current_time - _emit_progress.last_log_time
+        
+        should_log = force or (progress_every > 0 and n_processed % progress_every == 0) or (time_elapsed > 15.0)
+        if not should_log:
             return
+            
+        _emit_progress.last_log_time = current_time
 
-        elapsed_sec = time.monotonic() - started_at
+        elapsed_sec = current_time - started_at
         rate_per_sec = (n_processed / elapsed_sec) if elapsed_sec > 0 else 0.0
         remaining = max(total - n_processed, 0)
         eta_sec = (remaining / rate_per_sec) if rate_per_sec > 0 else None
@@ -1259,29 +1401,59 @@ def compute_reference_prs_batch(
             result_parquet = out_dir / "scores.parquet"
 
             if skip_existing and result_parquet.exists():
-                dist = _aggregate_single_pgs(result_parquet, pgs_id)
-                if dist is not None:
-                    dist_parts.append(dist.df)
-                    outcomes.append(dist.outcome)
-                    n_processed += 1
-                    n_ok += 1
-                    n_cached += 1
-                    recent_ids.append(pgs_id)
+                stale = False
+                input_parquet = scoring_parquet_path(pgs_id, scores_cache, genome_build)
+                if input_parquet.exists() and input_parquet.stat().st_mtime > result_parquet.stat().st_mtime:
+                    stale = True
                     log_message(
-                        message_type="reference:batch_skip_cached",
+                        message_type="reference:batch_cache_stale",
                         pgs_id=pgs_id,
-                        progress=f"{i + 1}/{len(pgs_ids)}",
+                        reason="scoring input newer than cached score",
+                        input_mtime=input_parquet.stat().st_mtime,
+                        output_mtime=result_parquet.stat().st_mtime,
                     )
-                    _emit_progress(last_pgs_id=pgs_id, last_status="cached")
-                    continue
+
+                if not stale:
+                    try:
+                        dist = _aggregate_single_pgs(result_parquet, pgs_id)
+                    except _CorruptParquet as exc:
+                        log_message(
+                            message_type="reference:batch_corrupt_cache",
+                            pgs_id=pgs_id,
+                            path=str(result_parquet),
+                            error=str(exc),
+                        )
+                        result_parquet.unlink(missing_ok=True)
+                        dist = None
+                    if dist is not None:
+                        dist_parts.append(dist.df)
+                        outcomes.append(dist.outcome)
+                        n_processed += 1
+                        n_ok += 1
+                        n_cached += 1
+                        recent_ids.append(pgs_id)
+                        log_message(
+                            message_type="reference:batch_skip_cached",
+                            pgs_id=pgs_id,
+                            progress=f"{i + 1}/{len(pgs_ids)}",
+                        )
+                        _emit_progress(last_pgs_id=pgs_id, last_status="cached")
+                        if len(dist_parts) >= _DIST_FLUSH_EVERY:
+                            dist_parts = [pl.concat(dist_parts, how="diagonal_relaxed")]
+                            gc.collect()
+                        continue
 
             t0 = time.monotonic()
             try:
-                scoring_file = download_scoring_file(
-                    pgs_id=pgs_id,
-                    output_dir=scores_cache,
-                    genome_build=genome_build,
-                )
+                parquet_path = scoring_parquet_path(pgs_id, scores_cache, genome_build)
+                if parquet_path.exists():
+                    scoring_file = parquet_path
+                else:
+                    scoring_file = download_scoring_file(
+                        pgs_id=pgs_id,
+                        output_dir=scores_cache,
+                        genome_build=genome_build,
+                    )
                 df = compute_reference_prs_polars(
                     pgs_id=pgs_id,
                     scoring_file=scoring_file,
@@ -1336,9 +1508,7 @@ def compute_reference_prs_batch(
             ))
             n_processed += 1
             recent_ids.append(pgs_id)
-            if status == "failed":
-                n_failed += 1
-            elif status in ("low_match", "zero_variance"):
+            if status in ("low_match", "zero_variance"):
                 n_problematic += 1
                 n_ok += 1
             else:
@@ -1353,6 +1523,13 @@ def compute_reference_prs_batch(
                 progress=f"{i + 1}/{len(pgs_ids)}",
             )
             _emit_progress(last_pgs_id=pgs_id, last_status=status)
+
+            # Periodically compact dist_parts to release per-ID DataFrame memory.
+            # Without this, thousands of small DataFrames accumulate in the list
+            # and RSS grows monotonically until OOM.
+            if len(dist_parts) >= _DIST_FLUSH_EVERY:
+                dist_parts = [pl.concat(dist_parts, how="diagonal_relaxed")]
+                gc.collect()
 
         quality_rows = [o.model_dump() for o in outcomes]
         quality_df = pl.DataFrame(quality_rows) if quality_rows else pl.DataFrame(

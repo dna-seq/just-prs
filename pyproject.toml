@@ -10,6 +10,8 @@ dependencies = [
 ]
 
 [project.scripts]
+prs = "just_prs.cli:run"
+just-prs = "just_prs.cli:run"
 ui = "prs_ui.cli:launch_ui"
 pipeline = "prs_pipeline.cli:app"
 

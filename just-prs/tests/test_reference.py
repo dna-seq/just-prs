@@ -7,6 +7,7 @@ for unit-level assertions.
 """
 
 import math
+import tempfile
 from pathlib import Path
 
 import polars as pl
@@ -273,3 +274,77 @@ class TestPRSCatalogPercentile:
         pct, method = catalog.percentile(0.0, "PGS999999", ancestry="EUR")
         assert pct is None
         assert method == "unavailable"
+
+    def test_percentile_refreshes_distributions_on_miss(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """When local distributions are stale, percentile() refreshes from HF once."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cache_dir = Path(tmpdir)
+            percentiles_dir = cache_dir / "percentiles"
+            percentiles_dir.mkdir(parents=True, exist_ok=True)
+
+            # Start with stale local data that does not include the target PGS.
+            stale = pl.DataFrame(
+                {
+                    "pgs_id": ["PGS_OLD"],
+                    "superpopulation": ["EUR"],
+                    "mean": [0.0],
+                    "std": [1.0],
+                    "n": [100],
+                    "median": [0.0],
+                    "p5": [-1.0],
+                    "p25": [-0.5],
+                    "p75": [0.5],
+                    "p95": [1.0],
+                }
+            )
+            stale.write_parquet(percentiles_dir / "1000g_distributions.parquet")
+
+            fresh = pl.DataFrame(
+                {
+                    "pgs_id": ["PGS_NEW"],
+                    "superpopulation": ["EUR"],
+                    "mean": [1.0],
+                    "std": [0.5],
+                    "n": [500],
+                    "median": [1.0],
+                    "p5": [0.2],
+                    "p25": [0.7],
+                    "p75": [1.3],
+                    "p95": [1.8],
+                }
+            )
+
+            pull_calls = {"count": 0}
+
+            def fake_pull_reference_distributions(
+                local_dir: Path,
+                repo_id: str = "just-dna-seq/prs-percentiles",
+                token: str | None = None,
+                panel: str = "1000g",
+            ) -> Path | None:
+                del repo_id, token
+                pull_calls["count"] += 1
+                target = local_dir / f"{panel}_distributions.parquet"
+                fresh.write_parquet(target)
+                return target
+
+            monkeypatch.setattr(
+                "just_prs.prs_catalog.pull_reference_distributions",
+                fake_pull_reference_distributions,
+            )
+
+            catalog = PRSCatalog(cache_dir=cache_dir)
+
+            pct, method = catalog.percentile(1.0, "PGS_NEW", ancestry="EUR", panel="1000g")
+            assert method == "reference_panel"
+            assert pct == pytest.approx(50.0, abs=0.1)
+            assert pull_calls["count"] == 1
+
+            # Guarded refresh: repeated calls should not re-pull.
+            pct2, method2 = catalog.percentile(1.0, "PGS_NEW", ancestry="EUR", panel="1000g")
+            assert method2 == "reference_panel"
+            assert pct2 == pytest.approx(50.0, abs=0.1)
+            assert pull_calls["count"] == 1

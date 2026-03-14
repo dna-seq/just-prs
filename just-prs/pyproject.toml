@@ -8,19 +8,19 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "polars-bio>=0.25.0",
+    "polars-bio>=0.26.0",
     "typer>=0.24.1",
     "rich>=13.9.1",
     "httpx>=0.28.0",
     "pydantic>=2.0",
-    "eliot>=1.15.0",
+    "eliot>=1.17.5",
     "fsspec[http]>=2026.2.0",
-    "huggingface-hub>=0.28.0",
+    "huggingface-hub>=1.7.1",
     "python-dotenv>=1.1.0",
     "platformdirs>=4.9.2",
     "zstandard>=0.23.0",
     "pgenlib>=0.93.0",
-    "duckdb>=1.4.4",
+    "duckdb>=1.5.0",
 ]
 
 [project.scripts]

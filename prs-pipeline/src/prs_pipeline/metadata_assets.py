@@ -9,13 +9,16 @@ Asset lineage (left to right):
   [download]          [compute]              [upload]
   raw_pgs_metadata → cleaned_pgs_metadata → hf_polygenic_risk_scores
                                            ↘ hf_prs_percentiles (in assets.py)
+                                           ↘ hf_pgs_catalog (+ scoring_files_parquet dep)
 
-cleaned_pgs_metadata feeds into both upload assets: hf_polygenic_risk_scores
-(metadata-only HF repo) and hf_prs_percentiles (enriched distributions).
+cleaned_pgs_metadata feeds into three upload assets: hf_polygenic_risk_scores
+(metadata-only HF repo), hf_prs_percentiles (enriched distributions), and
+hf_pgs_catalog (combined metadata + scoring parquets at just-dna-seq/pgs-catalog).
 SourceAsset ebi_pgs_catalog_scoring_files is declared in assets.py as a
 visualisation-only node documenting the FTP origin.
 """
 
+import os
 from pathlib import Path
 
 import polars as pl
@@ -24,9 +27,14 @@ from eliot import start_action
 
 from just_prs.cleanup import best_performance_per_score, clean_performance_metrics, clean_scores
 from just_prs.ftp import PGS_METADATA_BASE, download_metadata_sheet
-from just_prs.hf import DEFAULT_HF_REPO, push_cleaned_parquets
+from just_prs.hf import DEFAULT_HF_REPO, push_cleaned_parquets, push_pgs_catalog
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
 from prs_pipeline.runtime import resource_tracker
+
+
+def _no_cache() -> bool:
+    """Return True if PRS_PIPELINE_NO_CACHE is set (user passed --no-cache)."""
+    return os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() in {"1", "true", "yes"}
 
 
 @asset(
@@ -50,12 +58,16 @@ def raw_pgs_metadata(
     raw_dir = cache_dir / "metadata" / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
+    overwrite = _no_cache()
+    if overwrite:
+        context.log.info("NO-CACHE: will re-download all metadata sheets from EBI FTP.")
+
     with resource_tracker("raw_pgs_metadata", context=context):
         sheet_meta: dict[str, int] = {}
         for sheet_name in ("scores", "performance_metrics", "evaluation_sample_sets"):
             dest = raw_dir / f"{sheet_name}.parquet"
             with start_action(action_type="pipeline:download_metadata_sheet", sheet=sheet_name):
-                df = download_metadata_sheet(sheet_name, dest)
+                df = download_metadata_sheet(sheet_name, dest, overwrite=overwrite)
             sheet_meta[sheet_name] = df.height
             context.log.info(f"Downloaded {sheet_name}: {df.height:,} rows → {dest}")
 
@@ -158,5 +170,54 @@ def hf_polygenic_risk_scores(
         "repo_id": repo_id,
         "url": url,
         "n_scores": dist_df.height,
+    })
+    return Output(url)
+
+
+@asset(
+    group_name="upload",
+    deps=[AssetDep("cleaned_pgs_metadata"), AssetDep("scoring_files_parquet")],
+    description=(
+        "Uploads the full PGS Catalog dataset — cleaned metadata parquets and "
+        "all scoring file parquets — to the HuggingFace dataset "
+        "just-dna-seq/pgs-catalog. Metadata goes under data/metadata/ and "
+        "scoring files under data/scores/. Generates a dataset card with "
+        "release statistics and timestamp."
+    ),
+)
+def hf_pgs_catalog(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Push scoring parquets and cleaned metadata to a combined HF dataset."""
+    cache_dir = cache_dir_resource.get_path()
+    metadata_dir = cache_dir / "metadata"
+    scores_dir = cache_dir / "scores"
+    repo_id = hf_resource.catalog_repo
+    token = hf_resource.get_token()
+
+    scoring_parquets = sorted(scores_dir.glob("*_hmPOS_*.parquet"))
+    scoring_parquets = [p for p in scoring_parquets if p.name != "conversion_failures.parquet"]
+    n_scoring = len(scoring_parquets)
+
+    with resource_tracker("hf_pgs_catalog", context=context):
+        with start_action(action_type="pipeline:push_pgs_catalog", repo_id=repo_id):
+            push_pgs_catalog(
+                metadata_dir=metadata_dir,
+                scores_dir=scores_dir,
+                repo_id=repo_id,
+                token=token,
+            )
+
+    url = f"https://huggingface.co/datasets/{repo_id}"
+    context.log.info(f"Pushed PGS Catalog ({n_scoring} scoring parquets + metadata) to {url}")
+
+    scores_df = pl.read_parquet(metadata_dir / "scores.parquet")
+    context.add_output_metadata({
+        "repo_id": repo_id,
+        "url": url,
+        "n_metadata_scores": scores_df.height,
+        "n_scoring_parquets": n_scoring,
     })
     return Output(url)

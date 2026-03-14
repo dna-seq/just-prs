@@ -46,6 +46,8 @@ class PRSCatalog:
         self._perf_lf: pl.LazyFrame | None = None
         self._best_perf_lf: pl.LazyFrame | None = None
         self._ref_dist_cache: dict[str, pl.LazyFrame] = {}
+        self._ref_dist_refresh_attempted: set[str] = set()
+        self._ref_dist_source: dict[str, str] = {}
 
     @property
     def cache_dir(self) -> Path:
@@ -217,6 +219,7 @@ class PRSCatalog:
         if not local.exists():
             if panel == "1000g" and legacy.exists():
                 local = legacy
+                self._ref_dist_source[panel] = "local_legacy_cache"
             else:
                 with start_action(action_type="prs_catalog:pull_reference_distributions", panel=panel):
                     pulled = pull_reference_distributions(self.percentiles_dir, panel=panel)
@@ -236,11 +239,31 @@ class PRSCatalog:
                             }
                         )
                         self._ref_dist_cache[panel] = empty
+                        self._ref_dist_source[panel] = "unavailable"
                         return empty
+                    self._ref_dist_source[panel] = "hf_sync"
+        else:
+            self._ref_dist_source[panel] = "local_cache"
 
         lf = pl.scan_parquet(local)
         self._ref_dist_cache[panel] = lf
         return lf
+
+    def _refresh_reference_distributions(self, panel: str = "1000g") -> None:
+        """Pull the latest reference distributions parquet from HF and reload cache.
+
+        Called on-demand when percentile lookup misses for a score. The refresh is
+        guarded so we only attempt it once per panel per PRSCatalog instance.
+        """
+        if panel in self._ref_dist_refresh_attempted:
+            return
+
+        self._ref_dist_refresh_attempted.add(panel)
+        with start_action(action_type="prs_catalog:refresh_reference_distributions", panel=panel):
+            pulled = pull_reference_distributions(self.percentiles_dir, panel=panel)
+            if pulled is not None:
+                self._ref_dist_cache.pop(panel, None)
+                self._ref_dist_source[panel] = "hf_sync"
 
     def reload(self) -> None:
         """Force re-download of all metadata on next access."""
@@ -248,6 +271,8 @@ class PRSCatalog:
         self._perf_lf = None
         self._best_perf_lf = None
         self._ref_dist_cache.clear()
+        self._ref_dist_refresh_attempted.clear()
+        self._ref_dist_source.clear()
         for p in self.metadata_dir.glob("*.parquet"):
             p.unlink()
         raw_dir = self.raw_metadata_dir
@@ -425,6 +450,10 @@ class PRSCatalog:
 
         ref_lf = self.reference_distributions(panel=panel)
         pct = ancestry_percentile(prs_score, pgs_id, ancestry, ref_lf)
+        if pct is None:
+            self._refresh_reference_distributions(panel=panel)
+            ref_lf = self.reference_distributions(panel=panel)
+            pct = ancestry_percentile(prs_score, pgs_id, ancestry, ref_lf)
         if pct is not None:
             return pct, "reference_panel"
 
@@ -448,6 +477,50 @@ class PRSCatalog:
         effective_std = math.sqrt(1.0 + d * d / 4.0)
         z = (prs_score - mean) / effective_std
         return round(_norm_cdf(z) * 100.0, 2), "auroc_approx"
+
+    def reference_data_status(
+        self,
+        pgs_id: str,
+        panel: str = "1000g",
+        refresh_on_miss: bool = True,
+    ) -> dict[str, object]:
+        """Return availability/source status for precomputed reference percentiles.
+
+        This reports whether a PGS ID has precomputed reference distributions in
+        the panel file, which superpopulations are available, and where the panel
+        file was resolved from (local cache, HF sync, or unavailable).
+        """
+        lf = self.reference_distributions(panel=panel)
+        rows = (
+            lf.filter(pl.col("pgs_id") == pgs_id)
+            .select("superpopulation")
+            .collect()
+        )
+        if rows.height == 0 and refresh_on_miss:
+            self._refresh_reference_distributions(panel=panel)
+            lf = self.reference_distributions(panel=panel)
+            rows = (
+                lf.filter(pl.col("pgs_id") == pgs_id)
+                .select("superpopulation")
+                .collect()
+            )
+        superpops: list[str] = []
+        if rows.height > 0:
+            superpops = sorted(set(rows["superpopulation"].to_list()))
+        source_code = self._ref_dist_source.get(panel, "unknown")
+        source_label = {
+            "hf_sync": "HuggingFace prs-percentiles",
+            "local_cache": "local percentiles cache",
+            "local_legacy_cache": "local legacy percentiles cache",
+            "unavailable": "no reference distributions file",
+        }.get(source_code, "unknown")
+        return {
+            "has_reference_data": len(superpops) > 0,
+            "available_superpopulations": superpops,
+            "source_code": source_code,
+            "source_label": source_label,
+            "panel": panel,
+        }
 
 
 def _auroc_to_cohens_d(auroc: float) -> float | None:

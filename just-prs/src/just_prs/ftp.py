@@ -2,12 +2,15 @@
 
 import gzip
 import io
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal
+from typing import Callable, Literal
 
 import fsspec
 import polars as pl
-from eliot import start_action
+from eliot import log_message, start_action
 
 PGS_FTP_BASE = "https://ftp.ebi.ac.uk/pub/databases/spot/pgs"
 PGS_SCORES_LIST_URL = f"{PGS_FTP_BASE}/pgs_scores_list.txt"
@@ -127,6 +130,8 @@ def stream_scoring_file(
     Returns:
         LazyFrame with scoring file columns
     """
+    from just_prs.scoring import SCORING_FILE_SCHEMA
+
     with start_action(
         action_type="ftp:stream_scoring_file",
         pgs_id=pgs_id,
@@ -138,11 +143,17 @@ def stream_scoring_file(
                 data_lines = [line for line in gz if not line.startswith("#")]
 
         tsv_content = "".join(data_lines)
+
+        col_header_line = data_lines[0] if data_lines else ""
+        present_cols = {c.strip() for c in col_header_line.split("\t")}
+        overrides = {k: v for k, v in SCORING_FILE_SCHEMA.items() if k in present_cols}
+
         df = pl.read_csv(
             io.StringIO(tsv_content),
             separator="\t",
             infer_schema_length=10000,
             null_values=["", "NA", "None"],
+            schema_overrides=overrides,
         )
         return df.lazy()
 
@@ -187,6 +198,8 @@ def bulk_download_scoring_parquets(
     genome_build: str = "GRCh38",
     pgs_ids: list[str] | None = None,
     overwrite: bool = False,
+    progress_every: int = 100,
+    progress_callback: Callable[[dict[str, int]], None] | None = None,
 ) -> list[Path]:
     """Download all (or a subset of) PGS scoring files as individual parquet files.
 
@@ -198,6 +211,8 @@ def bulk_download_scoring_parquets(
         genome_build: Genome build (GRCh37 or GRCh38)
         pgs_ids: Explicit list of PGS IDs to download. If None, download all.
         overwrite: If True, overwrite existing parquet files
+        progress_every: Log progress every N completed files.
+        progress_callback: Optional callback for progress updates.
 
     Returns:
         List of paths to written (or already-existing) parquet files
@@ -208,7 +223,12 @@ def bulk_download_scoring_parquets(
     ):
         ids = pgs_ids if pgs_ids is not None else list_all_pgs_ids()
         written: list[Path] = []
-        for pgs_id in ids:
+        total = len(ids)
+        
+        import time
+        last_log_time = time.monotonic()
+        
+        for i, pgs_id in enumerate(ids):
             path = download_scoring_as_parquet(
                 pgs_id,
                 output_dir=output_dir,
@@ -216,4 +236,175 @@ def bulk_download_scoring_parquets(
                 overwrite=overwrite,
             )
             written.append(path)
+            
+            completed = i + 1
+            current_time = time.monotonic()
+            should_log = (completed % progress_every == 0) or (current_time - last_log_time > 15.0) or (completed == total)
+            
+            if should_log:
+                last_log_time = current_time
+                log_message(
+                    message_type="ftp:bulk_download_parquets_progress",
+                    completed=completed,
+                    total=total,
+                )
+                if progress_callback is not None:
+                    progress_callback({
+                        "completed": completed,
+                        "total": total,
+                    })
+                    
         return written
+
+
+_DEFAULT_DOWNLOAD_WORKERS = 4
+_DEFAULT_DOWNLOAD_PROGRESS_EVERY = 100
+
+
+@dataclass
+class BulkDownloadResult:
+    """Summary of a bulk scoring file download."""
+    total: int = 0
+    downloaded: int = 0
+    cached: int = 0
+    parquet_cached: int = 0
+    failed: int = 0
+    failed_ids: list[str] = field(default_factory=list)
+
+
+def _download_one_scoring_file(
+    pgs_id: str,
+    output_dir: Path,
+    genome_build: str,
+) -> tuple[str, str]:
+    """Download a single scoring .txt.gz file via fsspec. Returns (pgs_id, status).
+
+    Status is one of: "cached" (.txt.gz exists), "parquet_cached" (parquet
+    cache exists so .txt.gz is not needed), "downloaded", or "failed".
+    """
+    filename = f"{pgs_id}_hmPOS_{genome_build}.txt.gz"
+    output_path = output_dir / filename
+    if output_path.exists():
+        return pgs_id, "cached"
+
+    parquet_path = output_dir / f"{pgs_id}_hmPOS_{genome_build}.parquet"
+    if parquet_path.exists():
+        return pgs_id, "parquet_cached"
+
+    url = _scoring_url(pgs_id, genome_build)
+    tmp_path = output_path.with_suffix(".tmp")
+    try:
+        with fsspec.open(url, "rb") as remote:
+            with tmp_path.open("wb") as local:
+                while True:
+                    chunk = remote.read(65536)
+                    if not chunk:
+                        break
+                    local.write(chunk)
+        tmp_path.rename(output_path)
+        return pgs_id, "downloaded"
+    except Exception:
+        if tmp_path.exists():
+            tmp_path.unlink()
+        return pgs_id, "failed"
+
+
+def bulk_download_scoring_files(
+    pgs_ids: list[str],
+    output_dir: Path,
+    genome_build: str = "GRCh38",
+    max_workers: int | None = None,
+    progress_every: int | None = None,
+    progress_callback: Callable[[dict[str, int]], None] | None = None,
+) -> BulkDownloadResult:
+    """Bulk-download harmonized PGS scoring .txt.gz files via fsspec.
+
+    Uses direct HTTPS URLs to the EBI FTP server (no REST API calls).
+    Downloads concurrently with a configurable number of workers and
+    skips files that already exist on disk.
+
+    Concurrency and progress frequency can be set via env vars
+    ``PRS_DOWNLOAD_WORKERS`` and ``PRS_DOWNLOAD_PROGRESS_EVERY``.
+
+    Args:
+        pgs_ids: List of PGS IDs to download.
+        output_dir: Directory to save the .txt.gz files.
+        genome_build: Genome build (GRCh37 or GRCh38).
+        max_workers: Number of concurrent download threads.
+            Defaults to ``PRS_DOWNLOAD_WORKERS`` env var or 4.
+        progress_every: Log progress every N completed files.
+            Defaults to ``PRS_DOWNLOAD_PROGRESS_EVERY`` env var or 100.
+
+    Returns:
+        BulkDownloadResult with counts of downloaded, cached, and failed files.
+    """
+    if max_workers is None:
+        env_val = os.environ.get("PRS_DOWNLOAD_WORKERS", "").strip()
+        max_workers = int(env_val) if env_val else _DEFAULT_DOWNLOAD_WORKERS
+    if progress_every is None:
+        env_val = os.environ.get("PRS_DOWNLOAD_PROGRESS_EVERY", "").strip()
+        progress_every = int(env_val) if env_val else _DEFAULT_DOWNLOAD_PROGRESS_EVERY
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    result = BulkDownloadResult(total=len(pgs_ids))
+
+    with start_action(
+        action_type="ftp:bulk_download_scoring_files",
+        genome_build=genome_build,
+        n_ids=len(pgs_ids),
+        max_workers=max_workers,
+    ):
+        completed = 0
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            futures = {
+                pool.submit(_download_one_scoring_file, pgs_id, output_dir, genome_build): pgs_id
+                for pgs_id in pgs_ids
+            }
+            import time
+            last_log_time = time.monotonic()
+            
+            for future in as_completed(futures):
+                pgs_id = futures[future]
+                try:
+                    _, status = future.result()
+                except Exception:
+                    status = "failed"
+                if status == "cached":
+                    result.cached += 1
+                elif status == "parquet_cached":
+                    result.parquet_cached += 1
+                elif status == "downloaded":
+                    result.downloaded += 1
+                else:
+                    result.failed += 1
+                    result.failed_ids.append(pgs_id)
+
+                completed += 1
+                current_time = time.monotonic()
+                time_elapsed = current_time - last_log_time
+                
+                # Log if we hit the file count threshold OR 15 seconds have passed
+                should_log = (completed % progress_every == 0) or (time_elapsed > 15.0) or (completed == len(pgs_ids))
+                
+                if should_log:
+                    last_log_time = current_time
+                    log_message(
+                        message_type="ftp:bulk_download_progress",
+                        completed=completed,
+                        total=len(pgs_ids),
+                        downloaded=result.downloaded,
+                        cached=result.cached,
+                        parquet_cached=result.parquet_cached,
+                        failed=result.failed,
+                    )
+                    if progress_callback is not None:
+                        progress_callback({
+                            "completed": completed,
+                            "total": len(pgs_ids),
+                            "downloaded": result.downloaded,
+                            "cached": result.cached,
+                            "parquet_cached": result.parquet_cached,
+                            "failed": result.failed,
+                        })
+
+    return result

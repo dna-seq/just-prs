@@ -10,14 +10,17 @@ from prs_pipeline.assets import (
     hf_prs_percentiles,
     reference_panel,
     reference_scores,
+    scoring_files,
+    scoring_files_parquet,
 )
 from prs_pipeline.metadata_assets import (
     cleaned_pgs_metadata,
+    hf_pgs_catalog,
     hf_polygenic_risk_scores,
     raw_pgs_metadata,
 )
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
-from prs_pipeline.sensors import run_pipeline_on_startup
+from prs_pipeline.sensors import make_all_sensors
 from prs_pipeline.utils import resource_summary_hook
 
 download_reference_data = dg.define_asset_job(
@@ -30,8 +33,8 @@ download_reference_data = dg.define_asset_job(
 score_and_push = dg.define_asset_job(
     name="score_and_push",
     selection=[
-        "ebi_scoring_files_fingerprint",
-        "reference_scores",
+        "ebi_scoring_files_fingerprint", "scoring_files",
+        "scoring_files_parquet", "reference_scores",
         "raw_pgs_metadata", "cleaned_pgs_metadata",
         "hf_prs_percentiles",
     ],
@@ -46,7 +49,8 @@ full_pipeline = dg.define_asset_job(
     name="full_pipeline",
     selection=[
         "ebi_reference_panel_fingerprint", "ebi_scoring_files_fingerprint",
-        "reference_panel", "reference_scores",
+        "reference_panel", "scoring_files", "scoring_files_parquet",
+        "reference_scores",
         "raw_pgs_metadata", "cleaned_pgs_metadata",
         "hf_prs_percentiles",
     ],
@@ -59,51 +63,101 @@ full_pipeline = dg.define_asset_job(
     hooks={resource_summary_hook},
 )
 
-defs = dg.Definitions(
-    assets=[
-        ebi_pgs_catalog_reference_panel,
-        ebi_pgs_catalog_scoring_files,
-        ebi_reference_panel_fingerprint,
-        ebi_scoring_files_fingerprint,
-        reference_panel,
-        reference_scores,
-        hf_prs_percentiles,
-        raw_pgs_metadata,
-        cleaned_pgs_metadata,
-        hf_polygenic_risk_scores,
+catalog_pipeline = dg.define_asset_job(
+    name="catalog_pipeline",
+    selection=[
+        "ebi_scoring_files_fingerprint",
+        "scoring_files", "scoring_files_parquet",
+        "raw_pgs_metadata", "cleaned_pgs_metadata",
+        "hf_pgs_catalog",
     ],
-    sensors=[run_pipeline_on_startup],
-    resources={
-        "cache_dir_resource": CacheDirResource(),
-        "hf_resource": HuggingFaceResource(),
-    },
-    jobs=[
-        download_reference_data,
-        score_and_push,
-        full_pipeline,
-        dg.define_asset_job(
-            name="metadata_pipeline",
-            selection=[
-                "ebi_scoring_files_fingerprint",
-                "raw_pgs_metadata", "cleaned_pgs_metadata", "hf_polygenic_risk_scores",
-            ],
-            description=(
-                "End-to-end metadata pipeline: download raw PGS Catalog sheets from EBI FTP, "
-                "run cleanup pipeline, push cleaned parquets to HuggingFace."
-            ),
-            hooks={resource_summary_hook},
-        ),
-        dg.define_asset_job(
-            name="clean_and_push_metadata",
-            selection=["cleaned_pgs_metadata", "hf_polygenic_risk_scores"],
-            description=(
-                "Re-run cleanup pipeline on already-cached raw metadata and push to HuggingFace. "
-                "Use this when raw sheets are already present in the cache."
-            ),
-            hooks={resource_summary_hook},
-        ),
-    ],
+    description=(
+        "Build and push the combined PGS Catalog dataset to HuggingFace "
+        "(just-dna-seq/pgs-catalog): download scoring files, convert to parquet, "
+        "download and clean metadata, then upload both to HF."
+    ),
+    hooks={resource_summary_hook},
 )
+
+metadata_pipeline = dg.define_asset_job(
+    name="metadata_pipeline",
+    selection=[
+        "ebi_scoring_files_fingerprint",
+        "raw_pgs_metadata", "cleaned_pgs_metadata", "hf_polygenic_risk_scores",
+    ],
+    description=(
+        "End-to-end metadata pipeline: download raw PGS Catalog sheets from EBI FTP, "
+        "run cleanup pipeline, push cleaned parquets to HuggingFace."
+    ),
+    hooks={resource_summary_hook},
+)
+
+clean_and_push_metadata = dg.define_asset_job(
+    name="clean_and_push_metadata",
+    selection=["cleaned_pgs_metadata", "hf_polygenic_risk_scores"],
+    description=(
+        "Re-run cleanup pipeline on already-cached raw metadata and push to HuggingFace. "
+        "Use this when raw sheets are already present in the cache."
+    ),
+    hooks={resource_summary_hook},
+)
+
+_assets = [
+    ebi_pgs_catalog_reference_panel,
+    ebi_pgs_catalog_scoring_files,
+    ebi_reference_panel_fingerprint,
+    ebi_scoring_files_fingerprint,
+    scoring_files,
+    scoring_files_parquet,
+    reference_panel,
+    reference_scores,
+    hf_prs_percentiles,
+    raw_pgs_metadata,
+    cleaned_pgs_metadata,
+    hf_polygenic_risk_scores,
+    hf_pgs_catalog,
+]
+_resources = {
+    "cache_dir_resource": CacheDirResource(),
+    "hf_resource": HuggingFaceResource(),
+}
+_unresolved_jobs = [
+    download_reference_data,
+    score_and_push,
+    full_pipeline,
+    catalog_pipeline,
+    metadata_pipeline,
+    clean_and_push_metadata,
+]
+
+
+def _build_definitions() -> dg.Definitions:
+    """Resolve unresolved asset jobs and build the final Definitions.
+
+    The temporary Definitions used for resolution is a local variable so
+    Dagster's module scanner only finds one Definitions object (the returned one).
+    """
+    tmp = dg.Definitions(assets=_assets, resources=_resources)
+    asset_graph = tmp.resolve_asset_graph()
+    resolved_jobs = [
+        uj.resolve(asset_graph=asset_graph, resource_defs=_resources)
+        for uj in _unresolved_jobs
+    ]
+    jobs_by_name = {j.name: j for j in resolved_jobs}
+
+    return dg.Definitions(
+        assets=_assets,
+        sensors=make_all_sensors(
+            full_pipeline_job=jobs_by_name["full_pipeline"],
+            catalog_pipeline_job=jobs_by_name["catalog_pipeline"],
+            score_and_push_job=jobs_by_name["score_and_push"],
+        ),
+        resources=_resources,
+        jobs=resolved_jobs,
+    )
+
+
+defs = _build_definitions()
 
 
 def main() -> None:

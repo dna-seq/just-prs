@@ -9,10 +9,47 @@ from pathlib import Path
 from typing import Annotated, Optional
 
 import typer
+from dotenv import load_dotenv
 from rich.console import Console
+
+load_dotenv()
 
 app = typer.Typer(help="PRS reference-panel pipeline (Dagster)")
 console = Console()
+
+_DEFAULT_HOST = os.environ.get("PRS_PIPELINE_HOST", "0.0.0.0")
+_DEFAULT_PORT = int(os.environ.get("PRS_PIPELINE_PORT", "3010"))
+_GRPC_CLEANUP_TIMEOUT = 5
+
+
+def _kill_stale_dagster_children() -> None:
+    """SIGKILL any leftover dagster gRPC server child processes."""
+    import psutil
+
+    current = psutil.Process()
+    for child in current.children(recursive=True):
+        cmdline = " ".join(child.cmdline())
+        if "dagster" in cmdline and "grpc" in cmdline:
+            console.print(f"[dim]Cleaning up stale gRPC subprocess (PID {child.pid})...[/dim]")
+            child.kill()
+            child.wait(timeout=_GRPC_CLEANUP_TIMEOUT)
+
+
+def _execute_job(resolved_job: "dagster.JobDefinition") -> "dagster.ExecuteInProcessResult":  # type: ignore[name-defined]
+    """Run a Dagster job in-process, handling gRPC server cleanup timeouts.
+
+    Dagster's internal gRPC code-server subprocess sometimes hangs during
+    teardown (subprocess.TimeoutExpired). The job itself completes fine;
+    the timeout only affects the cleanup of the child process. We catch it
+    and force-kill the stale subprocess so the CLI exits cleanly.
+    """
+    from dagster import DagsterInstance
+
+    with DagsterInstance.get() as instance:
+        result = resolved_job.execute_in_process(instance=instance)
+
+    _kill_stale_dagster_children()
+    return result
 
 
 def _find_project_root() -> Path:
@@ -82,9 +119,15 @@ def _set_pipeline_env(
     panel: str,
     test: int = 0,
     test_ids: str | None = None,
+    no_cache: bool = False,
 ) -> bool:
     """Set PRS_PIPELINE_* env vars. Returns True if in test mode."""
     os.environ["PRS_PIPELINE_PANEL"] = panel
+    if no_cache:
+        os.environ["PRS_PIPELINE_NO_CACHE"] = "1"
+        console.print("[yellow]NO-CACHE MODE: all assets will re-download and recompute.[/yellow]")
+    else:
+        os.environ.pop("PRS_PIPELINE_NO_CACHE", None)
     if test > 0:
         os.environ["PRS_PIPELINE_TEST_IDS"] = f"random:{test}"
         console.print(f"[yellow]TEST MODE: will score {test} randomly selected PGS IDs.[/yellow]")
@@ -102,69 +145,86 @@ def run(
     test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
     test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
-    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, metadata_pipeline.")] = "full_pipeline",
+    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline.")] = "full_pipeline",
+    no_cache: Annotated[bool, typer.Option("--no-cache", help="Ignore on-disk caches and re-download/recompute everything.")] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Run in-process without Dagster UI.")] = False,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
 ) -> None:
-    """Execute a pipeline job directly in-process (no Dagster UI).
+    """Run a pipeline job with Dagster UI by default.
 
-    This is the simplest way to run the pipeline. It materializes assets
-    in dependency order, skipping any that are already up-to-date on disk.
+    \b
+    Default behavior launches Dagster UI so you can monitor execution
+    live. The startup sensor submits the selected job automatically.
+
+    Use ``--headless`` to run in-process without UI.
+    Use ``--no-cache`` to force a full re-run.
     """
     if test and test_ids:
         console.print("[red]Cannot use --test and --test-ids together.[/red]")
         raise typer.Exit(code=1)
 
     dagster_home = _setup_dagster_home()
-    is_test = _set_pipeline_env(panel, test, test_ids)
+    _set_pipeline_env(panel, test, test_ids, no_cache=no_cache)
+
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = job
+    os.environ["PRS_PIPELINE_FORCE_RUN"] = "1"
+
+    if headless:
+        _cancel_orphaned_runs()
+        console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+        console.print("[yellow]HEADLESS MODE — no Dagster UI.[/yellow]")
+
+        from prs_pipeline.definitions import defs
+
+        resolved_job = defs.get_job_def(job)
+        console.print(f"\n[bold]Running job: {job}[/bold]")
+        console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+        result = _execute_job(resolved_job)
+
+        if result.success:
+            console.print(f"\n[green bold]Job '{job}' completed successfully.[/green bold]")
+        else:
+            console.print(f"\n[red bold]Job '{job}' failed.[/red bold]")
+            for event in result.all_events:
+                if event.is_failure:
+                    console.print(f"  [red]{event.message}[/red]")
+            raise typer.Exit(code=1)
+        return
+
+    _kill_port(port)
     _cancel_orphaned_runs()
-
     console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
+    console.print(f"[bold]Job '{job}' will be submitted automatically on startup.[/bold]\n")
 
-    from prs_pipeline.definitions import defs
-
-    resolved_job = defs.get_job_def(job)
-    console.print(f"\n[bold]Running job: {job}[/bold]")
-    console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
-
-    result = resolved_job.execute_in_process(
-        instance=__import__("dagster").DagsterInstance.get(),
-    )
-
-    if result.success:
-        console.print(f"\n[green bold]Job '{job}' completed successfully.[/green bold]")
-    else:
-        console.print(f"\n[red bold]Job '{job}' failed.[/red bold]")
-        for event in result.all_events:
-            if event.is_failure:
-                console.print(f"  [red]{event.message}[/red]")
-        raise typer.Exit(code=1)
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])
 
 
 @app.command()
 def launch(
-    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver.")] = "0.0.0.0",
-    port: Annotated[int, typer.Option(help="Port for the Dagster webserver.")] = 3010,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver.")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver.")] = _DEFAULT_PORT,
     test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
     test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
-    run_now: Annotated[
-        bool,
-        typer.Option(
-            "--run-now/--no-run-now",
-            help=(
-                "Request an immediate full_pipeline run on startup even if assets are "
-                "already materialized."
-            ),
-        ),
-    ] = True,
 ) -> None:
-    """Start the Dagster UI webserver with auto-triggered pipeline.
+    """Start the Dagster UI webserver.
 
     \b
     Launches the Dagster dev server with full monitoring UI.
-    By default, launch requests one immediate ``full_pipeline`` run via
-    the startup sensor. Use ``--no-run-now`` to only start the UI without
-    submitting a run. You can also trigger jobs manually from the UI, or
-    use ``pipeline run`` for headless execution.
+    The startup sensor will automatically submit the full_pipeline job
+    if any assets are unmaterialized. If all assets are already cached,
+    no run is submitted. You can trigger jobs manually from the UI.
+
+    Equivalent to ``pipeline run`` without ``--headless``.
     """
     if test and test_ids:
         console.print("[red]Cannot use --test and --test-ids together.[/red]")
@@ -172,18 +232,71 @@ def launch(
 
     dagster_home = _setup_dagster_home()
     _set_pipeline_env(panel, test, test_ids)
-    if run_now:
-        os.environ["PRS_PIPELINE_FORCE_RUN_ON_STARTUP"] = "1"
-        os.environ["PRS_PIPELINE_STARTUP_RUN_KEY"] = f"pipeline_startup_{int(time.time())}"
-        console.print("[yellow]Launch will force one full_pipeline run on startup.[/yellow]")
-    else:
-        os.environ["PRS_PIPELINE_FORCE_RUN_ON_STARTUP"] = "0"
     _kill_port(port)
     _cancel_orphaned_runs()
 
     console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
     console.print(f"[bold]Dagster UI:[/bold] http://{host}:{port}")
+    console.print(f"[dim]The startup sensor will submit jobs only if assets are missing.[/dim]")
     console.print(f"[dim]Use the UI to trigger jobs, or run 'pipeline run' in another terminal.[/dim]\n")
+
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])
+
+
+@app.command()
+def catalog(
+    panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
+    no_cache: Annotated[bool, typer.Option("--no-cache", help="Ignore on-disk caches and re-download/recompute everything.")] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Run catalog_pipeline in-process without Dagster UI.")] = False,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
+) -> None:
+    """Run the catalog pipeline with Dagster UI by default.
+
+    \b
+    Default behavior launches Dagster UI and sets startup target to
+    ``catalog_pipeline`` so you can monitor execution live.
+
+    Use ``--headless`` to run in-process without UI.
+    """
+    dagster_home = _setup_dagster_home()
+    _set_pipeline_env(panel, no_cache=no_cache)
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "catalog_pipeline"
+    os.environ["PRS_PIPELINE_FORCE_RUN"] = "1"
+
+    if headless:
+        _cancel_orphaned_runs()
+        console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+        console.print("[bold]Job:[/bold] catalog_pipeline (scoring parquets + metadata → HF)\n")
+
+        from prs_pipeline.definitions import defs
+
+        resolved_job = defs.get_job_def("catalog_pipeline")
+        console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+        result = _execute_job(resolved_job)
+
+        if result.success:
+            console.print("\n[green bold]Job 'catalog_pipeline' completed successfully.[/green bold]")
+        else:
+            console.print("\n[red bold]Job 'catalog_pipeline' failed.[/red bold]")
+            for event in result.all_events:
+                if event.is_failure:
+                    console.print(f"  [red]{event.message}[/red]")
+            raise typer.Exit(code=1)
+        return
+
+    _kill_port(port)
+    _cancel_orphaned_runs()
+    console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
+    console.print("[bold]Job 'catalog_pipeline' will be submitted automatically on startup.[/bold]\n")
 
     dagster_bin = str(Path(sys.executable).parent / "dagster")
     os.execvp(dagster_bin, [

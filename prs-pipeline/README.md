@@ -22,10 +22,12 @@ Then open http://localhost:3000 in your browser.
 
 ## Assets
 
-| Asset | Description |
-|-------|-------------|
-| `pgs_id_partitions` | Discover all PGS IDs and register as dynamic partitions |
-| `reference_panel` | Download + extract `pgsc_1000G_v1.tar.zst` (~7 GB, once) |
-| `per_pgs_scores` | Score reference panel for each PGS ID via pgenlib + polars (partitioned) |
-| `reference_distributions` | Aggregate per-individual scores to per-superpopulation stats |
-| `push_distributions_to_hf` | Upload to `just-dna-seq/prs-percentiles` on HuggingFace |
+| Asset | Group | Description |
+|-------|-------|-------------|
+| `ebi_reference_panel_fingerprint` | download | HTTP fingerprint for freshness tracking of the remote reference panel |
+| `ebi_scoring_files_fingerprint` | download | HTTP fingerprint for the remote scoring file manifest |
+| `scoring_files` | download | Bulk-download all harmonized PGS scoring `.txt.gz` files from EBI FTP |
+| `scoring_files_parquet` | compute | Convert all `.txt.gz` scoring files to spec-driven parquet caches (zstd-9, embedded headers). Deletes `.txt.gz` after verified conversion to save ~5.5 GB disk space. Tracks per-file failures in `conversion_failures.parquet` |
+| `reference_panel` | download | Download + extract reference panel binary files (.pgen/.pvar/.psam) |
+| `reference_scores` | compute | Score all PGS IDs against the reference panel via `compute_reference_prs_batch()` |
+| `hf_prs_percentiles` | upload | Enrich distributions with metadata and push to HuggingFace |

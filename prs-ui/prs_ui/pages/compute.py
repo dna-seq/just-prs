@@ -8,6 +8,7 @@ progress, and results, while keeping VCF-upload-specific UI here.
 import reflex as rx
 
 from prs_ui.components.prs_section import (
+    prs_ancestry_selector,
     prs_progress_section,
     prs_results_table,
     prs_scores_selector,
@@ -66,15 +67,23 @@ def _build_selector() -> rx.Component:
     """Genome build selector with auto-detection message (standalone-specific)."""
     return rx.vstack(
         rx.hstack(
-            rx.text("Genome Build:", size="2", weight="medium"),
-            rx.select(
-                ["GRCh37", "GRCh38"],
-                value=ComputeGridState.genome_build,
-                on_change=ComputeGridState.set_genome_build,
-                size="2",
+            rx.hstack(
+                rx.text("Genome Build:", size="2", weight="medium"),
+                rx.select(
+                    ["GRCh37", "GRCh38"],
+                    value=ComputeGridState.genome_build,
+                    on_change=ComputeGridState.set_genome_build,
+                    size="2",
+                ),
+                spacing="2",
+                align="center",
             ),
-            spacing="2",
+            rx.separator(orientation="vertical", size="2"),
+            prs_ancestry_selector(ComputeGridState),
+            spacing="4",
             align="center",
+            wrap="wrap",
+            width="100%",
         ),
         rx.cond(
             ComputeGridState.build_detection_message != "",

@@ -7,9 +7,9 @@ end-users compare their personal PRS against a global reference.
 
 Asset lineage (left to right):
 
-  [external]                        [download]                         [compute]              [upload]
-  ebi_pgs_catalog_reference_panel    ebi_reference_panel_fingerprint → reference_panel → reference_scores ──→ hf_prs_percentiles
-  ebi_pgs_catalog_scoring_files  →   ebi_scoring_files_fingerprint  ──────────────────────↗                     ↗
+  [external]                        [download]                         [compute]                     [upload]
+  ebi_pgs_catalog_reference_panel    ebi_reference_panel_fingerprint → reference_panel ──────→ reference_scores ──→ hf_prs_percentiles
+  ebi_pgs_catalog_scoring_files  →   ebi_scoring_files_fingerprint  → scoring_files → scoring_files_parquet ↗       ↗
                                                                              raw_pgs_metadata → cleaned_pgs_metadata
 
 hf_prs_percentiles enriches the raw distribution statistics with cleaned
@@ -35,7 +35,7 @@ from dagster import (
     asset,
 )
 
-from just_prs.ftp import PGS_FTP_BASE, PGS_SCORES_LIST_URL, list_all_pgs_ids
+from just_prs.ftp import PGS_FTP_BASE, PGS_SCORES_LIST_URL, bulk_download_scoring_files, list_all_pgs_ids
 from just_prs.hf import DEFAULT_HF_PERCENTILES_REPO, push_reference_distributions
 from just_prs.reference import (
     DEFAULT_PANEL,
@@ -48,6 +48,11 @@ from just_prs.reference import (
 from prs_pipeline.fingerprint import fingerprint_http_resource
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
 from prs_pipeline.runtime import resource_tracker
+
+
+def _no_cache() -> bool:
+    """Return True if PRS_PIPELINE_NO_CACHE is set (user passed --no-cache)."""
+    return os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() in {"1", "true", "yes"}
 
 
 # ---------------------------------------------------------------------------
@@ -114,6 +119,223 @@ def ebi_scoring_files_fingerprint(context: AssetExecutionContext) -> Output[str]
     return Output(fingerprint)
 
 # ---------------------------------------------------------------------------
+# Download asset — bulk-fetch all scoring .txt.gz files from EBI FTP
+# ---------------------------------------------------------------------------
+
+@asset(
+    group_name="download",
+    deps=[AssetDep("ebi_scoring_files_fingerprint")],
+    description=(
+        "Bulk-downloads all harmonized PGS scoring files (.txt.gz) from the "
+        "EBI FTP server into the local cache. Uses direct HTTPS URLs (no REST "
+        "API calls) with concurrent connections. Files that already exist on "
+        "disk are skipped. The reference_scores asset depends on this to "
+        "ensure all scoring files are available before computation begins."
+    ),
+)
+def scoring_files(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[int]:
+    """Download all PGS scoring .txt.gz files from EBI FTP."""
+    cache_dir = cache_dir_resource.get_path()
+    scores_dir = cache_dir / "scores"
+    genome_build = "GRCh38"
+
+    context.log.info("Fetching PGS ID list from EBI FTP...")
+    pgs_ids = list_all_pgs_ids()
+    context.log.info(f"Found {len(pgs_ids)} PGS IDs. Starting bulk download to {scores_dir}")
+
+    def _dagster_progress(payload: dict[str, int]) -> None:
+        completed = payload.get("completed", 0)
+        total = payload.get("total", 0)
+        downloaded = payload.get("downloaded", 0)
+        cached = payload.get("cached", 0)
+        parquet_cached = payload.get("parquet_cached", 0)
+        failed = payload.get("failed", 0)
+        percent = (completed / total * 100) if total > 0 else 0
+        context.log.info(
+            f"Download progress: {completed}/{total} ({percent:.1f}%), "
+            f"downloaded={downloaded}, cached={cached}, parquet_cached={parquet_cached}, failed={failed}"
+        )
+
+    with resource_tracker("scoring_files", context=context):
+        result = bulk_download_scoring_files(
+            pgs_ids=pgs_ids,
+            output_dir=scores_dir,
+            genome_build=genome_build,
+            progress_callback=_dagster_progress,
+        )
+
+    context.log.info(
+        f"Bulk download complete: {result.downloaded} downloaded, "
+        f"{result.cached} cached, {result.parquet_cached} parquet_cached, "
+        f"{result.failed} failed (out of {result.total} total)."
+    )
+    if result.failed_ids:
+        context.log.warning(
+            f"Failed to download {result.failed} scoring files: "
+            f"{result.failed_ids[:20]}{'...' if result.failed > 20 else ''}"
+        )
+
+    n_ok = result.total - result.failed
+    coverage_ratio = n_ok / result.total if result.total > 0 else 0.0
+    context.add_output_metadata({
+        "n_total": result.total,
+        "n_ok": n_ok,
+        "n_failed": result.failed,
+        "n_cached": result.cached + result.parquet_cached,
+        "coverage_ratio": round(coverage_ratio, 4),
+        "downloaded": result.downloaded,
+        "cached": result.cached,
+        "parquet_cached": result.parquet_cached,
+        "scores_dir": str(scores_dir),
+        "genome_build": genome_build,
+    })
+    return Output(n_ok)
+
+
+# ---------------------------------------------------------------------------
+# Compute asset — convert scoring .txt.gz files to parquet caches
+# ---------------------------------------------------------------------------
+
+@asset(
+    group_name="compute",
+    deps=[AssetDep("scoring_files")],
+    description=(
+        "Converts all downloaded PGS scoring .txt.gz files to parquet caches "
+        "with spec-driven schema overrides and zstd-9 compression. "
+        "By default keeps the original .txt.gz files; set env var "
+        "PRS_PIPELINE_DELETE_GZ=1 to delete them after verified conversion "
+        "(saves ~5.5 GB for the full catalog). "
+        "Failures are tracked per-file without aborting the loop and written "
+        "to a conversion_failures.parquet report for post-hoc error analysis. "
+        "The reference_scores asset depends on this to ensure all scoring "
+        "files are available as parquet before batch computation begins."
+    ),
+)
+def scoring_files_parquet(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[int]:
+    """Convert all scoring .txt.gz files to parquet caches."""
+    import datetime
+
+    from eliot import log_message as _log
+
+    from just_prs.scoring import _scoring_parquet_cache_path, parse_scoring_file
+
+    cache_dir = cache_dir_resource.get_path()
+    scores_dir = cache_dir / "scores"
+    delete_gz = os.environ.get("PRS_PIPELINE_DELETE_GZ", "0") == "1"
+
+    if delete_gz:
+        context.log.info("PRS_PIPELINE_DELETE_GZ=1: will delete .txt.gz after verified conversion")
+
+    gz_files = sorted(scores_dir.glob("*_hmPOS_*.txt.gz"))
+    total = len(gz_files)
+    context.log.info(f"Found {total} scoring .txt.gz files in {scores_dir}")
+
+    converted = 0
+    already_cached = 0
+    failed = 0
+    deleted_gz_count = 0
+    total_gz_bytes = 0
+    total_parquet_bytes = 0
+    failures: list[dict[str, str]] = []
+    progress_every = max(total // 20, 50)
+    
+    import time
+    last_log_time = time.monotonic()
+
+    force = _no_cache()
+    if force:
+        context.log.info("NO-CACHE: will re-parse all .txt.gz files even if parquet cache exists.")
+
+    with resource_tracker("scoring_files_parquet", context=context):
+        for i, gz_path in enumerate(gz_files):
+            pgs_id = gz_path.name.split("_hmPOS_")[0] if "_hmPOS_" in gz_path.name else gz_path.stem
+            parquet_path = _scoring_parquet_cache_path(gz_path)
+            gz_size = gz_path.stat().st_size
+            total_gz_bytes += gz_size
+
+            if parquet_path.exists() and not force:
+                already_cached += 1
+                total_parquet_bytes += parquet_path.stat().st_size
+                if delete_gz and gz_path.exists():
+                    gz_path.unlink()
+                    deleted_gz_count += 1
+            else:
+                try:
+                    lf = parse_scoring_file(gz_path)
+                    row_count = lf.select(pl.len()).collect().item()
+
+                    if not parquet_path.exists() or row_count == 0:
+                        raise RuntimeError(
+                            f"Parquet not created or empty after parse (rows={row_count})"
+                        )
+                    total_parquet_bytes += parquet_path.stat().st_size
+                    converted += 1
+
+                    if delete_gz:
+                        gz_path.unlink()
+                        deleted_gz_count += 1
+                except Exception as exc:
+                    failed += 1
+                    failures.append({
+                        "pgs_id": pgs_id,
+                        "gz_path": str(gz_path),
+                        "error": str(exc),
+                        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    })
+                    _log(
+                        message_type="scoring:parquet_conversion_failed",
+                        pgs_id=pgs_id,
+                        error=str(exc),
+                    )
+
+            current_time = time.monotonic()
+            should_log = ((i + 1) % progress_every == 0) or (current_time - last_log_time > 15.0) or ((i + 1) == total)
+            
+            if should_log:
+                last_log_time = current_time
+                context.log.info(
+                    f"Parquet conversion: {i + 1}/{total} "
+                    f"(converted={converted}, cached={already_cached}, failed={failed}, "
+                    f"deleted_gz={deleted_gz_count})"
+                )
+
+    failure_report_path = ""
+    if failures:
+        failure_df = pl.DataFrame(failures)
+        report_path = scores_dir / "conversion_failures.parquet"
+        failure_df.write_parquet(report_path)
+        failure_report_path = str(report_path)
+        context.log.warning(
+            f"{failed} conversions failed. Report: {report_path}"
+        )
+
+    n_ok = converted + already_cached
+    coverage_ratio = n_ok / total if total > 0 else 0.0
+    context.add_output_metadata({
+        "n_total": total,
+        "n_ok": n_ok,
+        "n_failed": failed,
+        "n_cached": already_cached,
+        "coverage_ratio": round(coverage_ratio, 4),
+        "converted": converted,
+        "deleted_gz_files": deleted_gz_count,
+        "delete_gz_enabled": delete_gz,
+        "failure_report_path": failure_report_path,
+        "total_gz_bytes": total_gz_bytes,
+        "total_parquet_bytes": total_parquet_bytes,
+        "compression_ratio": round(total_parquet_bytes / max(total_gz_bytes, 1), 3),
+        "scores_dir": str(scores_dir),
+    })
+    return Output(n_ok)
+
+
+# ---------------------------------------------------------------------------
 # Download asset — fetch reference panel into local cache
 # ---------------------------------------------------------------------------
 
@@ -154,12 +376,15 @@ def reference_panel(
 @asset(
     group_name="compute",
     ins={"ref_dir": AssetIn("reference_panel")},
-    deps=[AssetDep("ebi_scoring_files_fingerprint")],
+    deps=[AssetDep("scoring_files_parquet")],
     description=(
         "Scores all PGS IDs (or a test subset) against the reference panel in a "
-        "single process using pgenlib + polars. Failures are logged and tracked "
-        "but do not abort the batch. Produces per-sample scores, aggregated "
-        "per-superpopulation distribution statistics, and a quality report. "
+        "single process using pgenlib + polars. Depends on the scoring_files_parquet "
+        "asset which converts all .txt.gz files to parquet first, so this asset "
+        "reads pre-parsed parquet caches instead of decompressing gzip on every ID. "
+        "Failures are logged and tracked but do not abort the batch. "
+        "Produces per-sample scores, aggregated per-superpopulation distribution "
+        "statistics, and a quality report. "
         "The distributions parquet is the input for hf_prs_percentiles."
     ),
 )
@@ -263,6 +488,10 @@ def reference_scores(
             f"ids=[{ids_text}] ({last_status})"
         )
 
+    skip_existing = not _no_cache()
+    if not skip_existing:
+        context.log.info("NO-CACHE: will recompute all PGS scores, ignoring cached results.")
+
     with resource_tracker("reference_scores", context=context):
         result = compute_reference_prs_batch(
             pgs_ids=pgs_ids,
@@ -270,7 +499,7 @@ def reference_scores(
             cache_dir=cache_dir,
             genome_build="GRCh38",
             panel=panel,
-            skip_existing=True,
+            skip_existing=skip_existing,
             output_subdir=output_subdir,
             progress_callback=_dagster_progress,
             progress_every=progress_every,
@@ -290,12 +519,17 @@ def reference_scores(
         f"Distributions: {percentiles_dir / f'{panel}_distributions.parquet'}"
     )
 
+    n_total = len(pgs_ids)
+    n_cached = sum(1 for o in result.outcomes if o.status == "ok" and o.elapsed_sec is None)
+    coverage_ratio = n_ok / n_total if n_total > 0 else 0.0
     context.add_output_metadata({
         "panel": panel,
-        "n_pgs_ids": len(pgs_ids),
+        "n_total": n_total,
         "n_ok": n_ok,
         "n_failed": n_failed,
+        "n_cached": n_cached,
         "n_problematic": n_problematic,
+        "coverage_ratio": round(coverage_ratio, 4),
         "n_distributions": result.distributions_df.height,
         "n_pgs_with_distributions": result.distributions_df["pgs_id"].n_unique() if result.distributions_df.height > 0 else 0,
         "per_pgs_scores_dir": str(scores_dir),
@@ -345,6 +579,9 @@ def hf_prs_percentiles(
     percentiles_dir.mkdir(parents=True, exist_ok=True)
     parquet_path = percentiles_dir / f"{panel}_distributions.parquet"
 
+    min_coverage_str = os.environ.get("PRS_PIPELINE_MIN_COVERAGE", "0.90").strip()
+    min_coverage = float(min_coverage_str) if min_coverage_str else 0.90
+
     with resource_tracker("hf_prs_percentiles", context=context):
         enriched = enrich_distributions(distributions, metadata_dir)
         n_metadata_cols = len(enriched.columns) - len(distributions.columns)
@@ -352,6 +589,27 @@ def hf_prs_percentiles(
             f"Enriched distributions with {n_metadata_cols} metadata columns "
             f"({distributions.height} rows, {len(enriched.columns)} total columns)."
         )
+
+        n_scored = enriched["pgs_id"].n_unique() if enriched.height > 0 else 0
+        try:
+            all_pgs_ids = list_all_pgs_ids()
+            n_catalog_total = len(all_pgs_ids)
+        except Exception as exc:
+            context.log.warning(f"Could not fetch EBI catalog for coverage check: {exc}")
+            n_catalog_total = n_scored
+
+        coverage_ratio = n_scored / n_catalog_total if n_catalog_total > 0 else 0.0
+        n_missing = n_catalog_total - n_scored
+        if coverage_ratio < min_coverage:
+            context.log.warning(
+                f"Coverage below threshold: {n_scored}/{n_catalog_total} "
+                f"({coverage_ratio:.1%} < {min_coverage:.0%}). "
+                f"Missing {n_missing} PGS IDs. Uploading partial data anyway."
+            )
+        else:
+            context.log.info(
+                f"Coverage check passed: {n_scored}/{n_catalog_total} ({coverage_ratio:.1%})."
+            )
 
         enriched.write_parquet(parquet_path)
 
@@ -371,7 +629,10 @@ def hf_prs_percentiles(
                 "n_rows": enriched.height,
                 "n_columns": len(enriched.columns),
                 "n_metadata_columns_added": n_metadata_cols,
-                "n_pgs_ids": enriched["pgs_id"].n_unique() if enriched.height > 0 else 0,
+                "n_scored": n_scored,
+                "n_catalog_total": n_catalog_total,
+                "n_missing": n_missing,
+                "coverage_ratio": round(coverage_ratio, 4),
             })
             return Output(str(parquet_path))
 
@@ -399,6 +660,9 @@ def hf_prs_percentiles(
         "n_rows": enriched.height,
         "n_columns": len(enriched.columns),
         "n_metadata_columns_added": n_metadata_cols,
-        "n_pgs_ids": enriched["pgs_id"].n_unique() if enriched.height > 0 else 0,
+        "n_scored": n_scored,
+        "n_catalog_total": n_catalog_total,
+        "n_missing": n_missing,
+        "coverage_ratio": round(coverage_ratio, 4),
     })
     return Output(url)

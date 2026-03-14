@@ -25,9 +25,9 @@ This pipeline computes population-level Polygenic Risk Score (PRS) distributions
 Asset lineage (left to right):
 
 ```text
-[external]                        [download]                         [compute]              [upload]
-ebi_pgs_catalog_reference_panel    ebi_reference_panel_fingerprint → reference_panel → reference_scores ──→ hf_prs_percentiles
-ebi_pgs_catalog_scoring_files  →   ebi_scoring_files_fingerprint  ──────────────────────↗                     ↗
+[external]                        [download]                         [compute]                     [upload]
+ebi_pgs_catalog_reference_panel    ebi_reference_panel_fingerprint → reference_panel ──────→ reference_scores ──→ hf_prs_percentiles
+ebi_pgs_catalog_scoring_files  →   ebi_scoring_files_fingerprint  → scoring_files → scoring_files_parquet ↗       ↗
                                                                          raw_pgs_metadata → cleaned_pgs_metadata
 ```
 
@@ -35,8 +35,10 @@ ebi_pgs_catalog_scoring_files  →   ebi_scoring_files_fingerprint  ────
 - **`ebi_pgs_catalog_scoring_files`** (SourceAsset): Remote PGS Catalog scoring files and metadata on the EBI FTP server.
 - **`ebi_reference_panel_fingerprint`**: Materialized remote fingerprint for the reference panel URL (HTTP metadata hash). Downstream assets depend on this, not directly on the SourceAsset.
 - **`ebi_scoring_files_fingerprint`**: Materialized remote fingerprint for `pgs_scores_list.txt` (HTTP metadata + body hash). Used as a freshness dependency for scoring/metadata assets.
+- **`scoring_files`**: Bulk-downloads all harmonized PGS scoring `.txt.gz` files from EBI FTP.
+- **`scoring_files_parquet`**: Converts all downloaded `.txt.gz` scoring files to parquet caches with spec-driven schema overrides (`SCORING_FILE_SCHEMA` from `just_prs.scoring`) and zstd-9 compression. PGS Catalog header metadata is embedded as file-level metadata in each parquet. After verified conversion, the original `.txt.gz` is deleted to save disk space (~5.5 GB savings for the full catalog). Per-file failures are tracked without aborting the loop and written to `conversion_failures.parquet` for post-hoc error analysis. `reference_scores` depends on this asset.
 - **`reference_panel`**: Downloads and extracts the reference panel binary files to local cache.
-- **`reference_scores`**: Scores all PGS IDs against the reference panel in a single batch using `compute_reference_prs_batch()`. This replaces the previous partitioned approach (one Dagster partition per PGS ID + sensor orchestration). The batch function iterates in-process, tracks failures, and produces aggregated distributions.
+- **`reference_scores`**: Scores all PGS IDs against the reference panel in a single batch using `compute_reference_prs_batch()`. Reads from parquet caches produced by `scoring_files_parquet` (5-60x faster than decompressing `.txt.gz`). The batch function iterates in-process, tracks failures, and produces aggregated distributions.
 - **`hf_prs_percentiles`**: Enriches the raw distribution statistics with cleaned PGS Catalog metadata (trait names, EFO terms, performance metrics like AUROC/OR/C-index, ancestry) via `enrich_distributions()`, then uploads the enriched parquet to HuggingFace (`just-dna-seq/prs-percentiles`). This creates a cross-pipeline dependency on `cleaned_pgs_metadata`, ensuring the published distributions parquet is self-contained.
 
 The batch scoring approach was adopted because the polars engine scores each PGS ID in seconds (not minutes), and the expensive parts (pvar parsing, psam loading, allele offset cache) are shared across IDs within a single process. This eliminates the overhead of thousands of Dagster partitions and the complex sensor orchestration that was previously required.
@@ -74,9 +76,9 @@ All jobs include `hooks={resource_summary_hook}` for run-level resource aggregat
 
 | Job | Assets | Description |
 |-----|--------|-------------|
-| `full_pipeline` | `reference_panel`, `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Full pipeline: download panel, score, download and clean metadata, enrich distributions, push. Auto-submitted by `run_pipeline_on_startup` sensor |
+| `full_pipeline` | `reference_panel`, `scoring_files`, `scoring_files_parquet`, `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Full pipeline: download panel + scoring files, convert to parquet, score, download and clean metadata, enrich distributions, push. Auto-submitted by `run_pipeline_on_startup` sensor |
 | `download_reference_data` | `reference_panel` | Download the reference panel from EBI FTP |
-| `score_and_push` | `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Batch-score, download/clean metadata, enrich, and push to HuggingFace |
+| `score_and_push` | `scoring_files`, `scoring_files_parquet`, `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Download scoring files, convert to parquet, batch-score, download/clean metadata, enrich, and push to HuggingFace |
 | `metadata_pipeline` | `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_polygenic_risk_scores` | End-to-end metadata pipeline |
 | `clean_and_push_metadata` | `cleaned_pgs_metadata`, `hf_polygenic_risk_scores` | Re-clean and push when raw sheets are already cached |
 

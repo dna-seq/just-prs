@@ -1,6 +1,6 @@
 [project]
 name = "just-prs"
-version = "0.3.6"
+version = "0.3.8"
 description = "Polars-bio based tool to compute polygenic risk scores from PGS Catalog"
 readme = "README.md"
 authors = [
@@ -26,6 +26,11 @@ dependencies = [
 [project.scripts]
 just-prs = "just_prs.cli:run"
 prs = "just_prs.cli:run"
+
+[tool.pytest.ini_options]
+markers = [
+    "plink2: tests that require the PLINK2 binary (auto-downloaded if not in PATH)",
+]
 
 [build-system]
 requires = ["uv_build>=0.10.0,<0.11.0"]

@@ -2,15 +2,16 @@
 
 import os
 import shutil
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import polars as pl
 from dotenv import load_dotenv
-from eliot import start_action
+from eliot import start_action, Message
 from huggingface_hub import HfApi, hf_hub_download
+import huggingface_hub.constants as _hf_constants
 
-DEFAULT_HF_REPO = "just-dna-seq/polygenic_risk_scores"
 DEFAULT_HF_PERCENTILES_REPO = "just-dna-seq/prs-percentiles"
 DEFAULT_HF_CATALOG_REPO = "just-dna-seq/pgs-catalog"
 HF_DATA_PREFIX = "data"
@@ -22,6 +23,24 @@ CLEANED_PARQUET_FILES = [
 ]
 
 REFERENCE_DISTRIBUTIONS_FILE = "reference_distributions.parquet"  # legacy fallback
+
+HF_UPLOAD_TIMEOUT_SEC = 1800
+HF_UPLOAD_MAX_RETRIES = 5
+HF_UPLOAD_RETRY_DELAY_SEC = 30
+
+
+def _configure_hf_timeouts(timeout_sec: int = HF_UPLOAD_TIMEOUT_SEC) -> None:
+    """Raise HuggingFace Hub HTTP timeouts from the 10s default.
+
+    The default 10-second timeout is far too low for large uploads
+    (thousands of scoring parquets).  This must be called before any
+    HfApi method that performs HTTP requests.
+    """
+    _hf_constants.DEFAULT_DOWNLOAD_TIMEOUT = timeout_sec
+    _hf_constants.DEFAULT_REQUEST_TIMEOUT = timeout_sec
+    _hf_constants.DEFAULT_ETAG_TIMEOUT = timeout_sec
+    _hf_constants.HF_HUB_DOWNLOAD_TIMEOUT = timeout_sec
+    _hf_constants.HF_HUB_ETAG_TIMEOUT = timeout_sec
 
 
 def distributions_filename(panel: str = "1000g") -> str:
@@ -35,150 +54,6 @@ def _resolve_token(token: str | None = None) -> str | None:
         return token
     load_dotenv()
     return os.environ.get("HF_TOKEN")
-
-
-def _generate_dataset_card(local_dir: Path, repo_id: str) -> str:
-    """Generate a HuggingFace dataset card (README.md) describing the cleaned PGS metadata."""
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
-    stats_lines: list[str] = []
-    for filename in CLEANED_PARQUET_FILES:
-        p = local_dir / filename
-        if p.exists():
-            df = pl.read_parquet(p)
-            cols = ", ".join(f"`{c}`" for c in df.columns[:8])
-            if len(df.columns) > 8:
-                cols += f", ... ({len(df.columns)} total)"
-            stats_lines.append(f"| `{filename}` | {df.height:,} | {len(df.columns)} | {cols} |")
-
-    stats_table = "\n".join(stats_lines) if stats_lines else "| — | — | — | — |"
-
-    return f"""---
-license: cc-by-4.0
-task_categories:
-  - tabular-classification
-  - tabular-regression
-tags:
-  - biology
-  - genomics
-  - polygenic-risk-scores
-  - pgs-catalog
-  - genetics
-  - health
-pretty_name: PGS Catalog — Cleaned Polygenic Risk Score Metadata
-size_categories:
-  - 10K<n<100K
-source_datasets:
-  - PGS Catalog (https://www.pgscatalog.org/)
----
-
-# PGS Catalog — Cleaned Polygenic Risk Score Metadata
-
-Cleaned and normalized metadata from the [PGS Catalog](https://www.pgscatalog.org/),
-the open database of published **Polygenic Risk Scores (PRS)**.
-
-This dataset is automatically built from the bulk FTP downloads provided by PGS Catalog
-and processed through the [`just-prs`](https://github.com/longevity-genie/just-prs) cleanup pipeline.
-
-**Last updated:** {now}
-
-## Files
-
-All files are in the `data/` directory in Apache Parquet format.
-
-| File | Rows | Columns | Key columns |
-|------|------|---------|-------------|
-{stats_table}
-
-## Cleanup Pipeline
-
-The raw PGS Catalog CSVs undergo several transformations:
-
-1. **Column renaming** — verbose PGS column names (e.g. `Polygenic Score (PGS) ID`) are mapped to
-   short `snake_case` equivalents (`pgs_id`).
-2. **Genome build normalization** — 9 raw build variants (`hg19`, `hg37`, `hg38`, `NCBI36`, `hg18`,
-   `NCBI35`, `GRCh37`, `GRCh38`, `NR`) are mapped to canonical values: `GRCh37`, `GRCh38`, `GRCh36`, or `NR`.
-3. **Metric string parsing** — performance metrics stored as strings like `"1.55 [1.52,1.58]"` or
-   `"-0.7 (0.15)"` are parsed into structured numeric columns (`*_estimate`, `*_ci_lower`, `*_ci_upper`, `*_se`)
-   for OR, HR, Beta, AUROC, and C-index.
-4. **Performance flattening** — performance metrics are joined with evaluation sample sets to include
-   sample size (`n_individuals`) and ancestry (`ancestry_broad`).
-5. **Best performance selection** — `best_performance.parquet` contains one row per PGS ID, selecting
-   the evaluation with the largest sample size (with a preference for European-ancestry cohorts).
-
-## Table Descriptions
-
-### `scores.parquet`
-
-One row per polygenic score in PGS Catalog. Key columns:
-- `pgs_id` — PGS Catalog identifier (e.g. PGS000001)
-- `name` — score name
-- `trait_reported` / `trait_efo` — reported and mapped trait labels
-- `genome_build` — normalized genome build (GRCh37, GRCh38, GRCh36, or NR)
-- `n_variants` — number of variants in the scoring file
-- `weight_type` — type of variant weights (e.g. beta, OR, log(OR))
-- `ftp_link` — direct FTP link to the scoring file
-
-### `performance.parquet`
-
-One row per performance evaluation, with parsed numeric metrics:
-- `ppm_id` — performance metric identifier
-- `pgs_id` — evaluated score
-- `or_estimate`, `hr_estimate`, `beta_estimate`, `auroc_estimate`, `cindex_estimate` — parsed point estimates
-- `*_ci_lower`, `*_ci_upper`, `*_se` — confidence intervals and standard errors
-- `n_individuals`, `ancestry_broad` — evaluation sample characteristics
-
-### `best_performance.parquet`
-
-One row per PGS ID with the single best performance evaluation (largest sample, European-preferred).
-Same columns as `performance.parquet`.
-
-## Source & License
-
-- **Source:** [PGS Catalog](https://www.pgscatalog.org/) (EBI / NHGRI)
-- **License:** [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
-- **Citation:** Lambert, S.A. et al. *The Polygenic Score Catalog as an open database for
-  reproducibility and systematic evaluation.* Nature Genetics 53, 420–425 (2021).
-  [doi:10.1038/s41588-021-00783-5](https://doi.org/10.1038/s41588-021-00783-5)
-"""
-
-
-def push_cleaned_parquets(
-    local_dir: Path,
-    repo_id: str = DEFAULT_HF_REPO,
-    token: str | None = None,
-) -> None:
-    """Upload cleaned parquet files and dataset card from local_dir to HF dataset repo.
-
-    Generates a README.md dataset card describing the contents, then uploads
-    both the parquets (under data/) and the card to the repo root.
-
-    Args:
-        local_dir: Directory containing scores.parquet, performance.parquet, best_performance.parquet
-        repo_id: HuggingFace dataset repository ID
-        token: HF API token. If None, loaded from .env / HF_TOKEN env var.
-    """
-    resolved_token = _resolve_token(token)
-    with start_action(action_type="hf:push_cleaned_parquets", repo_id=repo_id):
-        api = HfApi(token=resolved_token)
-        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
-
-        readme_path = local_dir / "README.md"
-        readme_path.write_text(_generate_dataset_card(local_dir, repo_id))
-        api.upload_file(
-            path_or_fileobj=str(readme_path),
-            path_in_repo="README.md",
-            repo_id=repo_id,
-            repo_type="dataset",
-        )
-
-        api.upload_folder(
-            folder_path=str(local_dir),
-            path_in_repo=HF_DATA_PREFIX,
-            repo_id=repo_id,
-            repo_type="dataset",
-            allow_patterns="*.parquet",
-        )
 
 
 def pull_reference_distributions(
@@ -256,6 +131,7 @@ def push_reference_distributions(
     resolved_token = _resolve_token(token)
     panel_file = distributions_filename(panel)
     with start_action(action_type="hf:push_reference_distributions", repo_id=repo_id, panel=panel):
+        _configure_hf_timeouts()
         api = HfApi(token=resolved_token)
         api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
         api.upload_file(
@@ -495,6 +371,57 @@ def _scores_with_parquet_links(scores_df: pl.DataFrame, repo_id: str) -> pl.Data
     )
 
 
+def _upload_large_folder_with_retry(
+    api: HfApi,
+    repo_id: str,
+    folder_path: Path,
+    repo_type: str = "dataset",
+    max_retries: int = HF_UPLOAD_MAX_RETRIES,
+    base_delay: int = HF_UPLOAD_RETRY_DELAY_SEC,
+) -> None:
+    """Call ``api.upload_large_folder`` with automatic retry on network timeouts.
+
+    ``upload_large_folder`` maintains a ``.cache/.huggingface/`` resumability
+    cache inside ``folder_path``, so retrying after a transient timeout
+    resumes from where it left off without re-uploading completed files.
+
+    Uses exponential backoff: delay doubles each attempt (30s, 60s, 120s, 240s).
+    """
+    import httpx
+    import httpcore
+
+    last_exc: Exception | None = None
+    for attempt in range(1, max_retries + 1):
+        try:
+            api.upload_large_folder(
+                repo_id=repo_id,
+                repo_type=repo_type,
+                folder_path=str(folder_path),
+            )
+            return
+        except (httpx.ReadTimeout, httpx.ConnectTimeout, httpx.WriteTimeout,
+                httpcore.ReadTimeout, httpcore.WriteTimeout,
+                httpx.RemoteProtocolError, ConnectionError, TimeoutError) as exc:
+            last_exc = exc
+            if attempt < max_retries:
+                delay = base_delay * (2 ** (attempt - 1))
+                Message.log(
+                    message_type="hf:upload_retry",
+                    attempt=attempt,
+                    max_retries=max_retries,
+                    error=str(exc),
+                    retry_delay=delay,
+                )
+                time.sleep(delay)
+            else:
+                Message.log(
+                    message_type="hf:upload_failed",
+                    attempts=max_retries,
+                    error=str(exc),
+                )
+    raise last_exc  # type: ignore[misc]
+
+
 def push_pgs_catalog(
     metadata_dir: Path,
     scores_dir: Path,
@@ -559,6 +486,7 @@ def push_pgs_catalog(
         scores_dir=str(scores_dir),
         staging_dir=str(staging_dir),
     ):
+        _configure_hf_timeouts()
         api = HfApi(token=resolved_token)
         api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
 
@@ -620,10 +548,12 @@ def push_pgs_catalog(
         # upload_large_folder writes .cache/.huggingface/ resumability cache inside
         # staging_dir.  Keeping staging_dir persistent means a crashed upload
         # can resume on re-run without re-hashing or re-uploading completed files.
-        api.upload_large_folder(
+        # Retry on transient network timeouts — the resumability cache ensures
+        # no work is repeated.
+        _upload_large_folder_with_retry(
+            api=api,
             repo_id=repo_id,
-            repo_type="dataset",
-            folder_path=str(staging_dir),
+            folder_path=staging_dir,
         )
 
         # Upload succeeded — remove the staging tree so stale hard-links don't
@@ -633,18 +563,22 @@ def push_pgs_catalog(
 
 def pull_cleaned_parquets(
     local_dir: Path,
-    repo_id: str = DEFAULT_HF_REPO,
+    repo_id: str = DEFAULT_HF_CATALOG_REPO,
     token: str | None = None,
 ) -> list[Path]:
-    """Download cleaned parquet files from HF dataset repo into local_dir.
+    """Download cleaned metadata parquets from the combined PGS Catalog HF dataset.
+
+    Pulls ``scores.parquet``, ``performance.parquet``, and
+    ``best_performance.parquet`` from ``data/metadata/`` in the combined
+    ``just-dna-seq/pgs-catalog`` repo.
 
     Args:
-        local_dir: Directory to save downloaded parquet files
-        repo_id: HuggingFace dataset repository ID
+        local_dir: Directory to save downloaded parquet files.
+        repo_id: HuggingFace dataset repository ID.
         token: HF API token. If None, loaded from .env / HF_TOKEN env var.
 
     Returns:
-        List of paths to downloaded parquet files
+        List of paths to downloaded parquet files.
     """
     resolved_token = _resolve_token(token)
     with start_action(action_type="hf:pull_cleaned_parquets", repo_id=repo_id):
@@ -653,7 +587,7 @@ def pull_cleaned_parquets(
         for filename in CLEANED_PARQUET_FILES:
             path = hf_hub_download(
                 repo_id=repo_id,
-                filename=f"{HF_DATA_PREFIX}/{filename}",
+                filename=f"{HF_DATA_PREFIX}/metadata/{filename}",
                 repo_type="dataset",
                 local_dir=local_dir,
                 token=resolved_token,
@@ -661,7 +595,6 @@ def pull_cleaned_parquets(
             target = local_dir / filename
             hf_cached = Path(path)
             if hf_cached != target:
-                import shutil
                 shutil.copy2(hf_cached, target)
             downloaded.append(target)
         return downloaded

@@ -43,6 +43,7 @@ _JOB_CHECK_KEYS: dict[str, list[dg.AssetKey]] = {
         dg.AssetKey("scoring_files"),
         dg.AssetKey("reference_scores"),
         dg.AssetKey("cleaned_pgs_metadata"),
+        dg.AssetKey("hf_pgs_catalog"),
         dg.AssetKey("hf_prs_percentiles"),
     ],
     "catalog_pipeline": [

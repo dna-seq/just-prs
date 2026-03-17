@@ -284,12 +284,16 @@ def _download_one_scoring_file(
     """
     filename = f"{pgs_id}_hmPOS_{genome_build}.txt.gz"
     output_path = output_dir / filename
-    if output_path.exists():
+    if output_path.exists() and output_path.stat().st_size > 0:
         return pgs_id, "cached"
 
     parquet_path = output_dir / f"{pgs_id}_hmPOS_{genome_build}.parquet"
-    if parquet_path.exists():
+    if parquet_path.exists() and parquet_path.stat().st_size > 0:
         return pgs_id, "parquet_cached"
+
+    # Remove stale 0-byte file from a previous failed download
+    if output_path.exists():
+        output_path.unlink()
 
     url = _scoring_url(pgs_id, genome_build)
     tmp_path = output_path.with_suffix(".tmp")
@@ -301,6 +305,9 @@ def _download_one_scoring_file(
                     if not chunk:
                         break
                     local.write(chunk)
+        if tmp_path.stat().st_size == 0:
+            tmp_path.unlink()
+            return pgs_id, "failed"
         tmp_path.rename(output_path)
         return pgs_id, "downloaded"
     except Exception:

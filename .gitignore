@@ -232,3 +232,7 @@ scores/
 *.crai
 *.bgz
 *.tbi
+
+#cursor
+.cursor/
+*.code-workspace

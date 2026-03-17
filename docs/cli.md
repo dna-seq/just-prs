@@ -271,28 +271,9 @@ Options:
 |------|---------|-------------|
 | `--output-dir / -o` | `./output/pgs_metadata` | Directory for cleaned parquet output |
 
-### `prs catalog bulk push-hf` — Push cleaned parquets to HuggingFace
-
-Uploads cleaned metadata parquets to a HuggingFace dataset repository. Builds them first if not already present. Token is read from `.env` file or `HF_TOKEN` environment variable.
-
-```bash
-# Push to default repo (just-dna-seq/polygenic_risk_scores)
-prs catalog bulk push-hf
-
-# Push from a custom directory to a custom repo
-prs catalog bulk push-hf --output-dir /data/cleaned --repo my-org/my-dataset
-```
-
-Options:
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--output-dir / -o` | `./output/pgs_metadata` | Directory containing cleaned parquets |
-| `--repo / -r` | `just-dna-seq/polygenic_risk_scores` | HuggingFace dataset repo ID |
-
 ### `prs catalog bulk pull-hf` — Pull cleaned parquets from HuggingFace
 
-Downloads cleaned metadata parquets from a HuggingFace dataset repository. Useful for bootstrapping a local cache without running the cleanup pipeline.
+Downloads cleaned metadata parquets from the combined PGS Catalog dataset on HuggingFace. Useful for bootstrapping a local cache without running the cleanup pipeline.
 
 ```bash
 # Pull to default directory
@@ -307,7 +288,7 @@ Options:
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--output-dir / -o` | `./output/pgs_metadata` | Directory to save pulled parquets |
-| `--repo / -r` | `just-dna-seq/polygenic_risk_scores` | HuggingFace dataset repo ID |
+| `--repo / -r` | `just-dna-seq/pgs-catalog` | HuggingFace dataset repo ID |
 
 ### `prs catalog bulk ids` — List all PGS IDs
 

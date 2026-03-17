@@ -125,7 +125,7 @@ dist_lf = catalog.reference_distributions(panel="hgdp_1kg")
 paths = catalog.build_cleaned_parquets(output_dir=Path("./output/pgs_metadata"))
 # {'scores': Path('output/pgs_metadata/scores.parquet'), 'performance': ..., 'best_performance': ...}
 
-# Push cleaned parquets to HuggingFace
+# Push metadata + scoring parquets to HuggingFace (just-dna-seq/pgs-catalog)
 catalog.push_to_hf()  # token from .env / HF_TOKEN
 catalog.push_to_hf(token="hf_...", repo_id="my-org/my-dataset")
 ```
@@ -456,15 +456,18 @@ paths = bulk_download_scoring_parquets(Path("./output/pgs_scores"))  # all ~5000
 ## HuggingFace sync (`just_prs.hf`)
 
 ```python
-from just_prs.hf import push_cleaned_parquets, pull_cleaned_parquets
+from just_prs.hf import pull_cleaned_parquets, push_pgs_catalog
 from pathlib import Path
 
-# Push cleaned parquets to HF dataset repo
-push_cleaned_parquets(Path("./output/pgs_metadata"))  # default: just-dna-seq/polygenic_risk_scores
-
-# Pull cleaned parquets from HF
+# Pull cleaned metadata parquets from HF (just-dna-seq/pgs-catalog)
 downloaded = pull_cleaned_parquets(Path("./local_cache"))
 # [Path('local_cache/scores.parquet'), Path('local_cache/performance.parquet'), ...]
+
+# Push metadata + scoring parquets to HF
+push_pgs_catalog(
+    metadata_dir=Path("./output/pgs_metadata"),
+    scores_dir=Path("./output/scores"),
+)
 ```
 
 ## Quality assessment helpers (`just_prs.quality`)

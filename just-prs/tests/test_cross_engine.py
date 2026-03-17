@@ -37,6 +37,7 @@ REF_DIR = reference_panel_dir()
 REF_PANEL_AVAILABLE = (REF_DIR / "GRCh38_1000G_ALL.pgen").exists()
 
 PGS_IDS = ["PGS000001", "PGS000003", "PGS000007"]
+LARGE_PGS_IDS = ["PGS002759", "PGS004759", "PGS004760"]
 
 
 @pytest.fixture(scope="module")
@@ -63,6 +64,7 @@ def _score_with_duckdb(
     scoring_file: Path,
     ref_dir: Path,
     panel: _ResolvedRefPanel,
+    match_mode: str = "position",
 ) -> pl.DataFrame:
     """Score using the DuckDB engine (current default path)."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -72,6 +74,7 @@ def _score_with_duckdb(
             ref_dir=ref_dir,
             out_dir=Path(tmpdir),
             genome_build="GRCh38",
+            match_mode=match_mode,
             _panel=panel,
         )
 
@@ -80,6 +83,7 @@ def _score_with_polars_match(
     pgs_id: str,
     scoring_file: Path,
     panel: _ResolvedRefPanel,
+    match_mode: str = "position",
 ) -> pl.DataFrame:
     """Score using the old polars match_scoring_to_pvar (loads full pvar)."""
     import numpy as np
@@ -88,7 +92,7 @@ def _score_with_polars_match(
     scoring_lf = parse_scoring_file(scoring_file)
     scoring_df = _normalize_scoring_columns(scoring_lf).collect()
 
-    matched = match_scoring_to_pvar(pvar_df, scoring_df)
+    matched = match_scoring_to_pvar(pvar_df, scoring_df, match_mode=match_mode)
     del pvar_df, scoring_df
 
     variant_indices = matched["variant_idx"].cast(pl.UInt32).to_numpy()
@@ -111,12 +115,11 @@ def _score_with_polars_match(
     dosage = np.where(missing_mask, 0.0, dosage)
     del missing_mask
 
-    prs_sum = (dosage * weights[:, np.newaxis]).sum(axis=0)
+    prs_scores = (dosage * weights[:, np.newaxis]).sum(axis=0)
     del dosage
-    prs_avg = prs_sum / (2 * matched.height)
 
     return (
-        pl.DataFrame({"iid": panel.psam_df["iid"].to_list(), "score": prs_avg.tolist()})
+        pl.DataFrame({"iid": panel.psam_df["iid"].to_list(), "score": prs_scores.tolist()})
         .join(panel.psam_df, on="iid", how="inner")
         .with_columns(pl.lit(pgs_id).alias("pgs_id"))
     )
@@ -169,10 +172,11 @@ class TestCrossEngineScores:
         polars_vals = polars_scores["score"].to_list()
 
         max_diff = max(abs(d - p) for d, p in zip(duckdb_vals, polars_vals))
-        assert max_diff < 1e-6, (
-            f"{pgs_id}: DuckDB vs polars max score diff = {max_diff:.2e} (should be < 1e-6)"
+        assert max_diff < 1e-5, (
+            f"{pgs_id}: DuckDB vs polars max score diff = {max_diff:.2e} (should be < 1e-5)"
         )
 
+    @pytest.mark.plink2
     @pytest.mark.parametrize("pgs_id", PGS_IDS)
     def test_duckdb_matches_plink2(
         self,
@@ -182,15 +186,12 @@ class TestCrossEngineScores:
         plink2_path: Path,
         scoring_cache: Path,
     ) -> None:
-        """DuckDB engine and PLINK2 binary must produce correlated per-sample scores.
-
-        PLINK2 uses SUM scoring while our engine uses AVG (sum / 2*n_variants),
-        and PLINK2 may match a different number of variants due to its own
-        ID-based matching. So we compare rank correlation rather than exact values.
-        """
+        """DuckDB id-match mode must reproduce PLINK2 scores exactly."""
         scoring_file = download_scoring_file(pgs_id, scoring_cache, genome_build="GRCh38")
 
-        duckdb_df = _score_with_duckdb(pgs_id, scoring_file, ref_dir, resolved_panel)
+        duckdb_df = _score_with_duckdb(
+            pgs_id, scoring_file, ref_dir, resolved_panel, match_mode="id"
+        )
         plink2_df = _score_with_plink2(pgs_id, scoring_file, ref_dir, plink2_path)
 
         merged = duckdb_df.select("iid", pl.col("score").alias("duckdb")).join(
@@ -204,11 +205,18 @@ class TestCrossEngineScores:
             f"{pgs_id}: sample count mismatch DuckDB={duckdb_df.height} vs merged={merged.height}"
         )
 
+        max_diff = merged.select((pl.col("duckdb") - pl.col("plink2")).abs().max()).item()
+        assert max_diff < 1e-5, (
+            f"{pgs_id}: DuckDB(id) vs PLINK2 max score diff = {max_diff:.2e} "
+            "(should be < 1e-5)"
+        )
+
         corr = merged.select(pl.corr("duckdb", "plink2")).item()
         assert corr is not None and corr > 0.999, (
             f"{pgs_id}: DuckDB vs PLINK2 Pearson r = {corr:.6f} (should be > 0.999)"
         )
 
+    @pytest.mark.plink2
     @pytest.mark.parametrize("pgs_id", PGS_IDS)
     def test_polars_matches_plink2(
         self,
@@ -218,10 +226,12 @@ class TestCrossEngineScores:
         plink2_path: Path,
         scoring_cache: Path,
     ) -> None:
-        """Old polars engine and PLINK2 binary must produce correlated per-sample scores."""
+        """Polars id-match mode must reproduce PLINK2 scores exactly."""
         scoring_file = download_scoring_file(pgs_id, scoring_cache, genome_build="GRCh38")
 
-        polars_df = _score_with_polars_match(pgs_id, scoring_file, resolved_panel)
+        polars_df = _score_with_polars_match(
+            pgs_id, scoring_file, resolved_panel, match_mode="id"
+        )
         plink2_df = _score_with_plink2(pgs_id, scoring_file, ref_dir, plink2_path)
 
         merged = polars_df.select("iid", pl.col("score").alias("polars")).join(
@@ -232,11 +242,18 @@ class TestCrossEngineScores:
 
         assert merged.height > 0, f"{pgs_id}: no overlapping samples"
 
+        max_diff = merged.select((pl.col("polars") - pl.col("plink2")).abs().max()).item()
+        assert max_diff < 1e-5, (
+            f"{pgs_id}: polars(id) vs PLINK2 max score diff = {max_diff:.2e} "
+            "(should be < 1e-5)"
+        )
+
         corr = merged.select(pl.corr("polars", "plink2")).item()
         assert corr is not None and corr > 0.999, (
             f"{pgs_id}: polars vs PLINK2 Pearson r = {corr:.6f} (should be > 0.999)"
         )
 
+    @pytest.mark.plink2
     def test_summary_table(
         self,
         ref_dir: Path,
@@ -250,8 +267,12 @@ class TestCrossEngineScores:
         for pgs_id in PGS_IDS:
             scoring_file = download_scoring_file(pgs_id, scoring_cache, genome_build="GRCh38")
 
-            duckdb_df = _score_with_duckdb(pgs_id, scoring_file, ref_dir, resolved_panel)
-            polars_df = _score_with_polars_match(pgs_id, scoring_file, resolved_panel)
+            duckdb_df = _score_with_duckdb(
+                pgs_id, scoring_file, ref_dir, resolved_panel, match_mode="id"
+            )
+            polars_df = _score_with_polars_match(
+                pgs_id, scoring_file, resolved_panel, match_mode="id"
+            )
             plink2_df = _score_with_plink2(pgs_id, scoring_file, ref_dir, plink2_path)
 
             merged = (
@@ -263,6 +284,12 @@ class TestCrossEngineScores:
             duck_vs_polars_max = (
                 merged.select((pl.col("duckdb") - pl.col("polars")).abs().max()).item()
             )
+            duck_vs_plink2_max = (
+                merged.select((pl.col("duckdb") - pl.col("plink2")).abs().max()).item()
+            )
+            polars_vs_plink2_max = (
+                merged.select((pl.col("polars") - pl.col("plink2")).abs().max()).item()
+            )
             duck_vs_plink2_corr = merged.select(pl.corr("duckdb", "plink2")).item()
             polars_vs_plink2_corr = merged.select(pl.corr("polars", "plink2")).item()
 
@@ -273,6 +300,8 @@ class TestCrossEngineScores:
                 "polars_mean": round(merged["polars"].mean(), 8),
                 "plink2_mean": round(merged["plink2"].mean(), 8),
                 "duck_vs_polars_max_diff": f"{duck_vs_polars_max:.2e}",
+                "duck_vs_plink2_max_diff": f"{duck_vs_plink2_max:.2e}",
+                "polars_vs_plink2_max_diff": f"{polars_vs_plink2_max:.2e}",
                 "duck_vs_plink2_r": f"{duck_vs_plink2_corr:.6f}",
                 "polars_vs_plink2_r": f"{polars_vs_plink2_corr:.6f}",
             })
@@ -282,6 +311,59 @@ class TestCrossEngineScores:
         print(summary)
 
         for row in rows:
-            assert float(row["duck_vs_polars_max_diff"]) < 1e-6
+            assert float(row["duck_vs_polars_max_diff"]) < 1e-5
+            assert float(row["duck_vs_plink2_max_diff"]) < 1e-5
+            assert float(row["polars_vs_plink2_max_diff"]) < 1e-5
             assert float(row["duck_vs_plink2_r"]) > 0.999
             assert float(row["polars_vs_plink2_r"]) > 0.999
+
+
+@pytest.mark.skipif(not REF_PANEL_AVAILABLE, reason="1000G reference panel not available")
+class TestLargeScoringFiles:
+    """Cross-engine validation with large (~1M variant) scoring files.
+
+    These Depression PGS IDs (PGS002759, PGS004759, PGS004760) exposed a
+    normalization bug where compute_reference_prs_polars divided PRS by
+    2*n_variants, producing ~1e-7 scores instead of ~0.1. This test
+    ensures both engines produce matching absolute scores.
+    """
+
+    @pytest.mark.plink2
+    @pytest.mark.parametrize("pgs_id", LARGE_PGS_IDS)
+    def test_duckdb_matches_plink2_large(
+        self,
+        pgs_id: str,
+        ref_dir: Path,
+        resolved_panel: _ResolvedRefPanel,
+        plink2_path: Path,
+        scoring_cache: Path,
+    ) -> None:
+        """DuckDB id-match mode must reproduce PLINK2 scores for large files."""
+        scoring_file = download_scoring_file(pgs_id, scoring_cache, genome_build="GRCh38")
+
+        duckdb_df = _score_with_duckdb(
+            pgs_id, scoring_file, ref_dir, resolved_panel, match_mode="id"
+        )
+        plink2_df = _score_with_plink2(pgs_id, scoring_file, ref_dir, plink2_path)
+
+        merged = duckdb_df.select("iid", pl.col("score").alias("duckdb")).join(
+            plink2_df.select("iid", pl.col("score").alias("plink2")),
+            on="iid",
+            how="inner",
+        )
+
+        assert merged.height > 0, f"{pgs_id}: no overlapping samples"
+        assert merged.height == duckdb_df.height, (
+            f"{pgs_id}: sample count mismatch DuckDB={duckdb_df.height} vs merged={merged.height}"
+        )
+
+        max_diff = merged.select((pl.col("duckdb") - pl.col("plink2")).abs().max()).item()
+        assert max_diff < 1e-4, (
+            f"{pgs_id}: DuckDB(id) vs PLINK2 max score diff = {max_diff:.2e} "
+            "(should be < 1e-4)"
+        )
+
+        corr = merged.select(pl.corr("duckdb", "plink2")).item()
+        assert corr is not None and corr > 0.9999, (
+            f"{pgs_id}: DuckDB vs PLINK2 Pearson r = {corr:.6f} (should be > 0.9999)"
+        )

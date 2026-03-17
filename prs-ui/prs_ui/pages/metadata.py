@@ -46,7 +46,6 @@ def metadata_panel() -> rx.Component:
                     density="compact",
                     column_header_height=56,
                     checkbox_selection=True,
-                    on_row_selection_model_change=MetadataGridState.handle_metadata_row_selection,
                 ),
                 width="100%",
                 spacing="2",

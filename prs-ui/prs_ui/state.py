@@ -129,8 +129,14 @@ class MetadataGridState(LazyFrameGridMixin, AppState):
         row_count = lf.select(pl.len()).collect().item()
         self.status_message = f"Loaded {pgs_id} ({row_count} variants)"
 
-    def handle_metadata_row_selection(self, model: dict) -> None:
-        """Track selected PGS IDs from metadata grid checkbox selection."""
+    def handle_lf_grid_row_selection(self, model: dict) -> None:
+        """Track selected PGS IDs from metadata grid checkbox selection.
+
+        Overrides ``LazyFrameGridMixin.handle_lf_grid_row_selection`` so that
+        ``lazyframe_grid()`` automatically calls this without needing an
+        explicit ``on_row_selection_model_change`` kwarg.
+        """
+        self.lf_grid_row_selection_model = model  # type: ignore[assignment]
         selection_type: str = model.get("type", "include")
         raw_ids: list = model.get("ids", [])
         selected_row_ids: set[int] = {int(i) for i in raw_ids}
@@ -232,6 +238,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
     selected_pgs_ids: list[str] = []
     prs_results: list[dict] = []
+    prs_results_rows: list[dict] = []
+    prs_results_columns: list[dict] = []
+    prs_results_column_groups: list[dict] = []
     prs_computing: bool = False
     prs_progress: int = 0
     low_match_warning: bool = False
@@ -239,11 +248,6 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     prs_genotypes_path: str = ""
     selected_ancestry: str = "EUR"
     compute_all_populations: bool = False
-
-    # Filter / sort state
-    prs_results_filter: str = ""
-    prs_results_sort_field: str = ""
-    prs_results_sort_asc: bool = True
 
     _scores_initialized: bool = False
     _compute_scores_lf: pl.LazyFrame | None = None
@@ -256,57 +260,6 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     def set_compute_all_populations(self, value: bool) -> None:
         """Enable/disable percentile lookup for all available superpopulations."""
         self.compute_all_populations = bool(value)
-
-    def set_prs_results_filter(self, value: str) -> None:
-        self.prs_results_filter = value
-
-    def set_prs_results_sort(self, field: str) -> None:
-        if self.prs_results_sort_field == field:
-            if self.prs_results_sort_asc:
-                self.prs_results_sort_asc = False
-            else:
-                self.prs_results_sort_field = ""
-                self.prs_results_sort_asc = True
-        else:
-            self.prs_results_sort_field = field
-            self.prs_results_sort_asc = True
-
-    @rx.var
-    def prs_filtered_results(self) -> list[dict]:
-        results = self.prs_results
-        q = self.prs_results_filter.strip().lower()
-        if q:
-            terms = q.split()
-            def matches_all(r: dict) -> bool:
-                fields = [
-                    r.get("pgs_id", "").lower(),
-                    r.get("trait", "").lower(),
-                    r.get("quality_label", "").lower(),
-                    r.get("ancestry", "").lower(),
-                ]
-                return all(any(term in field for field in fields) for term in terms)
-            results = [r for r in results if matches_all(r)]
-        field = self.prs_results_sort_field
-        if field and results:
-            numeric_fields = {"score", "match_rate", "percentile", "auroc"}
-            def sort_key(r: dict) -> Any:
-                v = r.get(field, "")
-                if field in numeric_fields:
-                    try:
-                        return float(v) if v not in ("", None) else -999.0
-                    except (TypeError, ValueError):
-                        return -999.0
-                return str(v).lower()
-            results = sorted(results, key=sort_key, reverse=not self.prs_results_sort_asc)
-        return results
-
-    @rx.var
-    def prs_result_count(self) -> int:
-        return len(self.prs_results)
-
-    @rx.var
-    def prs_filtered_result_count(self) -> int:
-        return len(self.prs_filtered_results)
 
     def set_prs_genotypes_lf(self, lf: pl.LazyFrame) -> None:
         """Provide a pre-loaded genotypes LazyFrame for PRS computation.
@@ -344,6 +297,191 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 values[superpop] = round(pct, 1)
         return values
 
+    def _build_prs_results_grid(self) -> None:
+        """Convert prs_results into DataGrid rows + column defs."""
+        from reflex_mui_datagrid.models import ColumnDef
+
+        _POP_COLORS: dict[str, tuple[str, str]] = {
+            "AFR": ("#f57f17", "#fff9c4"),
+            "AMR": ("#d81b60", "#f8bbd0"),
+            "EAS": ("#388e3c", "#c8e6c9"),
+            "EUR": ("#1976d2", "#bbdefb"),
+            "SAS": ("#8e24aa", "#e1bee7"),
+        }
+        _POP_NAMES: dict[str, str] = {
+            "AFR": "African",
+            "AMR": "American",
+            "EAS": "East Asian",
+            "EUR": "European",
+            "SAS": "South Asian",
+        }
+
+        cols: list[ColumnDef] = [
+            ColumnDef(field="pgs_id", header_name="PGS ID", min_width=120),
+            ColumnDef(field="trait", header_name="Trait", min_width=150, flex=1),
+            ColumnDef(field="score", header_name="PRS Score", type="number", min_width=110),
+            ColumnDef(
+                field="percentile_num", header_name="Percentile", type="number",
+                min_width=140,
+                cell_renderer_type="progress_bar",
+                cell_renderer_config={
+                    "color": "#5b5bd6", "trackColor": "#e0e0e0", "showValue": True,
+                },
+            ),
+        ]
+
+        if self.compute_all_populations:
+            for sp in SUPERPOPULATIONS:
+                fg, bg = _POP_COLORS[sp]
+                cols.append(ColumnDef(
+                    field=f"pct_{sp}_num",
+                    header_name=_POP_NAMES[sp],
+                    description=f"{sp} — 1000 Genomes superpopulation",
+                    type="number",
+                    min_width=130,
+                    cell_renderer_type="progress_bar",
+                    cell_renderer_config={
+                        "color": fg, "trackColor": bg, "showValue": True,
+                    },
+                ))
+            self.prs_results_column_groups = [{
+                "groupId": "pop_percentiles",
+                "headerName": "Percentiles by Population (1000G)",
+                "children": [{"field": f"pct_{sp}_num"} for sp in SUPERPOPULATIONS],
+            }]
+        else:
+            self.prs_results_column_groups = []
+
+        cols.extend([
+            ColumnDef(
+                field="percentile_method", header_name="Pct. Method",
+                min_width=110,
+                cell_renderer_type="badge",
+                cell_renderer_config={
+                    "colorMap": {
+                        "1000G ref": "#2e7d32",
+                        "theoretical": "#1565c0",
+                        "AUROC est.": "#e65100",
+                        "unavailable": "#757575",
+                    },
+                    "bgColorMap": {
+                        "1000G ref": "#e8f5e9",
+                        "theoretical": "#e3f2fd",
+                        "AUROC est.": "#fff3e0",
+                        "unavailable": "#f5f5f5",
+                    },
+                },
+            ),
+            ColumnDef(field="auroc", header_name="AUROC", type="number", min_width=80),
+            ColumnDef(
+                field="quality_label", header_name="Quality",
+                min_width=100,
+                cell_renderer_type="badge",
+                cell_renderer_config={
+                    "colorMap": {
+                        "High": "#2e7d32", "Moderate": "#f57f17",
+                        "Low": "#c62828", "Very Low": "#c62828",
+                    },
+                    "bgColorMap": {
+                        "High": "#e8f5e9", "Moderate": "#fff3e0",
+                        "Low": "#ffebee", "Very Low": "#ffebee",
+                    },
+                },
+            ),
+            ColumnDef(field="ancestry", header_name="Population", min_width=100),
+            ColumnDef(field="reference_status", header_name="Reference Data", min_width=140),
+            ColumnDef(
+                field="match_rate", header_name="Match Rate", type="number",
+                min_width=130,
+                cell_renderer_type="progress_bar",
+                cell_renderer_config={
+                    "color": "#43a047", "trackColor": "#e8e8e8", "showValue": True,
+                },
+            ),
+            ColumnDef(field="variants_text", header_name="Matched / Total", min_width=120),
+            ColumnDef(field="effect_size", header_name="Effect Size", min_width=120),
+        ])
+
+        rows: list[dict[str, Any]] = []
+        for i, r in enumerate(self.prs_results):
+            pct_str = r.get("percentile", "")
+            pct_num: float | str = "N/A"
+            if pct_str:
+                try:
+                    pct_num = float(pct_str)
+                except (TypeError, ValueError):
+                    pass
+
+            method_raw = r.get("percentile_method", "")
+            method_label = {
+                "reference_panel": "1000G ref",
+                "theoretical": "theoretical",
+                "auroc_approx": "AUROC est.",
+                "": "unavailable",
+            }.get(method_raw, method_raw)
+
+            auroc_raw = r.get("auroc", "")
+            auroc_num: float | str = "N/A"
+            if auroc_raw:
+                try:
+                    auroc_num = float(auroc_raw)
+                except (TypeError, ValueError):
+                    pass
+
+            # Build reference source detail for the foldable panel.
+            ref_source = r.get("reference_source", "")
+            ref_source_detail = ref_source
+            if ref_source:
+                ref_source_detail = (
+                    f"{ref_source}. Precomputed from reference panel scoring, "
+                    "not direct PGS Catalog API percentiles."
+                )
+
+            # Build effect size + classification detail for the foldable panel.
+            effect_size_val = r.get("effect_size", "")
+            classification_val = r.get("classification", "")
+            effect_size_detail = " | ".join(
+                p for p in [effect_size_val, classification_val] if p
+            ) or "N/A"
+
+            row: dict[str, Any] = {
+                "id": i,
+                "pgs_id": r.get("pgs_id", ""),
+                "trait": r.get("trait", ""),
+                "score": r.get("score", 0),
+                "percentile_num": pct_num,
+                "percentile_method": method_label,
+                "auroc": auroc_num,
+                "quality_label": r.get("quality_label", ""),
+                "ancestry": r.get("ancestry", ""),
+                "reference_status": r.get("reference_status", ""),
+                "match_rate": r.get("match_rate", 0),
+                "variants_text": f"{r.get('variants_matched', 0)} / {r.get('variants_total', 0)}",
+                "effect_size": r.get("effect_size", ""),
+                "risk_level": r.get("risk_level", ""),
+                "risk_hint": r.get("risk_hint", ""),
+                "summary": r.get("summary", ""),
+                "all_population_percentiles": r.get("all_population_percentiles", ""),
+                "reference_source_detail": ref_source_detail,
+                "effect_size_detail": effect_size_detail,
+            }
+
+            if self.compute_all_populations:
+                for sp in SUPERPOPULATIONS:
+                    val_str = r.get(f"pct_{sp}", "")
+                    val_num: float | str = "N/A"
+                    if val_str:
+                        try:
+                            val_num = float(val_str)
+                        except (TypeError, ValueError):
+                            pass
+                    row[f"pct_{sp}_num"] = val_num
+
+            rows.append(row)
+
+        self.prs_results_rows = rows
+        self.prs_results_columns = [c.dict() for c in cols]
+
     def initialize_prs(self) -> Any:
         """Auto-load cleaned scores on first access."""
         if self._scores_initialized:
@@ -369,14 +507,19 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         total = lf.select(pl.len()).collect().item()
         self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
 
-    def handle_compute_row_selection(self, model: dict) -> None:
+    def handle_lf_grid_row_selection(self, model: dict) -> None:
         """Track selected PGS IDs from compute grid checkbox selection.
+
+        Overrides ``LazyFrameGridMixin.handle_lf_grid_row_selection`` so that
+        ``lazyframe_grid()`` automatically calls this without needing an
+        explicit ``on_row_selection_model_change`` kwarg.
 
         Handles MUI DataGrid v8 selection model:
         - {type: "include", ids: [...]} -- only listed rows are selected
         - {type: "exclude", ids: [...]} -- all rows EXCEPT listed are selected
         - {type: "exclude", ids: []} -- all rows selected (header checkbox)
         """
+        self.lf_grid_row_selection_model = model  # type: ignore[assignment]
         self.status_message = f"Selection event: {model}"  # type: ignore[attr-defined]
 
         selection_type: str = model.get("type", "include")
@@ -617,6 +760,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "reference_source": ref_source_label,
                 "reference_source_code": ref_source_code,
             }
+            for sp in SUPERPOPULATIONS:
+                row[f"pct_{sp}"] = f"{all_pop_values[sp]:.1f}" if all_pop_values.get(sp) is not None else ""
 
             if result.match_rate < 0.1:
                 any_low_match = True
@@ -624,6 +769,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             results.append(row)
 
         self.prs_results = results
+        self._build_prs_results_grid()
         self.low_match_warning = any_low_match
         self.prs_computing = False
         self.prs_progress = 100
@@ -639,6 +785,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             "effect_size", "classification", "ancestry",
             "n_individuals", "summary",
             "all_population_percentiles",
+            "pct_AFR", "pct_AMR", "pct_EAS", "pct_EUR", "pct_SAS",
             "reference_status",
             "reference_source",
         ]

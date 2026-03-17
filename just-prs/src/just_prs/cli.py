@@ -372,33 +372,6 @@ def bulk_clean_metadata(
     console.print(table)
 
 
-@bulk_app.command("push-hf")
-def bulk_push_hf(
-    output_dir: Annotated[
-        Path,
-        typer.Option("--output-dir", "-o", help="Directory containing cleaned parquets to push"),
-    ] = Path("./output/pgs_metadata"),
-    repo_id: Annotated[
-        str,
-        typer.Option("--repo", "-r", help="HuggingFace dataset repo ID"),
-    ] = "just-dna-seq/polygenic_risk_scores",
-) -> None:
-    """Push cleaned metadata parquets to a HuggingFace dataset repository.
-
-    Builds cleaned parquets first if they don't exist in output-dir.
-    Token is read from .env file or HF_TOKEN environment variable.
-    """
-    catalog = PRSCatalog()
-    if not all((output_dir / f).exists() for f in ("scores.parquet", "performance.parquet", "best_performance.parquet")):
-        console.print(f"Cleaned parquets not found in {output_dir}, building them first...")
-        catalog.build_cleaned_parquets(output_dir=output_dir)
-
-    console.print(f"Pushing cleaned parquets to [cyan]{repo_id}[/cyan] ...")
-    from just_prs.hf import push_cleaned_parquets
-    push_cleaned_parquets(output_dir, repo_id=repo_id)
-    console.print(f"[green]Pushed to https://huggingface.co/datasets/{repo_id}[/green]")
-
-
 @bulk_app.command("push-catalog")
 def bulk_push_catalog(
     repo_id: Annotated[
@@ -554,12 +527,12 @@ def bulk_pull_hf(
     repo_id: Annotated[
         str,
         typer.Option("--repo", "-r", help="HuggingFace dataset repo ID"),
-    ] = "just-dna-seq/polygenic_risk_scores",
+    ] = "just-dna-seq/pgs-catalog",
 ) -> None:
     """Pull cleaned metadata parquets from a HuggingFace dataset repository.
 
     Downloads scores.parquet, performance.parquet, and best_performance.parquet
-    from the data/ folder of the HF repo into the output directory.
+    from the data/metadata/ folder of the HF repo into the output directory.
     """
     console.print(f"Pulling cleaned parquets from [cyan]{repo_id}[/cyan] → {output_dir} ...")
     downloaded = pull_cleaned_parquets(output_dir, repo_id=repo_id)
@@ -1216,6 +1189,18 @@ def reference_compare(
     build: Annotated[
         str, typer.Option("--build", "-b", help="Genome build (GRCh37 or GRCh38)")
     ] = "GRCh38",
+    match_mode: Annotated[
+        str,
+        typer.Option(
+            "--match-mode",
+            help=(
+                "Variant matching strategy for the polars engine: "
+                "'position' matches on chromosome+position+alleles (default), "
+                "'id' matches on synthetic CHROM:POS:REF:ALT IDs for PLINK-parity."
+            ),
+            case_sensitive=False,
+        ),
+    ] = "position",
     cache_dir: Annotated[
         Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
     ] = None,
@@ -1232,6 +1217,12 @@ def reference_compare(
     )
 
     pgs_id = _validate_pgs_id(pgs_id)
+    match_mode = match_mode.lower()
+    if match_mode not in {"position", "id"}:
+        console.print(
+            f"[red]Invalid --match-mode '{match_mode}'. Expected 'position' or 'id'.[/red]"
+        )
+        raise typer.Exit(code=1)
     cache = cache_dir or resolve_cache_dir()
     ref_dir = reference_panel_dir(cache)
     if not ref_dir.exists():
@@ -1262,7 +1253,7 @@ def reference_compare(
     console.print(f"  Completed in [green]{t_plink2:.2f}s[/green] ({plink2_df.height} samples)")
 
     # --- Run polars engine ---
-    console.print(f"[bold]Engine 2: pgenlib + polars[/bold]")
+    console.print(f"[bold]Engine 2: pgenlib + polars ({match_mode} match)[/bold]")
     t0 = _time.monotonic()
     polars_df = compute_reference_prs_polars(
         pgs_id=pgs_id,
@@ -1270,6 +1261,7 @@ def reference_compare(
         ref_dir=ref_dir,
         out_dir=cache / "reference_scores" / f"{pgs_id}_polars",
         genome_build=build,
+        match_mode=match_mode,
     )
     t_polars = _time.monotonic() - t0
     console.print(f"  Completed in [green]{t_polars:.2f}s[/green] ({polars_df.height} samples)")

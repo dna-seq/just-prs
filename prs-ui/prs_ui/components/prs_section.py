@@ -17,10 +17,8 @@ Usage in a host app::
         return prs_section(MyPRSState)
 """
 
-from typing import Any
-
 import reflex as rx
-from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
+from reflex_mui_datagrid import data_grid, lazyframe_grid, lazyframe_grid_stats_bar
 
 
 def prs_build_selector(state: type[rx.State]) -> rx.Component:
@@ -114,7 +112,6 @@ def prs_scores_selector(state: type[rx.State]) -> rx.Component:
                     density="compact",
                     column_header_height=56,
                     checkbox_selection=True,
-                    on_row_selection_model_change=state.handle_compute_row_selection,
                 ),
                 width="100%",
                 spacing="2",
@@ -190,183 +187,6 @@ def prs_progress_section(state: type[rx.State]) -> rx.Component:
     )
 
 
-def _result_row(row: dict) -> rx.Component:  # type: ignore[type-arg]
-    """Single row in the PRS results table."""
-    return rx.table.row(
-        rx.table.cell(
-            rx.text(row["pgs_id"], size="2", weight="medium"),
-        ),
-        rx.table.cell(rx.text(row["trait"], size="2")),
-        rx.table.cell(
-            rx.text(row["score"], size="2", weight="bold"),
-        ),
-        rx.table.cell(
-            rx.cond(
-                row["percentile"] != "",
-                rx.badge(
-                    rx.text(row["percentile"], "%"),
-                    color_scheme="iris",
-                    size="2",
-                    variant="solid",
-                ),
-                rx.text("\u2014", size="2", color="gray"),
-            ),
-        ),
-        rx.table.cell(
-            rx.cond(
-                row["percentile_method"] == "reference_panel",
-                rx.badge("1000G ref", color_scheme="green", size="1", variant="soft"),
-                rx.cond(
-                    row["percentile_method"] == "theoretical",
-                    rx.badge("theoretical", color_scheme="blue", size="1", variant="soft"),
-                    rx.cond(
-                        row["percentile_method"] == "auroc_approx",
-                        rx.badge("AUROC est.", color_scheme="orange", size="1", variant="soft"),
-                        rx.text("\u2014", size="2", color="gray"),
-                    ),
-                ),
-            ),
-        ),
-        rx.table.cell(
-            rx.cond(
-                row["auroc"] != "",
-                rx.text(row["auroc"], size="2"),
-                rx.text("N/A", size="2", color="gray"),
-            ),
-        ),
-        rx.table.cell(
-            rx.badge(
-                row["quality_label"],
-                color_scheme=row["quality_color"],
-                size="1",
-                variant="soft",
-            ),
-        ),
-        rx.table.cell(
-            rx.cond(
-                row["ancestry"] != "",
-                rx.text(row["ancestry"], size="2"),
-                rx.text("N/A", size="2", color="gray"),
-            ),
-        ),
-        rx.table.cell(
-            rx.cond(
-                row["reference_status"] != "",
-                rx.text(row["reference_status"], size="2"),
-                rx.text("N/A", size="2", color="gray"),
-            ),
-        ),
-        rx.table.cell(
-            rx.cond(
-                row["reference_source"] != "",
-                rx.text(row["reference_source"], size="2"),
-                rx.text("N/A", size="2", color="gray"),
-            ),
-        ),
-        rx.table.cell(
-            rx.badge(
-                rx.text(row["match_rate"], "%"),
-                color_scheme=row["match_color"],
-                size="1",
-            ),
-        ),
-        rx.table.cell(
-            rx.text(
-                row["variants_matched"], " / ", row["variants_total"],
-                size="2",
-            ),
-        ),
-        rx.table.cell(rx.text(row["effect_size"], size="2")),
-    )
-
-
-def _result_interpretation_card(row: dict) -> rx.Component:  # type: ignore[type-arg]
-    """Interpretation card for a single PRS result."""
-    return rx.card(
-        rx.vstack(
-            rx.hstack(
-                rx.badge(
-                    row["pgs_id"],
-                    color_scheme="gray",
-                    size="1",
-                    variant="outline",
-                ),
-                rx.cond(
-                    row["risk_level"] != "",
-                    rx.badge(
-                        row["risk_level"],
-                        color_scheme=row["risk_level_color"],
-                        size="1",
-                        variant="solid",
-                    ),
-                ),
-                rx.badge(
-                    rx.text("Quality: ", row["quality_label"]),
-                    color_scheme=row["quality_color"],
-                    size="1",
-                    variant="soft",
-                ),
-                rx.cond(
-                    row["percentile"] != "",
-                    rx.badge(
-                        rx.text("Percentile: ", row["percentile"], "%"),
-                        color_scheme="iris",
-                        size="1",
-                        variant="solid",
-                    ),
-                ),
-                rx.cond(
-                    row["ancestry"] != "",
-                    rx.badge(
-                        rx.text("Pop: ", row["ancestry"]),
-                        color_scheme="purple",
-                        size="1",
-                        variant="outline",
-                    ),
-                ),
-                rx.cond(
-                    row["reference_status"] != "",
-                    rx.badge(
-                        rx.text("Ref: ", row["reference_status"]),
-                        color_scheme="blue",
-                        size="1",
-                        variant="outline",
-                    ),
-                ),
-                spacing="2",
-                wrap="wrap",
-            ),
-            rx.text(row["risk_hint"], size="2", weight="medium"),
-            rx.cond(
-                row["summary"] != "",
-                rx.text(row["summary"], size="2", color="var(--gray-11)"),
-            ),
-            rx.cond(
-                row["all_population_percentiles"] != "",
-                rx.text(
-                    "All populations (1000G): ",
-                    row["all_population_percentiles"],
-                    size="2",
-                    color="var(--gray-11)",
-                ),
-            ),
-            rx.cond(
-                row["reference_source"] != "",
-                rx.text(
-                    "Reference source: ",
-                    row["reference_source"],
-                    ". These precomputed distributions are generated from reference panel scoring (not direct PGS Catalog score API percentiles).",
-                    size="2",
-                    color="var(--gray-11)",
-                ),
-            ),
-            spacing="2",
-            width="100%",
-        ),
-        width="100%",
-        size="1",
-    )
-
 
 def _prs_interpretation_guide() -> rx.Component:
     """Collapsible guide explaining how to read PRS percentiles and risk levels."""
@@ -428,30 +248,13 @@ def _prs_interpretation_guide() -> rx.Component:
     )
 
 
-def _sortable_header(state: type[rx.State], label: str, field: str) -> rx.Component:
-    return rx.table.column_header_cell(
-        rx.flex(
-            rx.text(label, size="2"),
-            rx.cond(
-                state.prs_results_sort_field == field,
-                rx.cond(
-                    state.prs_results_sort_asc,
-                    rx.text("↑", size="1"),
-                    rx.text("↓", size="1"),
-                ),
-                rx.text("↕", size="1", color="gray"),
-            ),
-            direction="row",
-            gap="1",
-            align="center",
-            on_click=state.set_prs_results_sort(field),
-            style={"cursor": "pointer"},
-        ),
-    )
-
-
 def prs_results_table(state: type[rx.State]) -> rx.Component:
-    """Table displaying PRS computation results with quality assessment."""
+    """Table displaying PRS computation results with quality assessment.
+
+    Uses foldable detail panels (reflex-mui-datagrid >= 0.2.0) to show
+    interpretation, reference source, and population percentiles inline
+    below each row when the chevron is clicked.
+    """
     return rx.cond(
         state.prs_results.length() > 0,  # type: ignore[operator]
         rx.vstack(
@@ -479,9 +282,9 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 "(matched to your selected ancestry group) when available. "
                 "For scores without reference data, a theoretical distribution from "
                 "allele frequencies or an AUROC-based approximation is used. "
-                "The method is shown in the Percentile Method column. "
-                "Reference Data/Reference Source columns indicate whether precomputed "
-                "population distributions exist and where they were loaded from.",
+                "The method is shown in the Pct. Method column. "
+                "Reference Data column indicates whether precomputed "
+                "population distributions exist.",
                 icon="info",
                 color_scheme="iris",
                 size="1",
@@ -515,71 +318,41 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 width="100%",
             ),
             _prs_interpretation_guide(),
-            rx.hstack(
-                rx.input(
-                    placeholder="Filter… (space-separated words are ANDed, e.g. blood european)",
-                    value=state.prs_results_filter,
-                    on_change=state.set_prs_results_filter,
-                    size="2",
-                    width="320px",
-                ),
-                rx.spacer(),
-                rx.cond(
-                    state.prs_results_filter != "",
-                    rx.text(
-                        state.prs_filtered_result_count, " / ", state.prs_result_count, " results",
-                        size="2", color="gray",
-                    ),
-                    rx.text(state.prs_result_count, " results", size="2", color="gray"),
-                ),
-                align="center",
-                spacing="2",
-                width="100%",
-            ),
-            rx.box(
-                rx.table.root(
-                    rx.table.header(
-                        rx.table.row(
-                            _sortable_header(state, "PGS ID", "pgs_id"),
-                            _sortable_header(state, "Trait", "trait"),
-                            _sortable_header(state, "PRS Score", "score"),
-                            _sortable_header(state, "Percentile", "percentile"),
-                            rx.table.column_header_cell("Pct. Method"),
-                            _sortable_header(state, "AUROC", "auroc"),
-                            _sortable_header(state, "Quality", "quality_label"),
-                            _sortable_header(state, "Population", "ancestry"),
-                            rx.table.column_header_cell("Reference Data"),
-                            rx.table.column_header_cell("Reference Source"),
-                            _sortable_header(state, "Match Rate", "match_rate"),
-                            rx.table.column_header_cell("Matched / Total"),
-                            rx.table.column_header_cell("Effect Size"),
-                        ),
-                    ),
-                    rx.table.body(
-                        rx.foreach(
-                            state.prs_filtered_results,
-                            _result_row,
-                        ),
-                    ),
-                    width="100%",
-                    size="2",
-                ),
-                overflow_x="auto",
-                width="100%",
-            ),
-            rx.cond(
-                state.prs_filtered_result_count == 0,
-                rx.text("No results match the current filter.", size="2", color="gray"),
-            ),
-            rx.foreach(
-                state.prs_filtered_results,
-                _result_interpretation_card,
+            data_grid(
+                rows=state.prs_results_rows,
+                columns=state.prs_results_columns,
+                column_grouping_model=state.prs_results_column_groups,
+                row_id_field="id",
+                pagination=False,
+                hide_footer=True,
+                density="compact",
+                height="500px",
+                disable_row_selection_on_click=True,
+                detail_columns=[
+                    "risk_level", "risk_hint", "summary",
+                    "reference_source_detail", "effect_size_detail",
+                ],
+                detail_labels={
+                    "risk_level": "Risk Level",
+                    "risk_hint": "Interpretation",
+                    "summary": "Quality Summary",
+                    "reference_source_detail": "Reference Data Source",
+                    "effect_size_detail": "Effect Size & Classification",
+                },
+                detail_badge_fields=["risk_level"],
+                detail_badge_colors={
+                    "High predisposition": ["#c62828", "#ffcdd2"],
+                    "Above average predisposition": ["#e65100", "#fff3e0"],
+                    "Average predisposition": ["#455a64", "#eceff1"],
+                    "Below average predisposition": ["#2e7d32", "#c8e6c9"],
+                },
             ),
             rx.text(
                 "AUROC, effect size, and population are from the best available "
                 "PGS Catalog evaluation study (largest sample, European-ancestry preferred). "
                 "Quality combines AUROC (model accuracy) and match rate (genotype coverage). "
-                "Results are most accurate when your ancestry matches the evaluation population.",
+                "Results are most accurate when your ancestry matches the evaluation population. "
+                "Click the chevron on any row to see detailed interpretation.",
                 size="1",
                 color="gray",
             ),

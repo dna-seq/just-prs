@@ -51,13 +51,13 @@ Asset lineage (left to right):
 
 ```text
 [download]          [compute]              [upload]
-raw_pgs_metadata → cleaned_pgs_metadata → hf_polygenic_risk_scores
+raw_pgs_metadata → cleaned_pgs_metadata → hf_pgs_catalog (+ scoring_files_parquet)
                                          ↘ hf_prs_percentiles (cross-pipeline)
 ```
 
 - **`raw_pgs_metadata`**: Downloads three bulk metadata CSV sheets (scores, performance_metrics, evaluation_sample_sets) from the FTP server and saves them as Parquet. The FTP source URL is logged in output metadata.
-- **`cleaned_pgs_metadata`**: Cleans and normalizes the raw metadata (genome builds, snake_case column names, metric parsing). Feeds into both `hf_polygenic_risk_scores` (metadata-only HF repo) and `hf_prs_percentiles` (enriched distributions).
-- **`hf_polygenic_risk_scores`**: Uploads the cleaned parquets to HuggingFace (`just-dna-seq/polygenic_risk_scores`).
+- **`cleaned_pgs_metadata`**: Cleans and normalizes the raw metadata (genome builds, snake_case column names, metric parsing). Feeds into `hf_pgs_catalog` (combined metadata + scoring files) and `hf_prs_percentiles` (enriched distributions).
+- **`hf_pgs_catalog`**: Uploads cleaned metadata and scoring file parquets to HuggingFace (`just-dna-seq/pgs-catalog`). The `just-prs` library pulls cleaned metadata from this repo on first use via `PRSCatalog`.
 
 ## Panel-Aware Naming
 
@@ -79,8 +79,7 @@ All jobs include `hooks={resource_summary_hook}` for run-level resource aggregat
 | `full_pipeline` | `reference_panel`, `scoring_files`, `scoring_files_parquet`, `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Full pipeline: download panel + scoring files, convert to parquet, score, download and clean metadata, enrich distributions, push. Auto-submitted by `run_pipeline_on_startup` sensor |
 | `download_reference_data` | `reference_panel` | Download the reference panel from EBI FTP |
 | `score_and_push` | `scoring_files`, `scoring_files_parquet`, `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Download scoring files, convert to parquet, batch-score, download/clean metadata, enrich, and push to HuggingFace |
-| `metadata_pipeline` | `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_polygenic_risk_scores` | End-to-end metadata pipeline |
-| `clean_and_push_metadata` | `cleaned_pgs_metadata`, `hf_polygenic_risk_scores` | Re-clean and push when raw sheets are already cached |
+| `metadata_pipeline` | `raw_pgs_metadata`, `cleaned_pgs_metadata` | End-to-end metadata pipeline (download + clean; push via catalog_pipeline) |
 
 ## CLI Commands
 

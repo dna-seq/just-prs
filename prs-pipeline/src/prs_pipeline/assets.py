@@ -259,6 +259,17 @@ def scoring_files_parquet(
             gz_size = gz_path.stat().st_size
             total_gz_bytes += gz_size
 
+            if gz_size == 0:
+                failures.append({
+                    "pgs_id": pgs_id,
+                    "gz_path": str(gz_path),
+                    "error": f"Scoring file {gz_path} is 0 bytes (corrupt download)",
+                    "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                })
+                failed += 1
+                gz_path.unlink()
+                continue
+
             if parquet_path.exists() and not force:
                 already_cached += 1
                 total_parquet_bytes += parquet_path.stat().st_size

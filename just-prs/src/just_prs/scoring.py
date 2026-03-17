@@ -336,18 +336,24 @@ def download_scoring_file(
         filename = f"{pgs_id}_hmPOS_{genome_build}.txt.gz"
         output_path = output_dir / filename
 
-        if output_path.exists():
+        if output_path.exists() and output_path.stat().st_size > 0:
             return output_path
 
         with PGSCatalogClient() as client:
             url = client.get_score_download_url(pgs_id, genome_build)
 
+        tmp_path = output_path.with_suffix(".tmp")
         with httpx.Client(timeout=120.0, follow_redirects=True) as http:
             with http.stream("GET", url) as response:
                 response.raise_for_status()
-                with output_path.open("wb") as f:
+                with tmp_path.open("wb") as f:
                     for chunk in response.iter_bytes(chunk_size=65536):
                         f.write(chunk)
+
+        if tmp_path.stat().st_size == 0:
+            tmp_path.unlink()
+            raise RuntimeError(f"Downloaded scoring file for {pgs_id} is empty (0 bytes)")
+        tmp_path.rename(output_path)
 
         return output_path
 

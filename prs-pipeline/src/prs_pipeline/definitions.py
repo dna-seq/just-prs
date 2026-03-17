@@ -16,7 +16,6 @@ from prs_pipeline.assets import (
 from prs_pipeline.metadata_assets import (
     cleaned_pgs_metadata,
     hf_pgs_catalog,
-    hf_polygenic_risk_scores,
     raw_pgs_metadata,
 )
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
@@ -52,7 +51,7 @@ full_pipeline = dg.define_asset_job(
         "reference_panel", "scoring_files", "scoring_files_parquet",
         "reference_scores",
         "raw_pgs_metadata", "cleaned_pgs_metadata",
-        "hf_prs_percentiles",
+        "hf_pgs_catalog", "hf_prs_percentiles",
     ],
     description=(
         "Full pipeline: download reference panel, batch-score all PGS IDs, "
@@ -83,21 +82,12 @@ metadata_pipeline = dg.define_asset_job(
     name="metadata_pipeline",
     selection=[
         "ebi_scoring_files_fingerprint",
-        "raw_pgs_metadata", "cleaned_pgs_metadata", "hf_polygenic_risk_scores",
+        "raw_pgs_metadata", "cleaned_pgs_metadata",
     ],
     description=(
-        "End-to-end metadata pipeline: download raw PGS Catalog sheets from EBI FTP, "
-        "run cleanup pipeline, push cleaned parquets to HuggingFace."
-    ),
-    hooks={resource_summary_hook},
-)
-
-clean_and_push_metadata = dg.define_asset_job(
-    name="clean_and_push_metadata",
-    selection=["cleaned_pgs_metadata", "hf_polygenic_risk_scores"],
-    description=(
-        "Re-run cleanup pipeline on already-cached raw metadata and push to HuggingFace. "
-        "Use this when raw sheets are already present in the cache."
+        "End-to-end metadata pipeline: download raw PGS Catalog sheets from EBI FTP "
+        "and run the cleanup pipeline. Metadata is published to HuggingFace via "
+        "the catalog_pipeline (hf_pgs_catalog asset) together with scoring files."
     ),
     hooks={resource_summary_hook},
 )
@@ -114,7 +104,6 @@ _assets = [
     hf_prs_percentiles,
     raw_pgs_metadata,
     cleaned_pgs_metadata,
-    hf_polygenic_risk_scores,
     hf_pgs_catalog,
 ]
 _resources = {
@@ -127,7 +116,6 @@ _unresolved_jobs = [
     full_pipeline,
     catalog_pipeline,
     metadata_pipeline,
-    clean_and_push_metadata,
 ]
 
 

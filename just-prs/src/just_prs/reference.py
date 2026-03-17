@@ -24,7 +24,7 @@ import subprocess
 import tarfile
 import time
 from pathlib import Path
-from typing import Any, Callable, TYPE_CHECKING
+from typing import Any, Callable, Literal, TYPE_CHECKING
 
 import httpx
 import polars as pl
@@ -57,6 +57,7 @@ DEFAULT_PANEL = "1000g"
 REFERENCE_PANEL_URL = REFERENCE_PANELS[DEFAULT_PANEL]["url"]
 
 SUPERPOPULATIONS = ("AFR", "AMR", "EAS", "EUR", "SAS")
+MatchMode = Literal["position", "id"]
 
 
 # ---------------------------------------------------------------------------
@@ -76,6 +77,20 @@ class ScoringOutcome(BaseModel):
     score_std: float | None = None
     elapsed_sec: float | None = None
     error: str | None = None
+
+
+QUALITY_DF_SCHEMA: dict[str, pl.DataType] = {
+    "pgs_id": pl.Utf8,
+    "status": pl.Utf8,
+    "variants_total": pl.Int64,
+    "variants_matched": pl.Int64,
+    "match_rate": pl.Float64,
+    "n_samples": pl.Int64,
+    "score_mean": pl.Float64,
+    "score_std": pl.Float64,
+    "elapsed_sec": pl.Float64,
+    "error": pl.Utf8,
+}
 
 
 class BatchScoringResult(BaseModel):
@@ -340,7 +355,7 @@ def compute_reference_prs_plink2(
         cmd = [
             str(plink2_bin),
             "--pfile", pfile_prefix, "vzs",
-            "--score", str(score_input), "1", "2", "3", "header", "no-mean-imputation",
+            "--score", str(score_input), "1", "2", "3", "header", "no-mean-imputation", "cols=scoresums",
             "--out", str(out_prefix),
             "--memory", str(memory_mb),
             "--threads", str(threads),
@@ -661,13 +676,21 @@ def parse_pvar(pvar_zst_path: Path) -> pl.DataFrame:
 
     Returns:
         DataFrame with columns: variant_idx (u32), chrom (str),
-        POS (i64), REF (str), ALT (str).  The variant_idx column corresponds
+        POS (i64), ID (str), REF (str), ALT (str). The variant_idx column corresponds
         to the 0-based row index in the .pgen file (needed by pgenlib).
     """
     parquet_cache = _pvar_parquet_cache_path(pvar_zst_path)
 
     if parquet_cache.exists():
-        return pl.read_parquet(parquet_cache)
+        cached = pl.read_parquet(parquet_cache)
+        if "ID" in cached.columns:
+            return cached
+        log_message(
+            message_type="reference:pvar_parquet_cache_missing_id_rebuild",
+            pvar_zst=str(pvar_zst_path),
+            parquet_cache=str(parquet_cache),
+        )
+        parquet_cache.unlink()
 
     import io
 
@@ -698,10 +721,11 @@ def parse_pvar(pvar_zst_path: Path) -> pl.DataFrame:
         schema_overrides={
             "#CHROM": pl.Utf8,
             "POS": pl.Int64,
+            "ID": pl.Utf8,
             "REF": pl.Utf8,
             "ALT": pl.Utf8,
         },
-        columns=["#CHROM", "POS", "REF", "ALT"],
+        columns=["#CHROM", "POS", "ID", "REF", "ALT"],
     )
     del raw, chunks
 
@@ -722,6 +746,7 @@ def parse_pvar(pvar_zst_path: Path) -> pl.DataFrame:
 def match_scoring_to_pvar(
     pvar_df: pl.DataFrame,
     scoring_df: pl.DataFrame,
+    match_mode: MatchMode = "position",
 ) -> pl.DataFrame:
     """Join scoring file variants with .pvar variants by position and alleles.
 
@@ -741,6 +766,17 @@ def match_scoring_to_pvar(
     Returns:
         DataFrame with columns from both inputs plus ``effect_is_alt``.
     """
+    if match_mode == "id":
+        if "ID" not in pvar_df.columns:
+            raise ReferencePanelError("pvar DataFrame is missing ID column required for id-based matching")
+        scoring_ids = _prepare_id_match_scoring_df(scoring_df)
+        return pvar_df.join(
+            scoring_ids,
+            left_on="ID",
+            right_on="variant_id",
+            how="inner",
+        )
+
     joined = pvar_df.join(
         scoring_df,
         left_on=["chrom", "POS"],
@@ -768,6 +804,49 @@ def match_scoring_to_pvar(
     return matched.with_columns(
         (pl.col("effect_allele") == pl.col("ALT")).alias("effect_is_alt")
     )
+
+
+def _prepare_id_match_scoring_df(scoring_df: pl.DataFrame) -> pl.DataFrame:
+    """Build PLINK-parity synthetic variant IDs from normalized scoring rows.
+
+    The reference panel .pvar uses ``CHROM:POS:REF:ALT`` IDs. To mirror the PLINK2
+    test path, emit both allele orderings for each scoring row so exactly one ID
+    matches the pvar when ``other_allele`` is available.
+    """
+    required = {"chr_name_norm", "chr_pos_norm", "effect_allele", "effect_weight", "other_allele"}
+    missing = sorted(required - set(scoring_df.columns))
+    if missing:
+        raise ReferencePanelError(
+            "id-based matching requires normalized scoring columns "
+            f"{sorted(required)}; missing {missing}"
+        )
+
+    chrom_expr = pl.col("chr_name_norm").cast(pl.Utf8).str.replace("(?i)^chr", "")
+    pos_expr = pl.col("chr_pos_norm").cast(pl.Int64).cast(pl.Utf8)
+    effect_expr = pl.col("effect_allele").cast(pl.Utf8)
+    other_expr = pl.col("other_allele").cast(pl.Utf8).str.split("/").list.first()
+
+    filtered = scoring_df.filter(
+        pl.col("effect_allele").is_not_null()
+        & pl.col("effect_weight").is_not_null()
+        & pl.col("chr_name_norm").is_not_null()
+        & pl.col("chr_pos_norm").is_not_null()
+        & pl.col("other_allele").is_not_null()
+        & (pl.col("other_allele").cast(pl.Utf8).str.len_chars() > 0)
+    )
+
+    id_fwd = chrom_expr + pl.lit(":") + pos_expr + pl.lit(":") + other_expr + pl.lit(":") + effect_expr
+    id_rev = chrom_expr + pl.lit(":") + pos_expr + pl.lit(":") + effect_expr + pl.lit(":") + other_expr
+
+    fwd = filtered.with_columns(
+        id_fwd.alias("variant_id"),
+        pl.lit(True).alias("effect_is_alt"),
+    ).select(["variant_id", "effect_weight", "effect_is_alt"])
+    rev = filtered.with_columns(
+        id_rev.alias("variant_id"),
+        pl.lit(False).alias("effect_is_alt"),
+    ).select(["variant_id", "effect_weight", "effect_is_alt"])
+    return pl.concat([fwd, rev])
 
 
 def read_pgen_genotypes(
@@ -854,6 +933,10 @@ class _ResolvedRefPanel:
         self.pvar_parquet_path = _pvar_parquet_cache_path(self.pvar_zst_path)
         if not self.pvar_parquet_path.exists():
             parse_pvar(self.pvar_zst_path)
+        else:
+            pvar_schema = pl.read_parquet_schema(self.pvar_parquet_path)
+            if "ID" not in pvar_schema:
+                parse_pvar(self.pvar_zst_path)
 
         pgen_files = list(ref_dir.rglob(f"*{build_suffix}*.pgen")) + list(
             ref_dir.rglob("*.pgen")
@@ -879,7 +962,7 @@ class _ResolvedRefPanel:
             pvar_parquet=str(self.pvar_parquet_path),
         )
 
-    def match_scoring(self, scoring_df: pl.DataFrame) -> pl.DataFrame:
+    def match_scoring(self, scoring_df: pl.DataFrame, match_mode: MatchMode = "position") -> pl.DataFrame:
         """Join scoring file variants with pvar using DuckDB (memory-efficient).
 
         Scans the 434 MB pvar parquet with DuckDB instead of loading 75M rows
@@ -888,54 +971,72 @@ class _ResolvedRefPanel:
         """
         import duckdb
 
-        has_other = "other_allele" in scoring_df.columns
         con = duckdb.connect()
-        con.register("scoring", scoring_df.to_arrow())
         pvar = str(self.pvar_parquet_path)
 
-        if has_other:
+        if match_mode == "id":
+            scoring_ids = _prepare_id_match_scoring_df(scoring_df)
+            con.register("scoring_ids", scoring_ids.to_arrow())
             query = f"""
                 SELECT
                     p.variant_idx,
                     p.chrom,
                     p."POS",
+                    p."ID",
                     p."REF",
                     p."ALT",
-                    s.effect_allele,
                     s.effect_weight,
-                    s.other_allele,
-                    CASE
-                        WHEN s.effect_allele = p."ALT" AND s.other_allele = p."REF" THEN true
-                        WHEN s.effect_allele = p."REF" AND s.other_allele = p."ALT" THEN false
-                        ELSE NULL
-                    END AS effect_is_alt
+                    s.effect_is_alt
                 FROM '{pvar}' p
-                INNER JOIN scoring s
-                    ON p.chrom = s.chr_name_norm AND p."POS" = s.chr_pos_norm
-                WHERE
-                    (s.effect_allele = p."ALT" AND s.other_allele = p."REF")
-                    OR (s.effect_allele = p."REF" AND s.other_allele = p."ALT")
+                INNER JOIN scoring_ids s
+                    ON p."ID" = s.variant_id
             """
         else:
-            query = f"""
-                SELECT
-                    p.variant_idx,
-                    p.chrom,
-                    p."POS",
-                    p."REF",
-                    p."ALT",
-                    s.effect_allele,
-                    s.effect_weight,
-                    CASE
-                        WHEN s.effect_allele = p."ALT" THEN true
-                        WHEN s.effect_allele = p."REF" THEN false
-                        ELSE NULL
-                    END AS effect_is_alt
-                FROM '{pvar}' p
-                INNER JOIN scoring s
-                    ON p.chrom = s.chr_name_norm AND p."POS" = s.chr_pos_norm
-                WHERE s.effect_allele = p."ALT" OR s.effect_allele = p."REF"
-            """
+            has_other = "other_allele" in scoring_df.columns
+            con.register("scoring", scoring_df.to_arrow())
+            if has_other:
+                query = f"""
+                    SELECT
+                        p.variant_idx,
+                        p.chrom,
+                        p."POS",
+                        p."REF",
+                        p."ALT",
+                        s.effect_allele,
+                        s.effect_weight,
+                        s.other_allele,
+                        CASE
+                            WHEN s.effect_allele = p."ALT" AND s.other_allele = p."REF" THEN true
+                            WHEN s.effect_allele = p."REF" AND s.other_allele = p."ALT" THEN false
+                            ELSE NULL
+                        END AS effect_is_alt
+                    FROM '{pvar}' p
+                    INNER JOIN scoring s
+                        ON p.chrom = s.chr_name_norm AND p."POS" = s.chr_pos_norm
+                    WHERE
+                        (s.effect_allele = p."ALT" AND s.other_allele = p."REF")
+                        OR (s.effect_allele = p."REF" AND s.other_allele = p."ALT")
+                """
+            else:
+                query = f"""
+                    SELECT
+                        p.variant_idx,
+                        p.chrom,
+                        p."POS",
+                        p."REF",
+                        p."ALT",
+                        s.effect_allele,
+                        s.effect_weight,
+                        CASE
+                            WHEN s.effect_allele = p."ALT" THEN true
+                            WHEN s.effect_allele = p."REF" THEN false
+                            ELSE NULL
+                        END AS effect_is_alt
+                    FROM '{pvar}' p
+                    INNER JOIN scoring s
+                        ON p.chrom = s.chr_name_norm AND p."POS" = s.chr_pos_norm
+                    WHERE s.effect_allele = p."ALT" OR s.effect_allele = p."REF"
+                """
 
         result = con.sql(query).pl()
         con.close()
@@ -1024,6 +1125,7 @@ def compute_reference_prs_polars(
     ref_dir: Path,
     out_dir: Path,
     genome_build: str = "GRCh38",
+    match_mode: MatchMode = "position",
     _panel: "_ResolvedRefPanel | None" = None,
 ) -> pl.DataFrame:
     """Score a PGS ID against the 1000G panel using pgenlib + polars (no PLINK2).
@@ -1042,6 +1144,9 @@ def compute_reference_prs_polars(
         ref_dir: Path to the extracted reference panel directory.
         out_dir: Directory for intermediate files.
         genome_build: Genome build (GRCh37 or GRCh38).
+        match_mode: Variant matching strategy. Default ``"position"`` matches on
+            chromosome + position + allele logic. ``"id"`` is an opt-in PLINK-parity
+            mode which matches on synthetic ``CHROM:POS:REF:ALT`` IDs.
         _panel: Pre-resolved panel data. If None, resolved from ref_dir
             (loads pvar into memory — fine for single calls, wasteful for batches).
 
@@ -1063,6 +1168,7 @@ def compute_reference_prs_polars(
         pgs_id=pgs_id,
         scoring_file=str(scoring_file),
         genome_build=genome_build,
+        match_mode=match_mode,
     ):
         out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1080,7 +1186,7 @@ def compute_reference_prs_polars(
         )
 
         t0 = time.monotonic()
-        matched = panel.match_scoring(scoring_df)
+        matched = panel.match_scoring(scoring_df, match_mode=match_mode)
         del scoring_df
         variants_matched = matched.height
         t_pvar = time.monotonic() - t0
@@ -1156,8 +1262,7 @@ def compute_reference_prs_polars(
         t_geno = time.monotonic() - geno_t0
 
         del sorted_all, weights_sorted, is_alt_sorted, allele_offsets
-        allele_ct = 2 * variants_matched
-        prs_avg = prs_sum / allele_ct
+        prs_scores = prs_sum
         t_compute = time.monotonic() - t0
         log_message(
             message_type="reference:phase_pgen_read",
@@ -1177,11 +1282,11 @@ def compute_reference_prs_polars(
 
         t0 = time.monotonic()
         result = (
-            pl.DataFrame({"iid": panel.psam_df["iid"].to_list(), "score": prs_avg.tolist()})
+            pl.DataFrame({"iid": panel.psam_df["iid"].to_list(), "score": prs_scores.tolist()})
             .join(panel.psam_df, on="iid", how="inner")
             .with_columns(pl.lit(pgs_id).alias("pgs_id"))
         )
-        del prs_avg
+        del prs_scores
         t_join = time.monotonic() - t0
         t_total = time.monotonic() - t_total_start
 
@@ -1532,13 +1637,11 @@ def compute_reference_prs_batch(
                 gc.collect()
 
         quality_rows = [o.model_dump() for o in outcomes]
-        quality_df = pl.DataFrame(quality_rows) if quality_rows else pl.DataFrame(
-            schema={
-                "pgs_id": pl.Utf8, "status": pl.Utf8, "variants_total": pl.Int64,
-                "variants_matched": pl.Int64, "match_rate": pl.Float64,
-                "n_samples": pl.Int64, "score_mean": pl.Float64, "score_std": pl.Float64,
-                "elapsed_sec": pl.Float64, "error": pl.Utf8,
-            }
+        # Avoid Polars schema inference here: reruns can produce hundreds of
+        # cached rows with only null elapsed/error fields before a late
+        # recomputed or failed row introduces a float/string value.
+        quality_df = pl.DataFrame(quality_rows, schema=QUALITY_DF_SCHEMA) if quality_rows else pl.DataFrame(
+            schema=QUALITY_DF_SCHEMA
         )
 
         if dist_parts:
@@ -1652,6 +1755,8 @@ def ancestry_percentile(
     if std <= 0:
         return None
     z = (prs_score - mean) / std
+    if abs(z) > 10:
+        return None
     return round(_norm_cdf(z) * 100.0, 2)
 
 

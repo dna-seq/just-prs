@@ -20,7 +20,7 @@ from just_prs.cleanup import (
     clean_scores,
 )
 from just_prs.ftp import download_metadata_sheet
-from just_prs.hf import distributions_filename, pull_cleaned_parquets, pull_reference_distributions, push_cleaned_parquets
+from just_prs.hf import distributions_filename, pull_cleaned_parquets, pull_reference_distributions
 from just_prs.models import PRSResult
 from just_prs.prs import compute_prs
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
@@ -176,21 +176,34 @@ class PRSCatalog:
         return paths
 
     def push_to_hf(self, token: str | None = None, repo_id: str | None = None) -> None:
-        """Push cleaned parquets to HuggingFace dataset repo.
+        """Push cleaned metadata and scoring parquets to the combined HF dataset.
 
-        Builds them first if they don't exist locally.
+        Builds cleaned metadata first if not present locally. Scoring parquets
+        must already exist in ``<cache_dir>/scores/``.
 
         Args:
             token: HF API token. If None, loaded from .env / HF_TOKEN env var.
-            repo_id: HF dataset repo ID. Defaults to just-dna-seq/polygenic_risk_scores.
+            repo_id: HF dataset repo ID. Defaults to just-dna-seq/pgs-catalog.
         """
+        from just_prs.hf import push_pgs_catalog, DEFAULT_HF_CATALOG_REPO
+
         if not self._has_cleaned_parquets():
             self.build_cleaned_parquets()
 
-        kwargs: dict[str, str] = {}
-        if repo_id is not None:
-            kwargs["repo_id"] = repo_id
-        push_cleaned_parquets(self.metadata_dir, token=token, **kwargs)
+        scores_dir = self._cache_dir / "scores"
+        if not scores_dir.exists() or not any(scores_dir.glob("*_hmPOS_*.parquet")):
+            raise FileNotFoundError(
+                f"No scoring parquets found in {scores_dir}. "
+                "Download scoring files first via 'prs catalog bulk download-scores' "
+                "or the pipeline."
+            )
+
+        push_pgs_catalog(
+            metadata_dir=self.metadata_dir,
+            scores_dir=scores_dir,
+            repo_id=repo_id or DEFAULT_HF_CATALOG_REPO,
+            token=token,
+        )
 
     @property
     def percentiles_dir(self) -> Path:

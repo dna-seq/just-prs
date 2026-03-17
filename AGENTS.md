@@ -31,7 +31,7 @@ The workspace root (`pyproject.toml` at repo root) is a non-published wrapper na
 |--------|---------|
 | `just_prs.prs_catalog` | **`PRSCatalog`** — high-level class for search, PRS computation, and percentile estimation using cleaned bulk metadata (no REST API calls). Persists cleaned parquets locally with HuggingFace sync; percentile lookup refreshes reference distributions from HF on miss; `reference_data_status()` reports whether precomputed reference data exists for a PGS ID, which superpopulations are available, and whether source is local cache vs HF sync. |
 | `just_prs.cleanup` | Pure-function pipeline: genome build normalization, column renaming, metric string parsing, performance metric cleanup |
-| `just_prs.hf` | HuggingFace Hub integration: `push_cleaned_parquets()` / `pull_cleaned_parquets()` for syncing cleaned metadata parquets to/from `just-dna-seq/polygenic_risk_scores`; `push_pgs_catalog()` uploads combined metadata+scores to `just-dna-seq/pgs-catalog` and rewrites `data/metadata/scores.parquet` to parquet-first scoring links (`ftp_link`) while preserving original EBI links in `ftp_link_ebi`. |
+| `just_prs.hf` | HuggingFace Hub integration: `pull_cleaned_parquets()` pulls cleaned metadata parquets from `just-dna-seq/pgs-catalog` (`data/metadata/`); `push_pgs_catalog()` uploads combined metadata+scores to `just-dna-seq/pgs-catalog` and rewrites `data/metadata/scores.parquet` to parquet-first scoring links (`ftp_link`) while preserving original EBI links in `ftp_link_ebi`. |
 | `just_prs.normalize` | VCF normalization: `normalize_vcf()` reads VCF with polars-bio, strips chr prefix, renames id→rsid, computes genotype List[Str], applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, sinks to zstd Parquet. `VcfFilterConfig` (Pydantic v2) holds filter settings. |
 | `just_prs.prs` | `compute_prs()` / `compute_prs_batch()` — core PRS engine. `compute_prs()` accepts optional `genotypes_lf` LazyFrame to skip VCF re-reading when a normalized parquet is available. |
 | `just_prs.reference` | Reference panel utilities and pgen operations: `download_reference_panel()` (panel-aware: `panel="1000g"` or `"hgdp_1kg"`), `parse_pvar()` (parse .pvar.zst with parquet caching), `parse_psam()` (parse .psam sample files), `read_pgen_genotypes()` (extract genotypes from .pgen via pgenlib), `match_scoring_to_pvar()` (allele-aware variant matching via polars — standalone use only), `compute_reference_prs_polars()` (single-PGS scoring using pgenlib + numpy; uses DuckDB for variant matching against pvar parquet to avoid loading 75M rows into memory), `compute_reference_prs_batch()` (memory-efficient batch scoring: resolves panel once via `_ResolvedRefPanel`, uses DuckDB for variant matching, aggregates distributions per PGS ID immediately and discards raw scores, returns `BatchScoringResult`), `compute_reference_prs_plink2()` (legacy, for cross-validation), `aggregate_distributions()`, `enrich_distributions()` (join distributions with cleaned metadata: traits, EFO, AUROC, OR, C-index, ancestry), `ancestry_percentile()`, `ReferencePanelError`. Panel-aware constants: `REFERENCE_PANELS` dict, `DEFAULT_PANEL = "1000g"`. Result models: `ScoringOutcome` (per-ID outcome), `BatchScoringResult` (panel, distributions_df, outcomes, quality_df — no raw scores held in memory). `_ResolvedRefPanel` caches file paths, psam, and variant count once per batch; variant matching uses DuckDB to scan the pvar parquet (~434 MB on disk) without materializing 75M rows in polars (~6 GB). |
@@ -67,7 +67,7 @@ The `prs-ui` package public API (`prs_ui.__init__`) exports: `PRSComputeStateMix
 
 ### HuggingFace sync (`just_prs.hf`)
 
-Cleaned metadata parquets are synced to/from the HuggingFace dataset repo `just-dna-seq/polygenic_risk_scores` under the `data/` prefix. The HF token is resolved from: explicit argument > `.env` file (via `python-dotenv`) > `HF_TOKEN` environment variable. CLI commands: `just-prs catalog bulk clean-metadata`, `push-hf`, `pull-hf`.
+Cleaned metadata parquets are synced to/from the HuggingFace dataset repo `just-dna-seq/pgs-catalog` under the `data/metadata/` prefix. The HF token is resolved from: explicit argument > `.env` file (via `python-dotenv`) > `HF_TOKEN` environment variable. CLI commands: `just-prs catalog bulk clean-metadata`, `push-catalog`, `pull-hf`.
 
 ### UI architecture notes
 
@@ -83,8 +83,9 @@ Cleaned metadata parquets are synced to/from the HuggingFace dataset repo `just-
 - The Compute tab (default tab) uses **cleaned** data from `PRSCatalog` with normalized genome builds and snake_case column names. Scores are loaded into the MUI DataGrid with server-side virtual scrolling — no manual pagination.
 - VCF upload triggers automatic normalization via `GenomicGridState.normalize_uploaded_vcf()` which runs `normalize_vcf()` (strip chr prefix, compute genotype, PASS filter) and shows the result in a browsable genomic data grid. The normalized parquet is reused by `ComputeGridState` for PRS computation.
 - PRS results include **quality assessment**: AUROC-based model quality labels (High/Moderate/Low/Very Low), effect sizes (OR/HR/Beta with CI), classification metrics (AUROC/C-index), evaluation population ancestry, and plain-English interpretation summaries. Results can be exported as CSV via `download_prs_results_csv()`.
-- PRS result rows/cards show explicit **reference percentile status**: whether precomputed 1000G reference data exists (`precomputed(...)` vs `not precomputed`), which populations are available, and the source (`HuggingFace prs-percentiles` vs local cache). UI text clarifies these reference distributions are precomputed from reference panel scoring, not direct PGS Catalog API percentiles.
-- `lazyframe_grid()` already sets `pagination=False` and `hide_footer=True` internally — do NOT pass them again or you get a duplicate kwarg error.
+- PRS result rows use **foldable detail panels** (reflex-mui-datagrid >= 0.2.0 `detail_columns`) to show interpretation, quality summary, population percentiles, reference source, and effect size inline below each row. The old separate "Detailed interpretation cards" section has been replaced by these inline expandable panels.
+- PRS result rows show explicit **reference percentile status**: whether precomputed 1000G reference data exists (`precomputed(...)` vs `not precomputed`), which populations are available, and the source (`HuggingFace prs-percentiles` vs local cache). UI text clarifies these reference distributions are precomputed from reference panel scoring, not direct PGS Catalog API percentiles.
+- `lazyframe_grid()` already sets `pagination=False`, `hide_footer=True`, and `on_row_selection_model_change` internally — do NOT pass any of these again or you get a duplicate kwarg error. To customize row selection handling, override `handle_lf_grid_row_selection` in the concrete state class.
 
 ### Running the UI
 
@@ -820,7 +821,7 @@ When `--headless` is passed to `pipeline run` or `pipeline catalog`, the command
 - **Fingerprint assets** (`ebi_scoring_files_fingerprint`, `ebi_reference_panel_fingerprint`): Always run — they're lightweight HTTP HEAD requests.
 - **Download assets** (`scoring_files`, `reference_panel`, `raw_pgs_metadata`): Check if files exist on disk. `scoring_files` checks both `.txt.gz` and `.parquet` per-file and skips already-cached. `download_metadata_sheet()` returns cached parquet if it exists (`overwrite=False`).
 - **Compute assets** (`scoring_files_parquet`, `cleaned_pgs_metadata`, `reference_scores`): Check if output already exists. `scoring_files_parquet` skips per-file if `.parquet` cache exists. `reference_scores` uses `skip_existing=True`.
-- **Upload assets** (`hf_pgs_catalog`, `hf_prs_percentiles`, `hf_polygenic_risk_scores`): Always run — uploading IS the point. They re-upload even if data hasn't changed (HF handles dedup).
+- **Upload assets** (`hf_pgs_catalog`, `hf_prs_percentiles`): Always run — uploading IS the point. They re-upload even if data hasn't changed (HF handles dedup).
 
 ### Why `os.execvp` (not `subprocess.run` or `Popen`)
 
@@ -941,6 +942,10 @@ If a Web UI (Reflex, FastAPI) needs to trigger a Dagster job in the background, 
 - When the user says "the pipeline should compute scores for all PRS on reference population," they expect the full pipeline to do this automatically without extra commands
 - The user is frustrated by naive automation that only checks surface-level state (e.g. "is it materialized?") instead of actual data completeness
 - Never introduce full `collect()` on large LazyFrames when lazy aggregations suffice — use `pl.collect_all([lf1, lf2])` to stream multiple aggregations in one pass without materialising per-sample data
+- When redundant functionality or bugs live in maintained upstream libraries (e.g. reflex-mui-datagrid), provide a prompt for the upstream AI project instead of monkey-patching — the user maintains those libraries
+- PLINK-related comparison tests should be runnable via explicit pytest markers/tags
+- Prefer foldable datagrid detail panels (`detail_columns`) over separate collapsible card sections for showing related info in grids — keeps everything inline
+- When data is unavailable vs zero, the UI must show "N/A" explicitly — never render empty or gray bars that can be confused with a zero value
 
 ## Learned Workspace Facts
 
@@ -948,11 +953,14 @@ If a Web UI (Reflex, FastAPI) needs to trigger a Dagster job in the background, 
 - Dagster's SQLite storage produces `database is locked` errors under concurrent writes (multiple runs + daemon + sensors) — these are transient and do not stop runs, but PostgreSQL (`dagster-postgres`) is the production alternative
 - Dagster's `AutomationCondition.on_missing()` and `.eager()` are broken for initial materialization in Dagster 1.12 — use run-once `@dg.sensor` instead
 - The pipeline processes ~5,300 PGS IDs from the EBI catalog; a full scoring run takes several hours at ~0.18 IDs/second with peak RSS around 3–5 GB
-- The `just-dna-seq/pgs-catalog` HuggingFace repo stores combined metadata+scores with parquet-first scoring links; `ftp_link` points to HF parquet mirrors and `ftp_link_ebi` preserves the original EBI URL
+- The `just-dna-seq/pgs-catalog` HuggingFace repo is the single source of truth for cleaned metadata and scoring files; `pull_cleaned_parquets` downloads from `data/metadata/` in this repo; `ftp_link` points to HF parquet mirrors and `ftp_link_ebi` preserves the original EBI URL; the legacy `just-dna-seq/polygenic_risk_scores` metadata-only repo is deprecated
 - The `just-dna-seq/prs-percentiles` HuggingFace repo stores precomputed reference population distributions
-- The `PRS_PIPELINE_FORCE_RUN=1` env var is set by `pipeline run`/`catalog` to ensure the sensor submits the job when launching the Dagster UI
-- `os.execvp` is used for Dagster UI mode because Dagster's daemon signal handling breaks under `subprocess.run()`/`Popen()`
-- The scoring files parquet cache (zstd-9 compressed) saves ~5.5 GB vs raw `.txt.gz` for the full catalog
+- Dagster UI mode uses `os.execvp` because daemon signal handling breaks under `subprocess.run()`/`Popen()`, and `pipeline run`/`catalog` set `PRS_PIPELINE_FORCE_RUN=1` so the startup sensor submits the job on launch
+- The scoring files parquet cache (zstd-9 compressed) saves ~5.5 GB vs raw `.txt.gz` for the full catalog; scoring file downloads must validate `st_size > 0` — 0-byte or corrupt `.txt.gz` files should be rejected, deleted, and re-fetched
 - `polars collect_schema()` reads only parquet footer metadata — data-page corruption (truncated writes, OOM-killed flushes) is only detected when `collect()` reads row groups; always wrap the full read sequence in try/except for `_CorruptParquet` sentinel
-- Reference population distributions parquet schema: `pgs_id, superpopulation, mean, std, n, median, p5, p25, p75, p95` — one row per (pgs_id, superpopulation) combination
 - `PRSCatalog.percentile()` does a one-time HF refresh on cache miss and retries lookup, so newly computed reference distributions are picked up without manual cache cleanup
+- `lazyframe_grid()` in `reflex_mui_datagrid` hardcodes `on_row_selection_model_change` internally — do not pass another handler via `**extra_props`; implement `handle_lf_grid_row_selection` in the concrete state class instead
+- The 1000G panel `.pvar` `ID` column uses `CHROM:POS:REF:ALT`; `parse_pvar()` must preserve it, `compute_reference_prs_polars(match_mode="id")` exists for PLINK-parity scoring while the default remains position-based matching, and `compute_reference_prs_plink2()` must request `scoresums` for PRS parity
+- `reflex-mui-datagrid` >= 0.2.0 supports foldable detail panels via `detail_columns`, `detail_labels`, `detail_badge_fields`, and `detail_badge_colors` on both `data_grid()` and `lazyframe_grid()`; the PRS UI uses this for scores selector and results grid
+- Population percentile columns (AFR, AMR, EAS, EUR, SAS) only have values when method is `reference_panel` (precomputed 1000G data); theoretical/AUROC methods produce ancestry-agnostic percentiles with N/A for individual populations
+- The `progress_bar` cell renderer in reflex-mui-datagrid renders null as 0% (gray bar) because `Number(null) === 0`; use explicit "N/A" string or a non-progress_bar column type when distinguishing unavailable from zero

@@ -68,7 +68,7 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 - **Quality assessment** — `just_prs.quality` provides pure-logic helpers (`classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`) usable from any UI or script
 - **CSV export** — download computed PRS results as CSV from the web UI or programmatically
 - **Cleanup pipeline** — normalizes genome builds, renames columns to snake_case, parses performance metrics into structured numeric fields
-- **HuggingFace sync** — cleaned metadata parquets published to [just-dna-seq/polygenic_risk_scores](https://huggingface.co/datasets/just-dna-seq/polygenic_risk_scores) and auto-downloaded on first use
+- **HuggingFace sync** — cleaned metadata and scoring parquets published to [just-dna-seq/pgs-catalog](https://huggingface.co/datasets/just-dna-seq/pgs-catalog) and auto-downloaded on first use
 - **Scoring file parquet cache** — scoring files are transparently cached as zstd-9 compressed parquet with spec-driven schema overrides and embedded PGS header metadata (5-60x faster reads, ~17% smaller than `.txt.gz`)
 - **Bulk download** the entire PGS Catalog metadata (~5,000+ scores) via EBI FTP
 - Compute PRS for one or many scores against a VCF file
@@ -221,4 +221,4 @@ Key properties of the test suite:
 - PGS Catalog REST API: <https://www.pgscatalog.org/rest/>
 - EBI FTP bulk downloads: <https://ftp.ebi.ac.uk/pub/databases/spot/pgs/>
 - PGS Catalog download documentation: <https://www.pgscatalog.org/downloads/>
-- Cleaned metadata parquets on HuggingFace: <https://huggingface.co/datasets/just-dna-seq/polygenic_risk_scores>
+- Cleaned metadata and scoring parquets on HuggingFace: <https://huggingface.co/datasets/just-dna-seq/pgs-catalog>

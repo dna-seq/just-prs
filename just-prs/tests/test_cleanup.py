@@ -224,21 +224,30 @@ class TestPRSCatalog:
         assert "auroc_estimate" in best.columns
         assert "n_individuals" in best.columns
 
-    def test_percentile_with_auroc(self, catalog: PRSCatalog) -> None:
-        best_all = catalog.best_performance().collect()
-        with_auroc = best_all.filter(pl.col("auroc_estimate").is_not_null())
-        assert with_auroc.height > 0
+    def test_percentile_with_reference_panel(self, catalog: PRSCatalog) -> None:
+        ref_lf = catalog.reference_distributions()
+        available = ref_lf.select("pgs_id").unique().collect()
+        if available.height == 0:
+            pytest.skip("No reference distributions available")
 
-        pgs_id = with_auroc["pgs_id"][0]
-        pct_zero, method = catalog.percentile(0.0, pgs_id)
-        assert pct_zero is not None
-        assert pct_zero == pytest.approx(50.0, abs=0.5)
+        pgs_id = available["pgs_id"][0]
+        row = ref_lf.filter(
+            (pl.col("pgs_id") == pgs_id) & (pl.col("superpopulation") == "EUR")
+        ).select("mean", "std").collect()
+        assert row.height > 0
+        dist_mean = float(row["mean"][0])
+        dist_std = float(row["std"][0])
 
-        pct_pos, _ = catalog.percentile(1.0, pgs_id)
-        pct_neg, _ = catalog.percentile(-1.0, pgs_id)
-        assert pct_pos is not None and pct_neg is not None
-        assert pct_pos > pct_zero
-        assert pct_neg < pct_zero
+        pct_at_mean, method = catalog.percentile(dist_mean, pgs_id)
+        assert pct_at_mean is not None
+        assert method == "reference_panel"
+        assert pct_at_mean == pytest.approx(50.0, abs=0.5)
+
+        pct_above, _ = catalog.percentile(dist_mean + 2 * dist_std, pgs_id)
+        pct_below, _ = catalog.percentile(dist_mean - 2 * dist_std, pgs_id)
+        assert pct_above is not None and pct_below is not None
+        assert pct_above > pct_at_mean
+        assert pct_below < pct_at_mean
 
     def test_percentile_with_explicit_std(self, catalog: PRSCatalog) -> None:
         pct, method = catalog.percentile(0.0, "PGS000001", mean=0.0, std=1.0)
@@ -249,9 +258,7 @@ class TestPRSCatalog:
         assert pct_high is not None
         assert pct_high == pytest.approx(97.5, abs=0.5)
 
-    def test_percentile_no_auroc_returns_none(self, catalog: PRSCatalog) -> None:
-        best = catalog.best_performance(pgs_id="PGS000001").collect()
-        auroc = best["auroc_estimate"][0] if best.height > 0 else None
-        if auroc is None:
-            pct, method = catalog.percentile(1.0, "PGS000001")
-            assert pct is None
+    def test_percentile_unavailable_for_unknown_score(self, catalog: PRSCatalog) -> None:
+        pct, method = catalog.percentile(1.0, "PGS_NONEXISTENT_ID_99999")
+        assert pct is None
+        assert method == "unavailable"

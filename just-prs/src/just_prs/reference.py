@@ -951,9 +951,11 @@ class _ResolvedRefPanel:
         self.psam_df = parse_psam(psam_files[0])
 
         import duckdb
-        self.pvar_variant_ct = duckdb.sql(
+        con = duckdb.connect(config={"memory_limit": _resolve_duckdb_memory_limit()})
+        self.pvar_variant_ct = con.sql(
             f"SELECT count(*) FROM '{self.pvar_parquet_path}'"
         ).fetchone()[0]  # type: ignore[index]
+        con.close()
 
         log_message(
             message_type="reference:panel_resolved",
@@ -971,8 +973,36 @@ class _ResolvedRefPanel:
         """
         import duckdb
 
-        con = duckdb.connect()
+        _MAX_ALLELE_LEN = 1000
+        con = duckdb.connect(config={"memory_limit": _resolve_duckdb_memory_limit()})
+        con.execute("SET arrow_large_buffer_size = true")
         pvar = str(self.pvar_parquet_path)
+
+        allele_filter = pl.col("effect_allele").str.len_bytes() <= _MAX_ALLELE_LEN
+        if "other_allele" in scoring_df.columns:
+            allele_filter = allele_filter & (
+                pl.col("other_allele").is_null()
+                | (pl.col("other_allele").str.len_bytes() <= _MAX_ALLELE_LEN)
+            )
+        n_before = scoring_df.height
+        scoring_df = scoring_df.filter(allele_filter)
+        n_dropped = n_before - scoring_df.height
+        if n_dropped > 0:
+            log_message(
+                message_type="reference:match_scoring_allele_filter",
+                dropped=n_dropped,
+                max_allele_len=_MAX_ALLELE_LEN,
+                remaining=scoring_df.height,
+            )
+
+        from just_prs.prs import DOSAGE_WEIGHT_COLUMNS, is_dosage_weight_format
+
+        dosage_weight = is_dosage_weight_format(scoring_df.columns)
+        weight_cols_sql = (
+            ", ".join(f's."{c}"' for c in DOSAGE_WEIGHT_COLUMNS)
+            if dosage_weight
+            else "s.effect_weight"
+        )
 
         if match_mode == "id":
             scoring_ids = _prepare_id_match_scoring_df(scoring_df)
@@ -985,7 +1015,7 @@ class _ResolvedRefPanel:
                     p."ID",
                     p."REF",
                     p."ALT",
-                    s.effect_weight,
+                    {weight_cols_sql},
                     s.effect_is_alt
                 FROM '{pvar}' p
                 INNER JOIN scoring_ids s
@@ -1003,7 +1033,7 @@ class _ResolvedRefPanel:
                         p."REF",
                         p."ALT",
                         s.effect_allele,
-                        s.effect_weight,
+                        {weight_cols_sql},
                         s.other_allele,
                         CASE
                             WHEN s.effect_allele = p."ALT" AND s.other_allele = p."REF" THEN true
@@ -1026,7 +1056,7 @@ class _ResolvedRefPanel:
                         p."REF",
                         p."ALT",
                         s.effect_allele,
-                        s.effect_weight,
+                        {weight_cols_sql},
                         CASE
                             WHEN s.effect_allele = p."ALT" THEN true
                             WHEN s.effect_allele = p."REF" THEN false
@@ -1038,14 +1068,48 @@ class _ResolvedRefPanel:
                     WHERE s.effect_allele = p."ALT" OR s.effect_allele = p."REF"
                 """
 
-        result = con.sql(query).pl()
-        con.close()
+        try:
+            result = con.sql(query).pl()
+        finally:
+            con.close()
         return result
 
 
 _DEFAULT_MEMORY_SAFETY_PERCENT = 10
 _DEFAULT_MEMORY_SAFETY_MIN_MB = 512
 _BYTES_PER_VARIANT_SAMPLE = 13
+_DEFAULT_DUCKDB_MEMORY_PERCENT = 75
+
+
+def _resolve_duckdb_memory_limit() -> str:
+    """Compute DuckDB per-connection memory limit.
+
+    This is a safety guardrail, not a tight budget.  DuckDB's actual usage
+    for scoring-vs-pvar INNER JOINs is well under 1 GB (hash table on the
+    small scoring side, streaming scan of the pvar parquet).  The limit
+    exists only to prevent a runaway query from consuming all system RAM.
+
+    Resolution order:
+      1. ``PRS_DUCKDB_MEMORY_LIMIT`` env var (e.g. ``"8GB"``) — used as-is.
+      2. ``PRS_DUCKDB_MEMORY_PERCENT`` env var — percentage of total RAM.
+      3. Default: 75 % of total RAM (on a 90 GB machine → ~67 GB).
+
+    Returns a string suitable for DuckDB's ``memory_limit`` config key.
+    """
+    import os
+
+    import psutil
+
+    explicit = os.environ.get("PRS_DUCKDB_MEMORY_LIMIT", "").strip()
+    if explicit:
+        return explicit
+
+    total_bytes = psutil.virtual_memory().total
+    pct_str = os.environ.get("PRS_DUCKDB_MEMORY_PERCENT", "").strip()
+    pct = int(pct_str) if pct_str else _DEFAULT_DUCKDB_MEMORY_PERCENT
+    limit_bytes = int(total_bytes * pct / 100)
+    limit_gb = max(limit_bytes / (1024 ** 3), 1.0)
+    return f"{limit_gb:.1f}GB"
 
 
 def _memory_safety_floor_bytes() -> int:
@@ -1197,6 +1261,8 @@ def compute_reference_prs_polars(
             variants_matched=variants_matched,
         )
 
+        from just_prs.prs import DOSAGE_WEIGHT_COLUMNS, is_dosage_weight_format
+
         t0 = time.monotonic()
         variant_indices = matched["variant_idx"].cast(pl.UInt32).to_numpy()
         n_samples = panel.psam_df.height
@@ -1206,7 +1272,13 @@ def compute_reference_prs_polars(
         if variants_matched == 0:
             raise ReferencePanelError(f"[{pgs_id}] No variants matched between scoring file and reference panel.")
 
-        weights = matched["effect_weight"].to_numpy().astype(np.float32)
+        dosage_weight = is_dosage_weight_format(matched.columns)
+        if dosage_weight:
+            w0 = matched["dosage_0_weight"].to_numpy().astype(np.float32)
+            w1 = matched["dosage_1_weight"].to_numpy().astype(np.float32)
+            w2 = matched["dosage_2_weight"].to_numpy().astype(np.float32)
+        else:
+            weights = matched["effect_weight"].to_numpy().astype(np.float32)
         is_alt = matched["effect_is_alt"].to_numpy()
         del matched
 
@@ -1214,9 +1286,16 @@ def compute_reference_prs_polars(
 
         sort_order = np.argsort(variant_indices)
         sorted_all = variant_indices[sort_order]
-        weights_sorted = weights[sort_order]
         is_alt_sorted = is_alt[sort_order]
-        del weights, is_alt, variant_indices
+        if dosage_weight:
+            w0_sorted = w0[sort_order]
+            w1_sorted = w1[sort_order]
+            w2_sorted = w2[sort_order]
+            del w0, w1, w2
+        else:
+            weights_sorted = weights[sort_order]
+            del weights
+        del is_alt, variant_indices
 
         offsets_cache = _allele_offsets_cache_path(panel.pvar_zst_path)
         if not offsets_cache.exists():
@@ -1239,29 +1318,60 @@ def compute_reference_prs_polars(
                 chunk_size = _resolve_geno_chunk_size(n_samples, variants_matched - start)
                 end = min(start + chunk_size, variants_matched)
                 batch_indices = sorted_all[start:end]
-                batch_weights = weights_sorted[start:end]
                 batch_is_alt = is_alt_sorted[start:end]
 
                 geno_buf = np.empty((end - start, actual_samples), dtype=np.int8)
                 greader.read_list(batch_indices, geno_buf)
 
                 missing_mask = geno_buf == -9
-                geno_float = geno_buf.astype(np.float32)
-                del geno_buf
 
-                ref_effect_mask = np.logical_not(batch_is_alt)
-                if ref_effect_mask.any():
-                    geno_float[ref_effect_mask, :] = np.float32(2.0) - geno_float[ref_effect_mask, :]
-                geno_float[missing_mask] = 0.0
-                del missing_mask
+                if dosage_weight:
+                    batch_w0 = w0_sorted[start:end]
+                    batch_w1 = w1_sorted[start:end]
+                    batch_w2 = w2_sorted[start:end]
 
-                prs_sum += (geno_float * batch_weights[:, np.newaxis]).sum(axis=0)
-                del geno_float, batch_indices, batch_weights, batch_is_alt
+                    geno_int = geno_buf.copy()
+                    ref_effect_mask = np.logical_not(batch_is_alt)
+                    if ref_effect_mask.any():
+                        geno_int[ref_effect_mask, :] = 2 - geno_int[ref_effect_mask, :]
+                    geno_int[missing_mask] = -9
+
+                    contrib = np.where(
+                        geno_int == 0,
+                        batch_w0[:, np.newaxis],
+                        np.where(
+                            geno_int == 1,
+                            batch_w1[:, np.newaxis],
+                            np.where(
+                                geno_int == 2,
+                                batch_w2[:, np.newaxis],
+                                np.float32(0.0),
+                            ),
+                        ),
+                    )
+                    prs_sum += contrib.sum(axis=0)
+                    del geno_int, contrib, batch_w0, batch_w1, batch_w2
+                else:
+                    batch_weights = weights_sorted[start:end]
+                    geno_float = geno_buf.astype(np.float32)
+
+                    ref_effect_mask = np.logical_not(batch_is_alt)
+                    if ref_effect_mask.any():
+                        geno_float[ref_effect_mask, :] = np.float32(2.0) - geno_float[ref_effect_mask, :]
+                    geno_float[missing_mask] = 0.0
+
+                    prs_sum += (geno_float * batch_weights[:, np.newaxis]).sum(axis=0)
+                    del geno_float, batch_weights
+
+                del geno_buf, missing_mask, batch_indices, batch_is_alt
                 start = end
 
         t_geno = time.monotonic() - geno_t0
 
-        del sorted_all, weights_sorted, is_alt_sorted, allele_offsets
+        if dosage_weight:
+            del sorted_all, is_alt_sorted, w0_sorted, w1_sorted, w2_sorted, allele_offsets
+        else:
+            del sorted_all, weights_sorted, is_alt_sorted, allele_offsets
         prs_scores = prs_sum
         t_compute = time.monotonic() - t0
         log_message(
@@ -1567,12 +1677,16 @@ def compute_reference_prs_batch(
                     genome_build=genome_build,
                     _panel=resolved,
                 )
-            except Exception as exc:
+            except (KeyboardInterrupt, SystemExit):
+                raise
+            except BaseException as exc:
                 elapsed = round(time.monotonic() - t0, 3)
+                exc_type = type(exc).__name__
+                error_msg = f"{exc_type}: {exc}"
                 log_message(
                     message_type="reference:batch_score_failed",
                     pgs_id=pgs_id,
-                    error=str(exc),
+                    error=error_msg,
                     elapsed_sec=elapsed,
                     progress=f"{i + 1}/{len(pgs_ids)}",
                 )
@@ -1580,12 +1694,13 @@ def compute_reference_prs_batch(
                     pgs_id=pgs_id,
                     status="failed",
                     elapsed_sec=elapsed,
-                    error=str(exc),
+                    error=error_msg,
                 ))
                 n_processed += 1
                 n_failed += 1
                 recent_ids.append(pgs_id)
                 _emit_progress(last_pgs_id=pgs_id, last_status="failed")
+                gc.collect()
                 continue
 
             elapsed = round(time.monotonic() - t0, 3)
@@ -1752,11 +1867,9 @@ def ancestry_percentile(
     row = row_df.row(0, named=True)
     mean = float(row["mean"])
     std = float(row["std"] or 0.0)
-    if std <= 0:
+    if std <= 0 or math.isnan(std) or math.isnan(mean):
         return None
     z = (prs_score - mean) / std
-    if abs(z) > 10:
-        return None
     return round(_norm_cdf(z) * 100.0, 2)
 
 

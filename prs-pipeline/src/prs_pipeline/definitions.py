@@ -1,6 +1,7 @@
 """Dagster Definitions for the PRS reference panel and metadata pipelines."""
 
 import dagster as dg
+from dagster import in_process_executor
 
 from prs_pipeline.assets import (
     ebi_reference_panel_fingerprint,
@@ -18,6 +19,7 @@ from prs_pipeline.metadata_assets import (
     hf_pgs_catalog,
     raw_pgs_metadata,
 )
+from prs_pipeline.checks import ALL_ASSET_CHECKS
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
 from prs_pipeline.sensors import make_all_sensors
 from prs_pipeline.utils import resource_summary_hook
@@ -27,69 +29,86 @@ download_reference_data = dg.define_asset_job(
     selection=["ebi_reference_panel_fingerprint", "reference_panel"],
     description="Download the reference panel from the EBI FTP server.",
     hooks={resource_summary_hook},
+    executor_def=in_process_executor,
+)
+
+_score_and_push_assets = dg.AssetSelection.assets(
+    "ebi_scoring_files_fingerprint", "scoring_files",
+    "scoring_files_parquet", "reference_scores",
+    "raw_pgs_metadata", "cleaned_pgs_metadata",
+    "hf_prs_percentiles",
 )
 
 score_and_push = dg.define_asset_job(
     name="score_and_push",
-    selection=[
-        "ebi_scoring_files_fingerprint", "scoring_files",
-        "scoring_files_parquet", "reference_scores",
-        "raw_pgs_metadata", "cleaned_pgs_metadata",
-        "hf_prs_percentiles",
-    ],
+    selection=_score_and_push_assets | dg.AssetSelection.checks_for_assets(
+        "reference_scores", "hf_prs_percentiles", "cleaned_pgs_metadata",
+    ),
     description=(
         "Score all PGS IDs against the reference panel in a single batch, "
-        "download and clean metadata, enrich distributions, and push to HuggingFace."
+        "download and clean metadata, enrich distributions, and push to HuggingFace. "
+        "Includes data quality checks on distributions and metadata."
     ),
     hooks={resource_summary_hook},
+    executor_def=in_process_executor,
+)
+
+_full_pipeline_assets = dg.AssetSelection.assets(
+    "ebi_reference_panel_fingerprint", "ebi_scoring_files_fingerprint",
+    "reference_panel", "scoring_files", "scoring_files_parquet",
+    "reference_scores",
+    "raw_pgs_metadata", "cleaned_pgs_metadata",
+    "hf_pgs_catalog", "hf_prs_percentiles",
 )
 
 full_pipeline = dg.define_asset_job(
     name="full_pipeline",
-    selection=[
-        "ebi_reference_panel_fingerprint", "ebi_scoring_files_fingerprint",
-        "reference_panel", "scoring_files", "scoring_files_parquet",
-        "reference_scores",
-        "raw_pgs_metadata", "cleaned_pgs_metadata",
-        "hf_pgs_catalog", "hf_prs_percentiles",
-    ],
+    selection=_full_pipeline_assets | dg.AssetSelection.checks_for_assets(
+        "reference_scores", "hf_prs_percentiles", "cleaned_pgs_metadata",
+    ),
     description=(
         "Full pipeline: download reference panel, batch-score all PGS IDs, "
         "download and clean PGS Catalog metadata, enrich distributions with "
-        "metadata, and push to HuggingFace. Triggered automatically by "
-        "run_pipeline_on_startup sensor when assets are unmaterialized."
+        "metadata, and push to HuggingFace. Includes data quality checks. "
+        "Triggered automatically by run_pipeline_on_startup sensor when "
+        "assets are unmaterialized."
     ),
     hooks={resource_summary_hook},
+    executor_def=in_process_executor,
 )
 
 catalog_pipeline = dg.define_asset_job(
     name="catalog_pipeline",
-    selection=[
+    selection=dg.AssetSelection.assets(
         "ebi_scoring_files_fingerprint",
         "scoring_files", "scoring_files_parquet",
         "raw_pgs_metadata", "cleaned_pgs_metadata",
         "hf_pgs_catalog",
-    ],
+    ) | dg.AssetSelection.checks_for_assets("cleaned_pgs_metadata"),
     description=(
         "Build and push the combined PGS Catalog dataset to HuggingFace "
         "(just-dna-seq/pgs-catalog): download scoring files, convert to parquet, "
-        "download and clean metadata, then upload both to HF."
+        "download and clean metadata, then upload both to HF. "
+        "Includes metadata quality checks."
     ),
     hooks={resource_summary_hook},
+    executor_def=in_process_executor,
 )
 
 metadata_pipeline = dg.define_asset_job(
     name="metadata_pipeline",
-    selection=[
+    selection=dg.AssetSelection.assets(
         "ebi_scoring_files_fingerprint",
         "raw_pgs_metadata", "cleaned_pgs_metadata",
-    ],
+    ) | dg.AssetSelection.checks_for_assets("cleaned_pgs_metadata"),
     description=(
         "End-to-end metadata pipeline: download raw PGS Catalog sheets from EBI FTP "
-        "and run the cleanup pipeline. Metadata is published to HuggingFace via "
-        "the catalog_pipeline (hf_pgs_catalog asset) together with scoring files."
+        "and run the cleanup pipeline. Includes metadata quality checks. "
+        "Metadata is published to HuggingFace via the catalog_pipeline (hf_pgs_catalog "
+        "asset) together with scoring files."
     ),
     hooks={resource_summary_hook},
+    executor_def=in_process_executor,
 )
 
 _assets = [
@@ -106,6 +125,7 @@ _assets = [
     cleaned_pgs_metadata,
     hf_pgs_catalog,
 ]
+_asset_checks = ALL_ASSET_CHECKS
 _resources = {
     "cache_dir_resource": CacheDirResource(),
     "hf_resource": HuggingFaceResource(),
@@ -135,6 +155,7 @@ def _build_definitions() -> dg.Definitions:
 
     return dg.Definitions(
         assets=_assets,
+        asset_checks=_asset_checks,
         sensors=make_all_sensors(
             full_pipeline_job=jobs_by_name["full_pipeline"],
             catalog_pipeline_job=jobs_by_name["catalog_pipeline"],

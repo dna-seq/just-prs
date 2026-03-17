@@ -14,7 +14,7 @@ The workspace root (`pyproject.toml` at repo root) is a non-published wrapper na
 
 **EVERY CLI THAT STARTS A SERVER MUST PRINT ITS URL (CRITICAL).** When any CLI command starts a web server or UI (Reflex UI via `uv run ui`, Dagster UI via `pipeline run`/`catalog`/`launch`), the URL (`http://<host>:<port>`) must be printed prominently in the first lines of output so the user always knows where to open their browser.
 
-**ALL CLIs LOAD `.env` VIA `python-dotenv` AT STARTUP (CRITICAL).** Both `prs_ui.cli` and `prs_pipeline.cli` call `load_dotenv()` before reading any configuration. Users override defaults by setting env vars in `.env` (see `.env.template`). Key config env vars: `PRS_UI_HOST`, `PRS_UI_PORT` (Reflex UI, default `0.0.0.0:3000`), `PRS_PIPELINE_HOST`, `PRS_PIPELINE_PORT` (Dagster UI, default `0.0.0.0:3010`), `PRS_CACHE_DIR`, `HF_TOKEN`, `PRS_PIPELINE_PANEL`, `PRS_PIPELINE_STARTUP_JOB`. When adding new configurable values, always read them from env vars with sensible defaults, document them in `.env.template`, and mention them in `AGENTS.md`.
+**ALL CLIs LOAD `.env` VIA `python-dotenv` AT STARTUP (CRITICAL).** Both `prs_ui.cli` and `prs_pipeline.cli` call `load_dotenv()` before reading any configuration. Users override defaults by setting env vars in `.env` (see `.env.template`). Key config env vars: `PRS_UI_HOST`, `PRS_UI_PORT` (Reflex UI, default `0.0.0.0:3000`), `PRS_PIPELINE_HOST`, `PRS_PIPELINE_PORT` (Dagster UI, default `0.0.0.0:3010`), `PRS_CACHE_DIR`, `HF_TOKEN`, `PRS_PIPELINE_PANEL`, `PRS_PIPELINE_STARTUP_JOB`, `PRS_DUCKDB_MEMORY_LIMIT` (DuckDB per-connection memory cap for pvar joins, e.g. `"8GB"`; default: 50% of total RAM), `PRS_DUCKDB_MEMORY_PERCENT` (percentage of total RAM for DuckDB if `PRS_DUCKDB_MEMORY_LIMIT` is not set, default `50`), `PRS_GENO_CHUNK_SIZE` (override auto-sized genotype chunk, default auto), `PRS_MEMORY_SAFETY_PERCENT` (percent of total RAM kept as safety floor, default `10`), `PRS_MEMORY_SAFETY_MIN_MB` (minimum safety floor in MB, default `512`). When adding new configurable values, always read them from env vars with sensible defaults, document them in `.env.template`, and mention them in `AGENTS.md`.
 
 **CRITICAL: All subproject CLI entry points must be registered in the workspace root `pyproject.toml` `[project.scripts]`.** When adding a new CLI entry point to any subproject, always add it to the root `pyproject.toml` as well. Users run commands from the workspace root with `uv run <script>`, and scripts not registered at the root level will not be found. Current entry points:
 
@@ -33,7 +33,7 @@ The workspace root (`pyproject.toml` at repo root) is a non-published wrapper na
 | `just_prs.cleanup` | Pure-function pipeline: genome build normalization, column renaming, metric string parsing, performance metric cleanup |
 | `just_prs.hf` | HuggingFace Hub integration: `pull_cleaned_parquets()` pulls cleaned metadata parquets from `just-dna-seq/pgs-catalog` (`data/metadata/`); `push_pgs_catalog()` uploads combined metadata+scores to `just-dna-seq/pgs-catalog` and rewrites `data/metadata/scores.parquet` to parquet-first scoring links (`ftp_link`) while preserving original EBI links in `ftp_link_ebi`. |
 | `just_prs.normalize` | VCF normalization: `normalize_vcf()` reads VCF with polars-bio, strips chr prefix, renames id→rsid, computes genotype List[Str], applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, sinks to zstd Parquet. `VcfFilterConfig` (Pydantic v2) holds filter settings. |
-| `just_prs.prs` | `compute_prs()` / `compute_prs_batch()` — core PRS engine. `compute_prs()` accepts optional `genotypes_lf` LazyFrame to skip VCF re-reading when a normalized parquet is available. |
+| `just_prs.prs` | `compute_prs()` / `compute_prs_batch()` — core PRS engine. `compute_prs()` accepts optional `genotypes_lf` LazyFrame to skip VCF re-reading when a normalized parquet is available. Supports two weight formats: standard additive (`effect_weight`) and per-dosage (GenoBoost: `dosage_0_weight`, `dosage_1_weight`, `dosage_2_weight`). `is_dosage_weight_format()` detects the format; `_normalize_scoring_columns()` handles both transparently. |
 | `just_prs.reference` | Reference panel utilities and pgen operations: `download_reference_panel()` (panel-aware: `panel="1000g"` or `"hgdp_1kg"`), `parse_pvar()` (parse .pvar.zst with parquet caching), `parse_psam()` (parse .psam sample files), `read_pgen_genotypes()` (extract genotypes from .pgen via pgenlib), `match_scoring_to_pvar()` (allele-aware variant matching via polars — standalone use only), `compute_reference_prs_polars()` (single-PGS scoring using pgenlib + numpy; uses DuckDB for variant matching against pvar parquet to avoid loading 75M rows into memory), `compute_reference_prs_batch()` (memory-efficient batch scoring: resolves panel once via `_ResolvedRefPanel`, uses DuckDB for variant matching, aggregates distributions per PGS ID immediately and discards raw scores, returns `BatchScoringResult`), `compute_reference_prs_plink2()` (legacy, for cross-validation), `aggregate_distributions()`, `enrich_distributions()` (join distributions with cleaned metadata: traits, EFO, AUROC, OR, C-index, ancestry), `ancestry_percentile()`, `ReferencePanelError`. Panel-aware constants: `REFERENCE_PANELS` dict, `DEFAULT_PANEL = "1000g"`. Result models: `ScoringOutcome` (per-ID outcome), `BatchScoringResult` (panel, distributions_df, outcomes, quality_df — no raw scores held in memory). `_ResolvedRefPanel` caches file paths, psam, and variant count once per batch; variant matching uses DuckDB to scan the pvar parquet (~434 MB on disk) without materializing 75M rows in polars (~6 GB). |
 | `just_prs.vcf` | VCF reading via `polars-bio`, genome build detection, dosage computation |
 | `just_prs.scoring` | Download, parse, and cache PGS scoring files. `SCORING_FILE_SCHEMA` — comprehensive column type map from the PGS Catalog spec (30+ columns). `parse_scoring_file()` transparently reads/writes a parquet cache (zstd-9 compressed) alongside the `.txt.gz`, with header metadata embedded as file-level metadata. `scoring_parquet_path()` computes cache paths. `read_scoring_header()` reads PGS header metadata from parquet or `.txt.gz`. `load_scoring()` checks parquet cache first and skips `.txt.gz` download when it exists. |
@@ -46,6 +46,7 @@ The workspace root (`pyproject.toml` at repo root) is a non-published wrapper na
 | `prs_ui.pages.*` | UI panels: `metadata` (grid browser), `scoring` (file viewer), `compute` (standalone PRS workflow using reusable components + VCF upload + genomic data grid) |
 | `prs_pipeline.runtime` | `ResourceReport` (Pydantic model) and `resource_tracker` context manager — tracks CPU%, peak memory, duration via `psutil` and logs to Dagster output metadata |
 | `prs_pipeline.utils` | `resource_summary_hook` — Dagster `@success_hook` that aggregates per-asset resource metrics into a run-level summary |
+| `prs_pipeline.checks` | Dagster `@asset_check` definitions for data quality validation. Checks run after asset materialization and surface in the Dagster UI. `ALL_ASSET_CHECKS` collects all checks for registration in `Definitions`. |
 
 ### Cleanup pipeline (`just_prs.cleanup`)
 
@@ -530,6 +531,20 @@ This hook logs a summary at the end of each successful run: Total Duration, Max 
 | `prs_pipeline/runtime.py` | `ResourceReport` model, `resource_tracker` context manager (uses `psutil`) |
 | `prs_pipeline/utils.py` | `resource_summary_hook` — aggregates per-asset metrics into a run-level summary |
 
+### Asset checks (`prs_pipeline/checks.py`)
+
+| Check | Asset | Severity | What it validates |
+|-------|-------|----------|-------------------|
+| `check_distributions_superpop_completeness` | `reference_scores` | ERROR | Every PGS ID has exactly 5 superpopulation rows |
+| `check_distributions_no_inf_nan` | `reference_scores` | ERROR/WARN | No inf, NaN, or zero-std in distributions |
+| `check_distributions_quantile_ordering` | `reference_scores` | ERROR | p5 ≤ p25 ≤ median ≤ p75 ≤ p95 for all rows |
+| `check_distributions_vs_raw_scores` | `reference_scores` | ERROR | Spot-checks 20 PGS IDs: distributions match re-aggregation from raw scores (catches stale data) |
+| `check_distributions_sample_sizes` | `reference_scores` | ERROR | Sample sizes within 1000G panel range (400–1000) |
+| `check_enriched_has_metadata_columns` | `hf_prs_percentiles` | ERROR/WARN | Enriched distributions have all required stats + metadata columns |
+| `check_cleaned_metadata_quality` | `cleaned_pgs_metadata` | ERROR | Non-empty scores, normalized genome builds, best_performance exists |
+
+Checks are included in job selections via `AssetSelection.checks_for_assets()` so they run automatically after their target asset materializes. Jobs that include checks: `full_pipeline`, `score_and_push`, `catalog_pipeline`, `metadata_pipeline`.
+
 ### Best Practices for Assets & IO
 
 **Declarative Assets:** Prioritize Software-Defined Assets (SDA) over imperative ops. Include all assets in `Definitions(assets=[...])` for complete lineage visibility in the UI.
@@ -777,6 +792,10 @@ Omitting a `SourceAsset` from `Definitions` makes it invisible in the UI even if
 - [ ] Every asset checks on-disk cache and short-circuits if data already exists — no redundant downloads or computations.
 - [ ] Every compute-heavy asset is wrapped with `resource_tracker(name, context=context)`.
 - [ ] Every job has `hooks={resource_summary_hook}` for run-level resource aggregation.
+- [ ] Assets that produce statistical data (distributions, aggregations) have `@asset_check`s in `checks.py` validating invariants.
+- [ ] Jobs that include checked assets use `AssetSelection.checks_for_assets(...)` in their selection.
+- [ ] All checks are collected in `ALL_ASSET_CHECKS` and registered in `Definitions(asset_checks=...)`.
+- [ ] The `check_distributions_vs_raw_scores` spot-check guards against stale distributions after scoring engine changes.
 
 ### 6. Universal Dagster Principles (Mindset & Architecture)
 
@@ -964,3 +983,12 @@ If a Web UI (Reflex, FastAPI) needs to trigger a Dagster job in the background, 
 - `reflex-mui-datagrid` >= 0.2.0 supports foldable detail panels via `detail_columns`, `detail_labels`, `detail_badge_fields`, and `detail_badge_colors` on both `data_grid()` and `lazyframe_grid()`; the PRS UI uses this for scores selector and results grid
 - Population percentile columns (AFR, AMR, EAS, EUR, SAS) only have values when method is `reference_panel` (precomputed 1000G data); theoretical/AUROC methods produce ancestry-agnostic percentiles with N/A for individual populations
 - The `progress_bar` cell renderer in reflex-mui-datagrid renders null as 0% (gray bar) because `Number(null) === 0`; use explicit "N/A" string or a non-progress_bar column type when distinguishing unavailable from zero
+- 15 GenoBoost scores (PGP000546) use per-dosage weights (`dosage_0_weight`, `dosage_1_weight`, `dosage_2_weight`) instead of `effect_weight`; the scoring engine handles both formats transparently via `is_dosage_weight_format()`. Of the 60 total GenoBoost scores, 45 use standard `effect_weight` and 15 use the dosage format.
+- 5 PGS IDs are permanently unscorable with SNP-based reference panels: PGS000343, PGS000941, PGS000966, PGS003757 (HLA allele variants with no genomic coordinates), PGS005228 (2.4M rows where `effect_allele == other_allele` for 100% of variants — upstream data defect)
+- Dagster `dagster dev` defaults to the **multiprocess executor**, which forks child processes. DuckDB, pgenlib, and Arrow/numpy C extensions are not fork-safe — SIGABRT (signal 6) crashes result. All pipeline jobs must use `executor_def=in_process_executor` to avoid forking. Never use `duckdb.sql()` (global singleton connection); always use `duckdb.connect()` with explicit `con.close()`.
+- DuckDB `duckdb.connect()` defaults to unlimited memory — joining scoring files against the 75M-row pvar parquet can spike to 60+ GB RAM. Always pass `config={"memory_limit": _resolve_duckdb_memory_limit()}` which defaults to 50% of total RAM (overridable via `PRS_DUCKDB_MEMORY_LIMIT` absolute value or `PRS_DUCKDB_MEMORY_PERCENT`). DuckDB spills to disk when the limit is exceeded.
+- DuckDB Arrow output uses standard `Utf8` (2 GB per-column limit) by default. When joining against the pvar (75M rows of `CHROM:POS:REF:ALT` strings in the ID column), the string data can exceed 2 GB and cause a polars Rust panic (`max string/binary length exceeded: TryFromIntError`). Always `SET arrow_large_buffer_size = true` before `.pl()` conversion.
+- `pyo3_runtime.PanicException` inherits from `BaseException`, not `Exception` — the standard `except Exception` in batch loops will NOT catch polars/pyo3 Rust panics. Use `except (KeyboardInterrupt, SystemExit): raise` then `except BaseException` to catch panics without swallowing interrupts.
+- Some PGS scoring files contain structural variant alleles with thousands of nucleotides that can trigger string overflow panics during DuckDB-to-polars conversion. Filter alleles longer than 1000 chars before the DuckDB join — they never match SNPs in the 1000G reference panel anyway.
+- The stored `1000g_distributions.parquet` (as of Mar 17 2026) was generated from PLINK2 AVG-mode scores (mean of allele dosages, divides by 2×n_variants) while the current polars engine uses SUM-mode (raw genotype×weight sum). Raw per-sample `scores.parquet` files were regenerated with the polars engine (correct), but the aggregated distributions parquet was NOT re-aggregated — it still reflects the old PLINK2-based values. **ALL 5248 PGS IDs in the distributions parquet have systematically wrong means and stds** (too small by a factor of 2×matched_variants). Must re-aggregate from the raw scores before publishing.
+- `ancestry_percentile()` must guard against NaN std (from single-sample groups or data quality issues). `float("nan") or 0.0` evaluates to `nan` (NaN is truthy), and `nan <= 0` is False, so without an explicit `math.isnan()` check the function would compute `z = (score - mean) / nan` and return NaN instead of None.

@@ -42,11 +42,24 @@ def _resolve_scoring(
     return parse_scoring_file(Path(scoring_file))
 
 
+DOSAGE_WEIGHT_COLUMNS = ("dosage_0_weight", "dosage_1_weight", "dosage_2_weight")
+
+
+def is_dosage_weight_format(columns: list[str]) -> bool:
+    """Check if a scoring file uses per-dosage-level weights (GenoBoost format)."""
+    return all(c in columns for c in DOSAGE_WEIGHT_COLUMNS) and "effect_weight" not in columns
+
+
 def _normalize_scoring_columns(scoring_lf: pl.LazyFrame) -> pl.LazyFrame:
     """Normalize scoring file columns to use harmonized position columns when available.
 
     Harmonized files from PGS Catalog have hm_chr and hm_pos columns that should
     be preferred over the original chr_name and chr_position.
+
+    Supports two weight formats:
+    - Standard additive: ``effect_weight`` column
+    - Per-dosage (GenoBoost): ``dosage_0_weight``, ``dosage_1_weight``,
+      ``dosage_2_weight`` columns (non-linear scoring model)
     """
     columns = scoring_lf.collect_schema().names()
 
@@ -70,11 +83,21 @@ def _normalize_scoring_columns(scoring_lf: pl.LazyFrame) -> pl.LazyFrame:
 
     if "effect_allele" not in columns:
         raise ValueError(f"Scoring file must have 'effect_allele' column. Found: {columns}")
-    if "effect_weight" not in columns:
-        raise ValueError(f"Scoring file must have 'effect_weight' column. Found: {columns}")
+
+    dosage_weight = is_dosage_weight_format(columns)
+
+    if dosage_weight:
+        for col in DOSAGE_WEIGHT_COLUMNS:
+            rename_exprs.append(pl.col(col).cast(pl.Float64))
+    elif "effect_weight" in columns:
+        rename_exprs.append(pl.col("effect_weight").cast(pl.Float64))
+    else:
+        raise ValueError(
+            f"Scoring file must have 'effect_weight' or dosage weight columns "
+            f"(dosage_0_weight, dosage_1_weight, dosage_2_weight). Found: {columns}"
+        )
 
     rename_exprs.append(pl.col("effect_allele").cast(pl.Utf8))
-    rename_exprs.append(pl.col("effect_weight").cast(pl.Float64))
 
     if "other_allele" in columns:
         rename_exprs.append(pl.col("other_allele").cast(pl.Utf8))
@@ -102,6 +125,8 @@ def _compute_theoretical_stats(
     column is absent or has no valid values.
     """
     if "allelefrequency_effect" not in scoring_df.columns:
+        return None
+    if "effect_weight" not in scoring_df.columns:
         return None
 
     valid = scoring_df.filter(
@@ -208,9 +233,22 @@ def compute_prs(
             )
         )
 
-        joined = joined.with_columns(
-            (pl.col("effect_weight") * pl.col("dosage")).alias("weighted_dosage")
-        )
+        dosage_weight = DOSAGE_WEIGHT_COLUMNS[0] in scoring_df.columns
+        if dosage_weight:
+            joined = joined.with_columns(
+                pl.when(pl.col("dosage") == 0)
+                .then(pl.col("dosage_0_weight"))
+                .when(pl.col("dosage") == 1)
+                .then(pl.col("dosage_1_weight"))
+                .when(pl.col("dosage") == 2)
+                .then(pl.col("dosage_2_weight"))
+                .otherwise(pl.lit(0.0))
+                .alias("weighted_dosage")
+            )
+        else:
+            joined = joined.with_columns(
+                (pl.col("effect_weight") * pl.col("dosage")).alias("weighted_dosage")
+            )
 
         matched_df = joined.collect()
         variants_matched = len(matched_df)

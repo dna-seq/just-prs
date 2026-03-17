@@ -254,14 +254,20 @@ class TestPRSCatalogPercentile:
     def test_different_ancestries_may_differ(self, catalog: PRSCatalog) -> None:
         """Percentile for the same score and PGS ID may differ across ancestries
         when reference panel data is available."""
-        score = 1.5
         pgs_id = "PGS000001"
+        ref_lf = catalog.reference_distributions()
+        dist_row = ref_lf.filter(
+            (pl.col("pgs_id") == pgs_id) & (pl.col("superpopulation") == "EUR")
+        ).select("mean", "std").collect()
+        if dist_row.height == 0:
+            pytest.skip("No reference distribution for PGS000001")
+        score = float(dist_row["mean"][0]) + float(dist_row["std"][0])
+
         results = {
             sp: catalog.percentile(score, pgs_id, ancestry=sp)
             for sp in SUPERPOPULATIONS
         }
         methods = {sp: m for sp, (_, m) in results.items()}
-        # If all used reference_panel, percentiles should differ (different distributions)
         ref_panel_used = all(m == "reference_panel" for m in methods.values())
         if ref_panel_used:
             percentiles = {sp: p for sp, (p, _) in results.items() if p is not None}

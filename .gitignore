@@ -236,3 +236,4 @@ scores/
 #cursor
 .cursor/
 *.code-workspace
+.cursor/hooks

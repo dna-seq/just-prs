@@ -25,6 +25,20 @@ The workspace root (`pyproject.toml` at repo root) is a non-published wrapper na
 | `ui` | `prs_ui.cli:launch_ui` | `prs-ui` |
 | `pipeline` | `prs_pipeline.cli:app` | `prs-pipeline` |
 
+### Optional dependencies
+
+`pgenlib` and `duckdb` are **optional** — they are only needed for reference panel operations (`.pgen` file reading, variant matching, batch scoring). The core PRS computation from VCF, scoring file parsing, `PRSCatalog`, quality assessment, and all UI components work without them.
+
+Install the `reference` extra when you need reference panel features:
+
+```bash
+pip install just-prs[reference]
+# or in pyproject.toml:
+"just-prs[reference]>=0.3.8"
+```
+
+**Why optional?** `pgenlib` requires C compilation and does not ship Windows wheels. Making it optional allows `just-prs` to be used on Windows (e.g. in `just-dna-lite`) for VCF-based PRS computation without requiring a C compiler. Functions that need `pgenlib`/`duckdb` raise a clear `ImportError` with installation instructions when called without the extra.
+
 ### Key modules
 
 | Module | Purpose |

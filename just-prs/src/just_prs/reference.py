@@ -36,6 +36,30 @@ from just_prs.scoring import resolve_cache_dir
 if TYPE_CHECKING:
     import numpy as np
 
+
+def _require_pgenlib() -> None:
+    """Raise ImportError with a helpful message if pgenlib is not installed."""
+    try:
+        import pgenlib as _pgenlib  # noqa: F401
+    except ImportError:
+        raise ImportError(
+            "pgenlib is required for reference panel operations but is not installed. "
+            "Install it with: pip install just-prs[reference]  "
+            "(note: pgenlib does not provide Windows wheels — it requires a C compiler on Windows)"
+        ) from None
+
+
+def _require_duckdb() -> None:
+    """Raise ImportError with a helpful message if duckdb is not installed."""
+    try:
+        import duckdb as _duckdb  # noqa: F401
+    except ImportError:
+        raise ImportError(
+            "duckdb is required for reference panel variant matching but is not installed. "
+            "Install it with: pip install just-prs[reference]"
+        ) from None
+
+
 # ---------------------------------------------------------------------------
 # Reference panel registry
 # ---------------------------------------------------------------------------
@@ -607,6 +631,7 @@ def _build_allele_offsets_cache(pvar_zst_path: Path) -> Path:
 
     Returns the path to the cache file.
     """
+    _require_pgenlib()
     import numpy as np
     import pgenlib
     import zstandard as zstd
@@ -877,6 +902,7 @@ def read_pgen_genotypes(
         values are ALT allele counts: 0 = hom-ref, 1 = het, 2 = hom-alt,
         -9 = missing.
     """
+    _require_pgenlib()
     import numpy as np
     import pgenlib
 
@@ -950,6 +976,7 @@ class _ResolvedRefPanel:
             raise ReferencePanelError(f"No .psam file found in {ref_dir}")
         self.psam_df = parse_psam(psam_files[0])
 
+        _require_duckdb()
         import duckdb
         con = duckdb.connect(config={"memory_limit": _resolve_duckdb_memory_limit()})
         self.pvar_variant_ct = con.sql(
@@ -971,6 +998,7 @@ class _ResolvedRefPanel:
         into polars (which spikes to 6+ GB). Returns a small DataFrame with
         only the matched variants, including ``variant_idx`` and ``effect_is_alt``.
         """
+        _require_duckdb()
         import duckdb
 
         _MAX_ALLELE_LEN = 1000
@@ -1282,6 +1310,7 @@ def compute_reference_prs_polars(
         is_alt = matched["effect_is_alt"].to_numpy()
         del matched
 
+        _require_pgenlib()
         import pgenlib
 
         sort_order = np.argsort(variant_indices)

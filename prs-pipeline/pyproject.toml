@@ -8,7 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "just-prs>=0.3.1",
+    "just-prs[reference]>=0.3.1",
     "dagster>=1.12.19",
     "dagster-webserver>=1.12.19",
     "dagster-polars>=0.27.9",

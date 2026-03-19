@@ -209,7 +209,16 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
         self.normalized_parquet_path = str(output_path)
 
         lf = pl.scan_parquet(output_path)
-        yield from self.set_lazyframe(lf, chunk_size=500)
+        yield from self.set_lazyframe(lf, chunk_size=500, column_overrides={
+            "rsid": {
+                "width": 140,
+                "cellRendererType": "url",
+                "cellRendererConfig": {
+                    "baseUrl": "https://www.ncbi.nlm.nih.gov/snp/",
+                    "color": "#1565c0",
+                },
+            },
+        })
         row_count = lf.select(pl.len()).collect().item()
         self.genomic_row_count = row_count
         self.genomic_loaded = True
@@ -317,7 +326,15 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         }
 
         cols: list[ColumnDef] = [
-            ColumnDef(field="pgs_id", header_name="PGS ID", min_width=120),
+            ColumnDef(
+                field="pgs_id", header_name="PGS ID", min_width=120,
+                cell_renderer_type="url",
+                cell_renderer_config={
+                    "baseUrl": "https://www.pgscatalog.org/score/",
+                    "suffixUrl": "/",
+                    "color": "#1565c0",
+                },
+            ),
             ColumnDef(field="trait", header_name="Trait", min_width=150, flex=1),
             ColumnDef(field="score", header_name="PRS Score", type="number", min_width=110),
             ColumnDef(
@@ -503,7 +520,43 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self._compute_scores_lf = lf
         self.compute_scores_loaded = True
         self.selected_pgs_ids = []
-        yield from self.set_lazyframe(lf, chunk_size=500)  # type: ignore[attr-defined]
+        yield from self.set_lazyframe(lf, chunk_size=500, column_overrides={  # type: ignore[attr-defined]
+            "pgs_id": {
+                "width": 140,
+                "cellRendererType": "url",
+                "cellRendererConfig": {
+                    "baseUrl": "https://www.pgscatalog.org/score/",
+                    "suffixUrl": "/",
+                    "color": "#1565c0",
+                },
+            },
+            "pgp_id": {
+                "width": 120,
+                "cellRendererType": "url",
+                "cellRendererConfig": {
+                    "baseUrl": "https://www.pgscatalog.org/publication/",
+                    "suffixUrl": "/",
+                    "color": "#1565c0",
+                },
+            },
+            "trait_efo_id": {
+                "width": 140,
+                "cellRendererType": "url",
+                "cellRendererConfig": {
+                    "baseUrl": "http://www.ebi.ac.uk/efo/",
+                    "color": "#1565c0",
+                },
+            },
+            "genome_build": {"width": 100},
+            "n_variants": {"width": 110},
+            "weight_type": {"width": 100},
+            "pmid": {"width": 100},
+            "name": {"minWidth": 120, "flex": 1},
+            "trait_reported": {"minWidth": 150, "flex": 2},
+            "trait_efo": {"minWidth": 130, "flex": 1},
+            "release_date": {"width": 110},
+            "ftp_link": {"hide": True},
+        })
         total = lf.select(pl.len()).collect().item()
         self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
 

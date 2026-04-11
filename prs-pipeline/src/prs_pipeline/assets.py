@@ -552,17 +552,124 @@ def reference_scores(
 
 
 # ---------------------------------------------------------------------------
+# Helper — enrich distributions with precomputed absolute risk
+# ---------------------------------------------------------------------------
+
+
+def _enrich_with_absolute_risk(
+    enriched: pl.DataFrame,
+    metadata_dir: Path,
+    context: "AssetExecutionContext",
+) -> pl.DataFrame:
+    """Add absolute risk columns for key percentile z-scores.
+
+    For each row (pgs_id × superpopulation), computes absolute risk at the
+    mean z-score (0.0) using whichever effect size is available (OR preferred,
+    then AUROC). Requires trait_prevalence.parquet in metadata_dir.
+    """
+    from just_prs.absolute_risk import estimate_absolute_risk
+
+    prevalence_path = metadata_dir / "trait_prevalence.parquet"
+    if not prevalence_path.exists():
+        context.log.info("No trait_prevalence.parquet found; skipping absolute risk enrichment.")
+        return enriched
+
+    if "trait_efo_id" not in enriched.columns:
+        context.log.info("No trait_efo_id column in enriched data; skipping absolute risk enrichment.")
+        return enriched
+
+    prevalence_df = pl.read_parquet(prevalence_path)
+    if prevalence_df.height == 0:
+        context.log.info("Empty prevalence table; skipping absolute risk enrichment.")
+        return enriched
+
+    prev_map: dict[str, tuple[float, str, str, str]] = {}
+    for row in prevalence_df.iter_rows(named=True):
+        efo_id = row.get("efo_id")
+        prev = row.get("prevalence")
+        if efo_id and prev and 0 < prev < 1.0:
+            prev_map[efo_id] = (
+                float(prev),
+                row.get("source", ""),
+                row.get("prevalence_type", "lifetime"),
+                row.get("confidence", "moderate"),
+            )
+
+    abs_risk_at_mean: list[float | None] = []
+    abs_risk_method: list[str | None] = []
+    abs_risk_prevalence: list[float | None] = []
+
+    for row in enriched.iter_rows(named=True):
+        efo_ids_raw = row.get("trait_efo_id", "")
+        or_est = row.get("or_estimate")
+        auroc_est = row.get("auroc_estimate")
+
+        if not efo_ids_raw:
+            abs_risk_at_mean.append(None)
+            abs_risk_method.append(None)
+            abs_risk_prevalence.append(None)
+            continue
+
+        efo_ids = [e.strip() for e in str(efo_ids_raw).split(",")]
+        prev_data = None
+        for eid in efo_ids:
+            if eid in prev_map:
+                prev_data = prev_map[eid]
+                break
+
+        if prev_data is None:
+            abs_risk_at_mean.append(None)
+            abs_risk_method.append(None)
+            abs_risk_prevalence.append(None)
+            continue
+
+        prevalence, prev_source, prev_type, confidence = prev_data
+        result = estimate_absolute_risk(
+            z_score=0.0,
+            prevalence=prevalence,
+            or_estimate=float(or_est) if or_est is not None else None,
+            auroc_estimate=float(auroc_est) if auroc_est is not None else None,
+            prevalence_source=prev_source,
+            prevalence_type=prev_type,
+            confidence=confidence,
+        )
+
+        if result is not None:
+            abs_risk_at_mean.append(result.absolute_risk)
+            abs_risk_method.append(result.method)
+            abs_risk_prevalence.append(result.population_prevalence)
+        else:
+            abs_risk_at_mean.append(None)
+            abs_risk_method.append(None)
+            abs_risk_prevalence.append(None)
+
+    enriched = enriched.with_columns(
+        pl.Series("abs_risk_at_mean", abs_risk_at_mean, dtype=pl.Float64),
+        pl.Series("abs_risk_method", abs_risk_method, dtype=pl.Utf8),
+        pl.Series("abs_risk_prevalence", abs_risk_prevalence, dtype=pl.Float64),
+    )
+
+    n_with_risk = sum(1 for v in abs_risk_at_mean if v is not None)
+    context.log.info(
+        f"Absolute risk enrichment: {n_with_risk}/{enriched.height} rows "
+        f"have precomputed absolute risk at mean z-score."
+    )
+    return enriched
+
+
+# ---------------------------------------------------------------------------
 # Upload asset — push to HuggingFace (represents the HF dataset as an asset)
 # ---------------------------------------------------------------------------
 
 @asset(
     group_name="upload",
     ins={"distributions": AssetIn("reference_scores")},
-    deps=[AssetDep("cleaned_pgs_metadata")],
+    deps=[AssetDep("cleaned_pgs_metadata"), AssetDep("trait_prevalence")],
     description=(
         "Enriches the raw distribution statistics with cleaned PGS Catalog metadata "
         "(trait names, EFO terms, best performance metrics like AUROC/OR/C-index, "
-        "ancestry info) and uploads the enriched parquet to the HuggingFace dataset "
+        "ancestry info) and precomputed absolute risk estimates at key percentile "
+        "buckets, then uploads the enriched parquet to the HuggingFace dataset "
         "just-dna-seq/prs-percentiles. This makes the population-level PRS percentiles "
         "self-contained and publicly available. End-users of the just-prs library pull "
         "this dataset via PRSCatalog.percentile() to compare their personal scores "
@@ -600,6 +707,8 @@ def hf_prs_percentiles(
             f"Enriched distributions with {n_metadata_cols} metadata columns "
             f"({distributions.height} rows, {len(enriched.columns)} total columns)."
         )
+
+        enriched = _enrich_with_absolute_risk(enriched, metadata_dir, context)
 
         n_scored = enriched["pgs_id"].n_unique() if enriched.height > 0 else 0
         try:

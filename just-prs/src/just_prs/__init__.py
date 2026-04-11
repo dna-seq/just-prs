@@ -1,6 +1,6 @@
 from importlib.metadata import metadata
 
-from just_prs.models import ReferenceDistribution
+from just_prs.models import AbsoluteRisk, AbsoluteRiskBundle, AbsoluteRiskEstimate, ReferenceDistribution
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.quality import (

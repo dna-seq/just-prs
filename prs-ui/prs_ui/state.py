@@ -257,6 +257,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     prs_genotypes_path: str = ""
     selected_ancestry: str = "EUR"
     compute_all_populations: bool = False
+    show_all_risk_estimates: bool = False
 
     _scores_initialized: bool = False
     _compute_scores_lf: pl.LazyFrame | None = None
@@ -269,6 +270,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     def set_compute_all_populations(self, value: bool) -> None:
         """Enable/disable percentile lookup for all available superpopulations."""
         self.compute_all_populations = bool(value)
+
+    def set_show_all_risk_estimates(self, value: bool) -> None:
+        """Toggle multi-method absolute risk estimate display."""
+        self.show_all_risk_estimates = bool(value)
+        if self.prs_results:
+            self._build_prs_results_grid()
 
     def set_prs_genotypes_lf(self, lf: pl.LazyFrame) -> None:
         """Provide a pre-loaded genotypes LazyFrame for PRS computation.
@@ -417,7 +424,52 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ),
             ColumnDef(field="variants_text", header_name="Matched / Total", min_width=120),
             ColumnDef(field="effect_size", header_name="Effect Size", min_width=120),
+            ColumnDef(field="absolute_risk", header_name="Absolute Risk (best)", min_width=180),
+            ColumnDef(
+                field="risk_agreement", header_name="Agreement",
+                min_width=100,
+                cell_renderer_type="badge",
+                cell_renderer_config={
+                    "colorMap": {
+                        "high": "#2e7d32", "moderate": "#f57f17",
+                        "low": "#c62828", "single": "#757575",
+                        "": "#757575",
+                    },
+                    "bgColorMap": {
+                        "high": "#e8f5e9", "moderate": "#fff3e0",
+                        "low": "#ffebee", "single": "#f5f5f5",
+                        "": "#f5f5f5",
+                    },
+                },
+            ),
         ])
+
+        if self.show_all_risk_estimates:
+            risk_method_fields: list[str] = []
+            all_methods: list[str] = []
+            for r in self.prs_results:
+                for m in r.get("risk_estimate_methods", []):
+                    if m not in all_methods:
+                        all_methods.append(m)
+
+            for method_label in all_methods:
+                field = f"risk_{method_label.replace(' ', '_').replace('²', '2').replace('(', '').replace(')', '')}"
+                risk_method_fields.append(field)
+                cols.append(ColumnDef(
+                    field=field,
+                    header_name=method_label,
+                    min_width=130,
+                    type="string",
+                ))
+
+            if risk_method_fields:
+                existing_groups = list(self.prs_results_column_groups)
+                existing_groups.append({
+                    "groupId": "risk_estimates",
+                    "headerName": "Absolute Risk by Method",
+                    "children": [{"field": f} for f in risk_method_fields],
+                })
+                self.prs_results_column_groups = existing_groups
 
         rows: list[dict[str, Any]] = []
         for i, r in enumerate(self.prs_results):
@@ -481,7 +533,15 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "all_population_percentiles": r.get("all_population_percentiles", ""),
                 "reference_source_detail": ref_source_detail,
                 "effect_size_detail": effect_size_detail,
+                "absolute_risk": r.get("absolute_risk", ""),
+                "absolute_risk_detail": r.get("absolute_risk_detail", ""),
+                "risk_agreement": r.get("risk_agreement", ""),
             }
+
+            if self.show_all_risk_estimates:
+                for method_label_key, risk_text in r.get("risk_estimates_by_method", {}).items():
+                    field = f"risk_{method_label_key.replace(' ', '_').replace('²', '2').replace('(', '').replace(')', '')}"
+                    row[field] = risk_text
 
             if self.compute_all_populations:
                 for sp in SUPERPOPULATIONS:
@@ -785,6 +845,72 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "Percentile falls back to theoretical/AUROC approximation when available."
                 )
 
+            abs_risk_text = ""
+            abs_risk_detail = ""
+            risk_agreement = ""
+            risk_estimates_by_method: dict[str, str] = {}
+            risk_estimate_methods: list[str] = []
+            z_score: float | None = None
+            if pct_value is not None:
+                from just_prs.absolute_risk import _norm_ppf
+                try:
+                    z_score = _norm_ppf(pct_value / 100.0) if 0 < pct_value < 100 else 0.0
+                except ValueError:
+                    z_score = 0.0
+
+            if z_score is not None:
+                bundle = _catalog.absolute_risk_bundle(pgs_id, z_score)
+                if bundle.best_estimate is not None:
+                    best = bundle.best_estimate
+                    user_pct = best.absolute_risk * 100
+                    pop_pct = best.population_prevalence * 100
+                    abs_risk_text = f"{user_pct:.1f}% (pop. avg: {pop_pct:.1f}%)"
+
+                    detail_parts = [
+                        f"Best estimate: {user_pct:.1f}% via {best.method_label}",
+                        f"Population average: {pop_pct:.1f}%",
+                        f"Risk ratio: {best.risk_ratio:.2f}x",
+                        f"Prevalence source: {best.prevalence_source}",
+                        f"Confidence: {best.confidence}",
+                    ]
+                    if best.effect_size_citation:
+                        detail_parts.append(f"Citation: {best.effect_size_citation}")
+
+                    if len(bundle.estimates) > 1:
+                        detail_parts.append(
+                            f"Agreement: {bundle.agreement} "
+                            f"(spread: {bundle.spread_pp:.1f}pp across {len(bundle.estimates)} methods)"
+                        )
+                        for est in bundle.estimates:
+                            est_pct = est.absolute_risk * 100
+                            detail_parts.append(
+                                f"  {est.method_label}: {est_pct:.1f}% "
+                                f"(ratio: {est.risk_ratio:.2f}x, conf: {est.confidence})"
+                            )
+
+                    if best.caveats:
+                        detail_parts.append(f"Caveats: {'; '.join(best.caveats)}")
+                    abs_risk_detail = " | ".join(detail_parts)
+
+                    agreement_label = bundle.agreement
+                    if agreement_label == "single_estimate":
+                        risk_agreement = "single"
+                    else:
+                        risk_agreement = agreement_label
+
+                    for est in bundle.estimates:
+                        est_pct = est.absolute_risk * 100
+                        risk_estimates_by_method[est.method_label] = f"{est_pct:.1f}%"
+                        if est.method_label not in risk_estimate_methods:
+                            risk_estimate_methods.append(est.method_label)
+
+                elif bundle.estimates:
+                    abs_risk_result_legacy = _catalog.absolute_risk(pgs_id, z_score)
+                    if abs_risk_result_legacy is not None:
+                        user_pct = abs_risk_result_legacy.absolute_risk * 100
+                        pop_pct = abs_risk_result_legacy.population_prevalence * 100
+                        abs_risk_text = f"{user_pct:.1f}% (pop. avg: {pop_pct:.1f}%)"
+
             row: dict[str, Any] = {
                 "pgs_id": result.pgs_id,
                 "trait": result.trait_reported or "",
@@ -812,6 +938,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "reference_status": ref_status_text,
                 "reference_source": ref_source_label,
                 "reference_source_code": ref_source_code,
+                "absolute_risk": abs_risk_text,
+                "absolute_risk_detail": abs_risk_detail,
+                "risk_agreement": risk_agreement,
+                "risk_estimates_by_method": risk_estimates_by_method,
+                "risk_estimate_methods": risk_estimate_methods,
             }
             for sp in SUPERPOPULATIONS:
                 row[f"pct_{sp}"] = f"{all_pop_values[sp]:.1f}" if all_pop_values.get(sp) is not None else ""
@@ -833,7 +964,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         if not self.prs_results:
             return
         columns = [
-            "pgs_id", "trait", "score", "percentile", "auroc", "quality_label",
+            "pgs_id", "trait", "score", "percentile", "absolute_risk",
+            "auroc", "quality_label",
             "match_rate", "variants_matched", "variants_total",
             "effect_size", "classification", "ancestry",
             "n_individuals", "summary",

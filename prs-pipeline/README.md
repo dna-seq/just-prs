@@ -22,6 +22,8 @@ Then open http://localhost:3000 in your browser.
 
 ## Assets
 
+### Scoring & Distribution Pipeline
+
 | Asset | Group | Description |
 |-------|-------|-------------|
 | `ebi_reference_panel_fingerprint` | download | HTTP fingerprint for freshness tracking of the remote reference panel |
@@ -30,4 +32,16 @@ Then open http://localhost:3000 in your browser.
 | `scoring_files_parquet` | compute | Convert all `.txt.gz` scoring files to spec-driven parquet caches (zstd-9, embedded headers). Deletes `.txt.gz` after verified conversion to save ~5.5 GB disk space. Tracks per-file failures in `conversion_failures.parquet` |
 | `reference_panel` | download | Download + extract reference panel binary files (.pgen/.pvar/.psam) |
 | `reference_scores` | compute | Score all PGS IDs against the reference panel via `compute_reference_prs_batch()` |
-| `hf_prs_percentiles` | upload | Enrich distributions with metadata and push to HuggingFace |
+| `hf_prs_percentiles` | upload | Enrich distributions with metadata and absolute risk, push to HuggingFace |
+
+### Metadata & Prevalence Pipeline
+
+| Asset | Group | Description |
+|-------|-------|-------------|
+| `raw_pgs_metadata` | download | Download PGS Catalog bulk metadata sheets (scores, performance, evaluation, publications) |
+| `cleaned_pgs_metadata` | compute | Clean and normalize metadata, produce parquets including `publications.parquet` |
+| `gwas_studies` | download | Download GWAS Catalog bulk studies + trait mappings, parse case/control from free-text |
+| `trait_prevalence` | compute | Merge 3-tier prevalence data (seed CSV → GWAS cohorts → PGS eval cohorts) into `trait_prevalence.parquet` |
+| `hf_pgs_catalog` | upload | Push cleaned metadata + prevalence to HuggingFace |
+
+For details on how absolute risk estimation works, see the [methodology document](../docs/absolute-risk-methodology.md).

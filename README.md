@@ -63,7 +63,10 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 ## Features
 
 - **Pure Python alternative to PLINK2** for PRS scoring, genotype extraction, and variant file operations — see [Why not PLINK2?](#why-not-plink2) below
-- **`PRSCatalog`** — search scores, compute PRS, and look up evaluation performance using cleaned bulk metadata (no REST API calls needed)
+- **`PRSCatalog`** — search scores, compute PRS, look up evaluation performance, and estimate absolute disease risk using cleaned bulk metadata (no REST API calls needed)
+- **Absolute disease risk estimation** — converts PRS percentiles into absolute disease probabilities using population prevalence data and published effect sizes. Two mathematical models: OR-per-SD and AUC-bivariate-normal (GenoPred-style). See [methodology](docs/absolute-risk-methodology.md)
+- **Disease prevalence data** — 3-tier automated sourcing: hand-curated seed data for ~50 common traits, GWAS Catalog cohort fractions parsed from free-text sample descriptions, and PGS Catalog evaluation cohorts. Consolidated into `trait_prevalence.parquet` and synced to HuggingFace
+- **Publication citations** — PRS scores are linked to their source papers with full citations (first author, title, journal, year, DOI)
 - **pgen operations** — read `.pgen`, `.pvar.zst`, `.psam` files, extract genotypes, match variants, and score PGS IDs directly in Python via `pgenlib` + polars + numpy
 - **Reusable Reflex UI components** — `prs_section()` and sub-components (`prs_scores_selector`, `prs_results_table`, etc.) can be embedded in any Reflex app via `PRSComputeStateMixin`
 - **VCF normalization** — `normalize_vcf()` strips chr prefix, renames id→rsid, computes genotype from GT, applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, and writes zstd-compressed Parquet
@@ -72,7 +75,7 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 - **Cleanup pipeline** — normalizes genome builds, renames columns to snake_case, parses performance metrics into structured numeric fields
 - **Scoring file parquet cache** — `parse_scoring_file()` transparently caches PGS scoring files as zstd-9 compressed parquet with [PGS Catalog spec](https://www.pgscatalog.org/downloads/#dl_ftp_scoring)-driven schema overrides and embedded header metadata, giving 5-60x faster reads and ~17% smaller files than `.txt.gz`
 - **Batch reference scoring** — `compute_reference_prs_batch()` scores all ~5,000+ PGS IDs against a reference panel in one call with error tracking, quality flags, and panel-aware output
-- **HuggingFace sync** — cleaned metadata and scoring parquets published to [just-dna-seq/pgs-catalog](https://huggingface.co/datasets/just-dna-seq/pgs-catalog), reference distributions to [just-dna-seq/prs-percentiles](https://huggingface.co/datasets/just-dna-seq/prs-percentiles) — auto-downloaded on first use
+- **HuggingFace sync** — cleaned metadata, prevalence data, publications, and scoring parquets published to [just-dna-seq/pgs-catalog](https://huggingface.co/datasets/just-dna-seq/pgs-catalog), reference distributions to [just-dna-seq/prs-percentiles](https://huggingface.co/datasets/just-dna-seq/prs-percentiles) — auto-downloaded on first use
 - **Bulk download** the entire PGS Catalog metadata (~5,000+ scores) via EBI FTP
 - Compute PRS for one or many scores against a VCF file
 - All data saved as **Parquet** for fast downstream analysis with Polars
@@ -262,6 +265,7 @@ Key properties of the test suite:
 
 - [CLI Reference](docs/cli.md) — full command-line usage for `prs compute`, `prs normalize`, `prs pgen`, `prs reference`, `prs catalog`, and bulk downloads
 - [Python API](docs/python-api.md) — `PRSCatalog`, pgen operations, VCF normalization, reference panel scoring, FTP downloads, REST client, cleanup pipeline, HuggingFace sync
+- [Absolute Risk Methodology](docs/absolute-risk-methodology.md) — mathematical models, prevalence data sourcing, confidence tiers, and caveats for converting PRS percentiles to absolute disease risk
 - [Dagster Pipelines](docs/dagster.md) — architecture and orchestration of the reference panel and metadata pipelines
 - [Validation](docs/validation.md) — accuracy benchmarks against PLINK2 `--score` (individual VCF and reference panel)
 - [Cleanup Pipeline](docs/cleanup-pipeline.md) — genome build normalization, column renaming, metric parsing

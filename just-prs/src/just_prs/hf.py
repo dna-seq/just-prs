@@ -20,6 +20,7 @@ CLEANED_PARQUET_FILES = [
     "scores.parquet",
     "performance.parquet",
     "best_performance.parquet",
+    "publications.parquet",
 ]
 
 REFERENCE_DISTRIBUTIONS_FILE = "reference_distributions.parquet"  # legacy fallback
@@ -580,18 +581,23 @@ def pull_cleaned_parquets(
     Returns:
         List of paths to downloaded parquet files.
     """
+    from huggingface_hub.errors import EntryNotFoundError
+
     resolved_token = _resolve_token(token)
     with start_action(action_type="hf:pull_cleaned_parquets", repo_id=repo_id):
         local_dir.mkdir(parents=True, exist_ok=True)
         downloaded: list[Path] = []
         for filename in CLEANED_PARQUET_FILES:
-            path = hf_hub_download(
-                repo_id=repo_id,
-                filename=f"{HF_DATA_PREFIX}/metadata/{filename}",
-                repo_type="dataset",
-                local_dir=local_dir,
-                token=resolved_token,
-            )
+            try:
+                path = hf_hub_download(
+                    repo_id=repo_id,
+                    filename=f"{HF_DATA_PREFIX}/metadata/{filename}",
+                    repo_type="dataset",
+                    local_dir=local_dir,
+                    token=resolved_token,
+                )
+            except EntryNotFoundError:
+                continue
             target = local_dir / filename
             hf_cached = Path(path)
             if hf_cached != target:

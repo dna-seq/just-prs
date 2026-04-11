@@ -17,11 +17,12 @@ from eliot import start_action
 from just_prs.cleanup import (
     best_performance_per_score,
     clean_performance_metrics,
+    clean_publications,
     clean_scores,
 )
 from just_prs.ftp import download_metadata_sheet
 from just_prs.hf import distributions_filename, pull_cleaned_parquets, pull_reference_distributions
-from just_prs.models import PRSResult
+from just_prs.models import AbsoluteRisk, AbsoluteRiskBundle, PRSResult
 from just_prs.prs import compute_prs
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
@@ -45,6 +46,9 @@ class PRSCatalog:
         self._scores_lf: pl.LazyFrame | None = None
         self._perf_lf: pl.LazyFrame | None = None
         self._best_perf_lf: pl.LazyFrame | None = None
+        self._publications_lf: pl.LazyFrame | None = None
+        self._prevalence_lf: pl.LazyFrame | None = None
+        self._heritability_lf: pl.LazyFrame | None = None
         self._ref_dist_cache: dict[str, pl.LazyFrame] = {}
         self._ref_dist_refresh_attempted: set[str] = set()
         self._ref_dist_source: dict[str, str] = {}
@@ -63,7 +67,11 @@ class PRSCatalog:
         return self._cache_dir / "metadata" / "raw"
 
     def _has_cleaned_parquets(self) -> bool:
-        """Check whether all 3 cleaned parquet files exist locally."""
+        """Check whether cleaned parquet files exist locally.
+
+        Requires the 3 core files; publications.parquet is optional for
+        backward compatibility with older caches.
+        """
         return all(
             (self.metadata_dir / f).exists()
             for f in ("scores.parquet", "performance.parquet", "best_performance.parquet")
@@ -78,27 +86,30 @@ class PRSCatalog:
             logger.debug("HF pull failed (will fall back to FTP): %s", exc)
             return False
 
-    def _build_from_ftp(self) -> tuple[pl.LazyFrame, pl.LazyFrame, pl.LazyFrame]:
+    def _build_from_ftp(self) -> tuple[pl.LazyFrame, pl.LazyFrame, pl.LazyFrame, pl.LazyFrame]:
         """Download raw CSVs from EBI FTP, run cleanup pipeline, and persist cleaned parquets."""
         raw_dir = self.raw_metadata_dir
 
         scores_df = download_metadata_sheet("scores", raw_dir / "scores.parquet")
         perf_df = download_metadata_sheet("performance_metrics", raw_dir / "performance_metrics.parquet")
         eval_df = download_metadata_sheet("evaluation_sample_sets", raw_dir / "evaluation_sample_sets.parquet")
+        pub_df = download_metadata_sheet("publications", raw_dir / "publications.parquet")
 
         scores_lf = clean_scores(scores_df)
         perf_lf = clean_performance_metrics(perf_df, eval_df)
         best_perf_lf = best_performance_per_score(perf_lf)
+        pub_lf = clean_publications(pub_df)
 
         self.metadata_dir.mkdir(parents=True, exist_ok=True)
         scores_lf.collect().write_parquet(self.metadata_dir / "scores.parquet")
         perf_lf.collect().write_parquet(self.metadata_dir / "performance.parquet")
         best_perf_lf.collect().write_parquet(self.metadata_dir / "best_performance.parquet")
+        pub_lf.collect().write_parquet(self.metadata_dir / "publications.parquet")
 
-        return scores_lf, perf_lf, best_perf_lf
+        return scores_lf, perf_lf, best_perf_lf, pub_lf
 
     def _load_all(self) -> None:
-        """Load all 3 cleaned LazyFrames, using the fallback chain:
+        """Load cleaned LazyFrames, using the fallback chain:
         local cleaned parquet -> HF pull -> raw FTP + cleanup.
         """
         if self._scores_lf is not None:
@@ -109,18 +120,25 @@ class PRSCatalog:
                 self._scores_lf = pl.scan_parquet(self.metadata_dir / "scores.parquet")
                 self._perf_lf = pl.scan_parquet(self.metadata_dir / "performance.parquet")
                 self._best_perf_lf = pl.scan_parquet(self.metadata_dir / "best_performance.parquet")
+                pub_path = self.metadata_dir / "publications.parquet"
+                if pub_path.exists():
+                    self._publications_lf = pl.scan_parquet(pub_path)
                 return
 
             if self._try_pull_from_hf():
                 self._scores_lf = pl.scan_parquet(self.metadata_dir / "scores.parquet")
                 self._perf_lf = pl.scan_parquet(self.metadata_dir / "performance.parquet")
                 self._best_perf_lf = pl.scan_parquet(self.metadata_dir / "best_performance.parquet")
+                pub_path = self.metadata_dir / "publications.parquet"
+                if pub_path.exists():
+                    self._publications_lf = pl.scan_parquet(pub_path)
                 return
 
-            scores_lf, perf_lf, best_perf_lf = self._build_from_ftp()
+            scores_lf, perf_lf, best_perf_lf, pub_lf = self._build_from_ftp()
             self._scores_lf = scores_lf
             self._perf_lf = perf_lf
             self._best_perf_lf = best_perf_lf
+            self._publications_lf = pub_lf
 
     def _ensure_scores(self) -> pl.LazyFrame:
         self._load_all()
@@ -158,13 +176,20 @@ class PRSCatalog:
             scores_df = download_metadata_sheet("scores", raw_dir / "scores.parquet", overwrite=True)
             perf_df = download_metadata_sheet("performance_metrics", raw_dir / "performance_metrics.parquet", overwrite=True)
             eval_df = download_metadata_sheet("evaluation_sample_sets", raw_dir / "evaluation_sample_sets.parquet", overwrite=True)
+            pub_df = download_metadata_sheet("publications", raw_dir / "publications.parquet", overwrite=True)
 
             scores_lf = clean_scores(scores_df)
             perf_lf = clean_performance_metrics(perf_df, eval_df)
             best_perf_lf = best_performance_per_score(perf_lf)
+            pub_lf = clean_publications(pub_df)
 
             paths: dict[str, Path] = {}
-            for name, lf in [("scores", scores_lf), ("performance", perf_lf), ("best_performance", best_perf_lf)]:
+            for name, lf in [
+                ("scores", scores_lf),
+                ("performance", perf_lf),
+                ("best_performance", best_perf_lf),
+                ("publications", pub_lf),
+            ]:
                 p = dest / f"{name}.parquet"
                 lf.collect().write_parquet(p)
                 paths[name] = p
@@ -172,6 +197,7 @@ class PRSCatalog:
             self._scores_lf = scores_lf
             self._perf_lf = perf_lf
             self._best_perf_lf = best_perf_lf
+            self._publications_lf = pub_lf
 
         return paths
 
@@ -283,6 +309,7 @@ class PRSCatalog:
         self._scores_lf = None
         self._perf_lf = None
         self._best_perf_lf = None
+        self._publications_lf = None
         self._ref_dist_cache.clear()
         self._ref_dist_refresh_attempted.clear()
         self._ref_dist_source.clear()
@@ -334,6 +361,27 @@ class PRSCatalog:
         lf = self._ensure_best_performance()
         if pgs_id is not None:
             lf = lf.filter(pl.col("pgs_id").eq(pgs_id))
+        return lf
+
+    def publications(self, pgp_id: str | None = None) -> pl.LazyFrame | None:
+        """Return cleaned publications LazyFrame, optionally filtered by PGP ID.
+
+        Returns None when the publications parquet is unavailable (older cache
+        that predates publications support).
+
+        Args:
+            pgp_id: If provided, filter to this specific PGP ID.
+
+        Returns:
+            Cleaned LazyFrame with columns: pgp_id, pmid, doi, title, authors,
+            journal, date_publication. None if publications data unavailable.
+        """
+        self._load_all()
+        if self._publications_lf is None:
+            return None
+        lf = self._publications_lf
+        if pgp_id is not None:
+            lf = lf.filter(pl.col("pgp_id").eq(pgp_id))
         return lf
 
     def search(
@@ -490,6 +538,316 @@ class PRSCatalog:
         effective_std = math.sqrt(1.0 + d * d / 4.0)
         z = (prs_score - mean) / effective_std
         return round(_norm_cdf(z) * 100.0, 2), "auroc_approx"
+
+    def prevalence_table(self) -> pl.LazyFrame:
+        """Return the prevalence LazyFrame, loading from cache or HF on first access.
+
+        Falls back to an empty LazyFrame if the prevalence parquet is not available.
+        """
+        if self._prevalence_lf is not None:
+            return self._prevalence_lf
+
+        local = self.metadata_dir / "trait_prevalence.parquet"
+        if local.exists():
+            self._prevalence_lf = pl.scan_parquet(local)
+            return self._prevalence_lf
+
+        from just_prs.prevalence import pull_prevalence_from_hf
+
+        pulled = pull_prevalence_from_hf(self.metadata_dir)
+        if pulled is not None and local.exists():
+            self._prevalence_lf = pl.scan_parquet(local)
+            return self._prevalence_lf
+
+        from just_prs.prevalence import _PREVALENCE_SCHEMA
+
+        self._prevalence_lf = pl.LazyFrame(schema=_PREVALENCE_SCHEMA)
+        return self._prevalence_lf
+
+    def heritability_table(self) -> pl.LazyFrame:
+        """Return the heritability LazyFrame, loading from cache or HF on first access.
+
+        Contains multiple rows per EFO ID (one per ancestry × source × method).
+        Falls back to an empty LazyFrame if the heritability parquet is not available.
+        """
+        if self._heritability_lf is not None:
+            return self._heritability_lf
+
+        local = self.metadata_dir / "trait_heritability.parquet"
+        if local.exists():
+            self._heritability_lf = pl.scan_parquet(local)
+            return self._heritability_lf
+
+        from just_prs.heritability import pull_heritability_from_hf, _HERITABILITY_SCHEMA
+
+        pulled = pull_heritability_from_hf(self.metadata_dir)
+        if pulled is not None and local.exists():
+            self._heritability_lf = pl.scan_parquet(local)
+            return self._heritability_lf
+
+        self._heritability_lf = pl.LazyFrame(schema=_HERITABILITY_SCHEMA)
+        return self._heritability_lf
+
+    def heritability_for_trait(
+        self,
+        efo_ids: list[str],
+        ancestry: str | None = None,
+    ) -> list[dict]:
+        """Look up heritability estimates for given EFO trait IDs.
+
+        Returns all matching rows as dicts with keys: h2_liability, h2_observed,
+        ancestry, source, confidence, source_detail, method.
+
+        Args:
+            efo_ids: List of EFO trait IDs to look up.
+            ancestry: If provided, filter to this ancestry only.
+
+        Returns:
+            List of dicts, one per matching heritability estimate.
+        """
+        h2_lf = self.heritability_table()
+        filtered = h2_lf.filter(pl.col("efo_id").is_in(efo_ids))
+        if ancestry is not None:
+            filtered = filtered.filter(pl.col("ancestry").eq(ancestry))
+
+        rows = filtered.collect()
+        if rows.height == 0:
+            return []
+
+        return rows.to_dicts()
+
+    def absolute_risk_bundle(
+        self,
+        pgs_id: str,
+        z_score: float,
+        sex: str | None = None,
+    ) -> AbsoluteRiskBundle:
+        """Compute ALL available absolute risk estimates for a PGS score.
+
+        Runs every method for which input data exists:
+        - OR-per-SD (from PGS Catalog best_performance)
+        - AUC-bivariate (from PGS Catalog best_performance)
+        - h²-liability (for each ancestry/source in heritability table)
+
+        Returns an AbsoluteRiskBundle with all estimates, a best pick, and
+        agreement information. Returns an empty bundle if prevalence is unavailable.
+
+        Args:
+            pgs_id: PGS Catalog Score ID.
+            z_score: PRS z-score (SDs from population mean).
+            sex: Optional sex filter for sex-specific prevalence.
+
+        Returns:
+            AbsoluteRiskBundle with all available estimates.
+        """
+        from just_prs.absolute_risk import estimate_all_absolute_risks
+
+        score_info = self.score_info_row(pgs_id)
+        if score_info is None:
+            return AbsoluteRiskBundle()
+
+        efo_ids_raw = score_info.get("trait_efo_id")
+        if efo_ids_raw is None:
+            return AbsoluteRiskBundle()
+
+        efo_ids = [e.strip() for e in str(efo_ids_raw).split(",")]
+        if not efo_ids:
+            return AbsoluteRiskBundle()
+
+        prev_lf = self.prevalence_table()
+        prev_filter = prev_lf.filter(pl.col("efo_id").is_in(efo_ids))
+        if sex is not None:
+            sex_filtered = prev_filter.filter(
+                pl.col("sex").eq(sex) | pl.col("sex").is_null()
+            )
+            prev_rows = sex_filtered.collect()
+            if prev_rows.height == 0:
+                prev_rows = prev_filter.collect()
+        else:
+            prev_rows = prev_filter.collect()
+
+        if prev_rows.height == 0:
+            return AbsoluteRiskBundle()
+
+        prev_row = prev_rows.row(0, named=True)
+        prevalence = prev_row.get("prevalence")
+        if prevalence is None or prevalence <= 0 or prevalence >= 1.0:
+            return AbsoluteRiskBundle()
+
+        prevalence_source = prev_row.get("source", "")
+        prevalence_type = prev_row.get("prevalence_type", "lifetime")
+        prev_confidence = prev_row.get("confidence", "moderate")
+
+        best_df = self.best_performance(pgs_id=pgs_id).collect()
+        or_estimate: float | None = None
+        auroc_estimate: float | None = None
+        effect_citation: str | None = None
+
+        if best_df.height > 0:
+            best_row = best_df.row(0, named=True)
+            or_val = best_row.get("or_estimate")
+            if or_val is not None:
+                or_estimate = float(or_val)
+            auroc_val = best_row.get("auroc_estimate")
+            if auroc_val is not None:
+                auroc_estimate = float(auroc_val)
+
+            pgp_id = best_row.get("pgp_id")
+            if pgp_id is not None:
+                pub_lf = self.publications(pgp_id=pgp_id)
+                if pub_lf is not None:
+                    pub_rows = pub_lf.collect()
+                    if pub_rows.height > 0:
+                        pub = pub_rows.row(0, named=True)
+                        authors = pub.get("authors", "")
+                        journal = pub.get("journal", "")
+                        pmid = pub.get("pmid")
+                        first_author = str(authors).split(",")[0].strip() if authors else ""
+                        parts = [first_author]
+                        if journal:
+                            parts.append(str(journal))
+                        if pmid is not None:
+                            parts.append(f"PMID: {pmid}")
+                        effect_citation = ", ".join(p for p in parts if p)
+
+        h2_rows = self.heritability_for_trait(efo_ids)
+        h2_estimates: list[dict] = []
+        for h2_row in h2_rows:
+            h2_lia = h2_row.get("h2_liability")
+            if h2_lia is not None and h2_lia > 0:
+                h2_estimates.append({
+                    "h2_liability": h2_lia,
+                    "ancestry": h2_row.get("ancestry"),
+                    "source": h2_row.get("source", ""),
+                    "confidence": h2_row.get("confidence", "moderate"),
+                    "source_detail": h2_row.get("source_detail", ""),
+                })
+
+        base_caveats: list[str] = []
+        if prevalence_source in ("gwas_catalog_cohort", "pgs_eval_cohort"):
+            base_caveats.append("Cohort case fraction used as prevalence proxy, not true population prevalence")
+        base_caveats.append("This is an estimate, not a clinical diagnosis")
+
+        return estimate_all_absolute_risks(
+            z_score=z_score,
+            prevalence=prevalence,
+            or_estimate=or_estimate,
+            auroc_estimate=auroc_estimate,
+            h2_estimates=h2_estimates if h2_estimates else None,
+            prevalence_source=prevalence_source,
+            prevalence_type=prevalence_type,
+            confidence=prev_confidence,
+            effect_size_citation=effect_citation,
+            caveats=base_caveats,
+        )
+
+    def absolute_risk(
+        self,
+        pgs_id: str,
+        z_score: float,
+        sex: str | None = None,
+    ) -> AbsoluteRisk | None:
+        """Estimate absolute disease risk for a given PGS score and z-score.
+
+        Joins scores -> best_performance -> prevalence and calls the risk
+        estimator. Returns None if required data (prevalence, effect size)
+        is unavailable.
+
+        Args:
+            pgs_id: PGS Catalog Score ID.
+            z_score: PRS z-score (SDs from population mean).
+            sex: Optional sex filter for sex-specific prevalence ('male'/'female').
+
+        Returns:
+            AbsoluteRisk model or None if estimation is not possible.
+        """
+        from just_prs.absolute_risk import estimate_absolute_risk
+
+        score_info = self.score_info_row(pgs_id)
+        if score_info is None:
+            return None
+
+        efo_ids_raw = score_info.get("trait_efo_id")
+        if efo_ids_raw is None:
+            return None
+
+        efo_ids = [e.strip() for e in str(efo_ids_raw).split(",")]
+        if not efo_ids:
+            return None
+
+        prev_lf = self.prevalence_table()
+        prev_filter = prev_lf.filter(pl.col("efo_id").is_in(efo_ids))
+        if sex is not None:
+            sex_filtered = prev_filter.filter(
+                pl.col("sex").eq(sex) | pl.col("sex").is_null()
+            )
+            prev_rows = sex_filtered.collect()
+            if prev_rows.height == 0:
+                prev_rows = prev_filter.collect()
+        else:
+            prev_rows = prev_filter.collect()
+
+        if prev_rows.height == 0:
+            return None
+
+        prev_row = prev_rows.row(0, named=True)
+        prevalence = prev_row.get("prevalence")
+        if prevalence is None or prevalence <= 0 or prevalence >= 1.0:
+            return None
+
+        prevalence_source = prev_row.get("source", "")
+        prevalence_type = prev_row.get("prevalence_type", "lifetime")
+        confidence = prev_row.get("confidence", "moderate")
+
+        best_df = self.best_performance(pgs_id=pgs_id).collect()
+        or_estimate: float | None = None
+        auroc_estimate: float | None = None
+        effect_citation: str | None = None
+
+        if best_df.height > 0:
+            best_row = best_df.row(0, named=True)
+            or_val = best_row.get("or_estimate")
+            if or_val is not None:
+                or_estimate = float(or_val)
+            auroc_val = best_row.get("auroc_estimate")
+            if auroc_val is not None:
+                auroc_estimate = float(auroc_val)
+
+            pgp_id = best_row.get("pgp_id")
+            if pgp_id is not None:
+                pub_lf = self.publications(pgp_id=pgp_id)
+                if pub_lf is not None:
+                    pub_rows = pub_lf.collect()
+                    if pub_rows.height > 0:
+                        pub = pub_rows.row(0, named=True)
+                        authors = pub.get("authors", "")
+                        title = pub.get("title", "")
+                        journal = pub.get("journal", "")
+                        pmid = pub.get("pmid")
+                        first_author = str(authors).split(",")[0].strip() if authors else ""
+                        parts = [first_author]
+                        if journal:
+                            parts.append(str(journal))
+                        if pmid is not None:
+                            parts.append(f"PMID: {pmid}")
+                        effect_citation = ", ".join(p for p in parts if p)
+
+        caveats: list[str] = []
+        if prevalence_source in ("gwas_catalog_cohort", "pgs_eval_cohort"):
+            caveats.append("Cohort case fraction used as prevalence proxy, not true population prevalence")
+        caveats.append("This is an estimate, not a clinical diagnosis")
+
+        return estimate_absolute_risk(
+            z_score=z_score,
+            prevalence=prevalence,
+            or_estimate=or_estimate,
+            auroc_estimate=auroc_estimate,
+            prevalence_source=prevalence_source,
+            prevalence_type=prevalence_type,
+            confidence=confidence,
+            effect_size_citation=effect_citation,
+            caveats=caveats,
+        )
 
     def reference_data_status(
         self,

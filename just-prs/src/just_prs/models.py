@@ -135,6 +135,7 @@ class AbsoluteRiskEstimate(BaseModel):
     ancestry: str | None = Field(default=None, description="Ancestry of the data used (EUR, AFR, etc.)")
     h2_value: float | None = Field(default=None, description="h² value used (for h2_liability method)")
     h2_source: str | None = Field(default=None, description="Source of h² data: 'pan_ukbb', 'gwas_atlas'")
+    h2_source_detail: str | None = Field(default=None, description="Detailed h² source description")
     confidence: str = Field(description="Data quality: 'high', 'moderate', or 'low'")
     prevalence_source: str = Field(description="Where the prevalence data came from")
     prevalence_type: str = Field(description="Type of prevalence: 'lifetime', 'point', or 'cohort'")
@@ -163,6 +164,21 @@ class AbsoluteRiskBundle(BaseModel):
     spread_pp: float | None = Field(
         default=None,
         description="Spread between min and max risk estimates in percentage points",
+    )
+    heritability_status: str = Field(
+        default="not_checked",
+        description=(
+            "h² lookup status: 'used', 'no_mapped_h2', 'table_unavailable', "
+            "or 'not_checked'"
+        ),
+    )
+    heritability_detail: str = Field(
+        default="",
+        description="Plain-language detail about h² usage or why it was unavailable",
+    )
+    heritability_trait_ids: list[str] = Field(
+        default_factory=list,
+        description="Trait IDs considered during h² lookup after ontology expansion",
     )
 
 

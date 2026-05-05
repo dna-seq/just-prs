@@ -37,6 +37,7 @@ from just_prs.heritability import (
     push_heritability_to_hf,
 )
 from just_prs.hf import push_pgs_catalog
+from just_prs.ontology import alias_coverage_metadata
 from just_prs.prevalence import build_prevalence_table, push_prevalence_to_hf
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
 from prs_pipeline.runtime import resource_tracker
@@ -230,6 +231,7 @@ def trait_prevalence(
             scores_lf=scores_lf,
             best_performance_lf=best_perf_lf,
             gwas_summary_df=gwas_summary_df,
+            xref_cache_dir=metadata_dir / "raw" / "ontology_xrefs",
         )
         prevalence_df.write_parquet(out_path)
         context.log.info(f"Built prevalence table: {prevalence_df.height:,} traits.")
@@ -242,6 +244,7 @@ def trait_prevalence(
     context.add_output_metadata({
         "n_traits": prevalence_df.height,
         "output_path": str(out_path),
+        **alias_coverage_metadata(prevalence_df, prefix="prevalence"),
         **{f"n_source_{k}": v for k, v in n_by_source.items()},
     })
     return Output(out_path)
@@ -249,6 +252,7 @@ def trait_prevalence(
 
 @asset(
     group_name="download",
+    deps=[AssetDep("cleaned_pgs_metadata")],
     description=(
         "Downloads SNP heritability estimates from Pan-UK Biobank (~7,200 traits × 6 ancestries) "
         "and GWAS Atlas (~4,700 GWAS). Maps traits to EFO IDs via the EBISPOT EFO-UKB "
@@ -309,6 +313,11 @@ def trait_heritability(
         combined_df = build_heritability_table(
             pan_ukbb_df=pan_ukbb_df,
             gwas_atlas_df=atlas_df,
+            requested_traits_df=pl.read_parquet(metadata_dir / "scores.parquet").select(
+                "trait_efo_id", "trait_efo"
+            ),
+            efo_mappings_df=mappings_df,
+            xref_cache_dir=raw_dir / "ontology_xrefs",
         )
         combined_df.write_parquet(out_path)
         context.log.info(
@@ -326,6 +335,7 @@ def trait_heritability(
         "n_efo_traits": combined_df["efo_id"].n_unique(),
         "n_efo_ukb_mappings": mappings_df.height,
         "output_path": str(out_path),
+        **alias_coverage_metadata(combined_df, prefix="heritability"),
         **{f"n_source_{k}": v for k, v in n_by_source.items()},
     })
     return Output(out_path)
@@ -333,7 +343,53 @@ def trait_heritability(
 
 @asset(
     group_name="upload",
-    deps=[AssetDep("cleaned_pgs_metadata"), AssetDep("scoring_files_parquet"), AssetDep("trait_prevalence"), AssetDep("trait_heritability")],
+    deps=[AssetDep("trait_prevalence"), AssetDep("trait_heritability")],
+    description=(
+        "Uploads trait-level risk metadata to the HuggingFace PGS Catalog dataset: "
+        "trait_prevalence.parquet and trait_heritability.parquet under data/metadata/. "
+        "These tables let PRSCatalog compute absolute-risk estimates from a user's "
+        "PRS z-score using prevalence and h²-liability data."
+    ),
+)
+def hf_pgs_catalog_risk_metadata(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Push prevalence and heritability tables used for absolute-risk estimates."""
+    cache_dir = cache_dir_resource.get_path()
+    metadata_dir = cache_dir / "metadata"
+    repo_id = hf_resource.catalog_repo
+    token = hf_resource.get_token()
+    prevalence_path = metadata_dir / "trait_prevalence.parquet"
+    heritability_path = metadata_dir / "trait_heritability.parquet"
+
+    with resource_tracker("hf_pgs_catalog_risk_metadata", context=context):
+        with start_action(action_type="pipeline:push_pgs_catalog_risk_metadata", repo_id=repo_id):
+            push_prevalence_to_hf(prevalence_path, repo_id=repo_id, token=token)
+            push_heritability_to_hf(heritability_path, repo_id=repo_id, token=token)
+
+    prevalence_df = pl.read_parquet(prevalence_path)
+    heritability_df = pl.read_parquet(heritability_path)
+    url = f"https://huggingface.co/datasets/{repo_id}/tree/main/data/metadata"
+    context.log.info(f"Pushed prevalence and heritability risk metadata to {url}")
+    context.add_output_metadata({
+        "repo_id": repo_id,
+        "url": url,
+        "prevalence_path": "data/metadata/trait_prevalence.parquet",
+        "heritability_path": "data/metadata/trait_heritability.parquet",
+        "n_prevalence_traits": prevalence_df.height,
+        "n_heritability_rows": heritability_df.height,
+        "n_heritability_efo_traits": heritability_df["efo_id"].n_unique(),
+        **alias_coverage_metadata(prevalence_df, prefix="prevalence"),
+        **alias_coverage_metadata(heritability_df, prefix="heritability"),
+    })
+    return Output(url)
+
+
+@asset(
+    group_name="upload",
+    deps=[AssetDep("cleaned_pgs_metadata"), AssetDep("scoring_files_parquet")],
     description=(
         "Uploads the full PGS Catalog dataset — cleaned metadata parquets and "
         "all scoring file parquets — to the HuggingFace dataset "

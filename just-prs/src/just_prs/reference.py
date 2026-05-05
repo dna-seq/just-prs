@@ -20,6 +20,7 @@ from __future__ import annotations
 import gc
 import math
 import re as _re
+import shutil
 import subprocess
 import tarfile
 import time
@@ -82,6 +83,7 @@ REFERENCE_PANEL_URL = REFERENCE_PANELS[DEFAULT_PANEL]["url"]
 
 SUPERPOPULATIONS = ("AFR", "AMR", "EAS", "EUR", "SAS")
 MatchMode = Literal["position", "id"]
+_REFERENCE_PANEL_BUILDS = ("GRCh37", "GRCh38")
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +118,22 @@ QUALITY_DF_SCHEMA: dict[str, pl.DataType] = {
     "error": pl.Utf8,
 }
 
+DISTRIBUTION_ISSUE_SCHEMA: dict[str, pl.DataType] = {
+    "pgs_id": pl.Utf8,
+    "superpopulation": pl.Utf8,
+    "severity": pl.Utf8,
+    "issue": pl.Utf8,
+    "recommended_action": pl.Utf8,
+    "mean": pl.Float64,
+    "std": pl.Float64,
+    "n": pl.Int64,
+    "median": pl.Float64,
+    "p5": pl.Float64,
+    "p25": pl.Float64,
+    "p75": pl.Float64,
+    "p95": pl.Float64,
+}
+
 
 class BatchScoringResult(BaseModel):
     """Result of batch reference PRS scoring across multiple PGS IDs.
@@ -129,6 +147,7 @@ class BatchScoringResult(BaseModel):
     distributions_df: pl.DataFrame
     outcomes: list[ScoringOutcome]
     quality_df: pl.DataFrame
+    distribution_issues_df: pl.DataFrame
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -145,6 +164,53 @@ def reference_panel_dir(cache_dir: Path | None = None, panel: str = DEFAULT_PANE
     if panel_info is None:
         raise ValueError(f"Unknown panel {panel!r}. Known panels: {list(REFERENCE_PANELS)}")
     return base / "reference_panel" / panel_info["dir_name"]
+
+
+def _build_name_tokens(genome_build: str) -> tuple[str, ...]:
+    """Return filename tokens used by PGS reference panels for a genome build."""
+    normalized = genome_build.upper()
+    if normalized in {"GRCH38", "HG38"}:
+        return ("GRCh38", "hg38")
+    if normalized in {"GRCH37", "HG19"}:
+        return ("GRCh37", "hg19")
+    raise ReferencePanelError(f"Unsupported reference panel build: {genome_build!r}")
+
+
+def _find_reference_panel_file(
+    ref_dir: Path,
+    genome_build: str,
+    extension: str,
+    allow_single_fallback: bool = True,
+) -> Path:
+    """Find a build-specific reference panel file without silently crossing builds."""
+    tokens = tuple(token.lower() for token in _build_name_tokens(genome_build))
+    all_files = sorted(path for path in ref_dir.rglob(f"*{extension}") if path.is_file())
+    matches = [path for path in all_files if any(token in path.name.lower() for token in tokens)]
+    if matches:
+        return matches[0]
+    if allow_single_fallback and len(all_files) == 1:
+        return all_files[0]
+
+    available = ", ".join(path.name for path in all_files[:10]) or "none"
+    raise ReferencePanelError(
+        f"No {extension} file in {ref_dir} for build {genome_build!r} "
+        f"(expected tokens: {', '.join(_build_name_tokens(genome_build))}; available: {available})"
+    )
+
+
+def _reference_panel_complete(ref_dir: Path) -> bool:
+    """Check whether an extracted panel has the files needed for supported builds."""
+    if not ref_dir.exists():
+        return False
+    if not any(path.is_file() for path in ref_dir.rglob("*.psam")):
+        return False
+    for build in _REFERENCE_PANEL_BUILDS:
+        try:
+            _find_reference_panel_file(ref_dir, build, ".pgen", allow_single_fallback=False)
+            _find_reference_panel_file(ref_dir, build, ".pvar.zst", allow_single_fallback=False)
+        except ReferencePanelError:
+            return False
+    return True
 
 
 def download_reference_panel(
@@ -171,13 +237,20 @@ def download_reference_panel(
     url = panel_info["url"]
     tarball_name = url.rsplit("/", 1)[-1]
 
-    if dest.exists() and not overwrite:
+    if dest.exists() and not overwrite and _reference_panel_complete(dest):
         log_message(
             message_type="reference:panel_already_exists",
             path=str(dest),
             panel=panel,
         )
         return dest
+    if dest.exists():
+        log_message(
+            message_type="reference:removing_incomplete_panel",
+            path=str(dest),
+            panel=panel,
+        )
+        shutil.rmtree(dest)
 
     tarball = base / "reference_panel" / tarball_name
     tarball.parent.mkdir(parents=True, exist_ok=True)
@@ -203,15 +276,29 @@ def download_reference_panel(
                             total_mb=round(total / 1e6, 1),
                         )
 
+    tmp_dest = dest.with_name(f"{dest.name}.extracting")
+    if tmp_dest.exists():
+        shutil.rmtree(tmp_dest)
+
     with start_action(action_type="reference:extract_panel", tarball=str(tarball)):
         import zstandard as zstd
 
-        dest.mkdir(parents=True, exist_ok=True)
-        with tarball.open("rb") as fh:
-            dctx = zstd.ZstdDecompressor()
-            with dctx.stream_reader(fh) as reader:
-                with tarfile.open(fileobj=reader, mode="r|") as tar:
-                    tar.extractall(dest)
+        tmp_dest.mkdir(parents=True, exist_ok=True)
+        try:
+            with tarball.open("rb") as fh:
+                dctx = zstd.ZstdDecompressor()
+                with dctx.stream_reader(fh) as reader:
+                    with tarfile.open(fileobj=reader, mode="r|") as tar:
+                        tar.extractall(tmp_dest)
+            if not _reference_panel_complete(tmp_dest):
+                raise ReferencePanelError(
+                    f"Extracted reference panel is incomplete: {tmp_dest}"
+                )
+            tmp_dest.replace(dest)
+        except Exception:
+            shutil.rmtree(tmp_dest, ignore_errors=True)
+            tarball.unlink(missing_ok=True)
+            raise
 
     log_message(message_type="reference:panel_extracted", dest=str(dest), panel=panel)
     return dest
@@ -947,14 +1034,7 @@ class _ResolvedRefPanel:
     )
 
     def __init__(self, ref_dir: Path, genome_build: str = "GRCh38") -> None:
-        build_suffix = "hg38" if genome_build in ("GRCh38", "hg38") else "hg19"
-
-        pvar_zst_files = list(ref_dir.rglob(f"*{build_suffix}*.pvar.zst")) + list(
-            ref_dir.rglob("*.pvar.zst")
-        )
-        if not pvar_zst_files:
-            raise ReferencePanelError(f"No .pvar.zst file in {ref_dir} for build '{build_suffix}'")
-        self.pvar_zst_path = pvar_zst_files[0]
+        self.pvar_zst_path = _find_reference_panel_file(ref_dir, genome_build, ".pvar.zst")
 
         self.pvar_parquet_path = _pvar_parquet_cache_path(self.pvar_zst_path)
         if not self.pvar_parquet_path.exists():
@@ -964,12 +1044,7 @@ class _ResolvedRefPanel:
             if "ID" not in pvar_schema:
                 parse_pvar(self.pvar_zst_path)
 
-        pgen_files = list(ref_dir.rglob(f"*{build_suffix}*.pgen")) + list(
-            ref_dir.rglob("*.pgen")
-        )
-        if not pgen_files:
-            raise ReferencePanelError(f"No .pgen file in {ref_dir} for build '{build_suffix}'")
-        self.pgen_path = pgen_files[0]
+        self.pgen_path = _find_reference_panel_file(ref_dir, genome_build, ".pgen")
 
         psam_files = list(ref_dir.rglob("*.psam"))
         if not psam_files:
@@ -1514,6 +1589,95 @@ def _aggregate_single_pgs(parquet_path: Path, pgs_id: str) -> _SinglePgsAgg | No
     )
 
 
+def distribution_quality_issues(distributions_df: pl.DataFrame) -> pl.DataFrame:
+    """Return one row per distribution-level quality issue.
+
+    The per-PGS quality report tracks scoring outcomes, but some failures only
+    appear after aggregation, e.g. one ancestry group has zero variance or a
+    stale cached distribution contains non-finite values.  This report is meant
+    for manual triage and downstream exclusion decisions.
+    """
+    if distributions_df.height == 0:
+        return pl.DataFrame(schema=DISTRIBUTION_ISSUE_SCHEMA)
+
+    issues: list[dict[str, object]] = []
+    numeric_cols = ("mean", "std", "n", "median", "p5", "p25", "p75", "p95")
+    required_cols = {"pgs_id", "superpopulation", *numeric_cols}
+    missing_cols = required_cols - set(distributions_df.columns)
+    if missing_cols:
+        return pl.DataFrame(
+            [{
+                "pgs_id": "",
+                "superpopulation": "",
+                "severity": "ERROR",
+                "issue": "missing_distribution_columns",
+                "recommended_action": f"fix_distribution_schema:{','.join(sorted(missing_cols))}",
+                "mean": None,
+                "std": None,
+                "n": None,
+                "median": None,
+                "p5": None,
+                "p25": None,
+                "p75": None,
+                "p95": None,
+            }],
+            schema=DISTRIBUTION_ISSUE_SCHEMA,
+        )
+
+    for row in distributions_df.iter_rows(named=True):
+        pgs_id = str(row["pgs_id"])
+        superpopulation = str(row["superpopulation"])
+        stats = {col: row[col] for col in numeric_cols}
+
+        def add_issue(severity: str, issue: str, recommended_action: str) -> None:
+            issues.append({
+                "pgs_id": pgs_id,
+                "superpopulation": superpopulation,
+                "severity": severity,
+                "issue": issue,
+                "recommended_action": recommended_action,
+                **stats,
+            })
+
+        mean = row["mean"]
+        std = row["std"]
+        if mean is None:
+            add_issue("ERROR", "mean_null", "exclude_pgs_until_recomputed")
+        elif not math.isfinite(float(mean)):
+            add_issue("ERROR", "mean_nonfinite", "exclude_pgs_until_recomputed")
+
+        if std is None:
+            add_issue("ERROR", "std_null", "exclude_pgs_until_recomputed")
+            continue
+
+        std_float = float(std)
+        if not math.isfinite(std_float):
+            add_issue("ERROR", "std_nonfinite", "exclude_pgs_until_recomputed")
+        elif std_float == 0.0:
+            add_issue("WARN", "std_zero", "review_or_exclude_superpopulation_percentile")
+
+        median = row["median"]
+        p5 = row["p5"]
+        p95 = row["p95"]
+        if (
+            mean is not None
+            and std is not None
+            and median is not None
+            and p5 is not None
+            and p95 is not None
+            and all(math.isfinite(float(v)) for v in (mean, std, median, p5, p95))
+        ):
+            robust_span = abs(float(p95) - float(p5))
+            tolerance = max(robust_span * 100.0, 1e-6)
+            absolute_scale = max(abs(float(mean)), std_float)
+            if absolute_scale > 1e4 and (abs(float(mean) - float(median)) > tolerance or std_float > tolerance):
+                add_issue("ERROR", "robust_outlier_suspected", "exclude_pgs_until_recomputed")
+
+    if not issues:
+        return pl.DataFrame(schema=DISTRIBUTION_ISSUE_SCHEMA)
+    return pl.DataFrame(issues, schema=DISTRIBUTION_ISSUE_SCHEMA)
+
+
 def compute_reference_prs_batch(
     pgs_ids: list[str],
     ref_dir: Path,
@@ -1534,8 +1698,9 @@ def compute_reference_prs_batch(
     and then discarded to avoid OOM.  Failures are logged and recorded
     in the returned ``outcomes`` list — the loop never aborts.
 
-    Writes both the quality report and the distributions parquet to
-    *cache_dir/percentiles/* (or *cache_dir/percentiles/{output_subdir}/*).
+    Writes the per-PGS quality report, distribution-quality issue report, and
+    distributions parquet to *cache_dir/percentiles/* (or
+    *cache_dir/percentiles/{output_subdir}/*).
 
     Args:
         pgs_ids: PGS Catalog Score IDs to score.
@@ -1798,17 +1963,24 @@ def compute_reference_prs_batch(
                 "p75": pl.Float64, "p95": pl.Float64,
             })
 
+        distribution_issues_df = distribution_quality_issues(distributions_df)
+
         percentiles_dir = cache_dir / "percentiles"
         if output_subdir:
             percentiles_dir = percentiles_dir / output_subdir
         percentiles_dir.mkdir(parents=True, exist_ok=True)
         quality_df.write_parquet(percentiles_dir / f"{panel}_quality.parquet")
+        distribution_issues_df.write_parquet(
+            percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
+        )
         distributions_df.write_parquet(percentiles_dir / f"{panel}_distributions.parquet")
 
         n_ok = sum(1 for o in outcomes if o.status == "ok")
         n_failed = sum(1 for o in outcomes if o.status == "failed")
         n_low = sum(1 for o in outcomes if o.status == "low_match")
         n_zero = sum(1 for o in outcomes if o.status == "zero_variance")
+        n_distribution_errors = distribution_issues_df.filter(pl.col("severity") == "ERROR").height
+        n_distribution_warnings = distribution_issues_df.filter(pl.col("severity") == "WARN").height
         _emit_progress(last_pgs_id="batch", last_status="complete", force=True)
         log_message(
             message_type="reference:batch_complete",
@@ -1819,6 +1991,8 @@ def compute_reference_prs_batch(
             n_low_match=n_low,
             n_zero_variance=n_zero,
             n_distributions=distributions_df.height,
+            n_distribution_errors=n_distribution_errors,
+            n_distribution_warnings=n_distribution_warnings,
         )
 
         return BatchScoringResult(
@@ -1826,6 +2000,7 @@ def compute_reference_prs_batch(
             distributions_df=distributions_df,
             outcomes=outcomes,
             quality_df=quality_df,
+            distribution_issues_df=distribution_issues_df,
         )
 
 

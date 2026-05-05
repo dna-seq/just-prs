@@ -292,6 +292,7 @@ def estimate_absolute_risk_h2(
     prevalence_type: str = "lifetime",
     confidence: str = "moderate",
     h2_source: str = "",
+    h2_source_detail: str | None = None,
     ancestry: str | None = None,
     caveats: list[str] | None = None,
 ) -> AbsoluteRiskEstimate:
@@ -361,6 +362,7 @@ def estimate_absolute_risk_h2(
         ancestry=ancestry,
         h2_value=h2_liability,
         h2_source=h2_source,
+        h2_source_detail=h2_source_detail,
         confidence=confidence,
         prevalence_source=prevalence_source,
         prevalence_type=prevalence_type,
@@ -489,6 +491,7 @@ def estimate_all_absolute_risks(
                 prevalence_type=prevalence_type,
                 confidence=h2_entry.get("confidence", "moderate"),
                 h2_source=h2_entry.get("source", ""),
+                h2_source_detail=h2_entry.get("source_detail"),
                 ancestry=h2_entry.get("ancestry"),
                 caveats=list(caveats or []),
             )

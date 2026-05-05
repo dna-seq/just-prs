@@ -18,6 +18,7 @@ from prs_pipeline.metadata_assets import (
     cleaned_pgs_metadata,
     gwas_studies,
     hf_pgs_catalog,
+    hf_pgs_catalog_risk_metadata,
     raw_pgs_metadata,
     trait_heritability,
     trait_prevalence,
@@ -40,7 +41,7 @@ _score_and_push_assets = dg.AssetSelection.assets(
     "scoring_files_parquet", "reference_scores",
     "raw_pgs_metadata", "cleaned_pgs_metadata",
     "gwas_studies", "trait_prevalence", "trait_heritability",
-    "hf_prs_percentiles",
+    "hf_pgs_catalog_risk_metadata", "hf_prs_percentiles",
 )
 
 score_and_push = dg.define_asset_job(
@@ -63,7 +64,7 @@ _full_pipeline_assets = dg.AssetSelection.assets(
     "reference_scores",
     "raw_pgs_metadata", "cleaned_pgs_metadata",
     "gwas_studies", "trait_prevalence", "trait_heritability",
-    "hf_pgs_catalog", "hf_prs_percentiles",
+    "hf_pgs_catalog", "hf_pgs_catalog_risk_metadata", "hf_prs_percentiles",
 )
 
 full_pipeline = dg.define_asset_job(
@@ -89,7 +90,7 @@ catalog_pipeline = dg.define_asset_job(
         "scoring_files", "scoring_files_parquet",
         "raw_pgs_metadata", "cleaned_pgs_metadata",
         "gwas_studies", "trait_prevalence", "trait_heritability",
-        "hf_pgs_catalog",
+        "hf_pgs_catalog", "hf_pgs_catalog_risk_metadata",
     ) | dg.AssetSelection.checks_for_assets("cleaned_pgs_metadata"),
     description=(
         "Build and push the combined PGS Catalog dataset to HuggingFace "
@@ -133,6 +134,7 @@ _assets = [
     trait_prevalence,
     trait_heritability,
     hf_pgs_catalog,
+    hf_pgs_catalog_risk_metadata,
 ]
 _asset_checks = ALL_ASSET_CHECKS
 _resources = {

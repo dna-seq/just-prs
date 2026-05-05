@@ -22,6 +22,13 @@ from just_prs.hf import (
     _configure_hf_timeouts,
     _resolve_token,
 )
+from just_prs.ontology import (
+    ONTOLOGY_ALIAS_COLUMNS,
+    build_efo_alias_map,
+    colon_trait_id,
+    enrich_with_trait_aliases,
+    normalize_trait_id,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +49,7 @@ _PREVALENCE_SCHEMA = {
     "xref_mondo": pl.Utf8,
     "xref_icd10": pl.Utf8,
     "confidence": pl.Utf8,
+    **ONTOLOGY_ALIAS_COLUMNS,
 }
 
 
@@ -95,6 +103,9 @@ def _gwas_cohort_prevalence(gwas_summary_df: pl.DataFrame) -> pl.LazyFrame:
         pl.lit(None, dtype=pl.Utf8).alias("xref_mondo"),
         pl.lit(None, dtype=pl.Utf8).alias("xref_icd10"),
         pl.lit("low").alias("confidence"),
+        pl.col("efo_id").alias("canonical_efo_id"),
+        pl.lit(None, dtype=pl.Utf8).alias("mapped_from_id"),
+        pl.lit("direct").alias("mapping_source"),
     )
     return result.lazy()
 
@@ -148,6 +159,9 @@ def _pgs_eval_cohort_prevalence(best_performance_lf: pl.LazyFrame, scores_lf: pl
         pl.lit(None, dtype=pl.Utf8).alias("xref_mondo"),
         pl.lit(None, dtype=pl.Utf8).alias("xref_icd10"),
         pl.lit("low").alias("confidence"),
+        pl.col("trait_efo_id").alias("canonical_efo_id"),
+        pl.lit(None, dtype=pl.Utf8).alias("mapped_from_id"),
+        pl.lit("direct").alias("mapping_source"),
     )
     return result.lazy()
 
@@ -157,39 +171,17 @@ def query_ols_xrefs(efo_id: str) -> dict[str, str | None]:
 
     Returns a dict with optional mondo_id, icd10_code, snomed_id keys.
     """
-    import httpx
-
-    iri = f"http://www.ebi.ac.uk/efo/{efo_id}"
-    encoded_iri = iri.replace(":", "%3A").replace("/", "%2F")
-    url = f"https://www.ebi.ac.uk/ols4/api/ontologies/efo/terms/{encoded_iri}"
-
     result: dict[str, str | None] = {"mondo_id": None, "icd10_code": None, "snomed_id": None}
-
-    try:
-        resp = httpx.get(url, follow_redirects=True, timeout=30.0)
-        if resp.status_code != 200:
-            return result
-        data = resp.json()
-    except Exception:
-        return result
-
-    annotation = data.get("annotation", {})
-
-    for key in ("database_cross_reference", "hasDbXref", "exactMatch"):
-        xrefs = annotation.get(key, [])
-        if isinstance(xrefs, list):
-            for xref in xrefs:
-                xref_str = str(xref)
-                if "MONDO:" in xref_str and result["mondo_id"] is None:
-                    result["mondo_id"] = xref_str.split("MONDO:")[-1].strip()
-                    result["mondo_id"] = f"MONDO:{result['mondo_id']}"
-                if "ICD10:" in xref_str and result["icd10_code"] is None:
-                    result["icd10_code"] = xref_str.split("ICD10:")[-1].strip()
-                elif "ICD-10:" in xref_str and result["icd10_code"] is None:
-                    result["icd10_code"] = xref_str.split("ICD-10:")[-1].strip()
-                if "SNOMEDCT:" in xref_str and result["snomed_id"] is None:
-                    result["snomed_id"] = xref_str.split("SNOMEDCT:")[-1].strip()
-
+    normalized = normalize_trait_id(efo_id) or efo_id
+    aliases = build_efo_alias_map([normalized], allow_network=True).get(normalized, [])
+    for alias in aliases:
+        curie = colon_trait_id(alias)
+        if curie.startswith("MONDO:") and result["mondo_id"] is None:
+            result["mondo_id"] = curie
+        if curie.startswith("ICD10:") and result["icd10_code"] is None:
+            result["icd10_code"] = curie.split(":", 1)[1]
+        if curie.startswith("SNOMEDCT:") and result["snomed_id"] is None:
+            result["snomed_id"] = curie.split(":", 1)[1]
     return result
 
 
@@ -205,31 +197,16 @@ def build_efo_xrefs(efo_ids: list[str], cache_dir: Path | None = None) -> pl.Dat
     Returns:
         DataFrame with columns: efo_id, xref_mondo, xref_icd10, xref_snomed.
     """
-    import json
-
     rows: list[dict[str, str | None]] = []
-
+    alias_map = build_efo_alias_map(efo_ids, cache_dir=cache_dir, allow_network=True)
     for efo_id in efo_ids:
-        cached = None
-        cache_file = None
-        if cache_dir is not None:
-            cache_file = cache_dir / f"{efo_id}.json"
-            if cache_file.exists():
-                cached = json.loads(cache_file.read_text())
-
-        if cached is not None:
-            xrefs = cached
-        else:
-            xrefs = query_ols_xrefs(efo_id)
-            if cache_dir is not None and cache_file is not None:
-                cache_dir.mkdir(parents=True, exist_ok=True)
-                cache_file.write_text(json.dumps(xrefs))
+        aliases = alias_map.get(efo_id, [])
 
         rows.append({
             "efo_id": efo_id,
-            "xref_mondo": xrefs.get("mondo_id"),
-            "xref_icd10": xrefs.get("icd10_code"),
-            "xref_snomed": xrefs.get("snomed_id"),
+            "xref_mondo": next((colon_trait_id(a) for a in aliases if a.startswith("MONDO_")), None),
+            "xref_icd10": None,
+            "xref_snomed": None,
         })
 
     return pl.DataFrame(rows)
@@ -240,6 +217,7 @@ def build_prevalence_table(
     best_performance_lf: pl.LazyFrame,
     gwas_summary_df: pl.DataFrame | None = None,
     seed_path: Path | None = None,
+    xref_cache_dir: Path | None = None,
 ) -> pl.DataFrame:
     """Merge all prevalence tiers into a single table.
 
@@ -285,7 +263,23 @@ def build_prevalence_table(
             .drop("_conf_rank")
         )
 
-        return result
+        enriched = enrich_with_trait_aliases(
+            result,
+            cache_dir=xref_cache_dir,
+            allow_network=xref_cache_dir is not None,
+        )
+        enriched = enriched.with_columns(
+            pl.col("confidence")
+            .replace_strict(confidence_order, default=3)
+            .alias("_conf_rank")
+        )
+        return (
+            enriched
+            .sort(["_conf_rank", "mapping_source"])
+            .group_by("efo_id")
+            .first()
+            .drop("_conf_rank")
+        )
 
 
 def pull_prevalence_from_hf(

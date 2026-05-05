@@ -17,8 +17,11 @@ from just_prs.models import ReferenceDistribution
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.reference import (
     SUPERPOPULATIONS,
+    _find_reference_panel_file,
+    _reference_panel_complete,
     aggregate_distributions,
     ancestry_percentile,
+    distribution_quality_issues,
 )
 from just_prs.scoring import resolve_cache_dir
 
@@ -62,6 +65,39 @@ def synthetic_distributions_lf() -> pl.LazyFrame:
 def catalog() -> PRSCatalog:
     """PRSCatalog instance using the test cache dir."""
     return PRSCatalog(cache_dir=TEST_CACHE_DIR)
+
+
+# ---------------------------------------------------------------------------
+# Reference panel file resolution tests
+# ---------------------------------------------------------------------------
+
+class TestReferencePanelResolution:
+    """Tests for local reference panel file discovery."""
+
+    def test_prefers_grch38_files_over_grch37(self, tmp_path: Path) -> None:
+        (tmp_path / "GRCh37_1000G_ALL.pvar.zst").touch()
+        expected = tmp_path / "GRCh38_1000G_ALL.pvar.zst"
+        expected.touch()
+
+        result = _find_reference_panel_file(tmp_path, "GRCh38", ".pvar.zst")
+
+        assert result == expected
+
+    def test_hg38_token_matches_build_file(self, tmp_path: Path) -> None:
+        expected = tmp_path / "panel_hg38.pgen"
+        expected.touch()
+
+        result = _find_reference_panel_file(tmp_path, "GRCh38", ".pgen")
+
+        assert result == expected
+
+    def test_incomplete_panel_is_not_valid(self, tmp_path: Path) -> None:
+        (tmp_path / "GRCh37_1000G_ALL.pgen").touch()
+        (tmp_path / "GRCh37_1000G_ALL.pvar.zst").touch()
+        (tmp_path / "GRCh37_1000G_ALL.psam").touch()
+        (tmp_path / "GRCh38_1000G_ALL.pgen").touch()
+
+        assert not _reference_panel_complete(tmp_path)
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +221,74 @@ class TestAggregateDistributions:
         assert result.filter(pl.col("pgs_id") == "PGS000002")["mean"][0] == pytest.approx(2.0)
 
 
+class TestDistributionQualityIssues:
+    """Tests for distribution-level anomaly reporting."""
+
+    def test_reports_each_nonfinite_and_zero_std_issue(self) -> None:
+        distributions = pl.DataFrame({
+            "pgs_id": ["PGS_BAD", "PGS_FLAT"],
+            "superpopulation": ["EUR", "AFR"],
+            "mean": [float("inf"), 0.0],
+            "std": [float("nan"), 0.0],
+            "n": [633, 893],
+            "median": [1.0, 0.0],
+            "p5": [0.5, 0.0],
+            "p25": [0.8, 0.0],
+            "p75": [1.2, 0.0],
+            "p95": [1.5, 0.0],
+        })
+
+        issues = distribution_quality_issues(distributions)
+
+        assert issues.height == 3
+        assert set(issues["issue"].to_list()) == {
+            "mean_nonfinite",
+            "std_nonfinite",
+            "std_zero",
+        }
+        assert issues.filter(pl.col("severity") == "ERROR").height == 2
+        assert issues.filter(pl.col("severity") == "WARN").height == 1
+
+    def test_returns_empty_schema_when_clean(self) -> None:
+        distributions = pl.DataFrame({
+            "pgs_id": ["PGS_OK"],
+            "superpopulation": ["EUR"],
+            "mean": [1.0],
+            "std": [0.5],
+            "n": [633],
+            "median": [1.0],
+            "p5": [0.2],
+            "p25": [0.7],
+            "p75": [1.3],
+            "p95": [1.8],
+        })
+
+        issues = distribution_quality_issues(distributions)
+
+        assert issues.height == 0
+        assert {"pgs_id", "superpopulation", "severity", "issue"}.issubset(set(issues.columns))
+
+    def test_reports_finite_but_robustly_absurd_distribution(self) -> None:
+        distributions = pl.DataFrame({
+            "pgs_id": ["PGS_CORRUPT"],
+            "superpopulation": ["EUR"],
+            "mean": [1.0e30],
+            "std": [1.0e31],
+            "n": [633],
+            "median": [1.0],
+            "p5": [0.5],
+            "p25": [0.8],
+            "p75": [1.2],
+            "p95": [1.5],
+        })
+
+        issues = distribution_quality_issues(distributions)
+
+        assert issues.height == 1
+        assert issues["issue"][0] == "robust_outlier_suspected"
+        assert issues["severity"][0] == "ERROR"
+
+
 # ---------------------------------------------------------------------------
 # ReferenceDistribution model tests
 # ---------------------------------------------------------------------------
@@ -280,6 +384,30 @@ class TestPRSCatalogPercentile:
         pct, method = catalog.percentile(0.0, "PGS999999", ancestry="EUR")
         assert pct is None
         assert method == "unavailable"
+
+    def test_reference_distributions_filters_untrustworthy_rows(self) -> None:
+        """Bad reference rows must not be exposed as trustworthy percentiles."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cache_dir = Path(tmpdir)
+            percentiles_dir = cache_dir / "percentiles"
+            percentiles_dir.mkdir(parents=True, exist_ok=True)
+            pl.DataFrame({
+                "pgs_id": ["PGS_BAD", "PGS_BAD", "PGS_OK"],
+                "superpopulation": ["EUR", "AFR", "EUR"],
+                "mean": [float("inf"), 0.0, 1.0],
+                "std": [float("nan"), 0.0, 0.5],
+                "n": [633, 893, 633],
+                "median": [1.0, 0.0, 1.0],
+                "p5": [0.5, 0.0, 0.2],
+                "p25": [0.8, 0.0, 0.7],
+                "p75": [1.2, 0.0, 1.3],
+                "p95": [1.5, 0.0, 1.8],
+            }).write_parquet(percentiles_dir / "1000g_distributions.parquet")
+
+            catalog = PRSCatalog(cache_dir=cache_dir)
+            filtered = catalog.reference_distributions().collect()
+
+            assert filtered["pgs_id"].to_list() == ["PGS_OK"]
 
     def test_percentile_refreshes_distributions_on_miss(
         self,

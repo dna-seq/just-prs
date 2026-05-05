@@ -2,11 +2,11 @@
 
 These tests require:
   - The 1000G reference panel extracted at ~/.cache/just-prs/reference_panel/
-  - A PLINK2 binary (auto-downloaded by the plink2_path fixture)
+  - A PLINK2 binary (auto-downloaded only with --run-plink2 if absent)
   - Network access to download PGS scoring files from the PGS Catalog FTP
 
 Tests are skipped automatically if the reference panel is not available.
-Run with: ``uv run pytest just-prs/tests/test_reference_plink2.py -v``
+Run with: ``uv run pytest --run-plink2 -m plink2 just-prs/tests/test_reference_plink2.py -v``
 """
 
 import tempfile
@@ -140,6 +140,7 @@ class TestResolveOtherAlleleCol:
 # compute_reference_prs_plink2 integration tests (need reference panel)
 # ---------------------------------------------------------------------------
 
+@pytest.mark.plink2
 @pytest.mark.skipif(not REF_PANEL_AVAILABLE, reason="1000G reference panel not available")
 class TestComputeReferencePrsPlink2:
     """End-to-end integration tests for compute_reference_prs_plink2."""

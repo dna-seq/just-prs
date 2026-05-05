@@ -75,7 +75,7 @@ def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
             content=(
                 "Show absolute risk estimates from ALL available methods side by side: "
                 "OR per SD (from PGS Catalog evaluation), AUROC model, and "
-                "h²-liability (from Pan-UK Biobank / GWAS Atlas heritability data). "
+                "h²-liability (from Pan-UK Biobank, with archival GWAS Atlas 2019 fallback). "
                 "Different methods may give different numbers — the Agreement column "
                 "shows how well they converge."
             ),
@@ -311,7 +311,8 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 "Absolute Risk estimates translate your PRS percentile into an approximate "
                 "lifetime disease probability using published effect sizes and population "
                 "prevalence data. Multiple methods may be available (OR per SD, AUROC model, "
-                "h²-liability from Pan-UK Biobank or GWAS Atlas). The Agreement column "
+                "h²-liability from Pan-UK Biobank or archival GWAS Atlas 2019 fallback). "
+                "The Agreement column "
                 "shows how well different methods converge. Enable 'All risk estimates' "
                 "to see each method's number. These are statistical estimates — NOT "
                 "clinical diagnoses.",
@@ -359,13 +360,14 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 height="500px",
                 disable_row_selection_on_click=True,
                 detail_columns=[
-                    "risk_level", "risk_hint", "absolute_risk_detail", "summary",
+                    "risk_level", "risk_hint", "absolute_risk_detail", "heritability_detail", "summary",
                     "reference_source_detail", "effect_size_detail",
                 ],
                 detail_labels={
                     "risk_level": "Risk Level",
                     "risk_hint": "Interpretation",
                     "absolute_risk_detail": "Absolute Risk Estimate",
+                    "heritability_detail": "Heritability (h²) Explanation",
                     "summary": "Quality Summary",
                     "reference_source_detail": "Reference Data Source",
                     "effect_size_detail": "Effect Size & Classification",

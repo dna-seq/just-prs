@@ -52,7 +52,12 @@ def _upload_area() -> rx.Component:
             padding="24px",
         ),
         id=UPLOAD_ID,
-        accept={".vcf": ["text/plain"], ".gz": ["application/gzip"]},
+        accept={
+            "text/vcf": [".vcf"],
+            "text/plain": [".vcf"],
+            "application/gzip": [".vcf.gz", ".gz"],
+            "application/octet-stream": [".vcf.gz", ".gz"],
+        },
         max_files=1,
         on_drop=ComputeGridState.handle_vcf_upload(rx.upload_files(upload_id=UPLOAD_ID)),  # type: ignore[arg-type]
         border="2px dashed var(--gray-6)",

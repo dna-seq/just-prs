@@ -14,6 +14,7 @@ UKB field / ICD-10 code → EFO translation.
 import gzip
 import io
 import logging
+import re
 from pathlib import Path
 
 import polars as pl
@@ -24,6 +25,12 @@ from just_prs.hf import (
     HF_DATA_PREFIX,
     _configure_hf_timeouts,
     _resolve_token,
+)
+from just_prs.ontology import (
+    ONTOLOGY_ALIAS_COLUMNS,
+    enrich_with_requested_trait_aliases,
+    enrich_with_trait_aliases,
+    ensure_ontology_alias_columns,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,6 +48,7 @@ GWAS_ATLAS_DATABASE_URLS: tuple[str, ...] = (
     "https://atlas.ctglab.nl/gwasATLAS_v20191115.txt.gz",
     "https://atlas.ctglab.nl/public/gwasATLAS_v20191115.txt.gz",
 )
+GWAS_ATLAS_RELEASE_URL = "https://atlas.ctglab.nl/home/release"
 
 _HERITABILITY_SCHEMA = {
     "efo_id": pl.Utf8,
@@ -57,6 +65,7 @@ _HERITABILITY_SCHEMA = {
     "confidence": pl.Utf8,
     "n_samples": pl.Int64,
     "trait_type": pl.Utf8,
+    **ONTOLOGY_ALIAS_COLUMNS,
 }
 
 _ANCESTRY_MAP_PAN_UKBB = {
@@ -277,6 +286,9 @@ def download_pan_ukbb_heritability(
                     "confidence": conf,
                     "n_samples": n_val,
                     "trait_type": trait_type,
+                    "canonical_efo_id": efo_id,
+                    "mapped_from_id": None,
+                    "mapping_source": "direct",
                 })
 
         result = pl.DataFrame(rows, schema=_HERITABILITY_SCHEMA)
@@ -322,6 +334,26 @@ def download_gwas_atlas_heritability(
             r.raise_for_status()
             resp = r
             break
+
+        if resp is None:
+            with httpx.Client(follow_redirects=True, timeout=300.0) as client:
+                home = client.get("https://atlas.ctglab.nl/")
+                home.raise_for_status()
+                token_match = re.search(r'name="_token" value="([^"]+)"', home.text)
+                if token_match is not None:
+                    release_resp = client.post(
+                        GWAS_ATLAS_RELEASE_URL,
+                        data={"_token": token_match.group(1), "file": "gwasATLAS_v20191115.txt.gz"},
+                        headers={"Referer": "https://atlas.ctglab.nl/"},
+                    )
+                    if release_resp.status_code < 400 and release_resp.content.startswith(b"\x1f\x8b"):
+                        resp = release_resp
+                    else:
+                        logger.warning(
+                            "GWAS Atlas release POST returned HTTP %s with %d bytes.",
+                            release_resp.status_code,
+                            len(release_resp.content),
+                        )
 
         if resp is None:
             logger.warning(
@@ -416,13 +448,11 @@ def download_gwas_atlas_heritability(
             pmid = str(row.get(pmid_col, "")) if pmid_col else ""
 
             conf = "moderate"
-            if z_val is not None and z_val > 4:
-                conf = "high"
-            elif z_val is not None and z_val < 2:
+            if z_val is not None and z_val < 2:
                 conf = "low"
 
             atlas_id = row.get("id", "")
-            source_detail = f"GWAS Atlas id={atlas_id}"
+            source_detail = f"GWAS Atlas v20191115 archival snapshot (2019), id={atlas_id}"
             if pmid:
                 source_detail += f", PMID:{pmid}"
 
@@ -441,6 +471,9 @@ def download_gwas_atlas_heritability(
                 "confidence": conf,
                 "n_samples": n_val,
                 "trait_type": None,
+                "canonical_efo_id": None,
+                "mapped_from_id": None,
+                "mapping_source": "direct",
             })
 
         result = pl.DataFrame(rows, schema=_HERITABILITY_SCHEMA)
@@ -499,6 +532,9 @@ def map_gwas_atlas_to_efo(
 def build_heritability_table(
     pan_ukbb_df: pl.DataFrame | None = None,
     gwas_atlas_df: pl.DataFrame | None = None,
+    requested_traits_df: pl.DataFrame | None = None,
+    efo_mappings_df: pl.DataFrame | None = None,
+    xref_cache_dir: Path | None = None,
 ) -> pl.DataFrame:
     """Merge heritability data from all tiers into a single table.
 
@@ -517,10 +553,10 @@ def build_heritability_table(
         tiers: list[pl.DataFrame] = []
 
         if pan_ukbb_df is not None and pan_ukbb_df.height > 0:
-            tiers.append(pan_ukbb_df.select(list(_HERITABILITY_SCHEMA.keys())))
+            tiers.append(ensure_ontology_alias_columns(pan_ukbb_df).select(list(_HERITABILITY_SCHEMA.keys())))
 
         if gwas_atlas_df is not None and gwas_atlas_df.height > 0:
-            mapped = gwas_atlas_df.filter(pl.col("efo_id").is_not_null())
+            mapped = ensure_ontology_alias_columns(gwas_atlas_df).filter(pl.col("efo_id").is_not_null())
             if mapped.height > 0:
                 tiers.append(mapped.select(list(_HERITABILITY_SCHEMA.keys())))
 
@@ -528,8 +564,21 @@ def build_heritability_table(
             return pl.DataFrame(schema=_HERITABILITY_SCHEMA)
 
         combined = pl.concat(tiers, how="vertical_relaxed")
+        combined = enrich_with_trait_aliases(
+            combined,
+            cache_dir=xref_cache_dir,
+            allow_network=xref_cache_dir is not None,
+        )
+        if requested_traits_df is not None and efo_mappings_df is not None:
+            combined = enrich_with_requested_trait_aliases(
+                combined,
+                requested_traits_df=requested_traits_df,
+                efo_mappings_df=efo_mappings_df,
+                cache_dir=xref_cache_dir,
+                allow_network=xref_cache_dir is not None,
+            )
         logger.info(
-            "Combined heritability table: %d rows for %d EFO traits.",
+            "Combined heritability table: %d rows for %d ontology-resolved traits.",
             combined.height,
             combined["efo_id"].n_unique(),
         )

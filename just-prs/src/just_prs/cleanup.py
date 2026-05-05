@@ -215,11 +215,16 @@ def clean_performance_metrics(
 
 _PUBLICATIONS_COLUMN_RENAME: dict[str, str] = {
     "PGS Publication (PGP) ID": "pgp_id",
+    "PGS Publication/Study (PGP) ID": "pgp_id",
+    "First Author": "first_author",
     "PubMed ID (PMID)": "pmid",
     "Digital Object Identifier (DOI)": "doi",
+    "digital object identifier (doi)": "doi",
     "Title": "title",
     "Author(s)": "authors",
+    "Authors": "authors",
     "Journal": "journal",
+    "Journal Name": "journal",
     "Publication Date": "date_publication",
 }
 

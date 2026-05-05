@@ -41,3 +41,8 @@ prs-pipeline = { workspace = true }
 dev = [
     "pytest>=9.0.2",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "plink2: tests that require the PLINK2 binary (auto-downloaded if not in PATH)",
+]

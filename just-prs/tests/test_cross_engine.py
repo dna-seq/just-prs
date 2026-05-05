@@ -11,7 +11,7 @@ Engines:
 
 Requires:
   - 1000G reference panel at ~/.cache/just-prs/reference_panel/
-  - PLINK2 binary (auto-downloaded by conftest fixture)
+  - PLINK2 binary (auto-downloaded only with --run-plink2 if absent)
   - Network access for PGS scoring file downloads
 """
 

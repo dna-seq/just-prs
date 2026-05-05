@@ -19,6 +19,7 @@ from just_prs.reference import (
     ancestry_percentile,
     compute_reference_prs_batch,
     compute_reference_prs_polars,
+    distribution_quality_issues,
     download_reference_panel,
     enrich_distributions,
     match_scoring_to_pvar,

@@ -110,7 +110,7 @@ class MetadataGridState(LazyFrameGridMixin, AppState):
         """Download (or load cached) a metadata sheet and display in the metadata grid."""
         self.selected_sheet = sheet
         self.status_message = f"Loading {SHEET_LABELS.get(sheet, sheet)}..."
-        cache_path = Path(self.cache_dir) / "metadata" / f"{sheet}.parquet"
+        cache_path = Path(self.cache_dir) / "metadata" / "raw" / f"{sheet}.parquet"
         df = download_metadata_sheet(sheet, cache_path)  # type: ignore[arg-type]
         lf = df.lazy()
         yield from self.set_lazyframe(lf, chunk_size=500)
@@ -257,7 +257,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     prs_genotypes_path: str = ""
     selected_ancestry: str = "EUR"
     compute_all_populations: bool = False
-    show_all_risk_estimates: bool = False
+    show_all_risk_estimates: bool = True
 
     _scores_initialized: bool = False
     _compute_scores_lf: pl.LazyFrame | None = None
@@ -412,19 +412,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     },
                 },
             ),
-            ColumnDef(field="ancestry", header_name="Population", min_width=100),
-            ColumnDef(field="reference_status", header_name="Reference Data", min_width=140),
-            ColumnDef(
-                field="match_rate", header_name="Match Rate", type="number",
-                min_width=130,
-                cell_renderer_type="progress_bar",
-                cell_renderer_config={
-                    "color": "#43a047", "trackColor": "#e8e8e8", "showValue": True,
-                },
-            ),
-            ColumnDef(field="variants_text", header_name="Matched / Total", min_width=120),
-            ColumnDef(field="effect_size", header_name="Effect Size", min_width=120),
             ColumnDef(field="absolute_risk", header_name="Absolute Risk (best)", min_width=180),
+            ColumnDef(field="heritability", header_name="Heritability (h²)", min_width=170),
             ColumnDef(
                 field="risk_agreement", header_name="Agreement",
                 min_width=100,
@@ -442,6 +431,18 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     },
                 },
             ),
+            ColumnDef(field="ancestry", header_name="Population", min_width=100),
+            ColumnDef(field="reference_status", header_name="Reference Data", min_width=140),
+            ColumnDef(
+                field="match_rate", header_name="Match Rate", type="number",
+                min_width=130,
+                cell_renderer_type="progress_bar",
+                cell_renderer_config={
+                    "color": "#43a047", "trackColor": "#e8e8e8", "showValue": True,
+                },
+            ),
+            ColumnDef(field="variants_text", header_name="Matched / Total", min_width=120),
+            ColumnDef(field="effect_size", header_name="Effect Size", min_width=120),
         ])
 
         if self.show_all_risk_estimates:
@@ -535,6 +536,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "effect_size_detail": effect_size_detail,
                 "absolute_risk": r.get("absolute_risk", ""),
                 "absolute_risk_detail": r.get("absolute_risk_detail", ""),
+                "heritability": r.get("heritability", ""),
+                "heritability_detail": r.get("heritability_detail", ""),
                 "risk_agreement": r.get("risk_agreement", ""),
             }
 
@@ -850,6 +853,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             risk_agreement = ""
             risk_estimates_by_method: dict[str, str] = {}
             risk_estimate_methods: list[str] = []
+            heritability_text = "N/A"
+            heritability_detail = "Absolute risk was not computed, so h²-liability was not checked."
             z_score: float | None = None
             if pct_value is not None:
                 from just_prs.absolute_risk import _norm_ppf
@@ -860,6 +865,36 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
             if z_score is not None:
                 bundle = _catalog.absolute_risk_bundle(pgs_id, z_score)
+                h2_estimates = [est for est in bundle.estimates if est.h2_value is not None]
+                if h2_estimates:
+                    heritability_parts: list[str] = []
+                    heritability_detail_parts = [
+                        "h² means population-level heritability: the fraction of trait variation "
+                        "statistically associated with genetic differences in a studied population, "
+                        "not an individual causal percentage."
+                    ]
+                    for est in h2_estimates:
+                        ancestry_label = f"{est.ancestry} " if est.ancestry else ""
+                        source_label = est.h2_source or est.method_label
+                        heritability_parts.append(
+                            f"{ancestry_label}h²={est.h2_value:.3f} ({source_label})"
+                        )
+                        detail = (
+                            f"{est.method_label}: h²={est.h2_value:.3f}, "
+                            f"risk={est.absolute_risk * 100:.1f}%, "
+                            f"ratio={est.risk_ratio:.2f}x, confidence={est.confidence}"
+                        )
+                        if est.h2_source_detail:
+                            detail += f", source detail={est.h2_source_detail}"
+                        heritability_detail_parts.append(detail)
+                    heritability_text = "; ".join(heritability_parts)
+                    heritability_detail = " | ".join(heritability_detail_parts)
+                else:
+                    heritability_text = "No mapped h²"
+                    heritability_detail = (
+                        bundle.heritability_detail
+                        or "No mapped h²-liability estimate is available for this trait."
+                    )
                 if bundle.best_estimate is not None:
                     best = bundle.best_estimate
                     user_pct = best.absolute_risk * 100
@@ -883,10 +918,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                         )
                         for est in bundle.estimates:
                             est_pct = est.absolute_risk * 100
-                            detail_parts.append(
+                            method_detail = (
                                 f"  {est.method_label}: {est_pct:.1f}% "
                                 f"(ratio: {est.risk_ratio:.2f}x, conf: {est.confidence})"
                             )
+                            if est.h2_value is not None:
+                                method_detail += (
+                                    f", h²={est.h2_value:.3f}, "
+                                    f"source={est.h2_source or 'heritability table'}"
+                                )
+                            detail_parts.append(method_detail)
 
                     if best.caveats:
                         detail_parts.append(f"Caveats: {'; '.join(best.caveats)}")
@@ -900,7 +941,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
                     for est in bundle.estimates:
                         est_pct = est.absolute_risk * 100
-                        risk_estimates_by_method[est.method_label] = f"{est_pct:.1f}%"
+                        risk_text = f"{est_pct:.1f}%"
+                        if est.h2_value is not None:
+                            risk_text += f" (h²={est.h2_value:.3f})"
+                        risk_estimates_by_method[est.method_label] = risk_text
                         if est.method_label not in risk_estimate_methods:
                             risk_estimate_methods.append(est.method_label)
 
@@ -940,6 +984,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "reference_source_code": ref_source_code,
                 "absolute_risk": abs_risk_text,
                 "absolute_risk_detail": abs_risk_detail,
+                "heritability": heritability_text,
+                "heritability_detail": heritability_detail,
                 "risk_agreement": risk_agreement,
                 "risk_estimates_by_method": risk_estimates_by_method,
                 "risk_estimate_methods": risk_estimate_methods,
@@ -965,6 +1011,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             return
         columns = [
             "pgs_id", "trait", "score", "percentile", "absolute_risk",
+            "heritability", "heritability_detail",
             "auroc", "quality_label",
             "match_rate", "variants_matched", "variants_total",
             "effect_size", "classification", "ancestry",

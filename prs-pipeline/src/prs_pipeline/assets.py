@@ -21,7 +21,9 @@ SourceAssets (external group) are visualisation-only nodes that document remote
 data Dagster observes but does not create.
 """
 
+import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +44,7 @@ from just_prs.reference import (
     REFERENCE_PANELS,
     REFERENCE_PANEL_URL,
     compute_reference_prs_batch,
+    distribution_quality_issues,
     download_reference_panel,
     enrich_distributions,
 )
@@ -527,8 +530,20 @@ def reference_scores(
     context.log.info(
         f"Scoring complete: {n_ok} ok, {n_failed} failed, {n_problematic} problematic. "
         f"Per-PGS scores: {scores_dir}/<PGS_ID>/scores.parquet  "
-        f"Distributions: {percentiles_dir / f'{panel}_distributions.parquet'}"
+        f"Distributions: {percentiles_dir / f'{panel}_distributions.parquet'}  "
+        f"Distribution issues: {percentiles_dir / f'{panel}_distribution_quality_issues.parquet'}"
     )
+    n_distribution_errors = result.distribution_issues_df.filter(pl.col("severity") == "ERROR").height
+    n_distribution_warnings = result.distribution_issues_df.filter(pl.col("severity") == "WARN").height
+    if result.distribution_issues_df.height > 0:
+        examples = result.distribution_issues_df.select(
+            "pgs_id", "superpopulation", "severity", "issue", "recommended_action"
+        ).head(20).to_dicts()
+        context.log.warning(
+            "Distribution-quality issues detected: "
+            f"errors={n_distribution_errors}, warnings={n_distribution_warnings}, "
+            f"examples={examples}"
+        )
 
     n_total = len(pgs_ids)
     n_cached = sum(1 for o in result.outcomes if o.status == "ok" and o.elapsed_sec is None)
@@ -540,11 +555,14 @@ def reference_scores(
         "n_failed": n_failed,
         "n_cached": n_cached,
         "n_problematic": n_problematic,
+        "n_distribution_quality_errors": n_distribution_errors,
+        "n_distribution_quality_warnings": n_distribution_warnings,
         "coverage_ratio": round(coverage_ratio, 4),
         "n_distributions": result.distributions_df.height,
         "n_pgs_with_distributions": result.distributions_df["pgs_id"].n_unique() if result.distributions_df.height > 0 else 0,
         "per_pgs_scores_dir": str(scores_dir),
         "percentiles_dir": str(percentiles_dir),
+        "distribution_quality_issues_path": str(percentiles_dir / f"{panel}_distribution_quality_issues.parquet"),
         "engine": "polars",
         "test_mode": is_test,
     })
@@ -657,6 +675,63 @@ def _enrich_with_absolute_risk(
     return enriched
 
 
+def _write_distribution_audit_summary(
+    *,
+    issue_df: pl.DataFrame,
+    path: Path,
+    panel: str,
+    input_rows: int,
+    published_rows: int,
+    input_pgs_ids: int,
+    published_pgs_ids: int,
+    fully_removed_pgs_ids: list[str],
+) -> dict[str, Any]:
+    """Write a compact JSON audit summary for the HF percentiles dataset."""
+    issue_counts_by_severity = (
+        {
+            row["severity"]: row["len"]
+            for row in issue_df.group_by("severity").len().iter_rows(named=True)
+        }
+        if issue_df.height > 0
+        else {}
+    )
+    issue_counts_by_type = (
+        {
+            row["issue"]: row["len"]
+            for row in issue_df.group_by("issue").len().iter_rows(named=True)
+        }
+        if issue_df.height > 0
+        else {}
+    )
+    affected_pgs_ids = sorted(issue_df["pgs_id"].unique().to_list()) if issue_df.height > 0 else []
+    quarantined_rows = (
+        issue_df.select("pgs_id", "superpopulation").unique().height
+        if issue_df.height > 0
+        else 0
+    )
+    summary: dict[str, Any] = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "panel": panel,
+        "input_rows": input_rows,
+        "published_rows": published_rows,
+        "quarantined_distribution_rows": quarantined_rows,
+        "input_pgs_ids": input_pgs_ids,
+        "published_pgs_ids": published_pgs_ids,
+        "fully_removed_pgs_ids": fully_removed_pgs_ids,
+        "issue_rows": issue_df.height,
+        "issue_counts_by_severity": issue_counts_by_severity,
+        "issue_counts_by_type": issue_counts_by_type,
+        "affected_pgs_ids": affected_pgs_ids,
+        "policy": (
+            "Rows with any distribution quality issue are quarantined from the "
+            "published distributions parquet. The full issue parquet is retained "
+            "as an audit/debugging sidecar."
+        ),
+    }
+    path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+    return summary
+
+
 # ---------------------------------------------------------------------------
 # Upload asset — push to HuggingFace (represents the HF dataset as an asset)
 # ---------------------------------------------------------------------------
@@ -701,6 +776,43 @@ def hf_prs_percentiles(
     min_coverage = float(min_coverage_str) if min_coverage_str else 0.90
 
     with resource_tracker("hf_prs_percentiles", context=context):
+        issue_report_path = percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
+        audit_summary_path = percentiles_dir / f"{panel}_distribution_audit_summary.json"
+        input_rows = distributions.height
+        input_pgs_ids_set = set(distributions["pgs_id"].unique().to_list()) if distributions.height > 0 else set()
+        issue_df = distribution_quality_issues(distributions)
+        issue_df.write_parquet(issue_report_path)
+        n_quarantined_rows = 0
+        n_error_rows = issue_df.filter(pl.col("severity") == "ERROR").height
+        n_warn_rows = issue_df.filter(pl.col("severity") == "WARN").height
+        if issue_df.height > 0:
+            bad_keys = issue_df.select("pgs_id", "superpopulation").unique()
+            n_quarantined_rows = bad_keys.height
+            distributions = distributions.join(
+                bad_keys,
+                on=["pgs_id", "superpopulation"],
+                how="anti",
+            )
+            context.log.warning(
+                "Quarantined untrustworthy reference distribution rows before publication: "
+                f"{bad_keys.height} unique pgs_id/superpopulation rows "
+                f"({n_error_rows} error issue rows, {n_warn_rows} warning issue rows). "
+                f"Full issue report: {issue_report_path}"
+            )
+
+        published_pgs_ids_set = set(distributions["pgs_id"].unique().to_list()) if distributions.height > 0 else set()
+        fully_removed_pgs_ids = sorted(input_pgs_ids_set - published_pgs_ids_set)
+        audit_summary = _write_distribution_audit_summary(
+            issue_df=issue_df,
+            path=audit_summary_path,
+            panel=panel,
+            input_rows=input_rows,
+            published_rows=distributions.height,
+            input_pgs_ids=len(input_pgs_ids_set),
+            published_pgs_ids=len(published_pgs_ids_set),
+            fully_removed_pgs_ids=fully_removed_pgs_ids,
+        )
+
         enriched = enrich_distributions(distributions, metadata_dir)
         n_metadata_cols = len(enriched.columns) - len(distributions.columns)
         context.log.info(
@@ -738,7 +850,9 @@ def hf_prs_percentiles(
                 f"TEST MODE: skipping HuggingFace push. "
                 f"Results saved locally:\n"
                 f"  Distributions: {parquet_path}\n"
-                f"  Quality report: {percentiles_dir / f'{panel}_quality.parquet'}"
+                f"  Quality report: {percentiles_dir / f'{panel}_quality.parquet'}\n"
+                f"  Distribution issues: {percentiles_dir / f'{panel}_distribution_quality_issues.parquet'}\n"
+                f"  Audit summary: {audit_summary_path}"
             )
             context.add_output_metadata({
                 "panel": panel,
@@ -746,6 +860,12 @@ def hf_prs_percentiles(
                 "hf_push_skipped": True,
                 "distributions_path": str(parquet_path),
                 "quality_path": str(percentiles_dir / f"{panel}_quality.parquet"),
+                "distribution_quality_issues_path": str(percentiles_dir / f"{panel}_distribution_quality_issues.parquet"),
+                "distribution_audit_summary_path": str(audit_summary_path),
+                "n_quarantined_distribution_rows": n_quarantined_rows,
+                "n_distribution_quality_error_rows": n_error_rows,
+                "n_distribution_quality_warning_rows": n_warn_rows,
+                "n_distribution_quality_issue_rows": audit_summary["issue_rows"],
                 "n_rows": enriched.height,
                 "n_columns": len(enriched.columns),
                 "n_metadata_columns_added": n_metadata_cols,
@@ -761,6 +881,8 @@ def hf_prs_percentiles(
             repo_id=repo_id,
             token=token,
             panel=panel,
+            issue_report_path=issue_report_path,
+            audit_summary_path=audit_summary_path,
         )
 
     url = f"https://huggingface.co/datasets/{repo_id}"
@@ -769,6 +891,8 @@ def hf_prs_percentiles(
         f"Results saved locally:\n"
         f"  Distributions: {parquet_path}\n"
         f"  Quality report: {percentiles_dir / f'{panel}_quality.parquet'}\n"
+        f"  Distribution issues: {percentiles_dir / f'{panel}_distribution_quality_issues.parquet'}\n"
+        f"  Audit summary: {audit_summary_path}\n"
         f"  HuggingFace: {url}"
     )
     context.add_output_metadata({
@@ -777,6 +901,12 @@ def hf_prs_percentiles(
         "panel": panel,
         "distributions_path": str(parquet_path),
         "quality_path": str(percentiles_dir / f"{panel}_quality.parquet"),
+        "distribution_quality_issues_path": str(percentiles_dir / f"{panel}_distribution_quality_issues.parquet"),
+        "distribution_audit_summary_path": str(audit_summary_path),
+        "n_quarantined_distribution_rows": n_quarantined_rows,
+        "n_distribution_quality_error_rows": n_error_rows,
+        "n_distribution_quality_warning_rows": n_warn_rows,
+        "n_distribution_quality_issue_rows": audit_summary["issue_rows"],
         "n_rows": enriched.height,
         "n_columns": len(enriched.columns),
         "n_metadata_columns_added": n_metadata_cols,

@@ -15,7 +15,8 @@ TEST_VCF_URL = "https://zenodo.org/records/18370498/files/antonkulaga.vcf?downlo
 TEST_CACHE_DIR = resolve_cache_dir() / "test-data"
 
 PLINK2_BASE_URL = "https://s3.amazonaws.com/plink2-assets"
-PLINK2_VERSION_DATE = "20260110"
+PLINK2_RELEASE_PATH = "alpha6"
+PLINK2_VERSION_DATE = "20260228"
 
 PLINK2_PLATFORM_MAP: dict[tuple[str, str], str] = {
     ("Linux", "x86_64"): f"plink2_linux_x86_64_{PLINK2_VERSION_DATE}.zip",
@@ -24,6 +25,32 @@ PLINK2_PLATFORM_MAP: dict[tuple[str, str], str] = {
     ("Darwin", "x86_64"): f"plink2_mac_{PLINK2_VERSION_DATE}.zip",
     ("Windows", "AMD64"): f"plink2_win64_{PLINK2_VERSION_DATE}.zip",
 }
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Add explicit opt-in flags for heavyweight external parity tests."""
+    parser.addoption(
+        "--run-plink2",
+        action="store_true",
+        default=False,
+        help="Run tests that require PLINK2; downloads the binary to the user cache if absent.",
+    )
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config,
+    items: list[pytest.Item],
+) -> None:
+    """Skip PLINK2-marked tests unless the user explicitly opts in."""
+    if config.getoption("--run-plink2"):
+        return
+
+    skip_plink2 = pytest.mark.skip(
+        reason="requires --run-plink2; may download PLINK2 to the user cache"
+    )
+    for item in items:
+        if "plink2" in item.keywords:
+            item.add_marker(skip_plink2)
 
 
 def _download_plink2(cache_dir: Path) -> Path:
@@ -43,7 +70,7 @@ def _download_plink2(cache_dir: Path) -> Path:
         return binary_path
 
     cache_dir.mkdir(parents=True, exist_ok=True)
-    url = f"{PLINK2_BASE_URL}/{filename}"
+    url = f"{PLINK2_BASE_URL}/{PLINK2_RELEASE_PATH}/{filename}"
     zip_path = cache_dir / filename
 
     with httpx.Client(timeout=300.0, follow_redirects=True) as client:
@@ -89,8 +116,11 @@ def scoring_cache_dir() -> Path:
 
 
 @pytest.fixture(scope="session")
-def plink2_path() -> Path:
-    """Return path to a plink2 binary, downloading it if not in PATH."""
+def plink2_path(request: pytest.FixtureRequest) -> Path:
+    """Return a PLINK2 binary path, downloading only under explicit opt-in."""
+    if not request.config.getoption("--run-plink2"):
+        pytest.skip("requires --run-plink2; may download PLINK2 to the user cache")
+
     system_plink2 = shutil.which("plink2")
     if system_plink2 is not None:
         return Path(system_plink2)

@@ -128,7 +128,7 @@ def test_header_metadata_preserved(
     )
 
     if pgs_id == "PGS000001":
-        assert header.get("trait_reported") == "Breast cancer"
+        assert header.get("trait_reported", "").casefold() == "breast cancer"
 
 
 @pytest.mark.parametrize("pgs_id", TEST_PGS_IDS[:2])

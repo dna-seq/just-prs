@@ -16,6 +16,7 @@ import os
 import polars as pl
 from dagster import AssetCheckResult, AssetCheckSeverity, asset_check
 
+from just_prs.reference import distribution_quality_issues
 from prs_pipeline.resources import CacheDirResource
 
 
@@ -85,13 +86,15 @@ def check_distributions_no_inf_nan(
         )
 
     df = pl.read_parquet(dist_path)
+    issue_df = distribution_quality_issues(df)
+    issue_path = dist_path.with_name(f"{panel}_distribution_quality_issues.parquet")
+    issue_df.write_parquet(issue_path)
+
     n_inf = df.filter(
         pl.col("mean").is_infinite() | pl.col("std").is_infinite()
     ).height
-    n_nan = df.filter(
-        pl.col("mean").is_nan() | pl.col("std").is_nan()
-    ).height
-    n_zero_std = df.filter(pl.col("std") == 0.0).height
+    n_nan = df.filter(pl.col("mean").is_nan() | pl.col("std").is_nan()).height
+    n_zero_std = issue_df.filter(pl.col("issue") == "std_zero").height
 
     n_problematic = n_inf + n_nan + n_zero_std
     passed = n_problematic == 0
@@ -106,6 +109,8 @@ def check_distributions_no_inf_nan(
             "n_nan": n_nan,
             "n_zero_std": n_zero_std,
             "n_problematic_total": n_problematic,
+            "issue_report_path": str(issue_path),
+            "issue_examples": issue_df.head(20).to_dicts() if issue_df.height > 0 else [],
         },
     )
 

@@ -66,7 +66,8 @@ VCF_URL = "https://zenodo.org/api/records/18370498/files/antonkulaga.vcf/content
 VCF_FILENAME = "antonkulaga.vcf"
 
 PLINK2_BASE_URL = "https://s3.amazonaws.com/plink2-assets"
-PLINK2_VERSION_DATE = "20260110"
+PLINK2_RELEASE_PATH = "alpha6"
+PLINK2_VERSION_DATE = "20260228"
 PLINK2_PLATFORM_MAP: dict[tuple[str, str], str] = {
     ("Linux", "x86_64"): f"plink2_linux_x86_64_{PLINK2_VERSION_DATE}.zip",
     ("Linux", "aarch64"): f"plink2_linux_aarch64_{PLINK2_VERSION_DATE}.zip",
@@ -203,7 +204,7 @@ def download_plink2(cache_dir: Path) -> Path | None:
         return binary_path
 
     cache_dir.mkdir(parents=True, exist_ok=True)
-    url = f"{PLINK2_BASE_URL}/{filename}"
+    url = f"{PLINK2_BASE_URL}/{PLINK2_RELEASE_PATH}/{filename}"
     zip_path = cache_dir / filename
     console.print(f"[cyan]Downloading PLINK2 binary → {binary_path}[/cyan]")
     with httpx.Client(timeout=300.0, follow_redirects=True) as client:

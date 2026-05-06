@@ -10,6 +10,7 @@ import pytest
 from just_prs.cleanup import (
     best_performance_per_score,
     clean_performance_metrics,
+    clean_publications,
     clean_scores,
     normalize_genome_build,
     parse_metric_string,
@@ -40,6 +41,12 @@ def raw_perf_df() -> pl.DataFrame:
 def raw_eval_df() -> pl.DataFrame:
     cache_path = RAW_METADATA_DIR / "evaluation_sample_sets.parquet"
     return download_metadata_sheet("evaluation_sample_sets", cache_path)
+
+
+@pytest.fixture(scope="module")
+def raw_publications_df() -> pl.DataFrame:
+    cache_path = RAW_METADATA_DIR / "publications.parquet"
+    return download_metadata_sheet("publications", cache_path)
 
 
 @pytest.fixture(scope="module")
@@ -174,6 +181,19 @@ class TestBestPerformancePerScore:
         assert best.height > 5000
 
 
+class TestCleanPublications:
+    def test_current_catalog_headers_are_mapped(
+        self, raw_publications_df: pl.DataFrame
+    ) -> None:
+        cleaned = clean_publications(raw_publications_df).collect()
+        expected_cols = {
+            "pgp_id", "first_author", "pmid", "doi", "title", "authors",
+            "journal", "date_publication",
+        }
+        assert expected_cols <= set(cleaned.columns)
+        assert cleaned["pgp_id"].drop_nulls().str.starts_with("PGP").all()
+
+
 class TestPRSCatalog:
     def test_scores_returns_cleaned_lazyframe(self, catalog: PRSCatalog) -> None:
         lf = catalog.scores()
@@ -223,6 +243,10 @@ class TestPRSCatalog:
         assert "or_estimate" in best.columns
         assert "auroc_estimate" in best.columns
         assert "n_individuals" in best.columns
+
+    def test_absolute_risk_bundle_tolerates_publications_cache(self, catalog: PRSCatalog) -> None:
+        bundle = catalog.absolute_risk_bundle("PGS000465", 0.0)
+        assert bundle is not None
 
     def test_percentile_with_reference_panel(self, catalog: PRSCatalog) -> None:
         ref_lf = catalog.reference_distributions()

@@ -44,16 +44,19 @@ pip install just-prs[reference]
 | Module | Purpose |
 |--------|---------|
 | `just_prs.prs_catalog` | **`PRSCatalog`** — high-level class for search, PRS computation, and percentile estimation using cleaned bulk metadata (no REST API calls). Persists cleaned parquets locally with HuggingFace sync; percentile lookup refreshes reference distributions from HF on miss; `reference_data_status()` reports whether precomputed reference data exists for a PGS ID, which superpopulations are available, and whether source is local cache vs HF sync. |
-| `just_prs.cleanup` | Pure-function pipeline: genome build normalization, column renaming, metric string parsing, performance metric cleanup |
+| `just_prs.cleanup` | Pure-function pipeline: genome build normalization, column renaming, metric string parsing, performance metric cleanup, publications cleanup |
+| `just_prs.absolute_risk` | Absolute risk estimation from PRS z-scores and population prevalence. Two methods: OR-per-SD (`estimate_absolute_risk_or`) and AUC-bivariate-normal (`estimate_absolute_risk_auc`). Facade `estimate_absolute_risk` picks the best available method. See [methodology doc](docs/absolute-risk-methodology.md). |
+| `just_prs.prevalence` | Prevalence data sourcing and consolidation. 3-tier merge: hand-curated seed CSV (Tier 1) > GWAS Catalog cohort fractions (Tier 2) > PGS eval cohort fractions (Tier 3). `build_prevalence_table()`, `pull_prevalence_from_hf()`, `push_prevalence_to_hf()`, `query_ols_xrefs()`, `build_efo_xrefs()`. |
+| `just_prs.gwas` | GWAS Catalog bulk data download and parsing. `download_gwas_studies()` fetches the bulk TSV and parses case/control counts from free-text sample descriptions. `download_gwas_trait_mappings()` fetches trait-to-EFO mappings. `build_gwas_trait_summary()` joins and aggregates per-EFO-trait. |
 | `just_prs.hf` | HuggingFace Hub integration: `pull_cleaned_parquets()` pulls cleaned metadata parquets from `just-dna-seq/pgs-catalog` (`data/metadata/`); `push_pgs_catalog()` uploads combined metadata+scores to `just-dna-seq/pgs-catalog` and rewrites `data/metadata/scores.parquet` to parquet-first scoring links (`ftp_link`) while preserving original EBI links in `ftp_link_ebi`. |
 | `just_prs.normalize` | VCF normalization: `normalize_vcf()` reads VCF with polars-bio, strips chr prefix, renames id→rsid, computes genotype List[Str], applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, sinks to zstd Parquet. `VcfFilterConfig` (Pydantic v2) holds filter settings. |
 | `just_prs.prs` | `compute_prs()` / `compute_prs_batch()` — core PRS engine. `compute_prs()` accepts optional `genotypes_lf` LazyFrame to skip VCF re-reading when a normalized parquet is available. Supports two weight formats: standard additive (`effect_weight`) and per-dosage (GenoBoost: `dosage_0_weight`, `dosage_1_weight`, `dosage_2_weight`). `is_dosage_weight_format()` detects the format; `_normalize_scoring_columns()` handles both transparently. |
-| `just_prs.reference` | Reference panel utilities and pgen operations: `download_reference_panel()` (panel-aware: `panel="1000g"` or `"hgdp_1kg"`), `parse_pvar()` (parse .pvar.zst with parquet caching), `parse_psam()` (parse .psam sample files), `read_pgen_genotypes()` (extract genotypes from .pgen via pgenlib), `match_scoring_to_pvar()` (allele-aware variant matching via polars — standalone use only), `compute_reference_prs_polars()` (single-PGS scoring using pgenlib + numpy; uses DuckDB for variant matching against pvar parquet to avoid loading 75M rows into memory), `compute_reference_prs_batch()` (memory-efficient batch scoring: resolves panel once via `_ResolvedRefPanel`, uses DuckDB for variant matching, aggregates distributions per PGS ID immediately and discards raw scores, returns `BatchScoringResult`), `compute_reference_prs_plink2()` (legacy, for cross-validation), `aggregate_distributions()`, `enrich_distributions()` (join distributions with cleaned metadata: traits, EFO, AUROC, OR, C-index, ancestry), `ancestry_percentile()`, `ReferencePanelError`. Panel-aware constants: `REFERENCE_PANELS` dict, `DEFAULT_PANEL = "1000g"`. Result models: `ScoringOutcome` (per-ID outcome), `BatchScoringResult` (panel, distributions_df, outcomes, quality_df — no raw scores held in memory). `_ResolvedRefPanel` caches file paths, psam, and variant count once per batch; variant matching uses DuckDB to scan the pvar parquet (~434 MB on disk) without materializing 75M rows in polars (~6 GB). |
+| `just_prs.reference` | Reference panel utilities and pgen operations: `download_reference_panel()` (panel-aware: `panel="1000g"` or `"hgdp_1kg"`), `parse_pvar()` (parse .pvar.zst with parquet caching), `parse_psam()` (parse .psam sample files), `read_pgen_genotypes()` (extract genotypes from .pgen via pgenlib), `match_scoring_to_pvar()` (allele-aware variant matching via polars — standalone use only), `compute_reference_prs_polars()` (single-PGS scoring using pgenlib + numpy; uses DuckDB for variant matching against pvar parquet to avoid loading 75M rows into memory), `compute_reference_prs_batch()` (memory-efficient batch scoring: resolves panel once via `_ResolvedRefPanel`, uses DuckDB for variant matching, aggregates distributions per PGS ID immediately and discards raw scores, returns `BatchScoringResult`), `compute_reference_prs_plink2()` (legacy, for cross-validation), `aggregate_distributions()`, `distribution_quality_issues()` (one row per non-finite/zero-variance distribution anomaly for manual triage and exclusion decisions), `enrich_distributions()` (join distributions with cleaned metadata: traits, EFO, AUROC, OR, C-index, ancestry), `ancestry_percentile()`, `ReferencePanelError`. Panel-aware constants: `REFERENCE_PANELS` dict, `DEFAULT_PANEL = "1000g"`. Result models: `ScoringOutcome` (per-ID outcome), `BatchScoringResult` (panel, distributions_df, outcomes, quality_df, distribution_issues_df — no raw scores held in memory). `_ResolvedRefPanel` caches file paths, psam, and variant count once per batch; variant matching uses DuckDB to scan the pvar parquet (~434 MB on disk) without materializing 75M rows in polars (~6 GB). |
 | `just_prs.vcf` | VCF reading via `polars-bio`, genome build detection, dosage computation |
 | `just_prs.scoring` | Download, parse, and cache PGS scoring files. `SCORING_FILE_SCHEMA` — comprehensive column type map from the PGS Catalog spec (30+ columns). `parse_scoring_file()` transparently reads/writes a parquet cache (zstd-9 compressed) alongside the `.txt.gz`, with header metadata embedded as file-level metadata. `scoring_parquet_path()` computes cache paths. `read_scoring_header()` reads PGS header metadata from parquet or `.txt.gz`. `load_scoring()` checks parquet cache first and skips `.txt.gz` download when it exists. |
 | `just_prs.ftp` | Bulk FTP/HTTPS downloads of raw metadata sheets and scoring files via `fsspec` |
 | `just_prs.catalog` | Synchronous REST API client (`PGSCatalogClient`) for PGS Catalog — used for individual lookups, not for bulk metadata |
-| `just_prs.models` | Pydantic v2 models (`ScoreInfo`, `PRSResult`, `PerformanceInfo`, etc.) |
+| `just_prs.models` | Pydantic v2 models (`ScoreInfo`, `PRSResult`, `PerformanceInfo`, `AbsoluteRisk`, `PublicationInfo`, etc.) |
 | `just_prs.quality` | Pure-logic quality assessment helpers: `classify_model_quality()`, `interpret_prs_result()`, `format_effect_size()`, `format_classification()`. No Reflex dependency -- shared between core library and UI. |
 | `prs_ui.state` | Reflex `AppState` + grid states + `PRSComputeStateMixin(rx.State, mixin=True)`. The mixin encapsulates all PRS computation logic (score loading, selection, batch compute, CSV export) and is designed for reuse in any Reflex app. `ComputeGridState` subclasses it with VCF-upload-specific behavior for the standalone app. |
 | `prs_ui.components` | **Reusable UI components**: `prs_section(state)`, `prs_scores_selector(state)`, `prs_results_table(state)`, `prs_progress_section(state)`, `prs_build_selector(state)`, `prs_compute_button(state)`. Each takes a state class parameter so the same components work with any concrete state inheriting `PRSComputeStateMixin`. |
@@ -66,23 +69,24 @@ pip install just-prs[reference]
 
 Raw PGS Catalog CSVs have data quality issues that `cleanup.py` fixes:
 - **Genome build normalization**: 9 raw variants (hg19, hg37, hg38, NCBI36, hg18, NCBI35, GRCh37, GRCh38, NR) are mapped to canonical `GRCh37`, `GRCh38`, `GRCh36`, or `NR` via `BUILD_NORMALIZATION` dict.
-- **Column renaming**: Verbose PGS column names (e.g. `Polygenic Score (PGS) ID`) become snake_case (`pgs_id`). The full mapping is `_SCORES_COLUMN_RENAME` / `_PERF_COLUMN_RENAME` / `_EVAL_COLUMN_RENAME`.
+- **Column renaming**: Verbose PGS column names (e.g. `Polygenic Score (PGS) ID`) become snake_case (`pgs_id`). The full mapping is `_SCORES_COLUMN_RENAME` / `_PERF_COLUMN_RENAME` / `_EVAL_COLUMN_RENAME` / `_PUBLICATIONS_COLUMN_RENAME`.
 - **Metric string parsing**: Performance metrics stored as strings like `"1.55 [1.52,1.58]"` or `"-0.7 (0.15)"` are parsed into `{estimate, ci_lower, ci_upper, se}` via `parse_metric_string()`.
-- **Performance flattening**: `clean_performance_metrics()` joins with evaluation sample sets and produces numeric columns for OR, HR, Beta, AUROC, and C-index. `best_performance_per_score()` selects one row per PGS ID (largest sample, European-preferred).
+- **Performance flattening**: `clean_performance_metrics()` joins with evaluation sample sets and produces numeric columns for OR, HR, Beta, AUROC, and C-index. Evaluation sample sets now preserve `n_cases` and `n_controls` for prevalence estimation. `best_performance_per_score()` selects one row per PGS ID (largest sample, European-preferred).
+- **Publications cleaning**: `clean_publications()` transforms raw `pgs_all_metadata_publications.csv` into snake_case with columns: `pgp_id`, `first_author`, `title`, `journal`, `year`, `doi`, `pmid`.
 
 ### PRSCatalog class (`just_prs.prs_catalog`)
 
-`PRSCatalog` is the primary interface for working with PGS Catalog data. It produces and persists 3 cleaned parquet files (`scores.parquet`, `performance.parquet`, `best_performance.parquet`) and loads them as LazyFrames. Loading uses a 3-tier fallback chain: local cleaned parquets -> HuggingFace pull -> raw FTP download + cleanup. Raw FTP parquets are cached separately in a `raw/` subdirectory to avoid collision with cleaned files.
+`PRSCatalog` is the primary interface for working with PGS Catalog data. It produces and persists 4 cleaned parquet files (`scores.parquet`, `performance.parquet`, `best_performance.parquet`, `publications.parquet`) and loads them as LazyFrames. Loading uses a 3-tier fallback chain: local cleaned parquets -> HuggingFace pull -> raw FTP download + cleanup. Raw FTP parquets are cached separately in a `raw/` subdirectory to avoid collision with cleaned files.
 
-Key methods: `scores()`, `search()`, `best_performance()`, `score_info_row()`, `compute_prs()`, `compute_prs_batch()`, `percentile()`, `reference_data_status()`, `build_cleaned_parquets()`, `push_to_hf()`.
+Key methods: `scores()`, `search()`, `best_performance()`, `publications()`, `score_info_row()`, `compute_prs()`, `compute_prs_batch()`, `percentile()`, `absolute_risk()`, `reference_data_status()`, `build_cleaned_parquets()`, `push_to_hf()`. The `absolute_risk(pgs_id, z_score, sex=None)` method joins scores, best_performance, prevalence, and publications data to produce an `AbsoluteRisk` estimate using the best available method (OR-per-SD or AUC-bivariate-normal).
 
-The package public API (`just_prs.__init__`) exports: `PRSCatalog`, `ReferencePanelError`, `normalize_vcf`, `VcfFilterConfig`, `resolve_cache_dir`, `classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`, `compute_reference_prs_polars`, `compute_reference_prs_batch`, `download_reference_panel`, `reference_panel_dir`, `parse_pvar`, `parse_psam`, `read_pgen_genotypes`, `match_scoring_to_pvar`, `aggregate_distributions`, `enrich_distributions`, `ancestry_percentile`, `ReferenceDistribution`, `ScoringOutcome`, `BatchScoringResult`, `REFERENCE_PANELS`, `DEFAULT_PANEL`, `__version__`, `__package_name__`.
+The package public API (`just_prs.__init__`) exports: `PRSCatalog`, `ReferencePanelError`, `AbsoluteRisk`, `normalize_vcf`, `VcfFilterConfig`, `resolve_cache_dir`, `classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`, `compute_reference_prs_polars`, `compute_reference_prs_batch`, `download_reference_panel`, `reference_panel_dir`, `parse_pvar`, `parse_psam`, `read_pgen_genotypes`, `match_scoring_to_pvar`, `aggregate_distributions`, `distribution_quality_issues`, `enrich_distributions`, `ancestry_percentile`, `ReferenceDistribution`, `ScoringOutcome`, `BatchScoringResult`, `REFERENCE_PANELS`, `DEFAULT_PANEL`, `__version__`, `__package_name__`.
 
 The `prs-ui` package public API (`prs_ui.__init__`) exports: `PRSComputeStateMixin`, `prs_section`, `prs_scores_selector`, `prs_results_table`, `prs_progress_section`, `prs_build_selector`, `prs_compute_button`.
 
 ### HuggingFace sync (`just_prs.hf`)
 
-Cleaned metadata parquets are synced to/from the HuggingFace dataset repo `just-dna-seq/pgs-catalog` under the `data/metadata/` prefix. The HF token is resolved from: explicit argument > `.env` file (via `python-dotenv`) > `HF_TOKEN` environment variable. CLI commands: `just-prs catalog bulk clean-metadata`, `push-catalog`, `pull-hf`.
+Cleaned metadata parquets (including `publications.parquet` and `trait_prevalence.parquet`) are synced to/from the HuggingFace dataset repo `just-dna-seq/pgs-catalog` under the `data/metadata/` prefix. The HF token is resolved from: explicit argument > `.env` file (via `python-dotenv`) > `HF_TOKEN` environment variable. CLI commands: `just-prs catalog bulk clean-metadata`, `push-catalog`, `pull-hf`.
 
 ### UI architecture notes
 
@@ -243,6 +247,7 @@ result = compute_reference_prs_batch(
 # result.distributions_df: pgs_id, superpopulation, mean, std, n, ...
 # result.outcomes: list[ScoringOutcome] with status, error, timing per ID
 # result.quality_df: polars DataFrame version of outcomes
+# result.distribution_issues_df: distribution-level anomalies for manual exclusion triage
 ```
 
 **Via Python API (single PGS scoring + building blocks):**
@@ -414,7 +419,7 @@ Override with the `PRS_CACHE_DIR` environment variable (or set it in `.env`).
 | `<cache>/scores/` | Cached scoring files for PRS computation. Contains both `.txt.gz` (original download) and `.parquet` (spec-driven parquet cache with zstd-9 compression and embedded PGS header metadata). The pipeline `scoring_files_parquet` asset deletes `.txt.gz` after verified conversion to save disk space (~5.5 GB savings for the full catalog). |
 | `<cache>/normalized/` | Normalized VCF parquets (auto-populated by the web UI) |
 | `<cache>/reference_scores/{panel}/{pgs_id}/` | Per-ID reference panel scores (cached by `compute_reference_prs_batch`) |
-| `<cache>/percentiles/` | Distribution and quality parquets (`{panel}_distributions.parquet`, `{panel}_quality.parquet`) |
+| `<cache>/percentiles/` | Distribution and quality parquets (`{panel}_distributions.parquet`, `{panel}_quality.parquet`, `{panel}_distribution_quality_issues.parquet`) |
 | `<cache>/test-data/` | Test VCF files and fixtures |
 | `<cache>/plink2/` | Auto-downloaded PLINK2 binary |
 
@@ -550,7 +555,7 @@ This hook logs a summary at the end of each successful run: Total Duration, Max 
 | Check | Asset | Severity | What it validates |
 |-------|-------|----------|-------------------|
 | `check_distributions_superpop_completeness` | `reference_scores` | ERROR | Every PGS ID has exactly 5 superpopulation rows |
-| `check_distributions_no_inf_nan` | `reference_scores` | ERROR/WARN | No inf, NaN, or zero-std in distributions |
+| `check_distributions_no_inf_nan` | `reference_scores` | ERROR/WARN | No inf, NaN, or zero-std in distributions; writes `{panel}_distribution_quality_issues.parquet` for full manual triage |
 | `check_distributions_quantile_ordering` | `reference_scores` | ERROR | p5 ≤ p25 ≤ median ≤ p75 ≤ p95 for all rows |
 | `check_distributions_vs_raw_scores` | `reference_scores` | ERROR | Spot-checks 20 PGS IDs: distributions match re-aggregation from raw scores (catches stale data) |
 | `check_distributions_sample_sizes` | `reference_scores` | ERROR | Sample sizes within 1000G panel range (400–1000) |
@@ -558,6 +563,29 @@ This hook logs a summary at the end of each successful run: Total Duration, Max 
 | `check_cleaned_metadata_quality` | `cleaned_pgs_metadata` | ERROR | Non-empty scores, normalized genome builds, best_performance exists |
 
 Checks are included in job selections via `AssetSelection.checks_for_assets()` so they run automatically after their target asset materializes. Jobs that include checks: `full_pipeline`, `score_and_push`, `catalog_pipeline`, `metadata_pipeline`.
+
+### Prevalence and Absolute Risk Pipeline Assets
+
+The metadata pipeline includes two additional assets for disease prevalence and absolute risk:
+
+| Asset | Group | What it does |
+|-------|-------|-------------|
+| `gwas_studies` | `download` | Downloads GWAS Catalog bulk studies TSV + trait mappings, parses case/control counts from free-text sample descriptions via regex, produces `gwas_studies.parquet` |
+| `trait_prevalence` | `compute` | Merges 3 tiers of prevalence data (seed CSV → GWAS cohort fractions → PGS eval cohorts), builds EFO cross-references via OLS4, produces `trait_prevalence.parquet`, synced to HF |
+| `trait_heritability` | `download` | Downloads Pan-UKBB SNP heritability plus GWAS Atlas v20191115 as an archival 2019 fallback, maps source traits to EFO where possible, and must publish ontology-resolved aliases so MONDO/OBA/HP PGS traits can still find EFO-keyed h² estimates |
+| `hf_pgs_catalog_risk_metadata` | `upload` | Uploads `trait_prevalence.parquet` and `trait_heritability.parquet` to `just-dna-seq/pgs-catalog` under `data/metadata/`; this is the HF source of truth for absolute-risk metadata |
+
+The `hf_prs_percentiles` asset enriches distributions with absolute risk columns (`abs_risk_at_mean`, `abs_risk_method`, `abs_risk_prevalence`) using the `estimate_absolute_risk` facade. See [Absolute Risk Methodology](docs/absolute-risk-methodology.md) for the mathematical details.
+
+Before publishing percentiles, `hf_prs_percentiles` must run `distribution_quality_issues()` and quarantine every affected `(pgs_id, superpopulation)` row from `{panel}_distributions.parquet`; the sidecar `{panel}_distribution_quality_issues.parquet` and compact `{panel}_distribution_audit_summary.json` are uploaded for audit/debugging. `PRSCatalog.reference_distributions()` also defensively filters untrustworthy rows on read, so stale local/HF parquets cannot expose bad percentiles to users.
+
+**Ontology-resolved risk metadata is mandatory.** PGS Catalog `trait_efo_id` values are not always EFO IDs; many shipped scores use MONDO, OBA, HP, or other ontology prefixes. Risk metadata must therefore be resolved at the data layer, not patched only in the UI. The pipeline should build/persist ontology aliases for prevalence and heritability (EFO ⇄ MONDO/OBA/HP where OLS4 or source mappings support it), publish the enriched parquets via `hf_pgs_catalog_risk_metadata`, and log alias coverage in Dagster metadata. `PRSCatalog` should exact-match cached IDs first, then use the same ontology resolver as a fallback for old caches or newly observed IDs. The UI must explicitly show when an h²-liability estimate was used and when all heritability mapping failed; silent omission of h² methods is not acceptable.
+
+**Explain h² and ontology mappings for citizen scientists.** UI and public docs must not assume users know what `h²`, EFO, MONDO, OBA, or HP mean. When showing h²-liability, explain that h² is population-level heritability: the fraction of trait variation statistically associated with genetic differences in a studied population, not an individual causal percentage. Explain that EFO/MONDO/OBA/HP are different biomedical vocabularies and ontology mapping lets the app recognize that IDs from different vocabularies may refer to the same or closely related trait. Prefer plain text like `No mapped heritability estimate is available for this trait` over internal-only phrases.
+
+**GWAS Atlas is archival only.** `atlas.ctglab.nl` is still reachable but effectively frozen at Release 3 (`v20191115`, last curated August 2019). Keep it as a reproducible secondary fallback for LDSC SNP-heritability coverage, but do not describe it as current. Pan-UKBB remains the primary h² source; GWAS Atlas rows should be labeled as archival 2019 data and should not receive `high` confidence.
+
+After changing risk metadata resolution, run `uv run pipeline catalog --headless --no-cache` (or `uv run pipeline catalog --no-cache` to monitor in Dagster UI) so old local risk assets are rewritten and enriched `trait_prevalence.parquet` / `trait_heritability.parquet` are uploaded to HuggingFace.
 
 ### Best Practices for Assets & IO
 
@@ -965,44 +993,30 @@ If a Web UI (Reflex, FastAPI) needs to trigger a Dagster job in the background, 
 
 ## Learned User Preferences
 
-- Pipeline sensors and assets must be at least as robust as standard bioinformatics pipeline engines (Nextflow, WDL/Cromwell, Snakemake) — materialization-only checks are unacceptable
-- All pipeline CLI commands (`run`, `catalog`, `launch`) must launch the Dagster UI by default; headless is opt-in via `--headless`
-- Every CLI that starts a server (Reflex UI, Dagster UI) must print its URL prominently in the first lines of output
-- All CLIs must load `.env` via `python-dotenv` at startup; configurable values must be overridable via env vars
-- Deprecation warnings in terminal output are critical blockers — investigate, update to non-deprecated APIs, and update AGENTS.md
-- Never present headless/CLI-only mode as the default for anything that has a UI — the user expects visual monitoring
-- Policy and rules must be written first (in AGENTS.md), then code must comply — not the other way around
-- When the user says "the pipeline should compute scores for all PRS on reference population," they expect the full pipeline to do this automatically without extra commands
-- The user is frustrated by naive automation that only checks surface-level state (e.g. "is it materialized?") instead of actual data completeness
-- Never introduce full `collect()` on large LazyFrames when lazy aggregations suffice — use `pl.collect_all([lf1, lf2])` to stream multiple aggregations in one pass without materialising per-sample data
-- When redundant functionality or bugs live in maintained upstream libraries (e.g. reflex-mui-datagrid), provide a prompt for the upstream AI project instead of monkey-patching — the user maintains those libraries
-- PLINK-related comparison tests should be runnable via explicit pytest markers/tags
-- Prefer foldable datagrid detail panels (`detail_columns`) over separate collapsible card sections for showing related info in grids — keeps everything inline
-- When data is unavailable vs zero, the UI must show "N/A" explicitly — never render empty or gray bars that can be confused with a zero value
+- Pipeline sensors and assets must be as robust as Nextflow/WDL/Snakemake: materialization-only checks are unacceptable, and data completeness must be verified from actual files and quality reports.
+- Pipeline commands with a UI must launch the UI by default, with headless execution only via explicit flags; every server-starting CLI must print its URL prominently and load `.env` at startup.
+- Policy and persistent rules should be written first, then code should comply; for major features, update `AGENTS.md`, README, and methodology/design docs without being asked.
+- Treat deprecation warnings in touched code as blockers: investigate current upstream APIs and update rules/examples so deprecated patterns do not return.
+- Integration tests should use real requests and real data unless the user explicitly asks for mocks or the data is multi-gigabyte; PLINK comparison tests must be opt-in and default clean-clone test runs must not download PLINK2.
+- Avoid full `collect()` on large LazyFrames when lazy aggregations or `pl.collect_all()` can stream the result.
+- When redundant functionality or bugs live in user-maintained upstream libraries such as `reflex-mui-datagrid`, provide a prompt/fix for that project instead of local monkey-patching.
+- UI must distinguish unavailable data from zero with explicit `N/A`; use green for favorable/low-risk and red only for alarming/high-risk results.
+- Long UI text in detail panels must word-wrap, badges should stay short, and foldable datagrid detail panels are preferred over separate cards for PRS result details.
+- Use full population names in UI display, with column grouping for per-population fields; abbreviations like AFR/EUR are for data/internal columns.
+- Do not hardcode memory limits, resource caps, or arbitrary column widths; use RAM percentages/env overrides and content-aware column sizing.
+- For public demos such as just-dna-lite, prefer an immutable public-genome mode: no user uploads on the server, only permissively licensed public genomes, with an FAQ guiding users to install locally for private data.
 
 ## Learned Workspace Facts
 
-- Dagster 1.12+ rejects multiple `Definitions` objects at module scope — never assign a temporary `Definitions` to a module-level variable (even prefixed with `_`); wrap resolution in a function
-- Dagster's SQLite storage produces `database is locked` errors under concurrent writes (multiple runs + daemon + sensors) — these are transient and do not stop runs, but PostgreSQL (`dagster-postgres`) is the production alternative
-- Dagster's `AutomationCondition.on_missing()` and `.eager()` are broken for initial materialization in Dagster 1.12 — use run-once `@dg.sensor` instead
-- The pipeline processes ~5,300 PGS IDs from the EBI catalog; a full scoring run takes several hours at ~0.18 IDs/second with peak RSS around 3–5 GB
-- The `just-dna-seq/pgs-catalog` HuggingFace repo is the single source of truth for cleaned metadata and scoring files; `pull_cleaned_parquets` downloads from `data/metadata/` in this repo; `ftp_link` points to HF parquet mirrors and `ftp_link_ebi` preserves the original EBI URL; the legacy `just-dna-seq/polygenic_risk_scores` metadata-only repo is deprecated
-- The `just-dna-seq/prs-percentiles` HuggingFace repo stores precomputed reference population distributions
-- Dagster UI mode uses `os.execvp` because daemon signal handling breaks under `subprocess.run()`/`Popen()`, and `pipeline run`/`catalog` set `PRS_PIPELINE_FORCE_RUN=1` so the startup sensor submits the job on launch
-- The scoring files parquet cache (zstd-9 compressed) saves ~5.5 GB vs raw `.txt.gz` for the full catalog; scoring file downloads must validate `st_size > 0` — 0-byte or corrupt `.txt.gz` files should be rejected, deleted, and re-fetched
-- `polars collect_schema()` reads only parquet footer metadata — data-page corruption (truncated writes, OOM-killed flushes) is only detected when `collect()` reads row groups; always wrap the full read sequence in try/except for `_CorruptParquet` sentinel
-- `PRSCatalog.percentile()` does a one-time HF refresh on cache miss and retries lookup, so newly computed reference distributions are picked up without manual cache cleanup
-- `lazyframe_grid()` in `reflex_mui_datagrid` hardcodes `on_row_selection_model_change` internally — do not pass another handler via `**extra_props`; implement `handle_lf_grid_row_selection` in the concrete state class instead
-- The 1000G panel `.pvar` `ID` column uses `CHROM:POS:REF:ALT`; `parse_pvar()` must preserve it, `compute_reference_prs_polars(match_mode="id")` exists for PLINK-parity scoring while the default remains position-based matching, and `compute_reference_prs_plink2()` must request `scoresums` for PRS parity
-- `reflex-mui-datagrid` >= 0.2.0 supports foldable detail panels via `detail_columns`, `detail_labels`, `detail_badge_fields`, and `detail_badge_colors` on both `data_grid()` and `lazyframe_grid()`; the PRS UI uses this for scores selector and results grid
-- Population percentile columns (AFR, AMR, EAS, EUR, SAS) only have values when method is `reference_panel` (precomputed 1000G data); theoretical/AUROC methods produce ancestry-agnostic percentiles with N/A for individual populations
-- The `progress_bar` cell renderer in reflex-mui-datagrid renders null as 0% (gray bar) because `Number(null) === 0`; use explicit "N/A" string or a non-progress_bar column type when distinguishing unavailable from zero
-- 15 GenoBoost scores (PGP000546) use per-dosage weights (`dosage_0_weight`, `dosage_1_weight`, `dosage_2_weight`) instead of `effect_weight`; the scoring engine handles both formats transparently via `is_dosage_weight_format()`. Of the 60 total GenoBoost scores, 45 use standard `effect_weight` and 15 use the dosage format.
-- 5 PGS IDs are permanently unscorable with SNP-based reference panels: PGS000343, PGS000941, PGS000966, PGS003757 (HLA allele variants with no genomic coordinates), PGS005228 (2.4M rows where `effect_allele == other_allele` for 100% of variants — upstream data defect)
-- Dagster `dagster dev` defaults to the **multiprocess executor**, which forks child processes. DuckDB, pgenlib, and Arrow/numpy C extensions are not fork-safe — SIGABRT (signal 6) crashes result. All pipeline jobs must use `executor_def=in_process_executor` to avoid forking. Never use `duckdb.sql()` (global singleton connection); always use `duckdb.connect()` with explicit `con.close()`.
-- DuckDB `duckdb.connect()` defaults to unlimited memory — joining scoring files against the 75M-row pvar parquet can spike to 60+ GB RAM. Always pass `config={"memory_limit": _resolve_duckdb_memory_limit()}` which defaults to 50% of total RAM (overridable via `PRS_DUCKDB_MEMORY_LIMIT` absolute value or `PRS_DUCKDB_MEMORY_PERCENT`). DuckDB spills to disk when the limit is exceeded.
-- DuckDB Arrow output uses standard `Utf8` (2 GB per-column limit) by default. When joining against the pvar (75M rows of `CHROM:POS:REF:ALT` strings in the ID column), the string data can exceed 2 GB and cause a polars Rust panic (`max string/binary length exceeded: TryFromIntError`). Always `SET arrow_large_buffer_size = true` before `.pl()` conversion.
-- `pyo3_runtime.PanicException` inherits from `BaseException`, not `Exception` — the standard `except Exception` in batch loops will NOT catch polars/pyo3 Rust panics. Use `except (KeyboardInterrupt, SystemExit): raise` then `except BaseException` to catch panics without swallowing interrupts.
-- Some PGS scoring files contain structural variant alleles with thousands of nucleotides that can trigger string overflow panics during DuckDB-to-polars conversion. Filter alleles longer than 1000 chars before the DuckDB join — they never match SNPs in the 1000G reference panel anyway.
-- The stored `1000g_distributions.parquet` (as of Mar 17 2026) was generated from PLINK2 AVG-mode scores (mean of allele dosages, divides by 2×n_variants) while the current polars engine uses SUM-mode (raw genotype×weight sum). Raw per-sample `scores.parquet` files were regenerated with the polars engine (correct), but the aggregated distributions parquet was NOT re-aggregated — it still reflects the old PLINK2-based values. **ALL 5248 PGS IDs in the distributions parquet have systematically wrong means and stds** (too small by a factor of 2×matched_variants). Must re-aggregate from the raw scores before publishing.
-- `ancestry_percentile()` must guard against NaN std (from single-sample groups or data quality issues). `float("nan") or 0.0` evaluates to `nan` (NaN is truthy), and `nan <= 0` is False, so without an explicit `math.isnan()` check the function would compute `z = (score - mean) / nan` and return NaN instead of None.
+- Dagster 1.12+ rejects multiple module-scope `Definitions`, `AutomationCondition` is unreliable for initial materialization, jobs must use `in_process_executor` because DuckDB/pgenlib/Arrow are not fork-safe under `dagster dev` multiprocessing, and `@asset_check` is non-blocking by default (`severity=ERROR` is only a UI label) so checks that must prevent a bad upload need `blocking=True` to fail the run and skip downstream assets.
+- The pipeline processes about 5,300 EBI PGS IDs; a full reference scoring run takes hours at roughly 0.18 IDs/second with peak RSS around 3-5 GB.
+- `just-dna-seq/pgs-catalog` is the HF source of truth for cleaned metadata, scoring parquet mirrors, and risk metadata, while `just-dna-seq/prs-percentiles` stores precomputed reference population distributions; catalog uploads use Hugging Face `upload_large_folder`, where pre-uploaded blobs may be committed incrementally and reruns resume from staging cache unless `--no-cache` or cache deletion forces more work.
+- Scoring parquet caches save about 5.5 GB versus raw `.txt.gz`; downloads must reject zero-byte/corrupt files, and parquet cache readers must treat unreadable/truncated files as missing and recompute.
+- `PRSCatalog.percentile()` performs a one-time HF refresh on cache miss, so newly computed reference distributions are picked up without manual cache cleanup.
+- `reflex-mui-datagrid` lazy grids own row-selection handling internally; customize by overriding `handle_lf_grid_row_selection`, and use supported `detail_columns`/badge props for foldable detail panels.
+- The 1000G `.pvar` `ID` is `CHROM:POS:REF:ALT`; `parse_pvar()` must preserve it, `compute_reference_prs_polars(match_mode="id")` supports PLINK-parity scoring, and PLINK2 parity uses `scoresums`.
+- GenoBoost includes 15 per-dosage-weight scores handled by `is_dosage_weight_format()`; five known PGS IDs are permanently unscorable with SNP-based reference panels due to HLA/no-coordinate data or upstream allele defects.
+- DuckDB joins against the 75M-row pvar parquet must use explicit `duckdb.connect()`, configured memory limits, closed connections, allele-length filtering, and `SET arrow_large_buffer_size = true` before Polars conversion.
+- The stored `1000g_distributions.parquet` from Mar 17 2026 was generated with PLINK2 AVG-mode and is stale versus current SUM-mode raw scores; delete that distribution parquet to re-aggregate from cached per-PGS scores.
+- Absolute-risk data combines prevalence and heritability sources; `hf_pgs_catalog_risk_metadata` publishes ontology-resolved `trait_prevalence.parquet` and `trait_heritability.parquet`, `PRSCatalog` pulls those from HF when local cache is missing and falls back through the shared ontology resolver when exact IDs miss, and the UI shows all available risk methods plus explicit h² used/unavailable status by default.
+- Metadata browsing must cache raw PGS sheets under `metadata/raw/` so it cannot overwrite cleaned metadata; cleaned `publications.parquet` must contain `pgp_id`, and Reflex backend exception logs must escape Rich markup to avoid masking real errors.

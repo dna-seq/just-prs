@@ -1,11 +1,35 @@
 """PRS UI: Reflex app for browsing PGS Catalog metadata and scoring files."""
 
+import traceback
+
 import reflex as rx
+from reflex_base.event import EventSpec
+from reflex.utils import console
+from rich.markup import escape
 
 from prs_ui.pages.compute import compute_panel
 from prs_ui.pages.metadata import metadata_panel
 from prs_ui.pages.scoring import scoring_panel
 from prs_ui.state import AppState, ComputeGridState
+
+
+def _safe_backend_exception_handler(exception: Exception) -> EventSpec:
+    """Log backend exceptions without letting Rich parse traceback text as markup."""
+    from reflex_components_sonner.toast import toast
+
+    error = "".join(
+        traceback.format_exception(type(exception), exception, exception.__traceback__)
+    )
+    console.error(f"[Reflex Backend Exception]\n {escape(error)}\n")
+    return toast(
+        "An error occurred.",
+        level="error",
+        fallback_to_alert=True,
+        description=f"{type(exception).__name__}: {exception}\nSee logs for details.",
+        position="top-center",
+        id="backend_error",
+        style={"width": "500px", "white-space": "pre-wrap"},
+    )
 
 
 def index() -> rx.Component:
@@ -62,6 +86,7 @@ def index() -> rx.Component:
 
 app = rx.App(
     theme=rx.theme(appearance="light", accent_color="blue"),
+    backend_exception_handler=_safe_backend_exception_handler,
 )
 app.add_page(index, title="PGS Catalog Browser", on_load=ComputeGridState.initialize)
 

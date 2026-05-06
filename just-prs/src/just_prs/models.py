@@ -104,6 +104,84 @@ class ReferenceDistribution(BaseModel):
     p95: float | None = Field(default=None, description="95th percentile PRS")
 
 
+class AbsoluteRisk(BaseModel):
+    """Absolute disease risk estimate derived from PRS z-score and prevalence."""
+
+    absolute_risk: float = Field(description="Estimated absolute risk (e.g. 0.18 = 18% lifetime risk)")
+    population_prevalence: float = Field(description="Population baseline prevalence (e.g. 0.11 = 11%)")
+    risk_ratio: float = Field(description="Risk ratio vs population average (e.g. 1.64x)")
+    method: str = Field(description="Estimation method: 'or_per_sd' or 'auc_bivariate'")
+    confidence: str = Field(description="Data quality confidence: 'high', 'moderate', or 'low'")
+    prevalence_source: str = Field(description="Where the prevalence data came from")
+    prevalence_type: str = Field(description="Type of prevalence: 'lifetime', 'point', or 'cohort'")
+    effect_size_citation: str | None = Field(
+        default=None,
+        description="Paper citation for the OR/AUROC used (e.g. 'Smith et al. 2023, JAMA (PMID: 12345678)')",
+    )
+    caveats: list[str] = Field(
+        default_factory=list,
+        description="Warnings about estimation quality (e.g. 'cohort prevalence used, not population')",
+    )
+
+
+class AbsoluteRiskEstimate(BaseModel):
+    """A single absolute risk estimate from one specific method and data source."""
+
+    absolute_risk: float = Field(description="Estimated disease probability (0-1), e.g. 0.132 = 13.2%")
+    population_prevalence: float = Field(description="Baseline prevalence used, e.g. 0.11 = 11%")
+    risk_ratio: float = Field(description="User's risk relative to population average, e.g. 1.20x")
+    method: str = Field(description="Estimation method: 'or_per_sd', 'auc_bivariate', 'h2_liability'")
+    method_label: str = Field(description="Human-readable label: 'OR per SD', 'AUROC model', 'h² EUR', etc.")
+    ancestry: str | None = Field(default=None, description="Ancestry of the data used (EUR, AFR, etc.)")
+    h2_value: float | None = Field(default=None, description="h² value used (for h2_liability method)")
+    h2_source: str | None = Field(default=None, description="Source of h² data: 'pan_ukbb', 'gwas_atlas'")
+    h2_source_detail: str | None = Field(default=None, description="Detailed h² source description")
+    confidence: str = Field(description="Data quality: 'high', 'moderate', or 'low'")
+    prevalence_source: str = Field(description="Where the prevalence data came from")
+    prevalence_type: str = Field(description="Type of prevalence: 'lifetime', 'point', or 'cohort'")
+    effect_size_citation: str | None = Field(default=None, description="Paper citation for the effect size")
+    caveats: list[str] = Field(default_factory=list, description="Warnings about estimation quality")
+
+
+class AbsoluteRiskBundle(BaseModel):
+    """All available risk estimates for a single PGS score.
+
+    Multiple methods may produce different risk numbers for the same score.
+    This bundle presents all of them for transparency, with a recommended
+    best estimate and an agreement indicator.
+    """
+
+    estimates: list[AbsoluteRiskEstimate] = Field(
+        default_factory=list, description="All computed risk estimates"
+    )
+    best_estimate: AbsoluteRiskEstimate | None = Field(
+        default=None, description="System's recommended best estimate"
+    )
+    agreement: str = Field(
+        default="unknown",
+        description="How well estimates agree: 'high' (<2pp spread), 'moderate' (2-5pp), 'low' (>5pp)",
+    )
+    spread_pp: float | None = Field(
+        default=None,
+        description="Spread between min and max risk estimates in percentage points",
+    )
+    heritability_status: str = Field(
+        default="not_checked",
+        description=(
+            "h² lookup status: 'used', 'no_mapped_h2', 'table_unavailable', "
+            "or 'not_checked'"
+        ),
+    )
+    heritability_detail: str = Field(
+        default="",
+        description="Plain-language detail about h² usage or why it was unavailable",
+    )
+    heritability_trait_ids: list[str] = Field(
+        default_factory=list,
+        description="Trait IDs considered during h² lookup after ontology expansion",
+    )
+
+
 class PRSResult(BaseModel):
     """Result of a polygenic risk score computation."""
 
@@ -139,4 +217,8 @@ class PRSResult(BaseModel):
     percentile_method: str | None = Field(
         default=None,
         description="Method used to compute percentile: 'reference_panel', 'theoretical', or 'auroc_approx'",
+    )
+    absolute_risk: AbsoluteRisk | None = Field(
+        default=None,
+        description="Absolute disease risk estimate based on PRS z-score and prevalence data",
     )

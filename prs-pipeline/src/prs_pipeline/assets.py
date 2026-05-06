@@ -21,7 +21,9 @@ SourceAssets (external group) are visualisation-only nodes that document remote
 data Dagster observes but does not create.
 """
 
+import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +44,7 @@ from just_prs.reference import (
     REFERENCE_PANELS,
     REFERENCE_PANEL_URL,
     compute_reference_prs_batch,
+    distribution_quality_issues,
     download_reference_panel,
     enrich_distributions,
 )
@@ -527,8 +530,20 @@ def reference_scores(
     context.log.info(
         f"Scoring complete: {n_ok} ok, {n_failed} failed, {n_problematic} problematic. "
         f"Per-PGS scores: {scores_dir}/<PGS_ID>/scores.parquet  "
-        f"Distributions: {percentiles_dir / f'{panel}_distributions.parquet'}"
+        f"Distributions: {percentiles_dir / f'{panel}_distributions.parquet'}  "
+        f"Distribution issues: {percentiles_dir / f'{panel}_distribution_quality_issues.parquet'}"
     )
+    n_distribution_errors = result.distribution_issues_df.filter(pl.col("severity") == "ERROR").height
+    n_distribution_warnings = result.distribution_issues_df.filter(pl.col("severity") == "WARN").height
+    if result.distribution_issues_df.height > 0:
+        examples = result.distribution_issues_df.select(
+            "pgs_id", "superpopulation", "severity", "issue", "recommended_action"
+        ).head(20).to_dicts()
+        context.log.warning(
+            "Distribution-quality issues detected: "
+            f"errors={n_distribution_errors}, warnings={n_distribution_warnings}, "
+            f"examples={examples}"
+        )
 
     n_total = len(pgs_ids)
     n_cached = sum(1 for o in result.outcomes if o.status == "ok" and o.elapsed_sec is None)
@@ -540,15 +555,181 @@ def reference_scores(
         "n_failed": n_failed,
         "n_cached": n_cached,
         "n_problematic": n_problematic,
+        "n_distribution_quality_errors": n_distribution_errors,
+        "n_distribution_quality_warnings": n_distribution_warnings,
         "coverage_ratio": round(coverage_ratio, 4),
         "n_distributions": result.distributions_df.height,
         "n_pgs_with_distributions": result.distributions_df["pgs_id"].n_unique() if result.distributions_df.height > 0 else 0,
         "per_pgs_scores_dir": str(scores_dir),
         "percentiles_dir": str(percentiles_dir),
+        "distribution_quality_issues_path": str(percentiles_dir / f"{panel}_distribution_quality_issues.parquet"),
         "engine": "polars",
         "test_mode": is_test,
     })
     return Output(result.distributions_df)
+
+
+# ---------------------------------------------------------------------------
+# Helper — enrich distributions with precomputed absolute risk
+# ---------------------------------------------------------------------------
+
+
+def _enrich_with_absolute_risk(
+    enriched: pl.DataFrame,
+    metadata_dir: Path,
+    context: "AssetExecutionContext",
+) -> pl.DataFrame:
+    """Add absolute risk columns for key percentile z-scores.
+
+    For each row (pgs_id × superpopulation), computes absolute risk at the
+    mean z-score (0.0) using whichever effect size is available (OR preferred,
+    then AUROC). Requires trait_prevalence.parquet in metadata_dir.
+    """
+    from just_prs.absolute_risk import estimate_absolute_risk
+
+    prevalence_path = metadata_dir / "trait_prevalence.parquet"
+    if not prevalence_path.exists():
+        context.log.info("No trait_prevalence.parquet found; skipping absolute risk enrichment.")
+        return enriched
+
+    if "trait_efo_id" not in enriched.columns:
+        context.log.info("No trait_efo_id column in enriched data; skipping absolute risk enrichment.")
+        return enriched
+
+    prevalence_df = pl.read_parquet(prevalence_path)
+    if prevalence_df.height == 0:
+        context.log.info("Empty prevalence table; skipping absolute risk enrichment.")
+        return enriched
+
+    prev_map: dict[str, tuple[float, str, str, str]] = {}
+    for row in prevalence_df.iter_rows(named=True):
+        efo_id = row.get("efo_id")
+        prev = row.get("prevalence")
+        if efo_id and prev and 0 < prev < 1.0:
+            prev_map[efo_id] = (
+                float(prev),
+                row.get("source", ""),
+                row.get("prevalence_type", "lifetime"),
+                row.get("confidence", "moderate"),
+            )
+
+    abs_risk_at_mean: list[float | None] = []
+    abs_risk_method: list[str | None] = []
+    abs_risk_prevalence: list[float | None] = []
+
+    for row in enriched.iter_rows(named=True):
+        efo_ids_raw = row.get("trait_efo_id", "")
+        or_est = row.get("or_estimate")
+        auroc_est = row.get("auroc_estimate")
+
+        if not efo_ids_raw:
+            abs_risk_at_mean.append(None)
+            abs_risk_method.append(None)
+            abs_risk_prevalence.append(None)
+            continue
+
+        efo_ids = [e.strip() for e in str(efo_ids_raw).split(",")]
+        prev_data = None
+        for eid in efo_ids:
+            if eid in prev_map:
+                prev_data = prev_map[eid]
+                break
+
+        if prev_data is None:
+            abs_risk_at_mean.append(None)
+            abs_risk_method.append(None)
+            abs_risk_prevalence.append(None)
+            continue
+
+        prevalence, prev_source, prev_type, confidence = prev_data
+        result = estimate_absolute_risk(
+            z_score=0.0,
+            prevalence=prevalence,
+            or_estimate=float(or_est) if or_est is not None else None,
+            auroc_estimate=float(auroc_est) if auroc_est is not None else None,
+            prevalence_source=prev_source,
+            prevalence_type=prev_type,
+            confidence=confidence,
+        )
+
+        if result is not None:
+            abs_risk_at_mean.append(result.absolute_risk)
+            abs_risk_method.append(result.method)
+            abs_risk_prevalence.append(result.population_prevalence)
+        else:
+            abs_risk_at_mean.append(None)
+            abs_risk_method.append(None)
+            abs_risk_prevalence.append(None)
+
+    enriched = enriched.with_columns(
+        pl.Series("abs_risk_at_mean", abs_risk_at_mean, dtype=pl.Float64),
+        pl.Series("abs_risk_method", abs_risk_method, dtype=pl.Utf8),
+        pl.Series("abs_risk_prevalence", abs_risk_prevalence, dtype=pl.Float64),
+    )
+
+    n_with_risk = sum(1 for v in abs_risk_at_mean if v is not None)
+    context.log.info(
+        f"Absolute risk enrichment: {n_with_risk}/{enriched.height} rows "
+        f"have precomputed absolute risk at mean z-score."
+    )
+    return enriched
+
+
+def _write_distribution_audit_summary(
+    *,
+    issue_df: pl.DataFrame,
+    path: Path,
+    panel: str,
+    input_rows: int,
+    published_rows: int,
+    input_pgs_ids: int,
+    published_pgs_ids: int,
+    fully_removed_pgs_ids: list[str],
+) -> dict[str, Any]:
+    """Write a compact JSON audit summary for the HF percentiles dataset."""
+    issue_counts_by_severity = (
+        {
+            row["severity"]: row["len"]
+            for row in issue_df.group_by("severity").len().iter_rows(named=True)
+        }
+        if issue_df.height > 0
+        else {}
+    )
+    issue_counts_by_type = (
+        {
+            row["issue"]: row["len"]
+            for row in issue_df.group_by("issue").len().iter_rows(named=True)
+        }
+        if issue_df.height > 0
+        else {}
+    )
+    affected_pgs_ids = sorted(issue_df["pgs_id"].unique().to_list()) if issue_df.height > 0 else []
+    quarantined_rows = (
+        issue_df.select("pgs_id", "superpopulation").unique().height
+        if issue_df.height > 0
+        else 0
+    )
+    summary: dict[str, Any] = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "panel": panel,
+        "input_rows": input_rows,
+        "published_rows": published_rows,
+        "quarantined_distribution_rows": quarantined_rows,
+        "input_pgs_ids": input_pgs_ids,
+        "published_pgs_ids": published_pgs_ids,
+        "fully_removed_pgs_ids": fully_removed_pgs_ids,
+        "issue_rows": issue_df.height,
+        "issue_counts_by_severity": issue_counts_by_severity,
+        "issue_counts_by_type": issue_counts_by_type,
+        "affected_pgs_ids": affected_pgs_ids,
+        "policy": (
+            "Rows with any distribution quality issue are quarantined from the "
+            "published distributions parquet. The full issue parquet is retained "
+            "as an audit/debugging sidecar."
+        ),
+    }
+    path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+    return summary
 
 
 # ---------------------------------------------------------------------------
@@ -558,11 +739,12 @@ def reference_scores(
 @asset(
     group_name="upload",
     ins={"distributions": AssetIn("reference_scores")},
-    deps=[AssetDep("cleaned_pgs_metadata")],
+    deps=[AssetDep("cleaned_pgs_metadata"), AssetDep("trait_prevalence")],
     description=(
         "Enriches the raw distribution statistics with cleaned PGS Catalog metadata "
         "(trait names, EFO terms, best performance metrics like AUROC/OR/C-index, "
-        "ancestry info) and uploads the enriched parquet to the HuggingFace dataset "
+        "ancestry info) and precomputed absolute risk estimates at key percentile "
+        "buckets, then uploads the enriched parquet to the HuggingFace dataset "
         "just-dna-seq/prs-percentiles. This makes the population-level PRS percentiles "
         "self-contained and publicly available. End-users of the just-prs library pull "
         "this dataset via PRSCatalog.percentile() to compare their personal scores "
@@ -594,12 +776,51 @@ def hf_prs_percentiles(
     min_coverage = float(min_coverage_str) if min_coverage_str else 0.90
 
     with resource_tracker("hf_prs_percentiles", context=context):
+        issue_report_path = percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
+        audit_summary_path = percentiles_dir / f"{panel}_distribution_audit_summary.json"
+        input_rows = distributions.height
+        input_pgs_ids_set = set(distributions["pgs_id"].unique().to_list()) if distributions.height > 0 else set()
+        issue_df = distribution_quality_issues(distributions)
+        issue_df.write_parquet(issue_report_path)
+        n_quarantined_rows = 0
+        n_error_rows = issue_df.filter(pl.col("severity") == "ERROR").height
+        n_warn_rows = issue_df.filter(pl.col("severity") == "WARN").height
+        if issue_df.height > 0:
+            bad_keys = issue_df.select("pgs_id", "superpopulation").unique()
+            n_quarantined_rows = bad_keys.height
+            distributions = distributions.join(
+                bad_keys,
+                on=["pgs_id", "superpopulation"],
+                how="anti",
+            )
+            context.log.warning(
+                "Quarantined untrustworthy reference distribution rows before publication: "
+                f"{bad_keys.height} unique pgs_id/superpopulation rows "
+                f"({n_error_rows} error issue rows, {n_warn_rows} warning issue rows). "
+                f"Full issue report: {issue_report_path}"
+            )
+
+        published_pgs_ids_set = set(distributions["pgs_id"].unique().to_list()) if distributions.height > 0 else set()
+        fully_removed_pgs_ids = sorted(input_pgs_ids_set - published_pgs_ids_set)
+        audit_summary = _write_distribution_audit_summary(
+            issue_df=issue_df,
+            path=audit_summary_path,
+            panel=panel,
+            input_rows=input_rows,
+            published_rows=distributions.height,
+            input_pgs_ids=len(input_pgs_ids_set),
+            published_pgs_ids=len(published_pgs_ids_set),
+            fully_removed_pgs_ids=fully_removed_pgs_ids,
+        )
+
         enriched = enrich_distributions(distributions, metadata_dir)
         n_metadata_cols = len(enriched.columns) - len(distributions.columns)
         context.log.info(
             f"Enriched distributions with {n_metadata_cols} metadata columns "
             f"({distributions.height} rows, {len(enriched.columns)} total columns)."
         )
+
+        enriched = _enrich_with_absolute_risk(enriched, metadata_dir, context)
 
         n_scored = enriched["pgs_id"].n_unique() if enriched.height > 0 else 0
         try:
@@ -629,7 +850,9 @@ def hf_prs_percentiles(
                 f"TEST MODE: skipping HuggingFace push. "
                 f"Results saved locally:\n"
                 f"  Distributions: {parquet_path}\n"
-                f"  Quality report: {percentiles_dir / f'{panel}_quality.parquet'}"
+                f"  Quality report: {percentiles_dir / f'{panel}_quality.parquet'}\n"
+                f"  Distribution issues: {percentiles_dir / f'{panel}_distribution_quality_issues.parquet'}\n"
+                f"  Audit summary: {audit_summary_path}"
             )
             context.add_output_metadata({
                 "panel": panel,
@@ -637,6 +860,12 @@ def hf_prs_percentiles(
                 "hf_push_skipped": True,
                 "distributions_path": str(parquet_path),
                 "quality_path": str(percentiles_dir / f"{panel}_quality.parquet"),
+                "distribution_quality_issues_path": str(percentiles_dir / f"{panel}_distribution_quality_issues.parquet"),
+                "distribution_audit_summary_path": str(audit_summary_path),
+                "n_quarantined_distribution_rows": n_quarantined_rows,
+                "n_distribution_quality_error_rows": n_error_rows,
+                "n_distribution_quality_warning_rows": n_warn_rows,
+                "n_distribution_quality_issue_rows": audit_summary["issue_rows"],
                 "n_rows": enriched.height,
                 "n_columns": len(enriched.columns),
                 "n_metadata_columns_added": n_metadata_cols,
@@ -652,6 +881,8 @@ def hf_prs_percentiles(
             repo_id=repo_id,
             token=token,
             panel=panel,
+            issue_report_path=issue_report_path,
+            audit_summary_path=audit_summary_path,
         )
 
     url = f"https://huggingface.co/datasets/{repo_id}"
@@ -660,6 +891,8 @@ def hf_prs_percentiles(
         f"Results saved locally:\n"
         f"  Distributions: {parquet_path}\n"
         f"  Quality report: {percentiles_dir / f'{panel}_quality.parquet'}\n"
+        f"  Distribution issues: {percentiles_dir / f'{panel}_distribution_quality_issues.parquet'}\n"
+        f"  Audit summary: {audit_summary_path}\n"
         f"  HuggingFace: {url}"
     )
     context.add_output_metadata({
@@ -668,6 +901,12 @@ def hf_prs_percentiles(
         "panel": panel,
         "distributions_path": str(parquet_path),
         "quality_path": str(percentiles_dir / f"{panel}_quality.parquet"),
+        "distribution_quality_issues_path": str(percentiles_dir / f"{panel}_distribution_quality_issues.parquet"),
+        "distribution_audit_summary_path": str(audit_summary_path),
+        "n_quarantined_distribution_rows": n_quarantined_rows,
+        "n_distribution_quality_error_rows": n_error_rows,
+        "n_distribution_quality_warning_rows": n_warn_rows,
+        "n_distribution_quality_issue_rows": audit_summary["issue_rows"],
         "n_rows": enriched.height,
         "n_columns": len(enriched.columns),
         "n_metadata_columns_added": n_metadata_cols,

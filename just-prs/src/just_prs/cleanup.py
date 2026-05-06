@@ -198,6 +198,8 @@ def clean_performance_metrics(
 
     eval_agg = eval_renamed.group_by("pss_id").agg(
         pl.col("n_individuals").sum().alias("n_individuals"),
+        pl.col("n_cases").sum().alias("n_cases"),
+        pl.col("n_controls").sum().alias("n_controls"),
         pl.col("ancestry_broad").first().alias("ancestry_broad"),
     ).collect()
 
@@ -209,6 +211,42 @@ def clean_performance_metrics(
         result = result.drop(drop_cols)
 
     return result.lazy()
+
+
+_PUBLICATIONS_COLUMN_RENAME: dict[str, str] = {
+    "PGS Publication (PGP) ID": "pgp_id",
+    "PGS Publication/Study (PGP) ID": "pgp_id",
+    "First Author": "first_author",
+    "PubMed ID (PMID)": "pmid",
+    "Digital Object Identifier (DOI)": "doi",
+    "digital object identifier (doi)": "doi",
+    "Title": "title",
+    "Author(s)": "authors",
+    "Authors": "authors",
+    "Journal": "journal",
+    "Journal Name": "journal",
+    "Publication Date": "date_publication",
+}
+
+
+def rename_publications_columns(lf: pl.LazyFrame) -> pl.LazyFrame:
+    """Rename raw PGS Catalog publications columns to snake_case."""
+    current_cols = set(lf.collect_schema().names())
+    target_cols = set(_PUBLICATIONS_COLUMN_RENAME.values())
+    already_renamed = target_cols & current_cols
+    if already_renamed and not (set(_PUBLICATIONS_COLUMN_RENAME.keys()) & current_cols):
+        return lf.select([pl.col(c) for c in _PUBLICATIONS_COLUMN_RENAME.values() if c in current_cols])
+    rename_map = {k: v for k, v in _PUBLICATIONS_COLUMN_RENAME.items() if k in current_cols}
+    return lf.select([pl.col(old).alias(new) for old, new in rename_map.items()])
+
+
+def clean_publications(df: pl.DataFrame) -> pl.LazyFrame:
+    """Full cleanup pipeline for the publications metadata sheet.
+
+    Renames columns to snake_case and selects only the fields useful for
+    linking PGS scores/performance to their source papers.
+    """
+    return rename_publications_columns(df.lazy())
 
 
 def best_performance_per_score(perf_lf: pl.LazyFrame) -> pl.LazyFrame:

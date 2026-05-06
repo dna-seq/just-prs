@@ -1,6 +1,7 @@
 """PLINK2 comparison tests: validate our PRS against PLINK2 --score output.
 
-PLINK2 is auto-downloaded if not found in PATH (see conftest.plink2_path fixture).
+Run with ``uv run pytest --run-plink2 -m plink2``. PLINK2 is downloaded to the
+user cache only when these tests are explicitly enabled and no binary is in PATH.
 """
 
 import math
@@ -15,6 +16,8 @@ from just_prs.prs import compute_prs
 from just_prs.scoring import download_scoring_file, parse_scoring_file
 
 PGS_IDS_GRCH38 = ["PGS000001", "PGS000002", "PGS000003", "PGS000004", "PGS000005"]
+
+pytestmark = pytest.mark.plink2
 
 
 def _prepare_plink_scoring_file(scoring_path: Path, output_dir: Path) -> Path:

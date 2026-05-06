@@ -1,6 +1,6 @@
 from importlib.metadata import metadata
 
-from just_prs.models import ReferenceDistribution
+from just_prs.models import AbsoluteRisk, AbsoluteRiskBundle, AbsoluteRiskEstimate, ReferenceDistribution
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.quality import (
@@ -19,6 +19,7 @@ from just_prs.reference import (
     ancestry_percentile,
     compute_reference_prs_batch,
     compute_reference_prs_polars,
+    distribution_quality_issues,
     download_reference_panel,
     enrich_distributions,
     match_scoring_to_pvar,

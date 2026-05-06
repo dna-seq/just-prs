@@ -28,10 +28,11 @@ def test_get_score_download_url() -> None:
 def test_get_trait_coronary_artery_disease() -> None:
     """Fetch coronary artery disease trait and verify metadata."""
     with PGSCatalogClient() as client:
-        trait = client.get_trait("EFO_0001645")
+        trait = client.get_trait("MONDO_0005010")
 
-    assert trait.id == "EFO_0001645"
-    assert trait.label == "coronary artery disease"
+    assert trait.id == "MONDO_0005010"
+    assert trait.label == "coronary artery disorder"
+    assert "coronary artery disease" in trait.trait_synonyms
     assert len(trait.associated_pgs_ids) > 0
     assert any(pid.startswith("PGS") for pid in trait.associated_pgs_ids)
 

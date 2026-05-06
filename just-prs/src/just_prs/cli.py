@@ -1148,12 +1148,20 @@ def reference_score_batch(
     console.print(f"  Per-PGS scores:  {scores_dir}/{{PGS_ID}}/scores.parquet")
     console.print(f"  Distributions:   {percentiles_dir / f'{panel}_distributions.parquet'}")
     console.print(f"  Quality report:  {percentiles_dir / f'{panel}_quality.parquet'}")
+    console.print(f"  Issue report:    {percentiles_dir / f'{panel}_distribution_quality_issues.parquet'}")
 
     if result.distributions_df.height > 0:
         console.print(
             f"  {result.distributions_df['pgs_id'].n_unique()} PGS IDs x "
             f"{result.distributions_df['superpopulation'].n_unique()} superpopulations = "
             f"{result.distributions_df.height} distribution rows"
+        )
+    if result.distribution_issues_df.height > 0:
+        n_errors = result.distribution_issues_df.filter(pl.col("severity") == "ERROR").height
+        n_warnings = result.distribution_issues_df.filter(pl.col("severity") == "WARN").height
+        console.print(
+            f"  [yellow]{result.distribution_issues_df.height} distribution issues "
+            f"(errors={n_errors}, warnings={n_warnings})[/yellow]"
         )
 
 

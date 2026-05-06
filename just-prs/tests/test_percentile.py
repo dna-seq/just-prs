@@ -218,6 +218,7 @@ class TestPercentileEndToEnd:
         )
 
 
+@pytest.mark.plink2
 class TestPercentileVsPlink2:
     """Cross-validate PRS scores against PLINK2 for scores with allele frequencies.
 

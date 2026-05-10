@@ -1442,7 +1442,7 @@ dependencies = [
 requires-dist = [
     { name = "just-prs", editable = "just-prs" },
     { name = "reflex", specifier = ">=0.9.1" },
-    { name = "reflex-mui-datagrid", specifier = ">=0.2.5" },
+    { name = "reflex-mui-datagrid", editable = "../reflex-mui-datagrid" },
 ]
 
 [[package]]
@@ -1974,16 +1974,28 @@ wheels = [
 
 [[package]]
 name = "reflex-mui-datagrid"
-version = "0.2.5"
-source = { registry = "https://pypi.org/simple" }
+version = "0.2.6"
+source = { editable = "../reflex-mui-datagrid" }
 dependencies = [
     { name = "polars" },
     { name = "reflex" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d8/c6/1c65f32f2318cde84b5190970f4aa4c09338378f3d3255f188b42c193d72/reflex_mui_datagrid-0.2.5.tar.gz", hash = "sha256:6c19d7cd5abd16b67621025e20241207596f94122bfce5aeb1b96f7ba828169a", size = 50744, upload-time = "2026-05-02T22:02:29.301Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3e/1a/5d1041ae54b176c33e736db0b09f4bc7ffb45c9c65a321b5287a55f6640c/reflex_mui_datagrid-0.2.5-py3-none-any.whl", hash = "sha256:fe8eab42a00c6c67bc011ca6989ffc3c02598bfce6c7e363ef54c3e0700fb6e5", size = 55613, upload-time = "2026-05-02T22:02:27.703Z" },
+
+[package.metadata]
+requires-dist = [
+    { name = "polars", specifier = ">=1.40.1" },
+    { name = "polars-bio", marker = "python_full_version < '3.15' and extra == 'bio'", specifier = ">=0.29.0" },
+    { name = "reflex", specifier = ">=0.9.1" },
+    { name = "typer", specifier = ">=0.24.1" },
+]
+provides-extras = ["bio"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "datagrid-demo", editable = "../reflex-mui-datagrid/examples/datagrid_demo" },
+    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "reflex-mui-datagrid", extras = ["bio"] },
 ]
 
 [[package]]

@@ -5,14 +5,14 @@
 This project is a **uv workspace** with a non-published root wrapper and three subprojects:
 
 - **`just-prs/src/just_prs/`** — Core library: PRS computation, PGS Catalog REST API client, FTP downloads, VCF reading, scoring file parsing. CLI entrypoint via Typer. Published to PyPI as `just-prs`.
-- **`prs-ui/`** — Reflex web app for interactive PRS computation. Has its own `pyproject.toml` and depends on `just_prs`. Run with `uv run ui` from workspace root or `uv run reflex run` from inside `prs-ui/`. Published to PyPI as `prs-ui`.
+- **`prs-ui/`** — Reflex web app for interactive PRS computation. Has its own `pyproject.toml` and depends on `just_prs`. Run with `uv run ui` or `uv run start` from workspace root or `uv run reflex run` from inside `prs-ui/`. Published to PyPI as `prs-ui`.
 - **`prs-pipeline/`** — Dagster pipeline for computing PRS reference distributions from the 1000G panel. Has its own `pyproject.toml` and depends on `just_prs`. All pipeline commands (`run`, `catalog`, `launch`) default to launching the Dagster UI for monitoring. Use `--headless` on `run`/`catalog` for in-process execution without UI.
 
 The workspace root (`pyproject.toml` at repo root) is a non-published wrapper named `just-prs-workspace`. It depends on all three subprojects and **must re-export all CLI entry points** from subprojects so that every command is available via `uv run <name>` from the workspace root. The pipeline CLI has three main commands: `pipeline run` (full pipeline with Dagster UI), `pipeline catalog` (catalog pipeline with Dagster UI), and `pipeline launch` (Dagster UI only, no specific job pre-selected). All three launch the Dagster UI by default. Use `--headless` on `run`/`catalog` for in-process execution without UI. Tests live in `just-prs/tests/`.
 
 **ALL PIPELINE COMMANDS LAUNCH DAGSTER UI BY DEFAULT (CRITICAL).** `pipeline run`, `pipeline catalog`, and `pipeline launch` all start the Dagster webserver with monitoring UI. Headless in-process execution is only available via the explicit `--headless` flag on `run`/`catalog`. The Dagster UI URL (`http://<host>:<port>`) must always be printed prominently at startup.
 
-**EVERY CLI THAT STARTS A SERVER MUST PRINT ITS URL (CRITICAL).** When any CLI command starts a web server or UI (Reflex UI via `uv run ui`, Dagster UI via `pipeline run`/`catalog`/`launch`), the URL (`http://<host>:<port>`) must be printed prominently in the first lines of output so the user always knows where to open their browser.
+**EVERY CLI THAT STARTS A SERVER MUST PRINT ITS URL (CRITICAL).** When any CLI command starts a web server or UI (Reflex UI via `uv run ui` or `uv run start`, Dagster UI via `pipeline run`/`catalog`/`launch`), the URL (`http://<host>:<port>`) must be printed prominently in the first lines of output so the user always knows where to open their browser.
 
 **ALL CLIs LOAD `.env` VIA `python-dotenv` AT STARTUP (CRITICAL).** Both `prs_ui.cli` and `prs_pipeline.cli` call `load_dotenv()` before reading any configuration. Users override defaults by setting env vars in `.env` (see `.env.template`). Key config env vars: `PRS_UI_HOST`, `PRS_UI_PORT` (Reflex UI, default `0.0.0.0:3000`), `PRS_PIPELINE_HOST`, `PRS_PIPELINE_PORT` (Dagster UI, default `0.0.0.0:3010`), `PRS_CACHE_DIR`, `HF_TOKEN`, `PRS_PIPELINE_PANEL`, `PRS_PIPELINE_STARTUP_JOB`, `PRS_DUCKDB_MEMORY_LIMIT` (DuckDB per-connection memory cap for pvar joins, e.g. `"8GB"`; default: 50% of total RAM), `PRS_DUCKDB_MEMORY_PERCENT` (percentage of total RAM for DuckDB if `PRS_DUCKDB_MEMORY_LIMIT` is not set, default `50`), `PRS_GENO_CHUNK_SIZE` (override auto-sized genotype chunk, default auto), `PRS_MEMORY_SAFETY_PERCENT` (percent of total RAM kept as safety floor, default `10`), `PRS_MEMORY_SAFETY_MIN_MB` (minimum safety floor in MB, default `512`). When adding new configurable values, always read them from env vars with sensible defaults, document them in `.env.template`, and mention them in `AGENTS.md`.
 
@@ -23,6 +23,7 @@ The workspace root (`pyproject.toml` at repo root) is a non-published wrapper na
 | `prs` | `just_prs.cli:run` | `just-prs` |
 | `just-prs` | `just_prs.cli:run` | `just-prs` |
 | `ui` | `prs_ui.cli:launch_ui` | `prs-ui` |
+| `start` | `prs_ui.cli:launch_ui` | `prs-ui` (alias of `ui`) |
 | `pipeline` | `prs_pipeline.cli:app` | `prs-pipeline` |
 
 ### Optional dependencies
@@ -112,7 +113,7 @@ The web UI is a Reflex app in the `prs-ui/` workspace member:
 
 ```bash
 uv sync --all-packages
-uv run ui
+uv run ui   # alias: uv run start
 ```
 
 Or equivalently:
@@ -122,7 +123,7 @@ cd prs-ui
 uv run reflex run
 ```
 
-This launches a local web server (default http://0.0.0.0:3000). The CLI always prints the UI URL prominently at startup. The `ui` script entry point is defined in both the root `pyproject.toml` (convenience) and `prs-ui/pyproject.toml`, pointing to `prs_ui.cli:launch_ui`.
+This launches a local web server (default http://0.0.0.0:3000). The CLI always prints the UI URL prominently at startup. The `ui` and `start` script entry points (aliases) are defined in both the root `pyproject.toml` (convenience) and `prs-ui/pyproject.toml`, pointing to `prs_ui.cli:launch_ui`.
 
 ### Computing PRS on a custom VCF
 

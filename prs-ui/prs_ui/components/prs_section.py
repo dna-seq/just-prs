@@ -18,7 +18,12 @@ Usage in a host app::
 """
 
 import reflex as rx
-from reflex_mui_datagrid import data_grid, lazyframe_grid, lazyframe_grid_stats_bar
+from reflex_mui_datagrid import (
+    PlotlyDetailSupport,
+    data_grid,
+    lazyframe_grid,
+    lazyframe_grid_stats_bar,
+)
 
 
 def prs_build_selector(state: type[rx.State]) -> rx.Component:
@@ -62,23 +67,6 @@ def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
             checked=state.compute_all_populations,
             on_change=state.set_compute_all_populations,
             size="2",
-        ),
-        rx.separator(orientation="vertical", size="2"),
-        rx.checkbox(
-            "All risk estimates",
-            checked=state.show_all_risk_estimates,
-            on_change=state.set_show_all_risk_estimates,
-            size="2",
-        ),
-        rx.tooltip(
-            rx.icon("info", size=14, color="gray"),
-            content=(
-                "Show absolute risk estimates from ALL available methods side by side: "
-                "OR per SD (from PGS Catalog evaluation), AUROC model, and "
-                "h²-liability (from Pan-UK Biobank, with archival GWAS Atlas 2019 fallback). "
-                "Different methods may give different numbers — the Agreement column "
-                "shows how well they converge."
-            ),
         ),
         spacing="2",
         align="center",
@@ -265,6 +253,71 @@ def _prs_interpretation_guide() -> rx.Component:
     )
 
 
+def _prs_disclaimers(state: type[rx.State]) -> rx.Component:
+    """Collapsible disclaimers and methodology notes for PRS results."""
+    return rx.vstack(
+        rx.callout(
+            "PRS results are statistical estimates for research purposes only. "
+            "They should not be used as clinical diagnoses.",
+            icon="shield_alert",
+            color_scheme="amber",
+            size="1",
+            width="100%",
+        ),
+        rx.cond(
+            state.low_match_warning,
+            rx.callout(
+                "One or more scores have a match rate below 10%. "
+                "This may indicate a genome build mismatch between "
+                "the VCF and scoring files. Check your genome build selection.",
+                icon="triangle_alert",
+                color_scheme="red",
+                size="1",
+                width="100%",
+            ),
+        ),
+        rx.el.details(
+            rx.el.summary(
+                rx.text(
+                    "Methodology notes",
+                    size="1",
+                    color="gray",
+                    weight="medium",
+                    style={"cursor": "pointer"},
+                ),
+            ),
+            rx.vstack(
+                rx.text(
+                    "Raw PRS scores are NOT comparable across different PGS models. "
+                    "Each model uses a different scale, number of variants, and weighting.",
+                    size="1",
+                    color="gray",
+                ),
+                rx.text(
+                    "Percentiles use 1000 Genomes reference distributions matched to your "
+                    "selected ancestry when available; otherwise a theoretical or AUROC-based "
+                    "approximation is used (shown in the Pct. Method column).",
+                    size="1",
+                    color="gray",
+                ),
+                rx.text(
+                    "Absolute Risk estimates translate PRS percentile into approximate "
+                    "lifetime disease probability. Multiple methods may be available "
+                    "(OR per SD, AUROC model, h²-liability). The Agreement column "
+                    "shows how well different methods converge.",
+                    size="1",
+                    color="gray",
+                ),
+                spacing="1",
+                padding_top="4px",
+                padding_x="4px",
+            ),
+        ),
+        spacing="2",
+        width="100%",
+    )
+
+
 def prs_results_table(state: type[rx.State]) -> rx.Component:
     """Table displaying PRS computation results with quality assessment.
 
@@ -275,64 +328,7 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
     return rx.cond(
         state.prs_results.length() > 0,  # type: ignore[operator]
         rx.vstack(
-            rx.callout(
-                "PRS results are statistical estimates for research purposes. "
-                "They should not be used as clinical diagnoses. "
-                "Consult a healthcare professional for medical interpretation.",
-                icon="shield_alert",
-                color_scheme="amber",
-                size="1",
-                width="100%",
-            ),
-            rx.callout(
-                "Raw PRS scores are NOT comparable across different PGS models. "
-                "Each model uses a different scale, number of variants, and weighting. "
-                "A higher score in one model does not mean higher risk than a lower "
-                "score in another model. Compare scores only within the same PGS ID.",
-                icon="info",
-                color_scheme="blue",
-                size="1",
-                width="100%",
-            ),
-            rx.callout(
-                "Percentiles are estimated using 1000 Genomes reference distributions "
-                "(matched to your selected ancestry group) when available. "
-                "For scores without reference data, a theoretical distribution from "
-                "allele frequencies or an AUROC-based approximation is used. "
-                "The method is shown in the Pct. Method column. "
-                "Reference Data column indicates whether precomputed "
-                "population distributions exist.",
-                icon="info",
-                color_scheme="iris",
-                size="1",
-                width="100%",
-            ),
-            rx.callout(
-                "Absolute Risk estimates translate your PRS percentile into an approximate "
-                "lifetime disease probability using published effect sizes and population "
-                "prevalence data. Multiple methods may be available (OR per SD, AUROC model, "
-                "h²-liability from Pan-UK Biobank or archival GWAS Atlas 2019 fallback). "
-                "The Agreement column "
-                "shows how well different methods converge. Enable 'All risk estimates' "
-                "to see each method's number. These are statistical estimates — NOT "
-                "clinical diagnoses.",
-                icon="heart_pulse",
-                color_scheme="purple",
-                size="1",
-                width="100%",
-            ),
-            rx.cond(
-                state.low_match_warning,
-                rx.callout(
-                    "One or more scores have a match rate below 10%. "
-                    "This may indicate a genome build mismatch between "
-                    "the VCF and scoring files. Check your genome build selection.",
-                    icon="triangle_alert",
-                    color_scheme="red",
-                    size="1",
-                    width="100%",
-                ),
-            ),
+            _prs_disclaimers(state),
             rx.hstack(
                 rx.icon("bar-chart-3", size=16),
                 rx.text("PRS Results", size="3", weight="bold"),
@@ -349,6 +345,7 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 width="100%",
             ),
             _prs_interpretation_guide(),
+            PlotlyDetailSupport.create(),
             data_grid(
                 rows=state.prs_results_rows,
                 columns=state.prs_results_columns,
@@ -357,40 +354,129 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 pagination=False,
                 hide_footer=True,
                 density="compact",
-                height="500px",
+                height="calc(100vh - 340px)",
                 disable_row_selection_on_click=True,
                 detail_columns=[
-                    "risk_level", "risk_hint", "absolute_risk_detail", "heritability_detail", "summary",
-                    "reference_source_detail", "effect_size_detail",
+                    "result_suggestions", "population_percentiles_chart",
+                    "risk_hint", "summary", "reference_source_detail",
                 ],
                 detail_labels={
-                    "risk_level": "Risk Level",
+                    "result_suggestions": "What This Means",
+                    "population_percentiles_chart": "Population Percentile Chart",
                     "risk_hint": "Interpretation",
-                    "absolute_risk_detail": "Absolute Risk Estimate",
-                    "heritability_detail": "Heritability (h²) Explanation",
                     "summary": "Quality Summary",
                     "reference_source_detail": "Reference Data Source",
-                    "effect_size_detail": "Effect Size & Classification",
                 },
-                detail_badge_fields=["risk_level"],
-                detail_badge_colors={
-                    "High predisposition": ["#c62828", "#ffcdd2"],
-                    "Above average predisposition": ["#e65100", "#fff3e0"],
-                    "Average predisposition": ["#455a64", "#eceff1"],
-                    "Below average predisposition": ["#2e7d32", "#c8e6c9"],
+                detail_renderers={
+                    "result_suggestions": {"type": "badge_list"},
+                    "population_percentiles_chart": {
+                        "type": "bell_curve",
+                        "scaleMin": 0,
+                        "scaleMax": 100,
+                        "bands": [
+                            {"from": 0, "to": 25, "label": "below average"},
+                            {"from": 25, "to": 75, "label": "usual middle range"},
+                            {"from": 75, "to": 90, "label": "above average"},
+                            {"from": 90, "to": 100, "label": "high tail"},
+                        ],
+                    },
                 },
+                detail_height=340,
             ),
             rx.text(
-                "AUROC, effect size, and population are from the best available "
-                "PGS Catalog evaluation study (largest sample, European-ancestry preferred). "
-                "Quality combines AUROC (model accuracy) and match rate (genotype coverage). "
-                "Results are most accurate when your ancestry matches the evaluation population. "
-                "Click the chevron on any row to see detailed interpretation.",
+                "Click the chevron on any row for a bell curve showing your position, "
+                "detailed interpretation, and quality assessment.",
                 size="1",
                 color="gray",
             ),
             spacing="3",
             width="100%",
+        ),
+    )
+
+
+def trait_summary_table(state: type[rx.State]) -> rx.Component:
+    """Trait-grouped summary with visualizations, built from computed PRS rows."""
+    return rx.cond(
+        state.prs_results.length() > 0,  # type: ignore[operator]
+        rx.vstack(
+            rx.separator(),
+            rx.hstack(
+                rx.button(
+                    rx.icon("layers", size=16),
+                    "Group by Trait",
+                    on_click=state.build_trait_summary,
+                    color_scheme="green",
+                    size="3",
+                ),
+                rx.text(
+                    "Aggregate multiple PRS models per trait to see consensus, "
+                    "spread, and outliers across scoring methods. "
+                    "Different models often give different percentiles — the bell curve "
+                    "and interpretation below each trait explain why and what to trust.",
+                    size="2",
+                    color="gray",
+                    style={"flex": "1"},
+                ),
+                spacing="3",
+                align="center",
+                width="100%",
+            ),
+            rx.cond(
+                state.trait_summary_visible,
+                rx.vstack(
+                    PlotlyDetailSupport.create(),
+                    data_grid(
+                        rows=state.trait_summary_rows,
+                        columns=state.trait_summary_columns,
+                        row_id_field="id",
+                        pagination=False,
+                        hide_footer=True,
+                        density="compact",
+                        height="calc(100vh - 380px)",
+                        disable_row_selection_on_click=True,
+                        detail_columns=[
+                            "key_metrics",
+                            "percentile_chart",
+                            "interpretation",
+                            "outlier_detail",
+                        ],
+                        detail_labels={
+                            "key_metrics": "Key Statistics",
+                            "percentile_chart": "Where You Fall on the Bell Curve",
+                            "interpretation": "What This Means for You",
+                            "outlier_detail": "Model Agreement & Outlier Notes",
+                        },
+                        detail_renderers={
+                            "key_metrics": {"type": "metric_list"},
+                            "percentile_chart": {
+                                "type": "bell_curve",
+                                "scaleMin": 0,
+                                "scaleMax": 100,
+                                "bands": [
+                                    {"from": 0, "to": 25, "label": "below average"},
+                                    {"from": 25, "to": 75, "label": "usual middle range"},
+                                    {"from": 75, "to": 90, "label": "above average"},
+                                    {"from": 90, "to": 100, "label": "high tail"},
+                                ],
+                            },
+                        },
+                        detail_height=420,
+                    ),
+                    rx.text(
+                        "Click the chevron on any trait row to see: a bell curve showing where "
+                        "each model places you, key statistics, and a plain-language explanation "
+                        "of what the results mean and why models may disagree.",
+                        size="1",
+                        color="gray",
+                    ),
+                    spacing="3",
+                    width="100%",
+                ),
+            ),
+            spacing="3",
+            width="100%",
+            padding_top="8px",
         ),
     )
 
@@ -420,6 +506,7 @@ def prs_section(state: type[rx.State]) -> rx.Component:
             prs_compute_button(state),
             prs_progress_section(state),
             prs_results_table(state),
+            trait_summary_table(state),
             width="100%",
             spacing="4",
         ),

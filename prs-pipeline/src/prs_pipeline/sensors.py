@@ -2,11 +2,8 @@
 
 Implements the 7 Robustness Guarantees from AGENTS.md:
 
-1. **startup_sensor** (30s) — handles ``PRS_PIPELINE_FORCE_RUN`` and initial
-   materialization check.  When ``PRS_PIPELINE_FORCE_RUN=1`` (set by
-   ``pipeline run`` / ``pipeline catalog``), always submits the target job
-   on its first tick.  Otherwise only submits when key assets are
-   unmaterialized.
+1. **startup_sensor** (30s) — handles the initial materialization check.
+   It submits the target job only when key assets are unmaterialized.
 
 2. **completeness_sensor** (5min) — compares on-disk scored PGS IDs
    against the EBI catalog.  If scored < catalog, submits ``score_and_push``
@@ -25,7 +22,6 @@ Implements the 7 Robustness Guarantees from AGENTS.md:
 
 import hashlib
 import os
-import time
 from pathlib import Path
 
 import dagster as dg
@@ -57,23 +53,22 @@ _JOB_CHECK_KEYS: dict[str, list[dg.AssetKey]] = {
     ],
 }
 
-_force_run_submitted = False
+_PIPELINE_JOB_NAMES = ("full_pipeline", "catalog_pipeline", "score_and_push")
 
 
-def _has_active_run(instance: dg.DagsterInstance, job_name: str) -> dg.DagsterRun | None:
-    """Return the active run for *job_name*, or None."""
+def _has_any_active_pipeline_run(instance: dg.DagsterInstance) -> dg.DagsterRun | None:
+    """Return an active pipeline run so sensors do not overlap heavy jobs."""
     active = instance.get_runs(
         filters=dg.RunsFilter(
-            job_name=job_name,
             statuses=[
                 dg.DagsterRunStatus.STARTED,
                 dg.DagsterRunStatus.NOT_STARTED,
                 dg.DagsterRunStatus.QUEUED,
             ],
         ),
-        limit=1,
+        limit=20,
     )
-    return active[0] if active else None
+    return next((run for run in active if run.job_name in _PIPELINE_JOB_NAMES), None)
 
 
 def _last_run_failed(instance: dg.DagsterInstance, job_name: str) -> bool:
@@ -101,7 +96,7 @@ def _make_startup_sensor(
     full_pipeline_job: object,
     catalog_pipeline_job: object,
 ) -> dg.SensorDefinition:
-    """Startup sensor: force-run or initial materialization check."""
+    """Startup sensor: initial materialization check."""
 
     @dg.sensor(
         jobs=[full_pipeline_job, catalog_pipeline_job],
@@ -109,27 +104,17 @@ def _make_startup_sensor(
         minimum_interval_seconds=30,
         name="startup_sensor",
         description=(
-            "Submits a pipeline job on startup. When PRS_PIPELINE_FORCE_RUN=1 "
-            "(set by `pipeline run`/`catalog`), always submits. Otherwise only "
-            "submits when key assets are unmaterialized."
+            "Submits a pipeline job on startup only when key assets are "
+            "unmaterialized."
         ),
     )
     def startup_sensor(context: dg.SensorEvaluationContext) -> dg.SensorResult | dg.SkipReason:
-        global _force_run_submitted
-
         target_job = os.environ.get("PRS_PIPELINE_STARTUP_JOB", "full_pipeline")
-        force_run = os.environ.get("PRS_PIPELINE_FORCE_RUN", "") == "1"
 
-        active = _has_active_run(context.instance, target_job)
+        active = _has_any_active_pipeline_run(context.instance)
         if active:
-            return dg.SkipReason(f"{target_job} already in progress (run {active.run_id[:8]}).")
-
-        if force_run and not _force_run_submitted:
-            _force_run_submitted = True
-            run_key = f"pipeline_run_{int(time.time())}"
-            context.log.info(f"PRS_PIPELINE_FORCE_RUN=1 — submitting {target_job} (run_key={run_key}).")
-            return dg.SensorResult(
-                run_requests=[dg.RunRequest(run_key=run_key, job_name=target_job)],
+            return dg.SkipReason(
+                f"{active.job_name} already in progress (run {active.run_id[:8]})."
             )
 
         check_keys = _JOB_CHECK_KEYS.get(target_job, _JOB_CHECK_KEYS["full_pipeline"])
@@ -143,10 +128,10 @@ def _make_startup_sensor(
 
         last_failed = _last_run_failed(context.instance, target_job)
         if last_failed:
-            run_key = f"pipeline_startup_retry_{int(time.time())}"
+            run_key = f"pipeline_startup_retry_{target_job}"
             context.log.info(f"Last {target_job} run failed — retrying with fresh run_key={run_key}.")
         else:
-            run_key = "pipeline_startup"
+            run_key = f"pipeline_startup_{target_job}"
 
         context.log.info(f"Unmaterialized assets {missing} — submitting {target_job}.")
         return dg.SensorResult(
@@ -177,12 +162,11 @@ def _make_completeness_sensor(
         ),
     )
     def completeness_sensor(context: dg.SensorEvaluationContext) -> dg.SensorResult | dg.SkipReason:
-        active = _has_active_run(context.instance, "score_and_push")
+        active = _has_any_active_pipeline_run(context.instance)
         if active:
-            return dg.SkipReason(f"score_and_push already in progress (run {active.run_id[:8]}).")
-        active_full = _has_active_run(context.instance, "full_pipeline")
-        if active_full:
-            return dg.SkipReason(f"full_pipeline already in progress (run {active_full.run_id[:8]}).")
+            return dg.SkipReason(
+                f"{active.job_name} already in progress (run {active.run_id[:8]})."
+            )
 
         cache_dir = _resolve_cache()
         panel = os.environ.get("PRS_PIPELINE_PANEL", "1000g")
@@ -273,12 +257,11 @@ def _make_failure_retry_sensor(
         ),
     )
     def failure_retry_sensor(context: dg.SensorEvaluationContext) -> dg.SensorResult | dg.SkipReason:
-        active = _has_active_run(context.instance, "score_and_push")
+        active = _has_any_active_pipeline_run(context.instance)
         if active:
-            return dg.SkipReason(f"score_and_push already in progress (run {active.run_id[:8]}).")
-        active_full = _has_active_run(context.instance, "full_pipeline")
-        if active_full:
-            return dg.SkipReason(f"full_pipeline already in progress (run {active_full.run_id[:8]}).")
+            return dg.SkipReason(
+                f"{active.job_name} already in progress (run {active.run_id[:8]})."
+            )
 
         cache_dir = _resolve_cache()
         panel = os.environ.get("PRS_PIPELINE_PANEL", "1000g")
@@ -350,9 +333,11 @@ def _make_upstream_freshness_sensor(
         ),
     )
     def upstream_freshness_sensor(context: dg.SensorEvaluationContext) -> dg.SensorResult | dg.SkipReason:
-        active = _has_active_run(context.instance, "full_pipeline")
+        active = _has_any_active_pipeline_run(context.instance)
         if active:
-            return dg.SkipReason(f"full_pipeline already in progress (run {active.run_id[:8]}).")
+            return dg.SkipReason(
+                f"{active.job_name} already in progress (run {active.run_id[:8]})."
+            )
 
         fingerprint_key = dg.AssetKey("ebi_scoring_files_fingerprint")
         last_event = context.instance.get_latest_materialization_event(fingerprint_key)

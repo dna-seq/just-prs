@@ -16,6 +16,7 @@ dependencies = [
 [project.scripts]
 prs-ui = "prs_ui.prs_ui:main"
 ui = "prs_ui.cli:launch_ui"
+start = "prs_ui.cli:launch_ui"
 
 [build-system]
 requires = ["hatchling"]

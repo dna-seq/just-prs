@@ -168,7 +168,6 @@ def run(
     _set_pipeline_env(panel, test, test_ids, no_cache=no_cache)
 
     os.environ["PRS_PIPELINE_STARTUP_JOB"] = job
-    os.environ["PRS_PIPELINE_FORCE_RUN"] = "1"
 
     if headless:
         _cancel_orphaned_runs()
@@ -268,7 +267,6 @@ def catalog(
     dagster_home = _setup_dagster_home()
     _set_pipeline_env(panel, no_cache=no_cache)
     os.environ["PRS_PIPELINE_STARTUP_JOB"] = "catalog_pipeline"
-    os.environ["PRS_PIPELINE_FORCE_RUN"] = "1"
 
     if headless:
         _cancel_orphaned_runs()

@@ -15,6 +15,7 @@ path), and get full PRS computation with quality assessment.
 
 import csv
 import io
+import math
 import os
 from pathlib import Path
 from typing import Any
@@ -64,6 +65,98 @@ def _resolve_cache_dir() -> Path:
 
 
 _catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
+
+
+def _parse_percent_text(value: Any) -> float | None:
+    """Extract the first percentage-like number from a UI text field."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    token = text.split("%", maxsplit=1)[0].split()[-1]
+    try:
+        return float(token)
+    except ValueError:
+        return None
+
+
+def _median(values: list[float]) -> float | None:
+    """Return the median of a non-empty numeric list."""
+    if not values:
+        return None
+    ordered = sorted(values)
+    mid = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[mid]
+    return (ordered[mid - 1] + ordered[mid]) / 2.0
+
+
+def _mean(values: list[float]) -> float | None:
+    """Return the arithmetic mean of a non-empty numeric list."""
+    if not values:
+        return None
+    return sum(values) / len(values)
+
+
+def _std(values: list[float]) -> float | None:
+    """Return sample standard deviation when at least two values exist."""
+    if len(values) < 2:
+        return None
+    avg = sum(values) / len(values)
+    variance = sum((value - avg) ** 2 for value in values) / (len(values) - 1)
+    return math.sqrt(variance)
+
+
+def _percentile_tone(percentile: float | None) -> str:
+    """Semantic tone for citizen-facing percentile interpretation."""
+    if percentile is None:
+        return "neutral"
+    if percentile >= 90:
+        return "danger"
+    if percentile >= 75:
+        return "warning"
+    if percentile < 25:
+        return "good"
+    return "neutral"
+
+
+def _percentile_summary(percentile: float | None) -> str:
+    """Plain-language explanation for what a percentile band means."""
+    if percentile is None:
+        return (
+            "No percentile is available, so the raw PRS cannot be interpreted "
+            "against a population reference."
+        )
+    if percentile >= 90:
+        return (
+            "This score is in the high tail of the reference population. "
+            "It suggests elevated inherited predisposition, not a diagnosis."
+        )
+    if percentile >= 75:
+        return (
+            "This score is above the usual middle range. Compare models and "
+            "check match rate before leaning on a single estimate."
+        )
+    if percentile < 25:
+        return (
+            "This score is below the usual middle range. For most PRS models, "
+            "that means lower inherited predisposition than average."
+        )
+    return "This score is within the broad middle range of the reference population."
+
+
+def _percentile_badge_label(percentile: float | None) -> str:
+    """Short label for compact detail-panel badges."""
+    if percentile is None:
+        return "No percentile available"
+    if percentile >= 90:
+        return "High tail (90th+)"
+    if percentile >= 75:
+        return "Above usual range"
+    if percentile < 25:
+        return "Below usual range"
+    return "Usual middle range"
 
 
 def _normalize_genotypes_lf(lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -250,6 +343,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     prs_results_rows: list[dict] = []
     prs_results_columns: list[dict] = []
     prs_results_column_groups: list[dict] = []
+    trait_summary_rows: list[dict] = []
+    trait_summary_columns: list[dict] = []
+    trait_summary_visible: bool = False
     prs_computing: bool = False
     prs_progress: int = 0
     low_match_warning: bool = False
@@ -312,6 +408,458 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             if pct is not None and method == "reference_panel":
                 values[superpop] = round(pct, 1)
         return values
+
+    def _quality_rank(self, label: str) -> int:
+        """Map quality labels to sortable ranks for representative-row selection."""
+        return {
+            "High": 4,
+            "Moderate": 3,
+            "Low": 2,
+            "Very Low": 1,
+        }.get(label, 0)
+
+    def _trait_outliers(self, values_by_id: dict[str, float]) -> tuple[list[str], str]:
+        """Detect trait-level percentile outliers with small-sample safeguards."""
+        values = list(values_by_id.values())
+        if len(values) <= 1:
+            return [], "Only one PRS model; no spread estimate."
+
+        min_value = min(values)
+        max_value = max(values)
+        spread = max_value - min_value
+        if len(values) < 4:
+            if spread >= 35:
+                low_id = min(values_by_id, key=values_by_id.get)  # type: ignore[arg-type]
+                high_id = max(values_by_id, key=values_by_id.get)  # type: ignore[arg-type]
+                return [], (
+                    f"Wide spread across {len(values)} models; lowest {low_id}={min_value:.1f}, "
+                    f"highest {high_id}={max_value:.1f}. Treat this as disagreement, not a proven outlier."
+                )
+            return [], "Models are close enough that no outlier is suggested."
+
+        median_value = _median(values)
+        if median_value is None:
+            return [], "No percentile values available for outlier detection."
+        deviations = [abs(value - median_value) for value in values]
+        mad = _median(deviations)
+        if mad is None or mad == 0:
+            if spread >= 35:
+                low_id = min(values_by_id, key=values_by_id.get)  # type: ignore[arg-type]
+                high_id = max(values_by_id, key=values_by_id.get)  # type: ignore[arg-type]
+                return [low_id, high_id], (
+                    "Most models cluster together, but the percentile range is wide. "
+                    f"Review {low_id} and {high_id} in the PRS-level table."
+                )
+            return [], "Models cluster tightly; no percentile outlier detected."
+
+        outliers = [
+            pgs_id
+            for pgs_id, value in values_by_id.items()
+            if abs(0.6745 * (value - median_value) / mad) > 2.5
+        ]
+        if outliers:
+            return outliers, (
+                "Possible outlier PRS model(s) detected using a robust percentile spread rule. "
+                "Review them in the PRS-level table before trusting the trait summary."
+            )
+        if spread >= 35:
+            return [], "No single outlier, but the models disagree widely."
+        return [], "No percentile outlier detected."
+
+    def _trait_overall_signal(
+        self,
+        median_pct: float | None,
+        max_pct: float | None,
+        spread: float | None,
+        outlier_count: int,
+        n_models: int,
+    ) -> str:
+        """Citizen-facing summary label for a grouped trait."""
+        if n_models <= 1:
+            return "Only one model"
+        if outlier_count > 0:
+            return "Possible outlier"
+        if spread is not None and spread >= 35:
+            return "Mixed"
+        if median_pct is not None and median_pct >= 75:
+            return "Consistently elevated"
+        if max_pct is not None and max_pct >= 75:
+            return "Elevated in some models"
+        return "Mostly average"
+
+    def _build_trait_summary_columns(self) -> list[dict]:
+        """Build column definitions for the trait-level summary grid."""
+        from reflex_mui_datagrid.models import ColumnDef
+
+        _SIGNAL_COLORS: dict[str, str] = {
+            "Consistently elevated": "#c62828",
+            "Elevated in some models": "#e65100",
+            "Mixed": "#f57f17",
+            "Possible outlier": "#6a1b9a",
+            "Only one model": "#757575",
+            "Mostly average": "#2e7d32",
+        }
+        _SIGNAL_BG: dict[str, str] = {
+            "Consistently elevated": "#ffebee",
+            "Elevated in some models": "#fff3e0",
+            "Mixed": "#fffde7",
+            "Possible outlier": "#f3e5f5",
+            "Only one model": "#f5f5f5",
+            "Mostly average": "#e8f5e9",
+        }
+        _CONSISTENCY_COLORS: dict[str, str] = {
+            "Consistent": "#2e7d32",
+            "Some variation": "#f57f17",
+            "Wide spread": "#c62828",
+            "Possible outlier": "#6a1b9a",
+            "Only one model": "#757575",
+        }
+        _CONSISTENCY_BG: dict[str, str] = {
+            "Consistent": "#e8f5e9",
+            "Some variation": "#fff3e0",
+            "Wide spread": "#ffebee",
+            "Possible outlier": "#f3e5f5",
+            "Only one model": "#f5f5f5",
+        }
+
+        columns = [
+            ColumnDef(field="trait", header_name="Trait", min_width=180, flex=1),
+            ColumnDef(
+                field="overall_signal", header_name="Signal", min_width=170,
+                cell_renderer_type="badge",
+                cell_renderer_config={
+                    "colorMap": _SIGNAL_COLORS,
+                    "bgColorMap": _SIGNAL_BG,
+                },
+            ),
+            ColumnDef(
+                field="typical_percentile", header_name="Median Percentile", type="number", min_width=150,
+                cell_renderer_type="progress_bar",
+                cell_renderer_config={
+                    "color": "#5b5bd6", "trackColor": "#e0e0e0", "showValue": True,
+                },
+            ),
+            ColumnDef(
+                field="highest_percentile", header_name="Highest Pctl.", type="number", min_width=140,
+                cell_renderer_type="progress_bar",
+                cell_renderer_config={
+                    "color": "#c62828", "trackColor": "#ffcdd2", "showValue": True,
+                },
+            ),
+            ColumnDef(field="best_absolute_risk", header_name="Abs. Risk (best model)", min_width=170),
+            ColumnDef(field="risk_vs_average", header_name="vs Average", min_width=110),
+            ColumnDef(field="n_models", header_name="Models", type="number", min_width=90),
+            ColumnDef(field="percentile_range", header_name="Pctl. Range", min_width=110),
+            ColumnDef(
+                field="consistency", header_name="Consistency", min_width=140,
+                cell_renderer_type="badge",
+                cell_renderer_config={
+                    "colorMap": _CONSISTENCY_COLORS,
+                    "bgColorMap": _CONSISTENCY_BG,
+                },
+            ),
+            ColumnDef(
+                field="best_match_rate", header_name="Best Match", type="number", min_width=120,
+                cell_renderer_type="progress_bar",
+                cell_renderer_config={
+                    "color": "#43a047", "trackColor": "#e8e8e8", "showValue": True,
+                },
+            ),
+            ColumnDef(field="outlier_ids", header_name="Outlier IDs", min_width=140),
+            ColumnDef(field="pgs_ids", header_name="PGS IDs", min_width=220),
+        ]
+        return [column.dict() for column in columns]
+
+    def _trait_interpretation(
+        self,
+        trait: str,
+        median_pct: float | None,
+        mean_pct: float | None,
+        max_pct: float | None,
+        min_pct: float | None,
+        spread: float | None,
+        std_pct: float | None,
+        n_models: int,
+        overall_signal: str,
+        consistency: str,
+        best_risk: str,
+        outliers: list[str],
+        pct_by_id: dict[str, float],
+    ) -> str:
+        """Build citizen-friendly interpretation text for a trait summary.
+
+        Written for a citizen scientist who may not understand why different PRS
+        models give different numbers for the same trait.
+        """
+        parts: list[str] = []
+
+        # --- What the percentile means ---
+        if median_pct is not None:
+            band = _percentile_summary(median_pct)
+            parts.append(
+                f"YOUR RESULT: Across {n_models} independent PRS scoring model(s) for "
+                f"{trait}, your median percentile is {median_pct:.1f} out of 100. "
+                f"{band}"
+            )
+        else:
+            parts.append(
+                f"{n_models} PRS model(s) were evaluated for {trait}, "
+                "but no percentile could be computed (reference data may be missing)."
+            )
+
+        # --- Risk estimate ---
+        if best_risk and best_risk != "N/A":
+            parts.append(
+                f"ABSOLUTE RISK ESTIMATE: The best-quality model estimates your "
+                f"approximate lifetime risk as {best_risk}. "
+                "This is a statistical estimate based on population data, not a personal diagnosis."
+            )
+
+        # --- Explain discrepancies between models ---
+        if n_models > 1:
+            parts.append(
+                f"WHY DO {n_models} MODELS GIVE DIFFERENT NUMBERS? "
+                "Each PRS model was built by a different research team using different "
+                "genetic variants, sample sizes, and statistical methods. "
+                "It is normal for models to disagree — this does not mean one is 'wrong'. "
+                "The median percentile is the most robust single summary."
+            )
+
+            if spread is not None and spread >= 35:
+                parts.append(
+                    f"WIDE DISAGREEMENT: The models span a range of {spread:.0f} percentile points "
+                    f"(from {min_pct:.1f} to {max_pct:.1f}). "
+                    "This large spread means the genetic signal for this trait is captured "
+                    "differently by each model. Possible reasons: (1) some models use fewer "
+                    "variants and have lower coverage of your genotype; (2) models trained on "
+                    "different ancestries transfer imperfectly; (3) the trait itself may be "
+                    "genetically complex with many small contributions. "
+                    "When models disagree this much, focus on the median and treat the "
+                    "spread as a measure of uncertainty."
+                )
+            elif consistency == "Consistent":
+                parts.append(
+                    "GOOD AGREEMENT: The models agree closely with each other "
+                    f"(std. dev. {std_pct:.1f} points). "
+                    "When multiple independent models converge, confidence in the "
+                    "result is higher."
+                )
+            elif consistency == "Some variation":
+                parts.append(
+                    "MODERATE AGREEMENT: The models show some variation but no extreme "
+                    "disagreement. This is typical — the median percentile is still a "
+                    "reasonable summary."
+                )
+
+            if outliers:
+                parts.append(
+                    f"OUTLIER MODELS: {', '.join(outliers)} deviate noticeably from the "
+                    "other models. Common causes: lower match rate (fewer of your variants "
+                    "overlap with the model), different training ancestry, or a model that "
+                    "captures a different genetic sub-signal. Check their match rate and "
+                    "quality label in the PRS results table above."
+                )
+
+        # --- How to read the chart ---
+        parts.append(
+            "HOW TO READ THE CHART: The bell curve shows where a 'typical' person falls "
+            "(center of the curve). Each colored dot is one PRS model's percentile for you. "
+            "The orange line marks the median across all models. "
+            "Dots clustered together = models agree; dots spread out = models disagree. "
+            "Dots in the right tail (above ~75th percentile) suggest above-average "
+            "genetic predisposition for this trait."
+        )
+
+        # --- Standard caveat ---
+        parts.append(
+            "IMPORTANT: A PRS captures only inherited genetic variants. It does not "
+            "account for lifestyle, environment, diet, medications, or family-specific "
+            "factors. Most people with an elevated PRS never develop the condition, "
+            "and many people with a low PRS do. This is a research tool for exploring "
+            "your genetic data — not a medical test or diagnosis."
+        )
+        return "\n\n".join(parts)
+
+    def build_trait_summary(self) -> None:
+        """Group computed PRS rows by trait and build a citizen-facing summary."""
+        if not self.prs_results:
+            self.trait_summary_rows = []
+            self.trait_summary_columns = self._build_trait_summary_columns()
+            self.trait_summary_visible = False
+            self.status_message = "Compute PRS results before building a trait summary."  # type: ignore[attr-defined]
+            return
+
+        grouped: dict[str, list[dict[str, Any]]] = {}
+        for row in self.prs_results:
+            trait = str(row.get("trait") or "Unlabeled trait").strip() or "Unlabeled trait"
+            grouped.setdefault(trait.casefold(), []).append(row)
+
+        summary_rows: list[dict[str, Any]] = []
+        for index, rows in enumerate(grouped.values()):
+            trait = str(rows[0].get("trait") or "Unlabeled trait")
+            pgs_ids = [str(row.get("pgs_id", "")) for row in rows if row.get("pgs_id")]
+            pct_by_id: dict[str, float] = {}
+            for row in rows:
+                pgs_id = str(row.get("pgs_id", ""))
+                pct = _parse_percent_text(row.get("percentile"))
+                if pgs_id and pct is not None:
+                    pct_by_id[pgs_id] = pct
+
+            pct_values = list(pct_by_id.values())
+            median_pct = _median(pct_values)
+            mean_pct = _mean(pct_values)
+            std_pct = _std(pct_values)
+            min_pct = min(pct_values) if pct_values else None
+            max_pct = max(pct_values) if pct_values else None
+            spread = (max_pct - min_pct) if max_pct is not None and min_pct is not None else None
+            outliers, outlier_detail = self._trait_outliers(pct_by_id)
+            overall_signal = self._trait_overall_signal(
+                median_pct=median_pct,
+                max_pct=max_pct,
+                spread=spread,
+                outlier_count=len(outliers),
+                n_models=len(rows),
+            )
+
+            best_row = max(
+                rows,
+                key=lambda row: (
+                    1 if row.get("absolute_risk") else 0,
+                    self._quality_rank(str(row.get("quality_label", ""))),
+                    float(row.get("match_rate") or 0.0),
+                ),
+            )
+            best_risk = str(best_row.get("absolute_risk") or "N/A")
+            best_user_pct = _parse_percent_text(best_row.get("absolute_risk"))
+            pop_avg_pct = None
+            abs_text = str(best_row.get("absolute_risk") or "")
+            if "pop. avg:" in abs_text:
+                pop_avg_pct = _parse_percent_text(abs_text.split("pop. avg:", maxsplit=1)[1])
+            risk_vs_average = (
+                f"{best_user_pct / pop_avg_pct:.2f}x"
+                if best_user_pct is not None and pop_avg_pct not in (None, 0)
+                else "N/A"
+            )
+
+            if len(rows) <= 1:
+                consistency = "Only one model"
+            elif outliers:
+                consistency = "Possible outlier"
+            elif spread is not None and spread >= 35:
+                consistency = "Wide spread"
+            elif std_pct is not None and std_pct <= 10:
+                consistency = "Consistent"
+            else:
+                consistency = "Some variation"
+
+            # Percentile spread chart: each PRS model as a data point
+            model_items: list[dict[str, Any]] = []
+            model_outlier_labels: list[str] = []
+            for pgs_id, pct in sorted(pct_by_id.items(), key=lambda item: item[1], reverse=True):
+                tone = _percentile_tone(pct)
+                is_outlier = pgs_id in outliers
+                model_items.append({
+                    "label": pgs_id,
+                    "value": pct,
+                    "tone": "danger" if is_outlier else tone,
+                })
+                if is_outlier:
+                    model_outlier_labels.append(pgs_id)
+
+            percentile_chart: dict[str, Any] = {
+                "score": median_pct,
+                "scoreLabel": f"Median: {median_pct:.1f}th" if median_pct is not None else "No data",
+                "items": model_items,
+                "outliers": model_outlier_labels,
+                "summary": (
+                    f"{len(pct_by_id)} models plotted. "
+                    + (f"Range: {min_pct:.1f}–{max_pct:.1f}. " if min_pct is not None and max_pct is not None else "")
+                    + (f"Outliers marked: {', '.join(model_outlier_labels)}." if model_outlier_labels else "No outliers detected.")
+                ),
+            }
+
+            # Key metrics as structured data for metric_list renderer
+            key_metrics: list[dict[str, Any]] = []
+            if median_pct is not None:
+                key_metrics.append({
+                    "label": "Median Percentile",
+                    "value": f"{median_pct:.1f}",
+                    "tone": _percentile_tone(median_pct),
+                    "subtext": "across all models",
+                })
+            if mean_pct is not None:
+                key_metrics.append({
+                    "label": "Mean Percentile",
+                    "value": f"{mean_pct:.1f}",
+                    "tone": _percentile_tone(mean_pct),
+                    "subtext": "arithmetic average",
+                })
+            if std_pct is not None:
+                key_metrics.append({
+                    "label": "Std Deviation",
+                    "value": f"{std_pct:.1f}",
+                    "tone": "warning" if std_pct > 15 else "neutral",
+                    "subtext": "model agreement",
+                })
+            if best_risk and best_risk != "N/A":
+                key_metrics.append({
+                    "label": "Absolute Risk",
+                    "value": best_risk.split("(")[0].strip(),
+                    "tone": "warning" if best_user_pct is not None and pop_avg_pct is not None and best_user_pct > pop_avg_pct else "neutral",
+                    "subtext": f"pop. avg: {pop_avg_pct:.1f}%" if pop_avg_pct is not None else "best model",
+                })
+            key_metrics.append({
+                "label": "Models",
+                "value": str(len(rows)),
+                "tone": "neutral",
+                "subtext": f"{len(pct_by_id)} with percentiles",
+            })
+
+            interpretation = self._trait_interpretation(
+                trait=trait,
+                median_pct=median_pct,
+                mean_pct=mean_pct,
+                max_pct=max_pct,
+                min_pct=min_pct,
+                spread=spread,
+                std_pct=std_pct,
+                n_models=len(rows),
+                overall_signal=overall_signal,
+                consistency=consistency,
+                best_risk=best_risk,
+                outliers=outliers,
+                pct_by_id=pct_by_id,
+            )
+
+            summary_rows.append({
+                "id": index,
+                "trait": trait,
+                "n_models": len(rows),
+                "overall_signal": overall_signal,
+                "best_absolute_risk": best_risk,
+                "population_average": f"{pop_avg_pct:.1f}%" if pop_avg_pct is not None else "N/A",
+                "risk_vs_average": risk_vs_average,
+                "highest_percentile": round(max_pct, 1) if max_pct is not None else "N/A",
+                "typical_percentile": round(median_pct, 1) if median_pct is not None else "N/A",
+                "percentile_range": (
+                    f"{min_pct:.1f}–{max_pct:.1f}" if min_pct is not None and max_pct is not None else "N/A"
+                ),
+                "percentile_std": round(std_pct, 1) if std_pct is not None else "N/A",
+                "outlier_count": len(outliers),
+                "outlier_ids": ", ".join(outliers) if outliers else "",
+                "consistency": consistency,
+                "best_match_rate": max(float(row.get("match_rate") or 0.0) for row in rows),
+                "pgs_ids": ", ".join(pgs_ids),
+                "key_metrics": key_metrics,
+                "percentile_chart": percentile_chart,
+                "interpretation": interpretation,
+                "outlier_detail": outlier_detail,
+            })
+
+        self.trait_summary_rows = summary_rows
+        self.trait_summary_columns = self._build_trait_summary_columns()
+        self.trait_summary_visible = True
+        self.status_message = f"Built trait summary for {len(summary_rows)} trait(s)."  # type: ignore[attr-defined]
 
     def _build_prs_results_grid(self) -> None:
         """Convert prs_results into DataGrid rows + column defs."""
@@ -514,6 +1062,60 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 p for p in [effect_size_val, classification_val] if p
             ) or "N/A"
 
+            percentile_items: list[dict[str, Any]] = []
+            percentile_outliers: list[str] = []
+            if self.compute_all_populations:
+                for sp in SUPERPOPULATIONS:
+                    pct_for_pop = _parse_percent_text(r.get(f"pct_{sp}"))
+                    if pct_for_pop is not None:
+                        percentile_items.append({
+                            "label": sp,
+                            "value": pct_for_pop,
+                            "tone": _percentile_tone(pct_for_pop),
+                        })
+                        if pct_for_pop >= 90 or pct_for_pop < 10:
+                            percentile_outliers.append(sp)
+            if not percentile_items and isinstance(pct_num, float):
+                selected_pop = str(r.get("selected_ancestry") or self.selected_ancestry)
+                percentile_items.append({
+                    "label": selected_pop,
+                    "value": pct_num,
+                    "tone": _percentile_tone(pct_num),
+                })
+                if pct_num >= 90 or pct_num < 10:
+                    percentile_outliers.append(selected_pop)
+            percentile_chart = {
+                "score": pct_num if isinstance(pct_num, float) else None,
+                "scoreLabel": (
+                    f"{r.get('selected_ancestry') or self.selected_ancestry}: {pct_num:.1f}th"
+                    if isinstance(pct_num, float)
+                    else "No percentile"
+                ),
+                "items": percentile_items,
+                "outliers": percentile_outliers,
+                "summary": _percentile_summary(pct_num if isinstance(pct_num, float) else None),
+            }
+            suggestion_badges = [{
+                "label": _percentile_badge_label(pct_num if isinstance(pct_num, float) else None),
+                "tone": _percentile_tone(pct_num if isinstance(pct_num, float) else None),
+            }]
+            match_rate = float(r.get("match_rate") or 0.0)
+            if match_rate < 10:
+                suggestion_badges.append({
+                    "label": "Very low match: check build",
+                    "tone": "danger",
+                })
+            elif match_rate < 50:
+                suggestion_badges.append({
+                    "label": "Partial match: use caution",
+                    "tone": "warning",
+                })
+            else:
+                suggestion_badges.append({
+                    "label": "Match rate usable",
+                    "tone": "good",
+                })
+
             row: dict[str, Any] = {
                 "id": i,
                 "pgs_id": r.get("pgs_id", ""),
@@ -539,6 +1141,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "heritability": r.get("heritability", ""),
                 "heritability_detail": r.get("heritability_detail", ""),
                 "risk_agreement": r.get("risk_agreement", ""),
+                "population_percentiles_chart": percentile_chart,
+                "result_suggestions": suggestion_badges,
             }
 
             if self.show_all_risk_estimates:
@@ -696,6 +1300,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.prs_computing = True
         self.prs_progress = 0
         self.prs_results = []
+        self.trait_summary_rows = []
+        self.trait_summary_visible = False
         self.low_match_warning = False
         self.status_message = f"Computing PRS for {total} score(s)..."  # type: ignore[attr-defined]
         yield
@@ -1080,6 +1686,8 @@ class ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
                 "Please select it manually."
             )
         self.prs_results = []
+        self.trait_summary_rows = []
+        self.trait_summary_visible = False
         self.low_match_warning = False
         self.status_message = f"Uploaded {filename}"
 

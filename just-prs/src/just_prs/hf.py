@@ -565,7 +565,16 @@ def push_pgs_catalog(
                     dst_file.unlink()
                 try:
                     dst_file.hardlink_to(src_file)
+                except FileExistsError:
+                    # Another Dagster run may have refreshed the shared staging
+                    # tree between exists()/unlink() and hardlink_to().
+                    if dst_file.exists() and dst_file.samefile(src_file):
+                        continue
+                    dst_file.unlink(missing_ok=True)
+                    dst_file.hardlink_to(src_file)
                 except OSError:
+                    if dst_file.exists() and dst_file.samefile(src_file):
+                        continue
                     shutil.copy2(src_file, dst_file)
 
         # upload_large_folder writes .cache/.huggingface/ resumability cache inside

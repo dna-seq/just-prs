@@ -12,6 +12,7 @@ from prs_ui.components.prs_section import (
     prs_progress_section,
     prs_results_table,
     prs_scores_selector,
+    trait_summary_table,
 )
 from prs_ui.state import ComputeGridState, GenomicGridState
 from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
@@ -215,6 +216,7 @@ def compute_panel() -> rx.Component:
         ),
         prs_progress_section(ComputeGridState),
         prs_results_table(ComputeGridState),
+        trait_summary_table(ComputeGridState),
         width="100%",
         spacing="4",
     )

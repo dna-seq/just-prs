@@ -15,6 +15,7 @@ path), and get full PRS computation with quality assessment.
 
 import csv
 import io
+import json
 import math
 import os
 from pathlib import Path
@@ -56,12 +57,78 @@ SHEET_LABELS: dict[str, str] = {
     "cohorts": "Cohorts",
 }
 
+SUPERPOPULATION_LABELS: dict[str, str] = {
+    "AFR": "African",
+    "AMR": "American",
+    "EAS": "East Asian",
+    "EUR": "European",
+    "SAS": "South Asian",
+}
+
 
 def _resolve_cache_dir() -> Path:
     raw = os.environ.get("PRS_CACHE_DIR", "")
     if raw:
         return Path(raw)
     return resolve_cache_dir()
+
+
+def _resolve_preloaded_vcf_path() -> Path | None:
+    """Return the optional local VCF path used for fast UI testing."""
+    if os.environ.get("PRS_UI_PRESELECT_ENABLED") != "1":
+        return None
+    raw = os.environ.get("PRS_UI_PRESELECT_VCF", "").strip()
+    if not raw:
+        return None
+    return Path(raw).expanduser()
+
+
+def _resolve_preselect_query() -> str:
+    """Return the optional startup score-selection query."""
+    if os.environ.get("PRS_UI_PRESELECT_ENABLED") != "1":
+        return ""
+    return os.environ.get("PRS_UI_PRESELECT_QUERY", "").strip()
+
+
+def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
+    """Column overrides for the compute score selection grid."""
+    return {
+        "pgs_id": {
+            "width": 140,
+            "cellRendererType": "url",
+            "cellRendererConfig": {
+                "baseUrl": "https://www.pgscatalog.org/score/",
+                "suffixUrl": "/",
+                "color": "#1565c0",
+            },
+        },
+        "pgp_id": {
+            "width": 120,
+            "cellRendererType": "url",
+            "cellRendererConfig": {
+                "baseUrl": "https://www.pgscatalog.org/publication/",
+                "suffixUrl": "/",
+                "color": "#1565c0",
+            },
+        },
+        "trait_efo_id": {
+            "width": 140,
+            "cellRendererType": "url",
+            "cellRendererConfig": {
+                "baseUrl": "http://www.ebi.ac.uk/efo/",
+                "color": "#1565c0",
+            },
+        },
+        "genome_build": {"width": 100},
+        "n_variants": {"width": 110},
+        "weight_type": {"width": 100},
+        "pmid": {"width": 100},
+        "name": {"minWidth": 120, "flex": 1},
+        "trait_reported": {"minWidth": 150, "flex": 2},
+        "trait_efo": {"minWidth": 130, "flex": 1},
+        "release_date": {"width": 110},
+        "ftp_link": {"hide": True},
+    }
 
 
 _catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
@@ -135,8 +202,9 @@ def _percentile_summary(percentile: float | None) -> str:
         )
     if percentile >= 75:
         return (
-            "This score is above the usual middle range. Compare models and "
-            "check match rate before leaning on a single estimate."
+            "This score is above the usual middle range of the reference population. "
+            "For most PRS models, that means more inherited predisposition than average, "
+            "but it is not a diagnosis and should be read together with model quality and match rate."
         )
     if percentile < 25:
         return (
@@ -157,6 +225,174 @@ def _percentile_badge_label(percentile: float | None) -> str:
     if percentile < 25:
         return "Below usual range"
     return "Usual middle range"
+
+
+def _quality_tone(label: str) -> str:
+    """Semantic tone for PRS model quality labels."""
+    normalized = label.strip().lower()
+    if normalized == "high":
+        return "good"
+    if normalized == "moderate":
+        return "warning"
+    if normalized in {"low", "very low"}:
+        return "danger"
+    return "neutral"
+
+
+def _absolute_risk_tone(user_pct: float | None, risk_ratio: float | None) -> str:
+    """Semantic tone for absolute-risk context, not just PRS percentile."""
+    if user_pct is None:
+        return "neutral"
+    if user_pct >= 10.0 or (risk_ratio is not None and risk_ratio >= 3.0 and user_pct >= 5.0):
+        return "danger"
+    if user_pct >= 5.0 or (risk_ratio is not None and risk_ratio >= 2.0):
+        return "warning"
+    if user_pct < 2.0 and risk_ratio is not None and risk_ratio >= 1.5:
+        return "info"
+    if user_pct < 2.0:
+        return "good"
+    return "info"
+
+
+def _absolute_risk_takeaway(
+    trait: str,
+    percentile: float | None,
+    user_pct: float | None,
+    pop_pct: float | None,
+    risk_ratio: float | None = None,
+) -> str:
+    """One-sentence citizen-facing summary for the expanded result panel."""
+    if user_pct is None:
+        return _percentile_summary(percentile)
+
+    trait_label = trait or "this trait"
+    if pop_pct is None:
+        return (
+            f"Your estimated absolute risk for {trait_label} is {user_pct:.1f}%. "
+            "Read this together with PRS percentile, model quality, and match rate."
+        )
+
+    if user_pct < 2.0:
+        ratio_part = ""
+        if risk_ratio is not None and risk_ratio >= 1.5:
+            ratio_part = (
+                f" That is {risk_ratio:.1f}x the population average — "
+                f"relatively elevated, but still a low probability in absolute terms."
+            )
+        elif risk_ratio is not None and risk_ratio > 1.0:
+            ratio_part = (
+                f" That is {risk_ratio:.1f}x the population average."
+            )
+        return (
+            f"Your estimated absolute risk for {trait_label} is {user_pct:.1f}% "
+            f"(population average {pop_pct:.1f}%).{ratio_part}"
+        )
+    return (
+        f"Your estimated absolute risk for {trait_label} is {user_pct:.1f}% "
+        f"compared with a population average of {pop_pct:.1f}%."
+    )
+
+
+def _absolute_risk_label(
+    user_pct: float | None,
+    percentile: float | None,
+    risk_ratio: float | None = None,
+) -> str:
+    """Short label for the visual risk context card."""
+    if user_pct is None:
+        return _percentile_badge_label(percentile)
+    if user_pct < 2.0:
+        if risk_ratio is not None and risk_ratio >= 1.5:
+            return f"Low absolute risk ({risk_ratio:.1f}x average)"
+        return "Low absolute risk"
+    if user_pct < 5.0:
+        return "Modest absolute risk"
+    if user_pct < 10.0:
+        return "Elevated absolute risk"
+    return "High absolute risk"
+
+
+def _format_percentile_spread(values: list[float]) -> str:
+    """Format the range of available population percentiles."""
+    if not values:
+        return "N/A"
+    if len(values) == 1:
+        return f"{values[0]:.1f} pct"
+    return f"{min(values):.1f}-{max(values):.1f} pct"
+
+
+def _pgs_link_items(pgs_ids: list[str]) -> str:
+    """Return detail-panel link items for PGS Catalog score pages."""
+    return json.dumps([
+        {
+            "label": pgs_id,
+            "url": f"https://www.pgscatalog.org/score/{pgs_id}/",
+        }
+        for pgs_id in pgs_ids
+    ])
+
+
+def _quality_distribution(rows: list[dict[str, Any]]) -> dict[str, int]:
+    """Count model quality labels in a stable display order."""
+    quality_order = ["High", "Moderate", "Low", "Very Low"]
+    counts = {quality: 0 for quality in quality_order}
+    for row in rows:
+        label = str(row.get("quality_label", "")).strip()
+        if label in counts:
+            counts[label] += 1
+    return counts
+
+
+def _format_quality_distribution(counts: dict[str, int]) -> str:
+    """Format quality counts without ambiguous one-letter abbreviations."""
+    if sum(counts.values()) == 0:
+        return "Quality labels unavailable"
+    return ", ".join(
+        f"{quality}: {counts.get(quality, 0)}"
+        for quality in ["High", "Moderate", "Low", "Very Low"]
+    )
+
+
+def _quality_distribution_tone(counts: dict[str, int]) -> str:
+    """Return the display tone for an aggregate model-quality distribution."""
+    if counts.get("Very Low", 0) > 0 or counts.get("Low", 0) > 0:
+        return "danger"
+    if counts.get("Moderate", 0) > 0:
+        return "warning"
+    if counts.get("High", 0) > 0:
+        return "good"
+    return "neutral"
+
+
+def _trait_segment_card(
+    label: str,
+    rows: list[dict[str, Any]],
+    pct_by_id: dict[str, float],
+    tone: str,
+) -> dict[str, Any]:
+    """Build one summary card for a trait-level model segment."""
+    if not rows:
+        return {
+            "label": label,
+            "value": "N/A",
+            "tone": "neutral",
+            "subtext": "No models in this segment.",
+        }
+    values = list(pct_by_id.values())
+    median_pct = _median(values)
+    if median_pct is None:
+        value = "N/A"
+        range_text = "no percentile values"
+    else:
+        value = f"Median {median_pct:.1f}"
+        range_text = f"range {min(values):.1f}-{max(values):.1f}"
+    quality_text = _format_quality_distribution(_quality_distribution(rows))
+    return {
+        "label": label,
+        "value": value,
+        "tone": tone,
+        "subtext": f"{len(rows)} model(s); {range_text}; {quality_text}",
+    }
 
 
 def _normalize_genotypes_lf(lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -521,6 +757,20 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             "Possible outlier": "#f3e5f5",
             "Only one model": "#f5f5f5",
         }
+        _QUALITY_COLORS: dict[str, str] = {
+            "High": "#2e7d32",
+            "Moderate": "#f57f17",
+            "Low": "#c62828",
+            "Very Low": "#c62828",
+            "N/A": "#757575",
+        }
+        _QUALITY_BG: dict[str, str] = {
+            "High": "#e8f5e9",
+            "Moderate": "#fff3e0",
+            "Low": "#ffebee",
+            "Very Low": "#ffebee",
+            "N/A": "#f5f5f5",
+        }
 
         columns = [
             ColumnDef(field="trait", header_name="Trait", min_width=180, flex=1),
@@ -549,6 +799,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ColumnDef(field="best_absolute_risk", header_name="Abs. Risk (best model)", min_width=170),
             ColumnDef(field="risk_vs_average", header_name="vs Average", min_width=110),
             ColumnDef(field="n_models", header_name="Models", type="number", min_width=90),
+            ColumnDef(field="high_confidence_models", header_name="High Quality Models", type="number", min_width=150),
+            ColumnDef(field="high_confidence_median", header_name="High Quality Median", min_width=160),
             ColumnDef(field="percentile_range", header_name="Pctl. Range", min_width=110),
             ColumnDef(
                 field="consistency", header_name="Consistency", min_width=140,
@@ -558,6 +810,15 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "bgColorMap": _CONSISTENCY_BG,
                 },
             ),
+            ColumnDef(
+                field="best_quality", header_name="Best Quality", min_width=120,
+                cell_renderer_type="badge",
+                cell_renderer_config={
+                    "colorMap": _QUALITY_COLORS,
+                    "bgColorMap": _QUALITY_BG,
+                },
+            ),
+            ColumnDef(field="best_auroc", header_name="Best AUROC", type="number", min_width=110),
             ColumnDef(
                 field="best_match_rate", header_name="Best Match", type="number", min_width=120,
                 cell_renderer_type="progress_bar",
@@ -705,6 +966,34 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 if pgs_id and pct is not None:
                     pct_by_id[pgs_id] = pct
 
+            high_confidence_rows = [
+                row
+                for row in rows
+                if str(row.get("quality_label", "")).strip() == "High"
+            ]
+            high_confidence_pct_by_id: dict[str, float] = {}
+            for row in high_confidence_rows:
+                pgs_id = str(row.get("pgs_id", ""))
+                pct = _parse_percent_text(row.get("percentile"))
+                if pgs_id and pct is not None:
+                    high_confidence_pct_by_id[pgs_id] = pct
+            high_confidence_values = list(high_confidence_pct_by_id.values())
+            high_confidence_median = _median(high_confidence_values)
+            confidence_segments = [
+                _trait_segment_card(
+                    "All PRS models",
+                    rows,
+                    pct_by_id,
+                    "info",
+                ),
+                _trait_segment_card(
+                    "High-quality PRS models only",
+                    high_confidence_rows,
+                    high_confidence_pct_by_id,
+                    "good",
+                ),
+            ]
+
             pct_values = list(pct_by_id.values())
             median_pct = _median(pct_values)
             mean_pct = _mean(pct_values)
@@ -730,6 +1019,15 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 ),
             )
             best_risk = str(best_row.get("absolute_risk") or "N/A")
+            best_pgs_id = str(best_row.get("pgs_id", ""))
+            best_auroc_str = str(best_row.get("auroc", ""))
+            best_auroc: float | None = None
+            if best_auroc_str:
+                try:
+                    best_auroc = float(best_auroc_str)
+                except (TypeError, ValueError):
+                    pass
+            best_quality = str(best_row.get("quality_label", "")) or "N/A"
             best_user_pct = _parse_percent_text(best_row.get("absolute_risk"))
             pop_avg_pct = None
             abs_text = str(best_row.get("absolute_risk") or "")
@@ -796,10 +1094,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 })
             if std_pct is not None:
                 key_metrics.append({
-                    "label": "Std Deviation",
-                    "value": f"{std_pct:.1f}",
+                    "label": "Model Spread (SD)",
+                    "value": f"{std_pct:.1f} pts",
                     "tone": "warning" if std_pct > 15 else "neutral",
-                    "subtext": "model agreement",
+                    "subtext": "standard deviation of model percentiles",
                 })
             if best_risk and best_risk != "N/A":
                 key_metrics.append({
@@ -814,6 +1112,29 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "tone": "neutral",
                 "subtext": f"{len(pct_by_id)} with percentiles",
             })
+            if best_auroc is not None:
+                key_metrics.append({
+                    "label": "Best Model AUROC",
+                    "value": f"{best_auroc:.3f}",
+                    "tone": "good" if best_auroc >= 0.7 else ("warning" if best_auroc >= 0.6 else "danger"),
+                    "subtext": f"from {best_pgs_id}",
+                })
+            if risk_vs_average != "N/A":
+                key_metrics.append({
+                    "label": "Risk vs Average",
+                    "value": risk_vs_average,
+                    "tone": "warning" if best_user_pct is not None and pop_avg_pct is not None and best_user_pct > pop_avg_pct else "neutral",
+                    "subtext": "your risk compared to population average",
+                })
+            quality_dist = _quality_distribution(rows)
+            quality_text = _format_quality_distribution(quality_dist)
+            if sum(quality_dist.values()) > 0:
+                key_metrics.append({
+                    "label": "Quality Breakdown",
+                    "value": quality_text,
+                    "tone": _quality_distribution_tone(quality_dist),
+                    "subtext": "Counts by PRS model quality label",
+                })
 
             interpretation = self._trait_interpretation(
                 trait=trait,
@@ -841,6 +1162,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "risk_vs_average": risk_vs_average,
                 "highest_percentile": round(max_pct, 1) if max_pct is not None else "N/A",
                 "typical_percentile": round(median_pct, 1) if median_pct is not None else "N/A",
+                "high_confidence_models": len(high_confidence_rows),
+                "high_confidence_median": (
+                    round(high_confidence_median, 1)
+                    if high_confidence_median is not None
+                    else "N/A"
+                ),
                 "percentile_range": (
                     f"{min_pct:.1f}–{max_pct:.1f}" if min_pct is not None and max_pct is not None else "N/A"
                 ),
@@ -848,9 +1175,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "outlier_count": len(outliers),
                 "outlier_ids": ", ".join(outliers) if outliers else "",
                 "consistency": consistency,
+                "best_quality": best_quality,
+                "best_auroc": round(best_auroc, 3) if best_auroc is not None else "N/A",
+                "best_pgs_id": best_pgs_id,
                 "best_match_rate": max(float(row.get("match_rate") or 0.0) for row in rows),
                 "pgs_ids": ", ".join(pgs_ids),
+                "pgs_links": _pgs_link_items(pgs_ids),
                 "key_metrics": key_metrics,
+                "confidence_segments": confidence_segments,
                 "percentile_chart": percentile_chart,
                 "interpretation": interpretation,
                 "outlier_detail": outlier_detail,
@@ -872,14 +1204,6 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             "EUR": ("#1976d2", "#bbdefb"),
             "SAS": ("#8e24aa", "#e1bee7"),
         }
-        _POP_NAMES: dict[str, str] = {
-            "AFR": "African",
-            "AMR": "American",
-            "EAS": "East Asian",
-            "EUR": "European",
-            "SAS": "South Asian",
-        }
-
         cols: list[ColumnDef] = [
             ColumnDef(
                 field="pgs_id", header_name="PGS ID", min_width=120,
@@ -961,26 +1285,6 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 },
             ),
             ColumnDef(field="absolute_risk", header_name="Absolute Risk (best)", min_width=180),
-            ColumnDef(field="heritability", header_name="Heritability (h²)", min_width=170),
-            ColumnDef(
-                field="risk_agreement", header_name="Agreement",
-                min_width=100,
-                cell_renderer_type="badge",
-                cell_renderer_config={
-                    "colorMap": {
-                        "high": "#2e7d32", "moderate": "#f57f17",
-                        "low": "#c62828", "single": "#757575",
-                        "": "#757575",
-                    },
-                    "bgColorMap": {
-                        "high": "#e8f5e9", "moderate": "#fff3e0",
-                        "low": "#ffebee", "single": "#f5f5f5",
-                        "": "#f5f5f5",
-                    },
-                },
-            ),
-            ColumnDef(field="ancestry", header_name="Population", min_width=100),
-            ColumnDef(field="reference_status", header_name="Reference Data", min_width=140),
             ColumnDef(
                 field="match_rate", header_name="Match Rate", type="number",
                 min_width=130,
@@ -989,8 +1293,6 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "color": "#43a047", "trackColor": "#e8e8e8", "showValue": True,
                 },
             ),
-            ColumnDef(field="variants_text", header_name="Matched / Total", min_width=120),
-            ColumnDef(field="effect_size", header_name="Effect Size", min_width=120),
         ])
 
         if self.show_all_risk_estimates:
@@ -1046,16 +1348,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 except (TypeError, ValueError):
                     pass
 
-            # Build reference source detail for the foldable panel.
+            # Keep source labels compact; detailed methodology lives in the collapsible guide.
             ref_source = r.get("reference_source", "")
             ref_source_detail = ref_source
-            if ref_source:
-                ref_source_detail = (
-                    f"{ref_source}. Precomputed from reference panel scoring, "
-                    "not direct PGS Catalog API percentiles."
-                )
 
-            # Build effect size + classification detail for the foldable panel.
+            # Build effect size + classification detail for the CSV and compact metric cards.
             effect_size_val = r.get("effect_size", "")
             classification_val = r.get("classification", "")
             effect_size_detail = " | ".join(
@@ -1069,37 +1366,196 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     pct_for_pop = _parse_percent_text(r.get(f"pct_{sp}"))
                     if pct_for_pop is not None:
                         percentile_items.append({
-                            "label": sp,
+                            "label": SUPERPOPULATION_LABELS.get(sp, sp),
                             "value": pct_for_pop,
                             "tone": _percentile_tone(pct_for_pop),
                         })
                         if pct_for_pop >= 90 or pct_for_pop < 10:
-                            percentile_outliers.append(sp)
+                            percentile_outliers.append(SUPERPOPULATION_LABELS.get(sp, sp))
             if not percentile_items and isinstance(pct_num, float):
                 selected_pop = str(r.get("selected_ancestry") or self.selected_ancestry)
                 percentile_items.append({
-                    "label": selected_pop,
+                    "label": SUPERPOPULATION_LABELS.get(selected_pop, selected_pop),
                     "value": pct_num,
                     "tone": _percentile_tone(pct_num),
                 })
                 if pct_num >= 90 or pct_num < 10:
-                    percentile_outliers.append(selected_pop)
+                    percentile_outliers.append(SUPERPOPULATION_LABELS.get(selected_pop, selected_pop))
             percentile_chart = {
                 "score": pct_num if isinstance(pct_num, float) else None,
                 "scoreLabel": (
-                    f"{r.get('selected_ancestry') or self.selected_ancestry}: {pct_num:.1f}th"
+                    f"You: {pct_num:.1f} of 100 ({r.get('selected_ancestry') or self.selected_ancestry})"
                     if isinstance(pct_num, float)
                     else "No percentile"
                 ),
                 "items": percentile_items,
                 "outliers": percentile_outliers,
-                "summary": _percentile_summary(pct_num if isinstance(pct_num, float) else None),
+                "summary": (
+                    "Start here: percentile shows where this PRS sits within a reference population. "
+                    "Dots compare available 1000G populations; percentile is not disease probability."
+                    if isinstance(pct_num, float)
+                    else _percentile_summary(None)
+                ),
             }
+            absolute_risk_percent = r.get("absolute_risk_percent")
+            absolute_risk_value = (
+                float(absolute_risk_percent)
+                if isinstance(absolute_risk_percent, int | float)
+                else None
+            )
+            population_average_percent = r.get("population_average_percent")
+            population_average_value = (
+                float(population_average_percent)
+                if isinstance(population_average_percent, int | float)
+                else None
+            )
+            risk_ratio_raw = r.get("risk_ratio_value")
+            risk_ratio = (
+                float(risk_ratio_raw)
+                if isinstance(risk_ratio_raw, int | float)
+                else None
+            )
+            population_values = [
+                float(item["value"])
+                for item in percentile_items
+                if isinstance(item.get("value"), int | float)
+            ]
+            risk_context_items: list[dict[str, Any]] = [
+                {
+                    "label": "Estimated absolute risk",
+                    "value": (
+                        f"{absolute_risk_value:.1f}%"
+                        if absolute_risk_value is not None
+                        else "N/A"
+                    ),
+                    "tone": _absolute_risk_tone(absolute_risk_value, risk_ratio),
+                    "subtext": _absolute_risk_label(
+                        absolute_risk_value,
+                        pct_num if isinstance(pct_num, float) else None,
+                        risk_ratio,
+                    ),
+                },
+                {
+                    "label": "Population average",
+                    "value": (
+                        f"{population_average_value:.1f}%"
+                        if population_average_value is not None
+                        else "N/A"
+                    ),
+                    "tone": "neutral",
+                    "subtext": "Baseline risk",
+                },
+                {
+                    "label": "Relative to average",
+                    "value": f"{risk_ratio:.2f}x" if risk_ratio is not None else "N/A",
+                    "tone": _absolute_risk_tone(absolute_risk_value, risk_ratio),
+                    "subtext": "Ratio can be high even when absolute risk is low",
+                },
+                {
+                    "label": "Population percentile spread",
+                    "value": _format_percentile_spread(population_values),
+                    "tone": "info" if len(population_values) > 1 else "neutral",
+                    "subtext": (
+                        "Across available 1000G populations"
+                        if len(population_values) > 1
+                        else "Enable all populations to compare"
+                    ),
+                },
+            ]
+            heritability_metrics = r.get("heritability_metrics", [])
+            if isinstance(heritability_metrics, list) and heritability_metrics:
+                risk_context_items.append({
+                    "label": "What h² means",
+                    "value": "Population-level",
+                    "tone": "neutral",
+                    "subtext": "Fraction of trait variation statistically associated with genetics, not an individual causal percentage.",
+                })
+                for metric in heritability_metrics:
+                    if not isinstance(metric, dict):
+                        continue
+                    population = str(metric.get("population") or "Population")
+                    source = str(metric.get("source") or "heritability table")
+                    confidence = str(metric.get("confidence") or "unknown")
+                    risk_context_items.append({
+                        "label": f"h² {population}",
+                        "value": f"{metric.get('h2', 'N/A')} ({source})",
+                        "tone": "neutral",
+                        "subtext": (
+                            f"Risk {metric.get('risk', 'N/A')}; "
+                            f"{metric.get('ratio', 'N/A')} vs population average; "
+                            f"{confidence} confidence."
+                        ),
+                    })
+            else:
+                risk_context_items.append({
+                    "label": "Heritability (h²)",
+                    "value": str(r.get("heritability") or "N/A"),
+                    "tone": "neutral",
+                    "subtext": "No mapped population-level estimate.",
+                })
+            match_rate = float(r.get("match_rate") or 0.0)
+            if match_rate < 10:
+                match_tone = "danger"
+            elif match_rate < 50:
+                match_tone = "warning"
+            else:
+                match_tone = "good"
+            model_context_items: list[dict[str, Any]] = [
+                {
+                    "label": "Model quality",
+                    "value": r.get("quality_label", "N/A") or "N/A",
+                    "tone": _quality_tone(str(r.get("quality_label") or "")),
+                    "subtext": (
+                        f"AUROC {auroc_num}: how well this PRS separated affected vs unaffected people in evaluation; "
+                        "below 0.60 is weak discrimination."
+                        if auroc_num != "N/A"
+                        else "AUROC unavailable; model discrimination was not reported."
+                    ),
+                },
+                {
+                    "label": "Variant match",
+                    "value": f"{match_rate:.1f}%",
+                    "tone": match_tone,
+                    "subtext": (
+                        f"Matched variants: {r.get('variants_matched', 0)} / {r.get('variants_total', 0)}. "
+                        "Low match means the score used only part of the model; check genome build and VCF coverage."
+                    ),
+                },
+                {
+                    "label": "Evaluation population",
+                    "value": r.get("ancestry", "N/A") or "N/A",
+                    "tone": "neutral",
+                    "subtext": "Population used in the PGS Catalog evaluation metadata.",
+                },
+                {
+                    "label": "Risk-method agreement",
+                    "value": r.get("risk_agreement", "N/A") or "N/A",
+                    "tone": {
+                        "high": "good",
+                        "moderate": "warning",
+                        "low": "danger",
+                        "single": "neutral",
+                    }.get(str(r.get("risk_agreement") or ""), "neutral"),
+                    "subtext": (
+                        "Agreement between absolute-risk calculation methods, not model accuracy. "
+                        "It can be high even when AUROC is low."
+                    ),
+                },
+                {
+                    "label": "Effect size",
+                    "value": effect_size_val or "N/A",
+                    "tone": "neutral",
+                    "subtext": (
+                        f"{classification_val}. Effect size estimates risk per PRS unit or SD in the evaluation study."
+                        if classification_val
+                        else "PGS Catalog effect size; separate from AUROC discrimination."
+                    ),
+                },
+            ]
             suggestion_badges = [{
                 "label": _percentile_badge_label(pct_num if isinstance(pct_num, float) else None),
                 "tone": _percentile_tone(pct_num if isinstance(pct_num, float) else None),
             }]
-            match_rate = float(r.get("match_rate") or 0.0)
             if match_rate < 10:
                 suggestion_badges.append({
                     "label": "Very low match: check build",
@@ -1141,6 +1597,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "heritability": r.get("heritability", ""),
                 "heritability_detail": r.get("heritability_detail", ""),
                 "risk_agreement": r.get("risk_agreement", ""),
+                "risk_context": risk_context_items,
+                "model_context": model_context_items,
                 "population_percentiles_chart": percentile_chart,
                 "result_suggestions": suggestion_badges,
             }
@@ -1187,43 +1645,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self._compute_scores_lf = lf
         self.compute_scores_loaded = True
         self.selected_pgs_ids = []
-        yield from self.set_lazyframe(lf, chunk_size=500, column_overrides={  # type: ignore[attr-defined]
-            "pgs_id": {
-                "width": 140,
-                "cellRendererType": "url",
-                "cellRendererConfig": {
-                    "baseUrl": "https://www.pgscatalog.org/score/",
-                    "suffixUrl": "/",
-                    "color": "#1565c0",
-                },
-            },
-            "pgp_id": {
-                "width": 120,
-                "cellRendererType": "url",
-                "cellRendererConfig": {
-                    "baseUrl": "https://www.pgscatalog.org/publication/",
-                    "suffixUrl": "/",
-                    "color": "#1565c0",
-                },
-            },
-            "trait_efo_id": {
-                "width": 140,
-                "cellRendererType": "url",
-                "cellRendererConfig": {
-                    "baseUrl": "http://www.ebi.ac.uk/efo/",
-                    "color": "#1565c0",
-                },
-            },
-            "genome_build": {"width": 100},
-            "n_variants": {"width": 110},
-            "weight_type": {"width": 100},
-            "pmid": {"width": 100},
-            "name": {"minWidth": 120, "flex": 1},
-            "trait_reported": {"minWidth": 150, "flex": 2},
-            "trait_efo": {"minWidth": 130, "flex": 1},
-            "release_date": {"width": 110},
-            "ftp_link": {"hide": True},
-        })
+        yield from self.set_lazyframe(  # type: ignore[attr-defined]
+            lf,
+            chunk_size=500,
+            column_overrides=_compute_score_column_overrides(),
+        )
         total = lf.select(pl.len()).collect().item()
         self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
 
@@ -1277,12 +1703,75 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             lf = apply_filter_model(lf, self._lf_grid_filter, schema)  # type: ignore[attr-defined]
         ids = lf.select("pgs_id").collect()["pgs_id"].to_list()
         self.selected_pgs_ids = ids
+        self._sync_loaded_grid_selection(ids)
         self.status_message = f"Selected {len(ids)} scores"  # type: ignore[attr-defined]
 
     def deselect_all_scores(self) -> None:
         """Clear all selected PGS IDs."""
         self.selected_pgs_ids = []
+        self.lf_grid_row_selection_model = {"type": "include", "ids": []}  # type: ignore[assignment]
         self.status_message = ""  # type: ignore[attr-defined]
+
+    def select_scores_by_query(self, query: str) -> None:
+        """Select all PGS IDs matching a text query in cleaned PGS metadata."""
+        term = query.strip()
+        if not term:
+            self.deselect_all_scores()
+            return
+        ids = (
+            _catalog.search(term, genome_build=self.genome_build)  # type: ignore[attr-defined]
+            .select("pgs_id")
+            .unique()
+            .sort("pgs_id")
+            .collect()["pgs_id"]
+            .to_list()
+        )
+        self.selected_pgs_ids = [str(pgs_id) for pgs_id in ids]
+        self._sync_loaded_grid_selection(self.selected_pgs_ids)
+        self.status_message = (
+            f"Preselected {len(self.selected_pgs_ids)} score(s) matching '{term}' "
+            f"for {self.genome_build}"  # type: ignore[attr-defined]
+        )
+
+    def filter_and_select_scores_by_query(self, query: str) -> Any:
+        """Filter the score grid to a query and select every matching PGS ID."""
+        term = query.strip()
+        if not term:
+            self.deselect_all_scores()
+            return
+
+        lf = _catalog.search(term, genome_build=self.genome_build)  # type: ignore[attr-defined]
+        self._compute_scores_lf = lf
+        self.compute_scores_loaded = True
+        yield from self.set_lazyframe(  # type: ignore[attr-defined]
+            lf,
+            chunk_size=500,
+            column_overrides=_compute_score_column_overrides(),
+        )
+
+        ids = (
+            lf.select("pgs_id")
+            .unique()
+            .sort("pgs_id")
+            .collect()["pgs_id"]
+            .to_list()
+        )
+        self.selected_pgs_ids = [str(pgs_id) for pgs_id in ids]
+        self._sync_loaded_grid_selection(self.selected_pgs_ids)
+        self.status_message = (
+            f"Filtered and preselected {len(self.selected_pgs_ids)} score(s) "
+            f"matching '{term}' for {self.genome_build}"  # type: ignore[attr-defined]
+        )
+
+    def _sync_loaded_grid_selection(self, pgs_ids: list[str]) -> None:
+        """Mark currently loaded grid rows as selected when their PGS IDs match."""
+        selected = set(pgs_ids)
+        loaded_row_ids = [
+            int(row["__row_id__"])
+            for row in self.lf_grid_rows  # type: ignore[attr-defined]
+            if row.get("pgs_id") in selected and row.get("__row_id__") is not None
+        ]
+        self.lf_grid_row_selection_model = {"type": "include", "ids": loaded_row_ids}  # type: ignore[assignment]
 
     def compute_selected_prs(self) -> Any:
         """Compute PRS for all selected PGS IDs using available genotype data.
@@ -1456,11 +1945,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
             abs_risk_text = ""
             abs_risk_detail = ""
+            abs_risk_percent: float | None = None
+            population_average_percent: float | None = None
+            risk_ratio_value: float | None = None
+            absolute_risk_method = ""
             risk_agreement = ""
             risk_estimates_by_method: dict[str, str] = {}
             risk_estimate_methods: list[str] = []
             heritability_text = "N/A"
             heritability_detail = "Absolute risk was not computed, so h²-liability was not checked."
+            heritability_metrics: list[dict[str, str]] = []
             z_score: float | None = None
             if pct_value is not None:
                 from just_prs.absolute_risk import _norm_ppf
@@ -1481,10 +1975,23 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     ]
                     for est in h2_estimates:
                         ancestry_label = f"{est.ancestry} " if est.ancestry else ""
+                        population_label = (
+                            SUPERPOPULATION_LABELS.get(est.ancestry, est.ancestry)
+                            if est.ancestry
+                            else "Combined population"
+                        )
                         source_label = est.h2_source or est.method_label
                         heritability_parts.append(
                             f"{ancestry_label}h²={est.h2_value:.3f} ({source_label})"
                         )
+                        heritability_metrics.append({
+                            "population": population_label,
+                            "h2": f"{est.h2_value:.3f}",
+                            "source": source_label,
+                            "risk": f"{est.absolute_risk * 100:.1f}%",
+                            "ratio": f"{est.risk_ratio:.2f}x",
+                            "confidence": est.confidence,
+                        })
                         detail = (
                             f"{est.method_label}: h²={est.h2_value:.3f}, "
                             f"risk={est.absolute_risk * 100:.1f}%, "
@@ -1505,6 +2012,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     best = bundle.best_estimate
                     user_pct = best.absolute_risk * 100
                     pop_pct = best.population_prevalence * 100
+                    abs_risk_percent = user_pct
+                    population_average_percent = pop_pct
+                    risk_ratio_value = best.risk_ratio
+                    absolute_risk_method = best.method_label
                     abs_risk_text = f"{user_pct:.1f}% (pop. avg: {pop_pct:.1f}%)"
 
                     detail_parts = [
@@ -1559,6 +2070,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     if abs_risk_result_legacy is not None:
                         user_pct = abs_risk_result_legacy.absolute_risk * 100
                         pop_pct = abs_risk_result_legacy.population_prevalence * 100
+                        abs_risk_percent = user_pct
+                        population_average_percent = pop_pct
+                        risk_ratio_value = abs_risk_result_legacy.risk_ratio
+                        absolute_risk_method = abs_risk_result_legacy.method
                         abs_risk_text = f"{user_pct:.1f}% (pop. avg: {pop_pct:.1f}%)"
 
             row: dict[str, Any] = {
@@ -1589,9 +2104,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "reference_source": ref_source_label,
                 "reference_source_code": ref_source_code,
                 "absolute_risk": abs_risk_text,
+                "absolute_risk_percent": abs_risk_percent,
+                "population_average_percent": population_average_percent,
+                "risk_ratio_value": risk_ratio_value,
+                "absolute_risk_method": absolute_risk_method,
                 "absolute_risk_detail": abs_risk_detail,
                 "heritability": heritability_text,
                 "heritability_detail": heritability_detail,
+                "heritability_metrics": heritability_metrics,
                 "risk_agreement": risk_agreement,
                 "risk_estimates_by_method": risk_estimates_by_method,
                 "risk_estimate_methods": risk_estimate_methods,
@@ -1647,31 +2167,50 @@ class ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
     build_detection_message: str = ""
 
     _vcf_path: str = ""
+    _preloaded_vcf_initialized: bool = False
 
-    def initialize(self) -> Any:
-        """Auto-load cleaned scores on first page visit."""
-        yield from self.initialize_prs()
+    async def initialize(self) -> Any:
+        """Auto-load cleaned scores and optional preloaded VCF on first page visit."""
+        for event in self.initialize_prs():
+            yield event
+
+        if self._preloaded_vcf_initialized or self._vcf_path:
+            return
+        self._preloaded_vcf_initialized = True
+
+        preloaded_vcf = _resolve_preloaded_vcf_path()
+        if preloaded_vcf is None:
+            for event in self._preselect_scores_from_env():
+                yield event
+            return
+        if not preloaded_vcf.exists():
+            self.status_message = f"Configured preloaded VCF does not exist: {preloaded_vcf}"
+            self.build_detection_message = "Configured preloaded VCF was not found."
+            for event in self._preselect_scores_from_env():
+                yield event
+            return
+
+        needs_score_reload = self._set_vcf_source(preloaded_vcf, label_prefix="Preloaded")
+        genomic_state = await self.get_state(GenomicGridState)
+        for event in genomic_state.normalize_uploaded_vcf(str(preloaded_vcf)):
+            yield event
+        if needs_score_reload:
+            for event in self.load_compute_scores():
+                yield event
+        for event in self._preselect_scores_from_env():
+            yield event
 
     def set_genome_build(self, value: str) -> Any:
         """Set genome build and reload compute scores if already loaded."""
         yield from self.set_prs_genome_build(value)
 
-    async def handle_vcf_upload(self, files: list[rx.UploadFile]) -> None:
-        """Save an uploaded VCF file and attempt genome build detection."""
-        if not files:
-            return
-        upload_file = files[0]
-        filename = upload_file.filename or "uploaded.vcf"
-        upload_dir = rx.get_upload_dir()
-        dest = upload_dir / filename
-        contents = await upload_file.read()
-        dest.write_bytes(contents)
+    def _set_vcf_source(self, path: Path, label_prefix: str) -> bool:
+        """Record a VCF path, detect genome build, and reset dependent UI state."""
+        self._vcf_path = str(path)
+        self.vcf_filename = path.name
+        self.prs_genotypes_path = str(path)
 
-        self._vcf_path = str(dest)
-        self.vcf_filename = filename
-        self.prs_genotypes_path = str(dest)
-
-        detected = detect_genome_build(dest)
+        detected = detect_genome_build(path)
         needs_score_reload = False
         if detected is not None:
             self.detected_build = detected
@@ -1689,7 +2228,27 @@ class ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
         self.trait_summary_rows = []
         self.trait_summary_visible = False
         self.low_match_warning = False
-        self.status_message = f"Uploaded {filename}"
+        self.status_message = f"{label_prefix} {path.name}"
+        return needs_score_reload
+
+    def _preselect_scores_from_env(self) -> Any:
+        """Apply optional startup score selection from ``PRS_UI_PRESELECT_QUERY``."""
+        query = _resolve_preselect_query()
+        if query:
+            yield from self.filter_and_select_scores_by_query(query)
+
+    async def handle_vcf_upload(self, files: list[rx.UploadFile]) -> None:
+        """Save an uploaded VCF file and attempt genome build detection."""
+        if not files:
+            return
+        upload_file = files[0]
+        filename = upload_file.filename or "uploaded.vcf"
+        upload_dir = rx.get_upload_dir()
+        dest = upload_dir / filename
+        contents = await upload_file.read()
+        dest.write_bytes(contents)
+
+        needs_score_reload = self._set_vcf_source(dest, label_prefix="Uploaded")
 
         events: list = [GenomicGridState.normalize_uploaded_vcf(str(dest))]
         if needs_score_reload:

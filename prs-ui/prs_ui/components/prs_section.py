@@ -357,22 +357,25 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                 height="calc(100vh - 340px)",
                 disable_row_selection_on_click=True,
                 detail_columns=[
-                    "result_suggestions", "population_percentiles_chart",
-                    "risk_hint", "summary", "reference_source_detail",
+                    "population_percentiles_chart", "risk_context",
+                    "result_suggestions", "model_context",
                 ],
                 detail_labels={
-                    "result_suggestions": "What This Means",
-                    "population_percentiles_chart": "Population Percentile Chart",
-                    "risk_hint": "Interpretation",
-                    "summary": "Quality Summary",
-                    "reference_source_detail": "Reference Data Source",
+                    "population_percentiles_chart": "Where You Fall on the Reference Curve",
+                    "risk_context": "Does This Change Actual Risk?",
+                    "result_suggestions": "Quick Flags",
+                    "model_context": "Can I Trust This Result?",
                 },
                 detail_renderers={
+                    "risk_context": {"type": "metric_list"},
+                    "model_context": {"type": "metric_list"},
                     "result_suggestions": {"type": "badge_list"},
                     "population_percentiles_chart": {
                         "type": "bell_curve",
                         "scaleMin": 0,
                         "scaleMax": 100,
+                        "height": 280,
+                        "maxWidth": 700,
                         "bands": [
                             {"from": 0, "to": 25, "label": "below average"},
                             {"from": 25, "to": 75, "label": "usual middle range"},
@@ -381,11 +384,11 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
                         ],
                     },
                 },
-                detail_height=340,
+                detail_height=700,
             ),
             rx.text(
                 "Click the chevron on any row for a bell curve showing your position, "
-                "detailed interpretation, and quality assessment.",
+                "absolute-risk context, population percentile spread, and quality flags.",
                 size="1",
                 color="gray",
             ),
@@ -436,23 +439,31 @@ def trait_summary_table(state: type[rx.State]) -> rx.Component:
                         height="calc(100vh - 380px)",
                         disable_row_selection_on_click=True,
                         detail_columns=[
+                            "pgs_links",
                             "key_metrics",
+                            "confidence_segments",
                             "percentile_chart",
                             "interpretation",
                             "outlier_detail",
                         ],
                         detail_labels={
+                            "pgs_links": "PGS Models Included",
                             "key_metrics": "Key Statistics",
+                            "confidence_segments": "All Models vs High-Quality Models",
                             "percentile_chart": "Where You Fall on the Bell Curve",
                             "interpretation": "What This Means for You",
                             "outlier_detail": "Model Agreement & Outlier Notes",
                         },
                         detail_renderers={
+                            "pgs_links": {"type": "link_list"},
                             "key_metrics": {"type": "metric_list"},
+                            "confidence_segments": {"type": "metric_list"},
                             "percentile_chart": {
                                 "type": "bell_curve",
                                 "scaleMin": 0,
                                 "scaleMax": 100,
+                                "height": 320,
+                                "maxWidth": 800,
                                 "bands": [
                                     {"from": 0, "to": 25, "label": "below average"},
                                     {"from": 25, "to": 75, "label": "usual middle range"},
@@ -461,7 +472,7 @@ def trait_summary_table(state: type[rx.State]) -> rx.Component:
                                 ],
                             },
                         },
-                        detail_height=420,
+                        detail_height=680,
                     ),
                     rx.text(
                         "Click the chevron on any trait row to see: a bell curve showing where "

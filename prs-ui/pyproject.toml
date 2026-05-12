@@ -9,14 +9,18 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "just-prs>=0.3.3",
-    "reflex>=0.9.1",
-    "reflex-mui-datagrid>=0.2.5",
+    "reflex==0.9.2.post1",
+    "reflex-components-core>=0.9.2",
+    "reflex-components-code>=0.9.2",
+    "reflex-components-radix>=0.9.2",
+    "reflex-mui-datagrid>=0.2.8",
 ]
 
 [project.scripts]
 prs-ui = "prs_ui.prs_ui:main"
 ui = "prs_ui.cli:launch_ui"
 start = "prs_ui.cli:launch_ui"
+preselect = "prs_ui.cli:launch_preselect_ui"
 
 [build-system]
 requires = ["hatchling"]

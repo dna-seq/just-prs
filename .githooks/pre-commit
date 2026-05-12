@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Bidirectional sync between AGENTS.md and CLAUDE.md.
+# Whichever was edited gets copied to the other. If both were edited, AGENTS.md wins.
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+AGENTS="$REPO_ROOT/AGENTS.md"
+CLAUDE="$REPO_ROOT/CLAUDE.md"
+
+agents_staged=$(git diff --cached --name-only -- AGENTS.md)
+claude_staged=$(git diff --cached --name-only -- CLAUDE.md)
+
+if [ -n "$agents_staged" ]; then
+    # AGENTS.md was edited (or both were) — copy AGENTS.md → CLAUDE.md
+    cp "$AGENTS" "$CLAUDE"
+    git add "$CLAUDE"
+elif [ -n "$claude_staged" ]; then
+    # Only CLAUDE.md was edited — copy CLAUDE.md → AGENTS.md
+    cp "$CLAUDE" "$AGENTS"
+    git add "$AGENTS"
+elif [ -f "$AGENTS" ] && ! cmp -s "$AGENTS" "$CLAUDE" 2>/dev/null; then
+    # Neither staged but files differ (e.g. unstaged drift) — AGENTS.md wins
+    cp "$AGENTS" "$CLAUDE"
+    git add "$CLAUDE"
+fi

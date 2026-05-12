@@ -84,10 +84,7 @@ def index() -> rx.Component:
     )
 
 
-app = rx.App(
-    theme=rx.theme(appearance="light", accent_color="blue"),
-    backend_exception_handler=_safe_backend_exception_handler,
-)
+app = rx.App(backend_exception_handler=_safe_backend_exception_handler)
 app.add_page(index, title="PGS Catalog Browser", on_load=ComputeGridState.initialize)
 
 

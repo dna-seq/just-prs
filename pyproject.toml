@@ -14,6 +14,7 @@ prs = "just_prs.cli:run"
 just-prs = "just_prs.cli:run"
 ui = "prs_ui.cli:launch_ui"
 start = "prs_ui.cli:launch_ui"
+preselect = "prs_ui.cli:launch_preselect_ui"
 pipeline = "prs_pipeline.cli:app"
 
 [build-system]
@@ -37,7 +38,7 @@ members = ["just-prs", "prs-ui", "prs-pipeline"]
 just-prs = { workspace = true }
 prs-ui = { workspace = true }
 prs-pipeline = { workspace = true }
-reflex-mui-datagrid = { path = "../reflex-mui-datagrid", editable = true }
+# reflex-mui-datagrid = { path = "../reflex-mui-datagrid", editable = true }
 
 [dependency-groups]
 dev = [

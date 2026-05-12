@@ -12,6 +12,14 @@ Built on top of [`just-prs`](https://pypi.org/project/just-prs/) for the computa
 pip install prs-ui
 ```
 
+## Running the Standalone App
+
+```bash
+uv run start
+```
+
+The launcher reads `.env`, resolves both the Reflex frontend port (`PRS_UI_PORT`, default `3000`) and backend port (`PRS_UI_BACKEND_PORT`, default `8000`), and passes the resolved pair explicitly to Reflex so another running Reflex app cannot shift only one side.
+
 ## Quick Start
 
 ```python

@@ -38,7 +38,7 @@ cd prs-ui
 uv run reflex run
 ```
 
-The UI opens at http://localhost:3000 with three tabs:
+The UI opens at http://localhost:3000 with four tabs:
 
 ### Compute PRS (default tab)
 
@@ -46,7 +46,12 @@ The UI opens at http://localhost:3000 with three tabs:
 2. **Load Scores** — fetches PGS Catalog scores metadata, pre-filtered by detected (or manually selected) genome build
 3. **Select scores** — use checkboxes to pick individual scores, or "Select Filtered" to select everything matching the current filter
 4. **Compute** — click **Compute PRS** to run PRS for each selected score. A progress bar tracks completion across scores. Results table shows PRS score, AUROC (model accuracy), quality assessment, evaluation population/ancestry, match rate, matched/total variants, and effect sizes. Each result includes an interpretation card with a plain-English summary of model quality
-5. **Download CSV** — export all computed results to a CSV file via the **Download CSV** button above the results table
+5. **Group by Trait** — aggregate individual PRS results by EFO trait to see consensus, model spread, outliers, and quality breakdown across scoring methods. Each trait row expands to show a bell curve with all models as data points
+6. **Download CSV** — export all computed results to a CSV file via the **Download CSV** button above the results table
+
+### Select Traits
+
+Instead of picking individual PGS IDs, browse traits grouped from the PGS Catalog (e.g. "type 2 diabetes mellitus" with 32 models). Select traits, and all associated PGS models are computed together. Results are **automatically grouped by trait** — the trait summary with consensus bell curves, outlier detection, and quality breakdown is the primary output. Individual PRS results are available in a collapsible section below.
 
 ### Metadata Sheets
 
@@ -68,7 +73,8 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 - **Disease prevalence data** — 3-tier automated sourcing: hand-curated seed data for ~50 common traits, GWAS Catalog cohort fractions parsed from free-text sample descriptions, and PGS Catalog evaluation cohorts. Consolidated into `trait_prevalence.parquet` and synced to HuggingFace
 - **Publication citations** — PRS scores are linked to their source papers with full citations (first author, title, journal, year, DOI)
 - **pgen operations** — read `.pgen`, `.pvar.zst`, `.psam` files, extract genotypes, match variants, and score PGS IDs directly in Python via `pgenlib` + polars + numpy
-- **Reusable Reflex UI components** — `prs_section()` and sub-components (`prs_scores_selector`, `prs_results_table`, etc.) can be embedded in any Reflex app via `PRSComputeStateMixin`
+- **Trait-grouped PRS analysis** — select entire traits (e.g. "type 2 diabetes") instead of individual PGS IDs; all associated models are computed and automatically aggregated into a consensus view with bell curves, outlier detection, and quality breakdown
+- **Reusable Reflex UI components** — `prs_section()`, `trait_summary_table()`, and sub-components (`prs_scores_selector`, `prs_results_table`, etc.) can be embedded in any Reflex app via `PRSComputeStateMixin`
 - **VCF normalization** — `normalize_vcf()` strips chr prefix, renames id→rsid, computes genotype from GT, applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, and writes zstd-compressed Parquet
 - **Quality assessment** — `just_prs.quality` provides pure-logic helpers (`classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`) usable from any UI or script
 - **CSV export** — download computed PRS results as CSV from the web UI or programmatically
@@ -233,7 +239,7 @@ def prs_page() -> rx.Component:
     return prs_section(PRSState)
 ```
 
-The preferred input method is a polars LazyFrame via `set_prs_genotypes_lf()` -- this is memory-efficient and avoids re-reading VCF files on each computation. Individual sub-components (`prs_scores_selector`, `prs_results_table`, `prs_compute_button`, `prs_progress_section`, `prs_build_selector`) can be used independently for custom layouts.
+The preferred input method is a polars LazyFrame via `set_prs_genotypes_lf()` -- this is memory-efficient and avoids re-reading VCF files on each computation. Individual sub-components (`prs_scores_selector`, `prs_results_table`, `trait_summary_table`, `prs_compute_button`, `prs_progress_section`, `prs_build_selector`) can be used independently for custom layouts. `trait_summary_table(state)` groups PRS results by trait and shows consensus bell curves, outlier detection, and quality breakdown — call `state.build_trait_summary()` after computation to populate it.
 
 ## Testing
 

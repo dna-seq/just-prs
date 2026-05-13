@@ -38,7 +38,6 @@ members = ["just-prs", "prs-ui", "prs-pipeline"]
 just-prs = { workspace = true }
 prs-ui = { workspace = true }
 prs-pipeline = { workspace = true }
-# reflex-mui-datagrid = { path = "../reflex-mui-datagrid", editable = true }
 
 [dependency-groups]
 dev = [

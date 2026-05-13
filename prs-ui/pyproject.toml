@@ -13,7 +13,7 @@ dependencies = [
     "reflex-components-core>=0.9.2",
     "reflex-components-code>=0.9.2",
     "reflex-components-radix>=0.9.2",
-    "reflex-mui-datagrid>=0.2.8",
+    "reflex-mui-datagrid>=0.3.3",
 ]
 
 [project.scripts]

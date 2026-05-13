@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"from prs_ui.pages.traits import traits_panel; print\\('OK'\\)\")",
+      "Bash(python -c \"from prs_ui.state import TraitBrowserState; print\\('OK'\\)\")"
+    ]
+  }
+}

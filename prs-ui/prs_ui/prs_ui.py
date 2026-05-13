@@ -11,7 +11,8 @@ from prs_ui.grid_style import data_grid_scroll_css
 from prs_ui.pages.compute import compute_panel
 from prs_ui.pages.metadata import metadata_panel
 from prs_ui.pages.scoring import scoring_panel
-from prs_ui.state import AppState, ComputeGridState
+from prs_ui.pages.traits import traits_panel
+from prs_ui.state import AppState, ComputeGridState, TraitBrowserState
 
 
 def _safe_backend_exception_handler(exception: Exception) -> EventSpec:
@@ -58,12 +59,25 @@ def index() -> rx.Component:
                         ),
                         value="compute",
                     ),
+                    rx.tabs.trigger(
+                        rx.hstack(
+                            rx.icon("layers", size=14),
+                            "Browse by Trait",
+                            spacing="1",
+                            align="center",
+                        ),
+                        value="traits",
+                    ),
                     rx.tabs.trigger("Metadata Sheets", value="metadata"),
                     rx.tabs.trigger("Scoring File", value="scoring"),
                 ),
                 rx.tabs.content(
                     rx.box(compute_panel(), padding_top="12px"),
                     value="compute",
+                ),
+                rx.tabs.content(
+                    rx.box(traits_panel(), padding_top="12px"),
+                    value="traits",
                 ),
                 rx.tabs.content(
                     rx.box(metadata_panel(), padding_top="12px"),
@@ -87,7 +101,11 @@ def index() -> rx.Component:
 
 
 app = rx.App(backend_exception_handler=_safe_backend_exception_handler)
-app.add_page(index, title="PGS Catalog Browser", on_load=ComputeGridState.initialize)
+app.add_page(
+    index,
+    title="PGS Catalog Browser",
+    on_load=[ComputeGridState.initialize, TraitBrowserState.initialize_traits],
+)
 
 
 def main() -> None:

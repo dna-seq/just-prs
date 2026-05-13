@@ -312,6 +312,29 @@ def _synthetic_quality_tone(label: str) -> str:
     return "neutral"
 
 
+def _trait_signal_tone(signal: str) -> str:
+    """Semantic tone for the trait-level overall_signal label."""
+    return {
+        "Consistently elevated": "danger",
+        "Elevated in some models": "warning",
+        "Mixed": "warning",
+        "Possible outlier": "warning",
+        "Only one model": "neutral",
+        "Mostly average": "good",
+    }.get(signal, "neutral")
+
+
+def _trait_consistency_tone(consistency: str) -> str:
+    """Semantic tone for the trait-level inter-model consistency label."""
+    return {
+        "Consistent": "good",
+        "Some variation": "warning",
+        "Wide spread": "danger",
+        "Possible outlier": "warning",
+        "Only one model": "neutral",
+    }.get(consistency, "neutral")
+
+
 _QUALITY_SHAPE_MAP: dict[str, str] = {
     "high": "star",
     "normal": "pentagon",
@@ -431,6 +454,17 @@ def _absolute_risk_label(
     if user_pct < 10.0:
         return "Elevated absolute risk"
     return "High absolute risk"
+
+
+def _percentile_method_tone(method_label: str) -> str:
+    """Semantic tone for percentile source labels in the chart side panel."""
+    if method_label == "1000G ref":
+        return "good"
+    if method_label == "theoretical":
+        return "info"
+    if method_label == "AUROC est.":
+        return "warning"
+    return "neutral"
 
 
 def _format_percentile_spread(values: list[float]) -> str:
@@ -1086,7 +1120,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         )
         return "\n\n".join(parts)
 
-    def build_trait_summary(self) -> None:
+    def build_trait_summary(
+        self,
+        large_chart_threshold: int = 4,
+        large_chart_height: int = 520,
+        large_chart_max_width: int = 1800,
+    ) -> None:
         """Group computed PRS rows by EFO ID and build a citizen-facing summary.
 
         Models within each group are ranked by synthetic_quality_score.
@@ -1270,6 +1309,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     + "dot grey = extreme or low match, open red = outlier."
                 ),
             }
+            if len(rows) > large_chart_threshold:
+                percentile_chart["rendererConfig"] = {
+                    "height": large_chart_height,
+                    "maxWidth": large_chart_max_width,
+                    "showSidePanel": False,
+                    "summaryPlacement": "none",
+                    "labelTiers": 12,
+                    "labelMaxVisible": 24,
+                    "labelMinGapZ": 0.18,
+                }
 
             # Key metrics as structured data for metric_list renderer
             key_metrics: list[dict[str, Any]] = []
@@ -1347,21 +1396,58 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "subtext": "Counts by PRS model quality label",
                 })
 
-            interpretation = self._trait_interpretation(
-                trait=trait,
-                median_pct=median_pct,
-                mean_pct=mean_pct,
-                max_pct=max_pct,
-                min_pct=min_pct,
-                spread=spread,
-                std_pct=std_pct,
-                n_models=len(rows),
-                overall_signal=overall_signal,
-                consistency=consistency,
-                best_risk=best_risk,
-                outliers=outliers,
-                pct_by_id=pct_by_id,
-            )
+            quick_flags: list[dict[str, Any]] = [
+                {"label": overall_signal, "tone": _trait_signal_tone(overall_signal)},
+                {
+                    "label": f"Consistency: {consistency}",
+                    "tone": _trait_consistency_tone(consistency),
+                },
+                {
+                    "label": _percentile_badge_label(median_pct),
+                    "tone": _percentile_tone(median_pct),
+                },
+                {
+                    "label": (
+                        f"{len(outliers)} outlier model(s)"
+                        if outliers
+                        else "No outliers detected"
+                    ),
+                    "tone": "warning" if outliers else "good",
+                },
+                {
+                    "label": (
+                        f"{len(high_confidence_rows)} of {len(rows)} high quality"
+                        if len(high_confidence_rows) > 0
+                        else f"No high-quality models in {len(rows)}"
+                    ),
+                    "tone": "good" if len(high_confidence_rows) >= 1 else "warning",
+                },
+                {
+                    "label": (
+                        f"Spread {spread:.0f} pctl pts" if spread is not None else "Spread N/A"
+                    ),
+                    "tone": (
+                        "danger"
+                        if spread is not None and spread >= 35
+                        else "warning"
+                        if spread is not None and spread >= 15
+                        else "good"
+                        if spread is not None
+                        else "neutral"
+                    ),
+                },
+            ]
+            if best_risk and best_risk != "N/A":
+                quick_flags.append({
+                    "label": f"Best-model risk {best_risk.split('(')[0].strip()}",
+                    "tone": (
+                        "warning"
+                        if best_user_pct is not None
+                        and pop_avg_pct is not None
+                        and best_user_pct > pop_avg_pct
+                        else "neutral"
+                    ),
+                })
 
             summary_rows.append({
                 "id": index,
@@ -1399,8 +1485,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "key_metrics": key_metrics,
                 "confidence_segments": confidence_segments,
                 "percentile_chart": percentile_chart,
-                "interpretation": interpretation,
-                "outlier_detail": outlier_detail,
+                "trait_quick_flags": quick_flags,
+                "outlier_summary": outlier_detail,
             })
 
         self.trait_summary_rows = summary_rows
@@ -1446,7 +1532,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 fg, bg = _POP_COLORS[sp]
                 cols.append(ColumnDef(
                     field=f"pct_{sp}_num",
-                    header_name=_POP_NAMES[sp],
+                    header_name=SUPERPOPULATION_LABELS[sp],
                     description=f"{sp} — 1000 Genomes superpopulation",
                     type="number",
                     min_width=130,
@@ -1596,22 +1682,6 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 })
                 if pct_num >= 90 or pct_num < 10:
                     percentile_outliers.append(SUPERPOPULATION_LABELS.get(selected_pop, selected_pop))
-            percentile_chart = {
-                "score": pct_num if isinstance(pct_num, float) else None,
-                "scoreLabel": (
-                    f"You: {pct_num:.1f} of 100 ({r.get('selected_ancestry') or self.selected_ancestry})"
-                    if isinstance(pct_num, float)
-                    else "No percentile"
-                ),
-                "items": percentile_items,
-                "outliers": percentile_outliers,
-                "summary": (
-                    "Start here: percentile shows where this PRS sits within a reference population. "
-                    "Dots compare available 1000G populations; percentile is not disease probability."
-                    if isinstance(pct_num, float)
-                    else _percentile_summary(None)
-                ),
-            }
             absolute_risk_percent = r.get("absolute_risk_percent")
             absolute_risk_value = (
                 float(absolute_risk_percent)
@@ -1630,11 +1700,85 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 if isinstance(risk_ratio_raw, int | float)
                 else None
             )
+            match_rate = float(r.get("match_rate") or 0.0)
             population_values = [
                 float(item["value"])
                 for item in percentile_items
                 if isinstance(item.get("value"), int | float)
             ]
+            percentile_value = pct_num if isinstance(pct_num, float) else None
+            chart_takeaway = _absolute_risk_takeaway(
+                trait=str(r.get("trait") or ""),
+                percentile=percentile_value,
+                user_pct=absolute_risk_value,
+                pop_pct=population_average_value,
+                risk_ratio=risk_ratio,
+            )
+            row_summary = str(r.get("summary") or "").strip()
+            if row_summary and row_summary not in chart_takeaway:
+                chart_takeaway = f"{chart_takeaway} {row_summary}"
+            percentile_side_items: list[dict[str, Any]] = [
+                {
+                    "label": "Your percentile",
+                    "value": (
+                        f"{percentile_value:.1f}th"
+                        if percentile_value is not None
+                        else "Not available"
+                    ),
+                    "tone": _percentile_tone(percentile_value),
+                    "subtext": _percentile_badge_label(percentile_value),
+                },
+                {
+                    "label": "Absolute risk",
+                    "value": (
+                        f"{absolute_risk_value:.1f}%"
+                        if absolute_risk_value is not None
+                        else "N/A"
+                    ),
+                    "tone": _absolute_risk_tone(absolute_risk_value, risk_ratio),
+                    "subtext": _absolute_risk_label(
+                        absolute_risk_value,
+                        percentile_value,
+                        risk_ratio,
+                    ),
+                },
+                {
+                    "label": "Scoring method",
+                    "value": method_label,
+                    "tone": _percentile_method_tone(method_label),
+                    "subtext": f"Match rate {match_rate:.1f}%",
+                },
+                {
+                    "label": "Model quality",
+                    "value": r.get("quality_label", "N/A") or "N/A",
+                    "tone": _quality_tone(str(r.get("quality_label") or "")),
+                    "subtext": (
+                        f"AUROC {auroc_num}"
+                        if auroc_num != "N/A"
+                        else "AUROC unavailable"
+                    ),
+                },
+            ]
+            if len(population_values) > 1:
+                percentile_side_items.append({
+                    "label": "Population spread",
+                    "value": _format_percentile_spread(population_values),
+                    "tone": "info",
+                    "subtext": "Across available 1000G populations",
+                })
+            percentile_chart = {
+                "score": percentile_value,
+                "scoreLabel": (
+                    f"You: {pct_num:.1f} of 100 ({r.get('selected_ancestry') or self.selected_ancestry})"
+                    if percentile_value is not None
+                    else "No percentile"
+                ),
+                "items": percentile_items,
+                "outliers": percentile_outliers,
+                "summary": "",
+                "interpretation": chart_takeaway,
+                "sideItems": percentile_side_items,
+            }
             risk_context_items: list[dict[str, Any]] = [
                 {
                     "label": "Estimated absolute risk",
@@ -1708,7 +1852,6 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "tone": "neutral",
                     "subtext": "No mapped population-level estimate.",
                 })
-            match_rate = float(r.get("match_rate") or 0.0)
             if match_rate < 10:
                 match_tone = "danger"
             elif match_rate < 50:
@@ -1815,6 +1958,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "risk_context": risk_context_items,
                 "model_context": model_context_items,
                 "population_percentiles_chart": percentile_chart,
+                "population_percentiles_summary": chart_takeaway,
                 "result_suggestions": suggestion_badges,
             }
 
@@ -2203,3 +2347,247 @@ class ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
         if gen is not None:
             for event in gen:
                 yield event
+
+
+def _build_trait_column_overrides() -> dict[str, dict[str, Any]]:
+    """Column overrides for the trait browser grid."""
+    return {
+        "trait": {"minWidth": 200, "flex": 2},
+        "trait_efo_id": {
+            "width": 160,
+            "cellRendererType": "url",
+            "cellRendererConfig": {
+                "baseUrl": "http://www.ebi.ac.uk/efo/",
+                "color": "#1565c0",
+            },
+        },
+        "n_models": {"width": 100},
+        "avg_variants": {"width": 130},
+        "min_variants": {"width": 120},
+        "max_variants": {"width": 120},
+        "pgs_ids": {"minWidth": 200, "flex": 1},
+    }
+
+
+class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
+    """State for the trait-based PRS browser tab.
+
+    Groups PGS Catalog scores by EFO trait and lets the user select
+    traits instead of individual PGS IDs.  Selected traits are resolved
+    to their constituent PGS IDs, and computation proceeds via the
+    inherited ``PRSComputeStateMixin``.
+    """
+
+    vcf_filename: str = ""
+    detected_build: str = ""
+    build_detection_message: str = ""
+    selected_traits: list[str] = []
+    traits_loaded: bool = False
+
+    _vcf_path: str = ""
+    _trait_to_pgs: dict[str, list[str]] = {}
+    _trait_scores_lf: pl.LazyFrame | None = None
+    _traits_initialized: bool = False
+
+    def _build_trait_df(self) -> pl.DataFrame:
+        """Group scores by trait and return a flat summary DataFrame."""
+        lf = _catalog.scores(genome_build=self.genome_build)  # type: ignore[attr-defined]
+        self._trait_scores_lf = lf
+        df = lf.select(
+            "pgs_id", "trait_reported", "trait_efo", "trait_efo_id", "n_variants",
+        ).collect()
+
+        df = df.with_columns(
+            pl.when(pl.col("trait_efo").is_not_null() & (pl.col("trait_efo") != ""))
+            .then(pl.col("trait_efo"))
+            .otherwise(pl.col("trait_reported"))
+            .alias("trait"),
+        )
+
+        grouped = df.group_by("trait").agg(
+            pl.col("pgs_id").count().alias("n_models"),
+            pl.col("pgs_id").alias("_pgs_list"),
+            pl.col("trait_efo_id").first().alias("trait_efo_id"),
+            pl.col("n_variants").mean().cast(pl.Int64).alias("avg_variants"),
+            pl.col("n_variants").min().alias("min_variants"),
+            pl.col("n_variants").max().alias("max_variants"),
+        ).sort("n_models", descending=True)
+
+        mapping: dict[str, list[str]] = {}
+        for row in grouped.iter_rows(named=True):
+            mapping[row["trait"]] = row["_pgs_list"]
+
+        self._trait_to_pgs = mapping
+
+        result = grouped.with_columns(
+            pl.col("_pgs_list").list.join(", ").alias("pgs_ids"),
+        ).drop("_pgs_list")
+
+        return result
+
+    def load_traits(self) -> Any:
+        """Load trait-grouped data into the grid."""
+        self.status_message = "Loading traits..."  # type: ignore[attr-defined]
+        yield
+        trait_df = self._build_trait_df()
+        self.traits_loaded = True
+        self.selected_traits = []
+        self.selected_pgs_ids = []
+        yield from self.set_lazyframe(  # type: ignore[attr-defined]
+            trait_df.lazy(),
+            chunk_size=500,
+            column_overrides=_build_trait_column_overrides(),
+        )
+        self.status_message = f"Loaded {trait_df.height} traits for {self.genome_build}"  # type: ignore[attr-defined]
+
+    def initialize_traits(self) -> Any:
+        """Auto-load traits on first access."""
+        if self._traits_initialized:
+            return
+        self._traits_initialized = True
+        yield from self.load_traits()
+
+    def set_genome_build(self, value: str) -> Any:
+        """Set genome build and reload traits."""
+        self.genome_build = value  # type: ignore[attr-defined]
+        if self.traits_loaded:
+            yield from self.load_traits()
+
+    def handle_lf_grid_row_selection(self, model: dict) -> None:
+        """Track selected traits and resolve to PGS IDs."""
+        self.lf_grid_row_selection_model = model  # type: ignore[assignment]
+
+        selection_type: str = model.get("type", "include")
+        raw_ids: list = model.get("ids", [])
+        selected_row_ids: set[int] = {int(i) for i in raw_ids}
+
+        if selection_type == "exclude" and not selected_row_ids:
+            self._select_all_traits()
+            return
+        if selection_type == "include" and not selected_row_ids:
+            self.selected_traits = []
+            self.selected_pgs_ids = []
+            return
+
+        traits: list[str] = []
+        for row in self.lf_grid_rows:  # type: ignore[attr-defined]
+            row_id = row.get("__row_id__")
+            in_set = (int(row_id) in selected_row_ids) if row_id is not None else False
+            if (selection_type == "include" and in_set) or (
+                selection_type == "exclude" and not in_set
+            ):
+                trait = row.get("trait")
+                if trait:
+                    traits.append(str(trait))
+
+        self.selected_traits = traits
+        self._resolve_pgs_ids_from_traits()
+
+    def _select_all_traits(self) -> None:
+        """Select all traits (and their PGS IDs)."""
+        self.selected_traits = list(self._trait_to_pgs.keys())
+        pgs_ids: list[str] = []
+        for ids in self._trait_to_pgs.values():
+            pgs_ids.extend(ids)
+        self.selected_pgs_ids = pgs_ids
+        self.status_message = (  # type: ignore[attr-defined]
+            f"Selected all {len(self.selected_traits)} traits "
+            f"({len(self.selected_pgs_ids)} PGS IDs)"
+        )
+
+    def select_filtered_traits(self) -> None:
+        """Select traits matching the current grid filter."""
+        if self._trait_scores_lf is None:
+            return
+        traits: list[str] = []
+        for row in self.lf_grid_rows:  # type: ignore[attr-defined]
+            trait = row.get("trait")
+            if trait:
+                traits.append(str(trait))
+        self.selected_traits = traits
+        self._resolve_pgs_ids_from_traits()
+
+    def deselect_all_traits(self) -> None:
+        """Clear all selected traits."""
+        self.selected_traits = []
+        self.selected_pgs_ids = []
+        self.lf_grid_row_selection_model = {"type": "include", "ids": []}  # type: ignore[assignment]
+        self.status_message = ""  # type: ignore[attr-defined]
+
+    def _resolve_pgs_ids_from_traits(self) -> None:
+        """Resolve selected traits to PGS IDs."""
+        pgs_ids: list[str] = []
+        for trait in self.selected_traits:
+            pgs_ids.extend(self._trait_to_pgs.get(trait, []))
+        self.selected_pgs_ids = pgs_ids
+        self.status_message = (  # type: ignore[attr-defined]
+            f"Selected {len(self.selected_traits)} trait(s) "
+            f"({len(self.selected_pgs_ids)} PGS IDs)"
+        )
+
+    def _set_vcf_source(self, path: Path, label_prefix: str) -> bool:
+        """Record a VCF path, detect genome build, and reset dependent state."""
+        self._vcf_path = str(path)
+        self.vcf_filename = path.name
+        self.prs_genotypes_path = str(path)
+
+        detected = detect_genome_build(path)
+        needs_reload = False
+        if detected is not None:
+            self.detected_build = detected
+            if detected != self.genome_build:  # type: ignore[attr-defined]
+                needs_reload = self.traits_loaded
+            self.genome_build = detected  # type: ignore[attr-defined]
+            self.build_detection_message = f"Detected genome build: {detected}"
+        else:
+            self.detected_build = ""
+            self.build_detection_message = (
+                "Could not detect genome build from VCF header. "
+                "Please select it manually."
+            )
+        self.prs_results = []
+        self.trait_summary_rows = []
+        self.trait_summary_visible = False
+        self.low_match_warning = False
+        self.status_message = f"{label_prefix} {path.name}"  # type: ignore[attr-defined]
+        return needs_reload
+
+    async def handle_vcf_upload(self, files: list[rx.UploadFile]) -> None:
+        """Save an uploaded VCF file and attempt genome build detection."""
+        if not files:
+            return
+        upload_file = files[0]
+        filename = upload_file.filename or "uploaded.vcf"
+        upload_dir = rx.get_upload_dir()
+        dest = upload_dir / filename
+        contents = await upload_file.read()
+        dest.write_bytes(contents)
+
+        needs_reload = self._set_vcf_source(dest, label_prefix="Uploaded")
+
+        events: list = [GenomicGridState.normalize_uploaded_vcf(str(dest))]
+        if needs_reload:
+            events.append(TraitBrowserState.load_traits)
+        return events
+
+    async def compute_selected_prs(self) -> Any:
+        """Resolve genotypes from GenomicGridState, then compute and auto-group by trait."""
+        if not self._vcf_path:
+            self.status_message = "Please upload a VCF file first."  # type: ignore[attr-defined]
+            return
+
+        genomic_state = await self.get_state(GenomicGridState)
+        normalized_path = genomic_state.normalized_parquet_path
+        if normalized_path and Path(normalized_path).exists():
+            self.prs_genotypes_path = normalized_path
+            self._prs_genotypes_lf = pl.scan_parquet(normalized_path)
+        else:
+            self.prs_genotypes_path = self._vcf_path
+
+        gen = PRSComputeStateMixin.compute_selected_prs(self)
+        if gen is not None:
+            for event in gen:
+                yield event
+
+        if self.prs_results:
+            self.build_trait_summary()

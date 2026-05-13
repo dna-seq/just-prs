@@ -8,6 +8,7 @@ from prs_ui.components.prs_section import (
     prs_results_table,
     prs_scores_selector,
     prs_section,
+    trait_summary_table,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "prs_results_table",
     "prs_scores_selector",
     "prs_section",
+    "trait_summary_table",
 ]

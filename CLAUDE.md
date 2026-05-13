@@ -60,9 +60,9 @@ pip install just-prs[reference]
 | `just_prs.catalog` | Synchronous REST API client (`PGSCatalogClient`) for PGS Catalog — used for individual lookups, not for bulk metadata |
 | `just_prs.models` | Pydantic v2 models (`ScoreInfo`, `PRSResult`, `PerformanceInfo`, `AbsoluteRisk`, `PublicationInfo`, etc.) |
 | `just_prs.quality` | Pure-logic quality assessment helpers: `classify_model_quality()`, `interpret_prs_result()`, `format_effect_size()`, `format_classification()`. No Reflex dependency -- shared between core library and UI. |
-| `prs_ui.state` | Reflex `AppState` + grid states + `PRSComputeStateMixin(rx.State, mixin=True)`. The mixin encapsulates all PRS computation logic (score loading, selection, batch compute, CSV export) and is designed for reuse in any Reflex app. `ComputeGridState` subclasses it with VCF-upload-specific behavior for the standalone app. |
-| `prs_ui.components` | **Reusable UI components**: `prs_section(state)`, `prs_scores_selector(state)`, `prs_results_table(state)`, `prs_progress_section(state)`, `prs_build_selector(state)`, `prs_compute_button(state)`. Each takes a state class parameter so the same components work with any concrete state inheriting `PRSComputeStateMixin`. |
-| `prs_ui.pages.*` | UI panels: `metadata` (grid browser), `scoring` (file viewer), `compute` (standalone PRS workflow using reusable components + VCF upload + genomic data grid) |
+| `prs_ui.state` | Reflex `AppState` + grid states + `PRSComputeStateMixin(rx.State, mixin=True)`. The mixin encapsulates all PRS computation logic (score loading, selection, batch compute, trait summary aggregation, CSV export) and is designed for reuse in any Reflex app. `ComputeGridState` subclasses it for the standalone Compute page; `TraitBrowserState` subclasses it for trait-based selection with auto-grouping. |
+| `prs_ui.components` | **Reusable UI components**: `prs_section(state)`, `prs_scores_selector(state)`, `prs_results_table(state)`, `trait_summary_table(state)`, `prs_progress_section(state)`, `prs_build_selector(state)`, `prs_compute_button(state)`, `prs_ancestry_selector(state)`. Each takes a state class parameter so the same components work with any concrete state inheriting `PRSComputeStateMixin`. |
+| `prs_ui.pages.*` | UI panels: `metadata` (grid browser), `scoring` (file viewer), `compute` (standalone PRS workflow using reusable components + VCF upload + genomic data grid), `traits` (trait-grouped PRS browser with auto-summary) |
 | `prs_pipeline.runtime` | `ResourceReport` (Pydantic model) and `resource_tracker` context manager — tracks CPU%, peak memory, duration via `psutil` and logs to Dagster output metadata |
 | `prs_pipeline.utils` | `resource_summary_hook` — Dagster `@success_hook` that aggregates per-asset resource metrics into a run-level summary |
 | `prs_pipeline.checks` | Dagster `@asset_check` definitions for data quality validation. Checks run after asset materialization and surface in the Dagster UI. `ALL_ASSET_CHECKS` collects all checks for registration in `Definitions`. |
@@ -84,7 +84,7 @@ Key methods: `scores()`, `search()`, `best_performance()`, `publications()`, `sc
 
 The package public API (`just_prs.__init__`) exports: `PRSCatalog`, `ReferencePanelError`, `AbsoluteRisk`, `normalize_vcf`, `VcfFilterConfig`, `resolve_cache_dir`, `classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`, `compute_reference_prs_polars`, `compute_reference_prs_batch`, `download_reference_panel`, `reference_panel_dir`, `parse_pvar`, `parse_psam`, `read_pgen_genotypes`, `match_scoring_to_pvar`, `aggregate_distributions`, `distribution_quality_issues`, `enrich_distributions`, `ancestry_percentile`, `ReferenceDistribution`, `ScoringOutcome`, `BatchScoringResult`, `REFERENCE_PANELS`, `DEFAULT_PANEL`, `__version__`, `__package_name__`.
 
-The `prs-ui` package public API (`prs_ui.__init__`) exports: `PRSComputeStateMixin`, `prs_section`, `prs_scores_selector`, `prs_results_table`, `prs_progress_section`, `prs_build_selector`, `prs_compute_button`.
+The `prs-ui` package public API (`prs_ui.__init__`) exports: `PRSComputeStateMixin`, `prs_section`, `prs_scores_selector`, `prs_results_table`, `trait_summary_table`, `prs_progress_section`, `prs_build_selector`, `prs_compute_button`, `prs_ancestry_selector`.
 
 ### HuggingFace sync (`just_prs.hf`)
 
@@ -98,8 +98,10 @@ Cleaned metadata parquets (including `publications.parquet` and `trait_prevalenc
   - `GenomicGridState(LazyFrameGridMixin, AppState)` — normalized VCF genomic data grid. After VCF upload, runs `normalize_vcf()` (strip chr prefix, compute genotype, apply PASS filter) and loads the resulting parquet into a browsable DataGrid. The normalized parquet path is also used by `ComputeGridState` for PRS computation.
   - `PRSComputeStateMixin(rx.State, mixin=True)` — **reusable** PRS computation mixin: score loading via `PRSCatalog`, row selection, batch PRS computation, quality assessment, CSV export. Accepts genotypes via LazyFrame (preferred, via `set_prs_genotypes_lf()`) or parquet path (`prs_genotypes_path`). Designed for embedding in any Reflex app.
   - `ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState)` — concrete state for the standalone Compute PRS page. Adds VCF upload + genome build detection on top of the mixin.
+  - `TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState)` — concrete state for the Traits page. Groups PGS Catalog scores by EFO trait, tracks selected traits, resolves them to PGS IDs, and **auto-builds the trait summary after computation** so the grouped view is the primary output (no manual "Group by Trait" click required). Overrides `compute_selected_prs()` to call `build_trait_summary()` after the parent mixin completes.
   - **Important**: `AppState` must NOT inherit from `LazyFrameGridMixin` — otherwise substates that also list the mixin create an unresolvable MRO diamond.
-- **Reusable components** (`prs_ui.components`): Each component function accepts a `state` class parameter, so the same UI works with any concrete state inheriting `PRSComputeStateMixin`. The primary entry point is `prs_section(state)` which composes build selector, score grid, compute button, progress bar, and results table. The compute section includes an `All available populations` toggle to request per-superpopulation percentiles where reference distributions exist.
+- **Reusable components** (`prs_ui.components`): Each component function accepts a `state` class parameter, so the same UI works with any concrete state inheriting `PRSComputeStateMixin`. The primary entry point is `prs_section(state)` which composes build selector, score grid, compute button, progress bar, and results table. `trait_summary_table(state)` is also exported and can be used independently for trait-grouped views. The compute section includes an `All available populations` toggle to request per-superpopulation percentiles where reference distributions exist.
+- **Bell curve sizing is configurable** in both result tables. `prs_results_table(state, bell_curve_height=280, bell_curve_max_width=900, detail_height=700, bell_curve_config=None)` and `trait_summary_table(state, bell_curve_height=380, bell_curve_max_width=1100, large_bell_curve_threshold=4, large_bell_curve_height=520, large_bell_curve_max_width=1800, detail_height=920, button_label="Group by Trait", bell_curve_config=None)` expose the chart dimensions with the defaults that match the reference layout. `bell_curve_config` is a shallow-merged dict of extra renderer keys (`labelTiers`, `labelMinGapZ`, `bands`, `marginTop`, etc.) for full per-app overrides. `prs_section(state, results_table_kwargs=None, trait_summary_kwargs=None)` forwards those dicts so embedders never need to fork the sub-tables to bump chart size. Default bell curve dimensions are sized to fit alongside the side panel without changing the underlying renderer layout; do not override `marginTop`/`marginBottom`/`legendY`/`yAxisMax` defaults unless you specifically need more headroom (changing them alters the curve aspect ratio).
 - The Metadata tab shows **raw** PGS Catalog columns for general-purpose browsing of all 7 sheets.
 - The Compute tab (default tab) uses **cleaned** data from `PRSCatalog` with normalized genome builds and snake_case column names. Scores are loaded into the MUI DataGrid with server-side virtual scrolling — no manual pagination.
 - VCF upload triggers automatic normalization via `GenomicGridState.normalize_uploaded_vcf()` which runs `normalize_vcf()` (strip chr prefix, compute genotype, PASS filter) and shows the result in a browsable genomic data grid. The normalized parquet is reused by `ComputeGridState` for PRS computation.
@@ -176,7 +178,7 @@ for r in results:
 best = catalog.best_performance(pgs_id="PGS000001").collect()
 ```
 
-**Via Web UI:** Open the Compute tab, upload your VCF (drag-and-drop), select genome build, load scores, check the ones you want, and click Compute.
+**Via Web UI:** Open the Compute tab, upload your VCF (drag-and-drop), select genome build, load scores, check the ones you want, and click Compute. Alternatively, use the **Traits** tab to select entire trait groups (e.g. "type 2 diabetes mellitus") — all associated PGS models are computed and automatically grouped into a trait summary with consensus bell curves, outlier detection, and quality breakdown.
 
 ### PLINK2 binary format operations
 
@@ -332,7 +334,11 @@ class PRSState(PRSComputeStateMixin, LazyFrameGridMixin, MyAppState):
 
 
 def prs_page() -> rx.Component:
-    return prs_section(PRSState)
+    return prs_section(
+        PRSState,
+        results_table_kwargs={"bell_curve_height": 360, "bell_curve_max_width": 1200},
+        trait_summary_kwargs={"bell_curve_height": 460},
+    )
 ```
 
 Key integration points:
@@ -340,7 +346,9 @@ Key integration points:
 - `prs_genotypes_path` is the fallback string path. Set it alongside the LazyFrame so the mixin can pass it to `compute_prs()` if needed.
 - The host app's state must provide `genome_build`, `cache_dir`, and `status_message` vars (inherited from a shared parent or defined directly).
 - Call `initialize_prs()` on page load to auto-load PGS Catalog scores into the grid.
-- Individual sub-components (`prs_scores_selector`, `prs_results_table`, `prs_compute_button`, etc.) can be used independently for custom layouts.
+- Individual sub-components (`prs_scores_selector`, `prs_results_table`, `trait_summary_table`, `prs_compute_button`, etc.) can be used independently for custom layouts.
+- **Trait summary** is available via `trait_summary_table(state)` — groups PRS results by EFO trait and shows consensus bell curves, outlier detection, quality breakdown, and per-trait aggregated statistics. Call `state.build_trait_summary()` after `compute_selected_prs()` completes to populate it, or override `compute_selected_prs()` in a concrete state to auto-build (as `TraitBrowserState` does).
+- **Bell curve dimensions are first-class config**: `prs_section` forwards `results_table_kwargs` and `trait_summary_kwargs` to the underlying tables. Use `bell_curve_height` / `bell_curve_max_width` / `detail_height` for size, and `bell_curve_config={"labelTiers": 12, "bands": [...], ...}` to layer on any `bell_curve` renderer key. Defaults preserve the standard layout.
 
 ### Reflex-specific patterns (CRITICAL)
 
@@ -1003,7 +1011,7 @@ If a Web UI (Reflex, FastAPI) needs to trigger a Dagster job in the background, 
 - Avoid full `collect()` on large LazyFrames when lazy aggregations or `pl.collect_all()` can stream the result.
 - When redundant functionality or bugs live in user-maintained upstream libraries such as `reflex-mui-datagrid`, provide a prompt/fix for that project instead of local monkey-patching.
 - UI must distinguish unavailable data from zero with explicit `N/A`; use green for favorable/low-risk and red only for alarming/high-risk results.
-- Long UI text in detail panels must word-wrap, badges should stay short, and foldable datagrid detail panels are preferred over separate cards for PRS result details.
+- Long UI text in detail panels must word-wrap, badges should stay short, and foldable datagrid detail panels are preferred over separate cards; expanded PRS views should start with the percentile/reference curve and explain AUROC, variant match, risk agreement, and h² in plain language.
 - Use full population names in UI display, with column grouping for per-population fields; abbreviations like AFR/EUR are for data/internal columns.
 - Do not hardcode memory limits, resource caps, or arbitrary column widths; use RAM percentages/env overrides and content-aware column sizing.
 - For public demos such as just-dna-lite, prefer an immutable public-genome mode: no user uploads on the server, only permissively licensed public genomes, with an FAQ guiding users to install locally for private data.
@@ -1015,7 +1023,7 @@ If a Web UI (Reflex, FastAPI) needs to trigger a Dagster job in the background, 
 - `just-dna-seq/pgs-catalog` is the HF source of truth for cleaned metadata, scoring parquet mirrors, and risk metadata, while `just-dna-seq/prs-percentiles` stores precomputed reference population distributions; catalog uploads use Hugging Face `upload_large_folder`, where pre-uploaded blobs may be committed incrementally and reruns resume from staging cache unless `--no-cache` or cache deletion forces more work.
 - Scoring parquet caches save about 5.5 GB versus raw `.txt.gz`; downloads must reject zero-byte/corrupt files, and parquet cache readers must treat unreadable/truncated files as missing and recompute.
 - `PRSCatalog.percentile()` performs a one-time HF refresh on cache miss, so newly computed reference distributions are picked up without manual cache cleanup.
-- `reflex-mui-datagrid` lazy grids own row-selection handling internally; customize by overriding `handle_lf_grid_row_selection`, use supported `detail_columns`/badge props for foldable detail panels, and do not inflate `getRowHeight` for community detail panels because MUI already renders panels after rows.
+- `reflex-mui-datagrid` lazy grids own row-selection handling internally; customize by overriding `handle_lf_grid_row_selection`, use native `detail_columns`, badge props, `column_overrides`, and `link_list` renderers for PRS UI links/details, and do not inflate `getRowHeight` for community detail panels because MUI already renders panels after rows.
 - The 1000G `.pvar` `ID` is `CHROM:POS:REF:ALT`; `parse_pvar()` must preserve it, `compute_reference_prs_polars(match_mode="id")` supports PLINK-parity scoring, and PLINK2 parity uses `scoresums`.
 - GenoBoost includes 15 per-dosage-weight scores handled by `is_dosage_weight_format()`; five known PGS IDs are permanently unscorable with SNP-based reference panels due to HLA/no-coordinate data or upstream allele defects.
 - DuckDB joins against the 75M-row pvar parquet must use explicit `duckdb.connect()`, configured memory limits, closed connections, allele-length filtering, and `SET arrow_large_buffer_size = true` before Polars conversion.

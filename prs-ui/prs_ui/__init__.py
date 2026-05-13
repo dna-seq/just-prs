@@ -8,6 +8,7 @@ from prs_ui.components.prs_section import (
     prs_results_table,
     prs_scores_selector,
     prs_section,
+    trait_summary_table,
 )
 from prs_ui.state import PRSComputeStateMixin
 
@@ -24,6 +25,7 @@ __all__ = [
     "prs_results_table",
     "prs_scores_selector",
     "prs_section",
+    "trait_summary_table",
     "__version__",
     "__package_name__",
 ]

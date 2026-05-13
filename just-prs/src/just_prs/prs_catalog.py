@@ -57,6 +57,7 @@ class PRSCatalog:
         self._perf_lf: pl.LazyFrame | None = None
         self._best_perf_lf: pl.LazyFrame | None = None
         self._publications_lf: pl.LazyFrame | None = None
+        self._quality_lf: pl.LazyFrame | None = None
         self._prevalence_lf: pl.LazyFrame | None = None
         self._heritability_lf: pl.LazyFrame | None = None
         self._ref_dist_cache: dict[str, pl.LazyFrame] = {}
@@ -139,6 +140,13 @@ class PRSCatalog:
             logger.warning("Unable to rebuild publications metadata: %s", exc)
             return None
 
+    def _load_quality_from_cache(self) -> pl.LazyFrame | None:
+        """Load optional quality scores parquet (synced from HF)."""
+        qpath = self.metadata_dir / "pgs_quality_scores.parquet"
+        if not qpath.exists():
+            return None
+        return pl.scan_parquet(qpath)
+
     def _load_publications_from_cache(self) -> pl.LazyFrame | None:
         """Load optional cleaned publications metadata, rebuilding stale caches."""
         pub_path = self.metadata_dir / "publications.parquet"
@@ -165,6 +173,7 @@ class PRSCatalog:
                 self._perf_lf = pl.scan_parquet(self.metadata_dir / "performance.parquet")
                 self._best_perf_lf = pl.scan_parquet(self.metadata_dir / "best_performance.parquet")
                 self._publications_lf = self._load_publications_from_cache()
+                self._quality_lf = self._load_quality_from_cache()
                 return
 
             if self._try_pull_from_hf():
@@ -172,6 +181,7 @@ class PRSCatalog:
                 self._perf_lf = pl.scan_parquet(self.metadata_dir / "performance.parquet")
                 self._best_perf_lf = pl.scan_parquet(self.metadata_dir / "best_performance.parquet")
                 self._publications_lf = self._load_publications_from_cache()
+                self._quality_lf = self._load_quality_from_cache()
                 return
 
             scores_lf, perf_lf, best_perf_lf, pub_lf = self._build_from_ftp()
@@ -179,6 +189,7 @@ class PRSCatalog:
             self._perf_lf = perf_lf
             self._best_perf_lf = best_perf_lf
             self._publications_lf = pub_lf
+            self._quality_lf = self._load_quality_from_cache()
 
     def _ensure_scores(self) -> pl.LazyFrame:
         self._load_all()
@@ -373,18 +384,21 @@ class PRSCatalog:
     def scores(self, genome_build: str | None = None) -> pl.LazyFrame:
         """Return cleaned scores LazyFrame, optionally filtered by genome build.
 
+        When ``pgs_quality_scores.parquet`` is available (synced from HF),
+        ``synthetic_quality_score`` and ``quality_label`` are joined in.
+
         Args:
             genome_build: If provided, filter to scores matching this canonical build
                           (GRCh37, GRCh38, GRCh36). Scores with build=NR are excluded.
-
-        Returns:
-            Cleaned LazyFrame with columns: pgs_id, name, trait_reported, trait_efo,
-            trait_efo_id, genome_build, n_variants, weight_type, pgp_id, pmid,
-            ftp_link, release_date
         """
         lf = self._ensure_scores()
         if genome_build is not None:
             lf = lf.filter(pl.col("genome_build").eq(genome_build))
+        if self._quality_lf is not None:
+            quality_cols = self._quality_lf.select(
+                "pgs_id", "synthetic_score", "combined_quality_score", "quality_label",
+            )
+            lf = lf.join(quality_cols, on="pgs_id", how="left")
         return lf
 
     def performance(self, pgs_id: str | None = None) -> pl.LazyFrame:

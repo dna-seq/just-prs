@@ -25,6 +25,8 @@ from reflex_mui_datagrid import (
     lazyframe_grid_stats_bar,
 )
 
+from prs_ui.grid_style import data_grid_scroll_container
+
 
 def prs_build_selector(state: type[rx.State]) -> rx.Component:
     """Genome build selector dropdown."""
@@ -111,12 +113,14 @@ def prs_scores_selector(state: type[rx.State]) -> rx.Component:
             state.compute_scores_loaded,
             rx.vstack(
                 lazyframe_grid_stats_bar(state),
-                lazyframe_grid(
-                    state,
-                    height="400px",
-                    density="compact",
-                    column_header_height=56,
-                    checkbox_selection=True,
+                data_grid_scroll_container(
+                    lazyframe_grid(
+                        state,
+                        height="400px",
+                        density="compact",
+                        column_header_height=56,
+                        checkbox_selection=True,
+                    ),
                 ),
                 width="100%",
                 spacing="2",
@@ -346,45 +350,47 @@ def prs_results_table(state: type[rx.State]) -> rx.Component:
             ),
             _prs_interpretation_guide(),
             PlotlyDetailSupport.create(),
-            data_grid(
-                rows=state.prs_results_rows,
-                columns=state.prs_results_columns,
-                column_grouping_model=state.prs_results_column_groups,
-                row_id_field="id",
-                pagination=False,
-                hide_footer=True,
-                density="compact",
-                height="calc(100vh - 340px)",
-                disable_row_selection_on_click=True,
-                detail_columns=[
-                    "population_percentiles_chart", "risk_context",
-                    "result_suggestions", "model_context",
-                ],
-                detail_labels={
-                    "population_percentiles_chart": "Where You Fall on the Reference Curve",
-                    "risk_context": "Does This Change Actual Risk?",
-                    "result_suggestions": "Quick Flags",
-                    "model_context": "Can I Trust This Result?",
-                },
-                detail_renderers={
-                    "risk_context": {"type": "metric_list"},
-                    "model_context": {"type": "metric_list"},
-                    "result_suggestions": {"type": "badge_list"},
-                    "population_percentiles_chart": {
-                        "type": "bell_curve",
-                        "scaleMin": 0,
-                        "scaleMax": 100,
-                        "height": 280,
-                        "maxWidth": 700,
-                        "bands": [
-                            {"from": 0, "to": 25, "label": "below average"},
-                            {"from": 25, "to": 75, "label": "usual middle range"},
-                            {"from": 75, "to": 90, "label": "above average"},
-                            {"from": 90, "to": 100, "label": "high tail"},
-                        ],
+            data_grid_scroll_container(
+                data_grid(
+                    rows=state.prs_results_rows,
+                    columns=state.prs_results_columns,
+                    column_grouping_model=state.prs_results_column_groups,
+                    row_id_field="id",
+                    pagination=False,
+                    hide_footer=True,
+                    density="compact",
+                    height="calc(100vh - 340px)",
+                    disable_row_selection_on_click=True,
+                    detail_columns=[
+                        "population_percentiles_chart", "risk_context",
+                        "result_suggestions", "model_context",
+                    ],
+                    detail_labels={
+                        "population_percentiles_chart": "Where You Fall on the Reference Curve",
+                        "risk_context": "Does This Change Actual Risk?",
+                        "result_suggestions": "Quick Flags",
+                        "model_context": "Can I Trust This Result?",
                     },
-                },
-                detail_height=700,
+                    detail_renderers={
+                        "risk_context": {"type": "metric_list"},
+                        "model_context": {"type": "metric_list"},
+                        "result_suggestions": {"type": "badge_list"},
+                        "population_percentiles_chart": {
+                            "type": "bell_curve",
+                            "scaleMin": 0,
+                            "scaleMax": 100,
+                            "height": 280,
+                            "maxWidth": 700,
+                            "bands": [
+                                {"from": 0, "to": 25, "label": "below average"},
+                                {"from": 25, "to": 75, "label": "usual middle range"},
+                                {"from": 75, "to": 90, "label": "above average"},
+                                {"from": 90, "to": 100, "label": "high tail"},
+                            ],
+                        },
+                    },
+                    detail_height=700,
+                ),
             ),
             rx.text(
                 "Click the chevron on any row for a bell curve showing your position, "
@@ -429,55 +435,67 @@ def trait_summary_table(state: type[rx.State]) -> rx.Component:
                 state.trait_summary_visible,
                 rx.vstack(
                     PlotlyDetailSupport.create(),
-                    data_grid(
-                        rows=state.trait_summary_rows,
-                        columns=state.trait_summary_columns,
-                        row_id_field="id",
-                        pagination=False,
-                        hide_footer=True,
-                        density="compact",
-                        height="calc(100vh - 380px)",
-                        disable_row_selection_on_click=True,
-                        detail_columns=[
-                            "pgs_links",
-                            "key_metrics",
-                            "confidence_segments",
-                            "percentile_chart",
-                            "interpretation",
-                            "outlier_detail",
-                        ],
-                        detail_labels={
-                            "pgs_links": "PGS Models Included",
-                            "key_metrics": "Key Statistics",
-                            "confidence_segments": "All Models vs High-Quality Models",
-                            "percentile_chart": "Where You Fall on the Bell Curve",
-                            "interpretation": "What This Means for You",
-                            "outlier_detail": "Model Agreement & Outlier Notes",
-                        },
-                        detail_renderers={
-                            "pgs_links": {"type": "link_list"},
-                            "key_metrics": {"type": "metric_list"},
-                            "confidence_segments": {"type": "metric_list"},
-                            "percentile_chart": {
-                                "type": "bell_curve",
-                                "scaleMin": 0,
-                                "scaleMax": 100,
-                                "height": 320,
-                                "maxWidth": 800,
-                                "bands": [
-                                    {"from": 0, "to": 25, "label": "below average"},
-                                    {"from": 25, "to": 75, "label": "usual middle range"},
-                                    {"from": 75, "to": 90, "label": "above average"},
-                                    {"from": 90, "to": 100, "label": "high tail"},
-                                ],
+                    data_grid_scroll_container(
+                        data_grid(
+                            rows=state.trait_summary_rows,
+                            columns=state.trait_summary_columns,
+                            row_id_field="id",
+                            pagination=False,
+                            hide_footer=True,
+                            density="compact",
+                            height="calc(100vh - 380px)",
+                            disable_row_selection_on_click=True,
+                            detail_columns=[
+                                "pgs_links",
+                                "key_metrics",
+                                "confidence_segments",
+                                "percentile_chart",
+                                "interpretation",
+                                "outlier_detail",
+                            ],
+                            detail_labels={
+                                "pgs_links": "PGS Models Included",
+                                "key_metrics": "Key Statistics",
+                                "confidence_segments": "All Models vs High-Quality Models",
+                                "percentile_chart": "Where You Fall on the Bell Curve",
+                                "interpretation": "What This Means for You",
+                                "outlier_detail": "Model Agreement & Outlier Notes",
                             },
-                        },
-                        detail_height=680,
+                            detail_renderers={
+                                "pgs_links": {"type": "link_list"},
+                                "key_metrics": {"type": "metric_list"},
+                                "confidence_segments": {"type": "metric_list"},
+                                "percentile_chart": {
+                                    "type": "bell_curve",
+                                    "scaleMin": 0,
+                                    "scaleMax": 100,
+                                    "height": 320,
+                                    "maxWidth": 800,
+                                    "bands": [
+                                        {"from": 0, "to": 25, "label": "below average"},
+                                        {"from": 25, "to": 75, "label": "usual middle range"},
+                                        {"from": 75, "to": 90, "label": "above average"},
+                                        {"from": 90, "to": 100, "label": "high tail"},
+                                    ],
+                                },
+                            },
+                            detail_height=780,
+                        ),
                     ),
                     rx.text(
                         "Click the chevron on any trait row to see: a bell curve showing where "
-                        "each model places you, key statistics, and a plain-language explanation "
+                        "each model places you, variant match rates, key statistics, and a plain-language explanation "
                         "of what the results mean and why models may disagree.",
+                        size="1",
+                        color="gray",
+                    ),
+                    rx.text(
+                        "Chart markers encode model quality and range status. "
+                        "Shape indicates quality rank: \u2605 star = High, \u2B1F pentagon = Normal, "
+                        "\u25A0 square = Moderate, \u25BC triangle = Low. "
+                        "Fill indicates range: solid green = typical range (25\u201375th percentile), "
+                        "dotted grey = extreme position or low variant match, open red = statistical outlier. "
+                        "Link colors in 'PGS Models Included' also reflect model quality.",
                         size="1",
                         color="gray",
                     ),

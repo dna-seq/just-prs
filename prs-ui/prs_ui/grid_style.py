@@ -17,12 +17,16 @@ def data_grid_scroll_container(grid: rx.Component) -> rx.Component:
 
 
 def data_grid_scroll_css() -> rx.Component:
-    """Global scrollbar CSS for MUI X DataGrid — cross-browser (Firefox + Chrome).
+    """Global scrollbar CSS for MUI X DataGrid v8 — cross-browser (Firefox + Chrome).
 
-    Strategy: enable native browser scrollbars on the actual scroll container
-    (.MuiDataGrid-virtualScroller) and hide MUI's custom overlay scrollbar divs.
-    Firefox never renders -webkit-scrollbar pseudo-elements and may also suppress
-    MUI's overlay scrollbars; native scrollbars are always visible in both browsers.
+    MUI X DataGrid v8 architecture: the .MuiDataGrid-virtualScroller intentionally
+    uses overflow:hidden and is scrolled by MUI's JS.  The actual scrollable elements
+    are the overlay scrollbar divs (.MuiDataGrid-scrollbar--vertical /
+    .MuiDataGrid-scrollbar--horizontal).  We must NOT hide those divs and must NOT
+    override overflow on the virtualScroller — doing so breaks wheel and drag scrolling.
+
+    Strategy: leave MUI's scroll mechanism untouched; style the overlay scrollbar
+    elements so they render as slim, visible scrollbars in both Firefox and Chromium.
     """
     return rx.el.style(
         f"""
@@ -39,36 +43,54 @@ def data_grid_scroll_css() -> rx.Component:
             overflow: hidden;
         }}
 
-        /* Native scrollbars on the actual scroll container — visible in all browsers */
-        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-virtualScroller {{
-            overflow: auto !important;
-            /* Firefox */
-            scrollbar-width: thin !important;
+        /* ---- Vertical overlay scrollbar ---- */
+        /* Firefox */
+        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar--vertical {{
+            scrollbar-width: thin;
             scrollbar-color: var(--gray-8) transparent;
         }}
 
         /* Chromium / Safari */
-        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-virtualScroller::-webkit-scrollbar {{
+        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar--vertical::-webkit-scrollbar {{
             width: 8px;
-            height: 8px;
         }}
 
-        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-virtualScroller::-webkit-scrollbar-track {{
+        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar--vertical::-webkit-scrollbar-track {{
             background: transparent;
         }}
 
-        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-virtualScroller::-webkit-scrollbar-thumb {{
+        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar--vertical::-webkit-scrollbar-thumb {{
             background: var(--gray-8);
             border-radius: 4px;
         }}
 
-        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-virtualScroller::-webkit-scrollbar-thumb:hover {{
+        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar--vertical::-webkit-scrollbar-thumb:hover {{
             background: var(--gray-10);
         }}
 
-        /* Hide MUI's custom overlay scrollbar elements — native scrollbars above replace them */
-        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar {{
-            display: none !important;
+        /* ---- Horizontal overlay scrollbar ---- */
+        /* Firefox */
+        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar--horizontal {{
+            scrollbar-width: thin;
+            scrollbar-color: var(--gray-8) transparent;
+        }}
+
+        /* Chromium / Safari */
+        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar--horizontal::-webkit-scrollbar {{
+            height: 8px;
+        }}
+
+        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar--horizontal::-webkit-scrollbar-track {{
+            background: transparent;
+        }}
+
+        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar--horizontal::-webkit-scrollbar-thumb {{
+            background: var(--gray-8);
+            border-radius: 4px;
+        }}
+
+        .{DATA_GRID_SCROLL_CLASS} .MuiDataGrid-scrollbar--horizontal::-webkit-scrollbar-thumb:hover {{
+            background: var(--gray-10);
         }}
         """
     )

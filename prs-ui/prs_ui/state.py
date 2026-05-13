@@ -32,6 +32,7 @@ from just_prs.ftp import (
     download_scoring_as_parquet,
     stream_scoring_file,
 )
+from just_prs.enrich import enrich_prs_result
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs import compute_prs
 from just_prs.prs_catalog import PRSCatalog
@@ -132,6 +133,64 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
 
 
 _catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
+
+
+def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
+    """Convert an ``EnrichedPRSResult`` to the dict format ``_build_prs_results_grid`` expects.
+
+    Bridges the typed enrichment model to the stringly-typed dict the grid
+    builder and CSV export consume.
+    """
+    row: dict[str, Any] = {
+        "pgs_id": enriched.pgs_id,
+        "trait": enriched.trait,
+        "trait_efo_id": enriched.trait_efo_id,
+        "score": enriched.score,
+        "percentile": f"{enriched.percentile:.1f}" if enriched.percentile is not None else "",
+        "percentile_method": enriched.percentile_method,
+        "has_allele_frequencies": enriched.has_allele_frequencies,
+        "match_rate": enriched.match_rate,
+        "match_color": enriched.match_color,
+        "variants_matched": enriched.variants_matched,
+        "variants_total": enriched.variants_total,
+        "effect_size": enriched.effect_size,
+        "classification": enriched.classification,
+        "auroc": f"{enriched.auroc:.3f}" if enriched.auroc is not None else "",
+        "quality_label": enriched.quality_label,
+        "quality_color": enriched.quality_color,
+        "summary": enriched.summary,
+        "ancestry": enriched.ancestry,
+        "selected_ancestry": enriched.selected_ancestry,
+        "n_individuals": enriched.n_individuals,
+        "synthetic_quality": enriched.synthetic_quality,
+        "synthetic_quality_label": enriched.synthetic_quality_label,
+        "synthetic_quality_color": enriched.synthetic_quality_color,
+        "quality_tier": enriched.quality_tier,
+        "quality_tier_metric": enriched.quality_tier_metric,
+        "risk_level": enriched.risk_level,
+        "risk_level_color": enriched.risk_level_color,
+        "risk_hint": enriched.risk_hint,
+        "all_population_percentiles": enriched.all_population_percentiles,
+        "reference_status": enriched.reference_status,
+        "reference_source": enriched.reference_source,
+        "reference_source_code": enriched.reference_source_code,
+        "absolute_risk": enriched.absolute_risk_text,
+        "absolute_risk_percent": enriched.absolute_risk_percent,
+        "population_average_percent": enriched.population_average_percent,
+        "risk_ratio_value": enriched.risk_ratio_value,
+        "absolute_risk_method": enriched.absolute_risk_method,
+        "absolute_risk_detail": enriched.absolute_risk_detail,
+        "heritability": enriched.heritability,
+        "heritability_detail": enriched.heritability_detail,
+        "heritability_metrics": enriched.heritability_metrics,
+        "risk_agreement": enriched.risk_agreement,
+        "risk_estimates_by_method": enriched.risk_estimates_by_method,
+        "risk_estimate_methods": enriched.risk_estimate_methods,
+    }
+    for sp in ("AFR", "AMR", "EAS", "EUR", "SAS"):
+        val = getattr(enriched, f"pct_{sp}", None)
+        row[f"pct_{sp}"] = f"{val:.1f}" if val is not None else ""
+    return row
 
 
 def _parse_percent_text(value: Any) -> float | None:
@@ -239,6 +298,68 @@ def _quality_tone(label: str) -> str:
     return "neutral"
 
 
+def _synthetic_quality_tone(label: str) -> str:
+    """Semantic tone derived from classify_synthetic_quality labels."""
+    normalized = label.strip().lower()
+    if normalized == "high":
+        return "good"
+    if normalized == "normal":
+        return "info"
+    if normalized == "moderate":
+        return "warning"
+    if normalized == "low":
+        return "danger"
+    return "neutral"
+
+
+_QUALITY_SHAPE_MAP: dict[str, str] = {
+    "high": "star",
+    "normal": "pentagon",
+    "moderate": "square",
+    "low": "triangle-down",
+}
+
+_BELL_GREEN = "#2e7d32"
+_BELL_GREY = "#9e9e9e"
+_BELL_RED = "#c62828"
+
+
+def _quality_marker_shape(quality_label: str) -> str:
+    """Map synthetic quality label to a Plotly marker base shape."""
+    return _QUALITY_SHAPE_MAP.get(quality_label.strip().lower(), "circle")
+
+
+def _bell_curve_marker(
+    base_shape: str,
+    pct: float,
+    is_outlier: bool,
+    match_rate: float = 100.0,
+) -> tuple[str, str]:
+    """Determine bell curve marker symbol and color.
+
+    Returns (plotly_symbol, hex_color):
+        - Outlier: ``{shape}-open``, red
+        - In average range (25–75th pctl) with >=50% match: ``{shape}`` (filled), green
+        - Extreme or low match: ``{shape}-dot``, grey
+    """
+    if is_outlier:
+        return f"{base_shape}-open", _BELL_RED
+    if match_rate < 50.0:
+        return f"{base_shape}-dot", _BELL_GREY
+    if 25 <= pct <= 75:
+        return base_shape, _BELL_GREEN
+    return f"{base_shape}-dot", _BELL_GREY
+
+
+def _match_rate_tone(match_rate: float) -> str:
+    """Return display tone for per-model variant match rate."""
+    if match_rate >= 50.0:
+        return "good"
+    if match_rate >= 25.0:
+        return "warning"
+    return "danger"
+
+
 def _absolute_risk_tone(user_pct: float | None, risk_ratio: float | None) -> str:
     """Semantic tone for absolute-risk context, not just PRS percentile."""
     if user_pct is None:
@@ -321,15 +442,36 @@ def _format_percentile_spread(values: list[float]) -> str:
     return f"{min(values):.1f}-{max(values):.1f} pct"
 
 
-def _pgs_link_items(pgs_ids: list[str]) -> str:
-    """Return detail-panel link items for PGS Catalog score pages."""
-    return json.dumps([
-        {
+_SYNTHETIC_QUALITY_LINK_COLORS: dict[str, str] = {
+    "High": "#2e7d32",
+    "Normal": "#1565c0",
+    "Moderate": "#e65100",
+    "Low": "#c62828",
+}
+
+
+def _pgs_link_items(
+    pgs_ids: list[str],
+    quality_labels: dict[str, str] | None = None,
+) -> str:
+    """Return detail-panel link items for PGS Catalog score pages.
+
+    When *quality_labels* is provided (pgs_id → synthetic quality label),
+    each link is colored according to the model's quality tier.
+    """
+    items: list[dict[str, str]] = []
+    for pgs_id in pgs_ids:
+        item: dict[str, str] = {
             "label": pgs_id,
             "url": f"https://www.pgscatalog.org/score/{pgs_id}/",
         }
-        for pgs_id in pgs_ids
-    ])
+        if quality_labels:
+            label = quality_labels.get(pgs_id, "")
+            color = _SYNTHETIC_QUALITY_LINK_COLORS.get(label, "")
+            if color:
+                item["color"] = color
+        items.append(item)
+    return json.dumps(items)
 
 
 def _quality_distribution(rows: list[dict[str, Any]]) -> dict[str, int]:
@@ -759,6 +901,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         }
         _QUALITY_COLORS: dict[str, str] = {
             "High": "#2e7d32",
+            "Normal": "#1565c0",
             "Moderate": "#f57f17",
             "Low": "#c62828",
             "Very Low": "#c62828",
@@ -766,6 +909,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         }
         _QUALITY_BG: dict[str, str] = {
             "High": "#e8f5e9",
+            "Normal": "#e3f2fd",
             "Moderate": "#fff3e0",
             "Low": "#ffebee",
             "Very Low": "#ffebee",
@@ -774,6 +918,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
         columns = [
             ColumnDef(field="trait", header_name="Trait", min_width=180, flex=1),
+            ColumnDef(field="trait_efo_id", header_name="EFO ID", min_width=140),
             ColumnDef(
                 field="overall_signal", header_name="Signal", min_width=170,
                 cell_renderer_type="badge",
@@ -818,7 +963,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "bgColorMap": _QUALITY_BG,
                 },
             ),
-            ColumnDef(field="best_auroc", header_name="Best AUROC", type="number", min_width=110),
+            ColumnDef(field="best_metric", header_name="Best Metric", min_width=150),
             ColumnDef(
                 field="best_match_rate", header_name="Best Match", type="number", min_width=120,
                 cell_renderer_type="progress_bar",
@@ -942,7 +1087,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         return "\n\n".join(parts)
 
     def build_trait_summary(self) -> None:
-        """Group computed PRS rows by trait and build a citizen-facing summary."""
+        """Group computed PRS rows by EFO ID and build a citizen-facing summary.
+
+        Models within each group are ranked by synthetic_quality_score.
+        """
         if not self.prs_results:
             self.trait_summary_rows = []
             self.trait_summary_columns = self._build_trait_summary_columns()
@@ -952,12 +1100,17 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
         grouped: dict[str, list[dict[str, Any]]] = {}
         for row in self.prs_results:
-            trait = str(row.get("trait") or "Unlabeled trait").strip() or "Unlabeled trait"
-            grouped.setdefault(trait.casefold(), []).append(row)
+            efo_id = str(row.get("trait_efo_id") or "").strip()
+            if not efo_id:
+                efo_id = str(row.get("trait") or "Unlabeled trait").strip().casefold()
+            grouped.setdefault(efo_id, []).append(row)
 
         summary_rows: list[dict[str, Any]] = []
         for index, rows in enumerate(grouped.values()):
+            rows.sort(key=lambda r: float(r.get("synthetic_quality") or 0), reverse=True)
+
             trait = str(rows[0].get("trait") or "Unlabeled trait")
+            efo_id = str(rows[0].get("trait_efo_id") or "")
             pgs_ids = [str(row.get("pgs_id", "")) for row in rows if row.get("pgs_id")]
             pct_by_id: dict[str, float] = {}
             for row in rows:
@@ -1014,7 +1167,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 rows,
                 key=lambda row: (
                     1 if row.get("absolute_risk") else 0,
-                    self._quality_rank(str(row.get("quality_label", ""))),
+                    float(row.get("synthetic_quality") or 0),
+                    float(row.get("match_rate") or 0.0),
+                ),
+            )
+            worst_row = min(
+                rows,
+                key=lambda row: (
+                    float(row.get("synthetic_quality") or 0),
                     float(row.get("match_rate") or 0.0),
                 ),
             )
@@ -1027,7 +1187,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     best_auroc = float(best_auroc_str)
                 except (TypeError, ValueError):
                     pass
-            best_quality = str(best_row.get("quality_label", "")) or "N/A"
+            best_quality = str(best_row.get("synthetic_quality_label", "")) or "N/A"
             best_user_pct = _parse_percent_text(best_row.get("absolute_risk"))
             pop_avg_pct = None
             abs_text = str(best_row.get("absolute_risk") or "")
@@ -1051,28 +1211,63 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 consistency = "Some variation"
 
             # Percentile spread chart: each PRS model as a data point
+            # Shape = quality tier (star/pentagon/square/triangle-down)
+            # Fill = range status: filled+green = in range with good match,
+            # dot+grey = extreme or low match, open+red = outlier.
+            sq_label_by_id: dict[str, str] = {
+                str(row.get("pgs_id", "")): str(row.get("synthetic_quality_label") or "")
+                for row in rows
+            }
+            row_by_id: dict[str, dict[str, Any]] = {
+                str(row.get("pgs_id", "")): row
+                for row in rows
+                if row.get("pgs_id")
+            }
             model_items: list[dict[str, Any]] = []
             model_outlier_labels: list[str] = []
             for pgs_id, pct in sorted(pct_by_id.items(), key=lambda item: item[1], reverse=True):
-                tone = _percentile_tone(pct)
                 is_outlier = pgs_id in outliers
+                quality_label = sq_label_by_id.get(pgs_id, "")
+                base_shape = _quality_marker_shape(quality_label)
+                match_rate_val = float(row_by_id.get(pgs_id, {}).get("match_rate") or 100.0)
+                symbol, marker_color = _bell_curve_marker(base_shape, pct, is_outlier, match_rate_val)
                 model_items.append({
                     "label": pgs_id,
                     "value": pct,
-                    "tone": "danger" if is_outlier else tone,
+                    "symbol": symbol,
+                    "markerColor": marker_color,
                 })
                 if is_outlier:
                     model_outlier_labels.append(pgs_id)
+
+            match_rate_items: list[dict[str, Any]] = []
+            for row in sorted(rows, key=lambda item: float(item.get("match_rate") or 0.0), reverse=True):
+                pgs_id = str(row.get("pgs_id", ""))
+                if not pgs_id:
+                    continue
+                match_rate_pct = float(row.get("match_rate") or 0.0)  # already 0-100 scale
+                sq_label = str(row.get("synthetic_quality_label") or "N/A")
+                tier_metric = str(row.get("quality_tier_metric") or "No metric")
+                match_rate_items.append({
+                    "label": f"{pgs_id} ({sq_label})",
+                    "value": f"{match_rate_pct:.1f}%",
+                    "tone": _match_rate_tone(match_rate_pct),
+                    "subtext": tier_metric,
+                })
 
             percentile_chart: dict[str, Any] = {
                 "score": median_pct,
                 "scoreLabel": f"Median: {median_pct:.1f}th" if median_pct is not None else "No data",
                 "items": model_items,
                 "outliers": model_outlier_labels,
+                "match_rate_items": match_rate_items,
                 "summary": (
                     f"{len(pct_by_id)} models plotted. "
                     + (f"Range: {min_pct:.1f}–{max_pct:.1f}. " if min_pct is not None and max_pct is not None else "")
-                    + (f"Outliers marked: {', '.join(model_outlier_labels)}." if model_outlier_labels else "No outliers detected.")
+                    + (f"Outliers marked: {', '.join(model_outlier_labels)}. " if model_outlier_labels else "No outliers detected. ")
+                    + "Shape = model quality (\u2605 High, \u2B1F Normal, \u25A0 Moderate, \u25BC Low). "
+                    + "Filled green = in typical range (25\u201375th pctl) with good match, "
+                    + "dot grey = extreme or low match, open red = outlier."
                 ),
             }
 
@@ -1112,13 +1307,29 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "tone": "neutral",
                 "subtext": f"{len(pct_by_id)} with percentiles",
             })
-            if best_auroc is not None:
+
+            best_sq = float(best_row.get("synthetic_quality") or 0)
+            best_sq_label = str(best_row.get("synthetic_quality_label") or "")
+            best_tier_metric = str(best_row.get("quality_tier_metric") or "No metric")
+            key_metrics.append({
+                "label": f"Best Model ({best_pgs_id})",
+                "value": f"{best_tier_metric} — score {best_sq:.0f}",
+                "tone": _synthetic_quality_tone(best_sq_label),
+                "subtext": f"Rank: {best_sq_label}; match {float(best_row.get('match_rate') or 0):.1f}%",
+            })
+
+            if len(rows) > 1:
+                worst_pgs_id = str(worst_row.get("pgs_id", ""))
+                worst_sq = float(worst_row.get("synthetic_quality") or 0)
+                worst_sq_label = str(worst_row.get("synthetic_quality_label") or "")
+                worst_tier_metric = str(worst_row.get("quality_tier_metric") or "No metric")
                 key_metrics.append({
-                    "label": "Best Model AUROC",
-                    "value": f"{best_auroc:.3f}",
-                    "tone": "good" if best_auroc >= 0.7 else ("warning" if best_auroc >= 0.6 else "danger"),
-                    "subtext": f"from {best_pgs_id}",
+                    "label": f"Worst Model ({worst_pgs_id})",
+                    "value": f"{worst_tier_metric} — score {worst_sq:.0f}",
+                    "tone": _synthetic_quality_tone(worst_sq_label),
+                    "subtext": f"Rank: {worst_sq_label}; match {float(worst_row.get('match_rate') or 0):.1f}%",
                 })
+
             if risk_vs_average != "N/A":
                 key_metrics.append({
                     "label": "Risk vs Average",
@@ -1155,6 +1366,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             summary_rows.append({
                 "id": index,
                 "trait": trait,
+                "trait_efo_id": efo_id,
                 "n_models": len(rows),
                 "overall_signal": overall_signal,
                 "best_absolute_risk": best_risk,
@@ -1176,11 +1388,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "outlier_ids": ", ".join(outliers) if outliers else "",
                 "consistency": consistency,
                 "best_quality": best_quality,
-                "best_auroc": round(best_auroc, 3) if best_auroc is not None else "N/A",
+                "best_metric": str(best_row.get("quality_tier_metric") or "N/A"),
                 "best_pgs_id": best_pgs_id,
                 "best_match_rate": max(float(row.get("match_rate") or 0.0) for row in rows),
                 "pgs_ids": ", ".join(pgs_ids),
-                "pgs_links": _pgs_link_items(pgs_ids),
+                "pgs_links": _pgs_link_items(pgs_ids, quality_labels={
+                    str(row.get("pgs_id", "")): str(row.get("synthetic_quality_label") or "")
+                    for row in rows
+                }),
                 "key_metrics": key_metrics,
                 "confidence_segments": confidence_segments,
                 "percentile_chart": percentile_chart,
@@ -1777,7 +1992,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         """Compute PRS for all selected PGS IDs using available genotype data.
 
         Uses PRSCatalog for metadata lookup (no REST API calls) and for
-        performance metrics from pre-downloaded bulk metadata.
+        performance metrics from pre-downloaded bulk metadata.  Enrichment
+        (quality, percentile, absolute risk, heritability) is delegated to
+        ``enrich_prs_result()`` so it is shared with CLI and batch scripts.
         """
         if not self.selected_pgs_ids:
             self.status_message = "No PGS scores selected. Load and select scores above."  # type: ignore[attr-defined]
@@ -1820,304 +2037,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 genotypes_lf=pre_genotypes,
             )
 
-            match_pct = round(result.match_rate * 100, 1)
-            if match_pct < 10:
-                match_color = "red"
-            elif match_pct < 50:
-                match_color = "orange"
-            else:
-                match_color = "green"
-
-            auroc_val: float | None = None
-            ancestry_str = ""
-            n_individuals: int | None = None
-            perf_rows = best_perf_df.filter(pl.col("pgs_id") == pgs_id)
-            effect_size_str = ""
-            classification_str = ""
-            if perf_rows.height > 0:
-                p = perf_rows.row(0, named=True)
-                effect_size_str = format_effect_size(p)
-                classification_str = format_classification(p)
-                auroc_val = p.get("auroc_estimate")
-                ancestry_str = p.get("ancestry_broad") or ""
-                n_individuals = p.get("n_individuals")
-
-            # Ancestry-aware percentile: try reference panel first, then fall back
-            pct_value = result.percentile
-            pct_method = result.percentile_method or ("theoretical" if result.has_allele_frequencies else "")
-            if pct_value is None:
-                pct_value, pct_method = _catalog.percentile(
-                    result.score, pgs_id, ancestry=self.selected_ancestry
-                )
-
-            all_pop_values: dict[str, float] = {}
-            all_pop_text = ""
-            if self.compute_all_populations:
-                all_pop_values = self._reference_percentiles_all_populations(
-                    result.score, pgs_id
-                )
-                if all_pop_values:
-                    all_pop_text = ", ".join(
-                        f"{sp}: {pct:.1f}%"
-                        for sp, pct in sorted(all_pop_values.items())
-                    )
-
-            # Reference status should be computed AFTER percentile lookups, because
-            # those lookups can trigger an HF refresh-on-miss and change availability.
-            ref_status = _catalog.reference_data_status(pgs_id, panel="1000g")
-            ref_superpops = list(ref_status["available_superpopulations"])
-            ref_has_data = bool(ref_status["has_reference_data"])
-            ref_source_label = str(ref_status["source_label"])
-            ref_source_code = str(ref_status["source_code"])
-
-            # If multi-pop lookup just found concrete reference_panel percentiles,
-            # reflect those as precomputed populations in status immediately.
-            if all_pop_values:
-                ref_has_data = True
-                merged = sorted(set(ref_superpops) | set(all_pop_values.keys()))
-                ref_superpops = merged
-
-            ref_status_text = (
-                f"precomputed ({', '.join(ref_superpops)})"
-                if ref_has_data
-                else "not precomputed"
+            enriched = enrich_prs_result(
+                result,
+                _catalog,
+                best_perf_df,
+                genome_build=self.genome_build,  # type: ignore[attr-defined]
+                selected_ancestry=self.selected_ancestry,
+                compute_all_populations=self.compute_all_populations,
             )
 
-            interp = interpret_prs_result(pct_value, result.match_rate, auroc_val)
-
-            # Risk level from percentile
-            if pct_value is not None:
-                if pct_value >= 90:
-                    risk_level = "High predisposition"
-                    risk_level_color = "red"
-                elif pct_value >= 75:
-                    risk_level = "Above average predisposition"
-                    risk_level_color = "orange"
-                elif pct_value >= 25:
-                    risk_level = "Average predisposition"
-                    risk_level_color = "gray"
-                else:
-                    risk_level = "Below average predisposition"
-                    risk_level_color = "blue"
-            else:
-                risk_level = ""
-                risk_level_color = "gray"
-
-            # Human-readable interpretation hint
-            trait_name = result.trait_reported or pgs_id
-            pop_label = ancestry_str or self.selected_ancestry or "the reference population"  # type: ignore[attr-defined]
-            if pct_value is not None:
-                pct_int = int(pct_value)
-                sfx = "th"
-                if pct_int % 100 not in (11, 12, 13):
-                    sfx = {1: "st", 2: "nd", 3: "rd"}.get(pct_int % 10, "th")
-                risk_hint = (
-                    f"Your PRS for {trait_name} is at the {pct_int}{sfx} percentile — "
-                    f"{risk_level.lower()} compared to the {pop_label} reference population. "
-                    "For standard PRS models, higher percentile = more genetic variants "
-                    "associated with increased risk."
-                )
-                if all_pop_text:
-                    risk_hint += f" Available 1000G population percentiles: {all_pop_text}."
-            else:
-                risk_hint = (
-                    f"No reference percentile is available for {trait_name}. "
-                    "The raw score is model-specific and cannot be read as protective or risky "
-                    "without a population reference. Try selecting a different ancestry or "
-                    "checking whether a reference panel exists for this score."
-                )
-                if self.compute_all_populations:
-                    risk_hint += (
-                        " All-population lookup is enabled, but no 1000G reference "
-                        "distribution is currently available for this PGS ID."
-                    )
-            if ref_has_data:
-                risk_hint += (
-                    f" Reference distributions source: {ref_source_label}. "
-                    "These are precomputed from reference panel scoring and are not "
-                    "provided directly by the PGS Catalog API."
-                )
-            else:
-                risk_hint += (
-                    f" Reference distributions source status: {ref_source_label}. "
-                    "Percentile falls back to theoretical/AUROC approximation when available."
-                )
-
-            abs_risk_text = ""
-            abs_risk_detail = ""
-            abs_risk_percent: float | None = None
-            population_average_percent: float | None = None
-            risk_ratio_value: float | None = None
-            absolute_risk_method = ""
-            risk_agreement = ""
-            risk_estimates_by_method: dict[str, str] = {}
-            risk_estimate_methods: list[str] = []
-            heritability_text = "N/A"
-            heritability_detail = "Absolute risk was not computed, so h²-liability was not checked."
-            heritability_metrics: list[dict[str, str]] = []
-            z_score: float | None = None
-            if pct_value is not None:
-                from just_prs.absolute_risk import _norm_ppf
-                try:
-                    z_score = _norm_ppf(pct_value / 100.0) if 0 < pct_value < 100 else 0.0
-                except ValueError:
-                    z_score = 0.0
-
-            if z_score is not None:
-                bundle = _catalog.absolute_risk_bundle(pgs_id, z_score)
-                h2_estimates = [est for est in bundle.estimates if est.h2_value is not None]
-                if h2_estimates:
-                    heritability_parts: list[str] = []
-                    heritability_detail_parts = [
-                        "h² means population-level heritability: the fraction of trait variation "
-                        "statistically associated with genetic differences in a studied population, "
-                        "not an individual causal percentage."
-                    ]
-                    for est in h2_estimates:
-                        ancestry_label = f"{est.ancestry} " if est.ancestry else ""
-                        population_label = (
-                            SUPERPOPULATION_LABELS.get(est.ancestry, est.ancestry)
-                            if est.ancestry
-                            else "Combined population"
-                        )
-                        source_label = est.h2_source or est.method_label
-                        heritability_parts.append(
-                            f"{ancestry_label}h²={est.h2_value:.3f} ({source_label})"
-                        )
-                        heritability_metrics.append({
-                            "population": population_label,
-                            "h2": f"{est.h2_value:.3f}",
-                            "source": source_label,
-                            "risk": f"{est.absolute_risk * 100:.1f}%",
-                            "ratio": f"{est.risk_ratio:.2f}x",
-                            "confidence": est.confidence,
-                        })
-                        detail = (
-                            f"{est.method_label}: h²={est.h2_value:.3f}, "
-                            f"risk={est.absolute_risk * 100:.1f}%, "
-                            f"ratio={est.risk_ratio:.2f}x, confidence={est.confidence}"
-                        )
-                        if est.h2_source_detail:
-                            detail += f", source detail={est.h2_source_detail}"
-                        heritability_detail_parts.append(detail)
-                    heritability_text = "; ".join(heritability_parts)
-                    heritability_detail = " | ".join(heritability_detail_parts)
-                else:
-                    heritability_text = "No mapped h²"
-                    heritability_detail = (
-                        bundle.heritability_detail
-                        or "No mapped h²-liability estimate is available for this trait."
-                    )
-                if bundle.best_estimate is not None:
-                    best = bundle.best_estimate
-                    user_pct = best.absolute_risk * 100
-                    pop_pct = best.population_prevalence * 100
-                    abs_risk_percent = user_pct
-                    population_average_percent = pop_pct
-                    risk_ratio_value = best.risk_ratio
-                    absolute_risk_method = best.method_label
-                    abs_risk_text = f"{user_pct:.1f}% (pop. avg: {pop_pct:.1f}%)"
-
-                    detail_parts = [
-                        f"Best estimate: {user_pct:.1f}% via {best.method_label}",
-                        f"Population average: {pop_pct:.1f}%",
-                        f"Risk ratio: {best.risk_ratio:.2f}x",
-                        f"Prevalence source: {best.prevalence_source}",
-                        f"Confidence: {best.confidence}",
-                    ]
-                    if best.effect_size_citation:
-                        detail_parts.append(f"Citation: {best.effect_size_citation}")
-
-                    if len(bundle.estimates) > 1:
-                        detail_parts.append(
-                            f"Agreement: {bundle.agreement} "
-                            f"(spread: {bundle.spread_pp:.1f}pp across {len(bundle.estimates)} methods)"
-                        )
-                        for est in bundle.estimates:
-                            est_pct = est.absolute_risk * 100
-                            method_detail = (
-                                f"  {est.method_label}: {est_pct:.1f}% "
-                                f"(ratio: {est.risk_ratio:.2f}x, conf: {est.confidence})"
-                            )
-                            if est.h2_value is not None:
-                                method_detail += (
-                                    f", h²={est.h2_value:.3f}, "
-                                    f"source={est.h2_source or 'heritability table'}"
-                                )
-                            detail_parts.append(method_detail)
-
-                    if best.caveats:
-                        detail_parts.append(f"Caveats: {'; '.join(best.caveats)}")
-                    abs_risk_detail = " | ".join(detail_parts)
-
-                    agreement_label = bundle.agreement
-                    if agreement_label == "single_estimate":
-                        risk_agreement = "single"
-                    else:
-                        risk_agreement = agreement_label
-
-                    for est in bundle.estimates:
-                        est_pct = est.absolute_risk * 100
-                        risk_text = f"{est_pct:.1f}%"
-                        if est.h2_value is not None:
-                            risk_text += f" (h²={est.h2_value:.3f})"
-                        risk_estimates_by_method[est.method_label] = risk_text
-                        if est.method_label not in risk_estimate_methods:
-                            risk_estimate_methods.append(est.method_label)
-
-                elif bundle.estimates:
-                    abs_risk_result_legacy = _catalog.absolute_risk(pgs_id, z_score)
-                    if abs_risk_result_legacy is not None:
-                        user_pct = abs_risk_result_legacy.absolute_risk * 100
-                        pop_pct = abs_risk_result_legacy.population_prevalence * 100
-                        abs_risk_percent = user_pct
-                        population_average_percent = pop_pct
-                        risk_ratio_value = abs_risk_result_legacy.risk_ratio
-                        absolute_risk_method = abs_risk_result_legacy.method
-                        abs_risk_text = f"{user_pct:.1f}% (pop. avg: {pop_pct:.1f}%)"
-
-            row: dict[str, Any] = {
-                "pgs_id": result.pgs_id,
-                "trait": result.trait_reported or "",
-                "score": round(result.score, 6),
-                "percentile": f"{pct_value:.1f}" if pct_value is not None else "",
-                "percentile_method": pct_method or "",
-                "has_allele_frequencies": result.has_allele_frequencies,
-                "match_rate": match_pct,
-                "match_color": match_color,
-                "variants_matched": result.variants_matched,
-                "variants_total": result.variants_total,
-                "effect_size": effect_size_str,
-                "classification": classification_str,
-                "auroc": f"{auroc_val:.3f}" if auroc_val is not None else "",
-                "quality_label": interp["quality_label"],
-                "quality_color": interp["quality_color"],
-                "summary": interp["summary"],
-                "ancestry": ancestry_str,
-                "selected_ancestry": self.selected_ancestry,  # type: ignore[attr-defined]
-                "n_individuals": n_individuals if n_individuals is not None else 0,
-                "risk_level": risk_level,
-                "risk_level_color": risk_level_color,
-                "risk_hint": risk_hint,
-                "all_population_percentiles": all_pop_text,
-                "reference_status": ref_status_text,
-                "reference_source": ref_source_label,
-                "reference_source_code": ref_source_code,
-                "absolute_risk": abs_risk_text,
-                "absolute_risk_percent": abs_risk_percent,
-                "population_average_percent": population_average_percent,
-                "risk_ratio_value": risk_ratio_value,
-                "absolute_risk_method": absolute_risk_method,
-                "absolute_risk_detail": abs_risk_detail,
-                "heritability": heritability_text,
-                "heritability_detail": heritability_detail,
-                "heritability_metrics": heritability_metrics,
-                "risk_agreement": risk_agreement,
-                "risk_estimates_by_method": risk_estimates_by_method,
-                "risk_estimate_methods": risk_estimate_methods,
-            }
-            for sp in SUPERPOPULATIONS:
-                row[f"pct_{sp}"] = f"{all_pop_values[sp]:.1f}" if all_pop_values.get(sp) is not None else ""
+            row = _enriched_to_row_dict(enriched)
 
             if result.match_rate < 0.1:
                 any_low_match = True
@@ -2136,7 +2065,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         if not self.prs_results:
             return
         columns = [
-            "pgs_id", "trait", "score", "percentile", "absolute_risk",
+            "pgs_id", "trait", "trait_efo_id", "score", "percentile", "absolute_risk",
+            "synthetic_quality", "synthetic_quality_label", "quality_tier", "quality_tier_metric",
             "heritability", "heritability_detail",
             "auroc", "quality_label",
             "match_rate", "variants_matched", "variants_total",

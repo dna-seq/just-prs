@@ -222,3 +222,83 @@ class PRSResult(BaseModel):
         default=None,
         description="Absolute disease risk estimate based on PRS z-score and prevalence data",
     )
+
+
+class EnrichedPRSResult(BaseModel):
+    """Fully enriched PRS result: raw computation + quality, percentile, risk, reference data.
+
+    Produced by ``enrich_prs_result()`` from a ``PRSResult`` plus catalog context.
+    Every field the UI needs is present here so consumers (UI, CLI, batch scripts)
+    share a single enrichment path.
+    """
+
+    pgs_id: str
+    trait: str = ""
+    trait_efo_id: str = Field("", description="EFO/MONDO/OBA/HP trait ontology ID(s) from PGS Catalog")
+    score: float = 0.0
+    variants_matched: int = 0
+    variants_total: int = 0
+    match_rate: float = Field(0.0, description="Match rate as percentage 0-100")
+    has_allele_frequencies: bool = False
+    genome_build: str = ""
+
+    # Synthetic quality ranking (0-100)
+    synthetic_quality: float = Field(0.0, description="Synthetic quality score for model ranking (0-100)")
+    synthetic_quality_label: str = Field("", description="Synthetic quality label: High/Normal/Moderate/Low")
+    synthetic_quality_color: str = Field("", description="Semantic color for synthetic quality label")
+    quality_tier: str = Field("", description="Quality tier: T1a_auroc, T1b_beta, T2_or_hr, T3_none")
+    quality_tier_metric: str = Field("", description="Primary metric for this tier, e.g. 'AUROC=0.72', 'Beta=0.24'")
+
+    # Resolved percentile (reference > theoretical > AUROC fallback)
+    percentile: float | None = None
+    percentile_method: str = ""
+
+    # Quality assessment
+    match_color: str = ""
+    quality_label: str = ""
+    quality_color: str = ""
+    summary: str = ""
+
+    # Performance metrics from best evaluation
+    effect_size: str = ""
+    classification: str = ""
+    auroc: float | None = None
+    ancestry: str = ""
+    n_individuals: int = 0
+
+    # Risk level derived from percentile
+    risk_level: str = ""
+    risk_level_color: str = ""
+    risk_hint: str = ""
+
+    # Per-superpopulation reference percentiles
+    selected_ancestry: str = "EUR"
+    all_population_percentiles: str = ""
+    pct_AFR: float | None = None
+    pct_AMR: float | None = None
+    pct_EAS: float | None = None
+    pct_EUR: float | None = None
+    pct_SAS: float | None = None
+
+    # Reference panel status
+    reference_status: str = ""
+    reference_source: str = ""
+    reference_source_code: str = ""
+
+    # Absolute risk
+    absolute_risk_text: str = ""
+    absolute_risk_percent: float | None = None
+    population_average_percent: float | None = None
+    risk_ratio_value: float | None = None
+    absolute_risk_method: str = ""
+    absolute_risk_detail: str = ""
+
+    # Heritability
+    heritability: str = "N/A"
+    heritability_detail: str = ""
+    heritability_metrics: list[dict[str, str]] = Field(default_factory=list)
+
+    # Multi-method risk agreement
+    risk_agreement: str = ""
+    risk_estimates_by_method: dict[str, str] = Field(default_factory=dict)
+    risk_estimate_methods: list[str] = Field(default_factory=list)

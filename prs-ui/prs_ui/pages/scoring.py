@@ -3,6 +3,7 @@
 import reflex as rx
 from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
 
+from prs_ui.grid_style import data_grid_scroll_container
 from prs_ui.state import MetadataGridState
 
 
@@ -37,11 +38,13 @@ def scoring_panel() -> rx.Component:
             MetadataGridState.lf_grid_loaded,
             rx.vstack(
                 lazyframe_grid_stats_bar(MetadataGridState),
-                lazyframe_grid(
-                    MetadataGridState,
-                    height="calc(100vh - 260px)",
-                    density="compact",
-                    column_header_height=56,
+                data_grid_scroll_container(
+                    lazyframe_grid(
+                        MetadataGridState,
+                        height="calc(100vh - 260px)",
+                        density="compact",
+                        column_header_height=56,
+                    ),
                 ),
                 width="100%",
                 spacing="2",

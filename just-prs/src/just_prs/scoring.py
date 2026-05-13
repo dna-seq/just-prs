@@ -278,12 +278,22 @@ def parse_scoring_file(path: Path) -> pl.LazyFrame:
 
     parquet_cache = _scoring_parquet_cache_path(path)
     if parquet_cache.exists():
-        log_message(
-            message_type="scoring:parse_cache_hit",
-            gz_path=str(path),
-            parquet_path=str(parquet_cache),
-        )
-        return pl.scan_parquet(parquet_cache)
+        try:
+            pl.scan_parquet(parquet_cache).collect_schema()
+            log_message(
+                message_type="scoring:parse_cache_hit",
+                gz_path=str(path),
+                parquet_path=str(parquet_cache),
+            )
+            return pl.scan_parquet(parquet_cache)
+        except Exception as exc:
+            log_message(
+                message_type="scoring:parse_cache_corrupt",
+                gz_path=str(path),
+                parquet_path=str(parquet_cache),
+                error=str(exc),
+            )
+            parquet_cache.unlink()
 
     with start_action(action_type="scoring:parse_and_cache", path=str(path)):
         df, header_metadata = _parse_gz_scoring_file(path)
@@ -383,12 +393,22 @@ def load_scoring(
     ):
         parquet = scoring_parquet_path(pgs_id, cache_dir, genome_build)
         if parquet.exists():
-            log_message(
-                message_type="scoring:load_from_parquet_cache",
-                pgs_id=pgs_id,
-                parquet_path=str(parquet),
-            )
-            return pl.scan_parquet(parquet)
+            try:
+                pl.scan_parquet(parquet).collect_schema()
+                log_message(
+                    message_type="scoring:load_from_parquet_cache",
+                    pgs_id=pgs_id,
+                    parquet_path=str(parquet),
+                )
+                return pl.scan_parquet(parquet)
+            except Exception as exc:
+                log_message(
+                    message_type="scoring:load_parquet_cache_corrupt",
+                    pgs_id=pgs_id,
+                    parquet_path=str(parquet),
+                    error=str(exc),
+                )
+                parquet.unlink()
 
         path = download_scoring_file(pgs_id, cache_dir, genome_build)
         return parse_scoring_file(path)

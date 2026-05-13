@@ -7,6 +7,7 @@ from reflex_base.event import EventSpec
 from reflex.utils import console
 from rich.markup import escape
 
+from prs_ui.grid_style import data_grid_scroll_css
 from prs_ui.pages.compute import compute_panel
 from prs_ui.pages.metadata import metadata_panel
 from prs_ui.pages.scoring import scoring_panel
@@ -34,6 +35,7 @@ def _safe_backend_exception_handler(exception: Exception) -> EventSpec:
 
 def index() -> rx.Component:
     return rx.box(
+        data_grid_scroll_css(),
         rx.vstack(
             rx.hstack(
                 rx.heading("PGS Catalog Browser", size="5"),

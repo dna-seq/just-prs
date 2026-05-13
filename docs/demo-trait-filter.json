@@ -1,0 +1,20 @@
+{
+  "filter_model": {
+    "logicOperator": "or",
+    "items": [
+      {"id": 1, "field": "trait_efo_id", "operator": "contains", "value": "MONDO_0005265"},
+      {"id": 2, "field": "trait_efo_id", "operator": "contains", "value": "MONDO_0005147"},
+      {"id": 3, "field": "trait_efo_id", "operator": "contains", "value": "MONDO_0005159"},
+      {"id": 4, "field": "trait_efo_id", "operator": "contains", "value": "MONDO_0005068"},
+      {"id": 5, "field": "trait_efo_id", "operator": "contains", "value": "MONDO_0005300"}
+    ]
+  },
+  "quality_floor": {
+    "field": "combined_quality_score",
+    "operator": ">=",
+    "value": 40
+  },
+  "sort_model": [
+    {"field": "combined_quality_score", "sort": "desc"}
+  ]
+}

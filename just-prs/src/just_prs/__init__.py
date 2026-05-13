@@ -1,13 +1,24 @@
 from importlib.metadata import metadata
 
-from just_prs.models import AbsoluteRisk, AbsoluteRiskBundle, AbsoluteRiskEstimate, ReferenceDistribution
+from just_prs.enrich import enrich_prs_result
+from just_prs.models import (
+    AbsoluteRisk,
+    AbsoluteRiskBundle,
+    AbsoluteRiskEstimate,
+    EnrichedPRSResult,
+    ReferenceDistribution,
+)
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.quality import (
+    classify_combined_quality,
     classify_model_quality,
+    classify_synthetic_quality,
     format_classification,
     format_effect_size,
     interpret_prs_result,
+    synthetic_quality_score,
+    synthetic_quality_tier,
 )
 from just_prs.reference import (
     BatchScoringResult,

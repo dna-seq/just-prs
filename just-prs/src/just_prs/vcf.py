@@ -47,7 +47,7 @@ def detect_genome_build(vcf_path: Path | str) -> str | None:
         "GRCh37", "GRCh38", or None if detection fails
     """
     vcf_path = Path(vcf_path)
-    opener = gzip.open if vcf_path.name.endswith(".gz") else open
+    opener = gzip.open if vcf_path.name.endswith((".gz", ".bgz")) else open
 
     with opener(vcf_path, "rt") as fh:  # type: ignore[arg-type]
         contig_votes: dict[str, int] = {"GRCh37": 0, "GRCh38": 0}

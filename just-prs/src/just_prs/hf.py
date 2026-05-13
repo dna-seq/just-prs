@@ -21,6 +21,7 @@ CLEANED_PARQUET_FILES = [
     "performance.parquet",
     "best_performance.parquet",
     "publications.parquet",
+    "pgs_quality_scores.parquet",
 ]
 
 REFERENCE_DISTRIBUTIONS_FILE = "reference_distributions.parquet"  # legacy fallback

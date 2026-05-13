@@ -14,6 +14,7 @@ from prs_ui.components.prs_section import (
     prs_scores_selector,
     trait_summary_table,
 )
+from prs_ui.grid_style import data_grid_scroll_container
 from prs_ui.state import ComputeGridState, GenomicGridState
 from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
 
@@ -150,11 +151,13 @@ def _genomic_data_section() -> rx.Component:
                 ),
                 rx.vstack(
                     lazyframe_grid_stats_bar(GenomicGridState),
-                    lazyframe_grid(
-                        GenomicGridState,
-                        height="320px",
-                        density="compact",
-                        column_header_height=56,
+                    data_grid_scroll_container(
+                        lazyframe_grid(
+                            GenomicGridState,
+                            height="320px",
+                            density="compact",
+                            column_header_height=56,
+                        ),
                     ),
                     spacing="2",
                     width="100%",

@@ -1,0 +1,8 @@
+*.vcf.gz
+*.vcf.gz.tbi
+*.vcf
+*.g.vcf.gz
+*.g.vcf.gz.tbi
+*.g.vcf
+*.vcf.bgz
+*.vcf.bgz.tbi

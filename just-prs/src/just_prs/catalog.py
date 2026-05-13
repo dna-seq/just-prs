@@ -1,15 +1,19 @@
 """PGS Catalog REST API client for querying scores, traits, and publications."""
 
+import time
 from collections.abc import Iterator
 from typing import cast
 
 import httpx
-from eliot import start_action
+from eliot import log_message, start_action
 
 from just_prs.models import EffectSizeInfo, PerformanceInfo, ScoreInfo, TraitInfo
 
 PGS_CATALOG_BASE_URL = "https://www.pgscatalog.org/rest"
 DEFAULT_TIMEOUT = 30.0
+_RETRY_STATUSES = {429, 500, 502, 503, 504}
+_MAX_RETRIES = 4
+_RETRY_BACKOFF_BASE = 2.0
 
 
 class PGSCatalogClient:
@@ -34,11 +38,31 @@ class PGSCatalogClient:
         self.close()
 
     def _get_json(self, endpoint: str, params: dict[str, str | int] | None = None) -> dict:
-        """Make a GET request and return JSON response."""
+        """Make a GET request and return JSON response, with exponential-backoff retry on transient errors."""
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
-        response = self.client.get(url, params={**(params or {}), "format": "json"})
-        response.raise_for_status()
-        return response.json()
+        merged_params = {**(params or {}), "format": "json"}
+        last_exc: httpx.HTTPStatusError | None = None
+        for attempt in range(_MAX_RETRIES):
+            response = self.client.get(url, params=merged_params)
+            if response.status_code not in _RETRY_STATUSES:
+                response.raise_for_status()
+                return response.json()
+            last_exc = httpx.HTTPStatusError(
+                f"Server error '{response.status_code}' for url '{url}'",
+                request=response.request,
+                response=response,
+            )
+            if attempt < _MAX_RETRIES - 1:
+                delay = _RETRY_BACKOFF_BASE ** attempt
+                log_message(
+                    message_type="pgs_catalog:retry",
+                    url=url,
+                    status_code=response.status_code,
+                    attempt=attempt + 1,
+                    retry_in_seconds=delay,
+                )
+                time.sleep(delay)
+        raise last_exc  # type: ignore[misc]
 
     def get_score(self, pgs_id: str) -> ScoreInfo:
         """Fetch metadata for a single PGS score by ID.

@@ -9,6 +9,7 @@ and all PGS IDs for those traits are computed together.  The output
 import reflex as rx
 
 from prs_ui.components.prs_section import (
+    _prs_results_header,
     prs_ancestry_selector,
     prs_progress_section,
     prs_results_table,
@@ -270,29 +271,9 @@ def traits_panel() -> rx.Component:
             align="center",
         ),
         prs_progress_section(TraitBrowserState),
+        _prs_results_header(TraitBrowserState),
         trait_summary_table(TraitBrowserState),
-        rx.cond(
-            TraitBrowserState.prs_results.length() > 0,  # type: ignore[operator]
-            rx.el.details(
-                rx.el.summary(
-                    rx.hstack(
-                        rx.icon("list", size=14),
-                        rx.text("Individual PRS Results", size="2", weight="medium"),
-                        rx.text(
-                            TraitBrowserState.prs_results.length(),  # type: ignore[operator]
-                            " scores",
-                            size="1",
-                            color="gray",
-                        ),
-                        spacing="2",
-                        align="center",
-                    ),
-                    cursor="pointer",
-                ),
-                prs_results_table(TraitBrowserState),
-                open=~TraitBrowserState.trait_summary_visible,  # type: ignore[operator]
-            ),
-        ),
+        prs_results_table(TraitBrowserState),
         width="100%",
         spacing="4",
     )

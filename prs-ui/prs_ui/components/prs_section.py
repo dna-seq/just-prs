@@ -364,11 +364,45 @@ def _prs_disclaimers(state: type[rx.State]) -> rx.Component:
     )
 
 
+def _prs_results_header(state: type[rx.State]) -> rx.Component:
+    """Header bar above PRS results: view mode toggle + download button."""
+    return rx.cond(
+        state.prs_results.length() > 0,  # type: ignore[operator]
+        rx.vstack(
+            rx.hstack(
+                rx.icon("bar-chart-3", size=16),
+                rx.text("PRS Results", size="3", weight="bold"),
+                rx.spacer(),
+                rx.segmented_control.root(
+                    rx.segmented_control.item("Grouped", value="grouped"),
+                    rx.segmented_control.item("Individual", value="individual"),
+                    value=state.prs_view_mode,
+                    on_change=state.set_prs_view_mode,
+                    size="2",
+                ),
+                rx.button(
+                    rx.icon("download", size=14),
+                    "CSV",
+                    on_click=state.download_prs_results_csv,
+                    color_scheme="green",
+                    variant="soft",
+                    size="2",
+                ),
+                align="center",
+                spacing="3",
+                width="100%",
+            ),
+            spacing="3",
+            width="100%",
+        ),
+    )
+
+
 def prs_results_table(
     state: type[rx.State],
     bell_curve_height: int = 360,
     bell_curve_max_width: int = 1200,
-    detail_height: int | str = "auto",
+    detail_height: int | None = None,
     bell_curve_config: dict[str, Any] | None = None,
     metric_list_config: dict[str, Any] | None = None,
 ) -> rx.Component:
@@ -382,10 +416,9 @@ def prs_results_table(
         state: Concrete state class (must mix in ``PRSComputeStateMixin``).
         bell_curve_height: Height of the per-row bell curve chart in pixels.
         bell_curve_max_width: Max width of the per-row bell curve container.
-        detail_height: Detail panel height. Default ``"auto"`` lets the
-            accordion grow vertically to fit the bell curve and colored
-            blocks without cropping or internal scrollbars. Pass a number
-            (e.g. ``700``) to enforce a fixed height with internal scroll.
+        detail_height: Detail panel height in pixels. When ``None`` (default)
+            the datagrid uses its built-in default. Pass a number (e.g.
+            ``700``) to enforce a fixed height with internal scroll.
         bell_curve_config: Extra renderer config keys merged on top of the
             defaults (e.g. ``{"labelTiers": 12, "bands": [...]}``); supports
             every key accepted by the ``bell_curve`` renderer.
@@ -424,24 +457,9 @@ def prs_results_table(
         metric_list_config,
     )
     return rx.cond(
-        state.prs_results.length() > 0,  # type: ignore[operator]
+        (state.prs_results.length() > 0) & (state.prs_view_mode == "individual"),  # type: ignore[operator]
         rx.vstack(
             _prs_disclaimers(state),
-            rx.hstack(
-                rx.icon("bar-chart-3", size=16),
-                rx.text("PRS Results", size="3", weight="bold"),
-                rx.spacer(),
-                rx.button(
-                    rx.icon("download", size=14),
-                    "Download CSV",
-                    on_click=state.download_prs_results_csv,
-                    color_scheme="green",
-                    size="2",
-                ),
-                align="center",
-                spacing="2",
-                width="100%",
-            ),
             _prs_interpretation_guide(),
             PlotlyDetailSupport.create(),
             data_grid_scroll_container(
@@ -472,7 +490,7 @@ def prs_results_table(
                         "result_suggestions": {"type": "badge_list"},
                         "population_percentiles_chart": bell_curve,
                     },
-                    detail_height=detail_height,
+                    **({"detail_height": detail_height} if detail_height is not None else {}),
                 ),
             ),
             rx.text(
@@ -494,8 +512,7 @@ def trait_summary_table(
     large_bell_curve_threshold: int = 4,
     large_bell_curve_height: int = 460,
     large_bell_curve_max_width: int = 1600,
-    detail_height: int | str = "auto",
-    button_label: str = "Group by Trait",
+    detail_height: int | None = None,
     bell_curve_config: dict[str, Any] | None = None,
     metric_list_config: dict[str, Any] | None = None,
     link_list_config: dict[str, Any] | None = None,
@@ -517,7 +534,6 @@ def trait_summary_table(
         detail_height: Detail panel height. Default ``"auto"`` lets the
             accordion grow vertically to fit the bell curve and colored
             blocks without cropping or internal scrollbars.
-        button_label: Text on the "group by trait" button.
         bell_curve_config: Extra renderer config keys merged on top of the
             defaults for the per-trait bell curve (e.g. ``{"labelTiers": 12}``).
         metric_list_config: Extra renderer config for trait metric cards.
@@ -561,95 +577,53 @@ def trait_summary_table(
         },
         link_list_config,
     )
-    help_text = (
-        "Aggregate multiple PRS models per trait to see consensus, spread, and outliers. "
-        f"Traits with more than {large_bell_curve_threshold} PRS models use a larger bell curve "
-        "without the side context cards so dense score labels remain readable. "
-        "Shape = model quality: star High, pentagon Normal, square Moderate, triangle Low. "
-        "Filled green = typical range, dot grey = extreme or low match, open red = outlier."
-    )
     return rx.cond(
-        state.prs_results.length() > 0,  # type: ignore[operator]
+        (state.prs_results.length() > 0) & (state.prs_view_mode == "grouped"),  # type: ignore[operator]
         rx.vstack(
-            rx.separator(),
-            rx.hstack(
-                rx.tooltip(
-                    rx.button(
-                        rx.icon("layers", size=16),
-                        button_label,
-                        on_click=state.build_trait_summary(
-                            large_bell_curve_threshold,
-                            large_bell_curve_height,
-                            large_bell_curve_max_width,
-                        ),
-                        color_scheme="green",
-                        size="3",
-                    ),
-                    content=help_text,
+            PlotlyDetailSupport.create(),
+            data_grid_scroll_container(
+                data_grid(
+                    rows=state.trait_summary_rows,
+                    columns=state.trait_summary_columns,
+                    row_id_field="id",
+                    pagination=False,
+                    hide_footer=True,
+                    density="compact",
+                    height="calc(100vh - 380px)",
+                    disable_row_selection_on_click=True,
+                    detail_columns=[
+                        "pgs_links",
+                        "percentile_chart",
+                        "key_metrics",
+                        "trait_quick_flags",
+                        "confidence_segments",
+                    ],
+                    detail_labels={
+                        "pgs_links": "PGS Models Included",
+                        "percentile_chart": "Where You Fall on the Bell Curve",
+                        "key_metrics": "Key Statistics",
+                        "trait_quick_flags": "Signal Flags",
+                        "confidence_segments": "All Models vs High-Quality Models",
+                    },
+                    detail_renderers={
+                        "pgs_links": pgs_links,
+                        "key_metrics": metric_cards,
+                        "trait_quick_flags": {"type": "badge_list"},
+                        "confidence_segments": metric_cards,
+                        "percentile_chart": bell_curve,
+                    },
+                    **({"detail_height": detail_height} if detail_height is not None else {}),
                 ),
-                rx.text(
-                    "Aggregate multiple PRS models per trait to compare consensus, spread, "
-                    "and outliers across scoring methods.",
-                    size="2",
-                    color="gray",
-                    style={"flex": "1"},
-                ),
-                spacing="3",
-                align="center",
-                width="100%",
             ),
-            rx.cond(
-                state.trait_summary_visible,
-                rx.vstack(
-                    PlotlyDetailSupport.create(),
-                    data_grid_scroll_container(
-                        data_grid(
-                            rows=state.trait_summary_rows,
-                            columns=state.trait_summary_columns,
-                            row_id_field="id",
-                            pagination=False,
-                            hide_footer=True,
-                            density="compact",
-                            height="calc(100vh - 380px)",
-                            disable_row_selection_on_click=True,
-                            detail_columns=[
-                                "pgs_links",
-                                "percentile_chart",
-                                "key_metrics",
-                                "trait_quick_flags",
-                                "confidence_segments",
-                            ],
-                            detail_labels={
-                                "pgs_links": "PGS Models Included",
-                                "percentile_chart": "Where You Fall on the Bell Curve",
-                                "key_metrics": "Key Statistics",
-                                "trait_quick_flags": "Signal Flags",
-                                "confidence_segments": "All Models vs High-Quality Models",
-                            },
-                            detail_renderers={
-                                "pgs_links": pgs_links,
-                                "key_metrics": metric_cards,
-                                "trait_quick_flags": {"type": "badge_list"},
-                                "confidence_segments": metric_cards,
-                                "percentile_chart": bell_curve,
-                            },
-                            detail_height=detail_height,
-                        ),
-                    ),
-                    rx.text(
-                        "Click the chevron on any trait row to see: a bell curve showing where "
-                        "each model places you, variant match rates, key statistics, and a plain-language explanation "
-                        "of what the results mean and why models may disagree.",
-                        size="1",
-                        color="gray",
-                    ),
-                    spacing="3",
-                    width="100%",
-                ),
+            rx.text(
+                "Click the chevron on any trait row to see: a bell curve showing where "
+                "each model places you, variant match rates, key statistics, and a plain-language explanation "
+                "of what the results mean and why models may disagree.",
+                size="1",
+                color="gray",
             ),
             spacing="3",
             width="100%",
-            padding_top="8px",
         ),
     )
 
@@ -694,6 +668,7 @@ def prs_section(
             prs_scores_selector(state),
             prs_compute_button(state),
             prs_progress_section(state),
+            _prs_results_header(state),
             prs_results_table(state, **(results_table_kwargs or {})),
             trait_summary_table(state, **(trait_summary_kwargs or {})),
             width="100%",

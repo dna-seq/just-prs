@@ -38,9 +38,11 @@ from just_prs.prs import compute_prs
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.quality import (
     classify_model_quality,
+    classify_synthetic_quality,
     format_classification,
     format_effect_size,
     interpret_prs_result,
+    synthetic_quality_score,
 )
 from just_prs.reference import SUPERPOPULATIONS
 from just_prs.scoring import resolve_cache_dir
@@ -95,7 +97,7 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
     """Column overrides for the compute score selection grid."""
     return {
         "pgs_id": {
-            "width": 140,
+            "width": 130,
             "cellRendererType": "url",
             "cellRendererConfig": {
                 "baseUrl": "https://www.pgscatalog.org/score/",
@@ -103,6 +105,50 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
                 "color": "#1565c0",
             },
         },
+        "trait_reported": {"minWidth": 150, "flex": 2, "headerName": "Trait"},
+        "quality_label": {
+            "width": 100,
+            "headerName": "Grade",
+            "cellRendererType": "badge",
+            "cellRendererConfig": {
+                "colorMap": {
+                    "High": "#2e7d32",
+                    "Normal": "#1565c0",
+                    "Moderate": "#f57f17",
+                    "Low": "#c62828",
+                },
+                "bgColorMap": {
+                    "High": "#e8f5e9",
+                    "Normal": "#e3f2fd",
+                    "Moderate": "#fff3e0",
+                    "Low": "#ffebee",
+                },
+            },
+        },
+        "weight_type": {"width": 100, "headerName": "Weight"},
+        "n_variants": {"width": 100, "headerName": "N var"},
+        "trait_efo": {"minWidth": 130, "flex": 1, "headerName": "Trait EFO"},
+        "citation": {"minWidth": 120, "flex": 1, "headerName": "Citation"},
+        "pmid": {
+            "width": 110,
+            "headerName": "PubMed",
+            "cellRendererType": "url",
+            "cellRendererConfig": {
+                "baseUrl": "https://pubmed.ncbi.nlm.nih.gov/",
+                "suffixUrl": "/",
+                "color": "#1565c0",
+            },
+        },
+        "release_date": {"width": 110},
+        "trait_efo_id": {
+            "width": 130,
+            "cellRendererType": "url",
+            "cellRendererConfig": {
+                "baseUrl": "http://www.ebi.ac.uk/efo/",
+                "color": "#1565c0",
+            },
+        },
+        "quality_score": {"width": 80, "headerName": "Score"},
         "pgp_id": {
             "width": 120,
             "cellRendererType": "url",
@@ -112,27 +158,93 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
                 "color": "#1565c0",
             },
         },
-        "trait_efo_id": {
-            "width": 140,
-            "cellRendererType": "url",
-            "cellRendererConfig": {
-                "baseUrl": "http://www.ebi.ac.uk/efo/",
-                "color": "#1565c0",
-            },
-        },
-        "genome_build": {"width": 100},
-        "n_variants": {"width": 110},
-        "weight_type": {"width": 100},
-        "pmid": {"width": 100},
-        "name": {"minWidth": 120, "flex": 1},
-        "trait_reported": {"minWidth": 150, "flex": 2},
-        "trait_efo": {"minWidth": 130, "flex": 1},
-        "release_date": {"width": 110},
+        # hidden columns
+        "genome_build": {"hide": True},
+        "name": {"hide": True},
         "ftp_link": {"hide": True},
+        "ftp_link_ebi": {"hide": True},
+        "scoring_parquet_filename": {"hide": True},
+        "scoring_parquet_path": {"hide": True},
     }
 
 
 _catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
+
+
+def _enrich_scores_for_grid(lf: pl.LazyFrame, catalog: PRSCatalog) -> pl.LazyFrame:
+    """Add citation and quality columns to the scores LazyFrame for the grid.
+
+    - citation: ``first_author (journal, year)`` from publications
+    - quality_score / quality_label: from quality parquet if available,
+      otherwise computed on the fly from best_performance
+    """
+    schema = lf.collect_schema()
+
+    pub_lf = catalog.publications()
+    if pub_lf is not None:
+        citation_lf = pub_lf.select(
+            "pgp_id",
+            pl.concat_str(
+                [
+                    pl.col("first_author"),
+                    pl.lit(" ("),
+                    pl.col("journal").fill_null(pl.lit("")),
+                    pl.lit(", "),
+                    pl.col("date_publication").str.slice(0, 4),
+                    pl.lit(")"),
+                ],
+            ).alias("citation"),
+        )
+        lf = lf.join(citation_lf, on="pgp_id", how="left")
+    else:
+        lf = lf.with_columns(pl.lit(None).cast(pl.Utf8).alias("citation"))
+
+    if "synthetic_score" not in schema.names():
+        bp = catalog.best_performance().collect()
+        quality_rows: list[dict[str, Any]] = []
+        for row in bp.iter_rows(named=True):
+            score = synthetic_quality_score(
+                auroc=row.get("auroc_estimate"),
+                cindex=row.get("cindex_estimate"),
+                or_estimate=row.get("or_estimate"),
+                hr_estimate=row.get("hr_estimate"),
+                beta_estimate=row.get("beta_estimate"),
+                n_individuals=row.get("n_individuals"),
+            )
+            label, _ = classify_synthetic_quality(score)
+            quality_rows.append({
+                "pgs_id": row["pgs_id"],
+                "quality_score": score,
+                "quality_label": label,
+            })
+        if quality_rows:
+            quality_df = pl.DataFrame(quality_rows).lazy()
+            lf = lf.join(quality_df, on="pgs_id", how="left")
+        else:
+            lf = lf.with_columns(
+                pl.lit(None).cast(pl.Float64).alias("quality_score"),
+                pl.lit(None).cast(pl.Utf8).alias("quality_label"),
+            )
+    else:
+        if "quality_score" not in schema.names():
+            lf = lf.rename({"synthetic_score": "quality_score"})
+
+    if "pmid" in lf.collect_schema().names():
+        lf = lf.with_columns(pl.col("pmid").cast(pl.Utf8))
+
+    preferred_order = [
+        "pgs_id", "trait_reported", "quality_label",
+        "weight_type", "n_variants", "trait_efo",
+        "quality_score", "pgp_id",
+        "citation", "pmid", "release_date",
+        "trait_efo_id",
+    ]
+    all_cols = lf.collect_schema().names()
+    ordered = [c for c in preferred_order if c in all_cols]
+    remaining = [c for c in all_cols if c not in ordered]
+    lf = lf.select(ordered + remaining)
+
+    return lf
 
 
 def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
@@ -758,6 +870,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     trait_summary_rows: list[dict] = []
     trait_summary_columns: list[dict] = []
     trait_summary_visible: bool = False
+    prs_view_mode: str = "grouped"
     prs_computing: bool = False
     prs_progress: int = 0
     low_match_warning: bool = False
@@ -770,6 +883,13 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     _scores_initialized: bool = False
     _compute_scores_lf: pl.LazyFrame | None = None
     _prs_genotypes_lf: pl.LazyFrame | None = None
+
+    def set_prs_view_mode(self, mode: str | list[str]) -> None:
+        """Switch between 'individual' and 'grouped' result views."""
+        value = mode if isinstance(mode, str) else (mode[0] if mode else "grouped")
+        self.prs_view_mode = value
+        if value == "grouped" and self.prs_results and not self.trait_summary_rows:
+            self.build_trait_summary()
 
     def set_selected_ancestry(self, value: str) -> None:
         """Set the ancestry superpopulation for percentile lookup."""
@@ -2001,6 +2121,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.status_message = "Loading scores for selection..."  # type: ignore[attr-defined]
         yield
         lf = _catalog.scores(genome_build=self.genome_build)  # type: ignore[attr-defined]
+        lf = _enrich_scores_for_grid(lf, _catalog)
         self._compute_scores_lf = lf
         self.compute_scores_loaded = True
         self.selected_pgs_ids = []
@@ -2203,6 +2324,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.prs_computing = False
         self.prs_progress = 100
         self.status_message = f"Computed {total} PRS score(s)"  # type: ignore[attr-defined]
+        if self.prs_view_mode == "grouped" and results:
+            self.build_trait_summary()
 
     def download_prs_results_csv(self) -> Any:
         """Build a CSV from prs_results and trigger a browser download."""
@@ -2351,21 +2474,42 @@ class ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
 
 def _build_trait_column_overrides() -> dict[str, dict[str, Any]]:
     """Column overrides for the trait browser grid."""
+    _grade_col = {"width": 75, "cellRendererType": "badge"}
     return {
         "trait": {"minWidth": 200, "flex": 2},
+        "n_models": {"width": 90, "headerName": "Models"},
+        "n_high": {
+            **_grade_col,
+            "headerName": "High",
+            "cellRendererConfig": {"color": "#2e7d32", "bgColor": "#e8f5e9"},
+        },
+        "n_normal": {
+            **_grade_col,
+            "headerName": "Normal",
+            "cellRendererConfig": {"color": "#1565c0", "bgColor": "#e3f2fd"},
+        },
+        "n_moderate": {
+            **_grade_col,
+            "headerName": "Moderate",
+            "cellRendererConfig": {"color": "#f57f17", "bgColor": "#fff3e0"},
+        },
+        "n_low": {
+            **_grade_col,
+            "headerName": "Low",
+            "cellRendererConfig": {"color": "#c62828", "bgColor": "#ffebee"},
+        },
+        "avg_variants": {"width": 120},
+        "min_variants": {"width": 110},
+        "max_variants": {"width": 110},
+        "pgs_ids": {"minWidth": 200, "flex": 1, "headerName": "PGS IDs"},
         "trait_efo_id": {
-            "width": 160,
+            "width": 150,
             "cellRendererType": "url",
             "cellRendererConfig": {
                 "baseUrl": "http://www.ebi.ac.uk/efo/",
                 "color": "#1565c0",
             },
         },
-        "n_models": {"width": 100},
-        "avg_variants": {"width": 130},
-        "min_variants": {"width": 120},
-        "max_variants": {"width": 120},
-        "pgs_ids": {"minWidth": 200, "flex": 1},
     }
 
 
@@ -2392,9 +2536,11 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
     def _build_trait_df(self) -> pl.DataFrame:
         """Group scores by trait and return a flat summary DataFrame."""
         lf = _catalog.scores(genome_build=self.genome_build)  # type: ignore[attr-defined]
+        lf = _enrich_scores_for_grid(lf, _catalog)
         self._trait_scores_lf = lf
         df = lf.select(
-            "pgs_id", "trait_reported", "trait_efo", "trait_efo_id", "n_variants",
+            "pgs_id", "trait_reported", "trait_efo", "trait_efo_id",
+            "n_variants", "quality_label",
         ).collect()
 
         df = df.with_columns(
@@ -2411,6 +2557,10 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
             pl.col("n_variants").mean().cast(pl.Int64).alias("avg_variants"),
             pl.col("n_variants").min().alias("min_variants"),
             pl.col("n_variants").max().alias("max_variants"),
+            (pl.col("quality_label") == "High").sum().cast(pl.Int64).alias("n_high"),
+            (pl.col("quality_label") == "Normal").sum().cast(pl.Int64).alias("n_normal"),
+            (pl.col("quality_label") == "Moderate").sum().cast(pl.Int64).alias("n_moderate"),
+            (pl.col("quality_label") == "Low").sum().cast(pl.Int64).alias("n_low"),
         ).sort("n_models", descending=True)
 
         mapping: dict[str, list[str]] = {}
@@ -2422,6 +2572,17 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
         result = grouped.with_columns(
             pl.col("_pgs_list").list.join(", ").alias("pgs_ids"),
         ).drop("_pgs_list")
+
+        for col in ("n_high", "n_normal", "n_moderate", "n_low"):
+            result = result.with_columns(
+                pl.when(pl.col(col) == 0).then(None).otherwise(pl.col(col)).alias(col),
+            )
+
+        result = result.select(
+            "trait", "n_models", "n_high", "n_normal", "n_moderate", "n_low",
+            "avg_variants", "min_variants", "max_variants",
+            "pgs_ids", "trait_efo_id",
+        )
 
         return result
 

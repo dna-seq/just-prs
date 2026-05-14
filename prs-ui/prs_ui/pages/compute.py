@@ -8,6 +8,7 @@ progress, and results, while keeping VCF-upload-specific UI here.
 import reflex as rx
 
 from prs_ui.components.prs_section import (
+    _prs_results_header,
     prs_ancestry_selector,
     prs_progress_section,
     prs_results_table,
@@ -236,6 +237,7 @@ def compute_panel() -> rx.Component:
             align="center",
         ),
         prs_progress_section(ComputeGridState),
+        _prs_results_header(ComputeGridState),
         prs_results_table(ComputeGridState),
         trait_summary_table(ComputeGridState),
         width="100%",

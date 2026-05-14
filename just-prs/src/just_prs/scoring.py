@@ -14,6 +14,7 @@ import gzip
 import io
 import json
 import os
+import tempfile
 from pathlib import Path
 
 import httpx
@@ -229,7 +230,11 @@ def _write_scoring_parquet(
     header_metadata: dict[str, str],
     parquet_path: Path,
 ) -> None:
-    """Write a scoring DataFrame as parquet with PGS header metadata embedded."""
+    """Write a scoring DataFrame as parquet with PGS header metadata embedded.
+
+    Uses atomic write (temp file + rename) so concurrent readers never see
+    a half-written file.
+    """
     import pyarrow as pa
     import pyarrow.parquet as pq
 
@@ -241,12 +246,24 @@ def _write_scoring_parquet(
     ).encode("utf-8")
     table = table.replace_schema_metadata(existing_meta)
 
-    pq.write_table(
-        table,
-        parquet_path,
-        compression=_PARQUET_COMPRESSION,
-        compression_level=_PARQUET_COMPRESSION_LEVEL,
+    fd, tmp = tempfile.mkstemp(
+        suffix=".parquet.tmp", dir=parquet_path.parent,
     )
+    try:
+        os.close(fd)
+        pq.write_table(
+            table,
+            tmp,
+            compression=_PARQUET_COMPRESSION,
+            compression_level=_PARQUET_COMPRESSION_LEVEL,
+        )
+        os.replace(tmp, parquet_path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def parse_scoring_file(path: Path) -> pl.LazyFrame:
@@ -261,6 +278,10 @@ def parse_scoring_file(path: Path) -> pl.LazyFrame:
        returns ``pl.scan_parquet()`` on the new cache.
 
     When given a ``.parquet`` path directly, returns ``pl.scan_parquet()``.
+
+    Thread/process safe: parquet cache writes use atomic rename, and corrupt
+    cache reads (e.g. from a partially-written file) fall back to re-parsing
+    the source gz.
 
     Args:
         path: Path to a ``.txt.gz`` scoring file or a ``.parquet`` cache.
@@ -279,13 +300,14 @@ def parse_scoring_file(path: Path) -> pl.LazyFrame:
     parquet_cache = _scoring_parquet_cache_path(path)
     if parquet_cache.exists():
         try:
-            pl.scan_parquet(parquet_cache).collect_schema()
+            lf = pl.scan_parquet(parquet_cache)
+            lf.collect_schema()
             log_message(
                 message_type="scoring:parse_cache_hit",
                 gz_path=str(path),
                 parquet_path=str(parquet_cache),
             )
-            return pl.scan_parquet(parquet_cache)
+            return lf
         except Exception as exc:
             log_message(
                 message_type="scoring:parse_cache_corrupt",
@@ -293,7 +315,10 @@ def parse_scoring_file(path: Path) -> pl.LazyFrame:
                 parquet_path=str(parquet_cache),
                 error=str(exc),
             )
-            parquet_cache.unlink()
+            try:
+                parquet_cache.unlink()
+            except OSError:
+                pass
 
     with start_action(action_type="scoring:parse_and_cache", path=str(path)):
         df, header_metadata = _parse_gz_scoring_file(path)
@@ -316,9 +341,18 @@ def parse_scoring_file(path: Path) -> pl.LazyFrame:
                 parquet_path=str(parquet_cache),
                 error=str(exc),
             )
-            if parquet_cache.exists():
-                parquet_cache.unlink()
+            try:
+                if parquet_cache.exists():
+                    parquet_cache.unlink()
+            except OSError:
+                pass
             return df.lazy()
+
+
+_DOWNLOAD_RETRY_STATUSES = {429, 500, 502, 503, 504}
+_DOWNLOAD_MAX_RETRIES = 4
+_DOWNLOAD_BACKOFF_BASE = 2.0
+_DOWNLOAD_TIMEOUT = 120.0
 
 
 def download_scoring_file(
@@ -328,6 +362,10 @@ def download_scoring_file(
 ) -> Path:
     """Download a harmonized PGS scoring file from the EBI FTP server.
 
+    Uses a unique temp file per caller so parallel downloads of the same
+    score don't corrupt each other.  The final rename is atomic.
+    Retries with exponential backoff on 429 / 5xx.
+
     Args:
         pgs_id: PGS Catalog score ID (e.g. "PGS000001")
         output_dir: Directory to save the downloaded file
@@ -336,6 +374,8 @@ def download_scoring_file(
     Returns:
         Path to the downloaded gzipped scoring file
     """
+    import time
+
     with start_action(
         action_type="scoring:download",
         pgs_id=pgs_id,
@@ -352,20 +392,54 @@ def download_scoring_file(
         with PGSCatalogClient() as client:
             url = client.get_score_download_url(pgs_id, genome_build)
 
-        tmp_path = output_path.with_suffix(".tmp")
-        with httpx.Client(timeout=120.0, follow_redirects=True) as http:
-            with http.stream("GET", url) as response:
-                response.raise_for_status()
-                with tmp_path.open("wb") as f:
-                    for chunk in response.iter_bytes(chunk_size=65536):
-                        f.write(chunk)
+        last_exc: Exception | None = None
+        for attempt in range(_DOWNLOAD_MAX_RETRIES):
+            fd, tmp = tempfile.mkstemp(suffix=".txt.gz.tmp", dir=output_dir)
+            try:
+                os.close(fd)
+                with httpx.Client(timeout=_DOWNLOAD_TIMEOUT, follow_redirects=True) as http:
+                    with http.stream("GET", url) as response:
+                        if response.status_code in _DOWNLOAD_RETRY_STATUSES:
+                            raise httpx.HTTPStatusError(
+                                f"{response.status_code} for {url}",
+                                request=response.request,
+                                response=response,
+                            )
+                        response.raise_for_status()
+                        with open(tmp, "wb") as f:
+                            for chunk in response.iter_bytes(chunk_size=65536):
+                                f.write(chunk)
 
-        if tmp_path.stat().st_size == 0:
-            tmp_path.unlink()
-            raise RuntimeError(f"Downloaded scoring file for {pgs_id} is empty (0 bytes)")
-        tmp_path.rename(output_path)
+                if os.path.getsize(tmp) == 0:
+                    raise RuntimeError(f"Downloaded scoring file for {pgs_id} is empty (0 bytes)")
+                os.replace(tmp, output_path)
+                return output_path
+            except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.ConnectError) as exc:
+                last_exc = exc
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                if attempt < _DOWNLOAD_MAX_RETRIES - 1:
+                    delay = _DOWNLOAD_BACKOFF_BASE ** attempt
+                    log_message(
+                        message_type="scoring:download_retry",
+                        pgs_id=pgs_id,
+                        attempt=attempt + 1,
+                        error=str(exc),
+                        retry_in_seconds=delay,
+                    )
+                    time.sleep(delay)
+            except BaseException:
+                try:
+                    os.unlink(tmp)
+                except OSError:
+                    pass
+                raise
 
-        return output_path
+        raise RuntimeError(
+            f"Failed to download {pgs_id} after {_DOWNLOAD_MAX_RETRIES} attempts: {last_exc}"
+        )
 
 
 def load_scoring(
@@ -376,7 +450,8 @@ def load_scoring(
     """Download (if needed) and parse a PGS scoring file, with local caching.
 
     Checks for a parquet cache first — if it exists, the ``.txt.gz`` download
-    is skipped entirely.
+    is skipped entirely.  Handles corrupt or partially-written cache files
+    gracefully by falling back to re-download + re-parse.
 
     Args:
         pgs_id: PGS Catalog score ID
@@ -394,13 +469,14 @@ def load_scoring(
         parquet = scoring_parquet_path(pgs_id, cache_dir, genome_build)
         if parquet.exists():
             try:
-                pl.scan_parquet(parquet).collect_schema()
+                lf = pl.scan_parquet(parquet)
+                lf.collect_schema()
                 log_message(
                     message_type="scoring:load_from_parquet_cache",
                     pgs_id=pgs_id,
                     parquet_path=str(parquet),
                 )
-                return pl.scan_parquet(parquet)
+                return lf
             except Exception as exc:
                 log_message(
                     message_type="scoring:load_parquet_cache_corrupt",
@@ -408,7 +484,10 @@ def load_scoring(
                     parquet_path=str(parquet),
                     error=str(exc),
                 )
-                parquet.unlink()
+                try:
+                    parquet.unlink()
+                except OSError:
+                    pass
 
         path = download_scoring_file(pgs_id, cache_dir, genome_build)
         return parse_scoring_file(path)

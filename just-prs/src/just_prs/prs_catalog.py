@@ -20,7 +20,7 @@ from just_prs.cleanup import (
     clean_publications,
     clean_scores,
 )
-from just_prs.ftp import download_metadata_sheet
+from just_prs.ftp import download_metadata_sheet, _atomic_write_parquet
 from just_prs.hf import distributions_filename, pull_cleaned_parquets, pull_reference_distributions
 from just_prs.models import AbsoluteRisk, AbsoluteRiskBundle, PRSResult
 from just_prs.ontology import (
@@ -112,10 +112,10 @@ class PRSCatalog:
         pub_lf = clean_publications(pub_df)
 
         self.metadata_dir.mkdir(parents=True, exist_ok=True)
-        scores_lf.collect().write_parquet(self.metadata_dir / "scores.parquet")
-        perf_lf.collect().write_parquet(self.metadata_dir / "performance.parquet")
-        best_perf_lf.collect().write_parquet(self.metadata_dir / "best_performance.parquet")
-        pub_lf.collect().write_parquet(self.metadata_dir / "publications.parquet")
+        _atomic_write_parquet(scores_lf.collect(), self.metadata_dir / "scores.parquet")
+        _atomic_write_parquet(perf_lf.collect(), self.metadata_dir / "performance.parquet")
+        _atomic_write_parquet(best_perf_lf.collect(), self.metadata_dir / "best_performance.parquet")
+        _atomic_write_parquet(pub_lf.collect(), self.metadata_dir / "publications.parquet")
 
         return scores_lf, perf_lf, best_perf_lf, pub_lf
 
@@ -134,7 +134,7 @@ class PRSCatalog:
                 logger.warning("Cleaned publications metadata lacks required columns")
                 return None
             self.metadata_dir.mkdir(parents=True, exist_ok=True)
-            pub_lf.collect().write_parquet(self.metadata_dir / "publications.parquet")
+            _atomic_write_parquet(pub_lf.collect(), self.metadata_dir / "publications.parquet")
             return pub_lf
         except Exception as exc:
             logger.warning("Unable to rebuild publications metadata: %s", exc)

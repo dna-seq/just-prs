@@ -3,6 +3,7 @@
 import gzip
 import io
 import os
+import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -49,6 +50,22 @@ def list_all_pgs_ids() -> list[str]:
             return [line.strip() for line in f if line.strip()]
 
 
+def _atomic_write_parquet(df: pl.DataFrame, dest: Path) -> None:
+    """Write a DataFrame to parquet atomically (temp file + rename)."""
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(suffix=".parquet.tmp", dir=dest.parent)
+    try:
+        os.close(fd)
+        df.write_parquet(tmp)
+        os.replace(tmp, dest)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
 def download_metadata_sheet(
     sheet: MetadataSheet,
     output_path: Path,
@@ -77,8 +94,7 @@ def download_metadata_sheet(
         with fsspec.open(url, "rt") as f:
             df = pl.read_csv(f, infer_schema_length=10000, null_values=["", "NA", "None"])
 
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        df.write_parquet(output_path)
+        _atomic_write_parquet(df, output_path)
         return df
 
 

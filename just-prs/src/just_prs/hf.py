@@ -29,6 +29,9 @@ REFERENCE_DISTRIBUTIONS_FILE = "reference_distributions.parquet"  # legacy fallb
 HF_UPLOAD_TIMEOUT_SEC = 1800
 HF_UPLOAD_MAX_RETRIES = 5
 HF_UPLOAD_RETRY_DELAY_SEC = 30
+HF_DOWNLOAD_TIMEOUT_SEC = 120
+HF_DOWNLOAD_MAX_RETRIES = 4
+HF_DOWNLOAD_BACKOFF_BASE = 2.0
 
 
 def _configure_hf_timeouts(timeout_sec: int = HF_UPLOAD_TIMEOUT_SEC) -> None:
@@ -48,6 +51,55 @@ def _configure_hf_timeouts(timeout_sec: int = HF_UPLOAD_TIMEOUT_SEC) -> None:
 def distributions_filename(panel: str = "1000g") -> str:
     """Return the panel-aware filename for a reference distributions parquet."""
     return f"{panel}_distributions.parquet"
+
+
+def _hf_download_with_retry(
+    repo_id: str,
+    filename: str,
+    repo_type: str = "dataset",
+    local_dir: Path | None = None,
+    token: str | None = None,
+) -> str:
+    """``hf_hub_download`` with retry on 429 / transient errors."""
+    import logging
+    from huggingface_hub.utils import HfHubHTTPError
+
+    _configure_hf_timeouts(HF_DOWNLOAD_TIMEOUT_SEC)
+    _logger = logging.getLogger(__name__)
+    last_exc: Exception | None = None
+    for attempt in range(HF_DOWNLOAD_MAX_RETRIES):
+        try:
+            return hf_hub_download(
+                repo_id=repo_id,
+                filename=filename,
+                repo_type=repo_type,
+                local_dir=local_dir,
+                token=token,
+            )
+        except HfHubHTTPError as exc:
+            last_exc = exc
+            status = getattr(getattr(exc, "response", None), "status_code", None)
+            if status not in (429, 500, 502, 503, 504):
+                raise
+            if attempt < HF_DOWNLOAD_MAX_RETRIES - 1:
+                delay = HF_DOWNLOAD_BACKOFF_BASE ** attempt
+                _logger.warning(
+                    "HF download %s/%s failed (%s), retry %d in %.0fs",
+                    repo_id, filename, status, attempt + 1, delay,
+                )
+                time.sleep(delay)
+        except (OSError, TimeoutError) as exc:
+            last_exc = exc
+            if attempt < HF_DOWNLOAD_MAX_RETRIES - 1:
+                delay = HF_DOWNLOAD_BACKOFF_BASE ** attempt
+                _logger.warning(
+                    "HF download %s/%s failed (%s), retry %d in %.0fs",
+                    repo_id, filename, exc, attempt + 1, delay,
+                )
+                time.sleep(delay)
+    raise RuntimeError(
+        f"HF download {repo_id}/{filename} failed after {HF_DOWNLOAD_MAX_RETRIES} attempts: {last_exc}"
+    )
 
 
 def _resolve_token(token: str | None = None) -> str | None:
@@ -91,7 +143,7 @@ def pull_reference_distributions(
         for candidate in [panel_file, REFERENCE_DISTRIBUTIONS_FILE]:
             hf_path = f"{HF_DATA_PREFIX}/{candidate}"
             try:
-                path = hf_hub_download(
+                path = _hf_download_with_retry(
                     repo_id=repo_id,
                     filename=hf_path,
                     repo_type="dataset",
@@ -603,7 +655,7 @@ def pull_cleaned_parquets(
 
     Pulls ``scores.parquet``, ``performance.parquet``, and
     ``best_performance.parquet`` from ``data/metadata/`` in the combined
-    ``just-dna-seq/pgs-catalog`` repo.
+    ``just-dna-seq/pgs-catalog`` repo.  Retries on 429 / transient errors.
 
     Args:
         local_dir: Directory to save downloaded parquet files.
@@ -621,7 +673,7 @@ def pull_cleaned_parquets(
         downloaded: list[Path] = []
         for filename in CLEANED_PARQUET_FILES:
             try:
-                path = hf_hub_download(
+                path = _hf_download_with_retry(
                     repo_id=repo_id,
                     filename=f"{HF_DATA_PREFIX}/metadata/{filename}",
                     repo_type="dataset",

@@ -111,7 +111,8 @@ def _normalize_scoring_columns(scoring_lf: pl.LazyFrame) -> pl.LazyFrame:
 
 
 def _compute_theoretical_stats(
-    scoring_df: pl.DataFrame,
+    scoring_lf: pl.LazyFrame,
+    schema_names: list[str] | None = None,
 ) -> tuple[float, float, int] | None:
     """Compute theoretical PRS mean and SD from allele frequencies in the scoring file.
 
@@ -124,38 +125,46 @@ def _compute_theoretical_stats(
     Returns (mean, std, n_variants_with_freq) or None if allelefrequency_effect
     column is absent or has no valid values.
     """
-    if "allelefrequency_effect" not in scoring_df.columns:
+    if schema_names is None:
+        schema_names = scoring_lf.collect_schema().names()
+
+    if "allelefrequency_effect" not in schema_names:
         return None
-    if "effect_weight" not in scoring_df.columns:
+    if "effect_weight" not in schema_names:
         return None
 
-    valid = scoring_df.filter(
-        pl.col("allelefrequency_effect").is_not_null()
-        & pl.col("effect_weight").is_not_null()
-        & (pl.col("allelefrequency_effect") > 0.0)
-        & (pl.col("allelefrequency_effect") < 1.0)
-    )
-    if valid.height == 0:
-        return None
-
-    agg = valid.select(
-        (pl.col("effect_weight") * 2.0 * pl.col("allelefrequency_effect"))
-        .sum()
-        .alias("mean"),
-        (
-            pl.col("effect_weight").pow(2)
-            * 2.0
-            * pl.col("allelefrequency_effect")
-            * (1.0 - pl.col("allelefrequency_effect"))
+    agg = (
+        scoring_lf.filter(
+            pl.col("allelefrequency_effect").is_not_null()
+            & pl.col("effect_weight").is_not_null()
+            & (pl.col("allelefrequency_effect") > 0.0)
+            & (pl.col("allelefrequency_effect") < 1.0)
         )
-        .sum()
-        .alias("variance"),
+        .select(
+            (pl.col("effect_weight") * 2.0 * pl.col("allelefrequency_effect"))
+            .sum()
+            .alias("mean"),
+            (
+                pl.col("effect_weight").pow(2)
+                * 2.0
+                * pl.col("allelefrequency_effect")
+                * (1.0 - pl.col("allelefrequency_effect"))
+            )
+            .sum()
+            .alias("variance"),
+            pl.len().alias("n_valid"),
+        )
+        .collect()
     )
-    row = agg.row(0, named=True)
-    mean = float(row["mean"])
-    variance = float(row["variance"])
+
+    n_valid = int(agg["n_valid"][0])
+    if n_valid == 0:
+        return None
+
+    mean = float(agg["mean"][0])
+    variance = float(agg["variance"][0])
     std = math.sqrt(variance) if variance > 0 else 0.0
-    return mean, std, valid.height
+    return mean, std, n_valid
 
 
 def _norm_cdf(x: float) -> float:
@@ -214,11 +223,11 @@ def compute_prs(
         scoring_lf = _resolve_scoring(scoring_file, genome_build, cache_dir)
         scoring_norm = _normalize_scoring_columns(scoring_lf)
 
-        scoring_df = scoring_norm.collect()
-        variants_total = scoring_df.height
+        schema_names = scoring_norm.collect_schema().names()
+        variants_total = scoring_norm.select(pl.len()).collect().item()
 
         joined = genotypes_lf.join(
-            scoring_df.lazy(),
+            scoring_norm,
             left_on=["chrom", "pos"],
             right_on=["chr_name_norm", "chr_pos_norm"],
             how="inner",
@@ -233,7 +242,7 @@ def compute_prs(
             )
         )
 
-        dosage_weight = DOSAGE_WEIGHT_COLUMNS[0] in scoring_df.columns
+        dosage_weight = DOSAGE_WEIGHT_COLUMNS[0] in schema_names
         if dosage_weight:
             joined = joined.with_columns(
                 pl.when(pl.col("dosage") == 0)
@@ -250,15 +259,17 @@ def compute_prs(
                 (pl.col("effect_weight") * pl.col("dosage")).alias("weighted_dosage")
             )
 
-        matched_df = joined.collect()
-        variants_matched = len(matched_df)
+        agg = joined.select(
+            pl.len().alias("n_matched"),
+            pl.col("weighted_dosage").sum().alias("prs_score"),
+        ).collect()
+
+        variants_matched = int(agg["n_matched"][0])
 
         if variants_matched == 0:
             prs_score = 0.0
         else:
-            prs_score = matched_df["weighted_dosage"].sum()
-            if prs_score is None:
-                prs_score = 0.0
+            prs_score = float(agg["prs_score"][0] or 0.0)
 
         match_rate = variants_matched / variants_total if variants_total > 0 else 0.0
 
@@ -268,14 +279,14 @@ def compute_prs(
         percentile: float | None = None
         percentile_method: str | None = None
 
-        stats = _compute_theoretical_stats(scoring_df)
+        stats = _compute_theoretical_stats(scoring_norm, schema_names)
         if stats is not None:
             mean, std, n_with_freq = stats
             has_freqs = True
             theoretical_mean = mean
             theoretical_std = std
             if std > 0:
-                z = (float(prs_score) - mean) / std
+                z = (prs_score - mean) / std
                 percentile = round(_norm_cdf(z) * 100.0, 2)
                 percentile_method = "theoretical"
             log_message(
@@ -290,8 +301,8 @@ def compute_prs(
 
         return PRSResult(
             pgs_id=pgs_id,
-            score=float(prs_score),
-            variants_matched=int(variants_matched),
+            score=prs_score,
+            variants_matched=variants_matched,
             variants_total=int(variants_total),
             match_rate=float(match_rate),
             trait_reported=trait_reported,

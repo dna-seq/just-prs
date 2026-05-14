@@ -402,7 +402,7 @@ def prs_results_table(
     state: type[rx.State],
     bell_curve_height: int = 360,
     bell_curve_max_width: int = 1200,
-    detail_height: int | None = None,
+    detail_height: int | str = "auto",
     bell_curve_config: dict[str, Any] | None = None,
     metric_list_config: dict[str, Any] | None = None,
 ) -> rx.Component:
@@ -416,9 +416,9 @@ def prs_results_table(
         state: Concrete state class (must mix in ``PRSComputeStateMixin``).
         bell_curve_height: Height of the per-row bell curve chart in pixels.
         bell_curve_max_width: Max width of the per-row bell curve container.
-        detail_height: Detail panel height in pixels. When ``None`` (default)
-            the datagrid uses its built-in default. Pass a number (e.g.
-            ``700``) to enforce a fixed height with internal scroll.
+        detail_height: Detail panel height. ``"auto"`` (default) lets the
+            panel grow to fit the bell curve without cropping. Pass a number
+            (e.g. ``700``) to enforce a fixed height with internal scroll.
         bell_curve_config: Extra renderer config keys merged on top of the
             defaults (e.g. ``{"labelTiers": 12, "bands": [...]}``); supports
             every key accepted by the ``bell_curve`` renderer.
@@ -458,48 +458,59 @@ def prs_results_table(
     )
     return rx.cond(
         (state.prs_results.length() > 0) & (state.prs_view_mode == "individual"),  # type: ignore[operator]
-        rx.vstack(
+        rx.box(
             _prs_disclaimers(state),
             _prs_interpretation_guide(),
             PlotlyDetailSupport.create(),
-            data_grid_scroll_container(
-                data_grid(
-                    rows=state.prs_results_rows,
-                    columns=state.prs_results_columns,
-                    column_grouping_model=state.prs_results_column_groups,
-                    row_id_field="id",
-                    pagination=False,
-                    hide_footer=True,
-                    density="compact",
-                    height="calc(100vh - 340px)",
-                    disable_row_selection_on_click=True,
-                    detail_columns=[
-                        "population_percentiles_chart", "population_percentiles_summary", "risk_context",
-                        "result_suggestions", "model_context",
-                    ],
-                    detail_labels={
-                        "population_percentiles_chart": "Where You Fall on the Reference Curve",
-                        "population_percentiles_summary": "Interpretation",
-                        "risk_context": "Does This Change Actual Risk?",
-                        "result_suggestions": "Quick Flags",
-                        "model_context": "Can I Trust This Result?",
-                    },
-                    detail_renderers={
-                        "risk_context": metric_cards,
-                        "model_context": metric_cards,
-                        "result_suggestions": {"type": "badge_list"},
-                        "population_percentiles_chart": bell_curve,
-                    },
-                    **({"detail_height": detail_height} if detail_height is not None else {}),
+            rx.box(
+                data_grid_scroll_container(
+                    data_grid(
+                        rows=state.prs_results_rows,
+                        columns=state.prs_results_columns,
+                        column_grouping_model=state.prs_results_column_groups,
+                        row_id_field="id",
+                        pagination=False,
+                        hide_footer=True,
+                        density="compact",
+                        height="100%",
+                        disable_row_selection_on_click=True,
+                        detail_columns=[
+                            "population_percentiles_chart", "population_percentiles_summary", "risk_context",
+                            "result_suggestions", "model_context",
+                        ],
+                        detail_labels={
+                            "population_percentiles_chart": "Where You Fall on the Reference Curve",
+                            "population_percentiles_summary": "Interpretation",
+                            "risk_context": "Does This Change Actual Risk?",
+                            "result_suggestions": "Quick Flags",
+                            "model_context": "Can I Trust This Result?",
+                        },
+                        detail_renderers={
+                            "risk_context": metric_cards,
+                            "model_context": metric_cards,
+                            "result_suggestions": {"type": "badge_list"},
+                            "population_percentiles_chart": bell_curve,
+                        },
+                        detail_height=detail_height,
+                    ),
                 ),
+                flex="1 1 0%",
+                min_height="0",
+                overflow="hidden",
+                width="100%",
             ),
             rx.text(
                 "Click the chevron on any row for a bell curve showing your position, "
                 "absolute-risk context, population percentile spread, and quality flags.",
                 size="1",
                 color="gray",
+                flex_shrink="0",
             ),
-            spacing="3",
+            display="flex",
+            flex_direction="column",
+            gap="12px",
+            height="calc(100vh - 340px)",
+            min_height="0",
             width="100%",
         ),
     )
@@ -512,7 +523,7 @@ def trait_summary_table(
     large_bell_curve_threshold: int = 4,
     large_bell_curve_height: int = 460,
     large_bell_curve_max_width: int = 1600,
-    detail_height: int | None = None,
+    detail_height: int | str = "auto",
     bell_curve_config: dict[str, Any] | None = None,
     metric_list_config: dict[str, Any] | None = None,
     link_list_config: dict[str, Any] | None = None,
@@ -531,9 +542,9 @@ def trait_summary_table(
             the threshold.
         large_bell_curve_max_width: Bell curve container width (px) for
             traits above the threshold.
-        detail_height: Detail panel height. Default ``"auto"`` lets the
-            accordion grow vertically to fit the bell curve and colored
-            blocks without cropping or internal scrollbars.
+        detail_height: Detail panel height. ``"auto"`` (default) lets the
+            panel grow to fit the bell curve without cropping. Pass a number
+            (e.g. ``700``) to enforce a fixed height with internal scroll.
         bell_curve_config: Extra renderer config keys merged on top of the
             defaults for the per-trait bell curve (e.g. ``{"labelTiers": 12}``).
         metric_list_config: Extra renderer config for trait metric cards.
@@ -579,41 +590,47 @@ def trait_summary_table(
     )
     return rx.cond(
         (state.prs_results.length() > 0) & (state.prs_view_mode == "grouped"),  # type: ignore[operator]
-        rx.vstack(
+        rx.box(
             PlotlyDetailSupport.create(),
-            data_grid_scroll_container(
-                data_grid(
-                    rows=state.trait_summary_rows,
-                    columns=state.trait_summary_columns,
-                    row_id_field="id",
-                    pagination=False,
-                    hide_footer=True,
-                    density="compact",
-                    height="calc(100vh - 380px)",
-                    disable_row_selection_on_click=True,
-                    detail_columns=[
-                        "pgs_links",
-                        "percentile_chart",
-                        "key_metrics",
-                        "trait_quick_flags",
-                        "confidence_segments",
-                    ],
-                    detail_labels={
-                        "pgs_links": "PGS Models Included",
-                        "percentile_chart": "Where You Fall on the Bell Curve",
-                        "key_metrics": "Key Statistics",
-                        "trait_quick_flags": "Signal Flags",
-                        "confidence_segments": "All Models vs High-Quality Models",
-                    },
-                    detail_renderers={
-                        "pgs_links": pgs_links,
-                        "key_metrics": metric_cards,
-                        "trait_quick_flags": {"type": "badge_list"},
-                        "confidence_segments": metric_cards,
-                        "percentile_chart": bell_curve,
-                    },
-                    **({"detail_height": detail_height} if detail_height is not None else {}),
+            rx.box(
+                data_grid_scroll_container(
+                    data_grid(
+                        rows=state.trait_summary_rows,
+                        columns=state.trait_summary_columns,
+                        row_id_field="id",
+                        pagination=False,
+                        hide_footer=True,
+                        density="compact",
+                        height="100%",
+                        disable_row_selection_on_click=True,
+                        detail_columns=[
+                            "pgs_links",
+                            "percentile_chart",
+                            "key_metrics",
+                            "trait_quick_flags",
+                            "confidence_segments",
+                        ],
+                        detail_labels={
+                            "pgs_links": "PGS Models Included",
+                            "percentile_chart": "Where You Fall on the Bell Curve",
+                            "key_metrics": "Key Statistics",
+                            "trait_quick_flags": "Signal Flags",
+                            "confidence_segments": "All Models vs High-Quality Models",
+                        },
+                        detail_renderers={
+                            "pgs_links": pgs_links,
+                            "key_metrics": metric_cards,
+                            "trait_quick_flags": {"type": "badge_list"},
+                            "confidence_segments": metric_cards,
+                            "percentile_chart": bell_curve,
+                        },
+                        detail_height=detail_height,
+                    ),
                 ),
+                flex="1 1 0%",
+                min_height="0",
+                overflow="hidden",
+                width="100%",
             ),
             rx.text(
                 "Click the chevron on any trait row to see: a bell curve showing where "
@@ -621,8 +638,13 @@ def trait_summary_table(
                 "of what the results mean and why models may disagree.",
                 size="1",
                 color="gray",
+                flex_shrink="0",
             ),
-            spacing="3",
+            display="flex",
+            flex_direction="column",
+            gap="12px",
+            height="calc(100vh - 380px)",
+            min_height="0",
             width="100%",
         ),
     )

@@ -1,6 +1,6 @@
 [project]
 name = "prs-ui"
-version = "0.2.6"
+version = "0.2.7"
 description = "Reusable Reflex UI components for Polygenic Risk Score computation with PGS Catalog"
 readme = "README.md"
 authors = [
@@ -13,7 +13,7 @@ dependencies = [
     "reflex-components-core>=0.9.2",
     "reflex-components-code>=0.9.2",
     "reflex-components-radix>=0.9.2",
-    "reflex-mui-datagrid>=0.3.3",
+    "reflex-mui-datagrid>=0.3.5",
 ]
 
 [project.scripts]

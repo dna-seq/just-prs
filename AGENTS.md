@@ -101,7 +101,7 @@ Cleaned metadata parquets (including `publications.parquet` and `trait_prevalenc
   - `TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState)` — concrete state for the Traits page. Groups PGS Catalog scores by EFO trait, tracks selected traits, resolves them to PGS IDs, and **auto-builds the trait summary after computation** so the grouped view is the primary output (no manual "Group by Trait" click required). Overrides `compute_selected_prs()` to call `build_trait_summary()` after the parent mixin completes.
   - **Important**: `AppState` must NOT inherit from `LazyFrameGridMixin` — otherwise substates that also list the mixin create an unresolvable MRO diamond.
 - **Reusable components** (`prs_ui.components`): Each component function accepts a `state` class parameter, so the same UI works with any concrete state inheriting `PRSComputeStateMixin`. The primary entry point is `prs_section(state)` which composes build selector, score grid, compute button, progress bar, and results table. `trait_summary_table(state)` is also exported and can be used independently for trait-grouped views. The compute section includes an `All available populations` toggle to request per-superpopulation percentiles where reference distributions exist.
-- **Bell curve sizing is configurable** in both result tables. `prs_results_table(state, bell_curve_height=280, bell_curve_max_width=900, detail_height=700, bell_curve_config=None)` and `trait_summary_table(state, bell_curve_height=380, bell_curve_max_width=1100, large_bell_curve_threshold=4, large_bell_curve_height=520, large_bell_curve_max_width=1800, detail_height=920, button_label="Group by Trait", bell_curve_config=None)` expose the chart dimensions with the defaults that match the reference layout. `bell_curve_config` is a shallow-merged dict of extra renderer keys (`labelTiers`, `labelMinGapZ`, `bands`, `marginTop`, etc.) for full per-app overrides. `prs_section(state, results_table_kwargs=None, trait_summary_kwargs=None)` forwards those dicts so embedders never need to fork the sub-tables to bump chart size. Default bell curve dimensions are sized to fit alongside the side panel without changing the underlying renderer layout; do not override `marginTop`/`marginBottom`/`legendY`/`yAxisMax` defaults unless you specifically need more headroom (changing them alters the curve aspect ratio).
+- **Bell curve sizing is configurable** in both result tables. `prs_results_table(state, bell_curve_height=360, bell_curve_max_width=1200, detail_height="auto", bell_curve_config=None)` and `trait_summary_table(state, bell_curve_height=380, bell_curve_max_width=1200, large_bell_curve_threshold=4, large_bell_curve_height=460, large_bell_curve_max_width=1600, detail_height="auto", bell_curve_config=None)` expose the chart dimensions. **`detail_height` defaults to `"auto"`** so the detail panel grows to fit the bell curve — never pass a fixed numeric height unless you specifically need internal scroll within the panel. `bell_curve_config` is a shallow-merged dict of extra renderer keys (`labelTiers`, `labelMinGapZ`, `bands`, `marginTop`, etc.) for full per-app overrides. `prs_section(state, results_table_kwargs=None, trait_summary_kwargs=None)` forwards those dicts so embedders never need to fork the sub-tables to bump chart size. Default bell curve dimensions are sized to fit alongside the side panel without changing the underlying renderer layout; do not override `marginTop`/`marginBottom`/`legendY`/`yAxisMax` defaults unless you specifically need more headroom (changing them alters the curve aspect ratio).
 - The Metadata tab shows **raw** PGS Catalog columns for general-purpose browsing of all 7 sheets.
 - The Compute tab (default tab) uses **cleaned** data from `PRSCatalog` with normalized genome builds and snake_case column names. Scores are loaded into the MUI DataGrid with server-side virtual scrolling — no manual pagination.
 - VCF upload triggers automatic normalization via `GenomicGridState.normalize_uploaded_vcf()` which runs `normalize_vcf()` (strip chr prefix, compute genotype, PASS filter) and shows the result in a browsable genomic data grid. The normalized parquet is reused by `ComputeGridState` for PRS computation.
@@ -375,6 +375,39 @@ Key integration points:
   ```
 - **No keyword-only arguments in mixin event handler methods**: Reflex's `_copy_fn` copies `__defaults__` but not `__kwdefaults__`. Always use regular positional arguments with defaults in mixin event handlers.
 - **`pagination=False` for scrollable grids**: `WrappedDataGrid` defaults to `pagination=True`. You MUST pass `pagination=False` and `hide_footer=True` to get a continuously scrollable grid. NOTE: `lazyframe_grid()` already does this internally — only pass these when using `data_grid()` directly.
+- **Detail panel height MUST be `"auto"` (CRITICAL — bell curve visibility).** When `detail_height` is omitted or `None`, the datagrid JS computes a tiny fallback (`max(120, columns×32+24)` ≈ 184px for 5 columns) that clips bell curves configured at 360–460px. Always pass `detail_height="auto"` so the panel grows to fit its content. Never use a fixed numeric `detail_height` unless you specifically need internal scroll within the panel.
+- **Grids with auto-height detail panels MUST use the viewport-bounded flex column layout (CRITICAL — prevents page-scroll regression).** When `detail_height="auto"`, the expanded detail panel grows inside the grid's virtual scroller. Without a constrained flex host, the grid can push the page scroll instead of scrolling internally. The required pattern:
+
+  ```python
+  # CORRECT — grid scrolls internally, detail panels expand freely
+  rx.box(
+      sibling_above,                          # flex_shrink="0"
+      rx.box(
+          data_grid_scroll_container(
+              data_grid(..., height="100%"),   # fills the flex slot
+          ),
+          flex="1 1 0%",
+          min_height="0",
+          overflow="hidden",                   # prevents leakage
+          width="100%",
+      ),
+      sibling_below,                          # flex_shrink="0"
+      display="flex",
+      flex_direction="column",
+      height="calc(100vh - <chrome>px)",      # viewport-bounded
+      min_height="0",
+      width="100%",
+  )
+
+  # WRONG — grid has its own calc height but sits in an unconstrained vstack
+  rx.vstack(
+      data_grid_scroll_container(
+          data_grid(..., height="calc(100vh - 380px)"),
+      ),
+  )
+  ```
+
+  Key rules: (1) the flex root has a viewport-bounded height; (2) the grid wrapper gets `flex="1 1 0%"`, `min_height="0"`, `overflow="hidden"`; (3) non-grid siblings get `flex_shrink="0"`; (4) the grid itself uses `height="100%"` (not a calc); (5) `data_grid_scroll_container` passes `height="100%"` through to maintain the chain. Do NOT put `calc(100vh - N)` on the grid directly when using auto detail panels — put it on the flex root.
 
 ### polars-bio caveats
 
@@ -1012,6 +1045,7 @@ If a Web UI (Reflex, FastAPI) needs to trigger a Dagster job in the background, 
 - When redundant functionality or bugs live in user-maintained upstream libraries such as `reflex-mui-datagrid`, provide a prompt/fix for that project instead of local monkey-patching.
 - UI must distinguish unavailable data from zero with explicit `N/A`; use green for favorable/low-risk and red only for alarming/high-risk results.
 - Long UI text in detail panels must word-wrap, badges should stay short, and foldable datagrid detail panels are preferred over separate cards; expanded PRS views should start with the percentile/reference curve and explain AUROC, variant match, risk agreement, and h² in plain language.
+- Datagrid detail panels with rich content (bell curves, metric cards) must use `detail_height="auto"` and the viewport-bounded flex column layout to ensure content is fully visible while preserving internal grid scrolling; never omit `detail_height` (the JS fallback formula produces ~184px which clips 360–460px bell curves) and never put `calc(100vh)` directly on the grid when using auto detail panels.
 - Use full population names in UI display, with column grouping for per-population fields; abbreviations like AFR/EUR are for data/internal columns.
 - Do not hardcode memory limits, resource caps, or arbitrary column widths; use RAM percentages/env overrides and content-aware column sizing.
 - For public demos such as just-dna-lite, prefer an immutable public-genome mode: no user uploads on the server, only permissively licensed public genomes, with an FAQ guiding users to install locally for private data.

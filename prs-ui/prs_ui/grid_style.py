@@ -12,6 +12,7 @@ def data_grid_scroll_container(grid: rx.Component) -> rx.Component:
         grid,
         class_name=DATA_GRID_SCROLL_CLASS,
         width="100%",
+        height="100%",
         min_width="0",
     )
 

@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(python -c \"from prs_ui.pages.traits import traits_panel; print\\('OK'\\)\")",
-      "Bash(python -c \"from prs_ui.state import TraitBrowserState; print\\('OK'\\)\")"
+      "Bash(python -c \"from prs_ui.state import TraitBrowserState; print\\('OK'\\)\")",
+      "Bash(python -c \"from prs_ui.components.prs_section import prs_results_table, trait_summary_table; print\\('OK'\\)\")",
+      "Bash(python -c \"from prs_ui.pages.traits import traits_panel; from prs_ui.pages.compute import compute_panel; print\\('OK'\\)\")"
     ]
   }
 }

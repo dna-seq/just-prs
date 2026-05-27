@@ -1,10 +1,20 @@
 """Core PRS computation engine: variant matching, dosage computation, weighted sum."""
 
+from __future__ import annotations
+
+import enum
 import math
 from pathlib import Path
 
+import duckdb
 import polars as pl
 from eliot import log_message, start_action
+
+
+class PRSEngine(str, enum.Enum):
+    """PRS computation engine selection."""
+    POLARS = "polars"
+    DUCKDB = "duckdb"
 
 from just_prs.models import PRSResult
 from just_prs.scoring import DEFAULT_CACHE_DIR, load_scoring, parse_scoring_file
@@ -305,6 +315,203 @@ def compute_prs(
             variants_matched=variants_matched,
             variants_total=int(variants_total),
             match_rate=float(match_rate),
+            trait_reported=trait_reported,
+            has_allele_frequencies=has_freqs,
+            theoretical_mean=theoretical_mean,
+            theoretical_std=theoretical_std,
+            percentile=percentile,
+            percentile_method=percentile_method,
+        )
+
+
+_DUCKDB_DOSAGE_SQL = """\
+CASE
+    WHEN g.GT IS NULL OR g.GT = './.' OR g.GT = '.' THEN 0
+    WHEN s.effect_allele = g.alt THEN
+        (CASE WHEN split_part(replace(replace(g.GT, '|', '/'), './', '0/'), '/', 1) = '1' THEN 1 ELSE 0 END
+       + CASE WHEN split_part(replace(replace(g.GT, '|', '/'), './', '0/'), '/', 2) = '1' THEN 1 ELSE 0 END)
+    WHEN s.effect_allele = g.ref THEN
+        (CASE WHEN split_part(replace(replace(g.GT, '|', '/'), './', '0/'), '/', 1) = '0' THEN 1 ELSE 0 END
+       + CASE WHEN split_part(replace(replace(g.GT, '|', '/'), './', '0/'), '/', 2) = '0' THEN 1 ELSE 0 END)
+    ELSE 0
+END"""
+
+_DUCKDB_WEIGHTED_DOSAGE_ADDITIVE = f"""\
+s.effect_weight * ({_DUCKDB_DOSAGE_SQL})"""
+
+_DUCKDB_WEIGHTED_DOSAGE_GENOBOOST = f"""\
+CASE ({_DUCKDB_DOSAGE_SQL})
+    WHEN 0 THEN s.dosage_0_weight
+    WHEN 1 THEN s.dosage_1_weight
+    WHEN 2 THEN s.dosage_2_weight
+    ELSE 0.0
+END"""
+
+
+_DEFAULT_DUCKDB_MEMORY_PERCENT = 75
+
+
+def _resolve_duckdb_memory_limit() -> str:
+    """Compute DuckDB per-connection memory limit.
+
+    Resolution order:
+      1. ``PRS_DUCKDB_MEMORY_LIMIT`` env var (e.g. ``"8GB"``) — used as-is.
+      2. ``PRS_DUCKDB_MEMORY_PERCENT`` env var — percentage of total RAM.
+      3. Default: 75% of total RAM.
+    """
+    import os
+
+    import psutil
+
+    explicit = os.environ.get("PRS_DUCKDB_MEMORY_LIMIT", "").strip()
+    if explicit:
+        return explicit
+
+    total_bytes = psutil.virtual_memory().total
+    pct_str = os.environ.get("PRS_DUCKDB_MEMORY_PERCENT", "").strip()
+    pct = int(pct_str) if pct_str else _DEFAULT_DUCKDB_MEMORY_PERCENT
+    limit_bytes = int(total_bytes * pct / 100)
+    limit_gb = max(limit_bytes / (1024**3), 1.0)
+    return f"{limit_gb:.1f}GB"
+
+
+def compute_prs_duckdb(
+    vcf_path: Path | str,
+    scoring_file: Path | pl.LazyFrame | str,
+    genome_build: str = "GRCh38",
+    cache_dir: Path = DEFAULT_CACHE_DIR,
+    pgs_id: str = "unknown",
+    trait_reported: str | None = None,
+    genotypes_parquet: Path | str | None = None,
+    genotypes_lf: pl.LazyFrame | None = None,
+    memory_limit: str | None = None,
+) -> PRSResult:
+    """Compute a polygenic risk score using DuckDB for the join and aggregation.
+
+    Functionally equivalent to ``compute_prs()`` but uses DuckDB SQL instead of
+    polars for the variant-matching join and weighted-sum aggregation. DuckDB can
+    spill to disk under memory pressure, making this more robust for large scoring
+    files on low-memory machines.
+
+    Either *genotypes_parquet* (preferred — DuckDB reads the file directly) or
+    *genotypes_lf* (materialized to an Arrow table and registered with DuckDB)
+    must be provided. If neither is given, the VCF is read via polars-bio and
+    materialized to a temporary Arrow table.
+
+    Args:
+        vcf_path: Path to VCF file (used only when neither genotypes arg is provided)
+        scoring_file: Path to scoring file, PGS ID string, or pre-loaded LazyFrame
+        genome_build: Genome build for downloading scoring files
+        cache_dir: Cache directory for downloaded scoring files
+        pgs_id: PGS ID for result labeling
+        trait_reported: Trait name for result labeling
+        genotypes_parquet: Path to normalized genotypes parquet (best for DuckDB)
+        genotypes_lf: Pre-built genotypes LazyFrame (collected to Arrow for DuckDB)
+        memory_limit: DuckDB memory limit (e.g. ``"2GB"``). Falls back to
+            ``PRS_DUCKDB_MEMORY_LIMIT`` / ``PRS_DUCKDB_MEMORY_PERCENT`` env vars,
+            then 75% of total RAM.
+
+    Returns:
+        PRSResult with computed score, match statistics, and optionally
+        theoretical distribution stats and percentile.
+    """
+    with start_action(
+        action_type="prs:compute_duckdb",
+        vcf_path=str(vcf_path),
+        pgs_id=pgs_id,
+        genome_build=genome_build,
+    ):
+        scoring_lf = _resolve_scoring(scoring_file, genome_build, cache_dir)
+        scoring_norm = _normalize_scoring_columns(scoring_lf)
+
+        schema_names = scoring_norm.collect_schema().names()
+        scoring_df = scoring_norm.collect()
+        variants_total = scoring_df.height
+
+        dosage_weight = DOSAGE_WEIGHT_COLUMNS[0] in schema_names
+        weighted_sql = _DUCKDB_WEIGHTED_DOSAGE_GENOBOOST if dosage_weight else _DUCKDB_WEIGHTED_DOSAGE_ADDITIVE
+
+        mem_limit = memory_limit or _resolve_duckdb_memory_limit()
+        conn = duckdb.connect(config={"memory_limit": mem_limit})
+        try:
+            conn.execute("SET arrow_large_buffer_size = true")
+            conn.register("scoring", scoring_df.to_arrow())
+
+            if genotypes_parquet is not None:
+                geno_from = f"read_parquet('{genotypes_parquet}')"
+            elif genotypes_lf is not None:
+                geno_lf = _normalize_genotype_columns(genotypes_lf)
+                conn.register("genotypes_tbl", geno_lf.collect().to_arrow())
+                geno_from = "genotypes_tbl"
+            else:
+                geno_lf = read_genotypes(vcf_path)
+                conn.register("genotypes_tbl", geno_lf.collect().to_arrow())
+                geno_from = "genotypes_tbl"
+
+            row = conn.execute(f"""
+                SELECT
+                    COALESCE(SUM({weighted_sql}), 0.0) AS prs_score,
+                    COUNT(*) AS variants_matched
+                FROM {geno_from} g
+                JOIN scoring s
+                  ON g.chrom = s.chr_name_norm AND g.pos = s.chr_pos_norm
+            """).fetchone()
+
+            prs_score = float(row[0])
+            variants_matched = int(row[1])
+
+            has_freqs = False
+            theoretical_mean: float | None = None
+            theoretical_std: float | None = None
+            percentile: float | None = None
+            percentile_method: str | None = None
+
+            if "allelefrequency_effect" in schema_names and "effect_weight" in schema_names:
+                stats_row = conn.execute("""
+                    SELECT
+                        SUM(effect_weight * 2.0 * allelefrequency_effect) AS mean,
+                        SUM(POWER(effect_weight, 2) * 2.0
+                            * allelefrequency_effect * (1.0 - allelefrequency_effect)) AS variance,
+                        COUNT(*) AS n_valid
+                    FROM scoring
+                    WHERE allelefrequency_effect IS NOT NULL
+                      AND effect_weight IS NOT NULL
+                      AND allelefrequency_effect > 0.0
+                      AND allelefrequency_effect < 1.0
+                """).fetchone()
+
+                n_valid = int(stats_row[2])
+                if n_valid > 0:
+                    mean = float(stats_row[0])
+                    variance = float(stats_row[1])
+                    std = math.sqrt(variance) if variance > 0 else 0.0
+                    has_freqs = True
+                    theoretical_mean = mean
+                    theoretical_std = std
+                    if std > 0:
+                        z = (prs_score - mean) / std
+                        percentile = round(_norm_cdf(z) * 100.0, 2)
+                        percentile_method = "theoretical"
+                    log_message(
+                        message_type="prs:theoretical_stats",
+                        pgs_id=pgs_id,
+                        variants_with_frequency=n_valid,
+                        variants_total=variants_total,
+                        theoretical_mean=mean,
+                        theoretical_std=std,
+                        percentile=percentile,
+                    )
+        finally:
+            conn.close()
+
+        match_rate = variants_matched / variants_total if variants_total > 0 else 0.0
+
+        return PRSResult(
+            pgs_id=pgs_id,
+            score=prs_score,
+            variants_matched=variants_matched,
+            variants_total=variants_total,
+            match_rate=match_rate,
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
             theoretical_mean=theoretical_mean,

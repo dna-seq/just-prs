@@ -27,6 +27,7 @@ from reflex_mui_datagrid import (
     lazyframe_grid_stats_bar,
 )
 
+from just_prs.prs import PRSEngine
 from prs_ui.grid_style import data_grid_scroll_container
 
 
@@ -84,6 +85,29 @@ def prs_build_selector(state: type[rx.State]) -> rx.Component:
             value=state.genome_build,
             on_change=state.set_prs_genome_build,
             size="2",
+        ),
+        spacing="2",
+        align="center",
+    )
+
+
+def prs_engine_selector(state: type[rx.State]) -> rx.Component:
+    """PRS computation engine selector: Polars (lazy, in-memory) or DuckDB (SQL, spills to disk)."""
+    return rx.hstack(
+        rx.text("Engine:", size="2", weight="medium"),
+        rx.select(
+            [PRSEngine.POLARS.value, PRSEngine.DUCKDB.value],
+            value=state.prs_engine,
+            on_change=state.set_prs_engine,
+            size="2",
+        ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "Polars: fast in-memory engine using Rust (default). "
+                "DuckDB: SQL engine that can spill to disk under memory pressure, "
+                "better for large scoring files on low-memory machines."
+            ),
         ),
         spacing="2",
         align="center",
@@ -681,6 +705,8 @@ def prs_section(
         rx.vstack(
             rx.hstack(
                 prs_build_selector(state),
+                rx.separator(orientation="vertical", size="2"),
+                prs_engine_selector(state),
                 rx.separator(orientation="vertical", size="2"),
                 prs_ancestry_selector(state),
                 spacing="4",

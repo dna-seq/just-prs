@@ -34,7 +34,7 @@ from just_prs.ftp import (
 )
 from just_prs.enrich import enrich_prs_result
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
-from just_prs.prs import compute_prs
+from just_prs.prs import PRSEngine, compute_prs, compute_prs_duckdb
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.quality import (
     classify_model_quality,
@@ -875,6 +875,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     prs_progress: int = 0
     low_match_warning: bool = False
     compute_scores_loaded: bool = False
+    prs_engine: str = PRSEngine.DUCKDB.value
     prs_genotypes_path: str = ""
     selected_ancestry: str = "EUR"
     compute_all_populations: bool = False
@@ -890,6 +891,13 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.prs_view_mode = value
         if value == "grouped" and self.prs_results and not self.trait_summary_rows:
             self.build_trait_summary()
+
+    def set_prs_engine(self, value: str) -> None:
+        """Switch PRS computation engine: 'polars' (default) or 'duckdb'."""
+        try:
+            self.prs_engine = PRSEngine(value).value
+        except ValueError:
+            self.prs_engine = PRSEngine.POLARS.value
 
     def set_selected_ancestry(self, value: str) -> None:
         """Set the ancestry superpopulation for percentile lookup."""
@@ -2292,15 +2300,27 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             trait = info["trait_reported"] if info else None
 
             vcf_path = self.prs_genotypes_path or ""
-            result = compute_prs(
-                vcf_path=vcf_path,
-                scoring_file=pgs_id,
-                genome_build=self.genome_build,  # type: ignore[attr-defined]
-                cache_dir=cache,
-                pgs_id=pgs_id,
-                trait_reported=trait,
-                genotypes_lf=pre_genotypes,
-            )
+            if self.prs_engine == PRSEngine.DUCKDB.value:
+                result = compute_prs_duckdb(
+                    vcf_path=vcf_path,
+                    scoring_file=pgs_id,
+                    genome_build=self.genome_build,  # type: ignore[attr-defined]
+                    cache_dir=cache,
+                    pgs_id=pgs_id,
+                    trait_reported=trait,
+                    genotypes_parquet=vcf_path if vcf_path else None,
+                    genotypes_lf=pre_genotypes,
+                )
+            else:
+                result = compute_prs(
+                    vcf_path=vcf_path,
+                    scoring_file=pgs_id,
+                    genome_build=self.genome_build,  # type: ignore[attr-defined]
+                    cache_dir=cache,
+                    pgs_id=pgs_id,
+                    trait_reported=trait,
+                    genotypes_lf=pre_genotypes,
+                )
 
             enriched = enrich_prs_result(
                 result,

@@ -9,6 +9,7 @@ from just_prs.models import (
     ReferenceDistribution,
 )
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
+from just_prs.prs import PRSEngine, compute_prs, compute_prs_duckdb
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.quality import (
     classify_combined_quality,

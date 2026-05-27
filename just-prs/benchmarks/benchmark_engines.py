@@ -14,8 +14,9 @@ plink2  — PLINK2 binary, pre-converted pgen dataset (chr:pos:ref:alt IDs).
 
 Memory measurement
 ------------------
-polars / duckdb: tracemalloc peak (Python heap allocations) — captures in-process
-                 allocations without OS page-cache noise.
+polars / duckdb: process RSS delta (peak RSS during call minus RSS before call),
+                 sampled every 10 ms via psutil. Captures native Rust/C++ allocations
+                 that tracemalloc misses.
 plink2:          subprocess peak RSS sampled every 100 ms via psutil — the full
                  process footprint of the PLINK2 binary.
 
@@ -35,13 +36,11 @@ import subprocess
 import tempfile
 import threading
 import time
-import tracemalloc
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-import duckdb
 import httpx
 import polars as pl
 import psutil
@@ -51,7 +50,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
-from just_prs.prs import _normalize_scoring_columns, compute_prs
+from just_prs.prs import _normalize_scoring_columns, compute_prs, compute_prs_duckdb
 from just_prs.scoring import download_scoring_file, parse_scoring_file, resolve_cache_dir
 from just_prs.reference import _prepare_plink2_score_input
 
@@ -125,21 +124,46 @@ def _track_subprocess_peak_memory(pid: int) -> float:
 def measure_engine(
     fn: Callable[[], tuple[float | None, int, int]],
 ) -> tuple[tuple[float | None, int, int], float, float]:
-    """Run *fn* with tracemalloc memory tracking.
+    """Run *fn* with RSS-based memory tracking.
 
-    Returns (result, elapsed_sec, peak_heap_mb).
+    Returns (result, elapsed_sec, rss_delta_mb).
 
-    Uses tracemalloc to capture peak Python heap allocations during the call.
-    This is stable across runs (no OS page-cache noise) and accurately reflects
-    the in-process memory cost of each engine.
+    Measures process RSS before and peak RSS during execution via a background
+    sampling thread. This captures native allocations from polars (Rust) and
+    DuckDB (C++) that tracemalloc misses.
     """
-    tracemalloc.start()
+    import gc
+    gc.collect()
+
+    proc = psutil.Process()
+    rss_before = proc.memory_info().rss
+
+    peak_rss = rss_before
+    stop_event = threading.Event()
+
+    def _sampler() -> None:
+        nonlocal peak_rss
+        while not stop_event.is_set():
+            try:
+                rss = proc.memory_info().rss
+                if rss > peak_rss:
+                    peak_rss = rss
+            except psutil.NoSuchProcess:
+                break
+            stop_event.wait(0.01)
+
+    sampler = threading.Thread(target=_sampler, daemon=True)
+    sampler.start()
+
     t0 = time.perf_counter()
     result = fn()
     elapsed = time.perf_counter() - t0
-    _current, peak_bytes = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
-    return result, elapsed, peak_bytes / 1_048_576
+
+    stop_event.set()
+    sampler.join(timeout=1.0)
+
+    delta_mb = (peak_rss - rss_before) / 1_048_576
+    return result, elapsed, max(delta_mb, 0.0)
 
 
 # ---------------------------------------------------------------------------
@@ -315,21 +339,8 @@ def score_polars(
 
 
 # ---------------------------------------------------------------------------
-# DuckDB engine
+# DuckDB engine (uses production compute_prs_duckdb from just_prs.prs)
 # ---------------------------------------------------------------------------
-
-_DOSAGE_SQL = """
-    CASE
-        WHEN GT IS NULL OR GT = './.' OR GT = '.' THEN 0
-        WHEN effect_allele = alt THEN
-            (CASE WHEN split_part(replace(replace(GT, '|', '/'), './', '0/'), '/', 1) = '1' THEN 1 ELSE 0 END +
-             CASE WHEN split_part(replace(replace(GT, '|', '/'), './', '0/'), '/', 2) = '1' THEN 1 ELSE 0 END)
-        WHEN effect_allele = ref THEN
-            (CASE WHEN split_part(replace(replace(GT, '|', '/'), './', '0/'), '/', 1) = '0' THEN 1 ELSE 0 END +
-             CASE WHEN split_part(replace(replace(GT, '|', '/'), './', '0/'), '/', 2) = '0' THEN 1 ELSE 0 END)
-        ELSE 0
-    END
-"""
 
 
 def score_duckdb(
@@ -338,25 +349,14 @@ def score_duckdb(
     normalized_parquet: Path,
 ) -> tuple[float | None, int, int]:
     """Score with DuckDB SQL engine. Returns (score, variants_matched, variants_total)."""
-    scoring_df = _normalize_scoring_columns(parse_scoring_file(scoring_file)).collect()
-    variants_total = scoring_df.height
-
-    conn = duckdb.connect()
-    conn.register("scoring", scoring_df)
-
-    row = conn.execute(f"""
-        SELECT
-            SUM(effect_weight * ({_DOSAGE_SQL})) AS prs_score,
-            COUNT(*) AS variants_matched
-        FROM read_parquet('{normalized_parquet}') g
-        JOIN scoring s
-          ON g.chrom = s.chr_name_norm AND g.pos = s.chr_pos_norm
-    """).fetchone()
-    conn.close()
-
-    prs_score = float(row[0]) if row[0] is not None else 0.0
-    variants_matched = int(row[1]) if row[1] is not None else 0
-    return prs_score, variants_matched, variants_total
+    result = compute_prs_duckdb(
+        vcf_path="__unused__",
+        scoring_file=scoring_file,
+        genome_build=GENOME_BUILD,
+        pgs_id=pgs_id,
+        genotypes_parquet=normalized_parquet,
+    )
+    return result.score, result.variants_matched, result.variants_total
 
 
 # ---------------------------------------------------------------------------
@@ -834,7 +834,7 @@ def run_benchmark(
         "vcf_url": VCF_URL,
         "genome_build": GENOME_BUILD,
         "plink2_available": str(not skip_plink2),
-        "memory_method_python": "tracemalloc_peak_heap",
+        "memory_method_python": "rss_delta_peak_minus_baseline",
         "memory_method_plink2": "subprocess_peak_rss",
     }
     meta_df = pl.DataFrame([{"key": k, "value": str(v)} for k, v in meta.items()])
@@ -846,7 +846,7 @@ def run_benchmark(
     console.print(f"  {validation_path}")
     console.print(f"  {validation_csv}")
     console.print(f"  {output / 'benchmark_metadata.csv'}")
-    console.print(f"\n[dim]* RAM: polars/duckdb = tracemalloc peak heap; plink2 = subprocess peak RSS[/dim]")
+    console.print(f"\n[dim]* RAM: polars/duckdb = process RSS delta (peak - baseline); plink2 = subprocess peak RSS[/dim]")
 
 
 if __name__ == "__main__":

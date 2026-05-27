@@ -39,7 +39,7 @@ class TestTheoreticalStats:
                 f"{pgs_id} should have allelefrequency_effect"
             )
 
-            stats = _compute_theoretical_stats(scoring_df)
+            stats = _compute_theoretical_stats(scoring_df.lazy())
             assert stats is not None, f"{pgs_id} should produce theoretical stats"
 
             mean, std, n_with_freq = stats
@@ -56,7 +56,7 @@ class TestTheoreticalStats:
         for pgs_id in PGS_IDS_WITHOUT_FREQ:
             scoring_lf = _resolve_scoring(pgs_id, "GRCh38", scoring_cache_dir)
             scoring_df = _normalize_scoring_columns(scoring_lf).collect()
-            stats = _compute_theoretical_stats(scoring_df)
+            stats = _compute_theoretical_stats(scoring_df.lazy())
             assert stats is None, f"{pgs_id} should NOT produce theoretical stats"
 
     def test_mean_equals_manual_computation(self, scoring_cache_dir: Path) -> None:
@@ -64,7 +64,7 @@ class TestTheoreticalStats:
         scoring_lf = _resolve_scoring("PGS000010", "GRCh38", scoring_cache_dir)
         scoring_df = _normalize_scoring_columns(scoring_lf).collect()
 
-        stats = _compute_theoretical_stats(scoring_df)
+        stats = _compute_theoretical_stats(scoring_df.lazy())
         assert stats is not None
         mean_from_fn, std_from_fn, _ = stats
 
@@ -87,7 +87,7 @@ class TestTheoreticalStats:
         for pgs_id in PGS_IDS_WITH_FREQ:
             scoring_lf = _resolve_scoring(pgs_id, "GRCh38", scoring_cache_dir)
             scoring_df = _normalize_scoring_columns(scoring_lf).collect()
-            stats = _compute_theoretical_stats(scoring_df)
+            stats = _compute_theoretical_stats(scoring_df.lazy())
             assert stats is not None
             _, std, _ = stats
             assert 0 < std < 100, f"{pgs_id}: SD={std} out of reasonable range"
@@ -98,7 +98,7 @@ class TestTheoreticalStats:
             "effect_weight": [0.5, -0.3],
             "allelefrequency_effect": [None, None],
         })
-        assert _compute_theoretical_stats(df) is None
+        assert _compute_theoretical_stats(df.lazy()) is None
 
     def test_boundary_frequencies_excluded(self) -> None:
         """Frequencies of exactly 0.0 or 1.0 are excluded (monomorphic sites)."""
@@ -106,7 +106,7 @@ class TestTheoreticalStats:
             "effect_weight": [0.5, -0.3, 0.1],
             "allelefrequency_effect": [0.0, 1.0, 0.5],
         })
-        stats = _compute_theoretical_stats(df)
+        stats = _compute_theoretical_stats(df.lazy())
         assert stats is not None
         mean, std, n = stats
         assert n == 1, "Only the p=0.5 variant should be included"

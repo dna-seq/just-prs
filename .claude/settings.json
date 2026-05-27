@@ -4,7 +4,14 @@
       "Bash(python -c \"from prs_ui.pages.traits import traits_panel; print\\('OK'\\)\")",
       "Bash(python -c \"from prs_ui.state import TraitBrowserState; print\\('OK'\\)\")",
       "Bash(python -c \"from prs_ui.components.prs_section import prs_results_table, trait_summary_table; print\\('OK'\\)\")",
-      "Bash(python -c \"from prs_ui.pages.traits import traits_panel; from prs_ui.pages.compute import compute_panel; print\\('OK'\\)\")"
+      "Bash(python -c \"from prs_ui.pages.traits import traits_panel; from prs_ui.pages.compute import compute_panel; print\\('OK'\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(uv build *)",
+      "Bash(uv publish *)",
+      "Bash(cat /home/antonkulaga/sources/just-prs/.env | grep -i pypi 2>/dev/null; cat /home/antonkulaga/sources/just-prs/.env.template | grep -i pypi 2>/dev/null; ls ~/.pypirc 2>/dev/null)",
+      "Read(//home/antonkulaga/**)"
     ]
   }
 }

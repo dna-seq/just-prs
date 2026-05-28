@@ -8,7 +8,7 @@ hierarchies.
 Usage in a host app::
 
     from prs_ui.components import prs_section
-    from prs_ui.state import PRSComputeStateMixin
+    from prs_ui.mixin import PRSComputeStateMixin
 
     class MyPRSState(PRSComputeStateMixin, LazyFrameGridMixin, MyAppState):
         ...

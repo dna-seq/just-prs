@@ -4,7 +4,8 @@ import reflex as rx
 from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
 
 from prs_ui.grid_style import data_grid_scroll_container
-from prs_ui.state import HeritabilityGridState, SUPERPOPULATION_LABELS
+from prs_ui.mixin import SUPERPOPULATION_LABELS
+from prs_ui.state import HeritabilityGridState
 
 _ACCORDION_SUMMARY_STYLE: dict[str, str] = {
     "cursor": "pointer",

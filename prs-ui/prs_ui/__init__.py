@@ -11,7 +11,7 @@ from prs_ui.components.prs_section import (
     prs_section,
     trait_summary_table,
 )
-from prs_ui.state import PRSComputeStateMixin
+from prs_ui.mixin import PRSComputeStateMixin
 
 _meta = metadata("prs-ui")
 __version__: str = _meta["Version"]

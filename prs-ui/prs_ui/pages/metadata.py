@@ -4,7 +4,8 @@ import reflex as rx
 from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
 
 from prs_ui.grid_style import data_grid_scroll_container
-from prs_ui.state import MetadataGridState, SHEET_LABELS, SHEET_NAMES
+from prs_ui.mixin import SHEET_LABELS, SHEET_NAMES
+from prs_ui.state import MetadataGridState
 
 
 def _sheet_button(sheet: str) -> rx.Component:

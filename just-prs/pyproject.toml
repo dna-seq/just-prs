@@ -19,12 +19,12 @@ dependencies = [
     "python-dotenv>=1.1.0",
     "platformdirs>=4.9.2",
     "zstandard>=0.23.0",
+    "duckdb>=1.5.0",
 ]
 
 [project.optional-dependencies]
 reference = [
     "pgenlib>=0.93.0",
-    "duckdb>=1.5.0",
 ]
 
 [project.scripts]

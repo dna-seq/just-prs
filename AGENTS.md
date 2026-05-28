@@ -29,7 +29,7 @@ The workspace root (`pyproject.toml` at repo root) is a non-published wrapper na
 
 ### Optional dependencies
 
-`pgenlib` and `duckdb` are **optional** — they are only needed for reference panel operations (`.pgen` file reading, variant matching, batch scoring). The core PRS computation from VCF, scoring file parsing, `PRSCatalog`, quality assessment, and all UI components work without them.
+`pgenlib` is **optional** — it is only needed for reference panel operations (`.pgen` file reading, batch scoring). `duckdb` is a **core dependency** since `compute_prs_duckdb()` (the default UI engine) uses it for variant-matching joins and weighted-sum aggregation. The core PRS computation from VCF, scoring file parsing, `PRSCatalog`, quality assessment, and all UI components require `duckdb` but work without `pgenlib`.
 
 Install the `reference` extra when you need reference panel features:
 
@@ -39,7 +39,7 @@ pip install just-prs[reference]
 "just-prs[reference]>=0.3.8"
 ```
 
-**Why optional?** `pgenlib` requires C compilation and does not ship Windows wheels. Making it optional allows `just-prs` to be used on Windows (e.g. in `just-dna-lite`) for VCF-based PRS computation without requiring a C compiler. Functions that need `pgenlib`/`duckdb` raise a clear `ImportError` with installation instructions when called without the extra.
+**Why is pgenlib optional?** `pgenlib` requires C compilation and does not ship Windows wheels. Making it optional allows `just-prs` to be used on Windows (e.g. in `just-dna-lite`) for VCF-based PRS computation without requiring a C compiler. Functions that need `pgenlib` raise a clear `ImportError` with installation instructions when called without the extra.
 
 ### Key modules
 
@@ -52,7 +52,7 @@ pip install just-prs[reference]
 | `just_prs.gwas` | GWAS Catalog bulk data download and parsing. `download_gwas_studies()` fetches the bulk TSV and parses case/control counts from free-text sample descriptions. `download_gwas_trait_mappings()` fetches trait-to-EFO mappings. `build_gwas_trait_summary()` joins and aggregates per-EFO-trait. |
 | `just_prs.hf` | HuggingFace Hub integration: `pull_cleaned_parquets()` pulls cleaned metadata parquets from `just-dna-seq/pgs-catalog` (`data/metadata/`); `push_pgs_catalog()` uploads combined metadata+scores to `just-dna-seq/pgs-catalog` and rewrites `data/metadata/scores.parquet` to parquet-first scoring links (`ftp_link`) while preserving original EBI links in `ftp_link_ebi`. |
 | `just_prs.normalize` | VCF normalization: `normalize_vcf()` reads VCF with polars-bio, strips chr prefix, renames id→rsid, computes genotype List[Str], applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, sinks to zstd Parquet. `VcfFilterConfig` (Pydantic v2) holds filter settings. |
-| `just_prs.prs` | `compute_prs()` / `compute_prs_batch()` — core PRS engine. `compute_prs()` accepts optional `genotypes_lf` LazyFrame to skip VCF re-reading when a normalized parquet is available. Supports two weight formats: standard additive (`effect_weight`) and per-dosage (GenoBoost: `dosage_0_weight`, `dosage_1_weight`, `dosage_2_weight`). `is_dosage_weight_format()` detects the format; `_normalize_scoring_columns()` handles both transparently. |
+| `just_prs.prs` | `compute_prs()` / `compute_prs_duckdb()` / `compute_prs_batch()` — core PRS engines. Two engines: **polars** (lazy in-memory, default for API) and **DuckDB** (SQL, spills to disk, default in UI). `PRSEngine` str enum (`POLARS`, `DUCKDB`) for type-safe selection. `compute_prs_duckdb()` accepts `genotypes_parquet` (preferred — DuckDB reads directly) or `genotypes_lf`, plus `memory_limit` param (falls back to `PRS_DUCKDB_MEMORY_LIMIT` env var, then 75% of RAM). Both engines support standard additive (`effect_weight`) and per-dosage (GenoBoost) weight formats, theoretical stats, and percentile computation. `is_dosage_weight_format()` detects the format; `_normalize_scoring_columns()` handles both transparently. |
 | `just_prs.reference` | Reference panel utilities and pgen operations: `download_reference_panel()` (panel-aware: `panel="1000g"` or `"hgdp_1kg"`), `parse_pvar()` (parse .pvar.zst with parquet caching), `parse_psam()` (parse .psam sample files), `read_pgen_genotypes()` (extract genotypes from .pgen via pgenlib), `match_scoring_to_pvar()` (allele-aware variant matching via polars — standalone use only), `compute_reference_prs_polars()` (single-PGS scoring using pgenlib + numpy; uses DuckDB for variant matching against pvar parquet to avoid loading 75M rows into memory), `compute_reference_prs_batch()` (memory-efficient batch scoring: resolves panel once via `_ResolvedRefPanel`, uses DuckDB for variant matching, aggregates distributions per PGS ID immediately and discards raw scores, returns `BatchScoringResult`), `compute_reference_prs_plink2()` (legacy, for cross-validation), `aggregate_distributions()`, `distribution_quality_issues()` (one row per non-finite/zero-variance distribution anomaly for manual triage and exclusion decisions), `enrich_distributions()` (join distributions with cleaned metadata: traits, EFO, AUROC, OR, C-index, ancestry), `ancestry_percentile()`, `ReferencePanelError`. Panel-aware constants: `REFERENCE_PANELS` dict, `DEFAULT_PANEL = "1000g"`. Result models: `ScoringOutcome` (per-ID outcome), `BatchScoringResult` (panel, distributions_df, outcomes, quality_df, distribution_issues_df — no raw scores held in memory). `_ResolvedRefPanel` caches file paths, psam, and variant count once per batch; variant matching uses DuckDB to scan the pvar parquet (~434 MB on disk) without materializing 75M rows in polars (~6 GB). |
 | `just_prs.vcf` | VCF reading via `polars-bio`, genome build detection, dosage computation |
 | `just_prs.scoring` | Download, parse, and cache PGS scoring files. `SCORING_FILE_SCHEMA` — comprehensive column type map from the PGS Catalog spec (30+ columns). `parse_scoring_file()` transparently reads/writes a parquet cache (zstd-9 compressed) alongside the `.txt.gz`, with header metadata embedded as file-level metadata. `scoring_parquet_path()` computes cache paths. `read_scoring_header()` reads PGS header metadata from parquet or `.txt.gz`. `load_scoring()` checks parquet cache first and skips `.txt.gz` download when it exists. |
@@ -482,6 +482,32 @@ Override with the `PRS_CACHE_DIR` environment variable (or set it in `.env`).
 - **Dependency Management**: Use `uv sync` and `uv add`. NEVER use `uv pip install`.
 - **Project Configuration**: Use `project.toml` as the single source of truth for dependencies and project metadata.
 - **Versioning**: Do not hardcode versions in `__init__.py`; rely on `project.toml`.
+
+---
+
+## PyPI Publishing
+
+Both `just-prs` and `prs-ui` are published to PyPI. The publish token is stored in `.env` as `UV_PUBLISH_TOKEN` (and `PYPI_TOKEN` alias).
+
+**`uv publish` does NOT load `.env` automatically** — unlike the project CLIs which use `python-dotenv`. You must extract the token explicitly:
+
+```bash
+# Build both packages
+uv build --package just-prs
+uv build --package prs-ui
+
+# Publish (extract token from .env since uv publish doesn't load dotenv)
+export UV_PUBLISH_TOKEN=$(grep '^UV_PUBLISH_TOKEN=' .env | sed 's/^UV_PUBLISH_TOKEN=//' | tr -d '"')
+uv publish dist/just_prs-<version>-py3-none-any.whl dist/just_prs-<version>.tar.gz
+uv publish dist/prs_ui-<version>-py3-none-any.whl dist/prs_ui-<version>.tar.gz
+```
+
+**Release checklist:**
+1. Bump versions in `just-prs/pyproject.toml` and/or `prs-ui/pyproject.toml`
+2. Run `uv lock` to update the lockfile
+3. Run the full test suite: `uv run python -m pytest just-prs/tests/ -v`
+4. Commit, push, build, publish
+5. Create a GitHub release: `gh release create v<version> --title "..." --notes "..."`
 
 ---
 

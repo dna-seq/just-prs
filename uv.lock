@@ -936,6 +936,7 @@ name = "just-prs"
 version = "0.4.4"
 source = { editable = "just-prs" }
 dependencies = [
+    { name = "duckdb" },
     { name = "eliot" },
     { name = "fsspec", extra = ["http"] },
     { name = "httpx" },
@@ -951,13 +952,12 @@ dependencies = [
 
 [package.optional-dependencies]
 reference = [
-    { name = "duckdb" },
     { name = "pgenlib" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "duckdb", marker = "extra == 'reference'", specifier = ">=1.5.0" },
+    { name = "duckdb", specifier = ">=1.5.0" },
     { name = "eliot", specifier = ">=1.17.5" },
     { name = "fsspec", extras = ["http"], specifier = ">=2026.2.0" },
     { name = "httpx", specifier = ">=0.28.0" },

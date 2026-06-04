@@ -1,5 +1,12 @@
 from importlib.metadata import metadata
 
+from just_prs.chip_coverage import (
+    CHIPS,
+    CHIPS_BY_ID,
+    chip_typed_positions,
+    compute_chip_coverage,
+    parse_gsa_manifest,
+)
 from just_prs.enrich import enrich_prs_result
 from just_prs.models import (
     AbsoluteRisk,

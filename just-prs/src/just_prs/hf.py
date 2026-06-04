@@ -218,6 +218,36 @@ def push_reference_distributions(
             )
 
 
+def push_chip_coverage(
+    parquet_path: Path,
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+) -> None:
+    """Upload a consumer-chip coverage parquet to the prs-percentiles HF dataset repo.
+
+    The file is uploaded as ``data/chip_coverage.parquet``. It reports, per PGS ID
+    and per consumer genotyping chip, how many of the score's variants are directly
+    typed (vs requiring imputation). End users pull this to label each PRS
+    "array-ready" or "imputation-required" for a given chip.
+
+    Args:
+        parquet_path: Local path to the chip coverage parquet file.
+        repo_id: HuggingFace dataset repository ID for percentiles.
+        token: HF API token. If None, loaded from .env / HF_TOKEN env var.
+    """
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:push_chip_coverage", repo_id=repo_id):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        api.upload_file(
+            path_or_fileobj=str(parquet_path),
+            path_in_repo=f"{HF_DATA_PREFIX}/chip_coverage.parquet",
+            repo_id=repo_id,
+            repo_type="dataset",
+        )
+
+
 def _generate_catalog_dataset_card(
     metadata_dir: Path,
     scores_dir: Path,

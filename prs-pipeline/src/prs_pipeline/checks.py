@@ -396,6 +396,62 @@ def check_cleaned_metadata_quality(
 
 
 # ---------------------------------------------------------------------------
+# chip_coverage — consumer-chip coverage quality check
+# ---------------------------------------------------------------------------
+
+
+@asset_check(
+    asset="chip_coverage",
+    description=(
+        "Verify chip coverage ratios are in [0, 1], n_typed <= n_total, every chip "
+        "covers the same set of PGS IDs, and the table is non-empty."
+    ),
+)
+def check_chip_coverage_valid(
+    cache_dir_resource: CacheDirResource,
+) -> AssetCheckResult:
+    cache_dir = cache_dir_resource.get_path()
+    path = cache_dir / "percentiles" / "chip_coverage.parquet"
+    if not path.exists():
+        return AssetCheckResult(
+            passed=False,
+            severity=AssetCheckSeverity.ERROR,
+            metadata={"error": "chip_coverage.parquet not found"},
+        )
+
+    df = pl.read_parquet(path)
+    n_bad_ratio = df.filter(
+        (pl.col("coverage_ratio") < 0.0) | (pl.col("coverage_ratio") > 1.0)
+    ).height
+    n_bad_counts = df.filter(pl.col("n_typed") > pl.col("n_total")).height
+
+    # Every chip must cover the same set of PGS IDs.
+    ids_per_chip = df.group_by("chip").agg(pl.col("pgs_id").n_unique().alias("n_ids"))
+    n_id_sets = ids_per_chip["n_ids"].n_unique()
+    chips_consistent = n_id_sets <= 1
+
+    passed = (
+        df.height > 0
+        and n_bad_ratio == 0
+        and n_bad_counts == 0
+        and chips_consistent
+    )
+    return AssetCheckResult(
+        passed=passed,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "n_rows": df.height,
+            "n_chips": df["chip"].n_unique() if df.height > 0 else 0,
+            "n_scores": df["pgs_id"].n_unique() if df.height > 0 else 0,
+            "n_bad_ratio": n_bad_ratio,
+            "n_typed_gt_total": n_bad_counts,
+            "chips_cover_same_ids": chips_consistent,
+            "median_coverage_ratio": round(float(df["coverage_ratio"].median()), 4) if df.height > 0 else 0.0,
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -426,4 +482,5 @@ ALL_ASSET_CHECKS = [
     check_distributions_sample_sizes,
     check_enriched_has_metadata_columns,
     check_cleaned_metadata_quality,
+    check_chip_coverage_valid,
 ]

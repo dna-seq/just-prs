@@ -37,8 +37,9 @@ from dagster import (
     asset,
 )
 
+from just_prs.chip_coverage import CHIPS, CHIPS_BY_ID, compute_chip_coverage
 from just_prs.ftp import PGS_FTP_BASE, PGS_SCORES_LIST_URL, bulk_download_scoring_files, list_all_pgs_ids
-from just_prs.hf import DEFAULT_HF_PERCENTILES_REPO, push_reference_distributions
+from just_prs.hf import DEFAULT_HF_PERCENTILES_REPO, push_chip_coverage, push_reference_distributions
 from just_prs.reference import (
     DEFAULT_PANEL,
     REFERENCE_PANELS,
@@ -86,6 +87,20 @@ ebi_pgs_catalog_scoring_files = SourceAsset(
         "each score's trait, development method, and validation performance."
     ),
     metadata={"url": PGS_FTP_BASE},
+)
+
+illumina_gsa_manifest = SourceAsset(
+    key="illumina_gsa_manifest",
+    group_name="external",
+    description=(
+        "Illumina Global Screening Array v3.0 manifest (A2 = GRCh38 coordinates, "
+        "~70 MB zip, ~648K typed markers). The GSA is the platform underlying "
+        "23andMe v5 and AncestryDNA v2 consumer genotyping chips. Used to compute, "
+        "per PGS score, how many variants are directly typed on the array vs require "
+        "imputation. Coordinates are GRCh38 so they intersect the harmonized GRCh38 "
+        "scoring files without liftover."
+    ),
+    metadata={"url": CHIPS_BY_ID["gsa_v3"]["manifest_url"]},
 )
 
 
@@ -347,6 +362,117 @@ def scoring_files_parquet(
         "scores_dir": str(scores_dir),
     })
     return Output(n_ok)
+
+
+# ---------------------------------------------------------------------------
+# Compute asset — consumer-chip coverage of scoring files
+# ---------------------------------------------------------------------------
+
+@asset(
+    group_name="compute",
+    deps=[AssetDep("scoring_files_parquet")],
+    description=(
+        "Computes, per PGS score and per consumer genotyping chip (Illumina GSA "
+        "v3 = 23andMe v5 / AncestryDNA v2 platform), how many of the score's "
+        "variants are directly typed on the array vs require imputation. "
+        "Intersects the GRCh38 GSA manifest positions against the GRCh38 "
+        "harmonized scoring parquets (the same hm_chr/hm_pos used by compute_prs). "
+        "Output chip_coverage.parquet lets the UI label each PRS 'array-ready' or "
+        "'imputation-required' for a given chip before a user even uploads data."
+    ),
+)
+def chip_coverage(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[pl.DataFrame]:
+    """Compute per-PGS, per-chip direct-typing coverage and cache the parquet."""
+    cache_dir = cache_dir_resource.get_path()
+    scores_dir = cache_dir / "scores"
+    coverage_dir = cache_dir / "percentiles"
+    coverage_dir.mkdir(parents=True, exist_ok=True)
+    out_path = coverage_dir / "chip_coverage.parquet"
+
+    def _progress(payload: dict[str, int]) -> None:
+        context.log.info(
+            f"Chip coverage: chip {payload['chip_index'] + 1}/{payload['n_chips']}, "
+            f"{payload['completed']}/{payload['total']} scores"
+        )
+
+    with resource_tracker("chip_coverage", context=context):
+        df = compute_chip_coverage(
+            scores_dir=scores_dir,
+            cache_dir=cache_dir,
+            chips=CHIPS,
+            progress_callback=_progress,
+        )
+        df.write_parquet(out_path)
+
+    n_scores = df["pgs_id"].n_unique() if df.height > 0 else 0
+    # Per-chip summary: how many scores are array-ready (>=80% typed) vs need imputation.
+    array_ready_by_chip: dict[str, int] = {}
+    for chip in df["chip"].unique().to_list() if df.height > 0 else []:
+        chip_df = df.filter(pl.col("chip") == chip)
+        array_ready_by_chip[chip] = int(chip_df.filter(pl.col("coverage_ratio") >= 0.80).height)
+
+    context.add_output_metadata({
+        "n_rows": df.height,
+        "n_scores": n_scores,
+        "n_chips": len(CHIPS),
+        "chips": ", ".join(c["chip"] for c in CHIPS),
+        "median_coverage_ratio": round(float(df["coverage_ratio"].median()), 4) if df.height > 0 else 0.0,
+        "array_ready_80pct_by_chip": str(array_ready_by_chip),
+        "coverage_path": str(out_path),
+    })
+    return Output(df)
+
+
+# ---------------------------------------------------------------------------
+# Upload asset — publish chip coverage to HuggingFace
+# ---------------------------------------------------------------------------
+
+@asset(
+    group_name="upload",
+    ins={"coverage": AssetIn("chip_coverage")},
+    description=(
+        "Uploads chip_coverage.parquet to the HuggingFace dataset "
+        "just-dna-seq/prs-percentiles. Published so the just-prs UI can label, per "
+        "consumer chip, which PRS models are usable on raw array data without "
+        "imputation. Named after the destination per lineage convention."
+    ),
+)
+def hf_chip_coverage(
+    context: AssetExecutionContext,
+    coverage: pl.DataFrame,
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Publish the chip coverage parquet to HuggingFace."""
+    repo_id = hf_resource.percentiles_repo
+    token = hf_resource.get_token()
+    cache_dir = cache_dir_resource.get_path()
+    parquet_path = cache_dir / "percentiles" / "chip_coverage.parquet"
+
+    test_spec = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
+    if test_spec:
+        context.log.info("TEST MODE: skipping HuggingFace push of chip_coverage.parquet.")
+        context.add_output_metadata({
+            "test_mode": True, "hf_push_skipped": True,
+            "coverage_path": str(parquet_path), "n_rows": coverage.height,
+        })
+        return Output(str(parquet_path))
+
+    with resource_tracker("hf_chip_coverage", context=context):
+        push_chip_coverage(parquet_path=parquet_path, repo_id=repo_id, token=token)
+
+    url = f"https://huggingface.co/datasets/{repo_id}"
+    context.log.info(f"Pushed chip_coverage.parquet to {url}")
+    context.add_output_metadata({
+        "repo_id": repo_id, "url": url,
+        "coverage_path": str(parquet_path),
+        "n_rows": coverage.height,
+        "n_scores": coverage["pgs_id"].n_unique() if coverage.height > 0 else 0,
+    })
+    return Output(url)
 
 
 # ---------------------------------------------------------------------------

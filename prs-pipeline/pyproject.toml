@@ -1,6 +1,6 @@
 [project]
 name = "prs-pipeline"
-version = "0.2.4"
+version = "0.2.5"
 description = "Dagster pipeline for computing PRS reference distributions from the 1000G panel"
 readme = "README.md"
 authors = [

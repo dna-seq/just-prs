@@ -463,10 +463,28 @@ def bulk_push_catalog(
     for i, gz_path in enumerate(gz_files):
         parquet_path = _scoring_parquet_cache_path(gz_path)
         if parquet_path.exists():
-            already_cached += 1
-            if delete_gz:
-                gz_path.unlink()
-                deleted += 1
+            try:
+                pl.scan_parquet(parquet_path).collect_schema()
+                already_cached += 1
+                if delete_gz:
+                    gz_path.unlink()
+                    deleted += 1
+            except Exception as exc:
+                console.print(f"  [yellow]{parquet_path.name}: corrupt cache removed ({exc})[/yellow]")
+                parquet_path.unlink(missing_ok=True)
+                try:
+                    lf = parse_scoring_file(gz_path)
+                    lf.select(pl.len()).collect()
+                    if parquet_path.exists():
+                        converted += 1
+                        if delete_gz:
+                            gz_path.unlink()
+                            deleted += 1
+                    else:
+                        failed += 1
+                except Exception as parse_exc:
+                    failed += 1
+                    console.print(f"  [red]{gz_path.name}: {parse_exc}[/red]")
         else:
             try:
                 lf = parse_scoring_file(gz_path)

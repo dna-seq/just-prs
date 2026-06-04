@@ -6,6 +6,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+from just_prs.ftp import download_scoring_as_parquet
 from just_prs.scoring import (
     SCORING_FILE_SCHEMA,
     _scoring_parquet_cache_path,
@@ -233,3 +234,33 @@ def test_scoring_parquet_cache_path_helper() -> None:
     gz = Path("/data/scores/PGS000001_hmPOS_GRCh38.txt.gz")
     pq = _scoring_parquet_cache_path(gz)
     assert pq == Path("/data/scores/PGS000001_hmPOS_GRCh38.parquet")
+
+
+def test_download_scoring_as_parquet_replaces_corrupt_existing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Existing unreadable parquet caches are deleted and regenerated."""
+    pgs_id = "PGS999999"
+    corrupt_path = tmp_path / f"{pgs_id}.parquet"
+    corrupt_path.write_bytes(b"not a parquet")
+
+    replacement = pl.DataFrame({
+        "chr_name": ["1"],
+        "chr_position": [123],
+        "effect_allele": ["A"],
+        "effect_weight": [0.5],
+    })
+
+    def fake_stream_scoring_file(pgs_id: str, genome_build: str = "GRCh38") -> pl.LazyFrame:
+        return replacement.lazy()
+
+    monkeypatch.setattr("just_prs.ftp.stream_scoring_file", fake_stream_scoring_file)
+
+    path = download_scoring_as_parquet(pgs_id, tmp_path)
+    assert path == corrupt_path
+
+    df = pl.read_parquet(path)
+    assert df.select("pgs_id", "chr_name", "effect_weight").to_dicts() == [
+        {"pgs_id": pgs_id, "chr_name": "1", "effect_weight": 0.5}
+    ]

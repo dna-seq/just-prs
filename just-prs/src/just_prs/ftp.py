@@ -66,6 +66,17 @@ def _atomic_write_parquet(df: pl.DataFrame, dest: Path) -> None:
         raise
 
 
+def _parquet_cache_is_readable(path: Path) -> bool:
+    """Return whether an existing parquet cache can be scanned by Polars."""
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    try:
+        pl.scan_parquet(path).collect_schema()
+        return True
+    except Exception:
+        return False
+
+
 def download_metadata_sheet(
     sheet: MetadataSheet,
     output_path: Path,
@@ -201,11 +212,18 @@ def download_scoring_as_parquet(
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / f"{pgs_id}.parquet"
         if output_path.exists() and not overwrite:
-            return output_path
+            if _parquet_cache_is_readable(output_path):
+                return output_path
+            log_message(
+                message_type="ftp:scoring_parquet_cache_corrupt",
+                pgs_id=pgs_id,
+                parquet_path=str(output_path),
+            )
+            output_path.unlink(missing_ok=True)
 
         lf = stream_scoring_file(pgs_id, genome_build=genome_build)
         df = lf.with_columns(pl.lit(pgs_id).alias("pgs_id")).collect()
-        df.write_parquet(output_path)
+        _atomic_write_parquet(df, output_path)
         return output_path
 
 
@@ -305,14 +323,9 @@ def _download_one_scoring_file(
 
     parquet_path = output_dir / f"{pgs_id}_hmPOS_{genome_build}.parquet"
     if parquet_path.exists() and parquet_path.stat().st_size > 0:
-        try:
-            pl.scan_parquet(parquet_path).collect_schema()
+        if _parquet_cache_is_readable(parquet_path):
             return pgs_id, "parquet_cached"
-        except Exception:
-            try:
-                parquet_path.unlink()
-            except OSError:
-                pass
+        parquet_path.unlink(missing_ok=True)
 
     # Remove stale 0-byte file from a previous failed download
     if output_path.exists():

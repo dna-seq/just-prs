@@ -288,7 +288,21 @@ def scoring_files_parquet(
                 gz_path.unlink()
                 continue
 
+            use_existing_cache = False
             if parquet_path.exists() and not force:
+                try:
+                    pl.scan_parquet(parquet_path).collect_schema()
+                    use_existing_cache = True
+                except Exception as exc:
+                    _log(
+                        message_type="scoring:parquet_cache_corrupt",
+                        pgs_id=pgs_id,
+                        parquet_path=str(parquet_path),
+                        error=str(exc),
+                    )
+                    parquet_path.unlink(missing_ok=True)
+
+            if use_existing_cache:
                 already_cached += 1
                 total_parquet_bytes += parquet_path.stat().st_size
                 if delete_gz and gz_path.exists():

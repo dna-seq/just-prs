@@ -933,7 +933,7 @@ wheels = [
 
 [[package]]
 name = "just-prs"
-version = "0.4.5"
+version = "0.4.6"
 source = { editable = "just-prs" }
 dependencies = [
     { name = "duckdb" },
@@ -1480,7 +1480,7 @@ requires-dist = [
 
 [[package]]
 name = "prs-ui"
-version = "0.3.1"
+version = "0.3.2"
 source = { editable = "prs-ui" }
 dependencies = [
     { name = "just-prs" },
@@ -1498,7 +1498,7 @@ requires-dist = [
     { name = "reflex-components-code", specifier = ">=0.9.2" },
     { name = "reflex-components-core", specifier = ">=0.9.4" },
     { name = "reflex-components-radix", specifier = ">=0.9.4" },
-    { name = "reflex-mui-datagrid", specifier = ">=0.3.5" },
+    { name = "reflex-mui-datagrid", specifier = ">=0.3.6" },
 ]
 
 [[package]]
@@ -2033,16 +2033,17 @@ wheels = [
 
 [[package]]
 name = "reflex-mui-datagrid"
-version = "0.3.5"
+version = "0.3.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "polars" },
     { name = "reflex" },
+    { name = "reflex-components-core" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8c/09/10a4534ef4fb3d8cb31d281f30d77b524d28c0504d9dfb23c08146759140/reflex_mui_datagrid-0.3.5.tar.gz", hash = "sha256:49ab6d9a0a406fb9477567e5e1e6479bf564c02ae106f613bdf6a71e6f944171", size = 63581, upload-time = "2026-05-14T07:21:32.604Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/80/cfcef45231d87159f37e7f5a39070b22ee9a94589776e619a564b4298a4f/reflex_mui_datagrid-0.3.6.tar.gz", hash = "sha256:978f9b46b2ef34d611eb214db65f993d951723a8518efdfad821428557b81514", size = 64397, upload-time = "2026-06-04T18:41:08.962Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/40/128ccd006a736c7ae0c2b188d33f41237270fa5eed644b8acd24a8677900/reflex_mui_datagrid-0.3.5-py3-none-any.whl", hash = "sha256:b3ddeb088ff85c78c5cb73f8c820ede847abc7e5ed234ac30288a41f2ec41f2f", size = 68621, upload-time = "2026-05-14T07:21:30.797Z" },
+    { url = "https://files.pythonhosted.org/packages/59/5c/e1d99014e6ad36a7d98a6733d5e0feb01396bb6fde35f83eb9e7696f8d84/reflex_mui_datagrid-0.3.6-py3-none-any.whl", hash = "sha256:58de0b691d9fb0fb49c3e39fb229091d9629d257ecdd290b0f47cee21e7c05ad", size = 69408, upload-time = "2026-06-04T18:41:07.658Z" },
 ]
 
 [[package]]

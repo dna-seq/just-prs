@@ -291,11 +291,28 @@ def parse_scoring_file(path: Path) -> pl.LazyFrame:
         effect_allele (str), effect_weight (float), and positional columns.
     """
     if str(path).endswith(".parquet"):
+        try:
+            lf = pl.scan_parquet(path)
+            lf.collect_schema()
+        except Exception as exc:
+            log_message(
+                message_type="scoring:parse_parquet_corrupt",
+                path=str(path),
+                error=str(exc),
+            )
+            try:
+                path.unlink()
+            except OSError:
+                pass
+            raise ValueError(
+                f"Corrupt parquet cache deleted: {path}. "
+                "Re-run to trigger re-download from source."
+            ) from exc
         log_message(
             message_type="scoring:parse_from_parquet",
             path=str(path),
         )
-        return pl.scan_parquet(path)
+        return lf
 
     parquet_cache = _scoring_parquet_cache_path(path)
     if parquet_cache.exists():

@@ -21,7 +21,12 @@ from just_prs.cleanup import (
     clean_scores,
 )
 from just_prs.ftp import download_metadata_sheet, _atomic_write_parquet
-from just_prs.hf import distributions_filename, pull_cleaned_parquets, pull_reference_distributions
+from just_prs.hf import (
+    distributions_filename,
+    pull_chip_coverage,
+    pull_cleaned_parquets,
+    pull_reference_distributions,
+)
 from just_prs.models import AbsoluteRisk, AbsoluteRiskBundle, PRSResult
 from just_prs.ontology import (
     enrich_with_requested_trait_aliases,
@@ -63,6 +68,8 @@ class PRSCatalog:
         self._best_perf_lf: pl.LazyFrame | None = None
         self._publications_lf: pl.LazyFrame | None = None
         self._quality_lf: pl.LazyFrame | None = None
+        self._chip_coverage_lf: pl.LazyFrame | None = None
+        self._chip_coverage_loaded = False
         self._prevalence_lf: pl.LazyFrame | None = None
         self._heritability_lf: pl.LazyFrame | None = None
         self._ref_dist_cache: dict[str, pl.LazyFrame] = {}
@@ -151,6 +158,50 @@ class PRSCatalog:
         if not qpath.exists():
             return None
         return pl.scan_parquet(qpath)
+
+    def _load_chip_coverage(self) -> pl.LazyFrame | None:
+        """Load consumer-chip coverage, pivoted to one row per PGS ID.
+
+        Looks for ``percentiles/chip_coverage.parquet`` locally; on a miss, pulls
+        it once from the prs-percentiles HF dataset. The long (pgs_id, chip) table
+        is pivoted to wide per-chip columns ``{chip}_array_ready`` (bool) and
+        ``{chip}_coverage`` (float) so it can be joined onto scores by pgs_id.
+        Returns None when no coverage data is available (e.g. offline first run).
+        """
+        cov_path = self._cache_dir / "percentiles" / "chip_coverage.parquet"
+        if not cov_path.exists():
+            try:
+                pull_chip_coverage(self._cache_dir / "percentiles")
+            except Exception as exc:
+                logger.debug("Chip coverage HF pull failed: %s", exc)
+        if not cov_path.exists():
+            return None
+        try:
+            long = pl.read_parquet(cov_path)
+        except (pl.exceptions.ComputeError, OSError) as exc:
+            logger.warning("Corrupt chip_coverage.parquet (%s); deleting.", exc)
+            cov_path.unlink(missing_ok=True)
+            return None
+        if long.height == 0:
+            return None
+        wide = long.pivot(
+            on="chip",
+            index="pgs_id",
+            values=["array_ready", "coverage_ratio"],
+        )
+        # polars names pivoted columns like ``array_ready_gsa_v3`` /
+        # ``coverage_ratio_gsa_v3``; rename to ``{chip}_array_ready`` / ``{chip}_coverage``.
+        chips = long["chip"].unique().to_list()
+        rename_map: dict[str, str] = {}
+        for chip in chips:
+            for src, dst in (
+                (f"array_ready_{chip}", f"{chip}_array_ready"),
+                (f"coverage_ratio_{chip}", f"{chip}_coverage"),
+            ):
+                if src in wide.columns:
+                    rename_map[src] = dst
+        wide = wide.rename(rename_map)
+        return wide.lazy()
 
     def _load_publications_from_cache(self) -> pl.LazyFrame | None:
         """Load optional cleaned publications metadata, rebuilding stale caches."""
@@ -426,6 +477,11 @@ class PRSCatalog:
                 "pgs_id", "synthetic_score", "combined_quality_score", "quality_label",
             )
             lf = lf.join(quality_cols, on="pgs_id", how="left")
+        if not self._chip_coverage_loaded:
+            self._chip_coverage_lf = self._load_chip_coverage()
+            self._chip_coverage_loaded = True
+        if self._chip_coverage_lf is not None:
+            lf = lf.join(self._chip_coverage_lf, on="pgs_id", how="left")
         return lf
 
     def performance(self, pgs_id: str | None = None) -> pl.LazyFrame:

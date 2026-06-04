@@ -408,11 +408,11 @@ def chip_coverage(
         df.write_parquet(out_path)
 
     n_scores = df["pgs_id"].n_unique() if df.height > 0 else 0
-    # Per-chip summary: how many scores are array-ready (>=80% typed) vs need imputation.
+    # Per-chip summary: how many scores are array-ready (array_ready bool) vs need imputation.
     array_ready_by_chip: dict[str, int] = {}
     for chip in df["chip"].unique().to_list() if df.height > 0 else []:
         chip_df = df.filter(pl.col("chip") == chip)
-        array_ready_by_chip[chip] = int(chip_df.filter(pl.col("coverage_ratio") >= 0.80).height)
+        array_ready_by_chip[chip] = int(chip_df.filter(pl.col("array_ready")).height)
 
     context.add_output_metadata({
         "n_rows": df.height,
@@ -420,7 +420,8 @@ def chip_coverage(
         "n_chips": len(CHIPS),
         "chips": ", ".join(c["chip"] for c in CHIPS),
         "median_coverage_ratio": round(float(df["coverage_ratio"].median()), 4) if df.height > 0 else 0.0,
-        "array_ready_80pct_by_chip": str(array_ready_by_chip),
+        "array_ready_by_chip": str(array_ready_by_chip),
+        "n_array_ready_total": int(df.filter(pl.col("array_ready")).height) if df.height > 0 else 0,
         "coverage_path": str(out_path),
     })
     return Output(df)

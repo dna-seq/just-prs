@@ -135,8 +135,13 @@ def test_compute_chip_coverage_schema(scores_dir: Path, cache_dir: Path, tmp_pat
     assert df.height == 2  # 2 scores x 1 chip
     expected_cols = {
         "pgs_id", "chip", "platform", "consumer_products", "build",
-        "n_typed", "n_total", "coverage_ratio",
+        "n_typed", "n_total", "coverage_ratio", "array_ready",
     }
     assert expected_cols == set(df.columns)
     assert df["chip"].unique().to_list() == ["gsa_v3"]
     assert df["build"].unique().to_list() == [CHIPS_BY_ID["gsa_v3"]["build"]]
+    # array_ready is exactly coverage_ratio >= threshold for mapped scores.
+    from just_prs.chip_coverage import ARRAY_READY_THRESHOLD
+    for row in df.iter_rows(named=True):
+        expected = row["n_total"] > 0 and row["coverage_ratio"] >= ARRAY_READY_THRESHOLD
+        assert row["array_ready"] is expected

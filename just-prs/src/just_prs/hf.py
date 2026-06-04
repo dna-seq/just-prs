@@ -218,6 +218,48 @@ def push_reference_distributions(
             )
 
 
+def pull_chip_coverage(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+) -> Path | None:
+    """Download chip_coverage.parquet from the prs-percentiles HF dataset repo.
+
+    Args:
+        local_dir: Directory to save the downloaded parquet file.
+        repo_id: HuggingFace dataset repository ID for percentiles.
+        token: HF API token. If None, loaded from .env / HF_TOKEN env var.
+
+    Returns:
+        Path to the downloaded file, or None if not available in the repo yet.
+    """
+    import logging
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:pull_chip_coverage", repo_id=repo_id):
+        local_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            path = _hf_download_with_retry(
+                repo_id=repo_id,
+                filename=f"{HF_DATA_PREFIX}/chip_coverage.parquet",
+                repo_type="dataset",
+                local_dir=local_dir,
+                token=resolved_token,
+            )
+        except (EntryNotFoundError, RepositoryNotFoundError):
+            logging.getLogger(__name__).debug(
+                "chip_coverage.parquet not found on HF (%s)", repo_id,
+            )
+            return None
+        target = local_dir / "chip_coverage.parquet"
+        hf_cached = Path(path)
+        if hf_cached != target:
+            import shutil
+            shutil.copy2(hf_cached, target)
+        return target
+
+
 def push_chip_coverage(
     parquet_path: Path,
     repo_id: str = DEFAULT_HF_PERCENTILES_REPO,

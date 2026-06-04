@@ -34,7 +34,10 @@ CHIPS: list[dict[str, str]] = [
     {
         "chip": "gsa_v3",
         "platform": "Illumina Global Screening Array v3.0",
-        "consumer_products": "23andMe v5, AncestryDNA v2",
+        # The current consumer-array market has converged on the GSA core: all of
+        # these add custom content on top of the same GSA backbone, so this single
+        # manifest approximates them all. (Older v1/v2 kits used OmniExpress.)
+        "consumer_products": "23andMe v5, AncestryDNA v2, MyHeritage (2019+), FamilyTreeDNA v2, LivingDNA",
         "build": "GRCh38",
         # A2 manifest = GRCh38 coordinates (A1 = GRCh37). ~70 MB zip, ~654K markers.
         "manifest_url": (
@@ -46,6 +49,12 @@ CHIPS: list[dict[str, str]] = [
 ]
 
 CHIPS_BY_ID: dict[str, dict[str, str]] = {chip["chip"]: chip for chip in CHIPS}
+
+# A PRS is considered "array-ready" (usable on raw consumer-array data without
+# imputation) when at least this fraction of its variants are directly typed on
+# the chip. 0.90 is strict on purpose: below it, enough variants are missing that
+# the score and its percentile drift from the full-coverage value.
+ARRAY_READY_THRESHOLD = 0.90
 
 _MIN_MANIFEST_BYTES = 1_000_000  # GSA zip is ~70 MB; reject truncated downloads.
 
@@ -234,7 +243,9 @@ def compute_chip_coverage(
     Returns:
         DataFrame with one row per (pgs_id, chip): ``pgs_id``, ``chip``,
         ``platform``, ``consumer_products``, ``build``, ``n_typed``,
-        ``n_total``, ``coverage_ratio``.
+        ``n_total``, ``coverage_ratio``, ``array_ready`` (bool —
+        ``coverage_ratio >= ARRAY_READY_THRESHOLD`` and the score has mapped
+        coordinates; usable on raw array data without imputation).
     """
     chips = chips or CHIPS
     score_files = sorted(scores_dir.glob("*_hmPOS_GRCh38.parquet"))
@@ -263,6 +274,7 @@ def compute_chip_coverage(
                 ).collect()
                 n_total = int(agg["n_total"][0])
                 n_typed = int(agg["n_typed"][0])
+                ratio = (n_typed / n_total) if n_total > 0 else 0.0
                 rows.append({
                     "pgs_id": pgs_id,
                     "chip": chip,
@@ -271,7 +283,11 @@ def compute_chip_coverage(
                     "build": spec["build"],
                     "n_typed": n_typed,
                     "n_total": n_total,
-                    "coverage_ratio": (n_typed / n_total) if n_total > 0 else 0.0,
+                    "coverage_ratio": ratio,
+                    # Usable on raw array data (no imputation) when nearly all
+                    # variants are directly typed. n_total==0 scores (no mapped
+                    # coordinates) are never array-ready.
+                    "array_ready": bool(n_total > 0 and ratio >= ARRAY_READY_THRESHOLD),
                 })
                 if progress_callback and ((i + 1) % 200 == 0 or (i + 1) == total):
                     progress_callback({

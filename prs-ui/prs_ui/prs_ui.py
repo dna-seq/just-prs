@@ -15,6 +15,20 @@ from prs_ui.pages.traits import traits_panel
 from prs_ui.state import AppState, ComputeGridState, TraitBrowserState
 
 
+def _tab_label(icon: str, label: str, description: str) -> rx.Component:
+    """Tab label with a compact explanation for non-specialist users."""
+    return rx.hstack(
+        rx.icon(icon, size=14),
+        rx.text(label, size="2"),
+        rx.tooltip(
+            rx.icon("info", size=12, color="gray"),
+            content=description,
+        ),
+        spacing="1",
+        align="center",
+    )
+
+
 def _safe_backend_exception_handler(exception: Exception) -> EventSpec:
     """Log backend exceptions without letting Rich parse traceback text as markup."""
     from reflex_components_sonner.toast import toast
@@ -51,25 +65,41 @@ def index() -> rx.Component:
             rx.tabs.root(
                 rx.tabs.list(
                     rx.tabs.trigger(
-                        rx.hstack(
-                            rx.icon("calculator", size=14),
+                        _tab_label(
+                            "calculator",
                             "Compute PRS",
-                            spacing="1",
-                            align="center",
+                            "Upload a VCF, choose PGS Catalog scores, and compute "
+                            "polygenic risk scores for one genome.",
                         ),
                         value="compute",
                     ),
                     rx.tabs.trigger(
-                        rx.hstack(
-                            rx.icon("layers", size=14),
+                        _tab_label(
+                            "layers",
                             "Browse by Trait",
-                            spacing="1",
-                            align="center",
+                            "Start from a trait or disease name instead of a specific "
+                            "PGS ID. The app finds related scores and computes them together.",
                         ),
                         value="traits",
                     ),
-                    rx.tabs.trigger("Metadata Sheets", value="metadata"),
-                    rx.tabs.trigger("Scoring File", value="scoring"),
+                    rx.tabs.trigger(
+                        _tab_label(
+                            "table",
+                            "Metadata Sheets",
+                            "Browse the raw PGS Catalog tables, such as score summaries, "
+                            "publications, evaluation cohorts, and performance metadata.",
+                        ),
+                        value="metadata",
+                    ),
+                    rx.tabs.trigger(
+                        _tab_label(
+                            "file-text",
+                            "Scoring File",
+                            "Inspect the variant weights for one PGS ID and genome build. "
+                            "This is the recipe the app uses to calculate a score.",
+                        ),
+                        value="scoring",
+                    ),
                 ),
                 rx.tabs.content(
                     rx.box(compute_panel(), padding_top="12px"),

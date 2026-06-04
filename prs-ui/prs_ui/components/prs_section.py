@@ -77,7 +77,7 @@ def _accordion_summary_label(
 
 
 def prs_build_selector(state: type[rx.State]) -> rx.Component:
-    """Genome build selector dropdown."""
+    """Genome build selector dropdown with harmonized-scores toggle."""
     return rx.hstack(
         rx.text("Genome Build:", size="2", weight="medium"),
         rx.select(
@@ -85,6 +85,23 @@ def prs_build_selector(state: type[rx.State]) -> rx.Component:
             value=state.genome_build,
             on_change=state.set_prs_genome_build,
             size="2",
+        ),
+        rx.checkbox(
+            "Include harmonized scores",
+            checked=state.include_harmonized,
+            on_change=state.set_include_harmonized,
+            size="2",
+        ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "When enabled, includes scores originally developed on a different "
+                "genome build but available as harmonized (coordinate-lifted) scoring "
+                "files. For example, with GRCh38 selected, this adds ~4,300 scores "
+                "originally developed on GRCh37. Harmonized scores receive a quality "
+                "penalty in ranking because coordinate liftover may introduce minor "
+                "mapping errors."
+            ),
         ),
         spacing="2",
         align="center",

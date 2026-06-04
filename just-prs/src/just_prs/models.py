@@ -241,6 +241,10 @@ class EnrichedPRSResult(BaseModel):
     match_rate: float = Field(0.0, description="Match rate as percentage 0-100")
     has_allele_frequencies: bool = False
     genome_build: str = ""
+    is_harmonized: bool = Field(
+        False,
+        description="True if the score's original build differs from the computation build (coordinates are lifted over)",
+    )
 
     # Synthetic quality ranking (0-100)
     synthetic_quality: float = Field(0.0, description="Synthetic quality score for model ranking (0-100)")

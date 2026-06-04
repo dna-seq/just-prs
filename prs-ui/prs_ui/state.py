@@ -369,7 +369,7 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
 
     def _build_trait_df(self) -> pl.DataFrame:
         """Group scores by trait and return a flat summary DataFrame."""
-        lf = _catalog.scores(genome_build=self.genome_build)  # type: ignore[attr-defined]
+        lf = _catalog.scores(genome_build=self.genome_build, include_harmonized=self.include_harmonized)  # type: ignore[attr-defined]
         lf = _enrich_scores_for_grid(lf, _catalog)
         self._trait_scores_lf = lf
         df = lf.select(

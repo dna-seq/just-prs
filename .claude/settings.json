@@ -11,7 +11,22 @@
       "Bash(uv build *)",
       "Bash(uv publish *)",
       "Bash(cat /home/antonkulaga/sources/just-prs/.env | grep -i pypi 2>/dev/null; cat /home/antonkulaga/sources/just-prs/.env.template | grep -i pypi 2>/dev/null; ls ~/.pypirc 2>/dev/null)",
-      "Read(//home/antonkulaga/**)"
+      "Read(//home/antonkulaga/**)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('dependencies',{}\\), indent=2\\)\\)\")",
+      "Bash(lsof -iTCP:3000 -sTCP:LISTEN -t)",
+      "Bash(xargs -r kill -9)",
+      "Bash(lsof -iTCP:8000 -sTCP:LISTEN -t)",
+      "Bash(uv lock *)",
+      "Bash(uv sync *)",
+      "Bash(lsof -iTCP:3001 -sTCP:LISTEN -t)",
+      "Bash(lsof -iTCP:8001 -sTCP:LISTEN -t)",
+      "Bash(pkill -f \"reflex\")",
+      "Bash(pkill -f \"granian\")",
+      "Bash(pkill -f \"react-router\")",
+      "Bash(pkill -f \"bun\")",
+      "Bash(ulimit -n)",
+      "Read(//proc/sys/fs/inotify/**)",
+      "Bash(ulimit -n 65536)"
     ]
   }
 }

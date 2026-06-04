@@ -203,3 +203,62 @@ def test_filtered_grch38_numeric_quality_concords_with_coarse_low_grades() -> No
         "or_estimate", "hr_estimate", "beta_estimate",
         "n_individuals", "tier",
     ).to_dicts()
+
+
+# ---------------------------------------------------------------------------
+# Harmonized score penalty
+# ---------------------------------------------------------------------------
+
+def test_harmonized_penalty_reduces_score() -> None:
+    """Harmonized scores should receive a multiplicative penalty."""
+    native = synthetic_quality_score(auroc=0.7, n_individuals=1_000_000)
+    harmonized = synthetic_quality_score(auroc=0.7, n_individuals=1_000_000, is_harmonized=True)
+    assert harmonized < native
+    assert harmonized == pytest.approx(native * 0.90, abs=0.15)
+
+
+def test_harmonized_penalty_applies_to_all_tiers() -> None:
+    """Penalty applies across all discrimination tiers."""
+    for kwargs in [
+        {"auroc": 0.8, "n_individuals": 50_000},
+        {"beta_estimate": 0.3, "n_individuals": 50_000},
+        {"or_estimate": 1.5, "n_individuals": 1_000},
+        {},  # Tier 3: no metric
+    ]:
+        native = synthetic_quality_score(**kwargs)
+        harmonized = synthetic_quality_score(**kwargs, is_harmonized=True)
+        assert harmonized < native, f"Failed for {kwargs}"
+
+
+def test_harmonized_false_is_identity() -> None:
+    """is_harmonized=False must not change the score at all."""
+    score_default = synthetic_quality_score(auroc=0.7, n_individuals=100_000)
+    score_explicit = synthetic_quality_score(auroc=0.7, n_individuals=100_000, is_harmonized=False)
+    assert score_default == score_explicit
+
+
+# ---------------------------------------------------------------------------
+# Catalog harmonized filtering
+# ---------------------------------------------------------------------------
+
+def test_catalog_include_harmonized_grch38() -> None:
+    """With include_harmonized=True, GRCh38 should return many more scores."""
+    catalog = PRSCatalog(cache_dir=resolve_cache_dir())
+    native_df = catalog.scores(genome_build="GRCh38", include_harmonized=False).collect()
+    harmonized_df = catalog.scores(genome_build="GRCh38", include_harmonized=True).collect()
+    assert harmonized_df.height > native_df.height
+    assert "is_harmonized" in native_df.columns
+    assert "is_harmonized" in harmonized_df.columns
+    assert all(~native_df["is_harmonized"])
+    assert harmonized_df.filter(pl.col("is_harmonized")).height > 0
+
+
+def test_catalog_include_harmonized_has_is_harmonized_column() -> None:
+    """is_harmonized column should be present regardless of include_harmonized setting."""
+    catalog = PRSCatalog(cache_dir=resolve_cache_dir())
+    lf_with = catalog.scores(genome_build="GRCh38", include_harmonized=True)
+    lf_without = catalog.scores(genome_build="GRCh38", include_harmonized=False)
+    lf_no_build = catalog.scores()
+    assert "is_harmonized" in lf_with.collect_schema().names()
+    assert "is_harmonized" in lf_without.collect_schema().names()
+    assert "is_harmonized" in lf_no_build.collect_schema().names()

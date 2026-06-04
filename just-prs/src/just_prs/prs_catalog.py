@@ -36,6 +36,11 @@ from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
 logger = logging.getLogger(__name__)
 
+_HARMONIZABLE_BUILDS: dict[str, set[str]] = {
+    "GRCh38": {"GRCh37", "GRCh36", "NR"},
+    "GRCh37": {"GRCh38", "GRCh36", "NR"},
+}
+
 _PUBLICATIONS_REQUIRED_COLUMNS = {"pgp_id"}
 
 
@@ -381,7 +386,11 @@ class PRSCatalog:
             for p in raw_dir.glob("*.parquet"):
                 p.unlink()
 
-    def scores(self, genome_build: str | None = None) -> pl.LazyFrame:
+    def scores(
+        self,
+        genome_build: str | None = None,
+        include_harmonized: bool = True,
+    ) -> pl.LazyFrame:
         """Return cleaned scores LazyFrame, optionally filtered by genome build.
 
         When ``pgs_quality_scores.parquet`` is available (synced from HF),
@@ -389,11 +398,29 @@ class PRSCatalog:
 
         Args:
             genome_build: If provided, filter to scores matching this canonical build
-                          (GRCh37, GRCh38, GRCh36). Scores with build=NR are excluded.
+                          (GRCh37, GRCh38, GRCh36). Scores with build=NR are excluded
+                          unless ``include_harmonized`` is True.
+            include_harmonized: When True (default), also include scores whose original
+                          build differs from ``genome_build`` but for which harmonized
+                          scoring files exist. An ``is_harmonized`` boolean column is
+                          added: True for scores whose original build != requested build.
         """
         lf = self._ensure_scores()
         if genome_build is not None:
-            lf = lf.filter(pl.col("genome_build").eq(genome_build))
+            native_filter = pl.col("genome_build").eq(genome_build)
+            if include_harmonized:
+                harmonizable = _HARMONIZABLE_BUILDS.get(genome_build, set())
+                if harmonizable:
+                    lf = lf.filter(native_filter | pl.col("genome_build").is_in(list(harmonizable)))
+                else:
+                    lf = lf.filter(native_filter)
+            else:
+                lf = lf.filter(native_filter)
+            lf = lf.with_columns(
+                (~pl.col("genome_build").eq(genome_build)).alias("is_harmonized"),
+            )
+        else:
+            lf = lf.with_columns(pl.lit(False).alias("is_harmonized"))
         if self._quality_lf is not None:
             quality_cols = self._quality_lf.select(
                 "pgs_id", "synthetic_score", "combined_quality_score", "quality_label",
@@ -452,6 +479,7 @@ class PRSCatalog:
         self,
         query: str,
         genome_build: str | None = None,
+        include_harmonized: bool = True,
     ) -> pl.LazyFrame:
         """Search scores by text query across pgs_id, name, trait_reported, and trait_efo.
 
@@ -461,8 +489,9 @@ class PRSCatalog:
         Args:
             query: Search term (case-insensitive substring match)
             genome_build: Optional genome build filter (canonical form)
+            include_harmonized: Include harmonized (cross-build) scores (default True)
         """
-        lf = self.scores(genome_build=genome_build)
+        lf = self.scores(genome_build=genome_build, include_harmonized=include_harmonized)
         term = query.strip().lower()
         if not term:
             return lf

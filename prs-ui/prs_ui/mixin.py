@@ -126,6 +126,22 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
             },
         },
         "quality_score": {"width": 80, "headerName": "Score"},
+        "score_source": {
+            "width": 110,
+            "headerName": "Source",
+            "cellRendererType": "badge",
+            "cellRendererConfig": {
+                "colorMap": {
+                    "Harmonized": "#e65100",
+                    "Native": "#2e7d32",
+                },
+                "bgColorMap": {
+                    "Harmonized": "#fff3e0",
+                    "Native": "#e8f5e9",
+                },
+            },
+        },
+        "genome_build": {"width": 100, "headerName": "Original Build"},
         "pgp_id": {
             "width": 120,
             "cellRendererType": "url",
@@ -136,7 +152,7 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
             },
         },
         # hidden columns
-        "genome_build": {"hide": True},
+        "is_harmonized": {"hide": True},
         "name": {"hide": True},
         "ftp_link": {"hide": True},
         "ftp_link_ebi": {"hide": True},
@@ -149,8 +165,16 @@ _catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
 
 
 def _enrich_scores_for_grid(lf: pl.LazyFrame, catalog: PRSCatalog) -> pl.LazyFrame:
-    """Rename pre-computed quality column and join publication citations."""
+    """Rename pre-computed quality column, add source badge, and join publication citations."""
     lf = lf.rename({"synthetic_score": "quality_score"}).drop("combined_quality_score")
+
+    if "is_harmonized" in lf.collect_schema().names():
+        lf = lf.with_columns(
+            pl.when(pl.col("is_harmonized"))
+            .then(pl.lit("Harmonized"))
+            .otherwise(pl.lit("Native"))
+            .alias("score_source"),
+        )
 
     pubs = catalog.publications()
     pubs_cols = pubs.select(
@@ -198,6 +222,7 @@ def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
         "synthetic_quality_color": enriched.synthetic_quality_color,
         "quality_tier": enriched.quality_tier,
         "quality_tier_metric": enriched.quality_tier_metric,
+        "is_harmonized": enriched.is_harmonized,
         "risk_level": enriched.risk_level,
         "risk_level_color": enriched.risk_level_color,
         "risk_hint": enriched.risk_hint,
@@ -653,6 +678,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     selected_ancestry: str = "EUR"
     compute_all_populations: bool = False
     show_all_risk_estimates: bool = True
+    include_harmonized: bool = True
 
     _scores_initialized: bool = False
     _compute_scores_lf: pl.LazyFrame | None = None
@@ -685,6 +711,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.show_all_risk_estimates = bool(value)
         if self.prs_results:
             self._build_prs_results_grid()
+
+    def set_include_harmonized(self, value: bool) -> Any:
+        """Enable/disable including harmonized (cross-build) scores."""
+        self.include_harmonized = bool(value)
+        if self.compute_scores_loaded:
+            yield from self.load_compute_scores()
 
     def set_prs_genotypes_lf(self, lf: pl.LazyFrame) -> None:
         """Provide a pre-loaded genotypes LazyFrame for PRS computation.
@@ -1557,6 +1589,21 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "bgColorMap": _MATCH_RELIABILITY_BG,
                 },
             ),
+            ColumnDef(
+                field="build_source", header_name="Build",
+                min_width=110,
+                cell_renderer_type="badge",
+                cell_renderer_config={
+                    "colorMap": {
+                        "Native": "#2e7d32",
+                        "⚠ Harmonized": "#e65100",
+                    },
+                    "bgColorMap": {
+                        "Native": "#e8f5e9",
+                        "⚠ Harmonized": "#fff3e0",
+                    },
+                },
+            ),
             ColumnDef(field="score", header_name="PRS Score", type="number", min_width=110),
             ColumnDef(
                 field="percentile_num", header_name="Percentile", type="number",
@@ -1800,6 +1847,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     ),
                 },
             ]
+            if r.get("is_harmonized"):
+                orig_build = str(r.get("original_genome_build", "") or "")
+                percentile_side_items.append({
+                    "label": "Build source",
+                    "value": "Harmonized",
+                    "tone": "warning",
+                    "subtext": f"Lifted from {orig_build}" if orig_build else "Coordinate liftover applied",
+                })
             if len(population_values) > 1:
                 percentile_side_items.append({
                     "label": "Population spread",
@@ -1978,9 +2033,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "tone": "good",
                 })
 
+            build_source = "⚠ Harmonized" if r.get("is_harmonized") else "Native"
+
             row: dict[str, Any] = {
                 "id": i,
                 "pgs_id": r.get("pgs_id", ""),
+                "build_source": build_source,
                 "match_reliability": match_reliability,
                 "trait": r.get("trait", ""),
                 "score": r.get("score", 0),
@@ -2049,7 +2107,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         """Load cleaned scores into the compute grid, filtered by genome build."""
         self.status_message = "Loading scores for selection..."  # type: ignore[attr-defined]
         yield
-        lf = _catalog.scores(genome_build=self.genome_build)  # type: ignore[attr-defined]
+        lf = _catalog.scores(
+            genome_build=self.genome_build,  # type: ignore[attr-defined]
+            include_harmonized=self.include_harmonized,
+        )
         lf = _enrich_scores_for_grid(lf, _catalog)
         self._compute_scores_lf = lf
         self.compute_scores_loaded = True
@@ -2060,7 +2121,18 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             column_overrides=_compute_score_column_overrides(),
         )
         total = lf.select(pl.len()).collect().item()
-        self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
+        if "is_harmonized" in lf.collect_schema().names():
+            native_count = lf.filter(~pl.col("is_harmonized")).select(pl.len()).collect().item()
+            harmonized_count = total - native_count
+            if harmonized_count > 0:
+                self.status_message = (  # type: ignore[attr-defined]
+                    f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
+                    f" ({native_count} native, {harmonized_count} harmonized)"
+                )
+            else:
+                self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
+        else:
+            self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
 
     def handle_lf_grid_row_selection(self, model: dict) -> None:
         """Track selected PGS IDs from compute grid checkbox selection.
@@ -2128,7 +2200,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.deselect_all_scores()
             return
         ids = (
-            _catalog.search(term, genome_build=self.genome_build)  # type: ignore[attr-defined]
+            _catalog.search(term, genome_build=self.genome_build, include_harmonized=self.include_harmonized)  # type: ignore[attr-defined]
             .select("pgs_id")
             .unique()
             .sort("pgs_id")
@@ -2149,7 +2221,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.deselect_all_scores()
             return
 
-        lf = _catalog.search(term, genome_build=self.genome_build)  # type: ignore[attr-defined]
+        lf = _catalog.search(term, genome_build=self.genome_build, include_harmonized=self.include_harmonized)  # type: ignore[attr-defined]
+        lf = _enrich_scores_for_grid(lf, _catalog)
         self._compute_scores_lf = lf
         self.compute_scores_loaded = True
         yield from self.set_lazyframe(  # type: ignore[attr-defined]
@@ -2212,6 +2285,22 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
         best_perf_df = _catalog.best_performance().collect()
 
+        harmonized_lookup: dict[str, bool] = {}
+        original_build_lookup: dict[str, str] = {}
+        if self._compute_scores_lf is not None:
+            try:
+                harm_df = (
+                    self._compute_scores_lf
+                    .filter(pl.col("pgs_id").is_in(self.selected_pgs_ids))
+                    .select("pgs_id", "is_harmonized", "genome_build")
+                    .collect()
+                )
+                for row in harm_df.iter_rows(named=True):
+                    harmonized_lookup[row["pgs_id"]] = bool(row["is_harmonized"])
+                    original_build_lookup[row["pgs_id"]] = str(row["genome_build"])
+            except Exception:
+                pass
+
         for i, pgs_id in enumerate(self.selected_pgs_ids, start=1):
             self.prs_progress = round(i / total * 100)
             self.status_message = f"Computing {i}/{total}: {pgs_id}..."  # type: ignore[attr-defined]
@@ -2250,9 +2339,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 genome_build=self.genome_build,  # type: ignore[attr-defined]
                 selected_ancestry=self.selected_ancestry,
                 compute_all_populations=self.compute_all_populations,
+                is_harmonized=harmonized_lookup.get(pgs_id, False),
             )
 
             row = _enriched_to_row_dict(enriched)
+            row["original_genome_build"] = original_build_lookup.get(pgs_id, "")
 
             if result.match_rate < 0.1:
                 any_low_match = True
@@ -2273,7 +2364,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         if not self.prs_results:
             return
         columns = [
-            "pgs_id", "trait", "trait_efo_id", "score", "percentile", "absolute_risk",
+            "pgs_id", "trait", "trait_efo_id", "is_harmonized", "score", "percentile", "absolute_risk",
             "synthetic_quality", "synthetic_quality_label", "quality_tier", "quality_tier_metric",
             "heritability", "heritability_detail",
             "auroc", "quality_label",

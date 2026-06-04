@@ -1,5 +1,6 @@
 from importlib.metadata import metadata
 
+from just_prs.arrays import detect_array_format, normalize_array
 from just_prs.chip_coverage import (
     CHIPS,
     CHIPS_BY_ID,

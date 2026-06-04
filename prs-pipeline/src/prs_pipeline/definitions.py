@@ -4,11 +4,14 @@ import dagster as dg
 from dagster import in_process_executor
 
 from prs_pipeline.assets import (
+    chip_coverage,
     ebi_reference_panel_fingerprint,
     ebi_pgs_catalog_reference_panel,
     ebi_pgs_catalog_scoring_files,
     ebi_scoring_files_fingerprint,
+    hf_chip_coverage,
     hf_prs_percentiles,
+    illumina_gsa_manifest,
     reference_panel,
     reference_scores,
     scoring_files,
@@ -58,9 +61,25 @@ score_and_push = dg.define_asset_job(
     executor_def=in_process_executor,
 )
 
+chip_coverage_pipeline = dg.define_asset_job(
+    name="chip_coverage_pipeline",
+    selection=dg.AssetSelection.assets(
+        "scoring_files", "scoring_files_parquet",
+        "chip_coverage", "hf_chip_coverage",
+    ) | dg.AssetSelection.checks_for_assets("chip_coverage"),
+    description=(
+        "Compute consumer-chip (Illumina GSA) coverage of all PGS scoring files "
+        "and publish chip_coverage.parquet to HuggingFace. Lightweight: reuses "
+        "cached scoring parquets and does not touch the reference panel."
+    ),
+    hooks={resource_summary_hook},
+    executor_def=in_process_executor,
+)
+
 _full_pipeline_assets = dg.AssetSelection.assets(
     "ebi_reference_panel_fingerprint", "ebi_scoring_files_fingerprint",
     "reference_panel", "scoring_files", "scoring_files_parquet",
+    "chip_coverage", "hf_chip_coverage",
     "reference_scores",
     "raw_pgs_metadata", "cleaned_pgs_metadata",
     "gwas_studies", "trait_prevalence", "trait_heritability",
@@ -70,7 +89,7 @@ _full_pipeline_assets = dg.AssetSelection.assets(
 full_pipeline = dg.define_asset_job(
     name="full_pipeline",
     selection=_full_pipeline_assets | dg.AssetSelection.checks_for_assets(
-        "reference_scores", "hf_prs_percentiles", "cleaned_pgs_metadata",
+        "reference_scores", "hf_prs_percentiles", "cleaned_pgs_metadata", "chip_coverage",
     ),
     description=(
         "Full pipeline: download reference panel, batch-score all PGS IDs, "
@@ -121,10 +140,13 @@ metadata_pipeline = dg.define_asset_job(
 _assets = [
     ebi_pgs_catalog_reference_panel,
     ebi_pgs_catalog_scoring_files,
+    illumina_gsa_manifest,
     ebi_reference_panel_fingerprint,
     ebi_scoring_files_fingerprint,
     scoring_files,
     scoring_files_parquet,
+    chip_coverage,
+    hf_chip_coverage,
     reference_panel,
     reference_scores,
     hf_prs_percentiles,
@@ -146,6 +168,7 @@ _unresolved_jobs = [
     score_and_push,
     full_pipeline,
     catalog_pipeline,
+    chip_coverage_pipeline,
     metadata_pipeline,
 ]
 

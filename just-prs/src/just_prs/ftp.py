@@ -305,7 +305,14 @@ def _download_one_scoring_file(
 
     parquet_path = output_dir / f"{pgs_id}_hmPOS_{genome_build}.parquet"
     if parquet_path.exists() and parquet_path.stat().st_size > 0:
-        return pgs_id, "parquet_cached"
+        try:
+            pl.scan_parquet(parquet_path).collect_schema()
+            return pgs_id, "parquet_cached"
+        except Exception:
+            try:
+                parquet_path.unlink()
+            except OSError:
+                pass
 
     # Remove stale 0-byte file from a previous failed download
     if output_path.exists():

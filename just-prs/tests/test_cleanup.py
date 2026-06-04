@@ -203,8 +203,14 @@ class TestPRSCatalog:
         assert df.height > 5000
 
     def test_scores_filter_by_build(self, catalog: PRSCatalog) -> None:
-        df_38 = catalog.scores(genome_build="GRCh38").collect()
-        df_37 = catalog.scores(genome_build="GRCh37").collect()
+        # Default include_harmonized=True includes all builds
+        df_38_all = catalog.scores(genome_build="GRCh38").collect()
+        assert "is_harmonized" in df_38_all.columns
+        assert df_38_all.filter(pl.col("is_harmonized")).height > 0
+
+        # Native-only filtering: GRCh38 has fewer native scores than GRCh37
+        df_38 = catalog.scores(genome_build="GRCh38", include_harmonized=False).collect()
+        df_37 = catalog.scores(genome_build="GRCh37", include_harmonized=False).collect()
         assert df_38.height < df_37.height
         builds_38 = set(df_38["genome_build"].unique().to_list())
         assert builds_38 == {"GRCh38"}

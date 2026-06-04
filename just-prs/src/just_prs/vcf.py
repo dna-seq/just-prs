@@ -79,17 +79,28 @@ def detect_genome_build(vcf_path: Path | str) -> str | None:
 
 
 def read_genotypes(vcf_path: Path | str) -> pl.LazyFrame:
-    """Read genotypes from a VCF file using polars-bio.
+    """Read genotypes from a VCF file (or a pre-normalized Parquet) for PRS scoring.
 
-    Returns a LazyFrame with columns: chrom, start (1-based), ref, alt, GT.
+    Returns a LazyFrame with at least columns: chrom, pos, ref, alt, GT.
     The chrom column is normalized to remove 'chr' prefix for consistent matching.
 
+    A ``.parquet`` path is read directly with ``scan_parquet`` — this covers both
+    ``normalize_vcf()`` and ``normalize_array()`` outputs, so consumer-array data
+    flows through the same compute path as VCFs.
+
     Args:
-        vcf_path: Path to VCF file (plain or gzipped)
+        vcf_path: Path to a VCF file (plain/gzipped) or a normalized ``.parquet``.
 
     Returns:
         LazyFrame with genotype data
     """
+    if str(vcf_path).endswith(".parquet"):
+        with start_action(action_type="vcf:read_genotypes_parquet", path=str(vcf_path)):
+            lf = pl.scan_parquet(vcf_path)
+            cols = lf.collect_schema().names()
+            if "pos" not in cols and "start" in cols:
+                lf = lf.rename({"start": "pos"})
+            return lf
     with start_action(action_type="vcf:read_genotypes", vcf_path=str(vcf_path)):
         lf = pb.scan_vcf(
             str(vcf_path),

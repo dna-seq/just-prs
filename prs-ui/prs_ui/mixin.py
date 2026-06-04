@@ -11,6 +11,7 @@ import io
 import json
 import math
 import os
+import urllib.parse
 from pathlib import Path
 from typing import Any
 
@@ -126,6 +127,22 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
             },
         },
         "quality_score": {"width": 80, "headerName": "Score"},
+        "score_source": {
+            "width": 110,
+            "headerName": "Source",
+            "cellRendererType": "badge",
+            "cellRendererConfig": {
+                "colorMap": {
+                    "Harmonized": "#e65100",
+                    "Native": "#2e7d32",
+                },
+                "bgColorMap": {
+                    "Harmonized": "#fff3e0",
+                    "Native": "#e8f5e9",
+                },
+            },
+        },
+        "genome_build": {"width": 100, "headerName": "Original Build"},
         "pgp_id": {
             "width": 120,
             "cellRendererType": "url",
@@ -136,7 +153,7 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
             },
         },
         # hidden columns
-        "genome_build": {"hide": True},
+        "is_harmonized": {"hide": True},
         "name": {"hide": True},
         "ftp_link": {"hide": True},
         "ftp_link_ebi": {"hide": True},
@@ -149,8 +166,16 @@ _catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
 
 
 def _enrich_scores_for_grid(lf: pl.LazyFrame, catalog: PRSCatalog) -> pl.LazyFrame:
-    """Rename pre-computed quality column and join publication citations."""
+    """Rename pre-computed quality column, add source badge, and join publication citations."""
     lf = lf.rename({"synthetic_score": "quality_score"}).drop("combined_quality_score")
+
+    if "is_harmonized" in lf.collect_schema().names():
+        lf = lf.with_columns(
+            pl.when(pl.col("is_harmonized"))
+            .then(pl.lit("Harmonized"))
+            .otherwise(pl.lit("Native"))
+            .alias("score_source"),
+        )
 
     pubs = catalog.publications()
     pubs_cols = pubs.select(
@@ -198,6 +223,7 @@ def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
         "synthetic_quality_color": enriched.synthetic_quality_color,
         "quality_tier": enriched.quality_tier,
         "quality_tier_metric": enriched.quality_tier_metric,
+        "is_harmonized": enriched.is_harmonized,
         "risk_level": enriched.risk_level,
         "risk_level_color": enriched.risk_level_color,
         "risk_hint": enriched.risk_hint,
@@ -617,6 +643,260 @@ def _normalize_genotypes_lf(lf: pl.LazyFrame) -> pl.LazyFrame:
     return lf
 
 
+_AI_ASSISTANTS: list[dict[str, str]] = [
+    {
+        "name": "ChatGPT", "base_url": "https://chatgpt.com/?q=",
+        "color": "#10A37F", "iconUrl": "/openai.svg",
+        "limit_env": "PRS_AI_CHATGPT_MAX_CHARS", "default_limit": "3000",
+    },
+    {
+        "name": "Claude", "base_url": "https://claude.ai/new?q=",
+        "color": "#DA7756", "iconUrl": "/anthropic.svg",
+        "limit_env": "PRS_AI_CLAUDE_MAX_CHARS", "default_limit": "6000",
+    },
+    {
+        "name": "Perplexity", "base_url": "https://www.perplexity.ai/search?q=",
+        "color": "#21808D", "iconUrl": "/perplexity.svg",
+        "limit_env": "PRS_AI_PERPLEXITY_MAX_CHARS", "default_limit": "3000",
+    },
+    {
+        "name": "Grok", "base_url": "https://grok.com/?q=",
+        "color": "#1D1D1F", "iconUrl": "/grok.svg",
+        "limit_env": "PRS_AI_GROK_MAX_CHARS", "default_limit": "3000",
+    },
+]
+
+_METHODOLOGY_CONTEXT = (
+    "Methodology: percentiles were computed by scoring the 1000 Genomes Project "
+    "phase 3 reference panel (2,504 individuals, 5 superpopulations: AFR, AMR, "
+    "EAS, EUR, SAS) on GRCh38 harmonized scoring files from the PGS Catalog. "
+    "Each individual's PRS was computed as the sum of effect_weight * dosage "
+    "for matched variants, then percentiles were derived per superpopulation. "
+    "The user's VCF was scored with the same engine and placed on this distribution."
+)
+
+_QUALITY_METHODOLOGY = (
+    "Quality scoring: each model gets a synthetic quality score (0-100) based on "
+    "four tiers: T1a (AUROC/C-index reported, no penalty), T1b (Beta only, 0.95 "
+    "penalty), T2 (OR/HR only, 0.90 penalty), T3 (no metric, 0.6 penalty). "
+    "The score also factors cohort size (log-scaled), variant match rate, and a "
+    "harmonized-score penalty if coordinates were lifted over. "
+    "Quality labels: High (>=70), Normal (>=50), Moderate (>=30), Low (<30)."
+)
+
+_FORMAT_SINGLE_COMPACT = (
+    "Reply in under 150 words. Start with ONE bold sentence verdict, "
+    "then 2-3 bullet points (percentile meaning, confidence, context). "
+    "Do NOT assume health — this may be a behavioral/physical/cognitive trait. "
+    "PRS is genetic predisposition, not a measurement. Be honest about limitations."
+)
+
+_FORMAT_ADDENDUM = (
+    "After the main section, you MAY add a clearly separated section "
+    "(use a horizontal rule ---) with additional commentary: caveats, "
+    "ancestry considerations, trait-specific biology, or links to further reading. "
+    "This optional section has no word limit but should earn its length — "
+    "only include it if you have genuinely useful additional context."
+)
+
+_FORMAT_SINGLE_FULL = (
+    "Structure your response EXACTLY as follows (keep this part under 250 words):\n"
+    "1. **Verdict** — one bold sentence (e.g. 'Your genetic score for [trait] is "
+    "moderately elevated (74th percentile) with moderate confidence.')\n"
+    "2. **Key numbers** — 2-4 bullet points: percentile meaning, match quality, "
+    "model confidence in plain language.\n"
+    "3. **Context** — 1-2 sentences: what this trait IS (health, behavioral, "
+    "physical, cognitive — do NOT assume health), how much genetics vs environment "
+    "matters, why PRS is one factor among many.\n"
+    "4. **What to do** — 1-2 sentences: only if actionable (screening for health "
+    "traits). For non-health traits, say no action is needed and why.\n"
+    "Citizen scientist audience — clarity and honesty over length.\n\n"
+    + _FORMAT_ADDENDUM
+)
+
+_FORMAT_TRAIT_COMPACT = (
+    "Reply in under 150 words. Start with ONE bold sentence verdict about the "
+    "combined result, then 3 bullet points: model agreement, percentile meaning, "
+    "confidence level. Do NOT assume health — this may be a non-health trait. "
+    "PRS is genetic predisposition, not a measurement. Be honest about limitations."
+)
+
+_FORMAT_TRAIT_FULL = (
+    "Structure your response EXACTLY as follows (keep this part under 300 words):\n"
+    "1. **Verdict** — one bold sentence (e.g. 'Five models consistently place your "
+    "[trait] score in the top 10% with moderate confidence.')\n"
+    "2. **Model agreement** — 2-3 bullet points: do models agree, percentile "
+    "spread, which model is best and why.\n"
+    "3. **What the percentile means** — 1-2 sentences in plain language. This is "
+    "a genetic predisposition score, not a measurement of the trait itself.\n"
+    "4. **Confidence** — 1-2 sentences: combine match rate, quality tier, and "
+    "number of high-quality models into an honest statement.\n"
+    "5. **Context & actions** — 1-2 sentences: what this trait IS (health, "
+    "behavioral, physical, cognitive — do NOT assume health), and whether any "
+    "action makes sense. For non-health traits, say no action is needed.\n"
+    "Citizen scientist audience — clarity and honesty over length.\n\n"
+    + _FORMAT_ADDENDUM
+)
+
+
+def _get_char_limit(assistant: dict[str, str]) -> int:
+    return int(os.environ.get(assistant["limit_env"], assistant["default_limit"]))
+
+
+def _build_score_ai_prompt(row: dict[str, Any], limit: int) -> str:
+    pgs_id = str(row.get("pgs_id") or "")
+    trait = str(row.get("trait") or "unknown trait")
+    efo = str(row.get("trait_efo_id") or "")
+    pct = row.get("percentile", "")
+    score = row.get("score", "")
+    match_rate = row.get("match_rate", "")
+    quality = str(row.get("quality_label") or "N/A")
+    sq = row.get("synthetic_quality", "")
+    auroc = row.get("auroc", "")
+    abs_risk = str(row.get("absolute_risk_text") or row.get("absolute_risk") or "")
+    effect = str(row.get("effect_size") or "")
+    classification = str(row.get("classification") or "")
+    ancestry = str(row.get("ancestry") or "")
+    heritability = str(row.get("heritability") or "")
+    variants_matched = row.get("variants_matched", "")
+    variants_total = row.get("variants_total", "")
+    method = str(row.get("percentile_method") or "")
+    is_harmonized = row.get("is_harmonized", False)
+    risk_agreement = str(row.get("risk_agreement") or "")
+
+    lines = [
+        f"Interpret this Polygenic Risk Score (PRS) result for a citizen scientist.",
+        "",
+        f"Trait: {trait}" + (f" (EFO: {efo})" if efo else ""),
+        f"PGS ID: {pgs_id}  https://www.pgscatalog.org/score/{pgs_id}/",
+    ]
+    if pct:
+        lines.append(f"Percentile: {pct} (method: {method})")
+    if score:
+        lines.append(f"Raw PRS value: {score}")
+    if variants_matched and variants_total:
+        lines.append(f"Variants matched: {variants_matched}/{variants_total} ({match_rate}%)")
+    elif match_rate:
+        lines.append(f"Variant match rate: {match_rate}%")
+    lines.append(f"Quality tier: {quality}" + (f" (synthetic score: {sq}/100)" if sq else ""))
+    if auroc and str(auroc) != "N/A":
+        lines.append(f"AUROC: {auroc}")
+    if effect:
+        lines.append(f"Effect size: {effect}")
+    if classification:
+        lines.append(f"Classification metric: {classification}")
+    if abs_risk and abs_risk != "N/A":
+        lines.append(f"Absolute risk: {abs_risk}")
+    if risk_agreement:
+        lines.append(f"Risk method agreement: {risk_agreement}")
+    if ancestry:
+        lines.append(f"Evaluation ancestry: {ancestry}")
+    if heritability and heritability != "N/A":
+        lines.append(f"Heritability (h²): {heritability}")
+    if is_harmonized:
+        orig = str(row.get("original_genome_build", "") or "")
+        lines.append(f"Note: harmonized score (lifted from {orig} to GRCh38)")
+    lines.append("")
+    if limit >= 3000:
+        lines.append(_QUALITY_METHODOLOGY)
+        lines.append("")
+        lines.append(_METHODOLOGY_CONTEXT)
+        lines.append("")
+        lines.append(_FORMAT_SINGLE_FULL)
+    elif limit >= 1500:
+        lines.append(_FORMAT_SINGLE_FULL)
+    else:
+        lines.append(_FORMAT_SINGLE_COMPACT)
+    prompt = "\n".join(lines)
+    if len(prompt) > limit:
+        prompt = prompt[:limit - 3] + "..."
+    return prompt
+
+
+def _build_trait_ai_prompt(row: dict[str, Any], limit: int) -> str:
+    trait = str(row.get("trait") or "unknown trait")
+    efo = str(row.get("trait_efo_id") or "")
+    n_models = row.get("n_models", 0)
+    n_usable = row.get("usable_models", 0)
+    typical = row.get("typical_percentile", "N/A")
+    consistency = str(row.get("consistency") or "")
+    signal = str(row.get("overall_signal") or "")
+    best_id = str(row.get("best_pgs_id") or "")
+    best_pctl = row.get("best_model_pctl", "N/A")
+    best_risk = str(row.get("best_absolute_risk") or "N/A")
+    risk_vs_avg = str(row.get("risk_vs_average") or "N/A")
+    best_quality = str(row.get("best_quality") or "N/A")
+    pct_range = str(row.get("percentile_range") or "N/A")
+    pct_std = row.get("percentile_std", "N/A")
+    reliability = str(row.get("reliability") or "")
+    best_match = row.get("best_match_rate", "")
+    high_q = row.get("high_confidence_models", 0)
+    high_q_median = row.get("high_confidence_median", "N/A")
+    outlier_ids = str(row.get("outlier_ids") or "")
+    pgs_ids = str(row.get("pgs_ids") or "")
+
+    lines = [
+        f"Interpret these combined Polygenic Risk Score (PRS) results "
+        f"for \"{trait}\"" + (f" (EFO: {efo})" if efo else "") + ".",
+        "",
+        f"Models computed: {n_models} total, {n_usable} usable (>=50% variant match)",
+        f"PGS IDs: {pgs_ids}",
+    ]
+    if best_id:
+        lines.append(
+            f"Best model: {best_id} (pctl: {best_pctl}, quality: {best_quality})"
+            f"  https://www.pgscatalog.org/score/{best_id}/"
+        )
+    lines.append(f"Median percentile (usable): {typical}")
+    lines.append(f"Percentile range: {pct_range} (SD: {pct_std})")
+    lines.append(f"Consistency: {consistency}")
+    lines.append(f"Overall signal: {signal}")
+    if reliability:
+        lines.append(f"Reliability: {reliability}")
+    if best_match:
+        lines.append(f"Best match rate: {best_match:.1f}%")
+    lines.append(f"High-quality models: {high_q}" + (f" (median pctl: {high_q_median})" if high_q else ""))
+    if outlier_ids:
+        lines.append(f"Outlier models: {outlier_ids}")
+    if best_risk and best_risk != "N/A":
+        lines.append(f"Absolute risk (best model): {best_risk}")
+    if risk_vs_avg and risk_vs_avg != "N/A":
+        lines.append(f"Risk vs population average: {risk_vs_avg}")
+    lines.append("")
+    if limit >= 3000:
+        lines.append(_QUALITY_METHODOLOGY)
+        lines.append("")
+        lines.append(_METHODOLOGY_CONTEXT)
+        lines.append("")
+        lines.append(_FORMAT_TRAIT_FULL)
+    elif limit >= 1500:
+        lines.append(_FORMAT_TRAIT_FULL)
+    else:
+        lines.append(_FORMAT_TRAIT_COMPACT)
+    prompt = "\n".join(lines)
+    if len(prompt) > limit:
+        prompt = prompt[:limit - 3] + "..."
+    return prompt
+
+
+def _build_ai_links(prompt_fn: Any, row: dict[str, Any]) -> list[dict[str, Any]]:
+    links: list[dict[str, Any]] = []
+    for assistant in _AI_ASSISTANTS:
+        limit = _get_char_limit(assistant)
+        prompt = prompt_fn(row, limit)
+        encoded = urllib.parse.quote(prompt, safe="")
+        url = assistant["base_url"] + encoded
+        link: dict[str, Any] = {
+            "label": f"Ask {assistant['name']}",
+            "url": url,
+            "color": assistant["color"],
+        }
+        if assistant.get("iconUrl"):
+            link["iconUrl"] = assistant["iconUrl"]
+        links.append(link)
+    return links
+
+
 class PRSComputeStateMixin(rx.State, mixin=True):
     """Reusable mixin for PRS score selection, computation, and result display.
 
@@ -653,6 +933,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     selected_ancestry: str = "EUR"
     compute_all_populations: bool = False
     show_all_risk_estimates: bool = True
+    include_harmonized: bool = True
 
     _scores_initialized: bool = False
     _compute_scores_lf: pl.LazyFrame | None = None
@@ -685,6 +966,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.show_all_risk_estimates = bool(value)
         if self.prs_results:
             self._build_prs_results_grid()
+
+    def set_include_harmonized(self, value: bool) -> Any:
+        """Enable/disable including harmonized (cross-build) scores."""
+        self.include_harmonized = bool(value)
+        if self.compute_scores_loaded:
+            yield from self.load_compute_scores()
 
     def set_prs_genotypes_lf(self, lf: pl.LazyFrame) -> None:
         """Provide a pre-loaded genotypes LazyFrame for PRS computation.
@@ -1511,6 +1798,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "trait_quick_flags": quick_flags,
                 "outlier_summary": outlier_detail,
             })
+            summary_rows[-1]["ai_ask"] = json.dumps(
+                _build_ai_links(_build_trait_ai_prompt, summary_rows[-1])
+            )
 
         self.trait_summary_rows = summary_rows
         self.trait_summary_columns = self._build_trait_summary_columns()
@@ -1555,6 +1845,21 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 cell_renderer_config={
                     "colorMap": _MATCH_RELIABILITY_COLORS,
                     "bgColorMap": _MATCH_RELIABILITY_BG,
+                },
+            ),
+            ColumnDef(
+                field="build_source", header_name="Build",
+                min_width=110,
+                cell_renderer_type="badge",
+                cell_renderer_config={
+                    "colorMap": {
+                        "Native": "#2e7d32",
+                        "⚠ Harmonized": "#e65100",
+                    },
+                    "bgColorMap": {
+                        "Native": "#e8f5e9",
+                        "⚠ Harmonized": "#fff3e0",
+                    },
                 },
             ),
             ColumnDef(field="score", header_name="PRS Score", type="number", min_width=110),
@@ -1800,6 +2105,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     ),
                 },
             ]
+            if r.get("is_harmonized"):
+                orig_build = str(r.get("original_genome_build", "") or "")
+                percentile_side_items.append({
+                    "label": "Build source",
+                    "value": "Harmonized",
+                    "tone": "warning",
+                    "subtext": f"Lifted from {orig_build}" if orig_build else "Coordinate liftover applied",
+                })
             if len(population_values) > 1:
                 percentile_side_items.append({
                     "label": "Population spread",
@@ -1978,9 +2291,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "tone": "good",
                 })
 
+            build_source = "⚠ Harmonized" if r.get("is_harmonized") else "Native"
+
             row: dict[str, Any] = {
                 "id": i,
                 "pgs_id": r.get("pgs_id", ""),
+                "build_source": build_source,
                 "match_reliability": match_reliability,
                 "trait": r.get("trait", ""),
                 "score": r.get("score", 0),
@@ -2009,6 +2325,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "population_percentiles_chart": percentile_chart,
                 "population_percentiles_summary": chart_takeaway,
                 "result_suggestions": suggestion_badges,
+                "ai_ask": json.dumps(_build_ai_links(_build_score_ai_prompt, r)),
             }
 
             if self.show_all_risk_estimates:
@@ -2049,7 +2366,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         """Load cleaned scores into the compute grid, filtered by genome build."""
         self.status_message = "Loading scores for selection..."  # type: ignore[attr-defined]
         yield
-        lf = _catalog.scores(genome_build=self.genome_build)  # type: ignore[attr-defined]
+        lf = _catalog.scores(
+            genome_build=self.genome_build,  # type: ignore[attr-defined]
+            include_harmonized=self.include_harmonized,
+        )
         lf = _enrich_scores_for_grid(lf, _catalog)
         self._compute_scores_lf = lf
         self.compute_scores_loaded = True
@@ -2060,7 +2380,18 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             column_overrides=_compute_score_column_overrides(),
         )
         total = lf.select(pl.len()).collect().item()
-        self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
+        if "is_harmonized" in lf.collect_schema().names():
+            native_count = lf.filter(~pl.col("is_harmonized")).select(pl.len()).collect().item()
+            harmonized_count = total - native_count
+            if harmonized_count > 0:
+                self.status_message = (  # type: ignore[attr-defined]
+                    f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
+                    f" ({native_count} native, {harmonized_count} harmonized)"
+                )
+            else:
+                self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
+        else:
+            self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
 
     def handle_lf_grid_row_selection(self, model: dict) -> None:
         """Track selected PGS IDs from compute grid checkbox selection.
@@ -2128,7 +2459,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.deselect_all_scores()
             return
         ids = (
-            _catalog.search(term, genome_build=self.genome_build)  # type: ignore[attr-defined]
+            _catalog.search(term, genome_build=self.genome_build, include_harmonized=self.include_harmonized)  # type: ignore[attr-defined]
             .select("pgs_id")
             .unique()
             .sort("pgs_id")
@@ -2149,7 +2480,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.deselect_all_scores()
             return
 
-        lf = _catalog.search(term, genome_build=self.genome_build)  # type: ignore[attr-defined]
+        lf = _catalog.search(term, genome_build=self.genome_build, include_harmonized=self.include_harmonized)  # type: ignore[attr-defined]
+        lf = _enrich_scores_for_grid(lf, _catalog)
         self._compute_scores_lf = lf
         self.compute_scores_loaded = True
         yield from self.set_lazyframe(  # type: ignore[attr-defined]
@@ -2212,6 +2544,22 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
         best_perf_df = _catalog.best_performance().collect()
 
+        harmonized_lookup: dict[str, bool] = {}
+        original_build_lookup: dict[str, str] = {}
+        if self._compute_scores_lf is not None:
+            try:
+                harm_df = (
+                    self._compute_scores_lf
+                    .filter(pl.col("pgs_id").is_in(self.selected_pgs_ids))
+                    .select("pgs_id", "is_harmonized", "genome_build")
+                    .collect()
+                )
+                for row in harm_df.iter_rows(named=True):
+                    harmonized_lookup[row["pgs_id"]] = bool(row["is_harmonized"])
+                    original_build_lookup[row["pgs_id"]] = str(row["genome_build"])
+            except Exception:
+                pass
+
         for i, pgs_id in enumerate(self.selected_pgs_ids, start=1):
             self.prs_progress = round(i / total * 100)
             self.status_message = f"Computing {i}/{total}: {pgs_id}..."  # type: ignore[attr-defined]
@@ -2250,9 +2598,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 genome_build=self.genome_build,  # type: ignore[attr-defined]
                 selected_ancestry=self.selected_ancestry,
                 compute_all_populations=self.compute_all_populations,
+                is_harmonized=harmonized_lookup.get(pgs_id, False),
             )
 
             row = _enriched_to_row_dict(enriched)
+            row["original_genome_build"] = original_build_lookup.get(pgs_id, "")
 
             if result.match_rate < 0.1:
                 any_low_match = True
@@ -2273,7 +2623,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         if not self.prs_results:
             return
         columns = [
-            "pgs_id", "trait", "trait_efo_id", "score", "percentile", "absolute_risk",
+            "pgs_id", "trait", "trait_efo_id", "is_harmonized", "score", "percentile", "absolute_risk",
             "synthetic_quality", "synthetic_quality_label", "quality_tier", "quality_tier_metric",
             "heritability", "heritability_detail",
             "auroc", "quality_label",

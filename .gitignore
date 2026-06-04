@@ -1,3 +1,7 @@
+# Reflex build output
+.web/
+**/.web/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -236,4 +240,4 @@ scores/
 #cursor
 .cursor/
 *.code-workspace
-.cursor/hooks
+.cursor/hooks.claude/

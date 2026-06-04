@@ -8,6 +8,22 @@ are shared between the core library and any UI that displays PRS results.
 from typing import Any
 
 
+_DEFAULT_HARMONIZED_PENALTY: float = 0.90
+
+
+def _harmonized_penalty() -> float:
+    """Read harmonized score quality penalty from env, default 0.85 (15% reduction)."""
+    import os
+    raw = os.environ.get("PRS_HARMONIZED_PENALTY")
+    if raw is None:
+        return _DEFAULT_HARMONIZED_PENALTY
+    try:
+        val = float(raw)
+        return max(0.0, min(1.0, val))
+    except (ValueError, TypeError):
+        return _DEFAULT_HARMONIZED_PENALTY
+
+
 def synthetic_quality_score(
     *,
     auroc: float | None = None,
@@ -17,6 +33,7 @@ def synthetic_quality_score(
     beta_estimate: float | None = None,
     n_individuals: int | float | None = None,
     match_rate: float | None = None,
+    is_harmonized: bool = False,
 ) -> float:
     """Compute a transparent numeric PRS quality score for ranking (0–100).
 
@@ -44,6 +61,10 @@ def synthetic_quality_score(
     Denominator 5.5 (vs 6.0) gives more credit to large GWAS cohorts.
     match_rate is optional (absent in metadata-only comparisons); when given
     it linearly reduces the score for poor genotype coverage.
+
+    Harmonized penalty: when ``is_harmonized`` is True, the score is reduced
+    by the ``PRS_HARMONIZED_PENALTY`` env factor (default 0.90, i.e. 10%
+    reduction) because coordinate liftover may introduce minor mapping errors.
     """
     import math
 
@@ -85,7 +106,8 @@ def synthetic_quality_score(
         cohort_factor = _clamp(math.log10(float(n_individuals)) / 5.5, 0.0, 1.0)
 
     match_factor = 1.0 if match_rate is None else _clamp(float(match_rate), 0.0, 1.0)
-    return round(100.0 * discrimination * cohort_factor * match_factor * penalty, 1)
+    harmonized_factor = _harmonized_penalty() if is_harmonized else 1.0
+    return round(100.0 * discrimination * cohort_factor * match_factor * penalty * harmonized_factor, 1)
 
 
 def classify_model_quality(

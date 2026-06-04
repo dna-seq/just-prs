@@ -698,6 +698,45 @@ def normalize(
     console.print(table)
 
 
+@app.command("normalize-array")
+def normalize_array_cmd(
+    array: Annotated[
+        Path,
+        typer.Option("--array", "-a", help="Path to a 23andMe/AncestryDNA raw file (.txt/.txt.gz/.csv/.zip)"),
+    ],
+    output: Annotated[
+        Optional[Path],
+        typer.Option("--output", "-o", help="Output Parquet path. Defaults to data/output/results/<stem>.parquet"),
+    ] = None,
+    build: Annotated[
+        str,
+        typer.Option("--build", "-b", help="Genome build of the array coordinates (GRCh37 for 23andMe v5 / AncestryDNA v2)"),
+    ] = "GRCh37",
+    array_format: Annotated[
+        Optional[str],
+        typer.Option("--format", help='Force vendor format ("23andme" or "ancestrydna"); auto-detected when omitted'),
+    ] = None,
+) -> None:
+    """Normalize a consumer genotyping-array file (23andMe/AncestryDNA) to Parquet for PRS computation."""
+    from just_prs.arrays import normalize_array
+
+    if output is None:
+        stem = array.name
+        for suffix in (".zip", ".gz", ".csv", ".txt"):
+            stem = stem.removesuffix(suffix)
+        output = Path("data/output/results") / f"{stem}.parquet"
+
+    console.print(f"Normalizing array [cyan]{array}[/cyan] (build {build}) → {output} ...")
+    result_path = normalize_array(array, output, genome_build=build, array_format=array_format)
+
+    df = pl.read_parquet(result_path)
+    console.print(f"[green]Wrote {df.height:,} typed variants to {result_path}[/green]")
+    console.print(
+        "Compute a PRS with: "
+        f"[cyan]prs compute --vcf {result_path} --pgs-id PGS000001 --build {build}[/cyan]"
+    )
+
+
 def _print_reference_score_table(pgs_id: str, result_df: pl.DataFrame) -> None:
     """Print per-superpopulation reference panel score statistics."""
     table = Table(title=f"Reference Panel Scores: {pgs_id}")

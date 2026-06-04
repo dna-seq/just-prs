@@ -43,6 +43,7 @@ def enrich_prs_result(
     genome_build: str = "GRCh38",
     selected_ancestry: str = "EUR",
     compute_all_populations: bool = True,
+    is_harmonized: bool = False,
 ) -> EnrichedPRSResult:
     """Enrich a raw PRS computation result with quality, percentile, risk and reference data.
 
@@ -123,6 +124,7 @@ def enrich_prs_result(
         auroc=sq_auroc, cindex=sq_cindex,
         or_estimate=sq_or, hr_estimate=sq_hr,
         beta_estimate=sq_beta, n_individuals=sq_n,
+        is_harmonized=is_harmonized,
     )
     sq_label, sq_color = classify_synthetic_quality(sq_score)
     q_tier, q_tier_metric = synthetic_quality_tier(
@@ -173,6 +175,7 @@ def enrich_prs_result(
         match_rate=match_pct,
         has_allele_frequencies=result.has_allele_frequencies,
         genome_build=genome_build,
+        is_harmonized=is_harmonized,
         synthetic_quality=sq_score,
         synthetic_quality_label=sq_label,
         synthetic_quality_color=sq_color,

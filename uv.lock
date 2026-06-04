@@ -297,7 +297,7 @@ wheels = [
 
 [[package]]
 name = "dagster"
-version = "1.13.6"
+version = "1.13.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "alembic" },
@@ -329,14 +329,14 @@ dependencies = [
     { name = "universal-pathlib" },
     { name = "watchdog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/15/cc/deafc4e431d04de4aee17a8963295f56660b36187543b94447d4757d5f70/dagster-1.13.6.tar.gz", hash = "sha256:f0622217a791e65c721fc2d9785e17025dc42de0637ea71fab7e4f3b9be864a6", size = 3438816, upload-time = "2026-05-22T14:19:04.51Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/4b/e17f63d16556a98d8c246a2c69959f1096271b0c45f4d0923be45b2a9c64/dagster-1.13.7.tar.gz", hash = "sha256:8eb2d6cd7da184ee6e718f0121219bb1f721fad4159e3668eb43cc0961fb5c62", size = 3440749, upload-time = "2026-05-28T16:34:56.253Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7f/12/ed1ca89953f5d99a4ce8f5d5f9450da95ff1ed37fecc2ad02c228cbc051e/dagster-1.13.6-py3-none-any.whl", hash = "sha256:716326e5c4fc191de724dab00095ff9d62532cd88629d6c3f5533a1500ff2fa0", size = 1979979, upload-time = "2026-05-22T14:19:02.073Z" },
+    { url = "https://files.pythonhosted.org/packages/35/22/4c0e109ace4374785309940f76cd4db59a7e4174fb08b237e5ad03d6e878/dagster-1.13.7-py3-none-any.whl", hash = "sha256:4ff8ba1b563d11c023452bd6e0cc3ab8154ff8bf0d2e571ae48eb710dd8a63e8", size = 1983609, upload-time = "2026-05-28T16:34:53.751Z" },
 ]
 
 [[package]]
 name = "dagster-graphql"
-version = "1.13.6"
+version = "1.13.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dagster" },
@@ -345,18 +345,18 @@ dependencies = [
     { name = "requests" },
     { name = "starlette" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/72/2e/86805b37ac6fbfca48484d38eb46f2bd2a35ef1ee5d4a1cebd77064897fe/dagster_graphql-1.13.6.tar.gz", hash = "sha256:07bced3666eae2e7993dfe2ec506eed5e0d3de6478f7aa23190529545f9ba39b", size = 629175, upload-time = "2026-05-22T14:19:31.28Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/77/02/a72173e1bbe8da928a438ccddc94d9894af600c592c0519eddc82e0869e9/dagster_graphql-1.13.7.tar.gz", hash = "sha256:f895bb44d405d7d3704917f5b9af4bd28080208375037304510993a3ff17c7da", size = 629327, upload-time = "2026-05-28T16:35:24.017Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d5/66/fd132b027fdfeb0d1b29580f65c4220d23d3dbb6a25c847270d7a458fb10/dagster_graphql-1.13.6-py3-none-any.whl", hash = "sha256:e54539742c9857ae8dc4e6fa95a9763048e065d72786abdb70c6fe63d9146121", size = 217041, upload-time = "2026-05-22T14:19:29.327Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/e0/721fcbbd8c114b597fb512c066fc4a6cee9dd8f24059824d8a589695baa9/dagster_graphql-1.13.7-py3-none-any.whl", hash = "sha256:c8658e8e353ceedd08fc88e3ba1258fc80f480170ca15363f668a44d1ea953ee", size = 217209, upload-time = "2026-05-28T16:35:21.927Z" },
 ]
 
 [[package]]
 name = "dagster-pipes"
-version = "1.13.6"
+version = "1.13.7"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/72/3e/29627307f9a393ca27242f261d775f622cd641ba3a16edbceea4a3810c1d/dagster_pipes-1.13.6.tar.gz", hash = "sha256:fdd6d01743c1cca81f5218322ac35cd768302c78a547f89a1fe8ad8f0f34d64a", size = 149652, upload-time = "2026-05-22T14:19:21.736Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1c/9e/e8791b73af7a1dd83ed39183dfa890c9a300f796c4333c2f3932b3a145d0/dagster_pipes-1.13.7.tar.gz", hash = "sha256:3da63a8829cd00cdb162ea75d10ba8fab2a641230bd019b9ac1ceeec223a068c", size = 149656, upload-time = "2026-05-28T16:35:14.442Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/20/f3/c8016cc4e2d9d9ed0ea28882bc4d1762e1e2eddef05b183d563a05a48693/dagster_pipes-1.13.6-py3-none-any.whl", hash = "sha256:b241f4c5a665c909dda9e9b4773626195a41b62fc05be7a9c6106f13ef16bc5d", size = 20219, upload-time = "2026-05-22T14:19:20.605Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/af/021709df00fdccfbe8100f7c61741a956754fd26fd65990e4ec695552495/dagster_pipes-1.13.7-py3-none-any.whl", hash = "sha256:2dd72fdbcfb6994b6e2e467266912a13148496e3c56301b982815754508a9b87", size = 20219, upload-time = "2026-05-28T16:35:13.18Z" },
 ]
 
 [[package]]
@@ -377,7 +377,7 @@ wheels = [
 
 [[package]]
 name = "dagster-shared"
-version = "1.13.6"
+version = "1.13.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
@@ -387,14 +387,14 @@ dependencies = [
     { name = "tomlkit" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/55/39/4350833f0498b7805f733925c3edfd0ce79ddd1dac6b6f642a81e7b07f95/dagster_shared-1.13.6.tar.gz", hash = "sha256:d8cbb0f14ceb4bb83771d9d68fc7ccda5d67c6d367a3190d63d008b0b896ee96", size = 121913, upload-time = "2026-05-22T14:30:29.884Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/30/39a100ec5a259e99892c6afdc154334c8a8162b504819fe4ca97722165b4/dagster_shared-1.13.7.tar.gz", hash = "sha256:41e602c5c610951c18e76dfd6beb4fed1511e0e3722927b617f41992d34399f9", size = 121918, upload-time = "2026-05-28T16:49:46.986Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3d/72/ef66301a1df0dfbd64534c0b7788fbcea0752c3b4237cc70d2a1b86e562e/dagster_shared-1.13.6-py3-none-any.whl", hash = "sha256:31aa34105345f98db11a1a6f0f1f8c8928d5fd1ef8dc992c3b054d50d3d14618", size = 94962, upload-time = "2026-05-22T14:30:28.581Z" },
+    { url = "https://files.pythonhosted.org/packages/97/d2/c28ba7ed7ed2d0dcd9e0d2e19b7e597811d19383471fe3791664474a4e33/dagster_shared-1.13.7-py3-none-any.whl", hash = "sha256:aeb6de66a6e9a71870db134817f95b162feafa95a0f0619c904edfb313a72486", size = 94962, upload-time = "2026-05-28T16:49:45.536Z" },
 ]
 
 [[package]]
 name = "dagster-webserver"
-version = "1.13.6"
+version = "1.13.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -403,9 +403,9 @@ dependencies = [
     { name = "starlette" },
     { name = "uvicorn", extra = ["standard"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/12/58/91ecd3583a93984d34c2db5bc1a472b8a8feee46104428ce97b52918755a/dagster_webserver-1.13.6.tar.gz", hash = "sha256:0864e4fc3672a830eb3c2cd33a46c44a452994d8ae4c0f7f7ba9a0ef2f3bb05b", size = 11939558, upload-time = "2026-05-22T14:25:04.485Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/c2/98d44d1b041dcdc6e5ca630c0ee8c187c5399b5d61700b292e25f5e0db96/dagster_webserver-1.13.7.tar.gz", hash = "sha256:0a6a71fb4f35d0b7bee0dfaae7603a5985a2a3b716714cd1e5609f0b0a5ee20d", size = 11926118, upload-time = "2026-05-28T16:40:30.264Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/c6/310898615ca12c765bb45c502bbb08c6019e6912a16742b3987803a009c7/dagster_webserver-1.13.6-py3-none-any.whl", hash = "sha256:a2b69ae52b2c3009886997cbd2d3b9b30e68ae395b4bf0306c785fabc6549851", size = 12090113, upload-time = "2026-05-22T14:25:01.532Z" },
+    { url = "https://files.pythonhosted.org/packages/30/b8/70a089dc140d4c4b5faa3e242a6f8e12e20f71958f4bca3fdd46407f96af/dagster_webserver-1.13.7-py3-none-any.whl", hash = "sha256:593772ebcc97e0521c270c53770d6ca73ddcace4d0d06648f3642a4a58166a5f", size = 12075649, upload-time = "2026-05-28T16:40:27.731Z" },
 ]
 
 [[package]]
@@ -933,7 +933,7 @@ wheels = [
 
 [[package]]
 name = "just-prs"
-version = "0.4.5"
+version = "0.4.6"
 source = { editable = "just-prs" }
 dependencies = [
     { name = "duckdb" },
@@ -1455,7 +1455,7 @@ wheels = [
 
 [[package]]
 name = "prs-pipeline"
-version = "0.2.3"
+version = "0.2.4"
 source = { editable = "prs-pipeline" }
 dependencies = [
     { name = "dagster" },
@@ -1469,9 +1469,9 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dagster", specifier = ">=1.12.19" },
-    { name = "dagster-polars", specifier = ">=0.27.9" },
-    { name = "dagster-webserver", specifier = ">=1.12.19" },
+    { name = "dagster", specifier = ">=1.13.7" },
+    { name = "dagster-polars", specifier = ">=0.27.12" },
+    { name = "dagster-webserver", specifier = ">=1.13.7" },
     { name = "just-prs", extras = ["reference"], editable = "just-prs" },
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
@@ -1480,7 +1480,7 @@ requires-dist = [
 
 [[package]]
 name = "prs-ui"
-version = "0.3.1"
+version = "0.3.2"
 source = { editable = "prs-ui" }
 dependencies = [
     { name = "just-prs" },
@@ -1494,11 +1494,11 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "just-prs", editable = "just-prs" },
-    { name = "reflex", specifier = ">=0.9.3" },
+    { name = "reflex", specifier = ">=0.9.4" },
     { name = "reflex-components-code", specifier = ">=0.9.2" },
-    { name = "reflex-components-core", specifier = ">=0.9.3" },
-    { name = "reflex-components-radix", specifier = ">=0.9.3" },
-    { name = "reflex-mui-datagrid", specifier = ">=0.3.5" },
+    { name = "reflex-components-core", specifier = ">=0.9.4" },
+    { name = "reflex-components-radix", specifier = ">=0.9.4" },
+    { name = "reflex-mui-datagrid", specifier = ">=0.3.6" },
 ]
 
 [[package]]
@@ -1803,7 +1803,7 @@ wheels = [
 
 [[package]]
 name = "reflex"
-version = "0.9.3"
+version = "0.9.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -1833,14 +1833,14 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6f/5e/03c96ec471957382360e59d9fac64e6af41906f7cc484220776b068921f0/reflex-0.9.3.tar.gz", hash = "sha256:a585e26289e544a3de647a95e4bae77faa68c9d44c9ce529700deb717dccd2e6", size = 391561, upload-time = "2026-05-23T00:35:52.838Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/6b/e8/57e45c858883a2a2be07bb7f211c0a6f3635bb1fad3b05a063e4e50f948a/reflex-0.9.4.tar.gz", hash = "sha256:b76fd6a57aa0828c6ed352bc0dda825e30e8708f490127ff5ad83d60d5208360", size = 383584, upload-time = "2026-06-04T01:44:22.468Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c3/1e/7aca12e932a1080f926749a18fde71bf00d41aebbecba535a5b48ca501af/reflex-0.9.3-py3-none-any.whl", hash = "sha256:b437073dfbce234aa69099f85630c4ffd127e5f33072bd0246f15b6173b96303", size = 646718, upload-time = "2026-05-23T00:35:54.607Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/e2/b0044ba53a2a33498c15c90e1085410656d71fd2bf16a3be0217ae16d347/reflex-0.9.4-py3-none-any.whl", hash = "sha256:510ffb3fc1ecf14024add567c97ff600d8aca9e5d28bc6ec2802b4b34a085b5b", size = 638383, upload-time = "2026-06-04T01:44:23.999Z" },
 ]
 
 [[package]]
 name = "reflex-base"
-version = "0.9.3"
+version = "0.9.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
@@ -1849,9 +1849,9 @@ dependencies = [
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/c8/f5/b75c5765e9f06f6c79acfec4a7946a63a9ade7ea454e9823665bd29356d5/reflex_base-0.9.3.tar.gz", hash = "sha256:a90144511db4886eabfbc00bf2192cda0bbfdc478bba0bdff809ae86986e0776", size = 228583, upload-time = "2026-05-23T00:35:37.508Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/02/6d/995b428c33bfa62e33d22e3a8058cb5991b332988b6adcca273d32cc3217/reflex_base-0.9.4.tar.gz", hash = "sha256:a54ba3d319136fded095b099a0c5074b5913db274ac1a74757ad9e4cd7d0788c", size = 243482, upload-time = "2026-06-04T01:44:10.11Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7b/8d/d33c21b239b949eb2e8055db00cd57a4d1f929244c8a8570e2873a2d8254/reflex_base-0.9.3-py3-none-any.whl", hash = "sha256:67bced21553feb6729aca7850b681cfd67bbdfadd22ed46c2db1c2d6fae459ce", size = 271737, upload-time = "2026-05-23T00:35:36.257Z" },
+    { url = "https://files.pythonhosted.org/packages/34/bb/66f48b3ef07b7bf758ffcf6f40bc1347a822e91ce27acd80a797d42e1522/reflex_base-0.9.4-py3-none-any.whl", hash = "sha256:1450ce2d24e19d978003ad8938c1eb1deea5951da5e3f166906b416a90c64d71", size = 286422, upload-time = "2026-06-04T01:44:08.649Z" },
 ]
 
 [[package]]
@@ -1871,7 +1871,7 @@ wheels = [
 
 [[package]]
 name = "reflex-components-core"
-version = "0.9.3"
+version = "0.9.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-multipart" },
@@ -1881,9 +1881,9 @@ dependencies = [
     { name = "starlette" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3e/f7/d7c541bf3f03a55b99deec1d294dc524461d371aaa97455dcf08dc76d46f/reflex_components_core-0.9.3.tar.gz", hash = "sha256:52a079b1f6c38e7e38897643d804cbc76bc450a7fd46aa76605f5be9cedfc5ad", size = 104093, upload-time = "2026-05-23T00:35:42.88Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7a/cf/5b0896e5929df1619c0119c5c56f0cf548df33585b7ad3db78dd886230d4/reflex_components_core-0.9.4.tar.gz", hash = "sha256:5973ca0520510246f613d12ed8ff99998323da23d88e5240b5c873fac696a041", size = 104166, upload-time = "2026-06-04T01:44:16.252Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/fa/e0730469d9022b5d8e07cbc5613b510fa9052ff71a96d8545daccecad0ec/reflex_components_core-0.9.3-py3-none-any.whl", hash = "sha256:4c837279ed9536c3ac765560f911dbb681d7e61e60127848040fdffa92eae15b", size = 173800, upload-time = "2026-05-23T00:35:41.342Z" },
+    { url = "https://files.pythonhosted.org/packages/76/f2/f8936a7ca2a4efea48c3e5fc938138ca0f093ea88b6ea9908431eb96ec46/reflex_components_core-0.9.4-py3-none-any.whl", hash = "sha256:111bdc2ed0a1f60cd22f2cf0300daca5987031e1446d2caf784be63a6fe0e5a4", size = 173818, upload-time = "2026-06-04T01:44:17.318Z" },
 ]
 
 [[package]]
@@ -1965,16 +1965,16 @@ wheels = [
 
 [[package]]
 name = "reflex-components-radix"
-version = "0.9.3"
+version = "0.9.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "reflex-base" },
     { name = "reflex-components-core" },
     { name = "reflex-components-lucide" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/67/ad/30bd32c5c901f81f119d2f99a29ba173e914614f7c4bb68d7552ad2606b2/reflex_components_radix-0.9.3.tar.gz", hash = "sha256:a82bf50261e97f21966d244a0634cfb74930b952067ee718e848609f70fe8d8d", size = 113780, upload-time = "2026-05-23T00:35:47.353Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/f9/c1e79f1f042bb3e10cdb0d8efab84a826c630c3feb246baf5431408394dd/reflex_components_radix-0.9.4.tar.gz", hash = "sha256:cba2355b786a6cf33457c9f505a8de614adf637411c9e23fd323e04b89e09bac", size = 113880, upload-time = "2026-06-04T01:44:14.993Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/c9/592e72f90b487b33f51f89605beec100755d28acbecf39b1099949e2b245/reflex_components_radix-0.9.3-py3-none-any.whl", hash = "sha256:e6184dff030c445558cfcf5a1ba6f92e6097ffcea8a46ea04e2709b383802347", size = 271525, upload-time = "2026-05-23T00:35:45.848Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/8a/bcdd5b1f9a81bc145aa8d36c751f1597e1148dbad7c0aa04bf599389e600/reflex_components_radix-0.9.4-py3-none-any.whl", hash = "sha256:713e5968b6fcc09f363b45820c067c4b7e452990667b7649373a9c3455ffe742", size = 271527, upload-time = "2026-06-04T01:44:13.658Z" },
 ]
 
 [[package]]
@@ -2033,16 +2033,17 @@ wheels = [
 
 [[package]]
 name = "reflex-mui-datagrid"
-version = "0.3.5"
+version = "0.3.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "polars" },
     { name = "reflex" },
+    { name = "reflex-components-core" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8c/09/10a4534ef4fb3d8cb31d281f30d77b524d28c0504d9dfb23c08146759140/reflex_mui_datagrid-0.3.5.tar.gz", hash = "sha256:49ab6d9a0a406fb9477567e5e1e6479bf564c02ae106f613bdf6a71e6f944171", size = 63581, upload-time = "2026-05-14T07:21:32.604Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/80/cfcef45231d87159f37e7f5a39070b22ee9a94589776e619a564b4298a4f/reflex_mui_datagrid-0.3.6.tar.gz", hash = "sha256:978f9b46b2ef34d611eb214db65f993d951723a8518efdfad821428557b81514", size = 64397, upload-time = "2026-06-04T18:41:08.962Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/40/128ccd006a736c7ae0c2b188d33f41237270fa5eed644b8acd24a8677900/reflex_mui_datagrid-0.3.5-py3-none-any.whl", hash = "sha256:b3ddeb088ff85c78c5cb73f8c820ede847abc7e5ed234ac30288a41f2ec41f2f", size = 68621, upload-time = "2026-05-14T07:21:30.797Z" },
+    { url = "https://files.pythonhosted.org/packages/59/5c/e1d99014e6ad36a7d98a6733d5e0feb01396bb6fde35f83eb9e7696f8d84/reflex_mui_datagrid-0.3.6-py3-none-any.whl", hash = "sha256:58de0b691d9fb0fb49c3e39fb229091d9629d257ecdd290b0f47cee21e7c05ad", size = 69408, upload-time = "2026-06-04T18:41:07.658Z" },
 ]
 
 [[package]]

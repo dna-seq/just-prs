@@ -1855,7 +1855,23 @@ def compute_reference_prs_batch(
             t0 = time.monotonic()
             try:
                 parquet_path = scoring_parquet_path(pgs_id, scores_cache, genome_build)
+                parquet_valid = False
                 if parquet_path.exists():
+                    try:
+                        pl.scan_parquet(parquet_path).collect_schema()
+                        parquet_valid = True
+                    except Exception as _pq_exc:
+                        log_message(
+                            message_type="reference:batch_scoring_cache_corrupt",
+                            pgs_id=pgs_id,
+                            path=str(parquet_path),
+                            error=str(_pq_exc),
+                        )
+                        try:
+                            parquet_path.unlink()
+                        except OSError:
+                            pass
+                if parquet_valid:
                     scoring_file = parquet_path
                 else:
                     scoring_file = download_scoring_file(

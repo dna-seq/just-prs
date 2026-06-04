@@ -77,7 +77,7 @@ def _accordion_summary_label(
 
 
 def prs_build_selector(state: type[rx.State]) -> rx.Component:
-    """Genome build selector dropdown."""
+    """Genome build selector dropdown with harmonized-scores toggle."""
     return rx.hstack(
         rx.text("Genome Build:", size="2", weight="medium"),
         rx.select(
@@ -85,6 +85,23 @@ def prs_build_selector(state: type[rx.State]) -> rx.Component:
             value=state.genome_build,
             on_change=state.set_prs_genome_build,
             size="2",
+        ),
+        rx.checkbox(
+            "Include harmonized scores",
+            checked=state.include_harmonized,
+            on_change=state.set_include_harmonized,
+            size="2",
+        ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "When enabled, includes scores originally developed on a different "
+                "genome build but available as harmonized (coordinate-lifted) scoring "
+                "files. For example, with GRCh38 selected, this adds ~4,300 scores "
+                "originally developed on GRCh37. Harmonized scores receive a quality "
+                "penalty in ranking because coordinate liftover may introduce minor "
+                "mapping errors."
+            ),
         ),
         spacing="2",
         align="center",
@@ -500,7 +517,7 @@ def prs_results_table(
                         disable_row_selection_on_click=True,
                         detail_columns=[
                             "population_percentiles_chart", "population_percentiles_summary", "risk_context",
-                            "result_suggestions", "model_context",
+                            "result_suggestions", "model_context", "ai_ask",
                         ],
                         detail_labels={
                             "population_percentiles_chart": "Where You Fall on the Reference Curve",
@@ -508,12 +525,14 @@ def prs_results_table(
                             "risk_context": "Does This Change Actual Risk?",
                             "result_suggestions": "Quick Flags",
                             "model_context": "Can I Trust This Result?",
+                            "ai_ask": "Ask AI for Interpretation",
                         },
                         detail_renderers={
                             "risk_context": metric_cards,
                             "model_context": metric_cards,
                             "result_suggestions": {"type": "badge_list"},
                             "population_percentiles_chart": bell_curve,
+                            "ai_ask": {"type": "button_links", "size": "medium", "gap": 12},
                         },
                         detail_height=detail_height,
                     ),
@@ -633,6 +652,7 @@ def trait_summary_table(
                             "key_metrics",
                             "trait_quick_flags",
                             "confidence_segments",
+                            "ai_ask",
                         ],
                         detail_labels={
                             "pgs_links": "PGS Models Included",
@@ -640,6 +660,7 @@ def trait_summary_table(
                             "key_metrics": "Key Statistics",
                             "trait_quick_flags": "Signal Flags",
                             "confidence_segments": "All Models vs High-Quality Models",
+                            "ai_ask": "Ask AI for Interpretation",
                         },
                         detail_renderers={
                             "pgs_links": pgs_links,
@@ -647,6 +668,7 @@ def trait_summary_table(
                             "trait_quick_flags": {"type": "badge_list"},
                             "confidence_segments": metric_cards,
                             "percentile_chart": bell_curve,
+                            "ai_ask": {"type": "button_links", "size": "medium", "gap": 12},
                         },
                         detail_height=detail_height,
                     ),

@@ -21,7 +21,12 @@ from just_prs.cleanup import (
     clean_scores,
 )
 from just_prs.ftp import download_metadata_sheet, _atomic_write_parquet
-from just_prs.hf import distributions_filename, pull_cleaned_parquets, pull_reference_distributions
+from just_prs.hf import (
+    distributions_filename,
+    pull_chip_coverage,
+    pull_cleaned_parquets,
+    pull_reference_distributions,
+)
 from just_prs.models import AbsoluteRisk, AbsoluteRiskBundle, PRSResult
 from just_prs.ontology import (
     enrich_with_requested_trait_aliases,
@@ -35,6 +40,11 @@ from just_prs.reference import distribution_quality_issues
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
 logger = logging.getLogger(__name__)
+
+_HARMONIZABLE_BUILDS: dict[str, set[str]] = {
+    "GRCh38": {"GRCh37", "GRCh36", "NR"},
+    "GRCh37": {"GRCh38", "GRCh36", "NR"},
+}
 
 _PUBLICATIONS_REQUIRED_COLUMNS = {"pgp_id"}
 
@@ -58,6 +68,8 @@ class PRSCatalog:
         self._best_perf_lf: pl.LazyFrame | None = None
         self._publications_lf: pl.LazyFrame | None = None
         self._quality_lf: pl.LazyFrame | None = None
+        self._chip_coverage_lf: pl.LazyFrame | None = None
+        self._chip_coverage_loaded = False
         self._prevalence_lf: pl.LazyFrame | None = None
         self._heritability_lf: pl.LazyFrame | None = None
         self._ref_dist_cache: dict[str, pl.LazyFrame] = {}
@@ -146,6 +158,50 @@ class PRSCatalog:
         if not qpath.exists():
             return None
         return pl.scan_parquet(qpath)
+
+    def _load_chip_coverage(self) -> pl.LazyFrame | None:
+        """Load consumer-chip coverage, pivoted to one row per PGS ID.
+
+        Looks for ``percentiles/chip_coverage.parquet`` locally; on a miss, pulls
+        it once from the prs-percentiles HF dataset. The long (pgs_id, chip) table
+        is pivoted to wide per-chip columns ``{chip}_array_ready`` (bool) and
+        ``{chip}_coverage`` (float) so it can be joined onto scores by pgs_id.
+        Returns None when no coverage data is available (e.g. offline first run).
+        """
+        cov_path = self._cache_dir / "percentiles" / "chip_coverage.parquet"
+        if not cov_path.exists():
+            try:
+                pull_chip_coverage(self._cache_dir / "percentiles")
+            except Exception as exc:
+                logger.debug("Chip coverage HF pull failed: %s", exc)
+        if not cov_path.exists():
+            return None
+        try:
+            long = pl.read_parquet(cov_path)
+        except (pl.exceptions.ComputeError, OSError) as exc:
+            logger.warning("Corrupt chip_coverage.parquet (%s); deleting.", exc)
+            cov_path.unlink(missing_ok=True)
+            return None
+        if long.height == 0:
+            return None
+        wide = long.pivot(
+            on="chip",
+            index="pgs_id",
+            values=["array_ready", "coverage_ratio"],
+        )
+        # polars names pivoted columns like ``array_ready_gsa_v3`` /
+        # ``coverage_ratio_gsa_v3``; rename to ``{chip}_array_ready`` / ``{chip}_coverage``.
+        chips = long["chip"].unique().to_list()
+        rename_map: dict[str, str] = {}
+        for chip in chips:
+            for src, dst in (
+                (f"array_ready_{chip}", f"{chip}_array_ready"),
+                (f"coverage_ratio_{chip}", f"{chip}_coverage"),
+            ):
+                if src in wide.columns:
+                    rename_map[src] = dst
+        wide = wide.rename(rename_map)
+        return wide.lazy()
 
     def _load_publications_from_cache(self) -> pl.LazyFrame | None:
         """Load optional cleaned publications metadata, rebuilding stale caches."""
@@ -381,7 +437,11 @@ class PRSCatalog:
             for p in raw_dir.glob("*.parquet"):
                 p.unlink()
 
-    def scores(self, genome_build: str | None = None) -> pl.LazyFrame:
+    def scores(
+        self,
+        genome_build: str | None = None,
+        include_harmonized: bool = True,
+    ) -> pl.LazyFrame:
         """Return cleaned scores LazyFrame, optionally filtered by genome build.
 
         When ``pgs_quality_scores.parquet`` is available (synced from HF),
@@ -389,16 +449,39 @@ class PRSCatalog:
 
         Args:
             genome_build: If provided, filter to scores matching this canonical build
-                          (GRCh37, GRCh38, GRCh36). Scores with build=NR are excluded.
+                          (GRCh37, GRCh38, GRCh36). Scores with build=NR are excluded
+                          unless ``include_harmonized`` is True.
+            include_harmonized: When True (default), also include scores whose original
+                          build differs from ``genome_build`` but for which harmonized
+                          scoring files exist. An ``is_harmonized`` boolean column is
+                          added: True for scores whose original build != requested build.
         """
         lf = self._ensure_scores()
         if genome_build is not None:
-            lf = lf.filter(pl.col("genome_build").eq(genome_build))
+            native_filter = pl.col("genome_build").eq(genome_build)
+            if include_harmonized:
+                harmonizable = _HARMONIZABLE_BUILDS.get(genome_build, set())
+                if harmonizable:
+                    lf = lf.filter(native_filter | pl.col("genome_build").is_in(list(harmonizable)))
+                else:
+                    lf = lf.filter(native_filter)
+            else:
+                lf = lf.filter(native_filter)
+            lf = lf.with_columns(
+                (~pl.col("genome_build").eq(genome_build)).alias("is_harmonized"),
+            )
+        else:
+            lf = lf.with_columns(pl.lit(False).alias("is_harmonized"))
         if self._quality_lf is not None:
             quality_cols = self._quality_lf.select(
                 "pgs_id", "synthetic_score", "combined_quality_score", "quality_label",
             )
             lf = lf.join(quality_cols, on="pgs_id", how="left")
+        if not self._chip_coverage_loaded:
+            self._chip_coverage_lf = self._load_chip_coverage()
+            self._chip_coverage_loaded = True
+        if self._chip_coverage_lf is not None:
+            lf = lf.join(self._chip_coverage_lf, on="pgs_id", how="left")
         return lf
 
     def performance(self, pgs_id: str | None = None) -> pl.LazyFrame:
@@ -452,6 +535,7 @@ class PRSCatalog:
         self,
         query: str,
         genome_build: str | None = None,
+        include_harmonized: bool = True,
     ) -> pl.LazyFrame:
         """Search scores by text query across pgs_id, name, trait_reported, and trait_efo.
 
@@ -461,8 +545,9 @@ class PRSCatalog:
         Args:
             query: Search term (case-insensitive substring match)
             genome_build: Optional genome build filter (canonical form)
+            include_harmonized: Include harmonized (cross-build) scores (default True)
         """
-        lf = self.scores(genome_build=genome_build)
+        lf = self.scores(genome_build=genome_build, include_harmonized=include_harmonized)
         term = query.strip().lower()
         if not term:
             return lf

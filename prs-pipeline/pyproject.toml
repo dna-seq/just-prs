@@ -1,6 +1,6 @@
 [project]
 name = "prs-pipeline"
-version = "0.2.3"
+version = "0.2.4"
 description = "Dagster pipeline for computing PRS reference distributions from the 1000G panel"
 readme = "README.md"
 authors = [
@@ -9,9 +9,9 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "just-prs[reference]>=0.3.1",
-    "dagster>=1.12.19",
-    "dagster-webserver>=1.12.19",
-    "dagster-polars>=0.27.9",
+    "dagster>=1.13.7",
+    "dagster-webserver>=1.13.7",
+    "dagster-polars>=0.27.12",
     "python-dotenv>=1.2.2",
     "typer>=0.24.1",
     "psutil>=7.2.2",

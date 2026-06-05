@@ -241,3 +241,6 @@ scores/
 .cursor/
 *.code-workspace
 .cursor/hooks.claude/
+
+# Claude local settings
+.claude/

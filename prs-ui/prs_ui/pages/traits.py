@@ -1,163 +1,46 @@
-"""Trait Browser page: select traits to compute PRS for all associated scores.
+"""Trait selection grid for the "By Trait" mode of the Compute PRS workbench.
 
-Instead of selecting individual PGS IDs, the user browses a datagrid of
-traits (grouped from PGS Catalog scores), selects the traits of interest,
-and all PGS IDs for those traits are computed together.  The output
-(results table + trait summary) is identical to the Compute PRS tab.
+This module exposes a single reusable ``trait_selector`` component: a datagrid
+of traits (grouped from PGS Catalog scores) with Select/Clear controls.  The
+VCF source, genome-build selector, compute button, and results are provided by
+the shared :func:`prs_ui.components.prs_workbench`, so this file no longer owns
+any upload/normalization/results UI.
 """
 
 import reflex as rx
 
-from prs_ui.components.prs_section import (
-    _prs_results_header,
-    prs_ancestry_selector,
-    prs_progress_section,
-    prs_results_table,
-    trait_summary_table,
-)
 from prs_ui.grid_style import data_grid_scroll_container
 from prs_ui.state import GenomicGridState, TraitBrowserState
 from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
 
-UPLOAD_ID = "trait_vcf_upload"
 
-
-def _upload_area() -> rx.Component:
-    """VCF file upload area with drag-and-drop."""
-    return rx.upload(
-        rx.vstack(
-            rx.cond(
-                TraitBrowserState.vcf_filename != "",
-                rx.hstack(
-                    rx.icon("file-check", size=18, color="green"),
-                    rx.text(TraitBrowserState.vcf_filename, size="2", weight="medium"),
-                    align="center",
-                    spacing="2",
-                ),
-                rx.vstack(
-                    rx.icon("upload", size=24, color="gray"),
-                    rx.text(
-                        "Drop a VCF file here or click to browse",
-                        size="2",
-                        color="gray",
-                    ),
-                    rx.text(
-                        "Accepts .vcf and .vcf.gz files",
-                        size="1",
-                        color="gray",
-                    ),
-                    align="center",
-                    spacing="1",
-                ),
-            ),
-            align="center",
-            justify="center",
-            padding="24px",
-        ),
-        id=UPLOAD_ID,
-        accept={
-            "text/vcf": [".vcf"],
-            "text/plain": [".vcf"],
-            "application/gzip": [".vcf.gz", ".gz"],
-            "application/octet-stream": [".vcf.gz", ".gz"],
-        },
-        max_files=1,
-        on_drop=TraitBrowserState.handle_vcf_upload(rx.upload_files(upload_id=UPLOAD_ID)),  # type: ignore[arg-type]
-        border="2px dashed var(--gray-6)",
-        border_radius="8px",
-        width="100%",
-        cursor="pointer",
-        _hover={"border_color": "var(--accent-9)"},
-    )
-
-
-def _build_selector() -> rx.Component:
-    """Genome build selector with auto-detection message."""
+def trait_selector(state: type[rx.State] = TraitBrowserState) -> rx.Component:
+    """Trait selection grid with Select/Clear buttons and selection badges."""
+    selection_ready = (state.prs_genotypes_path != "") & ~GenomicGridState.vcf_normalizing  # type: ignore[operator]
+    selection_disabled = ~selection_ready  # type: ignore[operator]
     return rx.vstack(
-        rx.hstack(
-            rx.hstack(
-                rx.text("Genome Build:", size="2", weight="medium"),
-                rx.select(
-                    ["GRCh37", "GRCh38"],
-                    value=TraitBrowserState.genome_build,
-                    on_change=TraitBrowserState.set_genome_build,
-                    size="2",
-                ),
-                spacing="2",
-                align="center",
-            ),
-            rx.separator(orientation="vertical", size="2"),
-            prs_ancestry_selector(TraitBrowserState),
-            spacing="4",
-            align="center",
-            wrap="wrap",
-            width="100%",
-        ),
         rx.cond(
-            TraitBrowserState.build_detection_message != "",
+            GenomicGridState.vcf_normalizing,
+            rx.callout(
+                "Normalizing your VCF. Trait selection will unlock automatically "
+                "once the genotype table is ready.",
+                icon="loader",
+                color_scheme="blue",
+                size="1",
+                width="100%",
+            ),
             rx.cond(
-                TraitBrowserState.detected_build != "",
+                state.prs_genotypes_path == "",
                 rx.callout(
-                    TraitBrowserState.build_detection_message,
-                    icon="check",
-                    color_scheme="green",
-                    size="1",
-                ),
-                rx.callout(
-                    TraitBrowserState.build_detection_message,
-                    icon="triangle_alert",
-                    color_scheme="orange",
-                    size="1",
-                ),
-            ),
-        ),
-        spacing="2",
-        width="100%",
-    )
-
-
-def _genomic_data_section() -> rx.Component:
-    """Compact VCF normalization status."""
-    return rx.cond(
-        GenomicGridState.genomic_loaded,
-        rx.callout(
-            rx.text(
-                GenomicGridState.normalize_status,
-                size="2",
-                weight="medium",
-            ),
-            icon="check",
-            color_scheme="green",
-            size="1",
-            width="100%",
-        ),
-        rx.cond(
-            GenomicGridState.normalize_status != "",
-            rx.vstack(
-                rx.callout(
-                    rx.hstack(
-                        rx.spinner(size="2"),
-                        rx.text(GenomicGridState.normalize_status, size="2"),
-                        spacing="2",
-                        align="center",
-                    ),
-                    icon="info",
+                    "Upload a VCF above to enable trait selection. The table below "
+                    "is read-only until genotypes are loaded.",
+                    icon="upload",
                     color_scheme="blue",
                     size="1",
                     width="100%",
                 ),
-                rx.progress(size="2", width="100%"),
-                spacing="2",
-                width="100%",
-                padding_y="4px",
             ),
         ),
-    )
-
-
-def _trait_selector() -> rx.Component:
-    """Trait selection grid with Select/Clear buttons."""
-    return rx.vstack(
         rx.hstack(
             rx.icon("layers", size=16),
             rx.text("Select Traits", size="3", weight="bold"),
@@ -173,30 +56,30 @@ def _trait_selector() -> rx.Component:
             rx.button(
                 rx.icon("list-checks", size=14),
                 "Select Filtered",
-                on_click=TraitBrowserState.select_filtered_traits,
+                on_click=state.select_filtered_traits,
                 variant="outline",
                 size="2",
-                disabled=~TraitBrowserState.traits_loaded,  # type: ignore[operator]
+                disabled=(~state.traits_loaded) | selection_disabled,  # type: ignore[operator]
             ),
             rx.button(
                 "Clear Selection",
-                on_click=TraitBrowserState.deselect_all_traits,
+                on_click=state.deselect_all_traits,
                 variant="outline",
                 color_scheme="gray",
                 size="2",
-                disabled=TraitBrowserState.selected_traits.length() == 0,  # type: ignore[operator]
+                disabled=(state.selected_traits.length() == 0) | selection_disabled,  # type: ignore[operator]
             ),
             rx.spacer(),
             rx.cond(
-                TraitBrowserState.selected_traits.length() > 0,  # type: ignore[operator]
+                state.selected_traits.length() > 0,  # type: ignore[operator]
                 rx.hstack(
                     rx.badge(
-                        rx.text(TraitBrowserState.selected_traits.length(), " traits"),  # type: ignore[operator]
+                        rx.text(state.selected_traits.length(), " traits"),  # type: ignore[operator]
                         color_scheme="blue",
                         size="2",
                     ),
                     rx.badge(
-                        rx.text(TraitBrowserState.selected_pgs_ids.length(), " PGS IDs"),  # type: ignore[operator]
+                        rx.text(state.selected_pgs_ids.length(), " PGS IDs"),  # type: ignore[operator]
                         color_scheme="green",
                         size="2",
                     ),
@@ -209,17 +92,23 @@ def _trait_selector() -> rx.Component:
             width="100%",
         ),
         rx.cond(
-            TraitBrowserState.traits_loaded,
+            state.traits_loaded,
             rx.vstack(
-                lazyframe_grid_stats_bar(TraitBrowserState),
-                data_grid_scroll_container(
-                    lazyframe_grid(
-                        TraitBrowserState,
-                        height="400px",
-                        density="compact",
-                        column_header_height=56,
-                        checkbox_selection=True,
+                lazyframe_grid_stats_bar(state),
+                rx.box(
+                    data_grid_scroll_container(
+                        lazyframe_grid(
+                            state,
+                            height="400px",
+                            density="compact",
+                            column_header_height=56,
+                            checkbox_selection=selection_ready,
+                        ),
                     ),
+                    opacity=rx.cond(selection_ready, 1.0, 0.55),
+                    pointer_events=rx.cond(selection_ready, "auto", "none"),
+                    position="relative",
+                    width="100%",
                 ),
                 width="100%",
                 spacing="2",
@@ -234,46 +123,4 @@ def _trait_selector() -> rx.Component:
         ),
         spacing="3",
         width="100%",
-    )
-
-
-def traits_panel() -> rx.Component:
-    """Full trait browser panel: upload VCF, select traits, compute PRS, view results."""
-    return rx.vstack(
-        rx.hstack(
-            _upload_area(),
-            width="100%",
-        ),
-        _build_selector(),
-        _genomic_data_section(),
-        rx.separator(),
-        _trait_selector(),
-        rx.callout(
-            "You are responsible for ensuring that your VCF matches the population "
-            "used in the selected PRS and that the genome build is correct for the "
-            "scoring files.",
-            icon="triangle_alert",
-            color_scheme="amber",
-            size="1",
-            width="100%",
-        ),
-        rx.hstack(
-            rx.button(
-                rx.icon("calculator", size=14),
-                "Compute PRS for Selected Traits",
-                on_click=TraitBrowserState.compute_selected_prs,
-                loading=TraitBrowserState.prs_computing,
-                disabled=(TraitBrowserState.selected_pgs_ids.length() == 0) | (TraitBrowserState.vcf_filename == ""),  # type: ignore[operator]
-                color_scheme="green",
-                size="3",
-            ),
-            spacing="3",
-            align="center",
-        ),
-        prs_progress_section(TraitBrowserState),
-        _prs_results_header(TraitBrowserState),
-        trait_summary_table(TraitBrowserState),
-        prs_results_table(TraitBrowserState),
-        width="100%",
-        spacing="4",
     )

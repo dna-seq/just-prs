@@ -9,8 +9,11 @@ from prs_ui.components.prs_section import (
     prs_results_table,
     prs_scores_selector,
     prs_section,
+    prs_shared_build_bar,
+    prs_workbench,
     trait_summary_table,
 )
+from prs_ui.components.vcf_source import vcf_source_section
 from prs_ui.mixin import PRSComputeStateMixin
 
 _meta = metadata("prs-ui")
@@ -27,7 +30,10 @@ __all__ = [
     "prs_results_table",
     "prs_scores_selector",
     "prs_section",
+    "prs_shared_build_bar",
+    "prs_workbench",
     "trait_summary_table",
+    "vcf_source_section",
     "__version__",
     "__package_name__",
 ]

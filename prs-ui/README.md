@@ -50,12 +50,23 @@ def prs_page() -> rx.Component:
 
 | Component | Description |
 |-----------|-------------|
-| `prs_section(state)` | Complete PRS section: build selector + score grid + compute button + progress + results |
+| `prs_workbench(source_section, prs_state, trait_state, mode_state, trait_selector, ...)` | Unified single-tab layout: one shared genotype source + `Select by PRS` / `Select by Trait` sub-tabs, per-mode controls, compute button, and per-mode results |
+| `vcf_source_section(source_state)` | Reference **detachable** genotype source: compact VCF upload + build detection + collapsed normalized preview. Swap it for your own source in a host app |
+| `prs_shared_build_bar(source_state)` | Single genome-build selector that fans the build out to all consumer states |
+| `prs_section(state)` | Older single-state section: build selector + score grid + compute button + progress + results |
 | `prs_build_selector(state)` | Genome build dropdown (GRCh37/GRCh38) |
-| `prs_scores_selector(state)` | MUI DataGrid for score selection with checkboxes and filtering |
+| `prs_scores_selector(state)` | MUI DataGrid for score selection. Selection (checkboxes + Select/Clear) is **read-only and dimmed until genotypes are loaded**, with an "upload a VCF" callout |
 | `prs_compute_button(state)` | Compute button with disclaimer callout |
 | `prs_progress_section(state)` | Progress bar and status text during computation |
 | `prs_results_table(state)` | Results table with quality badges, interpretation cards, and CSV download |
+
+The genotype source is **loosely coupled** to the PRS logic: a source pushes a normalized
+genotypes parquet into each consumer via the additive `load_genotypes(path)` hook (and
+optionally `set_genome_build(build)`), so a host app can replace `vcf_source_section` /
+`GenomicGridState` with its own source (public genome, consumer-array file, pre-normalized
+parquet) without touching `PRSComputeStateMixin`. VCF **normalization** (not upload) is the
+slow step; it is content-aware cached (a fresh normalized parquet is reused) and shown via an
+indeterminate progress bar.
 
 ## State Mixin
 

@@ -9,8 +9,11 @@ from prs_ui.components.prs_section import (
     prs_results_table,
     prs_scores_selector,
     prs_section,
+    prs_shared_build_bar,
+    prs_workbench,
     trait_summary_table,
 )
+from prs_ui.components.vcf_source import vcf_source_section
 
 __all__ = [
     "prs_ancestry_selector",
@@ -21,5 +24,8 @@ __all__ = [
     "prs_results_table",
     "prs_scores_selector",
     "prs_section",
+    "prs_shared_build_bar",
+    "prs_workbench",
     "trait_summary_table",
+    "vcf_source_section",
 ]

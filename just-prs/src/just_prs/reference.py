@@ -45,8 +45,10 @@ def _require_pgenlib() -> None:
     except ImportError:
         raise ImportError(
             "pgenlib is required for reference panel operations but is not installed. "
-            "Install it with: pip install just-prs[reference]  "
-            "(note: pgenlib does not provide Windows wheels — it requires a C compiler on Windows)"
+            "On Linux/macOS install it with: pip install just-prs[reference] (or uv sync). "
+            "On Windows pgenlib is intentionally excluded (no Windows wheels and its "
+            "bundled C fails to compile with MSVC) — use WSL or Linux for reference-panel "
+            "/ .pgen features. The UI and VCF-based PRS computation do not need pgenlib."
         ) from None
 
 

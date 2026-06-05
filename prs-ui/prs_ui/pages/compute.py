@@ -1,245 +1,26 @@
-"""Compute PRS page: VCF upload, genome build detection, score selection via MUI DataGrid, PRS computation.
+"""Compute PRS page: a single workbench with a shared, detachable VCF source.
 
-This is the standalone page for the prs-ui app. It uses the reusable
-components from ``prs_ui.components.prs_section`` for score selection,
-progress, and results, while keeping VCF-upload-specific UI here.
+The page composes the reusable :func:`prs_ui.components.prs_workbench` with the
+reference VCF genotype source (:func:`vcf_source_section`).  One uploaded VCF is
+normalized once by ``GenomicGridState`` and fed into both the "By PRS"
+(``ComputeGridState``) and "By Trait" (``TraitBrowserState``) consumer states.
 """
 
 import reflex as rx
 
-from prs_ui.components.prs_section import (
-    _prs_results_header,
-    prs_ancestry_selector,
-    prs_progress_section,
-    prs_results_table,
-    prs_scores_selector,
-    trait_summary_table,
-)
-from prs_ui.grid_style import data_grid_scroll_container
-from prs_ui.state import ComputeGridState, GenomicGridState
-from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
-
-UPLOAD_ID = "vcf_upload"
-
-
-def _upload_area() -> rx.Component:
-    """VCF file upload area with drag-and-drop."""
-    return rx.upload(
-        rx.vstack(
-            rx.cond(
-                ComputeGridState.vcf_filename != "",
-                rx.hstack(
-                    rx.icon("file-check", size=18, color="green"),
-                    rx.text(ComputeGridState.vcf_filename, size="2", weight="medium"),
-                    align="center",
-                    spacing="2",
-                ),
-                rx.vstack(
-                    rx.icon("upload", size=24, color="gray"),
-                    rx.text(
-                        "Drop a VCF file here or click to browse",
-                        size="2",
-                        color="gray",
-                    ),
-                    rx.text(
-                        "Accepts .vcf and .vcf.gz files",
-                        size="1",
-                        color="gray",
-                    ),
-                    align="center",
-                    spacing="1",
-                ),
-            ),
-            align="center",
-            justify="center",
-            padding="24px",
-        ),
-        id=UPLOAD_ID,
-        accept={
-            "text/vcf": [".vcf"],
-            "text/plain": [".vcf"],
-            "application/gzip": [".vcf.gz", ".gz"],
-            "application/octet-stream": [".vcf.gz", ".gz"],
-        },
-        max_files=1,
-        on_drop=ComputeGridState.handle_vcf_upload(rx.upload_files(upload_id=UPLOAD_ID)),  # type: ignore[arg-type]
-        border="2px dashed var(--gray-6)",
-        border_radius="8px",
-        width="100%",
-        cursor="pointer",
-        _hover={"border_color": "var(--accent-9)"},
-    )
-
-
-def _build_selector() -> rx.Component:
-    """Genome build selector with auto-detection message (standalone-specific)."""
-    return rx.vstack(
-        rx.hstack(
-            rx.hstack(
-                rx.text("Genome Build:", size="2", weight="medium"),
-                rx.select(
-                    ["GRCh37", "GRCh38"],
-                    value=ComputeGridState.genome_build,
-                    on_change=ComputeGridState.set_genome_build,
-                    size="2",
-                ),
-                spacing="2",
-                align="center",
-            ),
-            rx.separator(orientation="vertical", size="2"),
-            prs_ancestry_selector(ComputeGridState),
-            spacing="4",
-            align="center",
-            wrap="wrap",
-            width="100%",
-        ),
-        rx.cond(
-            ComputeGridState.build_detection_message != "",
-            rx.cond(
-                ComputeGridState.detected_build != "",
-                rx.callout(
-                    ComputeGridState.build_detection_message,
-                    icon="check",
-                    color_scheme="green",
-                    size="1",
-                ),
-                rx.callout(
-                    ComputeGridState.build_detection_message,
-                    icon="triangle_alert",
-                    color_scheme="orange",
-                    size="1",
-                ),
-            ),
-        ),
-        spacing="2",
-        width="100%",
-    )
-
-
-def _genomic_data_section() -> rx.Component:
-    """Collapsible section showing normalized VCF data in a DataGrid."""
-    return rx.cond(
-        GenomicGridState.genomic_loaded,
-        rx.vstack(
-            rx.callout(
-                rx.text(
-                    GenomicGridState.normalize_status,
-                    size="2",
-                    weight="medium",
-                ),
-                icon="check",
-                color_scheme="green",
-                size="1",
-                width="100%",
-            ),
-            rx.el.details(
-                rx.el.summary(
-                    rx.hstack(
-                        rx.icon("dna", size=16),
-                        rx.text("Normalized VCF Preview", size="3", weight="bold"),
-                        rx.spacer(),
-                        rx.badge(
-                            rx.text(GenomicGridState.genomic_row_count, " variants"),
-                            color_scheme="blue",
-                            size="2",
-                        ),
-                        rx.text("Open table", size="1", color="gray"),
-                        align="center",
-                        spacing="2",
-                        width="100%",
-                    ),
-                    style={"cursor": "pointer", "listStyle": "none"},
-                ),
-                rx.vstack(
-                    lazyframe_grid_stats_bar(GenomicGridState),
-                    data_grid_scroll_container(
-                        lazyframe_grid(
-                            GenomicGridState,
-                            height="320px",
-                            density="compact",
-                            column_header_height=56,
-                        ),
-                    ),
-                    spacing="2",
-                    width="100%",
-                    padding_top="8px",
-                ),
-                width="100%",
-                style={
-                    "border": "1px solid var(--gray-5)",
-                    "borderRadius": "8px",
-                    "padding": "10px 12px",
-                    "background": "var(--gray-1)",
-                },
-            ),
-            spacing="2",
-            width="100%",
-        ),
-        rx.cond(
-            GenomicGridState.normalize_status != "",
-            rx.vstack(
-                rx.callout(
-                    rx.hstack(
-                        rx.spinner(size="2"),
-                        rx.text(GenomicGridState.normalize_status, size="2"),
-                        spacing="2",
-                        align="center",
-                    ),
-                    icon="info",
-                    color_scheme="blue",
-                    size="1",
-                    width="100%",
-                ),
-                rx.progress(size="2", width="100%"),
-                spacing="2",
-                width="100%",
-                padding_y="4px",
-            ),
-        ),
-    )
+from prs_ui.components.prs_section import prs_shared_build_bar, prs_workbench
+from prs_ui.components.vcf_source import vcf_source_section
+from prs_ui.pages.traits import trait_selector
+from prs_ui.state import AppState, ComputeGridState, GenomicGridState, TraitBrowserState
 
 
 def compute_panel() -> rx.Component:
-    """Full PRS computation panel: upload, build selector, scores grid, compute button, results.
-
-    Uses reusable PRS components for score selection and results, with
-    standalone-specific VCF upload and genomic data preview.
-    """
-    return rx.vstack(
-        rx.hstack(
-            _upload_area(),
-            width="100%",
-        ),
-        _build_selector(),
-        _genomic_data_section(),
-        rx.separator(),
-        prs_scores_selector(ComputeGridState),
-        rx.callout(
-            "You are responsible for ensuring that your VCF matches the population "
-            "used in the selected PRS and that the genome build is correct for the "
-            "scoring files.",
-            icon="triangle_alert",
-            color_scheme="amber",
-            size="1",
-            width="100%",
-        ),
-        rx.hstack(
-            rx.button(
-                rx.icon("calculator", size=14),
-                "Compute PRS",
-                on_click=ComputeGridState.compute_selected_prs,
-                loading=ComputeGridState.prs_computing,
-                disabled=(ComputeGridState.selected_pgs_ids.length() == 0) | (ComputeGridState.vcf_filename == ""),  # type: ignore[operator]
-                color_scheme="green",
-                size="3",
-            ),
-            spacing="3",
-            align="center",
-        ),
-        prs_progress_section(ComputeGridState),
-        _prs_results_header(ComputeGridState),
-        prs_results_table(ComputeGridState),
-        trait_summary_table(ComputeGridState),
-        width="100%",
-        spacing="4",
+    """Unified Compute PRS workbench: shared VCF source + By PRS / By Trait modes."""
+    return prs_workbench(
+        source_section=vcf_source_section(GenomicGridState, upload_id="vcf_upload"),
+        prs_state=ComputeGridState,
+        trait_state=TraitBrowserState,
+        mode_state=AppState,
+        trait_selector=trait_selector,
+        build_bar=prs_shared_build_bar(GenomicGridState),
     )

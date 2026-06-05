@@ -17,7 +17,7 @@ Usage in a host app::
         return prs_section(MyPRSState)
 """
 
-from typing import Any
+from typing import Any, Callable
 
 import reflex as rx
 from reflex_mui_datagrid import (
@@ -29,6 +29,7 @@ from reflex_mui_datagrid import (
 
 from just_prs.prs import PRSEngine
 from prs_ui.grid_style import data_grid_scroll_container
+from prs_ui.state import GenomicGridState
 
 
 def _merge_bell_curve_config(
@@ -165,7 +166,31 @@ def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
 
 def prs_scores_selector(state: type[rx.State]) -> rx.Component:
     """Score selection using MUI DataGrid with server-side virtual scrolling."""
+    selection_ready = (state.prs_genotypes_path != "") & ~GenomicGridState.vcf_normalizing  # type: ignore[operator]
+    selection_disabled = ~selection_ready  # type: ignore[operator]
     return rx.vstack(
+        rx.cond(
+            GenomicGridState.vcf_normalizing,
+            rx.callout(
+                "Normalizing your VCF. Score selection will unlock automatically "
+                "once the genotype table is ready.",
+                icon="loader",
+                color_scheme="blue",
+                size="1",
+                width="100%",
+            ),
+            rx.cond(
+                state.prs_genotypes_path == "",
+                rx.callout(
+                    "Upload a VCF above to enable score selection. The table below "
+                    "is read-only until genotypes are loaded.",
+                    icon="upload",
+                    color_scheme="blue",
+                    size="1",
+                    width="100%",
+                ),
+            ),
+        ),
         rx.hstack(
             rx.button(
                 rx.icon("list-checks", size=14),
@@ -173,7 +198,7 @@ def prs_scores_selector(state: type[rx.State]) -> rx.Component:
                 on_click=state.select_filtered_scores,
                 variant="outline",
                 size="2",
-                disabled=~state.compute_scores_loaded,  # type: ignore[operator]
+                disabled=(~state.compute_scores_loaded) | selection_disabled,  # type: ignore[operator]
             ),
             rx.button(
                 "Clear Selection",
@@ -181,7 +206,7 @@ def prs_scores_selector(state: type[rx.State]) -> rx.Component:
                 variant="outline",
                 color_scheme="gray",
                 size="2",
-                disabled=state.selected_pgs_ids.length() == 0,  # type: ignore[operator]
+                disabled=(state.selected_pgs_ids.length() == 0) | selection_disabled,  # type: ignore[operator]
             ),
             rx.spacer(),
             rx.cond(
@@ -201,14 +226,20 @@ def prs_scores_selector(state: type[rx.State]) -> rx.Component:
             state.compute_scores_loaded,
             rx.vstack(
                 lazyframe_grid_stats_bar(state),
-                data_grid_scroll_container(
-                    lazyframe_grid(
-                        state,
-                        height="400px",
-                        density="compact",
-                        column_header_height=56,
-                        checkbox_selection=True,
+                rx.box(
+                    data_grid_scroll_container(
+                        lazyframe_grid(
+                            state,
+                            height="400px",
+                            density="compact",
+                            column_header_height=56,
+                            checkbox_selection=selection_ready,
+                        ),
                     ),
+                    opacity=rx.cond(selection_ready, 1.0, 0.55),
+                    pointer_events=rx.cond(selection_ready, "auto", "none"),
+                    position="relative",
+                    width="100%",
                 ),
                 width="100%",
                 spacing="2",
@@ -405,8 +436,22 @@ def _prs_disclaimers(state: type[rx.State]) -> rx.Component:
     )
 
 
-def _prs_results_header(state: type[rx.State]) -> rx.Component:
+def _prs_results_header(
+    state: type[rx.State],
+    show_view_toggle: bool = True,
+) -> rx.Component:
     """Header bar above PRS results: view mode toggle + download button."""
+    view_toggle = (
+        rx.segmented_control.root(
+            rx.segmented_control.item("Grouped", value="grouped"),
+            rx.segmented_control.item("Individual", value="individual"),
+            value=state.prs_view_mode,
+            on_change=state.set_prs_view_mode,
+            size="2",
+        )
+        if show_view_toggle
+        else rx.fragment()
+    )
     return rx.cond(
         state.prs_results.length() > 0,  # type: ignore[operator]
         rx.vstack(
@@ -414,13 +459,7 @@ def _prs_results_header(state: type[rx.State]) -> rx.Component:
                 rx.icon("bar-chart-3", size=16),
                 rx.text("PRS Results", size="3", weight="bold"),
                 rx.spacer(),
-                rx.segmented_control.root(
-                    rx.segmented_control.item("Grouped", value="grouped"),
-                    rx.segmented_control.item("Individual", value="individual"),
-                    value=state.prs_view_mode,
-                    on_change=state.set_prs_view_mode,
-                    size="2",
-                ),
+                view_toggle,
                 rx.button(
                     rx.icon("download", size=14),
                     "CSV",
@@ -542,11 +581,19 @@ def prs_results_table(
                 overflow="hidden",
                 width="100%",
             ),
-            rx.text(
-                "Click the chevron on any row for a bell curve showing your position, "
-                "absolute-risk context, population percentile spread, and quality flags.",
-                size="1",
-                color="gray",
+            rx.hstack(
+                rx.icon("chevron-right", size=14, color="var(--accent-9)"),
+                rx.text(
+                    "Expand any row (chevron on the left) for a bell curve showing your "
+                    "position, absolute-risk context, percentile spread, quality flags, and "
+                    "one-click ",
+                    rx.text.strong("Ask AI buttons (ChatGPT, Claude, and more)"),
+                    " that open a ready-made prompt explaining your result.",
+                    size="1",
+                    color="gray",
+                ),
+                spacing="1",
+                align="center",
                 flex_shrink="0",
             ),
             display="flex",
@@ -678,12 +725,19 @@ def trait_summary_table(
                 overflow="hidden",
                 width="100%",
             ),
-            rx.text(
-                "Click the chevron on any trait row to see: a bell curve showing where "
-                "each model places you, variant match rates, key statistics, and a plain-language explanation "
-                "of what the results mean and why models may disagree.",
-                size="1",
-                color="gray",
+            rx.hstack(
+                rx.icon("chevron-right", size=14, color="var(--accent-9)"),
+                rx.text(
+                    "Expand any trait row (chevron on the left) to see a bell curve showing where "
+                    "each model places you, variant match rates, key statistics, a plain-language "
+                    "explanation of why models may disagree, and one-click ",
+                    rx.text.strong("Ask AI buttons (ChatGPT, Claude, and more)"),
+                    " that open a ready-made prompt about this trait.",
+                    size="1",
+                    color="gray",
+                ),
+                spacing="1",
+                align="center",
                 flex_shrink="0",
             ),
             display="flex",
@@ -693,6 +747,223 @@ def trait_summary_table(
             min_height="0",
             width="100%",
         ),
+    )
+
+
+def prs_shared_build_bar(source_state: type[rx.State]) -> rx.Component:
+    """Genome-build selector owned by a shared genotype source.
+
+    Unlike :func:`prs_build_selector` (which is per-consumer), this binds to a
+    source state's ``genome_build`` and ``set_shared_genome_build`` so a single
+    control fans the build out to every consumer of that source.
+    """
+    return rx.hstack(
+        rx.text("Genome Build:", size="2", weight="medium"),
+        rx.select(
+            ["GRCh37", "GRCh38"],
+            value=source_state.genome_build,
+            on_change=source_state.set_shared_genome_build,
+            size="2",
+        ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "Genome build of your uploaded data. Auto-detected from the VCF "
+                "header when possible; the selected build is applied to both the "
+                "'By PRS' and 'By Trait' score selections."
+            ),
+        ),
+        spacing="2",
+        align="center",
+    )
+
+
+def _workbench_mode_controls(state: type[rx.State]) -> rx.Component:
+    """Per-mode controls (engine, ancestry, harmonized) for a consumer state."""
+    return rx.hstack(
+        prs_engine_selector(state),
+        rx.separator(orientation="vertical", size="2"),
+        prs_ancestry_selector(state),
+        rx.separator(orientation="vertical", size="2"),
+        rx.checkbox(
+            "Include harmonized scores",
+            checked=state.include_harmonized,
+            on_change=state.set_include_harmonized,
+            size="2",
+        ),
+        spacing="4",
+        align="center",
+        wrap="wrap",
+        width="100%",
+    )
+
+
+def _workbench_compute_button(state: type[rx.State], label: str) -> rx.Component:
+    """Compute button + disclaimer that reads genotype readiness from the consumer.
+
+    Decoupled from any VCF source: readiness is inferred from the consumer's own
+    ``prs_genotypes_path`` (set by the source via ``load_genotypes``), so the
+    same button works regardless of where the genotypes came from.
+    """
+    not_ready = (state.selected_pgs_ids.length() == 0) | (state.prs_genotypes_path == "") | GenomicGridState.vcf_normalizing  # type: ignore[operator]
+    return rx.vstack(
+        rx.callout(
+            "You are responsible for ensuring that your genomic data matches the "
+            "population used in the selected PRS and that the genome build is "
+            "correct for the scoring files.",
+            icon="triangle_alert",
+            color_scheme="amber",
+            size="1",
+            width="100%",
+        ),
+        rx.hstack(
+            rx.button(
+                rx.icon("calculator", size=14),
+                label,
+                on_click=state.compute_selected_prs,
+                loading=state.prs_computing,
+                disabled=not_ready,
+                color_scheme="green",
+                size="3",
+            ),
+            rx.cond(
+                not_ready,
+                rx.text(
+                    rx.cond(
+                        GenomicGridState.vcf_normalizing,
+                        "VCF normalization in progress...",
+                        rx.cond(
+                            state.prs_genotypes_path == "",
+                            rx.cond(
+                                state.selected_pgs_ids.length() == 0,  # type: ignore[operator]
+                                "Load genomic data and select at least one score to compute.",
+                                "Load genomic data to enable computation.",
+                            ),
+                            "Select at least one score to enable computation.",
+                        ),
+                    ),
+                    size="2",
+                    color="gray",
+                ),
+            ),
+            spacing="3",
+            align="center",
+        ),
+        spacing="3",
+        width="100%",
+    )
+
+
+def _workbench_results(
+    state: type[rx.State],
+    view_mode: str,
+    results_table_kwargs: dict[str, Any] | None,
+    trait_summary_kwargs: dict[str, Any] | None,
+) -> rx.Component:
+    """Progress, results header, and the active workbench result table."""
+    table = (
+        trait_summary_table(state, **(trait_summary_kwargs or {}))
+        if view_mode == "grouped"
+        else prs_results_table(state, **(results_table_kwargs or {}))
+    )
+    return rx.fragment(
+        prs_progress_section(state),
+        _prs_results_header(state, show_view_toggle=False),
+        table,
+    )
+
+
+def prs_workbench(
+    source_section: rx.Component,
+    prs_state: type[rx.State],
+    trait_state: type[rx.State],
+    mode_state: type[rx.State],
+    trait_selector: Callable[[], rx.Component],
+    build_bar: rx.Component | None = None,
+    results_table_kwargs: dict[str, Any] | None = None,
+    trait_summary_kwargs: dict[str, Any] | None = None,
+) -> rx.Component:
+    """Unified PRS workbench: one shared genotype source + By PRS / By Trait modes.
+
+    A single, detachable genotype ``source_section`` feeds two consumer states
+    (``prs_state`` for individual-score selection, ``trait_state`` for
+    trait-group selection).  A segmented control bound to ``mode_state`` switches
+    between the two; results are shown for the active mode only.
+
+    The source is loosely coupled: it only needs to push normalized genotypes
+    into the consumers via their inherited ``load_genotypes(path)`` hook (and
+    optionally ``set_genome_build``).  A host app (e.g. just-dna-lite) can pass
+    its own ``source_section`` (public genome, array file, ...) without changing
+    the consumers or ``PRSComputeStateMixin``.
+
+    Args:
+        source_section: The genotype source UI (e.g. ``vcf_source_section(...)``).
+        prs_state: Concrete "By PRS" consumer state (mixes in PRSComputeStateMixin).
+        trait_state: Concrete "By Trait" consumer state.
+        mode_state: State providing ``compute_mode`` / ``set_compute_mode``.
+        trait_selector: Zero-arg callable returning the trait-selection grid UI.
+        build_bar: Optional shared genome-build control (e.g. ``prs_shared_build_bar``).
+        results_table_kwargs: Forwarded to :func:`prs_results_table`.
+        trait_summary_kwargs: Forwarded to :func:`trait_summary_table`.
+    """
+    def _tab_trigger(label: str, icon_name: str, value: str) -> rx.Component:
+        return rx.tabs.trigger(
+            rx.hstack(
+                rx.icon(icon_name, size=18),
+                rx.text(label, size="3", weight="bold"),
+                spacing="2",
+                align="center",
+            ),
+            value=value,
+            padding="10px 24px",
+            cursor="pointer",
+        )
+
+    prs_content = rx.vstack(
+        _workbench_mode_controls(prs_state),
+        prs_scores_selector(prs_state),
+        _workbench_compute_button(prs_state, "Compute PRS"),
+        _workbench_results(
+            prs_state, "individual", results_table_kwargs, trait_summary_kwargs
+        ),
+        width="100%",
+        spacing="4",
+        padding="16px",
+    )
+    trait_content = rx.vstack(
+        _workbench_mode_controls(trait_state),
+        trait_selector(),
+        _workbench_compute_button(
+            trait_state, "Compute PRS for Selected Traits"
+        ),
+        _workbench_results(
+            trait_state, "grouped", results_table_kwargs, trait_summary_kwargs
+        ),
+        width="100%",
+        spacing="4",
+        padding="16px",
+    )
+
+    return rx.theme(
+        rx.vstack(
+            source_section,
+            build_bar if build_bar is not None else rx.fragment(),
+            rx.tabs.root(
+                rx.tabs.list(
+                    _tab_trigger("Select by PRS", "list-checks", "prs"),
+                    _tab_trigger("Select by Trait", "layers", "trait"),
+                    size="2",
+                ),
+                rx.tabs.content(prs_content, value="prs", width="100%"),
+                rx.tabs.content(trait_content, value="trait", width="100%"),
+                value=mode_state.compute_mode,
+                on_change=mode_state.set_compute_mode,
+                width="100%",
+            ),
+            width="100%",
+            spacing="4",
+        ),
+        has_background=False,
     )
 
 

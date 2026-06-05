@@ -1,6 +1,9 @@
 """CLI for prs-ui: launch the Reflex dev server."""
 
 import os
+import platform
+import shutil
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -13,6 +16,48 @@ _FRONTEND_PORT_ENV = "PRS_UI_PORT"
 _BACKEND_PORT_ENV = "PRS_UI_BACKEND_PORT"
 _PRESELECT_ENABLED_ENV = "PRS_UI_PRESELECT_ENABLED"
 _PRESELECT_QUERY_ENV = "PRS_UI_PRESELECT_QUERY"
+
+# Reflex bundles bun on first run and shells out to `unzip` to extract it on
+# Linux (this includes WSL). Fresh WSL/Ubuntu installs frequently lack `unzip`,
+# producing a cryptic ``SystemPackageMissingError`` deep inside Reflex. We detect
+# it up front and print an actionable message instead.
+_REQUIRED_SYSTEM_BINARIES = ("unzip",)
+
+
+def _is_wsl() -> bool:
+    """Return True when running under Windows Subsystem for Linux."""
+    if os.environ.get("WSL_DISTRO_NAME") or os.environ.get("WSL_INTEROP"):
+        return True
+    return "microsoft" in platform.release().lower()
+
+
+def _check_system_dependencies() -> None:
+    """Verify required system binaries exist before handing off to Reflex.
+
+    Reflex needs ``unzip`` to install its bundled ``bun`` runtime on Linux/WSL.
+    When missing, exit early with a clear ``apt install`` hint rather than the
+    opaque ``SystemPackageMissingError`` traceback Reflex would otherwise raise.
+    """
+    if platform.system() == "Windows":
+        return
+
+    missing = [name for name in _REQUIRED_SYSTEM_BINARIES if shutil.which(name) is None]
+    if not missing:
+        return
+
+    packages = " ".join(missing)
+    context = "WSL" if _is_wsl() else "this system"
+    console.print(
+        f"[bold red]Missing required system package(s):[/bold red] {packages}"
+    )
+    console.print(
+        f"Reflex needs them to install its bundled bun runtime, but they are "
+        f"not installed on {context}."
+    )
+    console.print("Install them with your package manager, for example:")
+    console.print(f"  [bold]sudo apt-get update && sudo apt-get install -y {packages}[/bold]")
+    console.print("Then re-run [bold]uv run ui[/bold].")
+    sys.exit(1)
 
 
 def _env_port(env_name: str) -> int | None:
@@ -39,6 +84,8 @@ def _launch_reflex() -> None:
     default (3000/8000) and auto-increments to the next free port if
     busy — so multiple Reflex apps can run side-by-side.
     """
+    _check_system_dependencies()
+
     prs_ui_dir = Path(__file__).resolve().parent.parent
     os.chdir(prs_ui_dir)
 

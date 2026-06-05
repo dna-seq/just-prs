@@ -1491,7 +1491,7 @@ requires-dist = [
 
 [[package]]
 name = "prs-ui"
-version = "0.3.3"
+version = "0.3.4"
 source = { editable = "prs-ui" }
 dependencies = [
     { name = "just-prs" },

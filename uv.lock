@@ -933,7 +933,7 @@ wheels = [
 
 [[package]]
 name = "just-prs"
-version = "0.4.6"
+version = "0.4.7"
 source = { editable = "just-prs" }
 dependencies = [
     { name = "duckdb" },
@@ -1443,7 +1443,7 @@ wheels = [
 
 [[package]]
 name = "prs-pipeline"
-version = "0.2.4"
+version = "0.2.5"
 source = { editable = "prs-pipeline" }
 dependencies = [
     { name = "dagster" },
@@ -1468,7 +1468,7 @@ requires-dist = [
 
 [[package]]
 name = "prs-ui"
-version = "0.3.2"
+version = "0.3.3"
 source = { editable = "prs-ui" }
 dependencies = [
     { name = "just-prs" },

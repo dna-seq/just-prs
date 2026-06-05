@@ -1002,7 +1002,7 @@ _AI_ASSISTANTS: list[dict[str, str]] = [
     },
     {
         "name": "Claude", "base_url": "https://claude.ai/new?q=",
-        "color": "#DA7756", "iconUrl": "/anthropic.svg",
+        "color": "#DA7756", "iconUrl": "/claude.svg",
         "limit_env": "PRS_AI_CLAUDE_MAX_CHARS", "default_limit": "6000",
     },
     {
@@ -1280,6 +1280,17 @@ def _build_ai_links(prompt_fn: Any, row: dict[str, Any]) -> list[dict[str, Any]]
         if assistant.get("iconUrl"):
             link["iconUrl"] = assistant["iconUrl"]
         links.append(link)
+    other_limit = int(os.environ.get("PRS_AI_OTHER_MAX_CHARS", "6000"))
+    other_prompt = prompt_fn(row, other_limit)
+    links.append({
+        "label": "Other LLMs ⓘ",
+        "copyText": other_prompt,
+        "color": "#5f6368",
+        "title": (
+            "Copy the prompt, then paste it into Gemini or another LLM manually. "
+            "Some assistants do not support reliable prompt-prefill URLs."
+        ),
+    })
     return links
 
 

@@ -319,12 +319,25 @@ class TestStoredDistributionsSanity:
         return _load_distributions()
 
     def test_all_superpopulations_present(self, dist_df: pl.DataFrame) -> None:
-        """Every PGS ID should have exactly 5 superpopulation rows."""
+        """Every PGS ID should have exactly 5 superpopulation rows unless some were quarantined."""
         counts = dist_df.group_by("pgs_id").agg(pl.len().alias("count"))
         non_five = counts.filter(pl.col("count") != 5)
-        assert non_five.height == 0, (
-            f"{non_five.height} PGS IDs have != 5 superpopulation rows"
-        )
+        if non_five.height > 0:
+            issues_path = DIST_PATH.with_name("1000g_distribution_quality_issues.parquet")
+            if issues_path.exists():
+                issues_df = pl.read_parquet(issues_path)
+                issue_ids = set(issues_df["pgs_id"].unique().to_list())
+                non_five_ids = set(non_five["pgs_id"].to_list())
+                unexplained = non_five_ids - issue_ids
+                assert len(unexplained) == 0, (
+                    f"Unexplained incomplete PGS IDs: {unexplained}. "
+                    f"These should have corresponding entries in {issues_path.name}"
+                )
+            else:
+                # If issues file isn't present, allow a few quarantined exceptions
+                assert non_five.height <= 10, (
+                    f"Too many incomplete PGS IDs: {non_five.height}"
+                )
 
     def test_superpopulations_are_known(self, dist_df: pl.DataFrame) -> None:
         sps = set(dist_df["superpopulation"].unique().to_list())

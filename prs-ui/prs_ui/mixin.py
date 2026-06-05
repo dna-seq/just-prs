@@ -17,7 +17,11 @@ from typing import Any
 
 import polars as pl
 import reflex as rx
-from reflex_mui_datagrid.lazyframe_grid import _get_cache, apply_filter_model
+from reflex_mui_datagrid.lazyframe_grid import (
+    LazyFrameGridMixin,
+    _get_cache,
+    apply_filter_model,
+)
 
 from just_prs.enrich import enrich_prs_result
 from just_prs.ftp import METADATA_FILES
@@ -982,6 +986,30 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         lazily inside ``_get_genotypes_lf()`` on a copy.
         """
         self._prs_genotypes_lf = lf
+
+    def load_genotypes(self, path: str) -> None:
+        """Loose-coupling hook: feed normalized genotypes from any source.
+
+        This is the contract a genotype **source** uses to push data into this
+        consumer state.  The reference source is the VCF upload (``prs-ui``),
+        but a host app (e.g. ``just-dna-lite``) can call this from any source
+        -- a public genome, a consumer-array file, or a pre-normalized parquet
+        -- without the mixin knowing anything about where the data came from.
+
+        ``path`` is a normalized genotypes parquet (same schema as
+        ``normalize_vcf()`` output).  Passing an empty string clears the source.
+        Any previously computed results are reset so stale output is never shown
+        against a new genome.
+        """
+        self.prs_genotypes_path = path
+        if path and Path(path).exists():
+            self._prs_genotypes_lf = pl.scan_parquet(path)
+        else:
+            self._prs_genotypes_lf = None
+        self.prs_results = []
+        self.trait_summary_rows = []
+        self.trait_summary_visible = False
+        self.low_match_warning = False
 
     def _get_genotypes_lf(self) -> pl.LazyFrame | None:
         """Resolve genotypes: explicit LazyFrame first, then parquet path.
@@ -2377,6 +2405,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         yield from self.set_lazyframe(  # type: ignore[attr-defined]
             lf,
             chunk_size=500,
+            eager_value_options_row_limit=0,
             column_overrides=_compute_score_column_overrides(),
         )
         total = lf.select(pl.len()).collect().item()
@@ -2394,46 +2423,95 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
 
     def handle_lf_grid_row_selection(self, model: dict) -> None:
-        """Track selected PGS IDs from compute grid checkbox selection.
+        """Merge grid checkbox changes into the durable ``selected_pgs_ids``.
 
         Overrides ``LazyFrameGridMixin.handle_lf_grid_row_selection`` so that
         ``lazyframe_grid()`` automatically calls this without needing an
         explicit ``on_row_selection_model_change`` kwarg.
+
+        ``selected_pgs_ids`` is the authoritative selection store. The MUI
+        selection model, by contrast, is scoped to the rows currently loaded
+        under the active filter/sort and is keyed by the positional
+        ``__row_id__`` that is renumbered every time the filter or sort
+        changes. Treating that model as the source of truth wipes selections
+        made under a previous filter (the user's complaint). Instead, each
+        event only updates the pgs_ids within the **currently loaded scope**
+        and leaves out-of-scope selections (e.g. from a different trait
+        filter) intact.
 
         Handles MUI DataGrid v8 selection model:
         - {type: "include", ids: [...]} -- only listed rows are selected
         - {type: "exclude", ids: [...]} -- all rows EXCEPT listed are selected
         - {type: "exclude", ids: []} -- all rows selected (header checkbox)
         """
-        self.lf_grid_row_selection_model = model  # type: ignore[assignment]
-        self.status_message = f"Selection event: {model}"  # type: ignore[attr-defined]
-
         selection_type: str = model.get("type", "include")
         raw_ids: list = model.get("ids", [])
         selected_row_ids: set[int] = {int(i) for i in raw_ids}
 
+        # Header "select all" (exclude with no explicit ids) -> add the full
+        # filtered set to the existing selection.
         if selection_type == "exclude" and not selected_row_ids:
             self.select_filtered_scores()
             return
-        if selection_type == "include" and not selected_row_ids:
-            self.selected_pgs_ids = []
-            return
 
-        pgs_ids: list[str] = []
+        # Map the event onto the rows currently loaded in the grid. Only these
+        # pgs_ids are "in scope" of this selection event; everything else stays
+        # as-is so cross-filter selections survive.
+        loaded_scope: set[str] = set()
+        within_scope: list[str] = []
         for row in self.lf_grid_rows:  # type: ignore[attr-defined]
+            pgs_id_raw = row.get("pgs_id")
+            if not pgs_id_raw:
+                continue
+            pgs_id = str(pgs_id_raw)
+            loaded_scope.add(pgs_id)
             row_id = row.get("__row_id__")
             in_set = (int(row_id) in selected_row_ids) if row_id is not None else False
             if (selection_type == "include" and in_set) or (
                 selection_type == "exclude" and not in_set
             ):
-                pgs_id = row.get("pgs_id")
-                if pgs_id:
-                    pgs_ids.append(str(pgs_id))
-        self.selected_pgs_ids = pgs_ids
-        self.status_message = f"Selected {len(pgs_ids)} scores (from {len(self.lf_grid_rows)} loaded rows)"  # type: ignore[attr-defined]
+                within_scope.append(pgs_id)
+
+        preserved = [pid for pid in self.selected_pgs_ids if pid not in loaded_scope]
+        merged = list(dict.fromkeys([*preserved, *within_scope]))
+        self.selected_pgs_ids = merged
+        self._sync_loaded_grid_selection(merged)
+        self.status_message = f"Selected {len(merged)} scores"  # type: ignore[attr-defined]
+
+    def handle_lf_grid_filter(self, filter_model: dict) -> Any:
+        """Apply a server-side filter, then restore selection on the new view.
+
+        The upstream handler reloads the grid rows (renumbering ``__row_id__``)
+        but never touches the selection. Without re-syncing, MUI prunes the now
+        non-existent selected row ids and the user's selection appears to
+        vanish when the filter changes. ``selected_pgs_ids`` is durable, so we
+        just re-project it onto the freshly loaded rows.
+        """
+        yield from LazyFrameGridMixin.handle_lf_grid_filter(self, filter_model)
+        self._sync_loaded_grid_selection(self.selected_pgs_ids)
+
+    def handle_lf_grid_sort(self, sort_model: list) -> Any:
+        """Apply a server-side sort, then restore selection on the new view."""
+        yield from LazyFrameGridMixin.handle_lf_grid_sort(self, sort_model)
+        self._sync_loaded_grid_selection(self.selected_pgs_ids)
+
+    def clear_lf_grid_filters(self) -> Any:
+        """Clear all grid filters, then restore selection on the new view."""
+        yield from LazyFrameGridMixin.clear_lf_grid_filters(self)
+        self._sync_loaded_grid_selection(self.selected_pgs_ids)
+
+    def handle_lf_grid_scroll_end(self, params: dict) -> Any:
+        """Load the next scroll chunk, then mark any selected rows as checked."""
+        yield from LazyFrameGridMixin.handle_lf_grid_scroll_end(self, params)
+        self._sync_loaded_grid_selection(self.selected_pgs_ids)
 
     def select_filtered_scores(self) -> None:
-        """Select PGS IDs matching the current grid filter (or all if no filter active)."""
+        """Add PGS IDs matching the current grid filter to the selection.
+
+        Additive (unions with the existing selection) so that selecting one
+        trait's scores, changing the filter, and selecting another trait's
+        scores accumulates instead of replacing the previous selection.
+        """
         if self._compute_scores_lf is None:
             return
         lf = self._compute_scores_lf
@@ -2442,9 +2520,13 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             schema = cache.schema if cache else None
             lf = apply_filter_model(lf, self._lf_grid_filter, schema)  # type: ignore[attr-defined]
         ids = lf.select("pgs_id").collect()["pgs_id"].to_list()
-        self.selected_pgs_ids = ids
-        self._sync_loaded_grid_selection(ids)
-        self.status_message = f"Selected {len(ids)} scores"  # type: ignore[attr-defined]
+        merged = list(dict.fromkeys([*self.selected_pgs_ids, *(str(i) for i in ids)]))
+        added = len(merged) - len(self.selected_pgs_ids)
+        self.selected_pgs_ids = merged
+        self._sync_loaded_grid_selection(merged)
+        self.status_message = (  # type: ignore[attr-defined]
+            f"Added {added} score(s) to selection ({len(merged)} total)"
+        )
 
     def deselect_all_scores(self) -> None:
         """Clear all selected PGS IDs."""
@@ -2487,6 +2569,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         yield from self.set_lazyframe(  # type: ignore[attr-defined]
             lf,
             chunk_size=500,
+            eager_value_options_row_limit=0,
             column_overrides=_compute_score_column_overrides(),
         )
 

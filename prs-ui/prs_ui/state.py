@@ -12,7 +12,7 @@ consumer apps can import it without registering these demo-only states.
 """
 
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import polars as pl
 import reflex as rx
@@ -49,6 +49,7 @@ class AppState(rx.State):
     pgs_id_input: str = "PGS000001"
     genome_build: str = "GRCh38"
     active_tab: str = "compute"
+    compute_mode: str = "prs"
 
     def set_pgs_id(self, value: str) -> None:
         self.pgs_id_input = value
@@ -58,6 +59,10 @@ class AppState(rx.State):
 
     def set_active_tab(self, value: str) -> None:
         self.active_tab = value
+
+    def set_compute_mode(self, value: str | list[str]) -> None:
+        """Switch the Compute PRS workbench between 'prs' and 'trait' selection."""
+        self.compute_mode = value if isinstance(value, str) else (value[0] if value else "prs")
 
 
 class MetadataGridState(LazyFrameGridMixin, AppState):
@@ -129,41 +134,166 @@ class MetadataGridState(LazyFrameGridMixin, AppState):
 
 
 class GenomicGridState(LazyFrameGridMixin, AppState):
-    """Grid state for viewing normalized VCF genomic data.
+    """Detachable genotype source: VCF upload + normalization + preview grid.
 
-    After a VCF is uploaded and normalized, the resulting Parquet is loaded
-    into this grid for interactive browsing.  The normalized parquet path
-    is also used by ``ComputeGridState`` to feed pre-filtered genotypes
-    into PRS computation.
+    This is the *reference* genotype source for the prs-ui demo app.  It owns
+    all VCF UI state (filename, detected build, normalized parquet) and feeds
+    the normalized genotypes into any registered **consumer** state (a state
+    that mixes in ``PRSComputeStateMixin``) via the loose-coupling hooks
+    ``consumer.load_genotypes(path)`` and ``consumer.set_genome_build(build)``.
+
+    Coupling is wiring-time, not hardcoded: register consumers by assigning
+    ``GenomicGridState._consumer_states = [...]`` (done at the bottom of this
+    module).  A host app such as just-dna-lite can ignore this source entirely
+    and drive the same consumer hooks from a different source (e.g. a public
+    genome selector) without touching the mixin.
     """
+
+    #: Consumer state classes fed by this source.  Set at app-wiring time.
+    _consumer_states: ClassVar[list[type]] = []
 
     normalized_parquet_path: str = ""
     normalize_status: str = ""
+    vcf_normalizing: bool = False
     genomic_loaded: bool = False
     genomic_row_count: int = 0
 
-    _normalizing: bool = False
+    vcf_filename: str = ""
+    detected_build: str = ""
+    build_detection_message: str = ""
+
+    _vcf_path: str = ""
+    _preloaded_vcf_initialized: bool = False
+
+    def _normalized_parquet_path(self, src: Path) -> Path:
+        """Deterministic output path for a normalized VCF parquet."""
+        out_dir = Path(self.cache_dir) / "normalized"
+        return out_dir / (src.stem.removesuffix(".vcf") + ".parquet")
+
+    def _set_vcf_source(self, path: Path, label_prefix: str) -> str:
+        """Record a VCF path and detect its genome build.
+
+        Returns the detected build (``""`` if undetected) so callers can fan
+        the build out to consumer states.
+        """
+        self._vcf_path = str(path)
+        self.vcf_filename = path.name
+
+        detected = detect_genome_build(path)
+        if detected is not None:
+            self.detected_build = detected
+            self.genome_build = detected
+            self.build_detection_message = f"Detected genome build: {detected}"
+        else:
+            self.detected_build = ""
+            self.build_detection_message = (
+                "Could not detect genome build from VCF header. "
+                "Please select it manually."
+            )
+        self.status_message = f"{label_prefix} {path.name}"
+        return self.detected_build
+
+    async def _push_to_consumers(self) -> Any:
+        """Push normalized genotypes (and changed build) into every consumer.
+
+        Consumers are mutated directly via ``get_state`` rather than by yielding
+        cross-state ``EventSpec``s.  Yielding chained events *after* the long,
+        blocking ``normalize_vcf()`` call triggers Reflex's "Cannot add a child
+        to an EventFuture that is already done" error and stalls the event
+        queue (which also makes grid checkbox selection sluggish/unresponsive).
+        Direct mutation enqueues no child events and is reliable and ordered.
+        """
+        for consumer_cls in self._consumer_states:
+            consumer = await self.get_state(consumer_cls)
+            consumer.load_genotypes(self.normalized_parquet_path)
+            if self.detected_build and self.detected_build != consumer.genome_build:
+                for event in consumer.set_genome_build(self.detected_build):
+                    yield event
+
+    async def set_shared_genome_build(self, value: str) -> Any:
+        """Manual genome-build override shared across all consumer states."""
+        self.genome_build = value
+        self.detected_build = ""
+        for consumer_cls in self._consumer_states:
+            consumer = await self.get_state(consumer_cls)
+            for event in consumer.set_genome_build(value):
+                yield event
+
+    async def handle_vcf_upload(self, files: list[rx.UploadFile]) -> Any:
+        """Save an uploaded VCF, normalize it, and feed all consumer states."""
+        if not files:
+            return
+        upload_file = files[0]
+        filename = upload_file.filename or "uploaded.vcf"
+        upload_dir = rx.get_upload_dir()
+        dest = upload_dir / filename
+
+        self.vcf_filename = filename
+        self.vcf_normalizing = True
+        self.genomic_loaded = False
+        self.normalize_status = f"Saving {filename}..."
+        self.status_message = self.normalize_status
+        yield
+
+        contents = await upload_file.read()
+        dest.write_bytes(contents)
+
+        self._set_vcf_source(dest, label_prefix="Uploaded")
+        for event in self.normalize_uploaded_vcf(str(dest)):
+            yield event
+        async for event in self._push_to_consumers():
+            yield event
+
+    async def initialize_source(self) -> Any:
+        """Normalize an optional preloaded VCF and feed consumers on startup."""
+        if self._preloaded_vcf_initialized or self._vcf_path:
+            return
+        self._preloaded_vcf_initialized = True
+
+        preloaded_vcf = _resolve_preloaded_vcf_path()
+        if preloaded_vcf is None:
+            return
+        if not preloaded_vcf.exists():
+            self.status_message = f"Configured preloaded VCF does not exist: {preloaded_vcf}"
+            self.build_detection_message = "Configured preloaded VCF was not found."
+            return
+
+        self._set_vcf_source(preloaded_vcf, label_prefix="Preloaded")
+        for event in self.normalize_uploaded_vcf(str(preloaded_vcf)):
+            yield event
+        async for event in self._push_to_consumers():
+            yield event
 
     def normalize_uploaded_vcf(self, vcf_path: str, sex: str = "") -> Any:
-        """Run VCF normalization and load the result into this grid."""
+        """Normalize a VCF and load the preview grid (no consumer fan-out)."""
         if not vcf_path:
             self.normalize_status = "No VCF path provided."
             return
-        self._normalizing = True
-        self.normalize_status = "Normalizing VCF..."
+        self.vcf_normalizing = True
+        self.genomic_loaded = False
+        self.normalize_status = (
+            "Normalizing VCF — this is the slow step; large files can take up to a "
+            "minute or two. Please wait."
+        )
         yield
 
         src = Path(vcf_path)
-        out_dir = Path(self.cache_dir) / "normalized"
-        out_dir.mkdir(parents=True, exist_ok=True)
-        parquet_name = src.stem.removesuffix(".vcf") + ".parquet"
-        output_path = out_dir / parquet_name
+        output_path = self._normalized_parquet_path(src)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        config = VcfFilterConfig(
-            pass_filters=["PASS", "."],
-            sex=sex if sex else None,
+        # Content-aware cache: reuse an existing normalized parquet when it is at
+        # least as recent as the source VCF.  Re-normalizing a large VCF on every
+        # upload is the main cause of the "normalization never finishes" regression.
+        cache_fresh = (
+            output_path.exists()
+            and output_path.stat().st_mtime >= src.stat().st_mtime
         )
-        normalize_vcf(src, output_path, config=config)
+        if not cache_fresh:
+            config = VcfFilterConfig(
+                pass_filters=["PASS", "."],
+                sex=sex if sex else None,
+            )
+            normalize_vcf(src, output_path, config=config)
 
         self.normalized_parquet_path = str(output_path)
 
@@ -181,53 +311,28 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
         row_count = lf.select(pl.len()).collect().item()
         self.genomic_row_count = row_count
         self.genomic_loaded = True
-        self._normalizing = False
+        self.vcf_normalizing = False
         self.normalize_status = f"Normalized: {row_count:,} variants"
         self.status_message = f"VCF normalized: {row_count:,} variants"
 
 
 class ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
-    """Concrete state for the standalone Compute PRS page.
+    """Concrete "By PRS" consumer state for the Compute PRS workbench.
 
-    Adds VCF-upload-specific behavior on top of PRSComputeStateMixin.
-    Inherits shared vars from AppState and grid vars from LazyFrameGridMixin.
+    Genotypes are pushed in by a genotype source (the VCF upload via
+    ``GenomicGridState``, or any other source in a host app) through the
+    inherited ``load_genotypes(path)`` hook, so this state owns no VCF or
+    upload logic and the base ``PRSComputeStateMixin.compute_selected_prs``
+    is used unchanged.
     """
 
-    vcf_filename: str = ""
-    detected_build: str = ""
-    build_detection_message: str = ""
+    prs_view_mode: str = "individual"
 
-    _vcf_path: str = ""
-    _preloaded_vcf_initialized: bool = False
-
-    async def initialize(self) -> Any:
-        """Auto-load cleaned scores and optional preloaded VCF on first page visit."""
+    def initialize(self) -> Any:
+        """Auto-load cleaned scores and apply optional startup preselection."""
+        self.prs_view_mode = "individual"
         for event in self.initialize_prs():
             yield event
-
-        if self._preloaded_vcf_initialized or self._vcf_path:
-            return
-        self._preloaded_vcf_initialized = True
-
-        preloaded_vcf = _resolve_preloaded_vcf_path()
-        if preloaded_vcf is None:
-            for event in self._preselect_scores_from_env():
-                yield event
-            return
-        if not preloaded_vcf.exists():
-            self.status_message = f"Configured preloaded VCF does not exist: {preloaded_vcf}"
-            self.build_detection_message = "Configured preloaded VCF was not found."
-            for event in self._preselect_scores_from_env():
-                yield event
-            return
-
-        needs_score_reload = self._set_vcf_source(preloaded_vcf, label_prefix="Preloaded")
-        genomic_state = await self.get_state(GenomicGridState)
-        for event in genomic_state.normalize_uploaded_vcf(str(preloaded_vcf)):
-            yield event
-        if needs_score_reload:
-            for event in self.load_compute_scores():
-                yield event
         for event in self._preselect_scores_from_env():
             yield event
 
@@ -235,75 +340,11 @@ class ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
         """Set genome build and reload compute scores if already loaded."""
         yield from self.set_prs_genome_build(value)
 
-    def _set_vcf_source(self, path: Path, label_prefix: str) -> bool:
-        """Record a VCF path, detect genome build, and reset dependent UI state."""
-        self._vcf_path = str(path)
-        self.vcf_filename = path.name
-        self.prs_genotypes_path = str(path)
-
-        detected = detect_genome_build(path)
-        needs_score_reload = False
-        if detected is not None:
-            self.detected_build = detected
-            if detected != self.genome_build:
-                needs_score_reload = self.compute_scores_loaded
-            self.genome_build = detected
-            self.build_detection_message = f"Detected genome build: {detected}"
-        else:
-            self.detected_build = ""
-            self.build_detection_message = (
-                "Could not detect genome build from VCF header. "
-                "Please select it manually."
-            )
-        self.prs_results = []
-        self.trait_summary_rows = []
-        self.trait_summary_visible = False
-        self.low_match_warning = False
-        self.status_message = f"{label_prefix} {path.name}"
-        return needs_score_reload
-
     def _preselect_scores_from_env(self) -> Any:
         """Apply optional startup score selection from ``PRS_UI_PRESELECT_QUERY``."""
         query = _resolve_preselect_query()
         if query:
             yield from self.filter_and_select_scores_by_query(query)
-
-    async def handle_vcf_upload(self, files: list[rx.UploadFile]) -> None:
-        """Save an uploaded VCF file and attempt genome build detection."""
-        if not files:
-            return
-        upload_file = files[0]
-        filename = upload_file.filename or "uploaded.vcf"
-        upload_dir = rx.get_upload_dir()
-        dest = upload_dir / filename
-        contents = await upload_file.read()
-        dest.write_bytes(contents)
-
-        needs_score_reload = self._set_vcf_source(dest, label_prefix="Uploaded")
-
-        events: list = [GenomicGridState.normalize_uploaded_vcf(str(dest))]
-        if needs_score_reload:
-            events.append(ComputeGridState.load_compute_scores)
-        return events
-
-    async def compute_selected_prs(self) -> Any:
-        """Override to resolve genotypes from GenomicGridState, then delegate."""
-        if not self._vcf_path:
-            self.status_message = "Please upload a VCF file first."
-            return
-
-        genomic_state = await self.get_state(GenomicGridState)
-        normalized_path = genomic_state.normalized_parquet_path
-        if normalized_path and Path(normalized_path).exists():
-            self.prs_genotypes_path = normalized_path
-            self._prs_genotypes_lf = pl.scan_parquet(normalized_path)
-        else:
-            self.prs_genotypes_path = self._vcf_path
-
-        gen = PRSComputeStateMixin.compute_selected_prs(self)
-        if gen is not None:
-            for event in gen:
-                yield event
 
 
 def _build_trait_column_overrides() -> dict[str, dict[str, Any]]:
@@ -348,21 +389,21 @@ def _build_trait_column_overrides() -> dict[str, dict[str, Any]]:
 
 
 class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
-    """State for the trait-based PRS browser tab.
+    """Concrete "By Trait" consumer state for the Compute PRS workbench.
 
     Groups PGS Catalog scores by EFO trait and lets the user select
     traits instead of individual PGS IDs.  Selected traits are resolved
     to their constituent PGS IDs, and computation proceeds via the
-    inherited ``PRSComputeStateMixin``.
+    inherited ``PRSComputeStateMixin``.  Genotypes are pushed in by a
+    genotype source through the inherited ``load_genotypes(path)`` hook;
+    this state owns no VCF or upload logic.
     """
 
-    vcf_filename: str = ""
-    detected_build: str = ""
-    build_detection_message: str = ""
+    prs_view_mode: str = "grouped"
+
     selected_traits: list[str] = []
     traits_loaded: bool = False
 
-    _vcf_path: str = ""
     _trait_to_pgs: dict[str, list[str]] = {}
     _trait_scores_lf: pl.LazyFrame | None = None
     _traits_initialized: bool = False
@@ -431,6 +472,7 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
         yield from self.set_lazyframe(  # type: ignore[attr-defined]
             trait_df.lazy(),
             chunk_size=500,
+            eager_value_options_row_limit=0,
             column_overrides=_build_trait_column_overrides(),
         )
         self.status_message = f"Loaded {trait_df.height} traits for {self.genome_build}"  # type: ignore[attr-defined]
@@ -520,65 +562,13 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
             f"({len(self.selected_pgs_ids)} PGS IDs)"
         )
 
-    def _set_vcf_source(self, path: Path, label_prefix: str) -> bool:
-        """Record a VCF path, detect genome build, and reset dependent state."""
-        self._vcf_path = str(path)
-        self.vcf_filename = path.name
-        self.prs_genotypes_path = str(path)
+    def compute_selected_prs(self) -> Any:
+        """Compute PRS for the selected traits, then auto-group by trait.
 
-        detected = detect_genome_build(path)
-        needs_reload = False
-        if detected is not None:
-            self.detected_build = detected
-            if detected != self.genome_build:  # type: ignore[attr-defined]
-                needs_reload = self.traits_loaded
-            self.genome_build = detected  # type: ignore[attr-defined]
-            self.build_detection_message = f"Detected genome build: {detected}"
-        else:
-            self.detected_build = ""
-            self.build_detection_message = (
-                "Could not detect genome build from VCF header. "
-                "Please select it manually."
-            )
-        self.prs_results = []
-        self.trait_summary_rows = []
-        self.trait_summary_visible = False
-        self.low_match_warning = False
-        self.status_message = f"{label_prefix} {path.name}"  # type: ignore[attr-defined]
-        return needs_reload
-
-    async def handle_vcf_upload(self, files: list[rx.UploadFile]) -> None:
-        """Save an uploaded VCF file and attempt genome build detection."""
-        if not files:
-            return
-        upload_file = files[0]
-        filename = upload_file.filename or "uploaded.vcf"
-        upload_dir = rx.get_upload_dir()
-        dest = upload_dir / filename
-        contents = await upload_file.read()
-        dest.write_bytes(contents)
-
-        needs_reload = self._set_vcf_source(dest, label_prefix="Uploaded")
-
-        events: list = [GenomicGridState.normalize_uploaded_vcf(str(dest))]
-        if needs_reload:
-            events.append(TraitBrowserState.load_traits)
-        return events
-
-    async def compute_selected_prs(self) -> Any:
-        """Resolve genotypes from GenomicGridState, then compute and auto-group by trait."""
-        if not self._vcf_path:
-            self.status_message = "Please upload a VCF file first."  # type: ignore[attr-defined]
-            return
-
-        genomic_state = await self.get_state(GenomicGridState)
-        normalized_path = genomic_state.normalized_parquet_path
-        if normalized_path and Path(normalized_path).exists():
-            self.prs_genotypes_path = normalized_path
-            self._prs_genotypes_lf = pl.scan_parquet(normalized_path)
-        else:
-            self.prs_genotypes_path = self._vcf_path
-
+        Genotypes are supplied beforehand via the inherited ``load_genotypes``
+        hook, so this override only adds trait-summary auto-building on top of
+        the base mixin computation.
+        """
         gen = PRSComputeStateMixin.compute_selected_prs(self)
         if gen is not None:
             for event in gen:
@@ -586,3 +576,10 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
 
         if self.prs_results:
             self.build_trait_summary()
+
+
+# App wiring: register the consumer states fed by the VCF genotype source.
+# This is the only coupling point between the source and the consumers; a host
+# app can register a different set (or drive the consumer hooks from its own
+# source) without changing GenomicGridState or PRSComputeStateMixin.
+GenomicGridState._consumer_states = [ComputeGridState, TraitBrowserState]

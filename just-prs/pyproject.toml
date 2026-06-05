@@ -23,8 +23,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# pgenlib has no Windows wheels and its bundled C (libdeflate) fails to compile
+# with MSVC, so it is excluded on Windows. The UI / VCF PRS path never needs it
+# (reference.py imports pgenlib lazily and raises a clear ImportError if missing).
+# Windows users who need reference-panel / .pgen features should use WSL or Linux.
 reference = [
-    "pgenlib>=0.93.0",
+    "pgenlib>=0.93.0; sys_platform != 'win32'",
 ]
 
 [project.scripts]

@@ -97,6 +97,14 @@ To install only the core library without UI or pipeline: `cd just-prs/just-prs &
 
 The CLI is available as both `just-prs` and `prs`.
 
+**Reference-panel features (optional):** `.pgen` / reference-panel scoring needs the `reference` extra, which depends on `pgenlib`:
+
+```bash
+pip install just-prs[reference]
+```
+
+`pgenlib` is excluded on Windows (`sys_platform != 'win32'`) because it has no Windows wheels and its bundled C does not compile with MSVC. The core VCF-based PRS computation and the web UI need **no C compiler** and work on native Windows; for reference-panel scoring on Windows use **WSL** or **Linux**.
+
 ## Quick Start
 
 ### CLI

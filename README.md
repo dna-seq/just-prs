@@ -38,20 +38,19 @@ cd prs-ui
 uv run reflex run
 ```
 
-The UI opens at http://localhost:3000 with four tabs:
+The UI opens at http://localhost:3000 with three tabs: **Compute PRS**, **Metadata Sheets**, and **Scoring File**.
 
 ### Compute PRS (default tab)
 
-1. **Upload a VCF** — drag-and-drop or browse; genome build is auto-detected from `##reference` and `##contig` headers. VCF is normalized (chr prefix stripped, genotype computed, quality filtered) with a visible progress bar and a green callout on completion showing variant count
-2. **Load Scores** — fetches PGS Catalog scores metadata, pre-filtered by detected (or manually selected) genome build
-3. **Select scores** — use checkboxes to pick individual scores, or "Select Filtered" to select everything matching the current filter
-4. **Compute** — click **Compute PRS** to run PRS for each selected score. A progress bar tracks completion across scores. Results table shows PRS score, AUROC (model accuracy), quality assessment, evaluation population/ancestry, match rate, matched/total variants, and effect sizes. Each result includes an interpretation card with a plain-English summary of model quality
-5. **Group by Trait** — aggregate individual PRS results by EFO trait to see consensus, model spread, outliers, and quality breakdown across scoring methods. Each trait row expands to show a bell curve with all models as data points
-6. **Download CSV** — export all computed results to a CSV file via the **Download CSV** button above the results table
+A single workbench with one shared, compact genotype source feeding two selection modes:
 
-### Select Traits
+1. **Upload a VCF once** — drag-and-drop or browse into the compact source at the top; genome build is auto-detected from `##reference` and `##contig` headers. The VCF is normalized (chr prefix stripped, genotype computed, quality filtered) — normalization is the slow step (shown with an ongoing progress indicator), and a normalized file is cached so re-uploading the same VCF is instant. A collapsed normalized-data preview is available. The same uploaded VCF powers **both** selection modes below. Until a VCF is loaded the score/trait tables are browsable but **read-only** (selection is disabled with an "upload a VCF" prompt).
+2. **Pick a mode** — switch between the **Select by PRS** and **Select by Trait** sub-tabs:
+   - **Select by PRS** — use checkboxes to pick individual scores (or "Select Filtered"), click **Compute PRS**, and get an **individual** results table: PRS score, AUROC, quality assessment, evaluation population/ancestry, match rate, matched/total variants, and effect sizes. Expand any row for a bell curve, absolute-risk context, and "Ask AI" prompts.
+   - **Select by Trait** — pick whole traits grouped from the PGS Catalog (e.g. "type 2 diabetes mellitus" with 32 models). All associated PGS models are computed together and **automatically grouped by trait** — a consensus summary with bell curves, outlier detection, and quality breakdown.
+3. **Download CSV** — export computed results via the **CSV** button above the results table.
 
-Instead of picking individual PGS IDs, browse traits grouped from the PGS Catalog (e.g. "type 2 diabetes mellitus" with 32 models). Select traits, and all associated PGS models are computed together. Results are **automatically grouped by trait** — the trait summary with consensus bell curves, outlier detection, and quality breakdown is the primary output. Individual PRS results are available in a collapsible section below.
+Per-mode controls (scoring engine, ancestry for percentiles, "Include harmonized scores") and the shared genome-build selector sit above the sub-tabs, so a single upload + build selection applies to both modes.
 
 ### Metadata Sheets
 
@@ -74,7 +73,7 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 - **Publication citations** — PRS scores are linked to their source papers with full citations (first author, title, journal, year, DOI)
 - **pgen operations** — read `.pgen`, `.pvar.zst`, `.psam` files, extract genotypes, match variants, and score PGS IDs directly in Python via `pgenlib` + polars + numpy
 - **Trait-grouped PRS analysis** — select entire traits (e.g. "type 2 diabetes") instead of individual PGS IDs; all associated models are computed and automatically aggregated into a consensus view with bell curves, outlier detection, and quality breakdown
-- **Reusable Reflex UI components** — `prs_section()`, `trait_summary_table()`, and sub-components (`prs_scores_selector`, `prs_results_table`, etc.) can be embedded in any Reflex app via `PRSComputeStateMixin`
+- **Reusable Reflex UI components** — `prs_workbench()` (the whole single-tab By PRS / By Trait layout with a pluggable, detachable genotype source), `vcf_source_section()`, `prs_shared_build_bar()`, `prs_section()`, `trait_summary_table()`, and sub-components (`prs_scores_selector`, `prs_results_table`, etc.) embed in any Reflex app via `PRSComputeStateMixin` and its loose-coupling `load_genotypes(path)` hook
 - **VCF normalization** — `normalize_vcf()` strips chr prefix, renames id→rsid, computes genotype from GT, applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, and writes zstd-compressed Parquet
 - **Quality assessment** — `just_prs.quality` provides pure-logic helpers (`classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`) usable from any UI or script
 - **CSV export** — download computed PRS results as CSV from the web UI or programmatically
@@ -108,6 +107,18 @@ uv sync --all-packages   # installs all three subprojects + dev deps
 To install only the core library without UI or pipeline: `cd just-prs/just-prs && uv sync`.
 
 The CLI is available as both `just-prs` and `prs`.
+
+### Windows
+
+The web UI and VCF-based PRS computation (the main use case) work on Windows with **no C compiler required**. The reference-panel dependency `pgenlib` is automatically excluded on Windows (via a `sys_platform != 'win32'` marker) because it has no Windows wheels and its bundled C fails to compile with MSVC. So a plain checkout works out of the box:
+
+```bash
+cd just-prs
+uv sync --all-packages
+uv run ui
+```
+
+Only the reference-panel / `.pgen` scoring features (`prs reference …`, `prs pgen …`, and the Dagster pipeline) are unavailable on native Windows. If you need those, run them under **WSL** or **Linux**, where `pgenlib` installs from a prebuilt wheel.
 
 ## Quick Start
 
@@ -213,10 +224,9 @@ For cross-validation against PLINK2, use `prs reference compare PGS000001` which
 
 ## Embedding PRS UI in Another Reflex App
 
-The PRS computation UI is packaged as reusable [Reflex](https://reflex.dev/) components. Install `prs-ui` (which pulls in `just-prs` automatically), mix `PRSComputeStateMixin` into your state, provide a normalized genotypes LazyFrame, and render the section:
+The PRS computation UI is packaged as reusable [Reflex](https://reflex.dev/) components. Install `prs-ui` (which pulls in `just-prs` automatically), mix `PRSComputeStateMixin` into your state, and feed normalized genotypes through the loose-coupling `load_genotypes(path)` hook. The genotype **source** is detachable — your app supplies its own (a public-genome selector, a consumer-array file, a pre-normalized parquet) and never has to use the bundled VCF upload:
 
 ```python
-import polars as pl
 import reflex as rx
 from reflex_mui_datagrid import LazyFrameGridMixin
 from prs_ui import PRSComputeStateMixin, prs_section
@@ -229,17 +239,22 @@ class MyAppState(rx.State):
 
 
 class PRSState(PRSComputeStateMixin, LazyFrameGridMixin, MyAppState):
-    def load_genotypes(self, parquet_path: str) -> None:
-        lf = pl.scan_parquet(parquet_path)
-        self.set_prs_genotypes_lf(lf)
-        self.prs_genotypes_path = parquet_path
+    """Consumer state — no override needed; load_genotypes is built in."""
 
 
 def prs_page() -> rx.Component:
     return prs_section(PRSState)
+
+
+# From your own source handler, push genotypes into the consumer:
+#   async def on_genome_ready(self, parquet_path: str):
+#       prs = await self.get_state(PRSState)
+#       prs.load_genotypes(parquet_path)          # built-in loose-coupling hook
+#       for event in prs.set_genome_build("GRCh38"):
+#           yield event
 ```
 
-The preferred input method is a polars LazyFrame via `set_prs_genotypes_lf()` -- this is memory-efficient and avoids re-reading VCF files on each computation. Individual sub-components (`prs_scores_selector`, `prs_results_table`, `trait_summary_table`, `prs_compute_button`, `prs_progress_section`, `prs_build_selector`) can be used independently for custom layouts. `trait_summary_table(state)` groups PRS results by trait and shows consensus bell curves, outlier detection, and quality breakdown — call `state.build_trait_summary()` after computation to populate it.
+`load_genotypes(path)` is the loose-coupling contract (it sets `prs_genotypes_path`, rescans the LazyFrame, and clears stale results); you can also call `set_prs_genotypes_lf()` directly with a `pl.scan_parquet()` LazyFrame for memory-efficient, no-re-read computation. For the full single-tab **By PRS / By Trait** experience with your own source, render `prs_workbench(source_section=..., prs_state=..., trait_state=..., mode_state=..., trait_selector=...)`. Individual sub-components (`prs_scores_selector`, `prs_results_table`, `trait_summary_table`, `prs_compute_button`, `prs_progress_section`, `prs_build_selector`, `prs_shared_build_bar`, `vcf_source_section`) can be used independently for custom layouts. `trait_summary_table(state)` groups PRS results by trait and shows consensus bell curves, outlier detection, and quality breakdown — call `state.build_trait_summary()` after computation to populate it.
 
 ## Testing
 

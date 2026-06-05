@@ -14,13 +14,17 @@ from prs_ui.state import GenomicGridState, TraitBrowserState
 from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
 
 
-def trait_selector(state: type[rx.State] = TraitBrowserState) -> rx.Component:
+def trait_selector(
+    state: type[rx.State] = TraitBrowserState,
+    normalizing: object | None = None,
+) -> rx.Component:
     """Trait selection grid with Select/Clear buttons and selection badges."""
-    selection_ready = (state.prs_genotypes_path != "") & ~GenomicGridState.vcf_normalizing  # type: ignore[operator]
+    is_normalizing = GenomicGridState.vcf_normalizing if normalizing is None else normalizing
+    selection_ready = (state.prs_genotypes_path != "") & (is_normalizing == False)  # noqa: E712
     selection_disabled = ~selection_ready  # type: ignore[operator]
     return rx.vstack(
         rx.cond(
-            GenomicGridState.vcf_normalizing,
+            is_normalizing,
             rx.callout(
                 "Normalizing your VCF. Trait selection will unlock automatically "
                 "once the genotype table is ready.",

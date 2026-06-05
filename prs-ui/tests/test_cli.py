@@ -1,58 +1,70 @@
 import os
 from pathlib import Path
+from typing import Any
 
 import pytest
-from reflex.utils import processes
+import reflex.reflex as reflex_runner
 
 from prs_ui import cli
 
 
-def test_resolve_reflex_config_lets_reflex_increment_frontend_and_backend(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    handled: list[tuple[str, int, bool]] = []
+def test_env_port_returns_none_when_unset(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("PRS_UI_PORT", raising=False)
 
-    def fake_handle_port(port_type: str, port: int, auto_increment: bool) -> int:
-        handled.append((port_type, port, auto_increment))
-        return port + (1 if port_type == "frontend" else 2)
+    assert cli._env_port("PRS_UI_PORT") is None
 
-    monkeypatch.setenv("PRS_UI_HOST", "0.0.0.0")
+
+def test_env_port_reads_valid_integer(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PRS_UI_PORT", "3000")
-    monkeypatch.setenv("PRS_UI_BACKEND_PORT", "8000")
-    monkeypatch.setattr(processes, "handle_port", fake_handle_port)
 
-    config = cli._resolve_reflex_config()
-
-    assert config.host == "0.0.0.0"
-    assert config.frontend_port == 3001
-    assert config.backend_port == 8002
-    assert handled == [
-        ("frontend", 3000, True),
-        ("backend", 8000, True),
-    ]
+    assert cli._env_port("PRS_UI_PORT") == 3000
 
 
 def test_launch_reflex_passes_explicit_frontend_and_backend_ports(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    captured_config: list[cli.ReflexServerConfig] = []
+    captured_run_kwargs: list[dict[str, Any]] = []
     captured_chdir: list[Path] = []
 
-    def fake_run_reflex(config: cli.ReflexServerConfig) -> None:
-        captured_config.append(config)
+    def fake_run_reflex(**kwargs: Any) -> None:
+        captured_run_kwargs.append(kwargs)
 
     def fake_chdir(path: str | os.PathLike[str]) -> None:
         captured_chdir.append(Path(path))
 
-    config = cli.ReflexServerConfig(host="0.0.0.0", frontend_port=3000, backend_port=8000)
-    monkeypatch.setattr(cli, "_resolve_reflex_config", lambda: config)
-    monkeypatch.setattr(cli, "_run_reflex", fake_run_reflex)
+    monkeypatch.setenv("PRS_UI_HOST", "127.0.0.1")
+    monkeypatch.setenv("PRS_UI_PORT", "3000")
+    monkeypatch.setenv("PRS_UI_BACKEND_PORT", "8000")
+    monkeypatch.setattr(cli, "_check_system_dependencies", lambda: None)
+    monkeypatch.setattr(reflex_runner, "_run", fake_run_reflex)
     monkeypatch.setattr(os, "chdir", fake_chdir)
 
     cli._launch_reflex()
 
     assert captured_chdir == [Path(cli.__file__).resolve().parent.parent]
-    assert captured_config == [config]
+    assert captured_run_kwargs[0]["frontend_port"] == 3000
+    assert captured_run_kwargs[0]["backend_port"] == 8000
+    assert captured_run_kwargs[0]["backend_host"] == "127.0.0.1"
+
+
+def test_launch_reflex_leaves_unset_ports_for_reflex(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_run_kwargs: list[dict[str, Any]] = []
+
+    def fake_run_reflex(**kwargs: Any) -> None:
+        captured_run_kwargs.append(kwargs)
+
+    monkeypatch.delenv("PRS_UI_PORT", raising=False)
+    monkeypatch.delenv("PRS_UI_BACKEND_PORT", raising=False)
+    monkeypatch.setattr(cli, "_check_system_dependencies", lambda: None)
+    monkeypatch.setattr(reflex_runner, "_run", fake_run_reflex)
+    monkeypatch.setattr(os, "chdir", lambda path: None)
+
+    cli._launch_reflex()
+
+    assert captured_run_kwargs[0]["frontend_port"] is None
+    assert captured_run_kwargs[0]["backend_port"] is None
 
 
 def test_launch_preselect_ui_uses_shared_reflex_launcher(
@@ -73,31 +85,8 @@ def test_launch_preselect_ui_uses_shared_reflex_launcher(
     assert os.environ["PRS_UI_PRESELECT_QUERY"] == "Type 1 diabetes (T1D)"
 
 
-def test_resolve_reflex_config_does_not_reuse_frontend_port(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    handled: list[tuple[str, int, bool]] = []
-
-    def fake_handle_port(port_type: str, port: int, auto_increment: bool) -> int:
-        handled.append((port_type, port, auto_increment))
-        return port
-
-    monkeypatch.setenv("PRS_UI_PORT", "3000")
-    monkeypatch.setenv("PRS_UI_BACKEND_PORT", "3000")
-    monkeypatch.setattr(processes, "handle_port", fake_handle_port)
-
-    config = cli._resolve_reflex_config()
-
-    assert config.frontend_port == 3000
-    assert config.backend_port == 3001
-    assert handled == [
-        ("frontend", 3000, True),
-        ("backend", 3001, True),
-    ]
-
-
 def test_resolve_port_rejects_invalid_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PRS_UI_PORT", "abc")
 
     with pytest.raises(ValueError, match="PRS_UI_PORT must be an integer port"):
-        cli._resolve_reflex_config()
+        cli._env_port("PRS_UI_PORT")

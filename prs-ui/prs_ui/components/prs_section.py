@@ -32,6 +32,11 @@ from prs_ui.grid_style import data_grid_scroll_container
 from prs_ui.state import GenomicGridState
 
 
+def _resolve_normalizing(normalizing: Any | None = None) -> Any:
+    """Return the source normalizing signal for reusable PRS controls."""
+    return GenomicGridState.vcf_normalizing if normalizing is None else normalizing
+
+
 def _merge_bell_curve_config(
     defaults: dict[str, Any],
     overrides: dict[str, Any] | None,
@@ -164,13 +169,17 @@ def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
     )
 
 
-def prs_scores_selector(state: type[rx.State]) -> rx.Component:
+def prs_scores_selector(
+    state: type[rx.State],
+    normalizing: Any | None = None,
+) -> rx.Component:
     """Score selection using MUI DataGrid with server-side virtual scrolling."""
-    selection_ready = (state.prs_genotypes_path != "") & ~GenomicGridState.vcf_normalizing  # type: ignore[operator]
+    is_normalizing = _resolve_normalizing(normalizing)
+    selection_ready = (state.prs_genotypes_path != "") & (is_normalizing == False)  # noqa: E712
     selection_disabled = ~selection_ready  # type: ignore[operator]
     return rx.vstack(
         rx.cond(
-            GenomicGridState.vcf_normalizing,
+            is_normalizing,
             rx.callout(
                 "Normalizing your VCF. Score selection will unlock automatically "
                 "once the genotype table is ready.",
@@ -257,8 +266,13 @@ def prs_scores_selector(state: type[rx.State]) -> rx.Component:
     )
 
 
-def prs_compute_button(state: type[rx.State]) -> rx.Component:
+def prs_compute_button(
+    state: type[rx.State],
+    normalizing: Any | None = None,
+) -> rx.Component:
     """Compute PRS button with disclaimer callout."""
+    is_normalizing = _resolve_normalizing(normalizing)
+    not_ready = (state.selected_pgs_ids.length() == 0) | (state.prs_genotypes_path == "") | is_normalizing  # type: ignore[operator]
     return rx.vstack(
         rx.callout(
             "You are responsible for ensuring that your VCF matches the population "
@@ -275,9 +289,25 @@ def prs_compute_button(state: type[rx.State]) -> rx.Component:
                 "Compute PRS",
                 on_click=state.compute_selected_prs,
                 loading=state.prs_computing,
-                disabled=state.selected_pgs_ids.length() == 0,  # type: ignore[operator]
+                disabled=not_ready,
                 color_scheme="green",
                 size="3",
+            ),
+            rx.cond(
+                not_ready,
+                rx.text(
+                    rx.cond(
+                        is_normalizing,
+                        "VCF normalization in progress...",
+                        rx.cond(
+                            state.prs_genotypes_path == "",
+                            "Load genomic data to enable computation.",
+                            "Select at least one score to enable computation.",
+                        ),
+                    ),
+                    size="2",
+                    color="gray",
+                ),
             ),
             spacing="3",
             align="center",
@@ -798,14 +828,19 @@ def _workbench_mode_controls(state: type[rx.State]) -> rx.Component:
     )
 
 
-def _workbench_compute_button(state: type[rx.State], label: str) -> rx.Component:
+def _workbench_compute_button(
+    state: type[rx.State],
+    label: str,
+    normalizing: Any | None = None,
+) -> rx.Component:
     """Compute button + disclaimer that reads genotype readiness from the consumer.
 
     Decoupled from any VCF source: readiness is inferred from the consumer's own
     ``prs_genotypes_path`` (set by the source via ``load_genotypes``), so the
     same button works regardless of where the genotypes came from.
     """
-    not_ready = (state.selected_pgs_ids.length() == 0) | (state.prs_genotypes_path == "") | GenomicGridState.vcf_normalizing  # type: ignore[operator]
+    is_normalizing = _resolve_normalizing(normalizing)
+    not_ready = (state.selected_pgs_ids.length() == 0) | (state.prs_genotypes_path == "") | is_normalizing  # type: ignore[operator]
     return rx.vstack(
         rx.callout(
             "You are responsible for ensuring that your genomic data matches the "
@@ -830,7 +865,7 @@ def _workbench_compute_button(state: type[rx.State], label: str) -> rx.Component
                 not_ready,
                 rx.text(
                     rx.cond(
-                        GenomicGridState.vcf_normalizing,
+                        is_normalizing,
                         "VCF normalization in progress...",
                         rx.cond(
                             state.prs_genotypes_path == "",
@@ -882,6 +917,7 @@ def prs_workbench(
     build_bar: rx.Component | None = None,
     results_table_kwargs: dict[str, Any] | None = None,
     trait_summary_kwargs: dict[str, Any] | None = None,
+    normalizing: Any | None = None,
 ) -> rx.Component:
     """Unified PRS workbench: one shared genotype source + By PRS / By Trait modes.
 
@@ -921,8 +957,8 @@ def prs_workbench(
 
     prs_content = rx.vstack(
         _workbench_mode_controls(prs_state),
-        prs_scores_selector(prs_state),
-        _workbench_compute_button(prs_state, "Compute PRS"),
+        prs_scores_selector(prs_state, normalizing=normalizing),
+        _workbench_compute_button(prs_state, "Compute PRS", normalizing=normalizing),
         _workbench_results(
             prs_state, "individual", results_table_kwargs, trait_summary_kwargs
         ),
@@ -934,7 +970,7 @@ def prs_workbench(
         _workbench_mode_controls(trait_state),
         trait_selector(),
         _workbench_compute_button(
-            trait_state, "Compute PRS for Selected Traits"
+            trait_state, "Compute PRS for Selected Traits", normalizing=normalizing
         ),
         _workbench_results(
             trait_state, "grouped", results_table_kwargs, trait_summary_kwargs

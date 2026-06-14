@@ -247,6 +247,7 @@ class TestPercentileVsPlink2:
             genome_build="GRCh38",
             cache_dir=scoring_cache_dir,
             pgs_id=pgs_id,
+            genotype_input_mode="plink_present_only",
         )
 
         assert our_result.has_allele_frequencies
@@ -288,6 +289,7 @@ class TestPercentileVsPlink2:
                 genome_build="GRCh38",
                 cache_dir=scoring_cache_dir,
                 pgs_id=pgs_id,
+                genotype_input_mode="plink_present_only",
             )
 
             with tempfile.TemporaryDirectory() as tmpdir:

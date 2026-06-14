@@ -158,6 +158,26 @@ def pull_reference_distributions(
             if hf_cached != target:
                 import shutil
                 shutil.copy2(hf_cached, target)
+            for sidecar in [
+                f"{panel}_quality.parquet",
+                f"{panel}_distribution_quality_issues.parquet",
+                f"{panel}_distribution_audit_summary.json",
+            ]:
+                try:
+                    sidecar_path = _hf_download_with_retry(
+                        repo_id=repo_id,
+                        filename=f"{HF_DATA_PREFIX}/{sidecar}",
+                        repo_type="dataset",
+                        local_dir=local_dir,
+                        token=resolved_token,
+                    )
+                except EntryNotFoundError:
+                    continue
+                sidecar_cached = Path(sidecar_path)
+                sidecar_target = local_dir / sidecar
+                if sidecar_cached != sidecar_target:
+                    import shutil
+                    shutil.copy2(sidecar_cached, sidecar_target)
             return target
 
         logging.getLogger(__name__).debug(
@@ -171,14 +191,17 @@ def push_reference_distributions(
     repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
     token: str | None = None,
     panel: str = "1000g",
+    quality_report_path: Path | None = None,
     issue_report_path: Path | None = None,
     audit_summary_path: Path | None = None,
 ) -> None:
     """Upload a distributions parquet to the prs-percentiles HF dataset repo.
 
     The distribution file is uploaded as ``data/{panel}_distributions.parquet``.
-    If provided, the distribution quality issue report is uploaded alongside it
-    as ``data/{panel}_distribution_quality_issues.parquet`` for audit/debugging.
+    If provided, the reference scoring quality report and distribution quality
+    issue report are uploaded alongside it as
+    ``data/{panel}_quality.parquet`` and
+    ``data/{panel}_distribution_quality_issues.parquet`` for audit/debugging.
     If provided, the audit summary is uploaded as
     ``data/{panel}_distribution_audit_summary.json``.
 
@@ -187,6 +210,7 @@ def push_reference_distributions(
         repo_id: HuggingFace dataset repository ID for percentiles.
         token: HF API token. If None, loaded from .env / HF_TOKEN env var.
         panel: Reference panel identifier (e.g. ``1000g``, ``hgdp_1kg``).
+        quality_report_path: Optional sidecar parquet with per-PGS scoring quality.
         issue_report_path: Optional sidecar parquet with quarantined distribution issues.
         audit_summary_path: Optional compact JSON audit summary.
     """
@@ -202,6 +226,13 @@ def push_reference_distributions(
             repo_id=repo_id,
             repo_type="dataset",
         )
+        if quality_report_path is not None and quality_report_path.exists():
+            api.upload_file(
+                path_or_fileobj=str(quality_report_path),
+                path_in_repo=f"{HF_DATA_PREFIX}/{panel}_quality.parquet",
+                repo_id=repo_id,
+                repo_type="dataset",
+            )
         if issue_report_path is not None and issue_report_path.exists():
             api.upload_file(
                 path_or_fileobj=str(issue_report_path),
@@ -213,6 +244,36 @@ def push_reference_distributions(
             api.upload_file(
                 path_or_fileobj=str(audit_summary_path),
                 path_in_repo=f"{HF_DATA_PREFIX}/{panel}_distribution_audit_summary.json",
+                repo_id=repo_id,
+                repo_type="dataset",
+            )
+
+
+def push_reference_audit_sidecars(
+    *,
+    quality_report_path: Path | None = None,
+    issue_report_path: Path | None = None,
+    audit_summary_path: Path | None = None,
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+    panel: str = "1000g",
+) -> None:
+    """Upload reference percentile audit sidecars without re-uploading distributions."""
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:push_reference_audit_sidecars", repo_id=repo_id, panel=panel):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        for path, path_in_repo in [
+            (quality_report_path, f"{HF_DATA_PREFIX}/{panel}_quality.parquet"),
+            (issue_report_path, f"{HF_DATA_PREFIX}/{panel}_distribution_quality_issues.parquet"),
+            (audit_summary_path, f"{HF_DATA_PREFIX}/{panel}_distribution_audit_summary.json"),
+        ]:
+            if path is None or not path.exists():
+                continue
+            api.upload_file(
+                path_or_fileobj=str(path),
+                path_in_repo=path_in_repo,
                 repo_id=repo_id,
                 repo_type="dataset",
             )

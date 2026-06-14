@@ -596,6 +596,16 @@ def compute(
     output: Annotated[
         Optional[Path], typer.Option("--output", "-o", help="Output JSON file")
     ] = None,
+    genotype_input_mode: Annotated[
+        str,
+        typer.Option(
+            "--genotype-input-mode",
+            help=(
+                "How absent scoring loci are interpreted: auto, variant_only, "
+                "all_sites, or plink_present_only"
+            ),
+        ),
+    ] = "auto",
 ) -> None:
     """Compute polygenic risk score(s) for a VCF file."""
     pgs_ids = [pid.strip() for pid in pgs_id.split(",")]
@@ -613,15 +623,23 @@ def compute(
             cache_dir=cache_dir,
             pgs_id=pgs_ids[0],
             trait_reported=score_info.trait_reported,
+            genotype_input_mode=genotype_input_mode,
         )
         results = [result]
     else:
-        results = compute_prs_batch(
+        batch = compute_prs_batch(
             vcf_path=vcf,
             pgs_ids=pgs_ids,
             genome_build=build,
             cache_dir=cache_dir,
+            genotype_input_mode=genotype_input_mode,
         )
+        results = batch.results
+        if batch.failed_ids:
+            console.print(
+                f"[yellow]Warning: {batch.n_failed}/{batch.n_total} scores failed: "
+                f"{', '.join(batch.failed_ids)}[/yellow]"
+            )
 
     table = Table(title="PRS Results")
     table.add_column("PGS ID", style="cyan")
@@ -630,6 +648,9 @@ def compute(
     table.add_column("Matched", justify="right")
     table.add_column("Total", justify="right")
     table.add_column("Match Rate", justify="right")
+    table.add_column("Assumed Ref", justify="right")
+    table.add_column("Unavailable", justify="right")
+    table.add_column("Mode", justify="right")
 
     for r in results:
         table.add_row(
@@ -639,6 +660,9 @@ def compute(
             str(r.variants_matched),
             str(r.variants_total),
             f"{r.match_rate:.1%}",
+            str(r.variants_assumed_hom_ref),
+            str(r.variants_unscorable_absent),
+            r.genotype_input_mode,
         )
 
     console.print(table)

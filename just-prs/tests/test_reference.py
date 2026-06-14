@@ -22,6 +22,7 @@ from just_prs.reference import (
     aggregate_distributions,
     ancestry_percentile,
     distribution_quality_issues,
+    reference_distribution_audit_issues,
 )
 from just_prs.scoring import resolve_cache_dir
 
@@ -287,6 +288,101 @@ class TestDistributionQualityIssues:
         assert issues.height == 1
         assert issues["issue"][0] == "robust_outlier_suspected"
         assert issues["severity"][0] == "ERROR"
+
+    def test_audit_flags_missing_quality_match_metadata(self) -> None:
+        distributions = pl.DataFrame({
+            "pgs_id": ["PGS_META"] * 5,
+            "superpopulation": ["AFR", "AMR", "EAS", "EUR", "SAS"],
+            "mean": [1.0] * 5,
+            "std": [0.2] * 5,
+            "n": [893, 490, 585, 633, 601],
+            "median": [1.0] * 5,
+            "p5": [0.7] * 5,
+            "p25": [0.9] * 5,
+            "p75": [1.1] * 5,
+            "p95": [1.3] * 5,
+        })
+        quality = pl.DataFrame({
+            "pgs_id": ["PGS_META"],
+            "status": ["ok"],
+            "variants_total": [None],
+            "variants_matched": [None],
+            "match_rate": [None],
+            "n_samples": [3202],
+            "score_mean": [1.0],
+            "score_std": [0.2],
+            "elapsed_sec": [None],
+            "error": [None],
+        }, schema={
+            "pgs_id": pl.Utf8,
+            "status": pl.Utf8,
+            "variants_total": pl.Int64,
+            "variants_matched": pl.Int64,
+            "match_rate": pl.Float64,
+            "n_samples": pl.Int64,
+            "score_mean": pl.Float64,
+            "score_std": pl.Float64,
+            "elapsed_sec": pl.Float64,
+            "error": pl.Utf8,
+        })
+
+        issues = reference_distribution_audit_issues(distributions, quality)
+
+        assert issues.height == 5
+        assert set(issues["issue"].to_list()) == {"quality_match_metadata_missing"}
+        assert set(issues["severity"].to_list()) == {"WARN"}
+
+    def test_audit_flags_low_reference_match_rate(self) -> None:
+        distributions = pl.DataFrame({
+            "pgs_id": ["PGS_LOW"] * 5,
+            "superpopulation": ["AFR", "AMR", "EAS", "EUR", "SAS"],
+            "mean": [0.0] * 5,
+            "std": [1.0] * 5,
+            "n": [893, 490, 585, 633, 601],
+            "median": [0.0] * 5,
+            "p5": [-1.0] * 5,
+            "p25": [-0.5] * 5,
+            "p75": [0.5] * 5,
+            "p95": [1.0] * 5,
+        })
+        quality = pl.DataFrame({
+            "pgs_id": ["PGS_LOW"],
+            "status": ["ok"],
+            "variants_total": [100],
+            "variants_matched": [20],
+            "match_rate": [0.20],
+            "n_samples": [3202],
+            "score_mean": [0.0],
+            "score_std": [1.0],
+            "elapsed_sec": [1.0],
+            "error": [None],
+        })
+
+        issues = reference_distribution_audit_issues(distributions, quality, min_match_rate=0.50)
+
+        assert issues.height == 5
+        assert set(issues["issue"].to_list()) == {"quality_low_match_rate"}
+        assert set(issues["severity"].to_list()) == {"ERROR"}
+
+    def test_audit_flags_missing_quality_report_once(self) -> None:
+        distributions = pl.DataFrame({
+            "pgs_id": ["PGS_NO_Q"],
+            "superpopulation": ["EUR"],
+            "mean": [0.0],
+            "std": [1.0],
+            "n": [633],
+            "median": [0.0],
+            "p5": [-1.0],
+            "p25": [-0.5],
+            "p75": [0.5],
+            "p95": [1.0],
+        })
+
+        issues = reference_distribution_audit_issues(distributions, None)
+
+        assert issues.height == 1
+        assert issues["issue"][0] == "quality_report_missing"
+        assert issues["severity"][0] == "WARN"
 
 
 # ---------------------------------------------------------------------------

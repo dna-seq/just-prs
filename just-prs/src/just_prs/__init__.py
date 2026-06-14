@@ -14,10 +14,12 @@ from just_prs.models import (
     AbsoluteRiskBundle,
     AbsoluteRiskEstimate,
     EnrichedPRSResult,
+    PRSBatchOutcome,
+    PRSBatchResult,
     ReferenceDistribution,
 )
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
-from just_prs.prs import PRSEngine, compute_prs, compute_prs_duckdb
+from just_prs.prs import GenotypeInputMode, PRSEngine, compute_prs, compute_prs_batch, compute_prs_duckdb
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.quality import (
     classify_combined_quality,
@@ -47,6 +49,7 @@ from just_prs.reference import (
     parse_pvar,
     read_pgen_genotypes,
     reference_panel_dir,
+    reference_distribution_audit_issues,
 )
 from just_prs.scoring import resolve_cache_dir
 

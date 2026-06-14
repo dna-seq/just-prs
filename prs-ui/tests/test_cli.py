@@ -35,6 +35,7 @@ def test_launch_reflex_passes_explicit_frontend_and_backend_ports(
     monkeypatch.setenv("PRS_UI_HOST", "127.0.0.1")
     monkeypatch.setenv("PRS_UI_PORT", "3000")
     monkeypatch.setenv("PRS_UI_BACKEND_PORT", "8000")
+    monkeypatch.delenv("PRS_UI_DATA_DIR", raising=False)
     monkeypatch.setattr(cli, "_check_system_dependencies", lambda: None)
     monkeypatch.setattr(reflex_runner, "_run", fake_run_reflex)
     monkeypatch.setattr(os, "chdir", fake_chdir)
@@ -45,6 +46,7 @@ def test_launch_reflex_passes_explicit_frontend_and_backend_ports(
     assert captured_run_kwargs[0]["frontend_port"] == 3000
     assert captured_run_kwargs[0]["backend_port"] == 8000
     assert captured_run_kwargs[0]["backend_host"] == "127.0.0.1"
+    assert os.environ["PRS_UI_DATA_DIR"] == str(Path.cwd() / "data")
 
 
 def test_launch_reflex_leaves_unset_ports_for_reflex(
@@ -65,6 +67,28 @@ def test_launch_reflex_leaves_unset_ports_for_reflex(
 
     assert captured_run_kwargs[0]["frontend_port"] is None
     assert captured_run_kwargs[0]["backend_port"] is None
+
+
+def test_launch_reflex_preserves_explicit_data_dir(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured_run_kwargs: list[dict[str, Any]] = []
+    explicit = Path("/tmp/prs-ui-data")
+
+    def fake_run_reflex(**kwargs: Any) -> None:
+        captured_run_kwargs.append(kwargs)
+
+    monkeypatch.setenv("PRS_UI_DATA_DIR", str(explicit))
+    monkeypatch.setattr(cli, "_check_system_dependencies", lambda: None)
+    monkeypatch.setattr(reflex_runner, "_run", fake_run_reflex)
+    monkeypatch.setattr(os, "chdir", lambda path: None)
+
+    cli._launch_reflex()
+
+    assert captured_run_kwargs
+    assert os.environ["PRS_UI_DATA_DIR"] == str(explicit)
+
+
+def test_default_data_dir_falls_back_to_invocation_dir(tmp_path: Path) -> None:
+    assert cli._default_data_dir(tmp_path) == tmp_path / "data"
 
 
 def test_launch_preselect_ui_uses_shared_reflex_launcher(

@@ -135,6 +135,55 @@ def _assert_scores_close(
         )
 
 
+def test_variant_only_inference_matches_plink2_augmented_hom_ref(
+    tmp_path: Path,
+    plink2_path: Path,
+) -> None:
+    """Variant-only absent-hom-ref inference matches PLINK2 on explicit 0/0 loci."""
+    variant_only_geno = tmp_path / "variant_only.parquet"
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["0/1"],
+    }).write_parquet(variant_only_geno)
+
+    scoring = pl.DataFrame({
+        "hm_chr": ["1", "1"],
+        "hm_pos": [100, 200],
+        "effect_allele": ["G", "T"],
+        "reference_allele": ["A", "T"],
+        "effect_weight": [1.0, 2.0],
+    }).lazy()
+    our_result = compute_prs(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(variant_only_geno),
+        genotype_input_mode="variant_only",
+    )
+
+    augmented_vcf = tmp_path / "augmented.vcf"
+    augmented_vcf.write_text(
+        "##fileformat=VCFv4.2\n"
+        "##contig=<ID=1,length=1000>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample\n"
+        "1\t100\t.\tA\tG\t.\tPASS\t.\tGT\t0/1\n"
+        "1\t200\t.\tT\tC\t.\tPASS\t.\tGT\t0/0\n"
+    )
+    plink_score_path = tmp_path / "plink_score.txt"
+    pl.DataFrame({
+        "ID": ["1:100", "1:200"],
+        "A1": ["G", "T"],
+        "WEIGHT": [1.0, 2.0],
+    }).write_csv(plink_score_path, separator="\t")
+    plink_score = _run_plink2_prs(plink2_path, augmented_vcf, plink_score_path, tmp_path)
+
+    _assert_scores_close(our_result.score, plink_score, "PGSTEST", tolerance=1e-6)
+
+
 def test_prs_matches_plink2_pgs000001(
     vcf_path: Path, scoring_cache_dir: Path, plink2_path: Path
 ) -> None:
@@ -149,6 +198,7 @@ def test_prs_matches_plink2_pgs000001(
         genome_build="GRCh38",
         cache_dir=scoring_cache_dir,
         pgs_id="PGS000001",
+        genotype_input_mode="plink_present_only",
     )
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -177,6 +227,7 @@ def test_prs_matches_plink2_grch38(
         genome_build="GRCh38",
         cache_dir=scoring_cache_dir,
         pgs_id=pgs_id,
+        genotype_input_mode="plink_present_only",
     )
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -206,6 +257,7 @@ def test_prs_batch_summary_vs_plink2(
             genome_build="GRCh38",
             cache_dir=scoring_cache_dir,
             pgs_id=pgs_id,
+            genotype_input_mode="plink_present_only",
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -12,6 +12,7 @@ from prs_pipeline.assets import (
     hf_chip_coverage,
     hf_prs_percentiles,
     illumina_gsa_manifest,
+    reference_percentile_audit,
     reference_panel,
     reference_scores,
     scoring_files,
@@ -71,6 +72,17 @@ chip_coverage_pipeline = dg.define_asset_job(
         "Compute consumer-chip (Illumina GSA) coverage of all PGS scoring files "
         "and publish chip_coverage.parquet to HuggingFace. Lightweight: reuses "
         "cached scoring parquets and does not touch the reference panel."
+    ),
+    hooks={resource_summary_hook},
+    executor_def=in_process_executor,
+)
+
+reference_percentile_audit_job = dg.define_asset_job(
+    name="reference_percentile_audit_job",
+    selection=dg.AssetSelection.assets("reference_percentile_audit"),
+    description=(
+        "Audit cached or HuggingFace reference percentile distributions and write "
+        "quality sidecars without recomputing reference scores."
     ),
     hooks={resource_summary_hook},
     executor_def=in_process_executor,
@@ -147,6 +159,7 @@ _assets = [
     scoring_files_parquet,
     chip_coverage,
     hf_chip_coverage,
+    reference_percentile_audit,
     reference_panel,
     reference_scores,
     hf_prs_percentiles,
@@ -169,6 +182,7 @@ _unresolved_jobs = [
     full_pipeline,
     catalog_pipeline,
     chip_coverage_pipeline,
+    reference_percentile_audit_job,
     metadata_pipeline,
 ]
 
@@ -194,6 +208,7 @@ def _build_definitions() -> dg.Definitions:
             full_pipeline_job=jobs_by_name["full_pipeline"],
             catalog_pipeline_job=jobs_by_name["catalog_pipeline"],
             score_and_push_job=jobs_by_name["score_and_push"],
+            reference_percentile_audit_job=jobs_by_name["reference_percentile_audit_job"],
         ),
         resources=_resources,
         jobs=resolved_jobs,

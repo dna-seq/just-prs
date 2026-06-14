@@ -181,17 +181,40 @@ def _enrich_scores_for_grid(lf: pl.LazyFrame, catalog: PRSCatalog) -> pl.LazyFra
             .alias("score_source"),
         )
 
+    publication_defaults = {
+        "citation": "",
+        "publication_title": "",
+        "publication_journal": "",
+        "publication_date": "",
+        "publication_pmid": "",
+        "publication_doi": "",
+    }
     pubs = catalog.publications()
+    if pubs is None:
+        return lf.with_columns([
+            pl.lit(value).alias(name)
+            for name, value in publication_defaults.items()
+        ])
+
     pubs_cols = pubs.select(
         "pgp_id",
         pl.concat_str([
-            pl.col("first_author"),
+            pl.col("first_author").fill_null(""),
             pl.lit(" ("),
-            pl.col("date_publication").cast(pl.Utf8),
+            pl.col("date_publication").cast(pl.Utf8).fill_null(""),
             pl.lit(")"),
         ]).alias("citation"),
+        pl.col("title").fill_null("").alias("publication_title"),
+        pl.col("journal").fill_null("").alias("publication_journal"),
+        pl.col("date_publication").cast(pl.Utf8).fill_null("").alias("publication_date"),
+        pl.col("pmid").cast(pl.Utf8).fill_null("").alias("publication_pmid"),
+        pl.col("doi").fill_null("").alias("publication_doi"),
     )
     lf = lf.join(pubs_cols, on="pgp_id", how="left")
+    lf = lf.with_columns([
+        pl.col(name).fill_null(value).alias(name)
+        for name, value in publication_defaults.items()
+    ])
     return lf
 
 
@@ -213,6 +236,11 @@ def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
         "match_color": enriched.match_color,
         "variants_matched": enriched.variants_matched,
         "variants_total": enriched.variants_total,
+        "variants_observed": enriched.variants_observed,
+        "variants_assumed_hom_ref": enriched.variants_assumed_hom_ref,
+        "variants_unscorable_absent": enriched.variants_unscorable_absent,
+        "variants_no_call": enriched.variants_no_call,
+        "genotype_input_mode": enriched.genotype_input_mode,
         "effect_size": enriched.effect_size,
         "classification": enriched.classification,
         "auroc": f"{enriched.auroc:.3f}" if enriched.auroc is not None else "",
@@ -235,6 +263,10 @@ def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
         "reference_status": enriched.reference_status,
         "reference_source": enriched.reference_source,
         "reference_source_code": enriched.reference_source_code,
+        "reference_audit_status": enriched.reference_audit_status,
+        "reference_audit_warning_count": enriched.reference_audit_warning_count,
+        "reference_audit_error_count": enriched.reference_audit_error_count,
+        "reference_audit_issues": enriched.reference_audit_issues,
         "absolute_risk": enriched.absolute_risk_text,
         "absolute_risk_percent": enriched.absolute_risk_percent,
         "population_average_percent": enriched.population_average_percent,
@@ -295,6 +327,48 @@ def _std(values: list[float]) -> float | None:
     return math.sqrt(variance)
 
 
+def _unique_nonempty_values(rows: list[dict[str, Any]], field: str) -> list[str]:
+    """Return distinct non-empty string values while preserving first-seen order."""
+    seen: set[str] = set()
+    values: list[str] = []
+    for row in rows:
+        value = str(row.get(field) or "").strip()
+        if not value:
+            continue
+        key = value.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        values.append(value)
+    return values
+
+
+def _trait_group_display_label(rows: list[dict[str, Any]]) -> tuple[str, list[str]]:
+    """Build an honest label for a grouped trait summary row.
+
+    PGS Catalog can map several reported traits to one ontology term.  The
+    grouped result is ontology-level, so the title should not pretend the
+    aggregate represents only whichever reported trait happened to sort first.
+    """
+    efo_labels = _unique_nonempty_values(rows, "trait_efo")
+    reported_traits = _unique_nonempty_values(rows, "trait")
+    base_label = (
+        efo_labels[0]
+        if efo_labels
+        else reported_traits[0]
+        if reported_traits
+        else "Unlabeled trait"
+    )
+    if len(reported_traits) <= 1:
+        return base_label, reported_traits
+
+    shown_traits = reported_traits[:4]
+    suffix = "; ".join(shown_traits)
+    if len(reported_traits) > len(shown_traits):
+        suffix = f"{suffix}; +{len(reported_traits) - len(shown_traits)} more"
+    return f"{base_label} ({suffix})", reported_traits
+
+
 def _percentile_tone(percentile: float | None) -> str:
     """Semantic tone for citizen-facing percentile interpretation."""
     if percentile is None:
@@ -324,7 +398,7 @@ def _percentile_summary(percentile: float | None) -> str:
         return (
             "This score is above the usual middle range of the reference population. "
             "For most PRS models, that means more inherited predisposition than average, "
-            "but it is not a diagnosis and should be read together with model quality and match rate."
+            "but it is not a diagnosis and should be read together with model quality and model coverage."
         )
     if percentile < 25:
         return (
@@ -423,8 +497,8 @@ def _bell_curve_marker(
 
     Returns (plotly_symbol, hex_color):
         - Outlier: ``{shape}-open``, red
-        - In average range (25-75th pctl) with >=50% match: ``{shape}`` (filled), green
-        - Extreme or low match: ``{shape}-dot``, grey
+        - In average range (25-75th pctl) with >=50% coverage: ``{shape}`` (filled), green
+        - Extreme or low coverage: ``{shape}-dot``, grey
     """
     if is_outlier:
         return f"{base_shape}-open", _BELL_RED
@@ -436,7 +510,7 @@ def _bell_curve_marker(
 
 
 def _match_rate_tone(match_rate: float) -> str:
-    """Return display tone for per-model variant match rate."""
+    """Return display tone for per-model coverage."""
     if match_rate >= 50.0:
         return "good"
     if match_rate >= 25.0:
@@ -474,7 +548,7 @@ def _absolute_risk_takeaway(
     if pop_pct is None:
         return (
             f"Your estimated absolute risk for {trait_label} is {user_pct:.1f}%. "
-            "Read this together with PRS percentile, model quality, and match rate."
+            "Read this together with PRS percentile, model quality, and model coverage."
         )
 
     if user_pct < 2.0:
@@ -525,6 +599,8 @@ def _percentile_method_tone(method_label: str) -> str:
         return "info"
     if method_label == "AUROC est.":
         return "warning"
+    if method_label == "Insufficient coverage":
+        return "warning"
     return "neutral"
 
 
@@ -567,6 +643,190 @@ def _pgs_link_items(
                 item["color"] = color
         items.append(item)
     return json.dumps(items)
+
+
+def _clean_metadata_text(value: Any) -> str:
+    """Return a display-safe string for optional metadata values."""
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if text.lower() in {"none", "nan", "null"}:
+        return ""
+    return text
+
+
+def _shorten_text(text: str, limit: int = 90) -> str:
+    """Trim long publication titles for compact detail-panel labels."""
+    clean = text.strip()
+    if len(clean) <= limit:
+        return clean
+    return clean[: limit - 3].rstrip() + "..."
+
+
+def _publication_display_label(row: dict[str, Any]) -> str:
+    """Build a compact source-study label from joined publication metadata."""
+    citation = _clean_metadata_text(row.get("citation"))
+    if citation and citation != "()":
+        return citation
+    title = _clean_metadata_text(row.get("publication_title"))
+    if title:
+        return _shorten_text(title)
+    pgp_id = _clean_metadata_text(row.get("pgp_id"))
+    if pgp_id:
+        return pgp_id
+    pmid = _clean_metadata_text(row.get("publication_pmid") or row.get("pmid"))
+    if pmid:
+        return f"PMID {pmid}"
+    return "Publication metadata unavailable"
+
+
+def _publication_detail_text(row: dict[str, Any]) -> str:
+    """Return title/journal/date text for source-study metric cards."""
+    title = _clean_metadata_text(row.get("publication_title"))
+    journal = _clean_metadata_text(row.get("publication_journal"))
+    date = _clean_metadata_text(row.get("publication_date"))
+    parts = [part for part in (journal, date) if part]
+    suffix = f" ({', '.join(parts)})" if parts else ""
+    return f"{_shorten_text(title, 110)}{suffix}" if title else "Original study metadata from PGS Catalog."
+
+
+def _publication_link_dicts(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """Return source-publication link objects for detail panels and AI prompts."""
+    items: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for row in rows:
+        label = _publication_display_label(row)
+        pgp_id = _clean_metadata_text(row.get("pgp_id"))
+        pmid = _clean_metadata_text(row.get("publication_pmid") or row.get("pmid"))
+        doi = _clean_metadata_text(row.get("publication_doi") or row.get("doi"))
+
+        if pgp_id:
+            key = f"pgp:{pgp_id}"
+            if key not in seen:
+                items.append({
+                    "label": label,
+                    "url": f"https://www.pgscatalog.org/publication/{pgp_id}/",
+                    "color": "#1565c0",
+                })
+                seen.add(key)
+            continue
+
+        if pmid:
+            key = f"pmid:{pmid}"
+            if key not in seen:
+                items.append({
+                    "label": f"{label} (PubMed)",
+                    "url": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
+                    "color": "#1565c0",
+                })
+                seen.add(key)
+            continue
+
+        if doi:
+            key = f"doi:{doi}"
+            if key not in seen:
+                items.append({
+                    "label": f"{label} (DOI)",
+                    "url": f"https://doi.org/{doi}",
+                    "color": "#1565c0",
+                })
+                seen.add(key)
+
+    if not items:
+        items.append({
+            "label": "Publication metadata unavailable in local PGS Catalog cache",
+            "url": "https://www.pgscatalog.org/",
+            "color": "#757575",
+        })
+    return items
+
+
+def _publication_link_items(rows: list[dict[str, Any]]) -> str:
+    """Return source-publication links for detail panels."""
+    return json.dumps(_publication_link_dicts(rows))
+
+
+def _source_link_prompt_lines(
+    rows: list[dict[str, Any]],
+    pgs_ids: list[str],
+    publication_links_json: str = "",
+) -> list[str]:
+    """Build source-link prompt lines for external LLM assistants."""
+    lines = [
+        "Source links to use if your environment can open web pages:",
+    ]
+    for pgs_id in pgs_ids[:8]:
+        clean_id = _clean_metadata_text(pgs_id)
+        if clean_id:
+            lines.append(f"- PGS Catalog score {clean_id}: https://www.pgscatalog.org/score/{clean_id}/")
+
+    pub_links = _publication_link_dicts(rows) if rows else []
+    if not pub_links and publication_links_json:
+        try:
+            parsed = json.loads(publication_links_json)
+            if isinstance(parsed, list):
+                pub_links = [
+                    item
+                    for item in parsed
+                    if isinstance(item, dict)
+                    and _clean_metadata_text(item.get("label"))
+                    and _clean_metadata_text(item.get("url"))
+                ]
+        except json.JSONDecodeError:
+            pub_links = []
+
+    for item in pub_links[:8]:
+        label = _clean_metadata_text(item.get("label"))
+        url = _clean_metadata_text(item.get("url"))
+        if label and url and "Publication metadata unavailable" not in label:
+            lines.append(f"- Source publication {label}: {url}")
+
+    lines.append(
+        "Please try to use the PGS Catalog page and source publication links for extra context. "
+        "If you cannot access a link, say that clearly instead of inventing details."
+    )
+    return lines
+
+
+def _match_rate_explanation(
+    match_rate: float,
+    variants_matched: Any,
+    variants_total: Any,
+    variants_observed: Any = 0,
+    variants_assumed_hom_ref: Any = 0,
+    variants_unscorable_absent: Any = 0,
+    variants_no_call: Any = 0,
+    genotype_input_mode: str = "",
+) -> str:
+    """Explain model coverage in citizen-science language."""
+    observed = int(variants_observed or 0)
+    assumed = int(variants_assumed_hom_ref or 0)
+    unscorable = int(variants_unscorable_absent or 0)
+    no_call = int(variants_no_call or 0)
+    if genotype_input_mode == "variant_only" and (assumed or unscorable or no_call):
+        coverage = (
+            f"Scored {variants_matched} of {variants_total} model markers: "
+            f"{observed} observed in the file"
+            + (f", {assumed} inferred as homozygous-reference" if assumed else "")
+            + (f", {unscorable} unavailable because the reference allele was unknown" if unscorable else "")
+            + (f", {no_call} present but no-called" if no_call else "")
+            + ". "
+        )
+    else:
+        coverage = (
+            f"Your file contained {variants_matched} of {variants_total} markers used by this PRS model. "
+        )
+    if match_rate < 10:
+        return (
+            coverage
+            + "That is too little of the recipe to interpret; treat the percentile and risk estimate as unreliable."
+        )
+    if match_rate < 50:
+        return (
+            coverage
+            + "This is partial coverage, so the score may move if you use a fuller VCF or more complete genotype source."
+        )
+    return coverage + "This is enough coverage for the result to be usable, though it is still not a diagnosis."
 
 
 def _quality_distribution(rows: list[dict[str, Any]]) -> dict[str, int]:
@@ -683,7 +943,7 @@ _QUALITY_METHODOLOGY = (
     "Quality scoring: each model gets a synthetic quality score (0-100) based on "
     "four tiers: T1a (AUROC/C-index reported, no penalty), T1b (Beta only, 0.95 "
     "penalty), T2 (OR/HR only, 0.90 penalty), T3 (no metric, 0.6 penalty). "
-    "The score also factors cohort size (log-scaled), variant match rate, and a "
+    "The score also factors cohort size (log-scaled), model coverage, and a "
     "harmonized-score penalty if coordinates were lifted over. "
     "Quality labels: High (>=70), Normal (>=50), Moderate (>=30), Low (<30)."
 )
@@ -733,7 +993,7 @@ _FORMAT_TRAIT_FULL = (
     "spread, which model is best and why.\n"
     "3. **What the percentile means** — 1-2 sentences in plain language. This is "
     "a genetic predisposition score, not a measurement of the trait itself.\n"
-    "4. **Confidence** — 1-2 sentences: combine match rate, quality tier, and "
+    "4. **Confidence** — 1-2 sentences: combine model coverage, quality tier, and "
     "number of high-quality models into an honest statement.\n"
     "5. **Context & actions** — 1-2 sentences: what this trait IS (health, "
     "behavioral, physical, cognitive — do NOT assume health), and whether any "
@@ -764,9 +1024,16 @@ def _build_score_ai_prompt(row: dict[str, Any], limit: int) -> str:
     heritability = str(row.get("heritability") or "")
     variants_matched = row.get("variants_matched", "")
     variants_total = row.get("variants_total", "")
+    variants_observed = int(row.get("variants_observed") or 0)
+    variants_assumed_hom_ref = int(row.get("variants_assumed_hom_ref") or 0)
+    variants_unscorable_absent = int(row.get("variants_unscorable_absent") or 0)
+    variants_no_call = int(row.get("variants_no_call") or 0)
     method = str(row.get("percentile_method") or "")
+    reference_audit_status = str(row.get("reference_audit_status") or "")
+    reference_audit_issues = str(row.get("reference_audit_issues") or "")
     is_harmonized = row.get("is_harmonized", False)
     risk_agreement = str(row.get("risk_agreement") or "")
+    publication_label = _publication_display_label(row)
 
     lines = [
         f"Interpret this Polygenic Risk Score (PRS) result for a citizen scientist.",
@@ -774,14 +1041,35 @@ def _build_score_ai_prompt(row: dict[str, Any], limit: int) -> str:
         f"Trait: {trait}" + (f" (EFO: {efo})" if efo else ""),
         f"PGS ID: {pgs_id}  https://www.pgscatalog.org/score/{pgs_id}/",
     ]
+    lines.extend(_source_link_prompt_lines([row], [pgs_id]))
+    lines.append("")
     if pct:
         lines.append(f"Percentile: {pct} (method: {method})")
+    if reference_audit_status in {"warning", "error"}:
+        lines.append(
+            f"Reference percentile audit status: {reference_audit_status}. "
+            f"Issues: {reference_audit_issues or 'see audit sidecar'}."
+        )
     if score:
         lines.append(f"Raw PRS value: {score}")
     if variants_matched and variants_total:
-        lines.append(f"Variants matched: {variants_matched}/{variants_total} ({match_rate}%)")
+        lines.append(
+            f"Model coverage: {variants_matched}/{variants_total} markers found "
+            f"in this genome file ({match_rate}%). Explain that low coverage "
+            "means the score used only part of the PRS model."
+        )
+        if variants_unscorable_absent or variants_assumed_hom_ref or variants_no_call:
+            lines.append(
+                "Coverage breakdown: "
+                f"{variants_observed} observed, "
+                f"{variants_assumed_hom_ref} safely inferred as homozygous-reference, "
+                f"{variants_unscorable_absent} unavailable because the reference allele was unknown, "
+                f"{variants_no_call} present but no-called."
+            )
     elif match_rate:
-        lines.append(f"Variant match rate: {match_rate}%")
+        lines.append(f"Model coverage: {match_rate}%")
+    if publication_label != "Publication metadata unavailable":
+        lines.append(f"Source publication: {publication_label}")
     lines.append(f"Quality tier: {quality}" + (f" (synthetic score: {sq}/100)" if sq else ""))
     if auroc and str(auroc) != "N/A":
         lines.append(f"AUROC: {auroc}")
@@ -838,14 +1126,21 @@ def _build_trait_ai_prompt(row: dict[str, Any], limit: int) -> str:
     high_q_median = row.get("high_confidence_median", "N/A")
     outlier_ids = str(row.get("outlier_ids") or "")
     pgs_ids = str(row.get("pgs_ids") or "")
+    pgs_id_list = [
+        pgs_id.strip()
+        for pgs_id in pgs_ids.split(",")
+        if pgs_id.strip()
+    ]
 
     lines = [
         f"Interpret these combined Polygenic Risk Score (PRS) results "
         f"for \"{trait}\"" + (f" (EFO: {efo})" if efo else "") + ".",
         "",
-        f"Models computed: {n_models} total, {n_usable} usable (>=50% variant match)",
+        f"Models computed: {n_models} total, {n_usable} usable (>=50% model coverage)",
         f"PGS IDs: {pgs_ids}",
     ]
+    lines.extend(_source_link_prompt_lines([], pgs_id_list, str(row.get("publication_links") or "")))
+    lines.append("")
     if best_id:
         lines.append(
             f"Best model: {best_id} (pctl: {best_pctl}, quality: {best_quality})"
@@ -858,7 +1153,7 @@ def _build_trait_ai_prompt(row: dict[str, Any], limit: int) -> str:
     if reliability:
         lines.append(f"Reliability: {reliability}")
     if best_match:
-        lines.append(f"Best match rate: {best_match:.1f}%")
+        lines.append(f"Best model coverage: {best_match:.1f}%")
     lines.append(f"High-quality models: {high_q}" + (f" (median pctl: {high_q_median})" if high_q else ""))
     if outlier_ids:
         lines.append(f"Outlier models: {outlier_ids}")
@@ -938,6 +1233,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     compute_all_populations: bool = False
     show_all_risk_estimates: bool = True
     include_harmonized: bool = True
+    prs_catalog_query: str = ""
 
     _scores_initialized: bool = False
     _compute_scores_lf: pl.LazyFrame | None = None
@@ -976,6 +1272,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.include_harmonized = bool(value)
         if self.compute_scores_loaded:
             yield from self.load_compute_scores()
+
+    def set_prs_catalog_query(self, value: str) -> None:
+        """Track the broad catalog search query used by the PRS selector."""
+        self.prs_catalog_query = value
 
     def set_prs_genotypes_lf(self, lf: pl.LazyFrame) -> None:
         """Provide a pre-loaded genotypes LazyFrame for PRS computation.
@@ -1200,7 +1500,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ),
             ColumnDef(
                 field="best_model_pctl", header_name="Your Percentile (best model)", type="number", min_width=200,
-                description="Percentile from the highest-quality model with usable match rate (≥50%)",
+                description="Percentile from the highest-quality model with usable model coverage (≥50%)",
                 cell_renderer_type="progress_bar",
                 cell_renderer_config={
                     "color": "#5b5bd6", "trackColor": "#e0e0e0", "showValue": True,
@@ -1208,7 +1508,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ),
             ColumnDef(
                 field="typical_percentile", header_name="Median Pctl (usable models)", type="number", min_width=200,
-                description="Median percentile across models with match rate ≥50% only",
+                description="Median percentile across models with model coverage ≥50% only",
                 cell_renderer_type="progress_bar",
                 cell_renderer_config={
                     "color": "#7c7cc9", "trackColor": "#e0e0e0", "showValue": True,
@@ -1225,7 +1525,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ColumnDef(field="risk_vs_average", header_name="vs Average", min_width=110),
             ColumnDef(field="n_models", header_name="Models", type="number", min_width=90),
             ColumnDef(field="usable_models", header_name="Usable Models", type="number", min_width=130,
-                      description="Models with variant match rate ≥50%"),
+                      description="Models with model coverage ≥50%"),
             ColumnDef(field="high_confidence_models", header_name="High Quality Models", type="number", min_width=150),
             ColumnDef(field="high_confidence_median", header_name="High Quality Median", min_width=160),
             ColumnDef(field="percentile_range", header_name="Pctl. Range", min_width=110),
@@ -1247,7 +1547,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ),
             ColumnDef(field="best_metric", header_name="Best Metric", min_width=150),
             ColumnDef(
-                field="best_match_rate", header_name="Best Match", type="number", min_width=120,
+                field="best_match_rate", header_name="Best Coverage", type="number", min_width=130,
                 cell_renderer_type="progress_bar",
                 cell_renderer_config={
                     "color": "#43a047", "trackColor": "#e8e8e8", "showValue": True,
@@ -1342,9 +1642,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             if outliers:
                 parts.append(
                     f"OUTLIER MODELS: {', '.join(outliers)} deviate noticeably from the "
-                    "other models. Common causes: lower match rate (fewer of your variants "
+                    "other models. Common causes: lower model coverage (fewer of your markers "
                     "overlap with the model), different training ancestry, or a model that "
-                    "captures a different genetic sub-signal. Check their match rate and "
+                    "captures a different genetic sub-signal. Check their model coverage and "
                     "quality label in the PRS results table above."
                 )
 
@@ -1396,7 +1696,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         for index, rows in enumerate(grouped.values()):
             rows.sort(key=lambda r: float(r.get("synthetic_quality") or 0), reverse=True)
 
-            trait = str(rows[0].get("trait") or "Unlabeled trait")
+            trait, reported_traits = _trait_group_display_label(rows)
             efo_id = str(rows[0].get("trait_efo_id") or "")
             pgs_ids = [str(row.get("pgs_id", "")) for row in rows if row.get("pgs_id")]
             pct_by_id: dict[str, float] = {}
@@ -1616,9 +1916,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "value": f"0 of {len(rows)} models usable",
                     "tone": "danger",
                     "subtext": (
-                        "All models have <50% variant match rate. "
-                        "Percentiles are meaningless — the score uses too few variants "
-                        "compared to the reference panel. Check genome build and VCF coverage."
+                        "All models have <50% model coverage. "
+                        "Percentiles are unreliable because too little of each PRS model "
+                        "was found in this genome file. Check genome build and VCF coverage."
                     ),
                 })
             elif reliability == "Partial match":
@@ -1627,7 +1927,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "value": f"{n_usable} of {len(rows)} models usable",
                     "tone": "warning",
                     "subtext": (
-                        "Some models have <50% variant match. "
+                        "Some models have <50% model coverage. "
                         "Percentiles below are from usable models only."
                     ),
                 })
@@ -1637,7 +1937,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "label": f"Your Percentile ({best_usable_id})",
                     "value": f"{best_model_pctl:.1f}",
                     "tone": _percentile_tone(best_model_pctl),
-                    "subtext": "from highest-quality model with ≥50% match rate",
+                    "subtext": "from highest-quality model with ≥50% model coverage",
                 })
             elif reliability != "⚠ UNRELIABLE":
                 key_metrics.append({
@@ -1763,7 +2063,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ]
             if reliability == "⚠ UNRELIABLE":
                 quick_flags.insert(0, {
-                    "label": f"⚠ UNRELIABLE: 0 of {len(rows)} models have ≥50% variant match",
+                    "label": f"⚠ UNRELIABLE: 0 of {len(rows)} models have ≥50% model coverage",
                     "tone": "danger",
                 })
             elif reliability == "Partial match":
@@ -1783,10 +2083,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                         else "neutral"
                     ),
                 })
+            if len(reported_traits) > 1:
+                quick_flags.insert(0, {
+                    "label": f"Ontology group includes: {'; '.join(reported_traits)}",
+                    "tone": "info",
+                })
 
             summary_rows.append({
                 "id": index,
                 "trait": trait,
+                "reported_traits": "; ".join(reported_traits),
                 "trait_efo_id": efo_id,
                 "reliability": reliability,
                 "n_models": len(rows),
@@ -1820,6 +2126,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     str(row.get("pgs_id", "")): str(row.get("synthetic_quality_label") or "")
                     for row in rows
                 }),
+                "publication_links": _publication_link_items(rows),
                 "key_metrics": key_metrics,
                 "confidence_segments": confidence_segments,
                 "percentile_chart": percentile_chart,
@@ -1961,8 +2268,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ),
             ColumnDef(field="absolute_risk", header_name="Absolute Risk (best)", min_width=180),
             ColumnDef(
-                field="match_rate", header_name="Match Rate", type="number",
+                field="match_rate", header_name="Model Coverage", type="number",
                 min_width=130,
+                description=(
+                    "How much of the PRS model was found in this genome file. "
+                    "Low coverage means the result is less reliable."
+                ),
                 cell_renderer_type="progress_bar",
                 cell_renderer_config={
                     "color": "#43a047", "trackColor": "#e8e8e8", "showValue": True,
@@ -2012,6 +2323,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "reference_panel": "1000G ref",
                 "theoretical": "theoretical",
                 "auroc_approx": "AUROC est.",
+                "insufficient_coverage": "Insufficient coverage",
                 "": "unavailable",
             }.get(method_raw, method_raw)
 
@@ -2026,6 +2338,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             # Keep source labels compact; detailed methodology lives in the collapsible guide.
             ref_source = r.get("reference_source", "")
             ref_source_detail = ref_source
+            ref_audit_status = str(r.get("reference_audit_status") or "")
+            ref_audit_issues = str(r.get("reference_audit_issues") or "")
+            ref_audit_warning_count = int(r.get("reference_audit_warning_count") or 0)
+            ref_audit_error_count = int(r.get("reference_audit_error_count") or 0)
+            if ref_audit_status in {"warning", "error"}:
+                ref_source_detail = (
+                    f"{ref_source}; audit {ref_audit_status}: "
+                    f"{ref_audit_error_count} error(s), {ref_audit_warning_count} warning(s)"
+                    + (f" ({ref_audit_issues})" if ref_audit_issues else "")
+                )
 
             # Build effect size + classification detail for the CSV and compact metric cards.
             effect_size_val = r.get("effect_size", "")
@@ -2075,6 +2397,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 else None
             )
             match_rate = float(r.get("match_rate") or 0.0)
+            variants_matched = r.get("variants_matched", 0)
+            variants_total = r.get("variants_total", 0)
             population_values = [
                 float(item["value"])
                 for item in percentile_items
@@ -2120,7 +2444,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "label": "Scoring method",
                     "value": method_label,
                     "tone": _percentile_method_tone(method_label),
-                    "subtext": f"Match rate {match_rate:.1f}%",
+                    "subtext": f"Model coverage {match_rate:.1f}%",
                 },
                 {
                     "label": "Model quality",
@@ -2253,13 +2577,25 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     ),
                 },
                 {
-                    "label": "Variant match",
+                    "label": "Model coverage",
                     "value": f"{match_rate:.1f}%",
                     "tone": match_tone,
-                    "subtext": (
-                        f"Matched variants: {r.get('variants_matched', 0)} / {r.get('variants_total', 0)}. "
-                        "Low match means the score used only part of the model; check genome build and VCF coverage."
+                    "subtext": _match_rate_explanation(
+                        match_rate,
+                        variants_matched,
+                        variants_total,
+                        r.get("variants_observed", 0),
+                        r.get("variants_assumed_hom_ref", 0),
+                        r.get("variants_unscorable_absent", 0),
+                        r.get("variants_no_call", 0),
+                        str(r.get("genotype_input_mode") or ""),
                     ),
+                },
+                {
+                    "label": "Source study",
+                    "value": _publication_display_label(r),
+                    "tone": "neutral",
+                    "subtext": _publication_detail_text(r),
                 },
                 {
                     "label": "Evaluation population",
@@ -2292,6 +2628,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     ),
                 },
             ]
+            if ref_audit_status in {"warning", "error"}:
+                model_context_items.append({
+                    "label": "Reference audit",
+                    "value": "Warnings" if ref_audit_status == "warning" else "Errors",
+                    "tone": "warning" if ref_audit_status == "warning" else "danger",
+                    "subtext": (
+                        f"{ref_audit_error_count} error(s), {ref_audit_warning_count} warning(s). "
+                        f"{ref_audit_issues or 'See percentile audit sidecar.'}"
+                    ),
+                })
             if match_rate < 10:
                 match_reliability = "⚠ UNRELIABLE"
             elif match_rate < 50:
@@ -2342,6 +2688,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "summary": r.get("summary", ""),
                 "all_population_percentiles": r.get("all_population_percentiles", ""),
                 "reference_source_detail": ref_source_detail,
+                "reference_audit_status": ref_audit_status,
+                "reference_audit_warning_count": ref_audit_warning_count,
+                "reference_audit_error_count": ref_audit_error_count,
+                "reference_audit_issues": ref_audit_issues,
                 "effect_size_detail": effect_size_detail,
                 "absolute_risk": r.get("absolute_risk", ""),
                 "absolute_risk_detail": r.get("absolute_risk_detail", ""),
@@ -2350,6 +2700,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "risk_agreement": r.get("risk_agreement", ""),
                 "risk_context": risk_context_items,
                 "model_context": model_context_items,
+                "publication_links": _publication_link_items([r]),
                 "population_percentiles_chart": percentile_chart,
                 "population_percentiles_summary": chart_takeaway,
                 "result_suggestions": suggestion_badges,
@@ -2394,10 +2745,18 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         """Load cleaned scores into the compute grid, filtered by genome build."""
         self.status_message = "Loading scores for selection..."  # type: ignore[attr-defined]
         yield
-        lf = _catalog.scores(
-            genome_build=self.genome_build,  # type: ignore[attr-defined]
-            include_harmonized=self.include_harmonized,
-        )
+        query = self.prs_catalog_query.strip()
+        if query:
+            lf = _catalog.search(
+                query,
+                genome_build=self.genome_build,  # type: ignore[attr-defined]
+                include_harmonized=self.include_harmonized,
+            )
+        else:
+            lf = _catalog.scores(
+                genome_build=self.genome_build,  # type: ignore[attr-defined]
+                include_harmonized=self.include_harmonized,
+            )
         lf = _enrich_scores_for_grid(lf, _catalog)
         self._compute_scores_lf = lf
         self.compute_scores_loaded = True
@@ -2421,6 +2780,15 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
         else:
             self.status_message = f"Loaded {total} scores for {self.genome_build}"  # type: ignore[attr-defined]
+
+    def apply_prs_catalog_query(self) -> Any:
+        """Filter the PRS selector using the catalog-wide text search."""
+        yield from self.load_compute_scores()
+
+    def clear_prs_catalog_query(self) -> Any:
+        """Clear the catalog-wide text search and reload all scores."""
+        self.prs_catalog_query = ""
+        yield from self.load_compute_scores()
 
     def handle_lf_grid_row_selection(self, model: dict) -> None:
         """Merge grid checkbox changes into the durable ``selected_pgs_ids``.
@@ -2629,17 +2997,35 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
         harmonized_lookup: dict[str, bool] = {}
         original_build_lookup: dict[str, str] = {}
+        publication_lookup: dict[str, dict[str, Any]] = {}
         if self._compute_scores_lf is not None:
             try:
+                score_schema = self._compute_scores_lf.collect_schema().names()
+                metadata_cols = [
+                    col
+                    for col in (
+                        "pgp_id",
+                        "pmid",
+                        "doi",
+                        "citation",
+                        "publication_title",
+                        "publication_journal",
+                        "publication_date",
+                        "publication_pmid",
+                        "publication_doi",
+                    )
+                    if col in score_schema
+                ]
                 harm_df = (
                     self._compute_scores_lf
                     .filter(pl.col("pgs_id").is_in(self.selected_pgs_ids))
-                    .select("pgs_id", "is_harmonized", "genome_build")
+                    .select("pgs_id", "is_harmonized", "genome_build", *metadata_cols)
                     .collect()
                 )
                 for row in harm_df.iter_rows(named=True):
                     harmonized_lookup[row["pgs_id"]] = bool(row["is_harmonized"])
                     original_build_lookup[row["pgs_id"]] = str(row["genome_build"])
+                    publication_lookup[row["pgs_id"]] = row
             except Exception:
                 pass
 
@@ -2685,7 +3071,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             )
 
             row = _enriched_to_row_dict(enriched)
+            row["trait_efo"] = str(info.get("trait_efo") or "") if info else ""
             row["original_genome_build"] = original_build_lookup.get(pgs_id, "")
+            row.update(publication_lookup.get(pgs_id, {}))
 
             if result.match_rate < 0.1:
                 any_low_match = True
@@ -2711,12 +3099,21 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             "heritability", "heritability_detail",
             "auroc", "quality_label",
             "match_rate", "variants_matched", "variants_total",
+            "variants_observed", "variants_assumed_hom_ref",
+            "variants_unscorable_absent", "variants_no_call",
+            "genotype_input_mode",
             "effect_size", "classification", "ancestry",
+            "pgp_id", "citation", "publication_title", "publication_journal",
+            "publication_date", "publication_pmid", "publication_doi",
             "n_individuals", "summary",
             "all_population_percentiles",
             "pct_AFR", "pct_AMR", "pct_EAS", "pct_EUR", "pct_SAS",
             "reference_status",
             "reference_source",
+            "reference_audit_status",
+            "reference_audit_warning_count",
+            "reference_audit_error_count",
+            "reference_audit_issues",
         ]
         buf = io.StringIO()
         writer = csv.DictWriter(buf, fieldnames=columns, extrasaction="ignore")

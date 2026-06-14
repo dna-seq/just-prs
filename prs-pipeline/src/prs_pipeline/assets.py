@@ -39,15 +39,21 @@ from dagster import (
 
 from just_prs.chip_coverage import CHIPS, CHIPS_BY_ID, compute_chip_coverage
 from just_prs.ftp import PGS_FTP_BASE, PGS_SCORES_LIST_URL, bulk_download_scoring_files, list_all_pgs_ids
-from just_prs.hf import DEFAULT_HF_PERCENTILES_REPO, push_chip_coverage, push_reference_distributions
+from just_prs.hf import (
+    DEFAULT_HF_PERCENTILES_REPO,
+    pull_reference_distributions,
+    push_reference_audit_sidecars,
+    push_chip_coverage,
+    push_reference_distributions,
+)
 from just_prs.reference import (
     DEFAULT_PANEL,
     REFERENCE_PANELS,
     REFERENCE_PANEL_URL,
     compute_reference_prs_batch,
-    distribution_quality_issues,
     download_reference_panel,
     enrich_distributions,
+    reference_distribution_audit_issues,
 )
 from prs_pipeline.fingerprint import fingerprint_http_resource
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
@@ -864,13 +870,151 @@ def _write_distribution_audit_summary(
         "issue_counts_by_type": issue_counts_by_type,
         "affected_pgs_ids": affected_pgs_ids,
         "policy": (
-            "Rows with any distribution quality issue are quarantined from the "
-            "published distributions parquet. The full issue parquet is retained "
-            "as an audit/debugging sidecar."
+            "Rows with ERROR distribution quality issues are quarantined from the "
+            "published distributions parquet. WARN rows remain published but are "
+            "retained in the issue parquet as an audit/debugging sidecar."
         ),
     }
     path.write_text(json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
     return summary
+
+
+@asset(
+    group_name="compute",
+    description=(
+        "Audit cached or HuggingFace reference percentile distributions without "
+        "recomputing reference scores. Writes {panel}_distribution_quality_issues.parquet "
+        "and {panel}_distribution_audit_summary.json, using {panel}_quality.parquet "
+        "when available to flag missing match metadata, low match rate, stale aggregates, "
+        "and other suspicious reference percentile rows."
+    ),
+)
+def reference_percentile_audit(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Run the quality-aware reference percentile audit as a standalone asset."""
+    panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+    test_spec = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
+    is_test = bool(test_spec)
+    cache_dir = cache_dir_resource.get_path()
+    percentiles_dir = cache_dir / "percentiles"
+    if is_test:
+        percentiles_dir = percentiles_dir / "test"
+    percentiles_dir.mkdir(parents=True, exist_ok=True)
+
+    dist_path = percentiles_dir / f"{panel}_distributions.parquet"
+    quality_path = percentiles_dir / f"{panel}_quality.parquet"
+    issue_report_path = percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
+    audit_summary_path = percentiles_dir / f"{panel}_distribution_audit_summary.json"
+
+    with resource_tracker("reference_percentile_audit", context=context):
+        if not dist_path.exists() and not is_test:
+            context.log.info(
+                f"No local {dist_path.name}; pulling reference distributions from {hf_resource.percentiles_repo}."
+            )
+            pull_reference_distributions(
+                percentiles_dir,
+                repo_id=hf_resource.percentiles_repo,
+                token=hf_resource.get_token(),
+                panel=panel,
+            )
+
+        if not dist_path.exists():
+            raise FileNotFoundError(
+                f"Reference distributions not found: {dist_path}. "
+                "Run reference_scores/hf_prs_percentiles first or pull from HuggingFace."
+            )
+
+        distributions = pl.read_parquet(dist_path)
+        quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
+        issue_df = reference_distribution_audit_issues(distributions, quality_df)
+        issue_df.write_parquet(issue_report_path)
+
+        error_issue_df = issue_df.filter(pl.col("severity") == "ERROR")
+        warning_issue_df = issue_df.filter(pl.col("severity") == "WARN")
+        affected_error_ids = (
+            sorted(error_issue_df["pgs_id"].unique().to_list())
+            if error_issue_df.height > 0
+            else []
+        )
+        affected_warning_ids = (
+            sorted(warning_issue_df["pgs_id"].unique().to_list())
+            if warning_issue_df.height > 0
+            else []
+        )
+        published_pgs_ids = distributions["pgs_id"].n_unique() if distributions.height > 0 else 0
+        warn_only_ids = sorted(set(affected_warning_ids) - set(affected_error_ids))
+        passed_pgs_ids = max(published_pgs_ids - len(set(affected_error_ids) | set(affected_warning_ids)), 0)
+        audit_summary = _write_distribution_audit_summary(
+            issue_df=issue_df,
+            path=audit_summary_path,
+            panel=panel,
+            input_rows=distributions.height,
+            published_rows=distributions.height,
+            input_pgs_ids=published_pgs_ids,
+            published_pgs_ids=published_pgs_ids,
+            fully_removed_pgs_ids=affected_error_ids,
+        )
+
+        context.log.info(
+            "Reference percentile audit summary: "
+            f"passed={passed_pgs_ids}, warnings={len(warn_only_ids)}, failed={len(affected_error_ids)}, "
+            f"issue_rows={issue_df.height}, error_rows={error_issue_df.height}, warning_rows={warning_issue_df.height}."
+        )
+        if issue_df.height > 0:
+            issue_counts = audit_summary["issue_counts_by_type"]
+            context.log.info(f"Reference percentile audit issue counts: {issue_counts}")
+            examples = issue_df.select(
+                "pgs_id", "superpopulation", "severity", "issue", "recommended_action"
+            ).head(20).to_dicts()
+            context.log.info(f"Reference percentile audit examples: {examples}")
+
+        hf_audit_uploaded = False
+        if not is_test:
+            hf_token = hf_resource.get_token()
+            if hf_token:
+                push_reference_audit_sidecars(
+                    quality_report_path=quality_path if quality_path.exists() else None,
+                    issue_report_path=issue_report_path,
+                    audit_summary_path=audit_summary_path,
+                    repo_id=hf_resource.percentiles_repo,
+                    token=hf_token,
+                    panel=panel,
+                )
+                hf_audit_uploaded = True
+                context.log.info(
+                    f"Uploaded reference percentile audit sidecars to HuggingFace dataset "
+                    f"{hf_resource.percentiles_repo}."
+                )
+            else:
+                context.log.warning(
+                    "HF_TOKEN is not set; reference percentile audit sidecars were written locally "
+                    "but not uploaded to HuggingFace."
+                )
+
+    context.add_output_metadata({
+        "panel": panel,
+        "test_mode": is_test,
+        "hf_audit_uploaded": hf_audit_uploaded,
+        "hf_repo": hf_resource.percentiles_repo,
+        "distributions_path": str(dist_path),
+        "quality_path": str(quality_path) if quality_path.exists() else "",
+        "distribution_quality_issues_path": str(issue_report_path),
+        "distribution_audit_summary_path": str(audit_summary_path),
+        "n_distribution_rows": distributions.height,
+        "n_pgs_ids": published_pgs_ids,
+        "n_passed_pgs_ids": passed_pgs_ids,
+        "n_warning_pgs_ids": len(warn_only_ids),
+        "n_failed_pgs_ids": len(affected_error_ids),
+        "n_issue_rows": issue_df.height,
+        "n_error_rows": error_issue_df.height,
+        "n_warning_rows": warning_issue_df.height,
+        "n_error_pgs_ids": len(affected_error_ids),
+        "issue_counts_by_type": audit_summary["issue_counts_by_type"],
+    })
+    return Output(str(audit_summary_path))
 
 
 # ---------------------------------------------------------------------------
@@ -921,23 +1065,29 @@ def hf_prs_percentiles(
         audit_summary_path = percentiles_dir / f"{panel}_distribution_audit_summary.json"
         input_rows = distributions.height
         input_pgs_ids_set = set(distributions["pgs_id"].unique().to_list()) if distributions.height > 0 else set()
-        issue_df = distribution_quality_issues(distributions)
+        quality_path = percentiles_dir / f"{panel}_quality.parquet"
+        quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
+        issue_df = reference_distribution_audit_issues(distributions, quality_df)
         issue_df.write_parquet(issue_report_path)
         n_quarantined_rows = 0
         n_error_rows = issue_df.filter(pl.col("severity") == "ERROR").height
         n_warn_rows = issue_df.filter(pl.col("severity") == "WARN").height
-        if issue_df.height > 0:
-            bad_keys = issue_df.select("pgs_id", "superpopulation").unique()
+        error_issue_df = issue_df.filter(pl.col("severity") == "ERROR")
+        if error_issue_df.height > 0:
+            bad_ids = error_issue_df.select("pgs_id").unique()
+            bad_keys = distributions.join(bad_ids, on="pgs_id", how="semi").select(
+                "pgs_id", "superpopulation"
+            ).unique()
             n_quarantined_rows = bad_keys.height
             distributions = distributions.join(
-                bad_keys,
-                on=["pgs_id", "superpopulation"],
+                bad_ids,
+                on="pgs_id",
                 how="anti",
             )
             context.log.warning(
                 "Quarantined untrustworthy reference distribution rows before publication: "
                 f"{bad_keys.height} unique pgs_id/superpopulation rows "
-                f"({n_error_rows} error issue rows, {n_warn_rows} warning issue rows). "
+                f"({n_error_rows} error issue rows; {n_warn_rows} warning issue rows retained in sidecar). "
                 f"Full issue report: {issue_report_path}"
             )
 
@@ -1022,6 +1172,7 @@ def hf_prs_percentiles(
             repo_id=repo_id,
             token=token,
             panel=panel,
+            quality_report_path=percentiles_dir / f"{panel}_quality.parquet",
             issue_report_path=issue_report_path,
             audit_summary_path=audit_summary_path,
         )

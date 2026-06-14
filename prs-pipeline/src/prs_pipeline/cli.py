@@ -1,10 +1,12 @@
 """CLI for prs-pipeline: launch or run the Dagster reference-panel pipeline."""
 
+import json
 import os
 import signal
 import subprocess
 import sys
 import time
+import uuid
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -140,12 +142,52 @@ def _set_pipeline_env(
     return False
 
 
+def _print_reference_audit_summary(panel: str) -> None:
+    """Print the compact audit summary for headless CLI users."""
+    from just_prs.scoring import resolve_cache_dir
+
+    cache_dir = Path(os.environ.get("PRS_CACHE_DIR", "")) if os.environ.get("PRS_CACHE_DIR") else resolve_cache_dir()
+    percentiles_dir = cache_dir / "percentiles"
+    if os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip():
+        percentiles_dir = percentiles_dir / "test"
+    summary_path = percentiles_dir / f"{panel}_distribution_audit_summary.json"
+    if not summary_path.exists():
+        console.print(f"[yellow]Audit summary file not found: {summary_path}[/yellow]")
+        return
+
+    summary = json.loads(summary_path.read_text(encoding="utf-8"))
+    input_pgs_ids = int(summary.get("input_pgs_ids", 0) or 0)
+    failed_pgs_ids = len(summary.get("fully_removed_pgs_ids", []) or [])
+    issue_counts_by_severity = summary.get("issue_counts_by_severity", {})
+    warning_issue_rows = (
+        int(issue_counts_by_severity.get("WARN", 0) or 0)
+        if isinstance(issue_counts_by_severity, dict)
+        else 0
+    )
+    error_issue_rows = (
+        int(issue_counts_by_severity.get("ERROR", 0) or 0)
+        if isinstance(issue_counts_by_severity, dict)
+        else 0
+    )
+    issue_counts = summary.get("issue_counts_by_type", {})
+    passed_or_warning_pgs_ids = max(input_pgs_ids - failed_pgs_ids, 0)
+
+    console.print("\n[bold]Reference percentile audit summary[/bold]")
+    console.print(f"  Panel: [cyan]{summary.get('panel', panel)}[/cyan]")
+    console.print(f"  PGS IDs passing quarantine: [green]{passed_or_warning_pgs_ids}[/green]")
+    console.print(f"  PGS IDs failed/quarantined: [red]{failed_pgs_ids}[/red]")
+    console.print(f"  Issue rows: [red]{error_issue_rows} error[/red], [yellow]{warning_issue_rows} warning[/yellow]")
+    if isinstance(issue_counts, dict) and issue_counts:
+        console.print(f"  Issue counts by type: {issue_counts}")
+    console.print(f"  Summary file: [dim]{summary_path}[/dim]")
+
+
 @app.command()
 def run(
     test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
     test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
-    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline.")] = "full_pipeline",
+    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, reference_percentile_audit_job.")] = "full_pipeline",
     no_cache: Annotated[bool, typer.Option("--no-cache", help="Ignore on-disk caches and re-download/recompute everything.")] = False,
     headless: Annotated[bool, typer.Option("--headless", help="Run in-process without Dagster UI.")] = False,
     host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
@@ -183,6 +225,8 @@ def run(
         result = _execute_job(resolved_job)
 
         if result.success:
+            if job == "reference_percentile_audit_job":
+                _print_reference_audit_summary(panel)
             console.print(f"\n[green bold]Job '{job}' completed successfully.[/green bold]")
         else:
             console.print(f"\n[red bold]Job '{job}' failed.[/red bold]")
@@ -295,6 +339,64 @@ def catalog(
     console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
     console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
     console.print("[bold]Job 'catalog_pipeline' will be submitted automatically on startup.[/bold]\n")
+
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])
+
+
+@app.command()
+def audit(
+    panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
+    test: Annotated[bool, typer.Option("--test", help="Audit test-run outputs under percentiles/test.")] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Run reference_percentile_audit_job in-process without Dagster UI.")] = False,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
+) -> None:
+    """Audit reference percentile distributions with Dagster UI by default.
+
+    \b
+    This runs the ``reference_percentile_audit_job`` Dagster job, which audits
+    cached or HuggingFace-pulled percentile parquets and writes the audit
+    sidecars without recomputing reference scores.
+    """
+    dagster_home = _setup_dagster_home()
+    _set_pipeline_env(panel, test_ids="audit-test" if test else None)
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "reference_percentile_audit_job"
+
+    if headless:
+        _cancel_orphaned_runs()
+        console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+        console.print("[bold]Job:[/bold] reference_percentile_audit_job (audit cached/HF percentiles)\n")
+
+        from prs_pipeline.definitions import defs
+
+        resolved_job = defs.get_job_def("reference_percentile_audit_job")
+        console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+        result = _execute_job(resolved_job)
+
+        if result.success:
+            _print_reference_audit_summary(panel)
+            console.print("\n[green bold]Job 'reference_percentile_audit_job' completed successfully.[/green bold]")
+        else:
+            console.print("\n[red bold]Job 'reference_percentile_audit_job' failed.[/red bold]")
+            for event in result.all_events:
+                if event.is_failure:
+                    console.print(f"  [red]{event.message}[/red]")
+            raise typer.Exit(code=1)
+        return
+
+    os.environ["PRS_PIPELINE_STARTUP_REQUEST_ID"] = uuid.uuid4().hex
+    _kill_port(port)
+    _cancel_orphaned_runs()
+    console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
+    console.print("[bold]Job 'reference_percentile_audit_job' will be submitted automatically on startup.[/bold]\n")
 
     dagster_bin = str(Path(sys.executable).parent / "dagster")
     os.execvp(dagster_bin, [

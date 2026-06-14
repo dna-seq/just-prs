@@ -1680,6 +1680,132 @@ def distribution_quality_issues(distributions_df: pl.DataFrame) -> pl.DataFrame:
     return pl.DataFrame(issues, schema=DISTRIBUTION_ISSUE_SCHEMA)
 
 
+def reference_distribution_audit_issues(
+    distributions_df: pl.DataFrame,
+    quality_df: pl.DataFrame | None = None,
+    min_match_rate: float = 0.50,
+) -> pl.DataFrame:
+    """Return distribution issues plus quality-report audit findings.
+
+    ``distribution_quality_issues()`` catches mathematically invalid percentile
+    rows. This helper adds provenance checks from the per-PGS quality report, so
+    finite-looking distributions are still flagged when we cannot audit how many
+    variants the reference panel actually matched, or when the reference scoring
+    run itself reported low match / failed / stale metadata.
+    """
+    base_issues = distribution_quality_issues(distributions_df)
+    if distributions_df.height == 0:
+        return base_issues
+
+    issues = base_issues.to_dicts() if base_issues.height > 0 else []
+    numeric_cols = ("mean", "std", "n", "median", "p5", "p25", "p75", "p95")
+    if not {"pgs_id", "superpopulation", *numeric_cols}.issubset(set(distributions_df.columns)):
+        return base_issues
+
+    def issue_from_row(
+        row: dict[str, object],
+        severity: str,
+        issue: str,
+        recommended_action: str,
+    ) -> dict[str, object]:
+        return {
+            "pgs_id": str(row["pgs_id"]),
+            "superpopulation": str(row["superpopulation"]),
+            "severity": severity,
+            "issue": issue,
+            "recommended_action": recommended_action,
+            **{col: row[col] for col in numeric_cols},
+        }
+
+    if quality_df is None:
+        issues.append({
+            "pgs_id": "",
+            "superpopulation": "",
+            "severity": "WARN",
+            "issue": "quality_report_missing",
+            "recommended_action": "download_or_recompute_quality_report_before_publication",
+            **{col: None for col in numeric_cols},
+        })
+        return pl.DataFrame(issues, schema=DISTRIBUTION_ISSUE_SCHEMA)
+
+    required_quality_cols = {
+        "pgs_id", "status", "variants_total", "variants_matched",
+        "match_rate", "n_samples", "score_mean", "score_std",
+    }
+    missing_quality_cols = required_quality_cols - set(quality_df.columns)
+    if missing_quality_cols:
+        issues.append({
+            "pgs_id": "",
+            "superpopulation": "",
+            "severity": "ERROR",
+            "issue": "missing_quality_columns",
+            "recommended_action": f"fix_quality_schema:{','.join(sorted(missing_quality_cols))}",
+            **{col: None for col in numeric_cols},
+        })
+        return pl.DataFrame(issues, schema=DISTRIBUTION_ISSUE_SCHEMA)
+
+    quality_by_id: dict[str, dict[str, object]] = {
+        str(row["pgs_id"]): row for row in quality_df.iter_rows(named=True)
+    }
+
+    for pgs_id, pgs_rows in distributions_df.group_by("pgs_id", maintain_order=True):
+        pgs_id_str = str(pgs_id[0] if isinstance(pgs_id, tuple) else pgs_id)
+        q = quality_by_id.get(pgs_id_str)
+        row_dicts = list(pgs_rows.iter_rows(named=True))
+        if q is None:
+            for row in row_dicts:
+                issues.append(issue_from_row(
+                    row,
+                    "WARN",
+                    "quality_row_missing",
+                    "recompute_reference_scores_or_pull_quality_sidecar",
+                ))
+            continue
+
+        status = str(q.get("status") or "")
+        variants_total = q.get("variants_total")
+        variants_matched = q.get("variants_matched")
+        match_rate = q.get("match_rate")
+        n_samples = q.get("n_samples")
+        score_mean = q.get("score_mean")
+        score_std = q.get("score_std")
+
+        q_issues: list[tuple[str, str, str]] = []
+        if status not in {"ok", "cached"}:
+            severity = "ERROR" if status == "failed" else "WARN"
+            q_issues.append((severity, f"quality_status_{status or 'unknown'}", "review_reference_scoring_outcome"))
+        if variants_total is None or variants_matched is None or match_rate is None:
+            q_issues.append(("WARN", "quality_match_metadata_missing", "recompute_reference_scores_with_match_counts"))
+        elif float(match_rate) < min_match_rate:
+            q_issues.append(("ERROR", "quality_low_match_rate", "exclude_pgs_until_reference_scoring_improves"))
+        if n_samples is None:
+            q_issues.append(("WARN", "quality_sample_count_missing", "recompute_reference_scores_with_sample_count"))
+        elif int(n_samples) != int(pgs_rows["n"].sum()):
+            q_issues.append(("ERROR", "quality_sample_count_mismatch", "recompute_distributions_from_raw_scores"))
+
+        if score_mean is not None and score_std is not None:
+            total_n = int(pgs_rows["n"].sum())
+            if total_n > 0:
+                weighted_mean = float((pgs_rows["mean"] * pgs_rows["n"]).sum() / total_n)
+                pooled_second = float((((pgs_rows["std"] ** 2) + (pgs_rows["mean"] ** 2)) * pgs_rows["n"]).sum() / total_n)
+                pooled_var = max(pooled_second - weighted_mean**2, 0.0)
+                pooled_std = math.sqrt(pooled_var)
+                mean_tol = max(abs(float(score_mean)) * 0.01, 1e-6)
+                std_tol = max(abs(float(score_std)) * 0.01, 1e-6)
+                if abs(weighted_mean - float(score_mean)) > mean_tol:
+                    q_issues.append(("ERROR", "quality_score_mean_mismatch", "reaggregate_distributions_from_raw_scores"))
+                if abs(pooled_std - float(score_std)) > std_tol:
+                    q_issues.append(("ERROR", "quality_score_std_mismatch", "reaggregate_distributions_from_raw_scores"))
+
+        for severity, issue, action in q_issues:
+            for row in row_dicts:
+                issues.append(issue_from_row(row, severity, issue, action))
+
+    if not issues:
+        return pl.DataFrame(schema=DISTRIBUTION_ISSUE_SCHEMA)
+    return pl.DataFrame(issues, schema=DISTRIBUTION_ISSUE_SCHEMA)
+
+
 def compute_reference_prs_batch(
     pgs_ids: list[str],
     ref_dir: Path,
@@ -1981,7 +2107,11 @@ def compute_reference_prs_batch(
                 "p75": pl.Float64, "p95": pl.Float64,
             })
 
-        distribution_issues_df = distribution_quality_issues(distributions_df)
+        distribution_issues_df = reference_distribution_audit_issues(
+            distributions_df,
+            quality_df,
+            min_match_rate=match_rate_threshold,
+        )
 
         percentiles_dir = cache_dir / "percentiles"
         if output_subdir:

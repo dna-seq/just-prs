@@ -51,9 +51,17 @@ _JOB_CHECK_KEYS: dict[str, list[dg.AssetKey]] = {
         dg.AssetKey("hf_pgs_catalog"),
         dg.AssetKey("hf_pgs_catalog_risk_metadata"),
     ],
+    "reference_percentile_audit_job": [
+        dg.AssetKey("reference_percentile_audit"),
+    ],
 }
 
-_PIPELINE_JOB_NAMES = ("full_pipeline", "catalog_pipeline", "score_and_push")
+_PIPELINE_JOB_NAMES = (
+    "full_pipeline",
+    "catalog_pipeline",
+    "score_and_push",
+    "reference_percentile_audit_job",
+)
 
 
 def _has_any_active_pipeline_run(instance: dg.DagsterInstance) -> dg.DagsterRun | None:
@@ -95,11 +103,12 @@ def _resolve_cache() -> Path:
 def _make_startup_sensor(
     full_pipeline_job: object,
     catalog_pipeline_job: object,
+    reference_percentile_audit_job: object,
 ) -> dg.SensorDefinition:
     """Startup sensor: initial materialization check."""
 
     @dg.sensor(
-        jobs=[full_pipeline_job, catalog_pipeline_job],
+        jobs=[full_pipeline_job, catalog_pipeline_job, reference_percentile_audit_job],
         default_status=dg.DefaultSensorStatus.RUNNING,
         minimum_interval_seconds=30,
         name="startup_sensor",
@@ -115,6 +124,14 @@ def _make_startup_sensor(
         if active:
             return dg.SkipReason(
                 f"{active.job_name} already in progress (run {active.run_id[:8]})."
+            )
+
+        if target_job == "reference_percentile_audit_job":
+            request_id = os.environ.get("PRS_PIPELINE_STARTUP_REQUEST_ID", "").strip()
+            run_key = f"reference_percentile_audit_{request_id or 'startup'}"
+            context.log.info(f"Submitting explicit {target_job} run with run_key={run_key}.")
+            return dg.SensorResult(
+                run_requests=[dg.RunRequest(run_key=run_key, job_name=target_job)],
             )
 
         check_keys = _JOB_CHECK_KEYS.get(target_job, _JOB_CHECK_KEYS["full_pipeline"])
@@ -385,18 +402,24 @@ def _make_upstream_freshness_sensor(
 def make_startup_sensor(
     full_pipeline_job: object,
     catalog_pipeline_job: object,
+    reference_percentile_audit_job: object | None = None,
 ) -> dg.SensorDefinition:
     """Create the startup sensor (backward-compatible entry point).
 
     Use ``make_all_sensors()`` for the full set of smart sensors.
     """
-    return _make_startup_sensor(full_pipeline_job, catalog_pipeline_job)
+    return _make_startup_sensor(
+        full_pipeline_job,
+        catalog_pipeline_job,
+        reference_percentile_audit_job or full_pipeline_job,
+    )
 
 
 def make_all_sensors(
     full_pipeline_job: object,
     catalog_pipeline_job: object,
     score_and_push_job: object,
+    reference_percentile_audit_job: object,
 ) -> list[dg.SensorDefinition]:
     """Create all 4 smart pipeline sensors.
 
@@ -404,7 +427,11 @@ def make_all_sensors(
         List of sensor definitions to register in Definitions(sensors=[...]).
     """
     return [
-        _make_startup_sensor(full_pipeline_job, catalog_pipeline_job),
+        _make_startup_sensor(
+            full_pipeline_job,
+            catalog_pipeline_job,
+            reference_percentile_audit_job,
+        ),
         _make_completeness_sensor(score_and_push_job),
         _make_failure_retry_sensor(score_and_push_job),
         _make_upstream_freshness_sensor(full_pipeline_job),

@@ -981,7 +981,7 @@ reference = [
 [package.metadata]
 requires-dist = [
     { name = "duckdb", specifier = ">=1.5.0" },
-    { name = "eliot", specifier = ">=1.17.5" },
+    { name = "eliot", specifier = ">=1.18.0" },
     { name = "fsspec", extras = ["http"], specifier = ">=2026.2.0" },
     { name = "httpx", specifier = ">=0.28.0" },
     { name = "huggingface-hub", specifier = ">=1.7.1" },
@@ -1509,7 +1509,7 @@ requires-dist = [
     { name = "reflex-components-code", specifier = ">=0.9.2" },
     { name = "reflex-components-core", specifier = ">=0.9.4" },
     { name = "reflex-components-radix", specifier = ">=0.9.4" },
-    { name = "reflex-mui-datagrid", specifier = ">=0.3.7" },
+    { name = "reflex-mui-datagrid", specifier = ">=0.3.8" },
 ]
 
 [[package]]
@@ -2047,7 +2047,7 @@ wheels = [
 
 [[package]]
 name = "reflex-mui-datagrid"
-version = "0.3.7"
+version = "0.3.8"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "polars" },
@@ -2055,9 +2055,9 @@ dependencies = [
     { name = "reflex-components-core" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/ef/df13fd2d7557cbb5071198ddbb04f90fdf7f0e39421ac5326663ac8e3bef/reflex_mui_datagrid-0.3.7.tar.gz", hash = "sha256:090ecedcaac4e9558e989f77aee2c610148e75f31e97e1a2c6c8b677aa98f59f", size = 64651, upload-time = "2026-06-04T23:55:21.66Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/32/38/341da550fa15241f38f20c1dac58e21a928c68f05dc3645b73db374895d5/reflex_mui_datagrid-0.3.8.tar.gz", hash = "sha256:c0900cf3f1b11876d86fcfe3dd4ddbd73c0d87e04b4867a29c8de2ae27597026", size = 65515, upload-time = "2026-06-14T12:50:38.787Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/24/b4/360d10f243f03f915c8c44402a7f04091f3acaec7ca7b91ddf2ecd5a9029/reflex_mui_datagrid-0.3.7-py3-none-any.whl", hash = "sha256:a4b68997101ad57e9bb69211254d29aab2c8e8ec3743f699bd39c9abeabadbf7", size = 69676, upload-time = "2026-06-04T23:55:22.867Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/50/45318562de7cae691d507829d5d06363560d69cd6c3f4d3c9b541d51c007/reflex_mui_datagrid-0.3.8-py3-none-any.whl", hash = "sha256:2c6a4ad62d3ae85327442ea93fcc316e8676c1d8426ec7c9f815fe50c9f1c451", size = 70553, upload-time = "2026-06-14T12:50:37.285Z" },
 ]
 
 [[package]]

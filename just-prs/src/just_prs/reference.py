@@ -1500,7 +1500,12 @@ def compute_reference_prs_polars(
         result = (
             pl.DataFrame({"iid": panel.psam_df["iid"].to_list(), "score": prs_scores.tolist()})
             .join(panel.psam_df, on="iid", how="inner")
-            .with_columns(pl.lit(pgs_id).alias("pgs_id"))
+            .with_columns(
+                pl.lit(pgs_id).alias("pgs_id"),
+                pl.lit(variants_total).alias("variants_total"),
+                pl.lit(variants_matched).alias("variants_matched"),
+                pl.lit(variants_matched / variants_total if variants_total > 0 else None).alias("match_rate"),
+            )
         )
         del prs_scores
         t_join = time.monotonic() - t0
@@ -1566,12 +1571,28 @@ def _aggregate_single_pgs(parquet_path: Path, pgs_id: str) -> _SinglePgsAgg | No
             .rename({"superpop": "superpopulation"})
             .sort(["pgs_id", "superpopulation"])
         )
-        # Also need overall n / mean / std for ScoringOutcome — derive lazily.
-        stats_lf = lf.select(
+        # Also need overall n / mean / std and, for current score parquets,
+        # reference match metadata for ScoringOutcome. Older caches won't have
+        # these columns, so keep nulls and let the audit flag them.
+        stat_exprs: list[pl.Expr] = [
             pl.col("score").mean().alias("mean"),
             pl.col("score").std().alias("std"),
             pl.len().alias("n"),
-        )
+        ]
+        schema_names = set(schema.names())
+        if {"variants_total", "variants_matched", "match_rate"}.issubset(schema_names):
+            stat_exprs.extend([
+                pl.col("variants_total").first().alias("variants_total"),
+                pl.col("variants_matched").first().alias("variants_matched"),
+                pl.col("match_rate").first().alias("match_rate"),
+            ])
+        else:
+            stat_exprs.extend([
+                pl.lit(None, dtype=pl.Int64).alias("variants_total"),
+                pl.lit(None, dtype=pl.Int64).alias("variants_matched"),
+                pl.lit(None, dtype=pl.Float64).alias("match_rate"),
+            ])
+        stats_lf = lf.select(stat_exprs)
         dist, stats = pl.collect_all([agg_lf, stats_lf])
     except _CorruptParquet:
         raise
@@ -1579,15 +1600,220 @@ def _aggregate_single_pgs(parquet_path: Path, pgs_id: str) -> _SinglePgsAgg | No
         raise _CorruptParquet(str(exc)) from exc
     if stats["n"][0] == 0:
         return None
+    score_std = float(stats["std"][0]) if stats["std"][0] is not None else None
+    status = "zero_variance" if score_std is not None and score_std < 1e-10 else "ok"
     return _SinglePgsAgg(
         df=dist,
         outcome=ScoringOutcome(
             pgs_id=pgs_id,
-            status="ok",
+            status=status,
+            variants_total=int(stats["variants_total"][0]) if stats["variants_total"][0] is not None else None,
+            variants_matched=int(stats["variants_matched"][0]) if stats["variants_matched"][0] is not None else None,
+            match_rate=float(stats["match_rate"][0]) if stats["match_rate"][0] is not None else None,
             n_samples=int(stats["n"][0]),
             score_mean=float(stats["mean"][0]) if stats["mean"][0] is not None else None,
-            score_std=float(stats["std"][0]) if stats["std"][0] is not None else None,
+            score_std=score_std,
         ),
+    )
+
+
+def _write_match_metadata_to_score_parquet(
+    parquet_path: Path,
+    variants_total: int,
+    variants_matched: int,
+    match_rate: float,
+) -> None:
+    """Persist reference match metadata into an existing per-PGS scores parquet."""
+    tmp_path = parquet_path.with_name(f"{parquet_path.stem}.match-metadata.tmp{parquet_path.suffix}")
+    (
+        pl.scan_parquet(parquet_path)
+        .with_columns(
+            pl.lit(variants_total).alias("variants_total"),
+            pl.lit(variants_matched).alias("variants_matched"),
+            pl.lit(match_rate).alias("match_rate"),
+        )
+        .sink_parquet(tmp_path)
+    )
+    tmp_path.replace(parquet_path)
+
+
+def _compute_reference_match_metadata(
+    pgs_id: str,
+    scores_cache: Path,
+    genome_build: str,
+    resolved: _ResolvedRefPanel,
+) -> tuple[int, int, float]:
+    """Compute scoring-file/reference-panel variant match counts without reading pgen genotypes."""
+    from just_prs.prs import _normalize_scoring_columns
+    from just_prs.scoring import download_scoring_file, parse_scoring_file, scoring_parquet_path
+
+    parquet_path = scoring_parquet_path(pgs_id, scores_cache, genome_build)
+    if parquet_path.exists():
+        scoring_file = parquet_path
+    else:
+        scoring_file = download_scoring_file(
+            pgs_id=pgs_id,
+            output_dir=scores_cache,
+            genome_build=genome_build,
+        )
+    scoring_df = _normalize_scoring_columns(parse_scoring_file(scoring_file)).collect()
+    variants_total = scoring_df.height
+    variants_matched = resolved.match_scoring(scoring_df).height
+    match_rate = variants_matched / variants_total if variants_total > 0 else 0.0
+    return variants_total, variants_matched, match_rate
+
+
+def backfill_reference_quality_metadata(
+    pgs_ids: list[str],
+    ref_dir: Path,
+    cache_dir: Path,
+    genome_build: str = "GRCh38",
+    panel: str = DEFAULT_PANEL,
+    match_rate_threshold: float = 0.1,
+    output_subdir: str | None = None,
+    rewrite_score_parquets: bool = True,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
+) -> BatchScoringResult:
+    """Rebuild reference quality/audit parquets from cached scores without pgen scoring.
+
+    This repairs quality reports produced by older buggy batch runs where
+    per-PGS score parquets existed but `variants_total`, `variants_matched`,
+    and `match_rate` were missing from `{panel}_quality.parquet`.
+    """
+    scores_cache = cache_dir / "scores"
+    scores_cache.mkdir(parents=True, exist_ok=True)
+    scores_dir = cache_dir / "reference_scores" / panel
+    percentiles_dir = cache_dir / "percentiles"
+    if output_subdir:
+        percentiles_dir = percentiles_dir / output_subdir
+    percentiles_dir.mkdir(parents=True, exist_ok=True)
+
+    t_resolve_start = time.monotonic()
+    resolved = _ResolvedRefPanel(ref_dir, genome_build)
+    t_resolve = time.monotonic() - t_resolve_start
+    if progress_callback is not None:
+        progress_callback({
+            "processed": 0,
+            "total": len(pgs_ids),
+            "ok": 0,
+            "failed": 0,
+            "problematic": 0,
+            "cached": 0,
+            "last_pgs_id": "panel_init",
+            "last_status": "panel_resolved",
+            "elapsed_sec": t_resolve,
+            "is_complete": False,
+        })
+
+    outcomes: list[ScoringOutcome] = []
+    dist_parts: list[pl.DataFrame] = []
+    n_ok = 0
+    n_failed = 0
+    n_problematic = 0
+    started_at = time.monotonic()
+
+    for i, pgs_id in enumerate(pgs_ids):
+        result_parquet = scores_dir / pgs_id / "scores.parquet"
+        if not result_parquet.exists():
+            outcomes.append(ScoringOutcome(
+                pgs_id=pgs_id,
+                status="failed",
+                error=f"cached score parquet not found: {result_parquet}",
+            ))
+            n_failed += 1
+            continue
+
+        try:
+            aggregated = _aggregate_single_pgs(result_parquet, pgs_id)
+            if aggregated is None:
+                outcomes.append(ScoringOutcome(
+                    pgs_id=pgs_id,
+                    status="failed",
+                    error=f"cached score parquet is empty or missing score column: {result_parquet}",
+                ))
+                n_failed += 1
+                continue
+
+            outcome = aggregated.outcome
+            if outcome.variants_total is None or outcome.variants_matched is None or outcome.match_rate is None:
+                variants_total, variants_matched, match_rate = _compute_reference_match_metadata(
+                    pgs_id,
+                    scores_cache,
+                    genome_build,
+                    resolved,
+                )
+                outcome.variants_total = variants_total
+                outcome.variants_matched = variants_matched
+                outcome.match_rate = match_rate
+                if rewrite_score_parquets:
+                    _write_match_metadata_to_score_parquet(
+                        result_parquet,
+                        variants_total,
+                        variants_matched,
+                        match_rate,
+                    )
+
+            if outcome.status == "ok" and outcome.match_rate is not None and outcome.match_rate < match_rate_threshold:
+                outcome.status = "low_match"
+            if outcome.status in {"low_match", "zero_variance"}:
+                n_problematic += 1
+
+            dist_parts.append(aggregated.df)
+            outcomes.append(outcome)
+            n_ok += 1
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except BaseException as exc:
+            outcomes.append(ScoringOutcome(
+                pgs_id=pgs_id,
+                status="failed",
+                error=f"{type(exc).__name__}: {exc}",
+            ))
+            n_failed += 1
+
+        if progress_callback is not None:
+            progress_callback({
+                "processed": i + 1,
+                "total": len(pgs_ids),
+                "ok": n_ok,
+                "failed": n_failed,
+                "problematic": n_problematic,
+                "cached": n_ok,
+                "last_pgs_id": pgs_id,
+                "last_status": outcomes[-1].status if outcomes else "unknown",
+                "elapsed_sec": time.monotonic() - started_at,
+                "is_complete": i + 1 >= len(pgs_ids),
+            })
+
+    quality_rows = [o.model_dump() for o in outcomes]
+    quality_df = pl.DataFrame(quality_rows, schema=QUALITY_DF_SCHEMA) if quality_rows else pl.DataFrame(
+        schema=QUALITY_DF_SCHEMA
+    )
+    distributions_df = (
+        pl.concat(dist_parts, how="diagonal_relaxed")
+        if dist_parts
+        else pl.DataFrame(schema={
+            "pgs_id": pl.Utf8, "superpopulation": pl.Utf8,
+            "mean": pl.Float64, "std": pl.Float64, "n": pl.UInt32,
+            "median": pl.Float64, "p5": pl.Float64, "p25": pl.Float64,
+            "p75": pl.Float64, "p95": pl.Float64,
+        })
+    )
+    distribution_issues_df = reference_distribution_audit_issues(
+        distributions_df,
+        quality_df,
+        min_match_rate=match_rate_threshold,
+    )
+    quality_df.write_parquet(percentiles_dir / f"{panel}_quality.parquet")
+    distribution_issues_df.write_parquet(percentiles_dir / f"{panel}_distribution_quality_issues.parquet")
+    distributions_df.write_parquet(percentiles_dir / f"{panel}_distributions.parquet")
+
+    return BatchScoringResult(
+        panel=panel,
+        distributions_df=distributions_df,
+        outcomes=outcomes,
+        quality_df=quality_df,
+        distribution_issues_df=distribution_issues_df,
     )
 
 
@@ -2059,6 +2285,9 @@ def compute_reference_prs_batch(
             outcomes.append(ScoringOutcome(
                 pgs_id=pgs_id,
                 status=status,
+                variants_total=int(df["variants_total"][0]) if "variants_total" in df.columns and df.height > 0 else None,
+                variants_matched=int(df["variants_matched"][0]) if "variants_matched" in df.columns and df.height > 0 else None,
+                match_rate=float(df["match_rate"][0]) if "match_rate" in df.columns and df.height > 0 else None,
                 n_samples=n_samples,
                 score_mean=mean_val,
                 score_std=std_val,

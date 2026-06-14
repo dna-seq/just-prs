@@ -1246,6 +1246,146 @@ def reference_score_batch(
         )
 
 
+@reference_app.command("backfill-quality")
+def reference_backfill_quality(
+    pgs_ids: Annotated[
+        Optional[str],
+        typer.Option("--pgs-ids", help="Comma-separated PGS IDs to backfill. Defaults to all cached IDs."),
+    ] = None,
+    limit: Annotated[
+        int,
+        typer.Option("--limit", help="Limit number of IDs for testing (0 = no limit)."),
+    ] = 0,
+    build: Annotated[
+        str,
+        typer.Option("--build", "-b", help="Genome build (GRCh37 or GRCh38)."),
+    ] = "GRCh38",
+    panel: Annotated[
+        str,
+        typer.Option("--panel", help="Reference panel (1000g or hgdp_1kg)."),
+    ] = "1000g",
+    match_threshold: Annotated[
+        float,
+        typer.Option("--match-threshold", help="Flag scores with match rate below this."),
+    ] = 0.1,
+    no_rewrite_scores: Annotated[
+        bool,
+        typer.Option("--no-rewrite-scores", help="Do not add match metadata columns to cached per-PGS scores.parquet files."),
+    ] = False,
+    output_subdir: Annotated[
+        Optional[str],
+        typer.Option("--output-subdir", help="Write percentiles under cache/percentiles/<subdir>; required for partial test runs."),
+    ] = None,
+    cache_dir: Annotated[
+        Optional[Path], typer.Option("--cache-dir", help="Override cache directory."),
+    ] = None,
+) -> None:
+    """Backfill reference quality metadata from cached scores without pgen scoring.
+
+    This repairs `{panel}_quality.parquet` after older runs that produced
+    distributions but left `variants_total`, `variants_matched`, and
+    `match_rate` null. It reuses cached per-PGS scores and only recomputes
+    scoring-file-to-pvar match counts.
+    """
+    from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TextColumn, TimeElapsedColumn
+
+    from just_prs.reference import (
+        DEFAULT_PANEL,
+        REFERENCE_PANELS,
+        backfill_reference_quality_metadata,
+        reference_panel_dir,
+    )
+
+    if panel not in REFERENCE_PANELS:
+        console.print(f"[red]Unknown panel {panel!r}. Known: {list(REFERENCE_PANELS)}[/red]")
+        raise typer.Exit(code=1)
+
+    cache = cache_dir or resolve_cache_dir()
+    ref_dir = reference_panel_dir(cache, panel=panel)
+    if not ref_dir.exists():
+        console.print(
+            f"[red]Reference panel {panel!r} not found at {ref_dir}.[/red]\n"
+            "Download it first with: prs reference download"
+        )
+        raise typer.Exit(code=1)
+
+    scores_dir = cache / "reference_scores" / panel
+    if pgs_ids:
+        ids = [_validate_pgs_id(pid) for pid in pgs_ids.split(",") if pid.strip()]
+    else:
+        ids = sorted(p.name for p in scores_dir.iterdir() if (p / "scores.parquet").exists()) if scores_dir.exists() else []
+    if limit > 0:
+        ids = ids[:limit]
+    if not ids:
+        console.print(f"[red]No cached per-PGS scores found under {scores_dir}.[/red]")
+        raise typer.Exit(code=1)
+    if (pgs_ids or limit > 0) and not output_subdir:
+        console.print(
+            "[red]Partial backfills would overwrite the main percentile files.[/red]\n"
+            "Pass --output-subdir test for trial runs, or omit --pgs-ids/--limit to repair all cached IDs."
+        )
+        raise typer.Exit(code=1)
+
+    panel_desc = REFERENCE_PANELS.get(panel, REFERENCE_PANELS[DEFAULT_PANEL])["description"]
+    console.print(
+        f"\nBackfilling quality metadata for [cyan]{len(ids)}[/cyan] cached PGS IDs "
+        f"against [bold]{panel}[/bold] ({panel_desc}, {build}).\n"
+        "[dim]This does not read pgen genotypes or recompute PRS scores.[/dim]\n"
+    )
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TimeElapsedColumn(),
+        console=console,
+    ) as progress:
+        task_id = progress.add_task("Resolving panel...", total=len(ids))
+
+        def _progress(update: dict[str, object]) -> None:
+            processed = int(update.get("processed", 0) or 0)
+            last_pgs_id = str(update.get("last_pgs_id", ""))
+            last_status = str(update.get("last_status", ""))
+            progress.update(
+                task_id,
+                completed=processed,
+                description=f"{last_pgs_id} {last_status}".strip(),
+            )
+
+        result = backfill_reference_quality_metadata(
+            pgs_ids=ids,
+            ref_dir=ref_dir,
+            cache_dir=cache,
+            genome_build=build,
+            panel=panel,
+            match_rate_threshold=match_threshold,
+            output_subdir=output_subdir,
+            rewrite_score_parquets=not no_rewrite_scores,
+            progress_callback=_progress,
+        )
+
+    percentiles_dir = cache / "percentiles"
+    if output_subdir:
+        percentiles_dir = percentiles_dir / output_subdir
+    n_missing = result.quality_df.select(
+        (
+            pl.col("variants_total").is_null()
+            | pl.col("variants_matched").is_null()
+            | pl.col("match_rate").is_null()
+        ).sum().alias("n_missing")
+    )["n_missing"][0]
+    n_errors = result.distribution_issues_df.filter(pl.col("severity") == "ERROR").height
+    n_warnings = result.distribution_issues_df.filter(pl.col("severity") == "WARN").height
+
+    console.print("\n[bold green]Backfill complete.[/bold green]")
+    console.print(f"  Quality report:  {percentiles_dir / f'{panel}_quality.parquet'}")
+    console.print(f"  Issue report:    {percentiles_dir / f'{panel}_distribution_quality_issues.parquet'}")
+    console.print(f"  Distributions:   {percentiles_dir / f'{panel}_distributions.parquet'}")
+    console.print(f"  Missing match metadata rows: {n_missing}")
+    console.print(f"  Audit issues: errors={n_errors}, warnings={n_warnings}")
+
+
 @reference_app.command("download")
 def reference_download(
     cache_dir: Annotated[

@@ -18,6 +18,7 @@ from just_prs.prs_catalog import PRSCatalog
 from just_prs.reference import (
     SUPERPOPULATIONS,
     _find_reference_panel_file,
+    _aggregate_single_pgs,
     _reference_panel_complete,
     aggregate_distributions,
     ancestry_percentile,
@@ -220,6 +221,45 @@ class TestAggregateDistributions:
         result = aggregate_distributions(scores_df)
         assert result.filter(pl.col("pgs_id") == "PGS000001")["mean"][0] == pytest.approx(1.0)
         assert result.filter(pl.col("pgs_id") == "PGS000002")["mean"][0] == pytest.approx(2.0)
+
+    def test_cached_aggregation_preserves_reference_match_metadata(self, tmp_path: Path) -> None:
+        """Cached per-PGS scores must carry match metadata into quality reports."""
+        scores_path = tmp_path / "scores.parquet"
+        pl.DataFrame({
+            "pgs_id": ["PGS_META"] * 4,
+            "iid": ["NA0001", "NA0002", "NA0003", "NA0004"],
+            "superpop": ["EUR", "EUR", "AFR", "AFR"],
+            "population": ["GBR", "GBR", "YRI", "YRI"],
+            "score": [1.0, 2.0, 1.5, 2.5],
+            "variants_total": [100] * 4,
+            "variants_matched": [80] * 4,
+            "match_rate": [0.8] * 4,
+        }).write_parquet(scores_path)
+
+        result = _aggregate_single_pgs(scores_path, "PGS_META")
+
+        assert result is not None
+        assert result.outcome.variants_total == 100
+        assert result.outcome.variants_matched == 80
+        assert result.outcome.match_rate == pytest.approx(0.8)
+
+    def test_cached_aggregation_keeps_old_cache_metadata_missing(self, tmp_path: Path) -> None:
+        """Old per-PGS score parquets stay auditable as missing match metadata."""
+        scores_path = tmp_path / "scores.parquet"
+        pl.DataFrame({
+            "pgs_id": ["PGS_OLD"] * 2,
+            "iid": ["NA0001", "NA0002"],
+            "superpop": ["EUR", "EUR"],
+            "population": ["GBR", "GBR"],
+            "score": [1.0, 2.0],
+        }).write_parquet(scores_path)
+
+        result = _aggregate_single_pgs(scores_path, "PGS_OLD")
+
+        assert result is not None
+        assert result.outcome.variants_total is None
+        assert result.outcome.variants_matched is None
+        assert result.outcome.match_rate is None
 
 
 class TestDistributionQualityIssues:

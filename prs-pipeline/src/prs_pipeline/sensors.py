@@ -126,9 +126,12 @@ def _make_startup_sensor(
                 f"{active.job_name} already in progress (run {active.run_id[:8]})."
             )
 
-        if target_job == "reference_percentile_audit_job":
-            request_id = os.environ.get("PRS_PIPELINE_STARTUP_REQUEST_ID", "").strip()
-            run_key = f"reference_percentile_audit_{request_id or 'startup'}"
+        request_id = os.environ.get("PRS_PIPELINE_STARTUP_REQUEST_ID", "").strip()
+        no_cache = os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() in {"1", "true", "yes"}
+        test_ids = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
+        if target_job == "reference_percentile_audit_job" or request_id or no_cache or test_ids:
+            explicit_id = request_id or ("no_cache" if no_cache else "test" if test_ids else "startup")
+            run_key = f"{target_job}_{explicit_id}"
             context.log.info(f"Submitting explicit {target_job} run with run_key={run_key}.")
             return dg.SensorResult(
                 run_requests=[dg.RunRequest(run_key=run_key, job_name=target_job)],

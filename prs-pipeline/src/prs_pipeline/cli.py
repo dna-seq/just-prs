@@ -207,7 +207,7 @@ def run(
         raise typer.Exit(code=1)
 
     dagster_home = _setup_dagster_home()
-    _set_pipeline_env(panel, test, test_ids, no_cache=no_cache)
+    is_test_run = _set_pipeline_env(panel, test, test_ids, no_cache=no_cache)
 
     os.environ["PRS_PIPELINE_STARTUP_JOB"] = job
 
@@ -235,6 +235,9 @@ def run(
                     console.print(f"  [red]{event.message}[/red]")
             raise typer.Exit(code=1)
         return
+
+    if no_cache or is_test_run:
+        os.environ["PRS_PIPELINE_STARTUP_REQUEST_ID"] = uuid.uuid4().hex
 
     _kill_port(port)
     _cancel_orphaned_runs()
@@ -333,6 +336,9 @@ def catalog(
                     console.print(f"  [red]{event.message}[/red]")
             raise typer.Exit(code=1)
         return
+
+    if no_cache:
+        os.environ["PRS_PIPELINE_STARTUP_REQUEST_ID"] = uuid.uuid4().hex
 
     _kill_port(port)
     _cancel_orphaned_runs()

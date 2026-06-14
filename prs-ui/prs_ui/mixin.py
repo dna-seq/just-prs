@@ -32,6 +32,19 @@ from just_prs.scoring import resolve_cache_dir
 
 SHEET_NAMES: list[str] = list(METADATA_FILES.keys())
 
+_REFERENCE_AUDIT_ISSUE_LABELS: dict[str, str] = {
+    "quality_report_missing": "Reference quality report missing",
+    "quality_match_metadata_missing": (
+        "Reference match metadata missing; old reference run cannot prove variant coverage"
+    ),
+    "quality_low_match_rate": "Low reference-panel match rate",
+    "quality_sample_count_mismatch": "Reference sample count mismatch",
+    "quality_score_mean_mismatch": "Reference mean is stale vs raw scores",
+    "quality_score_std_mismatch": "Reference standard deviation is stale vs raw scores",
+    "missing_distribution_columns": "Reference distribution schema is incomplete",
+    "missing_quality_columns": "Reference quality report schema is incomplete",
+}
+
 SHEET_LABELS: dict[str, str] = {
     "scores": "Scores",
     "publications": "Publications",
@@ -146,6 +159,28 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
                 },
             },
         },
+        "reference_audit_label": {
+            "width": 120,
+            "headerName": "Ref. Audit",
+            "cellRendererType": "badge",
+            "cellRendererConfig": {
+                "colorMap": {
+                    "OK": "#2e7d32",
+                    "Warnings": "#e65100",
+                    "Errors": "#c62828",
+                },
+                "bgColorMap": {
+                    "OK": "#e8f5e9",
+                    "Warnings": "#fff3e0",
+                    "Errors": "#ffebee",
+                },
+            },
+        },
+        "reference_audit_detail": {
+            "minWidth": 260,
+            "flex": 1,
+            "headerName": "Audit Detail",
+        },
         "genome_build": {"width": 100, "headerName": "Original Build"},
         "pgp_id": {
             "width": 120,
@@ -169,6 +204,50 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
 _catalog = PRSCatalog(cache_dir=_resolve_cache_dir())
 
 
+def _reference_audit_issue_text(issue_codes: str | list[str]) -> str:
+    """Return citizen-readable text for reference audit issue codes."""
+    if isinstance(issue_codes, str):
+        raw_codes = [code.strip() for code in issue_codes.split(",") if code.strip()]
+    else:
+        raw_codes = [str(code).strip() for code in issue_codes if str(code).strip()]
+    labels = [_REFERENCE_AUDIT_ISSUE_LABELS.get(code, code.replace("_", " ")) for code in raw_codes]
+    return "; ".join(dict.fromkeys(labels))
+
+
+def _reference_audit_grid_frame(catalog: PRSCatalog) -> pl.LazyFrame:
+    """Aggregate reference audit sidecar rows to one display row per PGS ID."""
+    issue_path = catalog.percentiles_dir / "1000g_distribution_quality_issues.parquet"
+    schema = {
+        "pgs_id": pl.Utf8,
+        "reference_audit_label": pl.Utf8,
+        "reference_audit_detail": pl.Utf8,
+        "reference_audit_warning_count": pl.Int64,
+        "reference_audit_error_count": pl.Int64,
+    }
+    if not issue_path.exists():
+        return pl.LazyFrame(schema=schema)
+
+    issue_df = pl.read_parquet(issue_path)
+    if issue_df.is_empty():
+        return pl.LazyFrame(schema=schema)
+
+    rows: list[dict[str, object]] = []
+    for pgs_id, group in issue_df.group_by("pgs_id", maintain_order=True):
+        pgs_id_value = pgs_id[0] if isinstance(pgs_id, tuple) else pgs_id
+        warning_count = group.filter(pl.col("severity") == "WARN").height
+        error_count = group.filter(pl.col("severity") == "ERROR").height
+        issue_codes = sorted(set(group["issue"].to_list()))
+        label = "Errors" if error_count > 0 else "Warnings" if warning_count > 0 else "OK"
+        rows.append({
+            "pgs_id": str(pgs_id_value),
+            "reference_audit_label": label,
+            "reference_audit_detail": _reference_audit_issue_text(issue_codes),
+            "reference_audit_warning_count": warning_count,
+            "reference_audit_error_count": error_count,
+        })
+    return pl.DataFrame(rows, schema=schema).lazy()
+
+
 def _enrich_scores_for_grid(lf: pl.LazyFrame, catalog: PRSCatalog) -> pl.LazyFrame:
     """Rename pre-computed quality column, add source badge, and join publication citations."""
     lf = lf.rename({"synthetic_score": "quality_score"}).drop("combined_quality_score")
@@ -180,6 +259,14 @@ def _enrich_scores_for_grid(lf: pl.LazyFrame, catalog: PRSCatalog) -> pl.LazyFra
             .otherwise(pl.lit("Native"))
             .alias("score_source"),
         )
+
+    lf = lf.join(_reference_audit_grid_frame(catalog), on="pgs_id", how="left")
+    lf = lf.with_columns([
+        pl.col("reference_audit_label").fill_null("OK"),
+        pl.col("reference_audit_detail").fill_null(""),
+        pl.col("reference_audit_warning_count").fill_null(0),
+        pl.col("reference_audit_error_count").fill_null(0),
+    ])
 
     publication_defaults = {
         "citation": "",
@@ -1030,7 +1117,7 @@ def _build_score_ai_prompt(row: dict[str, Any], limit: int) -> str:
     variants_no_call = int(row.get("variants_no_call") or 0)
     method = str(row.get("percentile_method") or "")
     reference_audit_status = str(row.get("reference_audit_status") or "")
-    reference_audit_issues = str(row.get("reference_audit_issues") or "")
+    reference_audit_issues = _reference_audit_issue_text(str(row.get("reference_audit_issues") or ""))
     is_harmonized = row.get("is_harmonized", False)
     risk_agreement = str(row.get("risk_agreement") or "")
     publication_label = _publication_display_label(row)
@@ -1233,6 +1320,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     compute_all_populations: bool = False
     show_all_risk_estimates: bool = True
     include_harmonized: bool = True
+    refresh_reference_cache_before_compute: bool = False
     prs_catalog_query: str = ""
 
     _scores_initialized: bool = False
@@ -1266,6 +1354,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.show_all_risk_estimates = bool(value)
         if self.prs_results:
             self._build_prs_results_grid()
+
+    def set_refresh_reference_cache_before_compute(self, value: bool) -> None:
+        """Enable/disable pulling latest reference/audit sidecars before compute."""
+        self.refresh_reference_cache_before_compute = bool(value)
 
     def set_include_harmonized(self, value: bool) -> Any:
         """Enable/disable including harmonized (cross-build) scores."""
@@ -2240,13 +2332,34 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                         "1000G ref": "#2e7d32",
                         "theoretical": "#1565c0",
                         "AUROC est.": "#e65100",
+                        "Insufficient coverage": "#c62828",
                         "unavailable": "#757575",
                     },
                     "bgColorMap": {
                         "1000G ref": "#e8f5e9",
                         "theoretical": "#e3f2fd",
                         "AUROC est.": "#fff3e0",
+                        "Insufficient coverage": "#ffebee",
                         "unavailable": "#f5f5f5",
+                    },
+                },
+            ),
+            ColumnDef(
+                field="reference_audit_label", header_name="Ref. Audit",
+                min_width=130,
+                cell_renderer_type="badge",
+                cell_renderer_config={
+                    "colorMap": {
+                        "OK": "#2e7d32",
+                        "Warnings": "#e65100",
+                        "Errors": "#c62828",
+                        "No audit": "#757575",
+                    },
+                    "bgColorMap": {
+                        "OK": "#e8f5e9",
+                        "Warnings": "#fff3e0",
+                        "Errors": "#ffebee",
+                        "No audit": "#f5f5f5",
                     },
                 },
             ),
@@ -2339,7 +2452,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ref_source = r.get("reference_source", "")
             ref_source_detail = ref_source
             ref_audit_status = str(r.get("reference_audit_status") or "")
-            ref_audit_issues = str(r.get("reference_audit_issues") or "")
+            ref_audit_issues = _reference_audit_issue_text(str(r.get("reference_audit_issues") or ""))
             ref_audit_warning_count = int(r.get("reference_audit_warning_count") or 0)
             ref_audit_error_count = int(r.get("reference_audit_error_count") or 0)
             if ref_audit_status in {"warning", "error"}:
@@ -2638,6 +2751,13 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                         f"{ref_audit_issues or 'See percentile audit sidecar.'}"
                     ),
                 })
+            reference_audit_label = {
+                "pass": "OK",
+                "warning": "Warnings",
+                "error": "Errors",
+                "not available": "No audit",
+                "": "No audit",
+            }.get(ref_audit_status, ref_audit_status)
             if match_rate < 10:
                 match_reliability = "⚠ UNRELIABLE"
             elif match_rate < 50:
@@ -2664,6 +2784,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "label": "Match rate usable",
                     "tone": "good",
                 })
+            if ref_audit_status in {"warning", "error"}:
+                suggestion_badges.append({
+                    "label": (
+                        f"Reference audit: {ref_audit_error_count} error(s), "
+                        f"{ref_audit_warning_count} warning(s)"
+                    ),
+                    "tone": "warning" if ref_audit_status == "warning" else "danger",
+                })
 
             build_source = "⚠ Harmonized" if r.get("is_harmonized") else "Native"
 
@@ -2676,6 +2804,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "score": r.get("score", 0),
                 "percentile_num": pct_num,
                 "percentile_method": method_label,
+                "reference_audit_label": reference_audit_label,
                 "auroc": auroc_num,
                 "quality_label": r.get("quality_label", ""),
                 "ancestry": r.get("ancestry", ""),
@@ -2988,6 +3117,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.low_match_warning = False
         self.status_message = f"Computing PRS for {total} score(s)..."  # type: ignore[attr-defined]
         yield
+
+        if self.refresh_reference_cache_before_compute:
+            self.status_message = "Refreshing 1000G reference percentiles and audit sidecars..."  # type: ignore[attr-defined]
+            yield
+            _catalog.refresh_reference_cache(panel="1000g")
 
         cache = Path(self.cache_dir) / "scores"  # type: ignore[attr-defined]
         results: list[dict] = []

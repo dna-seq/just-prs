@@ -128,3 +128,8 @@ def trait_selector(
         spacing="3",
         width="100%",
     )
+
+
+def traits_panel() -> rx.Component:
+    """Full traits tab panel (wraps the reusable trait_selector)."""
+    return trait_selector()

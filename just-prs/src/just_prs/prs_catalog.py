@@ -428,6 +428,12 @@ class PRSCatalog:
                 self._ref_dist_cache.pop(panel, None)
                 self._ref_dist_source[panel] = "hf_sync"
 
+    def refresh_reference_cache(self, panel: str = "1000g") -> None:
+        """Force-pull reference distributions and audit sidecars from HuggingFace."""
+        self._ref_dist_refresh_attempted.discard(panel)
+        self._ref_dist_cache.pop(panel, None)
+        self._refresh_reference_distributions(panel=panel)
+
     def reload(self) -> None:
         """Force re-download of all metadata on next access."""
         self._scores_lf = None

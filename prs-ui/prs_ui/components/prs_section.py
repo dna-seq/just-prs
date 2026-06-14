@@ -164,6 +164,12 @@ def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
             on_change=state.set_compute_all_populations,
             size="2",
         ),
+        rx.checkbox(
+            "Refresh reference/audit cache",
+            checked=state.refresh_reference_cache_before_compute,
+            on_change=state.set_refresh_reference_cache_before_compute,
+            size="2",
+        ),
         spacing="2",
         align="center",
     )
@@ -871,6 +877,12 @@ def _workbench_mode_controls(state: type[rx.State]) -> rx.Component:
             "Include harmonized scores",
             checked=state.include_harmonized,
             on_change=state.set_include_harmonized,
+            size="2",
+        ),
+        rx.checkbox(
+            "Refresh reference/audit cache",
+            checked=state.refresh_reference_cache_before_compute,
+            on_change=state.set_refresh_reference_cache_before_compute,
             size="2",
         ),
         spacing="4",

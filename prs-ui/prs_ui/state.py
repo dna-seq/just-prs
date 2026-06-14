@@ -11,6 +11,7 @@ The reusable ``PRSComputeStateMixin`` lives in ``prs_ui.mixin`` so that
 consumer apps can import it without registering these demo-only states.
 """
 
+import hashlib
 import os
 from pathlib import Path
 from typing import Any, ClassVar
@@ -255,7 +256,13 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
         yield
 
         contents = await upload_file.read()
-        dest.write_bytes(contents)
+        # Skip writing identical content so the VCF mtime stays unchanged and
+        # the downstream mtime-based normalization cache remains valid.
+        new_hash = hashlib.md5(contents).digest()
+        if dest.exists() and hashlib.md5(dest.read_bytes()).digest() == new_hash:
+            pass  # identical file already on disk — keep its mtime
+        else:
+            dest.write_bytes(contents)
 
         self._set_vcf_source(dest, label_prefix="Uploaded")
         for event in self.normalize_uploaded_vcf(str(dest)):

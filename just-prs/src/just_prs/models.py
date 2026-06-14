@@ -190,6 +190,26 @@ class PRSResult(BaseModel):
     variants_matched: int = Field(description="Number of scoring variants matched in VCF")
     variants_total: int = Field(description="Total number of variants in scoring file")
     match_rate: float = Field(description="Fraction of scoring variants matched (0-1)")
+    variants_observed: int = Field(
+        default=0,
+        description="Scoring loci present in the genotype input with a genotype row",
+    )
+    variants_assumed_hom_ref: int = Field(
+        default=0,
+        description="Absent loci treated as homozygous-reference under variant-only VCF semantics",
+    )
+    variants_unscorable_absent: int = Field(
+        default=0,
+        description="Absent loci that could not be scored because the reference allele was unknown",
+    )
+    variants_no_call: int = Field(
+        default=0,
+        description="Scoring loci present in the genotype input but carrying a missing/no-call GT",
+    )
+    genotype_input_mode: str = Field(
+        default="plink_present_only",
+        description="How absent genotype loci were interpreted during scoring",
+    )
     trait_reported: str | None = Field(default=None, description="Reported trait for the score")
     performance: PerformanceInfo | None = Field(
         default=None, description="Best available performance metric from PGS Catalog"
@@ -239,6 +259,11 @@ class EnrichedPRSResult(BaseModel):
     variants_matched: int = 0
     variants_total: int = 0
     match_rate: float = Field(0.0, description="Match rate as percentage 0-100")
+    variants_observed: int = 0
+    variants_assumed_hom_ref: int = 0
+    variants_unscorable_absent: int = 0
+    variants_no_call: int = 0
+    genotype_input_mode: str = ""
     has_allele_frequencies: bool = False
     genome_build: str = ""
     is_harmonized: bool = Field(
@@ -288,6 +313,10 @@ class EnrichedPRSResult(BaseModel):
     reference_status: str = ""
     reference_source: str = ""
     reference_source_code: str = ""
+    reference_audit_status: str = ""
+    reference_audit_warning_count: int = 0
+    reference_audit_error_count: int = 0
+    reference_audit_issues: str = ""
 
     # Absolute risk
     absolute_risk_text: str = ""
@@ -306,3 +335,23 @@ class EnrichedPRSResult(BaseModel):
     risk_agreement: str = ""
     risk_estimates_by_method: dict[str, str] = Field(default_factory=dict)
     risk_estimate_methods: list[str] = Field(default_factory=list)
+
+
+class PRSBatchOutcome(BaseModel):
+    """Per-ID outcome from a batch PRS computation."""
+
+    pgs_id: str = Field(description="PGS Catalog Score ID")
+    status: str = Field(description="'ok', 'failed', or 'cache_repaired'")
+    error: str | None = Field(default=None, description="Error message if status is 'failed'")
+    attempts: int = Field(default=1, description="Number of attempts (2 if cache was repaired)")
+
+
+class PRSBatchResult(BaseModel):
+    """Result of a batch PRS computation with per-ID error tracking."""
+
+    results: list["PRSResult"] = Field(default_factory=list, description="Successfully computed results")
+    outcomes: list[PRSBatchOutcome] = Field(default_factory=list, description="Per-ID status/error tracking")
+    n_total: int = Field(default=0, description="Total IDs attempted")
+    n_ok: int = Field(default=0, description="Successfully computed")
+    n_failed: int = Field(default=0, description="Failed IDs")
+    failed_ids: list[str] = Field(default_factory=list, description="PGS IDs that failed")

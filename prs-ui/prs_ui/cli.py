@@ -14,6 +14,7 @@ console = Console()
 _DEFAULT_HOST = "0.0.0.0"
 _FRONTEND_PORT_ENV = "PRS_UI_PORT"
 _BACKEND_PORT_ENV = "PRS_UI_BACKEND_PORT"
+_DATA_DIR_ENV = "PRS_UI_DATA_DIR"
 _PRESELECT_ENABLED_ENV = "PRS_UI_PRESELECT_ENABLED"
 _PRESELECT_QUERY_ENV = "PRS_UI_PRESELECT_QUERY"
 
@@ -76,6 +77,20 @@ def _env_port(env_name: str) -> int | None:
     return port
 
 
+def _project_root_from(start: Path) -> Path | None:
+    """Return the nearest uv workspace root at or above ``start``."""
+    for parent in (start, *start.parents):
+        if (parent / "uv.lock").exists() and (parent / "pyproject.toml").exists():
+            return parent
+    return None
+
+
+def _default_data_dir(invocation_dir: Path) -> Path:
+    """Default runtime data directory, stable across Reflex's cwd switch."""
+    root = _project_root_from(invocation_dir)
+    return (root or invocation_dir) / "data"
+
+
 def _launch_reflex() -> None:
     """Start the Reflex dev server after environment setup.
 
@@ -85,6 +100,9 @@ def _launch_reflex() -> None:
     busy — so multiple Reflex apps can run side-by-side.
     """
     _check_system_dependencies()
+
+    invocation_dir = Path.cwd()
+    os.environ.setdefault(_DATA_DIR_ENV, str(_default_data_dir(invocation_dir)))
 
     prs_ui_dir = Path(__file__).resolve().parent.parent
     os.chdir(prs_ui_dir)
@@ -98,6 +116,7 @@ def _launch_reflex() -> None:
         console.print(f"[dim]Frontend port pinned to {frontend_port}[/dim]")
     if backend_port:
         console.print(f"[dim]Backend port pinned to {backend_port}[/dim]")
+    console.print(f"[dim]Runtime data directory: {os.environ[_DATA_DIR_ENV]}[/dim]")
 
     from reflex import constants
     from reflex.reflex import _run

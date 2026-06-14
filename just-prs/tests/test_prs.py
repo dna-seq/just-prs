@@ -3,6 +3,7 @@
 import math
 from pathlib import Path
 
+import polars as pl
 import pytest
 
 from just_prs.prs import PRSEngine, compute_prs, compute_prs_batch, compute_prs_duckdb
@@ -73,6 +74,7 @@ def test_engine_parity(vcf_path: Path, scoring_cache_dir: Path, pgs_id: str) -> 
         genome_build="GRCh38",
         cache_dir=scoring_cache_dir,
         pgs_id=pgs_id,
+        genotype_input_mode="plink_present_only",
     )
     duckdb_result = compute_prs_duckdb(
         vcf_path=vcf_path,
@@ -80,6 +82,7 @@ def test_engine_parity(vcf_path: Path, scoring_cache_dir: Path, pgs_id: str) -> 
         genome_build="GRCh38",
         cache_dir=scoring_cache_dir,
         pgs_id=pgs_id,
+        genotype_input_mode="plink_present_only",
     )
 
     assert polars_result.variants_total == duckdb_result.variants_total
@@ -94,6 +97,94 @@ def test_engine_parity(vcf_path: Path, scoring_cache_dir: Path, pgs_id: str) -> 
         assert polars_result.percentile == pytest.approx(duckdb_result.percentile, abs=0.01)
 
 
+def test_variant_only_absent_hom_ref_inference(tmp_path: Path) -> None:
+    """Absent loci in variant-only VCFs can be scored as hom-ref when reference is known."""
+    geno_path = tmp_path / "variant_only.parquet"
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["0/1"],
+    }).write_parquet(geno_path)
+
+    scoring = pl.DataFrame({
+        "hm_chr": ["1", "1", "1"],
+        "hm_pos": [100, 200, 300],
+        "effect_allele": ["G", "T", "C"],
+        "reference_allele": ["A", "T", None],
+        "effect_weight": [1.0, 2.0, 3.0],
+    }).lazy()
+
+    expected_score = 5.0  # observed G dosage 1 (+1), absent T/T dosage 2 (+4), unknown ref skipped.
+    polars_result = compute_prs(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path),
+        genotype_input_mode="variant_only",
+    )
+    duckdb_result = compute_prs_duckdb(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_parquet=geno_path,
+        genotype_input_mode="variant_only",
+    )
+
+    for result in (polars_result, duckdb_result):
+        assert result.score == pytest.approx(expected_score)
+        assert result.variants_observed == 1
+        assert result.variants_assumed_hom_ref == 1
+        assert result.variants_unscorable_absent == 1
+        assert result.variants_matched == 2
+        assert result.match_rate == pytest.approx(2 / 3)
+
+
+def test_variant_only_differs_from_plink_present_only_when_ref_effect_absent(tmp_path: Path) -> None:
+    """Present-only PLINK-compatible scoring skips absent loci that variant-only mode can infer."""
+    geno_path = tmp_path / "variant_only.parquet"
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["0/1"],
+    }).write_parquet(geno_path)
+
+    scoring = pl.DataFrame({
+        "hm_chr": ["1", "1"],
+        "hm_pos": [100, 200],
+        "effect_allele": ["G", "T"],
+        "reference_allele": ["A", "T"],
+        "effect_weight": [1.0, 2.0],
+    }).lazy()
+
+    variant_only = compute_prs(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path),
+        genotype_input_mode="variant_only",
+    )
+    present_only = compute_prs(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path),
+        genotype_input_mode="plink_present_only",
+    )
+
+    assert variant_only.score == pytest.approx(5.0)
+    assert present_only.score == pytest.approx(1.0)
+    assert variant_only.variants_assumed_hom_ref == 1
+    assert present_only.variants_assumed_hom_ref == 0
+
+
 def test_prs_engine_enum() -> None:
     """Verify PRSEngine enum values."""
     assert PRSEngine.POLARS.value == "polars"
@@ -105,18 +196,21 @@ def test_prs_engine_enum() -> None:
 def test_compute_prs_batch(vcf_path: Path, scoring_cache_dir: Path) -> None:
     """Compute multiple PRS scores in batch mode."""
     pgs_ids = ["PGS000001", "PGS000002"]
-    results = compute_prs_batch(
+    batch = compute_prs_batch(
         vcf_path=vcf_path,
         pgs_ids=pgs_ids,
         genome_build="GRCh38",
         cache_dir=scoring_cache_dir,
     )
 
-    assert len(results) == 2
-    result_ids = {r.pgs_id for r in results}
+    assert batch.n_total == 2
+    assert batch.n_ok == 2
+    assert batch.n_failed == 0
+    assert len(batch.results) == 2
+    result_ids = {r.pgs_id for r in batch.results}
     assert result_ids == {"PGS000001", "PGS000002"}
 
-    for r in results:
+    for r in batch.results:
         assert r.variants_matched > 0
         assert r.match_rate > 0.0
         assert math.isfinite(r.score)

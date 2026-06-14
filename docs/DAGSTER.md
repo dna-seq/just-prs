@@ -79,6 +79,7 @@ All jobs include `hooks={resource_summary_hook}` for run-level resource aggregat
 | `full_pipeline` | `reference_panel`, `scoring_files`, `scoring_files_parquet`, `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Full pipeline: download panel + scoring files, convert to parquet, score, download and clean metadata, enrich distributions, push. Auto-submitted by `run_pipeline_on_startup` sensor |
 | `download_reference_data` | `reference_panel` | Download the reference panel from EBI FTP |
 | `score_and_push` | `scoring_files`, `scoring_files_parquet`, `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Download scoring files, convert to parquet, batch-score, download/clean metadata, enrich, and push to HuggingFace |
+| `reference_percentile_audit_job` | `reference_percentile_audit` | Audit cached or HuggingFace reference percentile distributions and write sidecars without recomputing reference scores |
 | `metadata_pipeline` | `raw_pgs_metadata`, `cleaned_pgs_metadata` | End-to-end metadata pipeline (download + clean; push via catalog_pipeline) |
 
 ## CLI Commands
@@ -111,6 +112,14 @@ The pipeline is operated via the `prs-pipeline` CLI (or `uv run pipeline` from t
   uv run pipeline status --panel 1000g
   ```
   Reads the quality report parquet and shows per-status counts and failed IDs.
+
+- **Audit reference percentiles**:
+  ```bash
+  uv run pipeline audit
+  uv run pipeline audit --headless
+  uv run pipeline audit --test
+  ```
+  Launches the Dagster UI by default and submits `reference_percentile_audit_job`, which audits cached or HuggingFace-pulled `{panel}_distributions.parquet` plus `{panel}_quality.parquet` when available. It logs pass/warn/fail PGS-ID counts, writes `{panel}_distribution_quality_issues.parquet` and `{panel}_distribution_audit_summary.json`, and uploads those sidecars to HuggingFace when `HF_TOKEN` is available, all without recomputing reference scores.
 
 - **Clean up stuck runs**:
   ```bash

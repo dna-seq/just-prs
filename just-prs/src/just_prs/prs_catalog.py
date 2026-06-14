@@ -12,7 +12,7 @@ import math
 from pathlib import Path
 
 import polars as pl
-from eliot import start_action
+from eliot import log_message, start_action
 
 from just_prs.cleanup import (
     best_performance_per_score,
@@ -36,7 +36,7 @@ from just_prs.ontology import (
     normalize_trait_id,
 )
 from just_prs.prs import compute_prs
-from just_prs.reference import distribution_quality_issues
+from just_prs.reference import reference_distribution_audit_issues
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
 logger = logging.getLogger(__name__)
@@ -392,13 +392,20 @@ class PRSCatalog:
             self._ref_dist_source[panel] = "local_cache"
 
         df = pl.read_parquet(local)
-        issue_df = distribution_quality_issues(df)
-        if issue_df.height > 0:
-            bad_keys = issue_df.select("pgs_id", "superpopulation").unique()
-            df = df.join(bad_keys, on=["pgs_id", "superpopulation"], how="anti")
+        issue_path = local.with_name(f"{panel}_distribution_quality_issues.parquet")
+        quality_path = local.with_name(f"{panel}_quality.parquet")
+        if issue_path.exists():
+            issue_df = pl.read_parquet(issue_path)
+        else:
+            quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
+            issue_df = reference_distribution_audit_issues(df, quality_df)
+        error_issue_df = issue_df.filter(pl.col("severity") == "ERROR")
+        if error_issue_df.height > 0:
+            bad_ids = error_issue_df.select("pgs_id").unique()
+            df = df.join(bad_ids, on="pgs_id", how="anti")
             logger.warning(
-                "Filtered %s untrustworthy reference distribution rows from %s.",
-                bad_keys.height,
+                "Filtered %s untrustworthy reference PGS IDs from %s.",
+                bad_ids.height,
                 local,
             )
         lf = df.lazy()
@@ -577,6 +584,7 @@ class PRSCatalog:
         vcf_path: Path | str,
         pgs_id: str,
         genome_build: str = "GRCh38",
+        genotype_input_mode: str = "auto",
     ) -> PRSResult:
         """Compute PRS for a VCF file against a single PGS score.
 
@@ -597,6 +605,7 @@ class PRSCatalog:
                 cache_dir=self._cache_dir / "scores",
                 pgs_id=pgs_id,
                 trait_reported=trait,
+                genotype_input_mode=genotype_input_mode,
             )
 
     def compute_prs_batch(
@@ -604,21 +613,158 @@ class PRSCatalog:
         vcf_path: Path | str,
         pgs_ids: list[str],
         genome_build: str = "GRCh38",
-    ) -> list[PRSResult]:
+        genotype_input_mode: str = "auto",
+        engine: str = "duckdb",
+        genotypes_lf: pl.LazyFrame | None = None,
+        memory_limit: str | None = None,
+    ) -> "PRSBatchResult":
         """Compute PRS for a VCF file against multiple PGS scores.
+
+        Memory-safe: uses DuckDB engine by default (spill-to-disk), runs
+        gc.collect() after each score, continues on per-score errors, and
+        auto-retries once on corrupt parquet caches.
 
         Uses cached metadata for trait lookup instead of per-score REST API calls.
         """
+        import gc
+
+        from just_prs.models import PRSBatchOutcome, PRSBatchResult
+        from just_prs.prs import (
+            PRSEngine,
+            _is_corrupt_parquet_error,
+            _remove_scoring_parquet_cache,
+            compute_prs_duckdb,
+        )
+
+        resolved_engine = PRSEngine(engine)
+        cache = self._cache_dir / "scores"
+
         with start_action(
             action_type="prs_catalog:compute_prs_batch",
             pgs_ids=pgs_ids,
             genome_build=genome_build,
+            engine=engine,
         ):
             results: list[PRSResult] = []
+            outcomes: list[PRSBatchOutcome] = []
+            failed_ids: list[str] = []
+
             for pgs_id in pgs_ids:
-                result = self.compute_prs(vcf_path, pgs_id, genome_build=genome_build)
-                results.append(result)
-            return results
+                attempts = 1
+                try:
+                    info = self.score_info_row(pgs_id)
+                    trait = info["trait_reported"] if info else None
+
+                    if resolved_engine == PRSEngine.DUCKDB:
+                        result = compute_prs_duckdb(
+                            vcf_path=vcf_path,
+                            scoring_file=pgs_id,
+                            genome_build=genome_build,
+                            cache_dir=cache,
+                            pgs_id=pgs_id,
+                            trait_reported=trait,
+                            genotypes_parquet=str(vcf_path) if (not genotypes_lf and str(vcf_path).endswith(".parquet")) else None,
+                            genotypes_lf=genotypes_lf,
+                            memory_limit=memory_limit,
+                            genotype_input_mode=genotype_input_mode,
+                        )
+                    else:
+                        result = compute_prs(
+                            vcf_path=vcf_path,
+                            scoring_file=pgs_id,
+                            genome_build=genome_build,
+                            cache_dir=cache,
+                            pgs_id=pgs_id,
+                            trait_reported=trait,
+                            genotypes_lf=genotypes_lf,
+                            genotype_input_mode=genotype_input_mode,
+                        )
+
+                    results.append(result)
+                    outcomes.append(PRSBatchOutcome(
+                        pgs_id=pgs_id, status="ok", attempts=attempts,
+                    ))
+
+                except Exception as exc:
+                    if _is_corrupt_parquet_error(exc):
+                        removed = _remove_scoring_parquet_cache(
+                            pgs_id, cache, genome_build,
+                        )
+                        if removed:
+                            attempts = 2
+                            try:
+                                log_message(
+                                    message_type="prs_catalog:batch_cache_repair",
+                                    pgs_id=pgs_id,
+                                )
+                                info = self.score_info_row(pgs_id)
+                                trait = info["trait_reported"] if info else None
+                                if resolved_engine == PRSEngine.DUCKDB:
+                                    result = compute_prs_duckdb(
+                                        vcf_path=vcf_path,
+                                        scoring_file=pgs_id,
+                                        genome_build=genome_build,
+                                        cache_dir=cache,
+                                        pgs_id=pgs_id,
+                                        trait_reported=trait,
+                                        genotypes_parquet=str(vcf_path) if (not genotypes_lf and str(vcf_path).endswith(".parquet")) else None,
+                                        genotypes_lf=genotypes_lf,
+                                        memory_limit=memory_limit,
+                                        genotype_input_mode=genotype_input_mode,
+                                    )
+                                else:
+                                    result = compute_prs(
+                                        vcf_path=vcf_path,
+                                        scoring_file=pgs_id,
+                                        genome_build=genome_build,
+                                        cache_dir=cache,
+                                        pgs_id=pgs_id,
+                                        trait_reported=trait,
+                                        genotypes_lf=genotypes_lf,
+                                        genotype_input_mode=genotype_input_mode,
+                                    )
+                                results.append(result)
+                                outcomes.append(PRSBatchOutcome(
+                                    pgs_id=pgs_id, status="cache_repaired",
+                                    attempts=attempts,
+                                ))
+                                gc.collect()
+                                continue
+                            except Exception as retry_exc:
+                                log_message(
+                                    message_type="prs_catalog:batch_retry_failed",
+                                    pgs_id=pgs_id,
+                                    error=str(retry_exc),
+                                )
+                                failed_ids.append(pgs_id)
+                                outcomes.append(PRSBatchOutcome(
+                                    pgs_id=pgs_id, status="failed",
+                                    error=str(retry_exc), attempts=attempts,
+                                ))
+                                gc.collect()
+                                continue
+
+                    log_message(
+                        message_type="prs_catalog:batch_score_failed",
+                        pgs_id=pgs_id,
+                        error=str(exc),
+                    )
+                    failed_ids.append(pgs_id)
+                    outcomes.append(PRSBatchOutcome(
+                        pgs_id=pgs_id, status="failed",
+                        error=str(exc), attempts=attempts,
+                    ))
+
+                gc.collect()
+
+            return PRSBatchResult(
+                results=results,
+                outcomes=outcomes,
+                n_total=len(pgs_ids),
+                n_ok=len(results),
+                n_failed=len(failed_ids),
+                failed_ids=failed_ids,
+            )
 
     def percentile(
         self,
@@ -1152,12 +1298,33 @@ class PRSCatalog:
             "local_legacy_cache": "local legacy percentiles cache",
             "unavailable": "no reference distributions file",
         }.get(source_code, "unknown")
+        issue_path = self.percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
+        audit_warning_count = 0
+        audit_error_count = 0
+        audit_issues: list[str] = []
+        audit_status = "not available"
+        if issue_path.exists():
+            issue_df = pl.read_parquet(issue_path)
+            pgs_issues = issue_df.filter(pl.col("pgs_id") == pgs_id)
+            audit_warning_count = pgs_issues.filter(pl.col("severity") == "WARN").height
+            audit_error_count = pgs_issues.filter(pl.col("severity") == "ERROR").height
+            if pgs_issues.height > 0:
+                audit_issues = sorted(set(pgs_issues["issue"].to_list()))
+            audit_status = (
+                "error" if audit_error_count > 0 else
+                "warning" if audit_warning_count > 0 else
+                "pass"
+            )
         return {
             "has_reference_data": len(superpops) > 0,
             "available_superpopulations": superpops,
             "source_code": source_code,
             "source_label": source_label,
             "panel": panel,
+            "audit_status": audit_status,
+            "audit_warning_count": audit_warning_count,
+            "audit_error_count": audit_error_count,
+            "audit_issues": audit_issues,
         }
 
 

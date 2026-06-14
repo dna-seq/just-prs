@@ -16,7 +16,7 @@ import os
 import polars as pl
 from dagster import AssetCheckResult, AssetCheckSeverity, asset_check
 
-from just_prs.reference import distribution_quality_issues
+from just_prs.reference import reference_distribution_audit_issues
 from prs_pipeline.resources import CacheDirResource
 
 
@@ -86,7 +86,9 @@ def check_distributions_no_inf_nan(
         )
 
     df = pl.read_parquet(dist_path)
-    issue_df = distribution_quality_issues(df)
+    quality_path = dist_path.with_name(f"{panel}_quality.parquet")
+    quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
+    issue_df = reference_distribution_audit_issues(df, quality_df)
     issue_path = dist_path.with_name(f"{panel}_distribution_quality_issues.parquet")
     issue_df.write_parquet(issue_path)
 
@@ -110,6 +112,7 @@ def check_distributions_no_inf_nan(
             "n_zero_std": n_zero_std,
             "n_problematic_total": n_problematic,
             "issue_report_path": str(issue_path),
+            "quality_report_path": str(quality_path) if quality_path.exists() else "",
             "issue_examples": issue_df.head(20).to_dicts() if issue_df.height > 0 else [],
         },
     )

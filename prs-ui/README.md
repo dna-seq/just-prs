@@ -18,7 +18,7 @@ pip install prs-ui
 uv run start
 ```
 
-The launcher reads `.env`, resolves both the Reflex frontend port (`PRS_UI_PORT`, default `3000`) and backend port (`PRS_UI_BACKEND_PORT`, default `8000`), and passes the resolved pair explicitly to Reflex so another running Reflex app cannot shift only one side.
+The launcher reads `.env`, resolves both the Reflex frontend port (`PRS_UI_PORT`, default `3000`) and backend port (`PRS_UI_BACKEND_PORT`, default `8000`), and passes the resolved pair explicitly to Reflex so another running Reflex app cannot shift only one side. Runtime uploads go under `PRS_UI_DATA_DIR/input/` (default: `./data/input/` from the directory where the launcher was invoked), which keeps `uvx` runs from writing into the installed package.
 
 ## Quick Start
 

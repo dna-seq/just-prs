@@ -201,6 +201,42 @@ def prs_scores_selector(
             ),
         ),
         rx.hstack(
+            rx.input(
+                placeholder="Search PGS ID, name, reported trait, or EFO trait...",
+                value=state.prs_catalog_query,
+                on_change=state.set_prs_catalog_query,
+                on_key_down=lambda key: rx.cond(
+                    key == "Enter",
+                    state.apply_prs_catalog_query(),
+                    rx.noop(),
+                ),
+                size="2",
+                flex="1 1 280px",
+                min_width="240px",
+                disabled=~state.compute_scores_loaded,
+            ),
+            rx.button(
+                rx.icon("search", size=14),
+                "Search Catalog",
+                on_click=state.apply_prs_catalog_query,
+                variant="outline",
+                size="2",
+                disabled=~state.compute_scores_loaded,
+            ),
+            rx.button(
+                "Reset Search",
+                on_click=state.clear_prs_catalog_query,
+                variant="outline",
+                color_scheme="gray",
+                size="2",
+                disabled=(~state.compute_scores_loaded) | (state.prs_catalog_query == ""),
+            ),
+            wrap="wrap",
+            spacing="2",
+            align="center",
+            width="100%",
+        ),
+        rx.hstack(
             rx.button(
                 rx.icon("list-checks", size=14),
                 "Select Filtered",
@@ -416,9 +452,9 @@ def _prs_disclaimers(state: type[rx.State]) -> rx.Component:
         rx.cond(
             state.low_match_warning,
             rx.callout(
-                "One or more scores have a match rate below 10%. "
-                "This may indicate a genome build mismatch between "
-                "the VCF and scoring files. Check your genome build selection.",
+                "One or more scores have model coverage below 10%. "
+                "That means the genome file contained too little of the PRS model "
+                "to interpret reliably. Check your genome build selection and VCF coverage.",
                 icon="triangle_alert",
                 color_scheme="red",
                 size="1",
@@ -515,6 +551,7 @@ def prs_results_table(
     detail_height: int | str = "auto",
     bell_curve_config: dict[str, Any] | None = None,
     metric_list_config: dict[str, Any] | None = None,
+    link_list_config: dict[str, Any] | None = None,
 ) -> rx.Component:
     """Table displaying PRS computation results with quality assessment.
 
@@ -534,6 +571,7 @@ def prs_results_table(
             every key accepted by the ``bell_curve`` renderer.
         metric_list_config: Extra renderer config for metric cards in the
             expanded row. Defaults keep cards compact and cap them at four per row.
+        link_list_config: Extra renderer config for source-study links.
     """
     bell_curve = _merge_bell_curve_config(
         {
@@ -566,6 +604,14 @@ def prs_results_table(
         },
         metric_list_config,
     )
+    source_links = _merge_bell_curve_config(
+        {
+            "type": "link_list",
+            "underline": True,
+            "separator": ", ",
+        },
+        link_list_config,
+    )
     return rx.cond(
         (state.prs_results.length() > 0) & (state.prs_view_mode == "individual"),  # type: ignore[operator]
         rx.box(
@@ -586,7 +632,7 @@ def prs_results_table(
                         disable_row_selection_on_click=True,
                         detail_columns=[
                             "population_percentiles_chart", "population_percentiles_summary", "risk_context",
-                            "result_suggestions", "model_context", "ai_ask",
+                            "result_suggestions", "model_context", "publication_links", "ai_ask",
                         ],
                         detail_labels={
                             "population_percentiles_chart": "Where You Fall on the Reference Curve",
@@ -594,6 +640,7 @@ def prs_results_table(
                             "risk_context": "Does This Change Actual Risk?",
                             "result_suggestions": "Quick Flags",
                             "model_context": "Can I Trust This Result?",
+                            "publication_links": "Source Study",
                             "ai_ask": "Ask AI for Interpretation",
                         },
                         detail_renderers={
@@ -601,6 +648,7 @@ def prs_results_table(
                             "model_context": metric_cards,
                             "result_suggestions": {"type": "badge_list"},
                             "population_percentiles_chart": bell_curve,
+                            "publication_links": source_links,
                             "ai_ask": {"type": "button_links", "size": "medium", "gap": 12},
                         },
                         detail_height=detail_height,
@@ -616,9 +664,10 @@ def prs_results_table(
                 rx.text(
                     "Expand any row (chevron on the left) for a bell curve showing your "
                     "position, absolute-risk context, percentile spread, quality flags, and "
+                    "source-study links, plus "
                     "one-click ",
                     rx.text.strong("Ask AI buttons (ChatGPT, Claude, and more)"),
-                    " that open a ready-made prompt explaining your result.",
+                    " that open a ready-made prompt with PGS Catalog and source-paper links.",
                     size="1",
                     color="gray",
                 ),
@@ -725,6 +774,7 @@ def trait_summary_table(
                         disable_row_selection_on_click=True,
                         detail_columns=[
                             "pgs_links",
+                            "publication_links",
                             "percentile_chart",
                             "key_metrics",
                             "trait_quick_flags",
@@ -733,6 +783,7 @@ def trait_summary_table(
                         ],
                         detail_labels={
                             "pgs_links": "PGS Models Included",
+                            "publication_links": "Source Studies",
                             "percentile_chart": "Where You Fall on the Bell Curve",
                             "key_metrics": "Key Statistics",
                             "trait_quick_flags": "Signal Flags",
@@ -741,6 +792,7 @@ def trait_summary_table(
                         },
                         detail_renderers={
                             "pgs_links": pgs_links,
+                            "publication_links": pgs_links,
                             "key_metrics": metric_cards,
                             "trait_quick_flags": {"type": "badge_list"},
                             "confidence_segments": metric_cards,
@@ -759,10 +811,10 @@ def trait_summary_table(
                 rx.icon("chevron-right", size=14, color="var(--accent-9)"),
                 rx.text(
                     "Expand any trait row (chevron on the left) to see a bell curve showing where "
-                    "each model places you, variant match rates, key statistics, a plain-language "
-                    "explanation of why models may disagree, and one-click ",
+                    "each model places you, model coverage, key statistics, source studies, "
+                    "a plain-language explanation of why models may disagree, and one-click ",
                     rx.text.strong("Ask AI buttons (ChatGPT, Claude, and more)"),
-                    " that open a ready-made prompt about this trait.",
+                    " that open a ready-made prompt with PGS Catalog and source-paper links.",
                     size="1",
                     color="gray",
                 ),

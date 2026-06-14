@@ -32,6 +32,7 @@ Then open http://localhost:3000 in your browser.
 | `scoring_files_parquet` | compute | Convert all `.txt.gz` scoring files to spec-driven parquet caches (zstd-9, embedded headers). Deletes `.txt.gz` after verified conversion to save ~5.5 GB disk space. Tracks per-file failures in `conversion_failures.parquet` |
 | `reference_panel` | download | Download + extract reference panel binary files (.pgen/.pvar/.psam) |
 | `reference_scores` | compute | Score all PGS IDs against the reference panel via `compute_reference_prs_batch()` |
+| `reference_percentile_audit` | compute | Audit cached or HuggingFace reference percentile parquets, log pass/warn/fail counts, and write/upload quality sidecars without recomputing scores |
 | `hf_prs_percentiles` | upload | Enrich distributions with metadata and absolute risk, push to HuggingFace |
 
 ### Metadata & Prevalence Pipeline

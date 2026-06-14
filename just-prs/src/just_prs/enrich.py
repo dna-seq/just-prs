@@ -34,6 +34,7 @@ SUPERPOPULATION_LABELS: dict[str, str] = {
     "EUR": "European",
     "SAS": "South Asian",
 }
+MIN_PERCENTILE_MATCH_RATE = 0.50
 
 
 def enrich_prs_result(
@@ -72,19 +73,24 @@ def enrich_prs_result(
     score_info = catalog.score_info_row(result.pgs_id)
     trait_efo_id = str(score_info.get("trait_efo_id") or "") if score_info else ""
 
+    percentile_allowed = result.match_rate >= MIN_PERCENTILE_MATCH_RATE
+
     # --- Percentile resolution: result's own → catalog fallback ---
     pct_value = result.percentile
     pct_method = result.percentile_method or (
         "theoretical" if result.has_allele_frequencies else ""
     )
-    if pct_value is None:
+    if not percentile_allowed:
+        pct_value = None
+        pct_method = "insufficient_coverage"
+    elif pct_value is None:
         pct_value, pct_method = catalog.percentile(
             result.score, result.pgs_id, ancestry=selected_ancestry
         )
 
     # --- Per-population percentiles ---
     all_pop_values: dict[str, float] = {}
-    if compute_all_populations:
+    if compute_all_populations and percentile_allowed:
         all_pop_values = _all_population_percentiles(catalog, result.score, result.pgs_id)
     all_pop_text = (
         ", ".join(f"{sp}: {pct:.1f}%" for sp, pct in sorted(all_pop_values.items()))
@@ -143,6 +149,12 @@ def enrich_prs_result(
     ref_has_data = bool(ref_status["has_reference_data"])
     ref_source_label = str(ref_status["source_label"])
     ref_source_code = str(ref_status["source_code"])
+    ref_audit_issues = ref_status.get("audit_issues", [])
+    ref_audit_issues_text = (
+        ", ".join(str(issue) for issue in ref_audit_issues)
+        if isinstance(ref_audit_issues, list)
+        else str(ref_audit_issues or "")
+    )
 
     if all_pop_values:
         ref_has_data = True
@@ -172,6 +184,11 @@ def enrich_prs_result(
         score=round(result.score, 6),
         variants_matched=result.variants_matched,
         variants_total=result.variants_total,
+        variants_observed=result.variants_observed,
+        variants_assumed_hom_ref=result.variants_assumed_hom_ref,
+        variants_unscorable_absent=result.variants_unscorable_absent,
+        variants_no_call=result.variants_no_call,
+        genotype_input_mode=result.genotype_input_mode,
         match_rate=match_pct,
         has_allele_frequencies=result.has_allele_frequencies,
         genome_build=genome_build,
@@ -205,6 +222,10 @@ def enrich_prs_result(
         reference_status=ref_status_text,
         reference_source=ref_source_label,
         reference_source_code=ref_source_code,
+        reference_audit_status=str(ref_status.get("audit_status") or ""),
+        reference_audit_warning_count=int(ref_status.get("audit_warning_count") or 0),
+        reference_audit_error_count=int(ref_status.get("audit_error_count") or 0),
+        reference_audit_issues=ref_audit_issues_text,
         absolute_risk_text=abs_risk["absolute_risk_text"],
         absolute_risk_percent=abs_risk["absolute_risk_percent"],
         population_average_percent=abs_risk["population_average_percent"],

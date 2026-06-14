@@ -11,6 +11,7 @@ The reusable ``PRSComputeStateMixin`` lives in ``prs_ui.mixin`` so that
 consumer apps can import it without registering these demo-only states.
 """
 
+import os
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -38,6 +39,23 @@ from prs_ui.mixin import (
     _resolve_preloaded_vcf_path,
     _resolve_preselect_query,
 )
+
+
+def _workspace_root() -> Path:
+    """Resolve the source workspace root for direct Reflex development runs."""
+    candidates = [Path.cwd(), Path(__file__).resolve()]
+    for start in candidates:
+        for parent in (start, *start.parents):
+            if (parent / "uv.lock").exists() and (parent / "pyproject.toml").exists():
+                return parent
+    return Path.cwd()
+
+
+def _input_vcf_dir() -> Path:
+    """Directory for user-provided VCF inputs, kept outside source packages."""
+    data_root = os.environ.get("PRS_UI_DATA_DIR", "").strip()
+    base = Path(data_root).expanduser() if data_root else _workspace_root() / "data"
+    return base / "input" / "vcf"
 
 
 class AppState(rx.State):
@@ -224,8 +242,9 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
         if not files:
             return
         upload_file = files[0]
-        filename = upload_file.filename or "uploaded.vcf"
-        upload_dir = rx.get_upload_dir()
+        filename = Path(upload_file.filename or "uploaded.vcf").name
+        upload_dir = _input_vcf_dir()
+        upload_dir.mkdir(parents=True, exist_ok=True)
         dest = upload_dir / filename
 
         self.vcf_filename = filename

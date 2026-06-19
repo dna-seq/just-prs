@@ -42,9 +42,15 @@ from just_prs.ftp import PGS_FTP_BASE, PGS_SCORES_LIST_URL, bulk_download_scorin
 from just_prs.hf import (
     DEFAULT_HF_PERCENTILES_REPO,
     pull_reference_distributions,
+    push_ld_proxy_pgs_table,
     push_reference_audit_sidecars,
     push_chip_coverage,
     push_reference_distributions,
+)
+from just_prs.ld_proxy import (
+    _ld_hard_memory_limit,
+    _ld_memory_limit_bytes,
+    build_ld_proxy_batch,
 )
 from just_prs.reference import (
     DEFAULT_PANEL,
@@ -1206,5 +1212,207 @@ def hf_prs_percentiles(
         "n_catalog_total": n_catalog_total,
         "n_missing": n_missing,
         "coverage_ratio": round(coverage_ratio, 4),
+    })
+    return Output(url)
+
+
+# ---------------------------------------------------------------------------
+# Compute asset — build LD-proxy tables for consumer genotyping arrays
+# ---------------------------------------------------------------------------
+
+# GSA v3 A2 manifest is GRCh38. GRCh37 requires a build-matched manifest or
+# liftover-backed typed positions, so keep it explicit until those inputs exist.
+_LD_PROXY_CHIP_BUILD_COMBOS = [
+    ("gsa_v3", "GRCh38"),
+]
+
+
+@asset(
+    group_name="compute",
+    ins={"ref_dir": AssetIn("reference_panel")},
+    deps=[AssetDep("scoring_files_parquet")],
+    description=(
+        "Builds LD-proxy lookup tables for consumer genotyping arrays. For each "
+        "PRS variant not directly typed on the chip, finds the best proxy among "
+        "chip-typed variants within ±500kb using Pearson correlation of reference "
+        "panel genotypes. Produces one parquet per PGS ID under each "
+        "(panel, chip, build) combination, so full-catalog coverage is built "
+        "as a resumable per-PGS batch rather than one catalog-wide union table. "
+        "Currently builds GSA v3 × GRCh38; add GRCh37 only when build-matched "
+        "typed positions are available."
+    ),
+)
+def ld_proxy_table(
+    context: AssetExecutionContext,
+    ref_dir: Path,
+    cache_dir_resource: CacheDirResource,
+) -> Output[dict[str, str]]:
+    """Build per-PGS LD-proxy tables for each chip × build combination."""
+    cache_dir = cache_dir_resource.get_path()
+    panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+    percentiles_dir = cache_dir / "percentiles"
+    percentiles_dir.mkdir(parents=True, exist_ok=True)
+    no_cache = _no_cache()
+
+    results: dict[str, str] = {}
+    total_proxied = 0
+    total_ok = 0
+    total_cached = 0
+    total_failed = 0
+
+    for chip, build in _LD_PROXY_CHIP_BUILD_COMBOS:
+        pgs_ids_spec = os.environ.get("PRS_LD_PGS_IDS", "").strip()
+        if pgs_ids_spec:
+            pgs_ids = [pid.strip().upper() for pid in pgs_ids_spec.split(",") if pid.strip()]
+            scope_label = f"pgs:{len(pgs_ids)}"
+        elif os.environ.get("PRS_LD_LIMIT_TARGETS", "").strip():
+            limit = int(os.environ["PRS_LD_LIMIT_TARGETS"].strip())
+            pgs_ids = list_all_pgs_ids()[:limit]
+            scope_label = f"limit:{limit}"
+        elif os.environ.get("PRS_LD_FULL_CATALOG", "").strip().lower() in {"1", "true", "yes"}:
+            pgs_ids = list_all_pgs_ids()
+            scope_label = "full_catalog"
+        else:
+            raise ValueError(
+                "LD proxy requires an explicit scope: set PRS_LD_PGS_IDS, "
+                "PRS_LD_LIMIT_TARGETS, or PRS_LD_FULL_CATALOG=1."
+            )
+
+        label = f"{panel}_{chip}_{build}"
+        context.log.info(f"Building LD proxy batch: {label} ({scope_label}, {len(pgs_ids)} PGS IDs)")
+
+        hard_limit = _ld_memory_limit_bytes()
+        if hard_limit is not None:
+            context.log.info(
+                f"LD proxy hard/cooperative memory limit: {hard_limit / (1024 ** 3):.1f} GB"
+            )
+        else:
+            context.log.warning("LD proxy memory guard is disabled.")
+
+        def _progress(payload: dict) -> None:
+            if "pgs_id" in payload:
+                context.log.info(
+                    f"  [{label}] PGS {payload['index']}/{payload['total']} "
+                    f"{payload['pgs_id']} status={payload['status']} "
+                    f"ok={payload['n_ok']} failed={payload['n_failed']}"
+                )
+            elif "chromosome" in payload:
+                context.log.info(
+                    f"  [{label}] chr batch {payload['chrom_index']}/{payload['n_chromosomes']} "
+                    f"({payload['chromosome']}), {payload['n_proxies_found']} proxies so far"
+                )
+
+        try:
+            with _ld_hard_memory_limit(), resource_tracker(f"ld_proxy_{label}", context=context):
+                build_result = build_ld_proxy_batch(
+                    pgs_ids=pgs_ids,
+                    chip=chip,
+                    build=build,
+                    ref_dir=ref_dir,
+                    cache_dir=cache_dir,
+                    panel=panel,
+                    skip_existing=not no_cache,
+                    progress_callback=_progress,
+                )
+        except FileNotFoundError as e:
+            context.log.warning(f"Skipping {label}: {e}")
+            continue
+
+        results.update(build_result.paths)
+        n_proxies = int(
+            build_result.quality_df.select(pl.col("n_proxied").fill_null(0).sum().alias("n")).item()
+        ) if build_result.quality_df.height > 0 else 0
+        total_proxied += n_proxies
+        total_ok += build_result.n_ok
+        total_cached += build_result.n_cached
+        total_failed += build_result.n_failed
+        context.log.info(
+            f"  {label}: total={build_result.n_total}, ok={build_result.n_ok}, "
+            f"cached={build_result.n_cached}, failed={build_result.n_failed}, "
+            f"coverage={build_result.coverage_ratio:.1%}, proxies={n_proxies}"
+        )
+
+    context.add_output_metadata({
+        "n_tables": len(results),
+        "combinations": str(_LD_PROXY_CHIP_BUILD_COMBOS),
+        "panel": panel,
+        "total_proxies": total_proxied,
+        "n_ok": total_ok,
+        "n_cached": total_cached,
+        "n_failed": total_failed,
+        "coverage_ratio": round((total_ok + total_cached) / max(total_ok + total_cached + total_failed, 1), 4),
+        "paths": str(results),
+    })
+    return Output(results)
+
+
+# ---------------------------------------------------------------------------
+# Upload asset — publish LD-proxy tables to HuggingFace
+# ---------------------------------------------------------------------------
+
+
+@asset(
+    group_name="upload",
+    ins={"ld_tables": AssetIn("ld_proxy_table")},
+    description=(
+        "Uploads per-PGS LD-proxy table parquets to the HuggingFace dataset "
+        "just-dna-seq/prs-percentiles. Published so compute_array_prs() can "
+        "auto-download the per-PGS table and apply LD-proxy substitution for consumer "
+        "array users. Named after the destination per lineage convention."
+    ),
+)
+def hf_ld_proxy_table(
+    context: AssetExecutionContext,
+    ld_tables: dict[str, str],
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Publish LD-proxy table parquets to HuggingFace."""
+    repo_id = hf_resource.percentiles_repo
+    token = hf_resource.get_token()
+    panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+
+    test_spec = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
+    limit_spec = os.environ.get("PRS_LD_LIMIT_TARGETS", "").strip()
+    if test_spec or limit_spec:
+        context.log.info("Test/pilot LD proxy run: skipping HuggingFace push of LD proxy tables.")
+        context.add_output_metadata({
+            "test_mode": bool(test_spec),
+            "limit_spec": limit_spec,
+            "hf_push_skipped": True,
+            "local_paths": str(ld_tables),
+        })
+        return Output("skipped")
+
+    pushed = 0
+    with resource_tracker("hf_ld_proxy_table", context=context):
+        for pgs_id, path_str in sorted(ld_tables.items()):
+            parquet_path = Path(path_str)
+            if not parquet_path.exists():
+                context.log.warning(f"LD proxy table file missing: {parquet_path}, skipping upload.")
+                continue
+
+            # Current asset only builds one chip/build combo, but infer from the
+            # combo list to keep upload metadata explicit.
+            chip, build = _LD_PROXY_CHIP_BUILD_COMBOS[0]
+            push_ld_proxy_pgs_table(
+                parquet_path=parquet_path,
+                pgs_id=pgs_id,
+                chip=chip,
+                build=build,
+                panel=panel,
+                repo_id=repo_id,
+                token=token,
+            )
+            pushed += 1
+            if pushed == 1 or pushed % 250 == 0 or pushed == len(ld_tables):
+                context.log.info(f"Pushed {pushed}/{len(ld_tables)} LD proxy parquets to {repo_id}")
+
+    url = f"https://huggingface.co/datasets/{repo_id}"
+    context.add_output_metadata({
+        "repo_id": repo_id,
+        "url": url,
+        "n_tables_pushed": pushed,
+        "tables": str(list(ld_tables.keys())),
     })
     return Output(url)

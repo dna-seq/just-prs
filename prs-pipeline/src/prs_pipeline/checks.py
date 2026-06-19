@@ -477,6 +477,74 @@ def _distributions_path(
 # ---------------------------------------------------------------------------
 
 
+@asset_check(asset="ld_proxy_table", description="Validate LD-proxy table schema and r² range.")
+def check_ld_proxy_table_valid(
+    cache_dir_resource: CacheDirResource,
+) -> AssetCheckResult:
+    from just_prs.ftp import list_all_pgs_ids
+    from just_prs.ld_proxy import LD_PROXY_TABLE_COLUMNS, ld_proxy_pgs_path
+
+    cache_dir = cache_dir_resource.get_path()
+    panel = os.environ.get("PRS_PIPELINE_PANEL", "1000g")
+
+    combos = [("gsa_v3", "GRCh38")]
+    total_rows = 0
+    issues: list[str] = []
+
+    for chip, build in combos:
+        pgs_ids_spec = os.environ.get("PRS_LD_PGS_IDS", "").strip()
+        limit_targets = os.environ.get("PRS_LD_LIMIT_TARGETS", "").strip()
+        if pgs_ids_spec:
+            pgs_ids = [pid.strip().upper() for pid in pgs_ids_spec.split(",") if pid.strip()]
+        elif limit_targets:
+            pgs_ids = list_all_pgs_ids()[:int(limit_targets)]
+        elif os.environ.get("PRS_LD_FULL_CATALOG", "").strip().lower() in {"1", "true", "yes"}:
+            pgs_ids = list_all_pgs_ids()
+        else:
+            issues.append("No LD proxy scope set for validation.")
+            pgs_ids = []
+
+        for pgs_id in pgs_ids:
+            path = ld_proxy_pgs_path(cache_dir, pgs_id, chip, build, panel)
+            if not path.exists():
+                issues.append(f"Missing: {pgs_id} ({path.name})")
+                continue
+
+            df = pl.read_parquet(path)
+            missing_cols = set(LD_PROXY_TABLE_COLUMNS) - set(df.columns)
+            if missing_cols:
+                issues.append(f"{pgs_id}: missing columns {missing_cols}")
+                continue
+            if df.height == 0:
+                issues.append(f"{pgs_id}: empty LD proxy table")
+                continue
+
+            n_bad_r2 = df.filter(
+                (pl.col("r_squared") < 0.0) | (pl.col("r_squared") > 1.0)
+            ).height
+            if n_bad_r2 > 0:
+                issues.append(f"{pgs_id}: {n_bad_r2} rows with r² outside [0,1]")
+
+            n_bad_signed = df.filter(
+                (pl.col("r_signed") < -1.0) | (pl.col("r_signed") > 1.0)
+            ).height
+            if n_bad_signed > 0:
+                issues.append(f"{pgs_id}: {n_bad_signed} rows with r_signed outside [-1,1]")
+
+            total_rows += df.height
+
+    passed = len(issues) == 0 and total_rows > 0
+    return AssetCheckResult(
+        passed=passed,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "total_rows": total_rows,
+            "n_tables_expected": len(combos) * len(pgs_ids) if "pgs_ids" in locals() else 0,
+            "issues": str(issues) if issues else "none",
+        },
+    )
+
+
 ALL_ASSET_CHECKS = [
     check_distributions_superpop_completeness,
     check_distributions_no_inf_nan,
@@ -486,4 +554,5 @@ ALL_ASSET_CHECKS = [
     check_enriched_has_metadata_columns,
     check_cleaned_metadata_quality,
     check_chip_coverage_valid,
+    check_ld_proxy_table_valid,
 ]

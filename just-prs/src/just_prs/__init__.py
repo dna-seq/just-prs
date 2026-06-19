@@ -1,6 +1,7 @@
 from importlib.metadata import metadata
 
-from just_prs.arrays import detect_array_format, normalize_array
+from just_prs.array_scoring import compute_array_prs
+from just_prs.arrays import detect_array_format, detect_chip_generation, normalize_array
 from just_prs.chip_coverage import (
     CHIPS,
     CHIPS_BY_ID,
@@ -9,14 +10,18 @@ from just_prs.chip_coverage import (
     parse_gsa_manifest,
 )
 from just_prs.enrich import enrich_prs_result
+from just_prs.ld_proxy import apply_ld_proxies, build_ld_proxy_table, ld_proxy_table_path
 from just_prs.models import (
     AbsoluteRisk,
     AbsoluteRiskBundle,
     AbsoluteRiskEstimate,
+    ArrayPRSResult,
+    ChipGeneration,
     EnrichedPRSResult,
     PRSBatchOutcome,
     PRSBatchResult,
     ReferenceDistribution,
+    classify_coverage_tier,
 )
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs import GenotypeInputMode, PRSEngine, compute_prs, compute_prs_batch, compute_prs_duckdb

@@ -1663,6 +1663,54 @@ def _compute_reference_match_metadata(
     return variants_total, variants_matched, match_rate
 
 
+def _read_cached_match_metadata(parquet_path: Path) -> tuple[int, int, float] | None:
+    """Read match metadata from the first row of a current per-PGS score parquet."""
+    schema = pl.read_parquet_schema(parquet_path)
+    if not {"variants_total", "variants_matched", "match_rate"}.issubset(set(schema)):
+        return None
+    row = (
+        pl.scan_parquet(parquet_path)
+        .select(
+            pl.col("variants_total").first().alias("variants_total"),
+            pl.col("variants_matched").first().alias("variants_matched"),
+            pl.col("match_rate").first().alias("match_rate"),
+        )
+        .collect()
+    )
+    if row.height == 0:
+        return None
+    variants_total = row["variants_total"][0]
+    variants_matched = row["variants_matched"][0]
+    match_rate = row["match_rate"][0]
+    if variants_total is None or variants_matched is None or match_rate is None:
+        return None
+    return int(variants_total), int(variants_matched), float(match_rate)
+
+
+def _outcome_from_distribution_rows(
+    pgs_id: str,
+    pgs_rows: pl.DataFrame,
+) -> ScoringOutcome | None:
+    """Build score summary fields from already-aggregated distribution rows."""
+    if pgs_rows.height == 0:
+        return None
+    total_n = int(pgs_rows["n"].sum())
+    if total_n <= 0:
+        return None
+    weighted_mean = float((pgs_rows["mean"] * pgs_rows["n"]).sum() / total_n)
+    pooled_second = float((((pgs_rows["std"] ** 2) + (pgs_rows["mean"] ** 2)) * pgs_rows["n"]).sum() / total_n)
+    pooled_var = max(pooled_second - weighted_mean**2, 0.0)
+    pooled_std = math.sqrt(pooled_var)
+    status = "zero_variance" if pooled_std < 1e-10 else "ok"
+    return ScoringOutcome(
+        pgs_id=pgs_id,
+        status=status,
+        n_samples=total_n,
+        score_mean=weighted_mean,
+        score_std=pooled_std,
+    )
+
+
 def backfill_reference_quality_metadata(
     pgs_ids: list[str],
     ref_dir: Path,
@@ -1687,6 +1735,15 @@ def backfill_reference_quality_metadata(
     if output_subdir:
         percentiles_dir = percentiles_dir / output_subdir
     percentiles_dir.mkdir(parents=True, exist_ok=True)
+    existing_distributions_path = cache_dir / "percentiles" / f"{panel}_distributions.parquet"
+    existing_distributions = (
+        pl.read_parquet(existing_distributions_path)
+        if existing_distributions_path.exists()
+        else None
+    )
+    selected_pgs_ids = set(pgs_ids)
+    if existing_distributions is not None:
+        existing_distributions = existing_distributions.filter(pl.col("pgs_id").is_in(selected_pgs_ids))
 
     t_resolve_start = time.monotonic()
     resolved = _ResolvedRefPanel(ref_dir, genome_build)
@@ -1724,18 +1781,32 @@ def backfill_reference_quality_metadata(
             continue
 
         try:
-            aggregated = _aggregate_single_pgs(result_parquet, pgs_id)
-            if aggregated is None:
-                outcomes.append(ScoringOutcome(
-                    pgs_id=pgs_id,
-                    status="failed",
-                    error=f"cached score parquet is empty or missing score column: {result_parquet}",
-                ))
-                n_failed += 1
-                continue
+            aggregated: _SinglePgsAgg | None = None
+            if existing_distributions is not None:
+                pgs_distribution_rows = existing_distributions.filter(pl.col("pgs_id") == pgs_id)
+                outcome = _outcome_from_distribution_rows(pgs_id, pgs_distribution_rows)
+            else:
+                outcome = None
 
-            outcome = aggregated.outcome
-            if outcome.variants_total is None or outcome.variants_matched is None or outcome.match_rate is None:
+            if outcome is None:
+                aggregated = _aggregate_single_pgs(result_parquet, pgs_id)
+                if aggregated is None:
+                    outcomes.append(ScoringOutcome(
+                        pgs_id=pgs_id,
+                        status="failed",
+                        error=f"cached score parquet is empty or missing score column: {result_parquet}",
+                    ))
+                    n_failed += 1
+                    continue
+                outcome = aggregated.outcome
+
+            cached_match = _read_cached_match_metadata(result_parquet)
+            if cached_match is not None:
+                variants_total, variants_matched, match_rate = cached_match
+                outcome.variants_total = variants_total
+                outcome.variants_matched = variants_matched
+                outcome.match_rate = match_rate
+            else:
                 variants_total, variants_matched, match_rate = _compute_reference_match_metadata(
                     pgs_id,
                     scores_cache,
@@ -1758,7 +1829,8 @@ def backfill_reference_quality_metadata(
             if outcome.status in {"low_match", "zero_variance"}:
                 n_problematic += 1
 
-            dist_parts.append(aggregated.df)
+            if aggregated is not None:
+                dist_parts.append(aggregated.df)
             outcomes.append(outcome)
             n_ok += 1
         except (KeyboardInterrupt, SystemExit):
@@ -1784,21 +1856,24 @@ def backfill_reference_quality_metadata(
                 "elapsed_sec": time.monotonic() - started_at,
                 "is_complete": i + 1 >= len(pgs_ids),
             })
+        if (i + 1) % 100 == 0:
+            gc.collect()
 
     quality_rows = [o.model_dump() for o in outcomes]
     quality_df = pl.DataFrame(quality_rows, schema=QUALITY_DF_SCHEMA) if quality_rows else pl.DataFrame(
         schema=QUALITY_DF_SCHEMA
     )
-    distributions_df = (
-        pl.concat(dist_parts, how="diagonal_relaxed")
-        if dist_parts
-        else pl.DataFrame(schema={
+    if existing_distributions is not None:
+        distributions_df = existing_distributions
+    elif dist_parts:
+        distributions_df = pl.concat(dist_parts, how="diagonal_relaxed")
+    else:
+        distributions_df = pl.DataFrame(schema={
             "pgs_id": pl.Utf8, "superpopulation": pl.Utf8,
             "mean": pl.Float64, "std": pl.Float64, "n": pl.UInt32,
             "median": pl.Float64, "p5": pl.Float64, "p25": pl.Float64,
             "p75": pl.Float64, "p95": pl.Float64,
         })
-    )
     distribution_issues_df = reference_distribution_audit_issues(
         distributions_df,
         quality_df,

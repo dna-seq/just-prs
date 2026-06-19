@@ -187,7 +187,7 @@ def run(
     test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
     test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
-    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, reference_percentile_audit_job.")] = "full_pipeline",
+    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, ld_proxy_pipeline, reference_percentile_audit_job.")] = "full_pipeline",
     no_cache: Annotated[bool, typer.Option("--no-cache", help="Ignore on-disk caches and re-download/recompute everything.")] = False,
     headless: Annotated[bool, typer.Option("--headless", help="Run in-process without Dagster UI.")] = False,
     host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
@@ -403,6 +403,145 @@ def audit(
     console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
     console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
     console.print("[bold]Job 'reference_percentile_audit_job' will be submitted automatically on startup.[/bold]\n")
+
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])
+
+
+@app.command(name="ld-proxy")
+def ld_proxy(
+    panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
+    no_cache: Annotated[bool, typer.Option("--no-cache", help="Rebuild LD proxy tables from scratch.")] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Run ld_proxy_pipeline in-process without Dagster UI.")] = False,
+    full_catalog: Annotated[bool, typer.Option("--full-catalog", help="Build LD proxies for the full PGS catalog via the resumable per-PGS batch.")] = False,
+    limit_targets: Annotated[Optional[int], typer.Option("--limit", "--limit-targets", help="Pilot mode: build LD proxies for the first N PGS IDs via the resumable per-PGS batch.")] = None,
+    pgs_ids: Annotated[Optional[str], typer.Option("--pgs-ids", help="Comma-separated PGS IDs to build LD proxies for.")] = None,
+    workers: Annotated[Optional[int], typer.Option("--workers", help="LD worker threads. Default: PRS_LD_MAX_WORKERS or 1.")] = None,
+    memory_limit_gb: Annotated[Optional[float], typer.Option("--memory-limit-gb", help="Cooperative RSS limit for LD build; aborts before system OOM.")] = None,
+    memory_limit_percent: Annotated[Optional[int], typer.Option("--memory-limit-percent", help="RSS limit as percent of system RAM. Default: 65.")] = None,
+    duckdb_memory_limit: Annotated[Optional[str], typer.Option("--duckdb-memory-limit", help="DuckDB memory limit for LD staging queries. Default: 4GB or 25% of LD cap.")] = None,
+    target_batch_size: Annotated[Optional[int], typer.Option("--target-batch-size", help="Untyped target positions per submitted LD batch. Default: 10000.")] = None,
+    max_targets_per_chunk: Annotated[Optional[int], typer.Option("--max-targets-per-chunk", help="Target variants per in-memory correlation chunk. Default: 256.")] = None,
+    chunk_size_bp: Annotated[Optional[int], typer.Option("--chunk-size-bp", help="Max genomic span per in-memory target chunk. Default: 250000.")] = None,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
+) -> None:
+    """Build LD-proxy tables for consumer genotyping arrays.
+
+    \b
+    Computes LD-proxy lookup tables for GSA v3 from the 1000G reference panel,
+    then uploads to HuggingFace. The current pipeline builds GRCh38 only;
+    GRCh37 should be added when build-matched typed positions are available.
+
+    Default behavior launches Dagster UI. Use ``--headless`` for in-process.
+    """
+    scoped_modes = sum([
+        1 if full_catalog else 0,
+        1 if limit_targets is not None else 0,
+        1 if pgs_ids else 0,
+    ])
+    if scoped_modes == 0:
+        console.print(
+            "[red bold]Refusing to launch a full-catalog LD-proxy build by default.[/red bold]\n"
+            "LD proxy is a reference-panel correlation search, not a lightweight "
+            "coverage table. Use [cyan]--pgs-ids PGS000001[/cyan] for a complete "
+            "one-score run, [cyan]--limit N[/cyan] for a bounded pilot, "
+            "or [cyan]--full-catalog[/cyan] when you intentionally want the full catalog."
+        )
+        raise typer.Exit(code=2)
+    if scoped_modes > 1:
+        console.print("[red]Use only one of --pgs-ids, --limit, or --full-catalog.[/red]")
+        raise typer.Exit(code=2)
+
+    dagster_home = _setup_dagster_home()
+    _set_pipeline_env(panel, no_cache=no_cache)
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "ld_proxy_pipeline"
+    if full_catalog:
+        os.environ["PRS_LD_FULL_CATALOG"] = "1"
+        os.environ.pop("PRS_LD_LIMIT_TARGETS", None)
+        os.environ.pop("PRS_LD_PGS_IDS", None)
+    elif pgs_ids:
+        ids = [pid.strip().upper() for pid in pgs_ids.split(",") if pid.strip()]
+        os.environ["PRS_LD_PGS_IDS"] = ",".join(ids)
+        os.environ.pop("PRS_LD_FULL_CATALOG", None)
+        os.environ.pop("PRS_LD_LIMIT_TARGETS", None)
+    else:
+        os.environ["PRS_LD_LIMIT_TARGETS"] = str(limit_targets)
+        os.environ.pop("PRS_LD_FULL_CATALOG", None)
+        os.environ.pop("PRS_LD_PGS_IDS", None)
+    os.environ.setdefault("OPENBLAS_NUM_THREADS", os.environ.get("PRS_LD_BLAS_THREADS", "1"))
+    os.environ.setdefault("MKL_NUM_THREADS", os.environ.get("PRS_LD_BLAS_THREADS", "1"))
+    os.environ.setdefault("OMP_NUM_THREADS", os.environ.get("PRS_LD_BLAS_THREADS", "1"))
+    if workers is not None:
+        os.environ["PRS_LD_MAX_WORKERS"] = str(workers)
+    if memory_limit_gb is not None:
+        os.environ["PRS_LD_MEMORY_LIMIT_GB"] = str(memory_limit_gb)
+    if memory_limit_percent is not None:
+        os.environ["PRS_LD_MEMORY_LIMIT_PERCENT"] = str(memory_limit_percent)
+    if duckdb_memory_limit is not None:
+        os.environ["PRS_LD_DUCKDB_MEMORY_LIMIT"] = duckdb_memory_limit
+    if target_batch_size is not None:
+        os.environ["PRS_LD_TARGET_BATCH_SIZE"] = str(target_batch_size)
+    if max_targets_per_chunk is not None:
+        os.environ["PRS_LD_MAX_TARGETS_PER_CHUNK"] = str(max_targets_per_chunk)
+    if chunk_size_bp is not None:
+        os.environ["PRS_LD_CHUNK_SIZE_BP"] = str(chunk_size_bp)
+
+    if full_catalog:
+        console.print(
+            "[yellow]Full-catalog LD proxy runs are resumable per-PGS batches, "
+            "but should still be launched under OS containment, e.g. "
+            "systemd-run --user --scope -p MemoryMax=24G uv run pipeline ld-proxy --full-catalog[/yellow]"
+        )
+
+    console.print(
+        "[dim]LD guardrails: "
+        f"workers={os.environ.get('PRS_LD_MAX_WORKERS', '1')}, "
+        f"memory_limit_gb={os.environ.get('PRS_LD_MEMORY_LIMIT_GB', 'auto')}, "
+        f"memory_limit_percent={os.environ.get('PRS_LD_MEMORY_LIMIT_PERCENT', '65')}, "
+        f"duckdb_memory_limit={os.environ.get('PRS_LD_DUCKDB_MEMORY_LIMIT', 'auto')}, "
+        f"pgs_ids={os.environ.get('PRS_LD_PGS_IDS', '')}, "
+        f"limit_targets={os.environ.get('PRS_LD_LIMIT_TARGETS', 'full-catalog')}, "
+        f"target_batch_size={os.environ.get('PRS_LD_TARGET_BATCH_SIZE', '10000')}, "
+        f"max_targets_per_chunk={os.environ.get('PRS_LD_MAX_TARGETS_PER_CHUNK', '256')}, "
+        f"chunk_size_bp={os.environ.get('PRS_LD_CHUNK_SIZE_BP', '250000')}[/dim]"
+    )
+
+    if headless:
+        _cancel_orphaned_runs()
+        console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+        console.print("[bold]Job:[/bold] ld_proxy_pipeline (build LD-proxy tables → HF)\n")
+
+        from prs_pipeline.definitions import defs
+
+        resolved_job = defs.get_job_def("ld_proxy_pipeline")
+        console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+        result = _execute_job(resolved_job)
+
+        if result.success:
+            console.print("\n[green bold]Job 'ld_proxy_pipeline' completed successfully.[/green bold]")
+        else:
+            console.print("\n[red bold]Job 'ld_proxy_pipeline' failed.[/red bold]")
+            for event in result.all_events:
+                if event.is_failure:
+                    console.print(f"  [red]{event.message}[/red]")
+            raise typer.Exit(code=1)
+        return
+
+    if no_cache:
+        os.environ["PRS_PIPELINE_STARTUP_REQUEST_ID"] = uuid.uuid4().hex
+
+    _kill_port(port)
+    _cancel_orphaned_runs()
+    console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
+    console.print("[bold]Job 'ld_proxy_pipeline' will be submitted automatically on startup.[/bold]\n")
 
     dagster_bin = str(Path(sys.executable).parent / "dagster")
     os.execvp(dagster_bin, [

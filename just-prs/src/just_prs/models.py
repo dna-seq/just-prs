@@ -1,5 +1,7 @@
 """Pydantic v2 models for PGS Catalog data and PRS computation results."""
 
+from dataclasses import dataclass
+
 from pydantic import BaseModel, Field
 
 
@@ -206,6 +208,10 @@ class PRSResult(BaseModel):
         default=0,
         description="Scoring loci present in the genotype input but carrying a missing/no-call GT",
     )
+    variants_maf_filled: int = Field(
+        default=0,
+        description="Absent loci filled with population MAF dosage (2 * allelefrequency_effect) instead of being unscorable",
+    )
     genotype_input_mode: str = Field(
         default="plink_present_only",
         description="How absent genotype loci were interpreted during scoring",
@@ -335,6 +341,63 @@ class EnrichedPRSResult(BaseModel):
     risk_agreement: str = ""
     risk_estimates_by_method: dict[str, str] = Field(default_factory=dict)
     risk_estimate_methods: list[str] = Field(default_factory=list)
+
+
+class ArrayPRSResult(PRSResult):
+    """PRS result from consumer genotyping array data with coverage and proxy metadata."""
+
+    chip: str = Field(default="", description="Chip identifier (e.g. 'gsa_v3')")
+    coverage_ratio: float = Field(
+        default=0.0,
+        description="Fraction of scoring variants directly typed on the chip (0-1)",
+    )
+    variants_proxied: int = Field(
+        default=0,
+        description="Scoring variants recovered via LD-proxy substitution",
+    )
+    effective_coverage: float = Field(
+        default=0.0,
+        description="(typed + proxied + maf_filled) / total — effective variant coverage after all recovery methods",
+    )
+    coverage_tier: str = Field(
+        default="unreliable",
+        description="Coverage quality tier: 'reliable' (>=90%), 'usable' (>=60%), 'low' (>=40%), 'unreliable' (<40%)",
+    )
+    proxy_r2_mean: float | None = Field(
+        default=None,
+        description="Mean LD r² of used proxy variants",
+    )
+    score_uncorrected: float = Field(
+        default=0.0,
+        description="Raw PRS score before LD-proxy weight adjustment",
+    )
+
+
+@dataclass
+class ChipGeneration:
+    """Detected consumer genotyping chip generation from raw array data."""
+
+    chip_id: str
+    platform: str
+    generation_label: str
+    ld_proxy_available: bool
+    marker_count: int
+
+
+# Coverage tier thresholds for array scoring
+COVERAGE_TIERS: dict[str, float] = {
+    "reliable": 0.90,
+    "usable": 0.60,
+    "low": 0.40,
+}
+
+
+def classify_coverage_tier(effective_coverage: float) -> str:
+    """Classify effective coverage into a quality tier."""
+    for tier, threshold in COVERAGE_TIERS.items():
+        if effective_coverage >= threshold:
+            return tier
+    return "unreliable"
 
 
 class PRSBatchOutcome(BaseModel):

@@ -10,8 +10,10 @@ from prs_pipeline.assets import (
     ebi_pgs_catalog_scoring_files,
     ebi_scoring_files_fingerprint,
     hf_chip_coverage,
+    hf_ld_proxy_table,
     hf_prs_percentiles,
     illumina_gsa_manifest,
+    ld_proxy_table,
     reference_percentile_audit,
     reference_panel,
     reference_scores,
@@ -88,6 +90,21 @@ reference_percentile_audit_job = dg.define_asset_job(
     executor_def=in_process_executor,
 )
 
+ld_proxy_pipeline = dg.define_asset_job(
+    name="ld_proxy_pipeline",
+    selection=dg.AssetSelection.assets(
+        "reference_panel", "scoring_files", "scoring_files_parquet",
+        "ld_proxy_table", "hf_ld_proxy_table",
+    ) | dg.AssetSelection.checks_for_assets("ld_proxy_table"),
+    description=(
+        "Build LD-proxy lookup tables for consumer genotyping arrays (GSA v3) "
+        "from the 1000G reference panel and publish to HuggingFace. "
+        "Currently produces a GRCh38 table. Includes schema validation checks."
+    ),
+    hooks={resource_summary_hook},
+    executor_def=in_process_executor,
+)
+
 _full_pipeline_assets = dg.AssetSelection.assets(
     "ebi_reference_panel_fingerprint", "ebi_scoring_files_fingerprint",
     "reference_panel", "scoring_files", "scoring_files_parquet",
@@ -159,6 +176,8 @@ _assets = [
     scoring_files_parquet,
     chip_coverage,
     hf_chip_coverage,
+    hf_ld_proxy_table,
+    ld_proxy_table,
     reference_percentile_audit,
     reference_panel,
     reference_scores,
@@ -182,6 +201,7 @@ _unresolved_jobs = [
     full_pipeline,
     catalog_pipeline,
     chip_coverage_pipeline,
+    ld_proxy_pipeline,
     reference_percentile_audit_job,
     metadata_pipeline,
 ]
@@ -209,6 +229,7 @@ def _build_definitions() -> dg.Definitions:
             catalog_pipeline_job=jobs_by_name["catalog_pipeline"],
             score_and_push_job=jobs_by_name["score_and_push"],
             reference_percentile_audit_job=jobs_by_name["reference_percentile_audit_job"],
+            ld_proxy_pipeline_job=jobs_by_name["ld_proxy_pipeline"],
         ),
         resources=_resources,
         jobs=resolved_jobs,

@@ -257,6 +257,7 @@ def compute_prs(
     trait_reported: str | None = None,
     genotypes_lf: pl.LazyFrame | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
+    maf_fill: bool = False,
 ) -> PRSResult:
     """Compute a polygenic risk score for a single VCF against a scoring file.
 
@@ -285,6 +286,9 @@ def compute_prs(
         genotype_input_mode: How absent scoring loci are interpreted:
             ``auto`` (default), ``variant_only``, ``all_sites``, or
             ``plink_present_only``.
+        maf_fill: When True and the scoring file has ``allelefrequency_effect``,
+            substitute ``dosage = 2 * MAF`` for absent variants that would
+            otherwise be unscorable. Tracked as ``variants_maf_filled``.
 
     Returns:
         PRSResult with computed score, match statistics, and optionally
@@ -334,25 +338,44 @@ def compute_prs(
         )
 
         dosage_weight = DOSAGE_WEIGHT_COLUMNS[0] in schema_names
+        has_maf_col = "allelefrequency_effect" in schema_names
+        do_maf_fill = maf_fill and has_maf_col and not dosage_weight
+
         if resolved_mode == GenotypeInputMode.VARIANT_ONLY:
             ref_known = pl.col("reference_allele").is_not_null() & (pl.col("reference_allele").str.len_chars() > 0)
             absent = pl.col("is_present").not_()
-            joined = joined.with_columns(
+
+            dosage_chain = (
                 pl.when(pl.col("is_present") & pl.col("is_no_call").not_())
                 .then(pl.col("dosage"))
                 .when(absent & ref_known & (pl.col("effect_allele") == pl.col("reference_allele")))
                 .then(pl.lit(2))
                 .when(absent & ref_known)
                 .then(pl.lit(0))
-                .otherwise(pl.lit(None, dtype=pl.Int64))
-                .alias("resolved_dosage")
             )
+            if do_maf_fill:
+                maf_available = pl.col("allelefrequency_effect").is_not_null() & (pl.col("allelefrequency_effect") > 0.0) & (pl.col("allelefrequency_effect") < 1.0)
+                dosage_chain = dosage_chain.when(absent & ref_known.not_() & maf_available).then(
+                    (2.0 * pl.col("allelefrequency_effect")).cast(pl.Float64)
+                )
+            dosage_chain = dosage_chain.otherwise(pl.lit(None, dtype=pl.Float64))
+
+            joined = joined.with_columns(dosage_chain.alias("resolved_dosage"))
+
+            if do_maf_fill:
+                joined = joined.with_columns(
+                    (absent & ref_known.not_() & pl.col("allelefrequency_effect").is_not_null() & (pl.col("allelefrequency_effect") > 0.0) & (pl.col("allelefrequency_effect") < 1.0) & pl.col("resolved_dosage").is_not_null())
+                    .alias("is_maf_filled")
+                )
+            else:
+                joined = joined.with_columns(pl.lit(False).alias("is_maf_filled"))
         else:
             joined = joined.with_columns(
                 pl.when(pl.col("is_no_call"))
                 .then(pl.lit(None, dtype=pl.Int64))
                 .otherwise(pl.col("dosage"))
-                .alias("resolved_dosage")
+                .alias("resolved_dosage"),
+                pl.lit(False).alias("is_maf_filled"),
             )
 
         if dosage_weight:
@@ -377,8 +400,9 @@ def compute_prs(
             pl.col("is_present").cast(pl.Int64).sum().alias("variants_observed"),
             (pl.col("is_present") & pl.col("is_no_call").not_()).cast(pl.Int64).sum().alias("observed_called"),
             (absent_expr & ref_known_expr).cast(pl.Int64).sum().alias("variants_assumed_hom_ref"),
-            (absent_expr & ref_known_expr.not_()).cast(pl.Int64).sum().alias("variants_unscorable_absent"),
+            (absent_expr & ref_known_expr.not_() & pl.col("is_maf_filled").not_()).cast(pl.Int64).sum().alias("variants_unscorable_absent"),
             (pl.col("is_present") & pl.col("is_no_call")).cast(pl.Int64).sum().alias("variants_no_call"),
+            pl.col("is_maf_filled").cast(pl.Int64).sum().alias("variants_maf_filled"),
             pl.col("weighted_dosage").sum().alias("prs_score"),
         ).collect()
 
@@ -386,7 +410,8 @@ def compute_prs(
         variants_assumed_hom_ref = int(agg["variants_assumed_hom_ref"][0] or 0)
         variants_unscorable_absent = int(agg["variants_unscorable_absent"][0] or 0)
         variants_no_call = int(agg["variants_no_call"][0] or 0)
-        variants_matched = int(agg["observed_called"][0] or 0) + variants_assumed_hom_ref
+        variants_maf_filled = int(agg["variants_maf_filled"][0] or 0)
+        variants_matched = int(agg["observed_called"][0] or 0) + variants_assumed_hom_ref + variants_maf_filled
 
         if variants_matched == 0:
             prs_score = 0.0
@@ -431,6 +456,7 @@ def compute_prs(
             variants_assumed_hom_ref=variants_assumed_hom_ref,
             variants_unscorable_absent=variants_unscorable_absent,
             variants_no_call=variants_no_call,
+            variants_maf_filled=variants_maf_filled,
             genotype_input_mode=resolved_mode.value,
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
@@ -472,6 +498,18 @@ CASE
     WHEN g.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN ({_DUCKDB_DOSAGE_SQL})
     WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} AND s.effect_allele = s.reference_allele THEN 2
     WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 0
+    ELSE NULL
+END"""
+
+_DUCKDB_MAF_AVAILABLE_SQL = """\
+(s.allelefrequency_effect IS NOT NULL AND s.allelefrequency_effect > 0.0 AND s.allelefrequency_effect < 1.0)"""
+
+_DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY_MAF = f"""\
+CASE
+    WHEN g.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN ({_DUCKDB_DOSAGE_SQL})
+    WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} AND s.effect_allele = s.reference_allele THEN 2
+    WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 0
+    WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND {_DUCKDB_MAF_AVAILABLE_SQL} THEN 2.0 * s.allelefrequency_effect
     ELSE NULL
 END"""
 
@@ -525,6 +563,7 @@ def compute_prs_duckdb(
     genotypes_lf: pl.LazyFrame | None = None,
     memory_limit: str | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
+    maf_fill: bool = False,
 ) -> PRSResult:
     """Compute a polygenic risk score using DuckDB for the join and aggregation.
 
@@ -553,6 +592,9 @@ def compute_prs_duckdb(
         genotype_input_mode: How absent scoring loci are interpreted:
             ``auto`` (default), ``variant_only``, ``all_sites``, or
             ``plink_present_only``.
+        maf_fill: When True and the scoring file has ``allelefrequency_effect``,
+            substitute ``dosage = 2 * MAF`` for absent variants that would
+            otherwise be unscorable. Tracked as ``variants_maf_filled``.
 
     Returns:
         PRSResult with computed score, match statistics, and optionally
@@ -595,20 +637,35 @@ def compute_prs_duckdb(
                 geno_mode_lf = geno_lf
 
             resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, geno_mode_lf)
+            has_maf_col_ddb = "allelefrequency_effect" in schema_names
+            do_maf_fill_ddb = maf_fill and has_maf_col_ddb and not dosage_weight
+
             if resolved_mode == GenotypeInputMode.VARIANT_ONLY:
                 join_sql = f"""
                     FROM scoring s
                     LEFT JOIN {geno_from} g
                       ON g.chrom = s.chr_name_norm AND g.pos = s.chr_pos_norm
                 """
-                resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY
-                counter_sql = f"""
-                    SUM(CASE WHEN g.GT IS NOT NULL THEN 1 ELSE 0 END) AS variants_observed,
-                    SUM(CASE WHEN g.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN 1 ELSE 0 END) AS observed_called,
-                    SUM(CASE WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
-                    SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
-                    SUM(CASE WHEN g.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call
-                """
+                if do_maf_fill_ddb:
+                    resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY_MAF
+                    counter_sql = f"""
+                        SUM(CASE WHEN g.GT IS NOT NULL THEN 1 ELSE 0 END) AS variants_observed,
+                        SUM(CASE WHEN g.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN 1 ELSE 0 END) AS observed_called,
+                        SUM(CASE WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
+                        SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND NOT ({_DUCKDB_MAF_AVAILABLE_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
+                        SUM(CASE WHEN g.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
+                        SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND {_DUCKDB_MAF_AVAILABLE_SQL} THEN 1 ELSE 0 END) AS variants_maf_filled
+                    """
+                else:
+                    resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY
+                    counter_sql = f"""
+                        SUM(CASE WHEN g.GT IS NOT NULL THEN 1 ELSE 0 END) AS variants_observed,
+                        SUM(CASE WHEN g.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN 1 ELSE 0 END) AS observed_called,
+                        SUM(CASE WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
+                        SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
+                        SUM(CASE WHEN g.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
+                        0 AS variants_maf_filled
+                    """
             else:
                 join_sql = f"""
                     FROM {geno_from} g
@@ -621,7 +678,8 @@ def compute_prs_duckdb(
                     SUM(CASE WHEN NOT ({_DUCKDB_NO_CALL_SQL}) THEN 1 ELSE 0 END) AS observed_called,
                     0 AS variants_assumed_hom_ref,
                     0 AS variants_unscorable_absent,
-                    SUM(CASE WHEN {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call
+                    SUM(CASE WHEN {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
+                    0 AS variants_maf_filled
                 """
 
             row = conn.execute(f"""
@@ -640,7 +698,8 @@ def compute_prs_duckdb(
                     COALESCE(SUM(variants_observed), 0) AS variants_observed,
                     COALESCE(SUM(variants_assumed_hom_ref), 0) AS variants_assumed_hom_ref,
                     COALESCE(SUM(variants_unscorable_absent), 0) AS variants_unscorable_absent,
-                    COALESCE(SUM(variants_no_call), 0) AS variants_no_call
+                    COALESCE(SUM(variants_no_call), 0) AS variants_no_call,
+                    COALESCE(SUM(variants_maf_filled), 0) AS variants_maf_filled
                 FROM resolved s
             """).fetchone()
 
@@ -650,7 +709,8 @@ def compute_prs_duckdb(
             variants_assumed_hom_ref = int(row[3])
             variants_unscorable_absent = int(row[4])
             variants_no_call = int(row[5])
-            variants_matched = observed_called + variants_assumed_hom_ref
+            variants_maf_filled = int(row[6])
+            variants_matched = observed_called + variants_assumed_hom_ref + variants_maf_filled
 
             has_freqs = False
             theoretical_mean: float | None = None
@@ -708,6 +768,7 @@ def compute_prs_duckdb(
             variants_assumed_hom_ref=variants_assumed_hom_ref,
             variants_unscorable_absent=variants_unscorable_absent,
             variants_no_call=variants_no_call,
+            variants_maf_filled=variants_maf_filled,
             genotype_input_mode=resolved_mode.value,
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,

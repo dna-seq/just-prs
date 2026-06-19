@@ -54,6 +54,10 @@ _JOB_CHECK_KEYS: dict[str, list[dg.AssetKey]] = {
     "reference_percentile_audit_job": [
         dg.AssetKey("reference_percentile_audit"),
     ],
+    "ld_proxy_pipeline": [
+        dg.AssetKey("ld_proxy_table"),
+        dg.AssetKey("hf_ld_proxy_table"),
+    ],
 }
 
 _PIPELINE_JOB_NAMES = (
@@ -61,6 +65,7 @@ _PIPELINE_JOB_NAMES = (
     "catalog_pipeline",
     "score_and_push",
     "reference_percentile_audit_job",
+    "ld_proxy_pipeline",
 )
 
 
@@ -79,13 +84,25 @@ def _has_any_active_pipeline_run(instance: dg.DagsterInstance) -> dg.DagsterRun 
     return next((run for run in active if run.job_name in _PIPELINE_JOB_NAMES), None)
 
 
-def _last_run_failed(instance: dg.DagsterInstance, job_name: str) -> bool:
-    """Return True if the most recent run of *job_name* has status FAILURE."""
+def _last_unsuccessful_run_id(instance: dg.DagsterInstance, job_name: str) -> str | None:
+    """Return the run id of the most recent *terminal-but-not-successful* run.
+
+    Covers both ``FAILURE`` and ``CANCELED`` so an OOM-killed run (orphan-cleaned
+    to ``CANCELED``) does not permanently block resubmission. Returns ``None``
+    when the latest run succeeded or no run exists. The returned id is used to
+    build a fresh, deterministic retry run_key (one retry per failed run — not a
+    timestamp), so Dagster's deduplication still prevents tick-by-tick resubmits.
+    """
     runs = instance.get_runs(
         filters=dg.RunsFilter(job_name=job_name),
         limit=1,
     )
-    return bool(runs and runs[0].status == dg.DagsterRunStatus.FAILURE)
+    if not runs:
+        return None
+    run = runs[0]
+    if run.status in (dg.DagsterRunStatus.FAILURE, dg.DagsterRunStatus.CANCELED):
+        return run.run_id
+    return None
 
 
 def _resolve_cache() -> Path:
@@ -104,11 +121,12 @@ def _make_startup_sensor(
     full_pipeline_job: object,
     catalog_pipeline_job: object,
     reference_percentile_audit_job: object,
+    ld_proxy_pipeline_job: object,
 ) -> dg.SensorDefinition:
     """Startup sensor: initial materialization check."""
 
     @dg.sensor(
-        jobs=[full_pipeline_job, catalog_pipeline_job, reference_percentile_audit_job],
+        jobs=[full_pipeline_job, catalog_pipeline_job, reference_percentile_audit_job, ld_proxy_pipeline_job],
         default_status=dg.DefaultSensorStatus.RUNNING,
         minimum_interval_seconds=30,
         name="startup_sensor",
@@ -146,10 +164,13 @@ def _make_startup_sensor(
         if not missing:
             return dg.SkipReason(f"All {target_job} assets already materialized.")
 
-        last_failed = _last_run_failed(context.instance, target_job)
-        if last_failed:
-            run_key = f"pipeline_startup_retry_{target_job}"
-            context.log.info(f"Last {target_job} run failed — retrying with fresh run_key={run_key}.")
+        last_bad_run_id = _last_unsuccessful_run_id(context.instance, target_job)
+        if last_bad_run_id:
+            run_key = f"pipeline_startup_retry_{target_job}_{last_bad_run_id[:12]}"
+            context.log.info(
+                f"Last {target_job} run {last_bad_run_id[:8]} did not succeed "
+                f"(failed/canceled) — retrying with fresh run_key={run_key}."
+            )
         else:
             run_key = f"pipeline_startup_{target_job}"
 
@@ -257,6 +278,7 @@ def _make_completeness_sensor(
 # ---------------------------------------------------------------------------
 
 _failure_retry_counts: dict[str, int] = {}
+_ld_failure_retry_counts: dict[str, int] = {}
 
 
 def _make_failure_retry_sensor(
@@ -329,6 +351,159 @@ def _make_failure_retry_sensor(
         )
 
     return failure_retry_sensor
+
+
+# ---------------------------------------------------------------------------
+# 3b. LD-proxy completeness / retry sensors
+# ---------------------------------------------------------------------------
+
+def _ld_proxy_automation_enabled() -> bool:
+    """Return True when LD-proxy full-catalog automation is explicitly enabled."""
+    return (
+        os.environ.get("PRS_LD_ENABLE_SENSORS", "").strip().lower() in {"1", "true", "yes"}
+        or os.environ.get("PRS_LD_FULL_CATALOG", "").strip().lower() in {"1", "true", "yes"}
+    )
+
+
+def _make_ld_proxy_completeness_sensor(
+    ld_proxy_pipeline_job: object,
+) -> dg.SensorDefinition:
+    """LD completeness sensor: compare per-PGS proxy files against catalog."""
+
+    @dg.sensor(
+        jobs=[ld_proxy_pipeline_job],
+        default_status=dg.DefaultSensorStatus.RUNNING,
+        minimum_interval_seconds=900,
+        name="ld_proxy_completeness_sensor",
+        description=(
+            "Compares per-PGS LD-proxy outputs against the PGS catalog and "
+            "submits ld_proxy_pipeline to fill gaps when explicitly enabled."
+        ),
+    )
+    def ld_proxy_completeness_sensor(context: dg.SensorEvaluationContext) -> dg.SensorResult | dg.SkipReason:
+        if not _ld_proxy_automation_enabled():
+            return dg.SkipReason("LD-proxy completeness automation is disabled.")
+
+        active = _has_any_active_pipeline_run(context.instance)
+        if active:
+            return dg.SkipReason(
+                f"{active.job_name} already in progress (run {active.run_id[:8]})."
+            )
+
+        cache_dir = _resolve_cache()
+        panel = os.environ.get("PRS_PIPELINE_PANEL", "1000g")
+        chip = os.environ.get("PRS_LD_CHIP", "gsa_v3")
+        build = os.environ.get("PRS_LD_BUILD", "GRCh38")
+        out_dir = cache_dir / "percentiles" / "ld_proxy" / panel / chip / build
+
+        proxied_ids: set[str] = set()
+        corrupt_count = 0
+        if out_dir.exists():
+            import polars as pl
+
+            for parquet_path in out_dir.glob("PGS*.parquet"):
+                try:
+                    lf = pl.scan_parquet(parquet_path)
+                    lf.collect_schema()
+                    lf.head(1).collect()
+                    proxied_ids.add(parquet_path.stem)
+                except Exception:
+                    corrupt_count += 1
+                    context.log.warning(
+                        f"Corrupt LD proxy parquet detected at {parquet_path} — deleting."
+                    )
+                    parquet_path.unlink(missing_ok=True)
+
+        try:
+            from just_prs.ftp import list_all_pgs_ids
+            all_ids = list_all_pgs_ids()
+        except Exception as exc:
+            context.log.warning(f"Failed to fetch PGS ID list: {exc}")
+            return dg.SkipReason(f"Could not fetch EBI catalog: {exc}")
+
+        missing_ids = sorted(set(all_ids) - proxied_ids)
+        if not missing_ids:
+            return dg.SkipReason(f"All {len(all_ids)} PGS IDs have LD-proxy files.")
+
+        os.environ["PRS_LD_FULL_CATALOG"] = "1"
+        os.environ.pop("PRS_LD_PGS_IDS", None)
+        run_key = f"ld_proxy_completeness_gap_{len(missing_ids)}"
+        context.log.info(
+            f"LD proxy gap: {len(proxied_ids)}/{len(all_ids)} files present, "
+            f"missing={len(missing_ids)}"
+            + (f", corrupt_deleted={corrupt_count}" if corrupt_count else "")
+            + " — submitting ld_proxy_pipeline."
+        )
+        return dg.SensorResult(
+            run_requests=[dg.RunRequest(run_key=run_key, job_name="ld_proxy_pipeline")],
+        )
+
+    return ld_proxy_completeness_sensor
+
+
+def _make_ld_proxy_failure_retry_sensor(
+    ld_proxy_pipeline_job: object,
+) -> dg.SensorDefinition:
+    """LD failure retry sensor: retry failed per-PGS LD-proxy outcomes."""
+
+    @dg.sensor(
+        jobs=[ld_proxy_pipeline_job],
+        default_status=dg.DefaultSensorStatus.RUNNING,
+        minimum_interval_seconds=1800,
+        name="ld_proxy_failure_retry_sensor",
+        description=(
+            "Reads per-PGS LD-proxy quality parquet and retries failed PGS IDs "
+            "when explicitly enabled."
+        ),
+    )
+    def ld_proxy_failure_retry_sensor(context: dg.SensorEvaluationContext) -> dg.SensorResult | dg.SkipReason:
+        if not _ld_proxy_automation_enabled():
+            return dg.SkipReason("LD-proxy failure retry automation is disabled.")
+
+        active = _has_any_active_pipeline_run(context.instance)
+        if active:
+            return dg.SkipReason(
+                f"{active.job_name} already in progress (run {active.run_id[:8]})."
+            )
+
+        cache_dir = _resolve_cache()
+        panel = os.environ.get("PRS_PIPELINE_PANEL", "1000g")
+        chip = os.environ.get("PRS_LD_CHIP", "gsa_v3")
+        build = os.environ.get("PRS_LD_BUILD", "GRCh38")
+        quality_path = cache_dir / "percentiles" / "ld_proxy" / panel / chip / build / "_quality.parquet"
+        if not quality_path.exists():
+            return dg.SkipReason(f"No LD proxy quality parquet at {quality_path}.")
+
+        import polars as pl
+
+        quality_df = pl.read_parquet(quality_path)
+        failed = quality_df.filter(pl.col("status") == "failed")
+        if failed.height == 0:
+            return dg.SkipReason("No failed PGS IDs in LD proxy quality report.")
+
+        failed_ids = sorted(failed["pgs_id"].to_list())
+        failure_hash = hashlib.sha256(",".join(failed_ids).encode()).hexdigest()[:12]
+        max_retries_str = os.environ.get("PRS_PIPELINE_MAX_FAILURE_RETRIES", "3").strip()
+        max_retries = int(max_retries_str) if max_retries_str else 3
+        retry_count = _ld_failure_retry_counts.get(failure_hash, 0)
+        if retry_count >= max_retries:
+            return dg.SkipReason(
+                f"Max retries ({max_retries}) exhausted for {len(failed_ids)} LD proxy failures."
+            )
+
+        _ld_failure_retry_counts[failure_hash] = retry_count + 1
+        os.environ["PRS_LD_PGS_IDS"] = ",".join(failed_ids)
+        os.environ.pop("PRS_LD_FULL_CATALOG", None)
+        run_key = f"ld_proxy_failure_retry_{failure_hash}_attempt{retry_count + 1}"
+        context.log.info(
+            f"Retrying {len(failed_ids)} failed LD proxy PGS IDs "
+            f"(attempt {retry_count + 1}/{max_retries}, hash={failure_hash})."
+        )
+        return dg.SensorResult(
+            run_requests=[dg.RunRequest(run_key=run_key, job_name="ld_proxy_pipeline")],
+        )
+
+    return ld_proxy_failure_retry_sensor
 
 
 # ---------------------------------------------------------------------------
@@ -406,6 +581,7 @@ def make_startup_sensor(
     full_pipeline_job: object,
     catalog_pipeline_job: object,
     reference_percentile_audit_job: object | None = None,
+    ld_proxy_pipeline_job: object | None = None,
 ) -> dg.SensorDefinition:
     """Create the startup sensor (backward-compatible entry point).
 
@@ -415,6 +591,7 @@ def make_startup_sensor(
         full_pipeline_job,
         catalog_pipeline_job,
         reference_percentile_audit_job or full_pipeline_job,
+        ld_proxy_pipeline_job or full_pipeline_job,
     )
 
 
@@ -423,6 +600,7 @@ def make_all_sensors(
     catalog_pipeline_job: object,
     score_and_push_job: object,
     reference_percentile_audit_job: object,
+    ld_proxy_pipeline_job: object | None = None,
 ) -> list[dg.SensorDefinition]:
     """Create all 4 smart pipeline sensors.
 
@@ -434,8 +612,11 @@ def make_all_sensors(
             full_pipeline_job,
             catalog_pipeline_job,
             reference_percentile_audit_job,
+            ld_proxy_pipeline_job or full_pipeline_job,
         ),
         _make_completeness_sensor(score_and_push_job),
         _make_failure_retry_sensor(score_and_push_job),
+        _make_ld_proxy_completeness_sensor(ld_proxy_pipeline_job or full_pipeline_job),
+        _make_ld_proxy_failure_retry_sensor(ld_proxy_pipeline_job or full_pipeline_job),
         _make_upstream_freshness_sensor(full_pipeline_job),
     ]

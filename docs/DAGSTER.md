@@ -80,6 +80,7 @@ All jobs include `hooks={resource_summary_hook}` for run-level resource aggregat
 | `download_reference_data` | `reference_panel` | Download the reference panel from EBI FTP |
 | `score_and_push` | `scoring_files`, `scoring_files_parquet`, `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Download scoring files, convert to parquet, batch-score, download/clean metadata, enrich, and push to HuggingFace |
 | `reference_percentile_audit_job` | `reference_percentile_audit` | Audit cached or HuggingFace reference percentile distributions and write sidecars without recomputing reference scores |
+| `ld_proxy_pipeline` | `ld_proxy_table`, `hf_ld_proxy_table` | Build consumer-array LD proxy tables as one parquet per PGS ID. Full-catalog coverage is a resumable per-PGS batch with shared reference-panel setup, not one catalog-wide union table |
 | `metadata_pipeline` | `raw_pgs_metadata`, `cleaned_pgs_metadata` | End-to-end metadata pipeline (download + clean; push via catalog_pipeline) |
 
 ## CLI Commands
@@ -120,6 +121,14 @@ The pipeline is operated via the `prs-pipeline` CLI (or `uv run pipeline` from t
   uv run pipeline audit --test
   ```
   Launches the Dagster UI by default and submits `reference_percentile_audit_job`, which audits cached or HuggingFace-pulled `{panel}_distributions.parquet` plus `{panel}_quality.parquet` when available. It logs pass/warn/fail PGS-ID counts, writes `{panel}_distribution_quality_issues.parquet` and `{panel}_distribution_audit_summary.json`, and uploads those sidecars to HuggingFace when `HF_TOKEN` is available, all without recomputing reference scores.
+
+- **Build LD proxy tables for consumer arrays**:
+  ```bash
+  uv run pipeline ld-proxy --pgs-ids PGS000001
+  uv run pipeline ld-proxy --limit 5
+  uv run pipeline ld-proxy --full-catalog
+  ```
+  Launches the Dagster UI by default and submits `ld_proxy_pipeline`. The output layout is `<cache>/percentiles/ld_proxy/{panel}/{chip}/{build}/{pgs_id}.parquet`, mirrored on HuggingFace as `data/ld_proxy/{panel}/{chip}/{build}/{pgs_id}.parquet`. `--full-catalog` is the eventual publishing path, but it still runs as a resumable loop over per-PGS files with mtime-aware `skip_existing`, per-ID failure isolation, and a `_quality.parquet` sidecar. Use OS memory containment such as `systemd-run --user --scope -p MemoryMax=24G ...` for long full-catalog runs.
 
 - **Clean up stuck runs**:
   ```bash

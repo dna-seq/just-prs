@@ -351,6 +351,177 @@ def push_chip_coverage(
         )
 
 
+def pull_ld_proxy_table(
+    chip: str,
+    build: str,
+    local_dir: Path,
+    panel: str = "1000g",
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+) -> Path | None:
+    """Download an LD-proxy table parquet from the prs-percentiles HF repo.
+
+    Args:
+        chip: Chip identifier (e.g. ``"gsa_v3"``).
+        build: Genome build (``"GRCh37"`` or ``"GRCh38"``).
+        local_dir: Directory to save the downloaded parquet file.
+        panel: Reference panel identifier (default ``"1000g"``).
+        repo_id: HuggingFace dataset repository ID for percentiles.
+        token: HF API token. If None, loaded from .env / HF_TOKEN env var.
+
+    Returns:
+        Path to the downloaded file, or None if not available in the repo yet.
+    """
+    import logging
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    resolved_token = _resolve_token(token)
+    filename = f"{panel}_ld_proxy_{chip}_{build}.parquet"
+    with start_action(action_type="hf:pull_ld_proxy_table", chip=chip, build=build, panel=panel, repo_id=repo_id):
+        local_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            path = _hf_download_with_retry(
+                repo_id=repo_id,
+                filename=f"{HF_DATA_PREFIX}/{filename}",
+                repo_type="dataset",
+                local_dir=local_dir,
+                token=resolved_token,
+            )
+        except (EntryNotFoundError, RepositoryNotFoundError):
+            logging.getLogger(__name__).debug(
+                "LD proxy table %s not found on HF (%s)", filename, repo_id,
+            )
+            return None
+        target = local_dir / filename
+        hf_cached = Path(path)
+        if hf_cached != target:
+            import shutil as _shutil
+            _shutil.copy2(hf_cached, target)
+        return target
+
+
+def ld_proxy_pgs_hf_path(
+    pgs_id: str,
+    chip: str,
+    build: str,
+    panel: str = "1000g",
+) -> str:
+    """Return the canonical HuggingFace path for one per-PGS LD-proxy table."""
+    return (
+        f"{HF_DATA_PREFIX}/ld_proxy/{panel}/{chip}/{build}/"
+        f"{pgs_id.strip().upper()}.parquet"
+    )
+
+
+def pull_ld_proxy_pgs_table(
+    pgs_id: str,
+    chip: str,
+    build: str,
+    local_dir: Path,
+    panel: str = "1000g",
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+) -> Path | None:
+    """Download one per-PGS LD-proxy table from the prs-percentiles HF repo."""
+    import logging
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    normalized_id = pgs_id.strip().upper()
+    resolved_token = _resolve_token(token)
+    hf_path = ld_proxy_pgs_hf_path(normalized_id, chip, build, panel)
+    with start_action(
+        action_type="hf:pull_ld_proxy_pgs_table",
+        pgs_id=normalized_id,
+        chip=chip,
+        build=build,
+        panel=panel,
+        repo_id=repo_id,
+    ):
+        local_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            path = _hf_download_with_retry(
+                repo_id=repo_id,
+                filename=hf_path,
+                repo_type="dataset",
+                local_dir=local_dir,
+                token=resolved_token,
+            )
+        except (EntryNotFoundError, RepositoryNotFoundError):
+            logging.getLogger(__name__).debug(
+                "Per-PGS LD proxy table %s not found on HF (%s)", hf_path, repo_id,
+            )
+            return None
+        target = local_dir / f"{normalized_id}.parquet"
+        hf_cached = Path(path)
+        if hf_cached != target:
+            import shutil as _shutil
+            _shutil.copy2(hf_cached, target)
+        return target
+
+
+def push_ld_proxy_table(
+    parquet_path: Path,
+    chip: str,
+    build: str,
+    panel: str = "1000g",
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+) -> None:
+    """Upload an LD-proxy table parquet to the prs-percentiles HF repo.
+
+    Args:
+        parquet_path: Local path to the LD-proxy table parquet file.
+        chip: Chip identifier (e.g. ``"gsa_v3"``).
+        build: Genome build (``"GRCh37"`` or ``"GRCh38"``).
+        panel: Reference panel identifier (default ``"1000g"``).
+        repo_id: HuggingFace dataset repository ID for percentiles.
+        token: HF API token. If None, loaded from .env / HF_TOKEN env var.
+    """
+    resolved_token = _resolve_token(token)
+    filename = f"{panel}_ld_proxy_{chip}_{build}.parquet"
+    with start_action(action_type="hf:push_ld_proxy_table", chip=chip, build=build, panel=panel, repo_id=repo_id):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        api.upload_file(
+            path_or_fileobj=str(parquet_path),
+            path_in_repo=f"{HF_DATA_PREFIX}/{filename}",
+            repo_id=repo_id,
+            repo_type="dataset",
+        )
+
+
+def push_ld_proxy_pgs_table(
+    parquet_path: Path,
+    pgs_id: str,
+    chip: str,
+    build: str,
+    panel: str = "1000g",
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+) -> None:
+    """Upload one per-PGS LD-proxy table parquet to the prs-percentiles HF repo."""
+    normalized_id = pgs_id.strip().upper()
+    resolved_token = _resolve_token(token)
+    with start_action(
+        action_type="hf:push_ld_proxy_pgs_table",
+        pgs_id=normalized_id,
+        chip=chip,
+        build=build,
+        panel=panel,
+        repo_id=repo_id,
+    ):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        api.upload_file(
+            path_or_fileobj=str(parquet_path),
+            path_in_repo=ld_proxy_pgs_hf_path(normalized_id, chip, build, panel),
+            repo_id=repo_id,
+            repo_type="dataset",
+        )
+
+
 def _generate_catalog_dataset_card(
     metadata_dir: Path,
     scores_dir: Path,

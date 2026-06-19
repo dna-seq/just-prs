@@ -213,3 +213,73 @@ def normalize_array(
             output_path=str(output_path),
         )
         return output_path
+
+
+# ---------------------------------------------------------------------------
+# Chip generation detection
+# ---------------------------------------------------------------------------
+
+_CHIP_GENERATIONS = [
+    # (marker_min, marker_max, vendor_format, chip_id, platform, label, ld_proxy)
+    (630_000, 680_000, "23andme", "gsa_v3", "Illumina GSA v3.0", "23andMe v5", True),
+    (550_000, 620_000, "23andme", "omniexpress", "Illumina OmniExpress+", "23andMe v4", False),
+    (930_000, 1_050_000, "23andme", "omniexpress", "Illumina OmniExpress", "23andMe v3", False),
+    (640_000, 700_000, "ancestrydna", "gsa_v3", "Illumina GSA v3.0", "AncestryDNA v2", True),
+    (680_000, 750_000, "ancestrydna", "omniexpress", "Illumina OmniExpress", "AncestryDNA v1", False),
+]
+
+
+def detect_chip_generation(
+    normalized_df_or_path: pl.DataFrame | Path,
+    array_format: str | None = None,
+) -> "ChipGeneration":
+    """Infer chip generation from marker count and vendor format.
+
+    Uses the number of markers after normalization (no-calls already dropped) to
+    determine which chip platform was used. When the marker count doesn't match
+    any known generation, falls back to GSA v3 for post-2017 counts and
+    OmniExpress for larger counts.
+
+    Args:
+        normalized_df_or_path: Normalized array DataFrame or path to normalized
+            parquet (output of ``normalize_array``).
+        array_format: Vendor format (``"23andme"`` or ``"ancestrydna"``).
+            Auto-detected from marker count if None.
+
+    Returns:
+        ChipGeneration with chip_id, platform, generation_label,
+        ld_proxy_available, and marker_count.
+    """
+    from just_prs.models import ChipGeneration
+
+    if isinstance(normalized_df_or_path, Path):
+        marker_count = pl.scan_parquet(normalized_df_or_path).select(pl.len()).collect().item()
+    else:
+        marker_count = normalized_df_or_path.height
+
+    for m_min, m_max, fmt, chip_id, platform, label, ld_avail in _CHIP_GENERATIONS:
+        if m_min <= marker_count <= m_max:
+            if array_format is None or array_format == fmt:
+                return ChipGeneration(
+                    chip_id=chip_id,
+                    platform=platform,
+                    generation_label=label,
+                    ld_proxy_available=ld_avail,
+                    marker_count=marker_count,
+                )
+
+    if marker_count > 800_000:
+        return ChipGeneration(
+            chip_id="omniexpress",
+            platform="Illumina OmniExpress (estimated)",
+            generation_label="Unknown (high marker count)",
+            ld_proxy_available=False,
+            marker_count=marker_count,
+        )
+    return ChipGeneration(
+        chip_id="gsa_v3",
+        platform="Illumina GSA v3.0 (estimated)",
+        generation_label="Unknown (GSA-range marker count)",
+        ld_proxy_available=True,
+        marker_count=marker_count,
+    )

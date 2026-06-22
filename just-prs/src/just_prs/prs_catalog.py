@@ -640,12 +640,16 @@ class PRSCatalog:
         genome_build: str = "GRCh38",
         genotype_input_mode: str = "auto",
         attach_performance: bool = False,
+        genotypes_lf: pl.LazyFrame | None = None,
     ) -> PRSResult:
         """Compute PRS for a VCF file against a single PGS score.
 
         Looks up trait_reported from cached metadata instead of making a REST API call.
         When ``attach_performance`` is True, also populates ``PRSResult.performance``
-        with the best evaluation metric (F11).
+        with the best evaluation metric (F11). When ``genotypes_lf`` is provided, the
+        pre-normalized genotype frame is reused instead of re-reading ``vcf_path`` — this
+        is the single-score mirror of ``compute_prs_batch``, so a normalized Parquet can
+        be reused *and* best performance attached in one call (F23).
         """
         with start_action(
             action_type="prs_catalog:compute_prs",
@@ -662,6 +666,7 @@ class PRSCatalog:
                 cache_dir=self._cache_dir / "scores",
                 pgs_id=pgs_id,
                 trait_reported=trait,
+                genotypes_lf=genotypes_lf,
                 genotype_input_mode=genotype_input_mode,
             )
             if attach_performance:
@@ -942,12 +947,19 @@ class PRSCatalog:
                 f"artifact, not an authoritative population position."
             )
 
+        # Echo the reference-panel ancestry/panel actually used (F19) — only the
+        # reference_panel method draws on a named superpopulation distribution.
+        used_ancestry = ancestry.upper() if method == "reference_panel" else None
+        used_panel = panel if method == "reference_panel" else None
+
         return PercentileResult(
             percentile=pct,
             method=method,
             z_score=z,
             reference_mean=ref_mean,
             reference_std=ref_std,
+            ancestry=used_ancestry,
+            panel=used_panel,
             reliable=reliable,
             caveat=caveat,
         )

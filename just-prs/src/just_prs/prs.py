@@ -26,7 +26,7 @@ class GenotypeInputMode(str, enum.Enum):
 
 from just_prs.models import PRSResult
 from just_prs.scoring import DEFAULT_CACHE_DIR, load_scoring, parse_scoring_file
-from just_prs.vcf import compute_dosage_expr, read_genotypes
+from just_prs.vcf import compute_dosage_expr, detect_genome_build, read_genotypes
 
 
 def _normalize_genotype_columns(lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -246,6 +246,41 @@ def _compute_theoretical_stats(
 def _norm_cdf(x: float) -> float:
     """Standard normal CDF using math.erfc (no scipy dependency)."""
     return 0.5 * math.erfc(-x / math.sqrt(2))
+
+
+_VCF_SUFFIXES = (".vcf", ".vcf.gz", ".vcf.bgz")
+
+
+def _detect_build_mismatch(
+    vcf_path: Path | str, genome_build: str
+) -> tuple[str | None, bool]:
+    """Best-effort: detect the VCF's own genome build and flag a build mismatch (F4).
+
+    Only attempts detection on a real, VCF-suffixed, existing file. Returns
+    ``(None, False)`` for pre-normalized genotype inputs (parquet/array/empty path)
+    where no VCF header is available — never guesses a mismatch it can't prove.
+    """
+    text = str(vcf_path)
+    if not text or not text.endswith(_VCF_SUFFIXES):
+        return None, False
+    path = Path(vcf_path)
+    if not path.exists():
+        return None, False
+    try:
+        detected = detect_genome_build(path)
+    except (OSError, ValueError):
+        return None, False
+    if detected is None:
+        return None, False
+    mismatch = detected != genome_build
+    if mismatch:
+        log_message(
+            message_type="prs:build_mismatch",
+            pgs_vcf_build=detected,
+            scoring_build=genome_build,
+            vcf_path=text,
+        )
+    return detected, mismatch
 
 
 def compute_prs(
@@ -476,6 +511,8 @@ def compute_prs(
                 percentile=percentile,
             )
 
+        detected_build, build_mismatch = _detect_build_mismatch(vcf_path, genome_build)
+
         return PRSResult(
             pgs_id=pgs_id,
             score=prs_score,
@@ -491,6 +528,8 @@ def compute_prs(
             weight_mass_total=weight_mass_total,
             weight_mass_coverage=weight_mass_coverage,
             genotype_input_mode=resolved_mode.value,
+            detected_genome_build=detected_build,
+            build_mismatch=build_mismatch,
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
             theoretical_mean=theoretical_mean,
@@ -821,6 +860,8 @@ def compute_prs_duckdb(
             weight_mass_matched / weight_mass_total if weight_mass_total > 0 else None
         )
 
+        detected_build, build_mismatch = _detect_build_mismatch(vcf_path, genome_build)
+
         return PRSResult(
             pgs_id=pgs_id,
             score=prs_score,
@@ -836,6 +877,8 @@ def compute_prs_duckdb(
             weight_mass_total=weight_mass_total,
             weight_mass_coverage=weight_mass_coverage,
             genotype_input_mode=resolved_mode.value,
+            detected_genome_build=detected_build,
+            build_mismatch=build_mismatch,
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
             theoretical_mean=theoretical_mean,

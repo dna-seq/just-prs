@@ -330,6 +330,108 @@ def test_z_score_and_reference_stats_exposed(tmp_path: Path) -> None:
     assert polars_result.z_score == pytest.approx(duckdb_result.z_score, abs=1e-10)
 
 
+def _write_grch37_vcf_header(path: Path) -> None:
+    """A minimal VCF whose contig lengths identify it as GRCh37 (>=3 votes)."""
+    path.write_text(
+        "##fileformat=VCFv4.2\n"
+        "##contig=<ID=1,length=249250621>\n"
+        "##contig=<ID=2,length=243199373>\n"
+        "##contig=<ID=3,length=198022430>\n"
+        "##contig=<ID=4,length=191154276>\n"
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+    )
+
+
+def test_detected_build_mismatch_flagged(tmp_path: Path) -> None:
+    """A GRCh37 VCF scored against a GRCh38 build is detected and flagged (F4)."""
+    vcf_file = tmp_path / "grch37.vcf"
+    _write_grch37_vcf_header(vcf_file)
+
+    geno_path = tmp_path / "geno.parquet"
+    pl.DataFrame({
+        "chrom": ["1"], "pos": [100], "ref": ["A"], "alt": ["G"], "GT": ["0/1"],
+    }).write_parquet(geno_path)
+
+    scoring = pl.DataFrame({
+        "hm_chr": ["1"], "hm_pos": [100],
+        "effect_allele": ["G"], "reference_allele": ["A"], "effect_weight": [1.0],
+    }).lazy()
+
+    # Build detection reads vcf_file's header; genotypes come from the parquet/lf.
+    polars_result = compute_prs(
+        vcf_path=vcf_file,
+        scoring_file=scoring,
+        genome_build="GRCh38",
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path),
+        genotype_input_mode="variant_only",
+    )
+    duckdb_result = compute_prs_duckdb(
+        vcf_path=vcf_file,
+        scoring_file=scoring,
+        genome_build="GRCh38",
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_parquet=geno_path,
+        genotype_input_mode="variant_only",
+    )
+
+    for result in (polars_result, duckdb_result):
+        assert result.detected_genome_build == "GRCh37"
+        assert result.build_mismatch is True
+
+
+def test_detected_build_match_no_flag(tmp_path: Path) -> None:
+    """A GRCh37 VCF scored against GRCh37 is detected with no mismatch flag (F4)."""
+    vcf_file = tmp_path / "grch37.vcf"
+    _write_grch37_vcf_header(vcf_file)
+    geno_path = tmp_path / "geno.parquet"
+    pl.DataFrame({
+        "chrom": ["1"], "pos": [100], "ref": ["A"], "alt": ["G"], "GT": ["0/1"],
+    }).write_parquet(geno_path)
+    scoring = pl.DataFrame({
+        "hm_chr": ["1"], "hm_pos": [100],
+        "effect_allele": ["G"], "reference_allele": ["A"], "effect_weight": [1.0],
+    }).lazy()
+
+    result = compute_prs(
+        vcf_path=vcf_file,
+        scoring_file=scoring,
+        genome_build="GRCh37",
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path),
+        genotype_input_mode="variant_only",
+    )
+    assert result.detected_genome_build == "GRCh37"
+    assert result.build_mismatch is False
+
+
+def test_no_build_detection_for_prenormalized_input(tmp_path: Path) -> None:
+    """A header-less / non-VCF genotype input yields no detected build, no false mismatch."""
+    geno_path = tmp_path / "geno.parquet"
+    pl.DataFrame({
+        "chrom": ["1"], "pos": [100], "ref": ["A"], "alt": ["G"], "GT": ["0/1"],
+    }).write_parquet(geno_path)
+    scoring = pl.DataFrame({
+        "hm_chr": ["1"], "hm_pos": [100],
+        "effect_allele": ["G"], "reference_allele": ["A"], "effect_weight": [1.0],
+    }).lazy()
+
+    result = compute_prs(
+        vcf_path="",
+        scoring_file=scoring,
+        genome_build="GRCh38",
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path),
+        genotype_input_mode="variant_only",
+    )
+    assert result.detected_genome_build is None
+    assert result.build_mismatch is False
+
+
 def test_prs_engine_enum() -> None:
     """Verify PRSEngine enum values."""
     assert PRSEngine.POLARS.value == "polars"

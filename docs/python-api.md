@@ -118,10 +118,19 @@ pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", panel="1000g
 pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", mean=0.0, std=1.0)
 
 # percentile_full() returns the TRUE z-score and reference mean/std (not discarded),
-# plus a weight-mass-coverage (C_wt) reliability verdict. PRSResult also carries
-# weight_mass_coverage and (on the theoretical path) z_score/reference_mean/reference_std.
+# plus a weight-mass-coverage (C_wt) reliability verdict and the panel ancestry used.
+# PRSResult also carries weight_mass_coverage and (on the theoretical path)
+# z_score/reference_mean/reference_std.
 pr = catalog.percentile_full(prs_score=1.5, pgs_id="PGS000014", weight_mass_coverage=result.weight_mass_coverage)
-#   pr.percentile, pr.method, pr.z_score, pr.reference_mean, pr.reference_std, pr.reliable, pr.caveat
+#   pr.percentile, pr.method, pr.z_score, pr.reference_mean, pr.reference_std,
+#   pr.ancestry, pr.panel (reference_panel method), pr.reliable, pr.caveat
+
+# Single-score compute can reuse a normalized genotype frame AND attach performance
+# in one call (genotypes_lf mirrors compute_prs_batch). The result also surfaces the
+# VCF's detected genome build and a build_mismatch flag vs the scoring build.
+result = catalog.compute_prs(vcf_path="sample.vcf.gz", pgs_id="PGS000014",
+                             genotypes_lf=normalized_lf, attach_performance=True)
+#   result.detected_genome_build, result.build_mismatch, result.performance
 
 # Raw score -> z -> absolute risk in one call (uses the true z, not a percentile inversion)
 risk_bundle = catalog.absolute_risk_from_score(pgs_id="PGS000014", score=1.5)

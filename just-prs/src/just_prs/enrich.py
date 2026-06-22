@@ -83,6 +83,8 @@ def enrich_prs_result(
     z_val = result.z_score
     ref_mean = result.reference_mean
     ref_std = result.reference_std
+    ref_panel_ancestry: str | None = None
+    ref_panel: str | None = None
     pct_reliable = True
     pct_caveat = ""
     if not percentile_allowed:
@@ -103,6 +105,8 @@ def enrich_prs_result(
         z_val = pr.z_score
         ref_mean = pr.reference_mean
         ref_std = pr.reference_std
+        ref_panel_ancestry = pr.ancestry
+        ref_panel = pr.panel
         pct_reliable = pr.reliable
         pct_caveat = pr.caveat
 
@@ -218,6 +222,8 @@ def enrich_prs_result(
         variants_no_call=result.variants_no_call,
         weight_mass_coverage=result.weight_mass_coverage,
         genotype_input_mode=result.genotype_input_mode,
+        detected_genome_build=result.detected_genome_build,
+        build_mismatch=result.build_mismatch,
         match_rate=match_pct,
         has_allele_frequencies=result.has_allele_frequencies,
         genome_build=genome_build,
@@ -232,6 +238,8 @@ def enrich_prs_result(
         z_score=z_val,
         reference_mean=ref_mean,
         reference_std=ref_std,
+        reference_panel_ancestry=ref_panel_ancestry,
+        reference_panel=ref_panel,
         percentile_reliable=pct_reliable,
         percentile_caveat=pct_caveat,
         match_color=match_color,

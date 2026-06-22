@@ -994,25 +994,36 @@ def _normalize_genotypes_lf(lf: pl.LazyFrame) -> pl.LazyFrame:
     return lf
 
 
+def _svg_asset_data_uri(filename: str) -> str:
+    """Return a data URI for a prs-ui SVG asset bundled with the package."""
+    package_asset = Path(__file__).resolve().parent / "assets" / filename
+    source_asset = Path(__file__).resolve().parents[1] / "assets" / filename
+    asset_path = package_asset if package_asset.exists() else source_asset
+    if not asset_path.exists():
+        return f"/{filename}"
+    svg_text = asset_path.read_text(encoding="utf-8")
+    return f"data:image/svg+xml;utf8,{urllib.parse.quote(svg_text, safe='')}"
+
+
 _AI_ASSISTANTS: list[dict[str, str]] = [
     {
         "name": "ChatGPT", "base_url": "https://chatgpt.com/?q=",
-        "color": "#10A37F", "iconUrl": "/openai.svg",
+        "color": "#10A37F", "iconUrl": _svg_asset_data_uri("openai.svg"),
         "limit_env": "PRS_AI_CHATGPT_MAX_CHARS", "default_limit": "3000",
     },
     {
         "name": "Claude", "base_url": "https://claude.ai/new?q=",
-        "color": "#DA7756", "iconUrl": "/claude.svg",
+        "color": "#DA7756", "iconUrl": _svg_asset_data_uri("claude.svg"),
         "limit_env": "PRS_AI_CLAUDE_MAX_CHARS", "default_limit": "6000",
     },
     {
         "name": "Perplexity", "base_url": "https://www.perplexity.ai/search?q=",
-        "color": "#21808D", "iconUrl": "/perplexity.svg",
+        "color": "#21808D", "iconUrl": _svg_asset_data_uri("perplexity.svg"),
         "limit_env": "PRS_AI_PERPLEXITY_MAX_CHARS", "default_limit": "3000",
     },
     {
         "name": "Grok", "base_url": "https://grok.com/?q=",
-        "color": "#1D1D1F", "iconUrl": "/grok.svg",
+        "color": "#1D1D1F", "iconUrl": _svg_asset_data_uri("grok.svg"),
         "limit_env": "PRS_AI_GROK_MAX_CHARS", "default_limit": "3000",
     },
 ]

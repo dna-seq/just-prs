@@ -184,6 +184,39 @@ class AbsoluteRiskBundle(BaseModel):
     )
 
 
+class PercentileResult(BaseModel):
+    """Population percentile plus the intermediate statistics used to derive it.
+
+    Returned by ``PRSCatalog.percentile_full()`` so callers get the true z-score
+    and reference mean/std directly, instead of re-deriving z by inverting the
+    percentile (which is lossy and collapses to 0 at the 0/100 extremes).
+    """
+
+    percentile: float | None = Field(
+        default=None, description="Population percentile (0-100), or None if unavailable"
+    )
+    method: str = Field(
+        default="unavailable",
+        description="Percentile method: 'reference_panel', 'theoretical', 'auroc_approx', or 'unavailable'",
+    )
+    z_score: float | None = Field(
+        default=None, description="Standardized score (prs_score - reference_mean) / reference_std"
+    )
+    reference_mean: float | None = Field(
+        default=None, description="Reference distribution mean used to standardize the score"
+    )
+    reference_std: float | None = Field(
+        default=None, description="Reference distribution std used to standardize the score"
+    )
+    reliable: bool = Field(
+        default=True,
+        description="False when weight-mass coverage (C_wt) is too low to trust the percentile",
+    )
+    caveat: str = Field(
+        default="", description="Human-readable reliability caveat when reliable is False"
+    )
+
+
 class PRSResult(BaseModel):
     """Result of a polygenic risk score computation."""
 
@@ -211,6 +244,18 @@ class PRSResult(BaseModel):
     variants_maf_filled: int = Field(
         default=0,
         description="Absent loci filled with population MAF dosage (2 * allelefrequency_effect) instead of being unscorable",
+    )
+    weight_mass_matched: float | None = Field(
+        default=None,
+        description="Sum of |effect_weight| over matched scoring variants (per-dosage formats use max|dosage_k_weight|)",
+    )
+    weight_mass_total: float | None = Field(
+        default=None,
+        description="Sum of |effect_weight| over all scoring variants (per-dosage formats use max|dosage_k_weight|)",
+    )
+    weight_mass_coverage: float | None = Field(
+        default=None,
+        description="C_wt: weight_mass_matched / weight_mass_total — fraction of total effect-weight mass carried by matched variants",
     )
     genotype_input_mode: str = Field(
         default="plink_present_only",
@@ -244,6 +289,16 @@ class PRSResult(BaseModel):
         default=None,
         description="Method used to compute percentile: 'reference_panel', 'theoretical', or 'auroc_approx'",
     )
+    z_score: float | None = Field(
+        default=None,
+        description="Standardized score (score - reference_mean) / reference_std, set when a percentile was computed",
+    )
+    reference_mean: float | None = Field(
+        default=None, description="Reference/theoretical distribution mean used for the percentile and z-score",
+    )
+    reference_std: float | None = Field(
+        default=None, description="Reference/theoretical distribution std used for the percentile and z-score",
+    )
     absolute_risk: AbsoluteRisk | None = Field(
         default=None,
         description="Absolute disease risk estimate based on PRS z-score and prevalence data",
@@ -269,6 +324,10 @@ class EnrichedPRSResult(BaseModel):
     variants_assumed_hom_ref: int = 0
     variants_unscorable_absent: int = 0
     variants_no_call: int = 0
+    weight_mass_coverage: float | None = Field(
+        default=None,
+        description="C_wt: fraction of total effect-weight mass carried by matched variants (0-1)",
+    )
     genotype_input_mode: str = ""
     has_allele_frequencies: bool = False
     genome_build: str = ""
@@ -287,6 +346,11 @@ class EnrichedPRSResult(BaseModel):
     # Resolved percentile (reference > theoretical > AUROC fallback)
     percentile: float | None = None
     percentile_method: str = ""
+    z_score: float | None = None
+    reference_mean: float | None = None
+    reference_std: float | None = None
+    percentile_reliable: bool = True
+    percentile_caveat: str = ""
 
     # Quality assessment
     match_color: str = ""

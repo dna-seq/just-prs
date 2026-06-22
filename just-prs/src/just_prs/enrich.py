@@ -75,18 +75,36 @@ def enrich_prs_result(
 
     percentile_allowed = result.match_rate >= MIN_PERCENTILE_MATCH_RATE
 
-    # --- Percentile resolution: result's own → catalog fallback ---
+    # --- Percentile resolution: result's own (theoretical) → catalog reference panel ---
     pct_value = result.percentile
     pct_method = result.percentile_method or (
         "theoretical" if result.has_allele_frequencies else ""
     )
+    z_val = result.z_score
+    ref_mean = result.reference_mean
+    ref_std = result.reference_std
+    pct_reliable = True
+    pct_caveat = ""
     if not percentile_allowed:
         pct_value = None
         pct_method = "insufficient_coverage"
+        z_val = None
+        ref_mean = None
+        ref_std = None
     elif pct_value is None:
-        pct_value, pct_method = catalog.percentile(
-            result.score, result.pgs_id, ancestry=selected_ancestry
+        pr = catalog.percentile_full(
+            result.score,
+            result.pgs_id,
+            ancestry=selected_ancestry,
+            weight_mass_coverage=result.weight_mass_coverage,
         )
+        pct_value = pr.percentile
+        pct_method = pr.method
+        z_val = pr.z_score
+        ref_mean = pr.reference_mean
+        ref_std = pr.reference_std
+        pct_reliable = pr.reliable
+        pct_caveat = pr.caveat
 
     # --- Per-population percentiles ---
     all_pop_values: dict[str, float] = {}
@@ -109,8 +127,8 @@ def enrich_prs_result(
     perf_dict: dict = {}
     if perf_rows.height > 0:
         perf_dict = perf_rows.row(0, named=True)
-        effect_size_str = format_effect_size(perf_dict)
-        classification_str = format_classification(perf_dict)
+        effect_size_str = format_effect_size(perf_dict) or ""
+        classification_str = format_classification(perf_dict) or ""
         auroc_val = perf_dict.get("auroc_estimate")
         ancestry_str = perf_dict.get("ancestry_broad") or ""
         n_individuals = perf_dict.get("n_individuals")
@@ -140,7 +158,14 @@ def enrich_prs_result(
     )
 
     # --- Quality ---
-    interp = interpret_prs_result(pct_value, result.match_rate, auroc_val)
+    interp = interpret_prs_result(
+        pct_value,
+        result.match_rate,
+        auroc_val,
+        percentile_method=pct_method,
+        reliable=pct_reliable,
+        caveat=pct_caveat,
+    )
     quality_label, quality_color = classify_model_quality(result.match_rate, auroc_val)
 
     # --- Reference status (after percentile lookups which may trigger HF refresh) ---
@@ -174,7 +199,10 @@ def enrich_prs_result(
     )
 
     # --- Absolute risk & heritability ---
-    z_score = _compute_z_score(pct_value)
+    # Prefer the TRUE z-score from percentile_full (score - mean)/std; fall back to
+    # inverting the percentile only when no true z is available. The inversion is
+    # lossy and collapses to 0 at the 0/100 extremes, so it is the last resort.
+    z_score = z_val if z_val is not None else _compute_z_score(pct_value)
     abs_risk = _enrich_absolute_risk(catalog, result.pgs_id, z_score)
 
     return EnrichedPRSResult(
@@ -188,6 +216,7 @@ def enrich_prs_result(
         variants_assumed_hom_ref=result.variants_assumed_hom_ref,
         variants_unscorable_absent=result.variants_unscorable_absent,
         variants_no_call=result.variants_no_call,
+        weight_mass_coverage=result.weight_mass_coverage,
         genotype_input_mode=result.genotype_input_mode,
         match_rate=match_pct,
         has_allele_frequencies=result.has_allele_frequencies,
@@ -200,6 +229,11 @@ def enrich_prs_result(
         quality_tier_metric=q_tier_metric,
         percentile=pct_value,
         percentile_method=pct_method or "",
+        z_score=z_val,
+        reference_mean=ref_mean,
+        reference_std=ref_std,
+        percentile_reliable=pct_reliable,
+        percentile_caveat=pct_caveat,
         match_color=match_color,
         quality_label=quality_label,
         quality_color=quality_color,

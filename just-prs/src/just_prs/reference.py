@@ -2490,6 +2490,40 @@ def aggregate_distributions(scores_df: pl.DataFrame) -> pl.DataFrame:
         return agg
 
 
+def ancestry_distribution_stats(
+    pgs_id: str,
+    superpopulation: str,
+    distributions_lf: pl.LazyFrame,
+) -> tuple[float, float] | None:
+    """Look up the (mean, std) for a (pgs_id, superpopulation) reference distribution.
+
+    Args:
+        pgs_id: PGS Catalog Score ID.
+        superpopulation: One of AFR, AMR, EAS, EUR, SAS.
+        distributions_lf: LazyFrame from reference_distributions.parquet.
+
+    Returns:
+        ``(mean, std)`` or None if the pair is not found or the distribution is
+        degenerate (std <= 0 or non-finite).
+    """
+    row_df = (
+        distributions_lf.filter(
+            (pl.col("pgs_id") == pgs_id)
+            & (pl.col("superpopulation") == superpopulation.upper())
+        )
+        .select(["mean", "std"])
+        .collect()
+    )
+    if row_df.height == 0:
+        return None
+    row = row_df.row(0, named=True)
+    mean = float(row["mean"])
+    std = float(row["std"] or 0.0)
+    if std <= 0 or math.isnan(std) or math.isnan(mean):
+        return None
+    return mean, std
+
+
 def ancestry_percentile(
     prs_score: float,
     pgs_id: str,
@@ -2510,21 +2544,10 @@ def ancestry_percentile(
     Returns:
         Percentile (0-100) or None if (pgs_id, superpopulation) not found or std==0.
     """
-    row_df = (
-        distributions_lf.filter(
-            (pl.col("pgs_id") == pgs_id)
-            & (pl.col("superpopulation") == superpopulation.upper())
-        )
-        .select(["mean", "std"])
-        .collect()
-    )
-    if row_df.height == 0:
+    stats = ancestry_distribution_stats(pgs_id, superpopulation, distributions_lf)
+    if stats is None:
         return None
-    row = row_df.row(0, named=True)
-    mean = float(row["mean"])
-    std = float(row["std"] or 0.0)
-    if std <= 0 or math.isnan(std) or math.isnan(mean):
-        return None
+    mean, std = stats
     z = (prs_score - mean) / std
     return round(_norm_cdf(z) * 100.0, 2)
 

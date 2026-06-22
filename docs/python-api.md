@@ -117,6 +117,15 @@ pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014")
 pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", panel="1000g")
 pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", mean=0.0, std=1.0)
 
+# percentile_full() returns the TRUE z-score and reference mean/std (not discarded),
+# plus a weight-mass-coverage (C_wt) reliability verdict. PRSResult also carries
+# weight_mass_coverage and (on the theoretical path) z_score/reference_mean/reference_std.
+pr = catalog.percentile_full(prs_score=1.5, pgs_id="PGS000014", weight_mass_coverage=result.weight_mass_coverage)
+#   pr.percentile, pr.method, pr.z_score, pr.reference_mean, pr.reference_std, pr.reliable, pr.caveat
+
+# Raw score -> z -> absolute risk in one call (uses the true z, not a percentile inversion)
+risk_bundle = catalog.absolute_risk_from_score(pgs_id="PGS000014", score=1.5)
+
 # Reference distributions (panel-aware)
 dist_lf = catalog.reference_distributions(panel="1000g")
 dist_lf = catalog.reference_distributions(panel="hgdp_1kg")
@@ -497,7 +506,7 @@ auroc = format_classification({"auroc_estimate": 0.721, "auroc_ci_lower": 0.690,
 | Function | Input | Output |
 |----------|-------|--------|
 | `classify_model_quality(match_rate, auroc)` | Match rate (0-1), optional AUROC | `(label, color)` tuple: High/Moderate/Low/Very Low |
-| `interpret_prs_result(percentile, match_rate, auroc)` | Percentile (optional), match rate, AUROC | Dict with `quality_label`, `quality_color`, `summary` |
+| `interpret_prs_result(percentile, match_rate, auroc, percentile_method=None, reliable=True, caveat="")` | Percentile (optional), match rate, AUROC, + percentile method/reliability | Dict with `quality_label`, `quality_color`, `summary` (method-aware) |
 | `format_effect_size(perf_row)` | Dict with OR/HR/Beta estimate + CI/SE keys | Formatted string like `"OR=1.55 [1.52-1.58]"` |
 | `format_classification(perf_row)` | Dict with AUROC/C-index estimate + CI keys | Formatted string like `"AUROC=0.721 [0.690-0.752]"` |
 

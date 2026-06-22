@@ -956,7 +956,7 @@ wheels = [
 
 [[package]]
 name = "just-prs"
-version = "0.4.8"
+version = "0.4.9"
 source = { editable = "just-prs" }
 dependencies = [
     { name = "duckdb" },
@@ -1484,7 +1484,7 @@ requires-dist = [
 
 [[package]]
 name = "prs-ui"
-version = "0.3.4"
+version = "0.3.5"
 source = { editable = "prs-ui" }
 dependencies = [
     { name = "just-prs" },

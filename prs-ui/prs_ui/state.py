@@ -34,6 +34,8 @@ from prs_ui.mixin import (
     SHEET_NAMES,
     SUPERPOPULATION_LABELS,
     _catalog,
+    loaded_grid_selection_model,
+    merge_loaded_grid_selection,
     _compute_score_column_overrides,
     _enrich_scores_for_grid,
     _resolve_cache_dir,
@@ -57,6 +59,11 @@ def _input_vcf_dir() -> Path:
     data_root = os.environ.get("PRS_UI_DATA_DIR", "").strip()
     base = Path(data_root).expanduser() if data_root else _workspace_root() / "data"
     return base / "input" / "vcf"
+
+
+def _has_gzip_magic(contents: bytes) -> bool:
+    """Return True when uploaded bytes are gzip-compressed."""
+    return contents.startswith(b"\x1f\x8b")
 
 
 class AppState(rx.State):
@@ -112,29 +119,62 @@ class MetadataGridState(LazyFrameGridMixin, AppState):
         row_count = lf.select(pl.len()).collect().item()
         self.status_message = f"Loaded {pgs_id} ({row_count} variants)"
 
+    # Raw PGS Catalog sheets key the ID by the verbose column name.
+    _METADATA_ID_FIELD: ClassVar[str] = "Polygenic Score (PGS) ID"
+
+    def _sync_loaded_metadata_selection(self) -> None:
+        """Re-project ``metadata_selected_ids`` onto the currently-loaded rows.
+
+        The MUI selection model is keyed by the positional ``__row_id__`` the
+        grid renumbers on every sort/filter; without re-syncing, the checkboxes
+        clear on sort and the next click collapses the selection.
+        """
+        self.lf_grid_row_selection_model = loaded_grid_selection_model(  # type: ignore[assignment]
+            self.lf_grid_rows, self.metadata_selected_ids, self._METADATA_ID_FIELD
+        )
+
     def handle_lf_grid_row_selection(self, model: dict) -> None:
         """Track selected PGS IDs from metadata grid checkbox selection.
 
         Overrides ``LazyFrameGridMixin.handle_lf_grid_row_selection`` so that
-        ``lazyframe_grid()`` automatically calls this without needing an
-        explicit ``on_row_selection_model_change`` kwarg.
+        ``lazyframe_grid()`` automatically calls this.  Out-of-scope (off-page /
+        filtered-out) selections are preserved so sort/filter never drops them.
         """
-        self.lf_grid_row_selection_model = model  # type: ignore[assignment]
-        selection_type: str = model.get("type", "include")
-        raw_ids: list = model.get("ids", [])
-        selected_row_ids: set[int] = {int(i) for i in raw_ids}
+        if model.get("type", "include") == "exclude" and not model.get("ids", []):
+            # "Select all" header checkbox: select every loaded row's ID.
+            loaded = [
+                str(row.get(self._METADATA_ID_FIELD))
+                for row in self.lf_grid_rows
+                if row.get(self._METADATA_ID_FIELD)
+            ]
+            self.metadata_selected_ids = list(
+                dict.fromkeys([*self.metadata_selected_ids, *loaded])
+            )
+        else:
+            self.metadata_selected_ids = merge_loaded_grid_selection(
+                self.lf_grid_rows, self.metadata_selected_ids, model, self._METADATA_ID_FIELD
+            )
+        self._sync_loaded_metadata_selection()
 
-        pgs_ids: list[str] = []
-        for row in self.lf_grid_rows:
-            row_id = row.get("__row_id__")
-            in_set = (int(row_id) in selected_row_ids) if row_id is not None else False
-            if (selection_type == "include" and in_set) or (
-                selection_type == "exclude" and not in_set
-            ):
-                pgs_id = row.get("Polygenic Score (PGS) ID")
-                if pgs_id:
-                    pgs_ids.append(str(pgs_id))
-        self.metadata_selected_ids = pgs_ids
+    def handle_lf_grid_sort(self, sort_model: list) -> Any:
+        """Apply a server-side sort, then restore the selection."""
+        yield from LazyFrameGridMixin.handle_lf_grid_sort(self, sort_model)
+        self._sync_loaded_metadata_selection()
+
+    def handle_lf_grid_filter(self, filter_model: dict) -> Any:
+        """Apply a server-side filter, then restore the selection."""
+        yield from LazyFrameGridMixin.handle_lf_grid_filter(self, filter_model)
+        self._sync_loaded_metadata_selection()
+
+    def clear_lf_grid_filters(self) -> Any:
+        """Clear all grid filters, then restore the selection."""
+        yield from LazyFrameGridMixin.clear_lf_grid_filters(self)
+        self._sync_loaded_metadata_selection()
+
+    def handle_lf_grid_scroll_end(self, params: dict) -> Any:
+        """Load the next scroll chunk, then mark selected rows checked."""
+        yield from LazyFrameGridMixin.handle_lf_grid_scroll_end(self, params)
+        self._sync_loaded_metadata_selection()
 
     def download_selected_scoring_files(self) -> Any:
         """Download scoring files for selected PGS IDs to the local cache."""
@@ -246,7 +286,6 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
         filename = Path(upload_file.filename or "uploaded.vcf").name
         upload_dir = _input_vcf_dir()
         upload_dir.mkdir(parents=True, exist_ok=True)
-        dest = upload_dir / filename
 
         self.vcf_filename = filename
         self.vcf_normalizing = True
@@ -256,6 +295,11 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
         yield
 
         contents = await upload_file.read()
+        if _has_gzip_magic(contents) and not filename.casefold().endswith((".gz", ".bgz")):
+            filename = f"{filename}.gz"
+            self.vcf_filename = filename
+        dest = upload_dir / filename
+
         # Skip writing identical content so the VCF mtime stays unchanged and
         # the downstream mtime-based normalization cache remains valid.
         new_hash = hashlib.md5(contents).digest()
@@ -516,35 +560,59 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
         if self.traits_loaded:
             yield from self.load_traits()
 
+    def _sync_loaded_trait_selection(self) -> None:
+        """Re-project ``selected_traits`` onto the currently-loaded grid rows.
+
+        The trait grid is keyed by the ``trait`` column, not ``pgs_id``, so the
+        inherited pgs_id-based ``_sync_loaded_grid_selection`` matches no rows
+        here and would silently clear the MUI selection model on every
+        sort/filter (the durable ``selected_traits`` badge would stay correct
+        while the checkboxes vanished, and the next click would collapse the
+        selection).  This trait-keyed variant keeps the client checkboxes in
+        sync with ``selected_traits`` after the loaded rows are reordered.
+        """
+        self.lf_grid_row_selection_model = loaded_grid_selection_model(  # type: ignore[assignment]
+            self.lf_grid_rows, self.selected_traits, "trait"  # type: ignore[attr-defined]
+        )
+
     def handle_lf_grid_row_selection(self, model: dict) -> None:
-        """Track selected traits and resolve to PGS IDs."""
-        self.lf_grid_row_selection_model = model  # type: ignore[assignment]
+        """Merge grid checkbox changes into the durable ``selected_traits``.
 
-        selection_type: str = model.get("type", "include")
-        raw_ids: list = model.get("ids", [])
-        selected_row_ids: set[int] = {int(i) for i in raw_ids}
-
-        if selection_type == "exclude" and not selected_row_ids:
+        Mirrors ``PRSComputeStateMixin.handle_lf_grid_row_selection`` but keyed
+        on the ``trait`` column: traits selected outside the currently-loaded
+        scope (off-page / filtered out) are preserved, so changing the
+        sort/filter never drops them.
+        """
+        if model.get("type", "include") == "exclude" and not model.get("ids", []):
             self._select_all_traits()
-            return
-        if selection_type == "include" and not selected_row_ids:
-            self.selected_traits = []
-            self.selected_pgs_ids = []
+            self._sync_loaded_trait_selection()
             return
 
-        traits: list[str] = []
-        for row in self.lf_grid_rows:  # type: ignore[attr-defined]
-            row_id = row.get("__row_id__")
-            in_set = (int(row_id) in selected_row_ids) if row_id is not None else False
-            if (selection_type == "include" and in_set) or (
-                selection_type == "exclude" and not in_set
-            ):
-                trait = row.get("trait")
-                if trait:
-                    traits.append(str(trait))
-
-        self.selected_traits = traits
+        self.selected_traits = merge_loaded_grid_selection(
+            self.lf_grid_rows, self.selected_traits, model, "trait"  # type: ignore[attr-defined]
+        )
         self._resolve_pgs_ids_from_traits()
+        self._sync_loaded_trait_selection()
+
+    def handle_lf_grid_sort(self, sort_model: list) -> Any:
+        """Apply a server-side sort, then restore the trait selection."""
+        yield from LazyFrameGridMixin.handle_lf_grid_sort(self, sort_model)
+        self._sync_loaded_trait_selection()
+
+    def handle_lf_grid_filter(self, filter_model: dict) -> Any:
+        """Apply a server-side filter, then restore the trait selection."""
+        yield from LazyFrameGridMixin.handle_lf_grid_filter(self, filter_model)
+        self._sync_loaded_trait_selection()
+
+    def clear_lf_grid_filters(self) -> Any:
+        """Clear all grid filters, then restore the trait selection."""
+        yield from LazyFrameGridMixin.clear_lf_grid_filters(self)
+        self._sync_loaded_trait_selection()
+
+    def handle_lf_grid_scroll_end(self, params: dict) -> Any:
+        """Load the next scroll chunk, then mark selected trait rows checked."""
+        yield from LazyFrameGridMixin.handle_lf_grid_scroll_end(self, params)
+        self._sync_loaded_trait_selection()
 
     def _select_all_traits(self) -> None:
         """Select all traits (and their PGS IDs)."""
@@ -559,16 +627,17 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
         )
 
     def select_filtered_traits(self) -> None:
-        """Select traits matching the current grid filter."""
+        """Select traits matching the current grid filter (additive)."""
         if self._trait_scores_lf is None:
             return
-        traits: list[str] = []
-        for row in self.lf_grid_rows:  # type: ignore[attr-defined]
-            trait = row.get("trait")
-            if trait:
-                traits.append(str(trait))
-        self.selected_traits = traits
+        loaded_traits = [
+            str(row.get("trait"))
+            for row in self.lf_grid_rows  # type: ignore[attr-defined]
+            if row.get("trait")
+        ]
+        self.selected_traits = list(dict.fromkeys([*self.selected_traits, *loaded_traits]))
         self._resolve_pgs_ids_from_traits()
+        self._sync_loaded_trait_selection()
 
     def deselect_all_traits(self) -> None:
         """Clear all selected traits."""

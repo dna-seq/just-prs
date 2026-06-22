@@ -12,6 +12,7 @@ import json
 import math
 import os
 import urllib.parse
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -1303,6 +1304,68 @@ def _build_ai_links(prompt_fn: Any, row: dict[str, Any]) -> list[dict[str, Any]]
         ),
     })
     return links
+
+
+def loaded_grid_selection_model(
+    rows: list[dict[str, Any]],
+    selected_keys: Iterable[str],
+    key_field: str,
+) -> dict[str, Any]:
+    """Build a MUI ``include`` selection model for the currently-loaded rows.
+
+    A row is included when its ``key_field`` value is in ``selected_keys``.
+    The MUI selection model is keyed by the positional ``__row_id__`` that the
+    server-side grid renumbers on every sort/filter, so the model must be
+    re-derived from the durable selection (``selected_keys``) every time the
+    loaded rows change -- otherwise stale positional ids point at the wrong
+    rows under the new ordering.
+    """
+    selected = {str(k) for k in selected_keys}
+    ids = [
+        int(row["__row_id__"])
+        for row in rows
+        if row.get("__row_id__") is not None and str(row.get(key_field)) in selected
+    ]
+    return {"type": "include", "ids": ids}
+
+
+def merge_loaded_grid_selection(
+    rows: list[dict[str, Any]],
+    current_selection: list[str],
+    model: dict[str, Any],
+    key_field: str,
+) -> list[str]:
+    """Merge a MUI selection-model change into a durable selection list.
+
+    Only rows currently loaded in the grid are *in scope* of the event; keys
+    selected outside the loaded scope (off-page, or filtered out under a
+    different filter) are preserved so changing the sort/filter never drops
+    them.  Returns the new ordered, de-duplicated selection.
+
+    The ``{type: "exclude", ids: []}`` "select all" case is **not** handled
+    here (the full filtered set is not derivable from the loaded rows alone);
+    callers must special-case it.
+    """
+    selection_type: str = model.get("type", "include")
+    selected_row_ids: set[int] = {int(i) for i in model.get("ids", [])}
+
+    loaded_scope: set[str] = set()
+    within_scope: list[str] = []
+    for row in rows:
+        raw = row.get(key_field)
+        if not raw:
+            continue
+        key = str(raw)
+        loaded_scope.add(key)
+        row_id = row.get("__row_id__")
+        in_set = (int(row_id) in selected_row_ids) if row_id is not None else False
+        if (selection_type == "include" and in_set) or (
+            selection_type == "exclude" and not in_set
+        ):
+            within_scope.append(key)
+
+    preserved = [k for k in current_selection if k not in loaded_scope]
+    return list(dict.fromkeys([*preserved, *within_scope]))
 
 
 class PRSComputeStateMixin(rx.State, mixin=True):
@@ -2963,36 +3026,18 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         - {type: "exclude", ids: [...]} -- all rows EXCEPT listed are selected
         - {type: "exclude", ids: []} -- all rows selected (header checkbox)
         """
-        selection_type: str = model.get("type", "include")
-        raw_ids: list = model.get("ids", [])
-        selected_row_ids: set[int] = {int(i) for i in raw_ids}
-
         # Header "select all" (exclude with no explicit ids) -> add the full
         # filtered set to the existing selection.
-        if selection_type == "exclude" and not selected_row_ids:
+        if model.get("type", "include") == "exclude" and not model.get("ids", []):
             self.select_filtered_scores()
             return
 
         # Map the event onto the rows currently loaded in the grid. Only these
         # pgs_ids are "in scope" of this selection event; everything else stays
         # as-is so cross-filter selections survive.
-        loaded_scope: set[str] = set()
-        within_scope: list[str] = []
-        for row in self.lf_grid_rows:  # type: ignore[attr-defined]
-            pgs_id_raw = row.get("pgs_id")
-            if not pgs_id_raw:
-                continue
-            pgs_id = str(pgs_id_raw)
-            loaded_scope.add(pgs_id)
-            row_id = row.get("__row_id__")
-            in_set = (int(row_id) in selected_row_ids) if row_id is not None else False
-            if (selection_type == "include" and in_set) or (
-                selection_type == "exclude" and not in_set
-            ):
-                within_scope.append(pgs_id)
-
-        preserved = [pid for pid in self.selected_pgs_ids if pid not in loaded_scope]
-        merged = list(dict.fromkeys([*preserved, *within_scope]))
+        merged = merge_loaded_grid_selection(
+            self.lf_grid_rows, self.selected_pgs_ids, model, "pgs_id"  # type: ignore[attr-defined]
+        )
         self.selected_pgs_ids = merged
         self._sync_loaded_grid_selection(merged)
         self.status_message = f"Selected {len(merged)} scores"  # type: ignore[attr-defined]
@@ -3108,13 +3153,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
     def _sync_loaded_grid_selection(self, pgs_ids: list[str]) -> None:
         """Mark currently loaded grid rows as selected when their PGS IDs match."""
-        selected = set(pgs_ids)
-        loaded_row_ids = [
-            int(row["__row_id__"])
-            for row in self.lf_grid_rows  # type: ignore[attr-defined]
-            if row.get("pgs_id") in selected and row.get("__row_id__") is not None
-        ]
-        self.lf_grid_row_selection_model = {"type": "include", "ids": loaded_row_ids}  # type: ignore[assignment]
+        self.lf_grid_row_selection_model = loaded_grid_selection_model(  # type: ignore[assignment]
+            self.lf_grid_rows, pgs_ids, "pgs_id"  # type: ignore[attr-defined]
+        )
 
     def compute_selected_prs(self) -> Any:
         """Compute PRS for all selected PGS IDs using available genotype data.

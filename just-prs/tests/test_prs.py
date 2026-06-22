@@ -185,6 +185,151 @@ def test_variant_only_differs_from_plink_present_only_when_ref_effect_absent(tmp
     assert present_only.variants_assumed_hom_ref == 0
 
 
+def test_weight_mass_coverage_math_and_parity(tmp_path: Path) -> None:
+    """C_wt = matched |beta| mass / total |beta| mass, identical across engines.
+
+    Same fixture as the hom-ref inference test: weights 1, 2, 3. The w=1 (observed)
+    and w=2 (absent hom-ref) variants are matched; the w=3 variant has an unknown
+    reference allele and is unscorable. So matched mass = 3, total mass = 6, and
+    C_wt = 0.5 — while the count-based match_rate is 2/3. The two diverge on purpose.
+    """
+    geno_path = tmp_path / "variant_only.parquet"
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["0/1"],
+    }).write_parquet(geno_path)
+
+    scoring = pl.DataFrame({
+        "hm_chr": ["1", "1", "1"],
+        "hm_pos": [100, 200, 300],
+        "effect_allele": ["G", "T", "C"],
+        "reference_allele": ["A", "T", None],
+        "effect_weight": [1.0, 2.0, 3.0],
+    }).lazy()
+
+    polars_result = compute_prs(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path),
+        genotype_input_mode="variant_only",
+    )
+    duckdb_result = compute_prs_duckdb(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_parquet=geno_path,
+        genotype_input_mode="variant_only",
+    )
+
+    for result in (polars_result, duckdb_result):
+        assert result.weight_mass_total == pytest.approx(6.0)
+        assert result.weight_mass_matched == pytest.approx(3.0)
+        assert result.weight_mass_coverage == pytest.approx(0.5)
+        # C_wt is scale-free: it differs from the count match_rate (2/3) here.
+        assert result.match_rate == pytest.approx(2 / 3)
+
+
+def test_weight_mass_coverage_genoboost_surrogate(tmp_path: Path) -> None:
+    """Per-dosage (GenoBoost) scores use max|dosage_k_weight| as the mass surrogate."""
+    geno_path = tmp_path / "geno.parquet"
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["0/1"],
+    }).write_parquet(geno_path)
+
+    # Variant A present (matched, mass = max(0.1,0.5,0.9) = 0.9); variant B absent
+    # with unknown reference allele -> unscorable (mass = max(0,1,4) = 4).
+    scoring = pl.DataFrame({
+        "hm_chr": ["1", "1"],
+        "hm_pos": [100, 200],
+        "effect_allele": ["G", "T"],
+        "reference_allele": ["A", None],
+        "dosage_0_weight": [0.1, 0.0],
+        "dosage_1_weight": [0.5, 1.0],
+        "dosage_2_weight": [0.9, 4.0],
+    }).lazy()
+
+    polars_result = compute_prs(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path),
+        genotype_input_mode="variant_only",
+    )
+    duckdb_result = compute_prs_duckdb(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_parquet=geno_path,
+        genotype_input_mode="variant_only",
+    )
+
+    for result in (polars_result, duckdb_result):
+        assert result.weight_mass_total == pytest.approx(4.9)
+        assert result.weight_mass_matched == pytest.approx(0.9)
+        assert result.weight_mass_coverage == pytest.approx(0.9 / 4.9)
+
+
+def test_z_score_and_reference_stats_exposed(tmp_path: Path) -> None:
+    """The true z-score and reference mean/std are exposed on PRSResult (F12)."""
+    geno_path = tmp_path / "geno.parquet"
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["0/1"],
+    }).write_parquet(geno_path)
+
+    scoring = pl.DataFrame({
+        "hm_chr": ["1", "1"],
+        "hm_pos": [100, 200],
+        "effect_allele": ["G", "T"],
+        "reference_allele": ["A", "A"],
+        "effect_weight": [1.0, 2.0],
+        "allelefrequency_effect": [0.3, 0.4],
+    }).lazy()
+
+    polars_result = compute_prs(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path),
+        genotype_input_mode="variant_only",
+    )
+    duckdb_result = compute_prs_duckdb(
+        vcf_path="",
+        scoring_file=scoring,
+        cache_dir=tmp_path,
+        pgs_id="PGSTEST",
+        genotypes_parquet=geno_path,
+        genotype_input_mode="variant_only",
+    )
+
+    for result in (polars_result, duckdb_result):
+        assert result.has_allele_frequencies
+        assert result.percentile_method == "theoretical"
+        assert result.reference_mean == pytest.approx(result.theoretical_mean)
+        assert result.reference_std == pytest.approx(result.theoretical_std)
+        assert result.z_score is not None
+        expected_z = (result.score - result.reference_mean) / result.reference_std
+        assert result.z_score == pytest.approx(expected_z)
+
+    assert polars_result.z_score == pytest.approx(duckdb_result.z_score, abs=1e-10)
+
+
 def test_prs_engine_enum() -> None:
     """Verify PRSEngine enum values."""
     assert PRSEngine.POLARS.value == "polars"

@@ -131,28 +131,40 @@ def classify_model_quality(
     return "Low", "orange"
 
 
+_PERCENTILE_METHOD_DESC: dict[str, str] = {
+    "reference_panel": "from a reference-panel population distribution",
+    "theoretical": "theoretical, from allele frequencies in the scoring file",
+    "auroc_approx": "an AUROC-based approximation",
+}
+
+
 def interpret_prs_result(
     percentile: float | None,
     match_rate: float,
     auroc: float | None,
+    percentile_method: str | None = None,
+    reliable: bool = True,
+    caveat: str = "",
 ) -> dict[str, str]:
     """Produce human-readable interpretation of a single PRS result.
 
     Returns a dict with keys: quality_label, quality_color, summary.
 
-    When a theoretical percentile is available (computed from allele frequencies
-    in the scoring file), it is included in the summary as an approximate
-    population position.
+    ``percentile_method`` (``'reference_panel'`` / ``'theoretical'`` / ``'auroc_approx'``)
+    lets the summary describe *how* the percentile was derived, instead of always
+    attributing it to scoring-file allele frequencies. When ``reliable`` is False the
+    ``caveat`` is appended. The percentile-unavailable message is generic and no longer
+    claims "no allele frequencies" when a reference-panel percentile could exist.
     """
     quality_label, quality_color = classify_model_quality(match_rate, auroc)
 
     parts: list[str] = []
 
     if percentile is not None:
-        parts.append(
-            f"Estimated percentile: {percentile:.1f}% "
-            f"(theoretical, from allele frequencies in the scoring file)."
-        )
+        method_desc = _PERCENTILE_METHOD_DESC.get(percentile_method or "", "estimated")
+        parts.append(f"Estimated percentile: {percentile:.1f}% ({method_desc}).")
+        if not reliable and caveat:
+            parts.append(caveat)
 
     if auroc is not None:
         if auroc >= 0.7:
@@ -173,8 +185,8 @@ def interpret_prs_result(
 
     if percentile is None:
         parts.append(
-            "No allele frequencies in scoring file \u2014 percentile not available. "
-            "Compare your score to a matched reference cohort for meaningful interpretation."
+            "No population percentile is available for this score \u2014 compare your "
+            "score to a matched reference cohort for meaningful interpretation."
         )
 
     return {
@@ -272,10 +284,12 @@ def synthetic_quality_tier(
     return "T3_none", "No metric"
 
 
-def format_effect_size(perf_row: dict[str, Any]) -> str:
+def format_effect_size(perf_row: dict[str, Any]) -> str | None:
     """Format the best available effect size metric from a cleaned performance row.
 
-    Checks OR, HR, then Beta in order. Returns empty string if none available.
+    Checks OR, HR, then Beta in order. Returns ``None`` (not an empty string) when
+    no effect-size estimate exists, so callers can distinguish "unavailable" from
+    an empty value (F11).
     """
     for prefix, label in [("or", "OR"), ("hr", "HR"), ("beta", "Beta")]:
         est = perf_row.get(f"{prefix}_estimate")
@@ -289,13 +303,14 @@ def format_effect_size(perf_row: dict[str, Any]) -> str:
             elif se is not None:
                 result += f" (SE={se:.2f})"
             return result
-    return ""
+    return None
 
 
-def format_classification(perf_row: dict[str, Any]) -> str:
+def format_classification(perf_row: dict[str, Any]) -> str | None:
     """Format the best available classification metric from a cleaned performance row.
 
-    Checks AUROC then C-index. Returns empty string if none available.
+    Checks AUROC then C-index. Returns ``None`` (not an empty string) when no
+    classification metric exists (F11).
     """
     for prefix, label in [("auroc", "AUROC"), ("cindex", "C-index")]:
         est = perf_row.get(f"{prefix}_estimate")
@@ -306,4 +321,4 @@ def format_classification(perf_row: dict[str, Any]) -> str:
             if ci_lo is not None and ci_hi is not None:
                 result += f" [{ci_lo:.3f}-{ci_hi:.3f}]"
             return result
-    return ""
+    return None

@@ -27,7 +27,13 @@ from just_prs.hf import (
     pull_cleaned_parquets,
     pull_reference_distributions,
 )
-from just_prs.models import AbsoluteRisk, AbsoluteRiskBundle, PRSResult
+from just_prs.models import (
+    AbsoluteRisk,
+    AbsoluteRiskBundle,
+    PercentileResult,
+    PerformanceInfo,
+    PRSResult,
+)
 from just_prs.ontology import (
     enrich_with_requested_trait_aliases,
     enrich_with_trait_aliases,
@@ -47,6 +53,42 @@ _HARMONIZABLE_BUILDS: dict[str, set[str]] = {
 }
 
 _PUBLICATIONS_REQUIRED_COLUMNS = {"pgp_id"}
+
+# Below this weight-mass coverage (C_wt), a percentile is treated as a likely
+# low-coverage artifact rather than an authoritative population position.
+MIN_RELIABLE_WEIGHT_MASS_COVERAGE: float = 0.20
+
+
+def _performance_info_from_row(row: dict[str, object]) -> PerformanceInfo:
+    """Build a lightweight PerformanceInfo from a cleaned best_performance row.
+
+    Populates effect sizes (OR/HR/Beta) and classification metrics (AUROC/C-index)
+    from the flattened numeric columns produced by the cleanup pipeline.
+    """
+    from just_prs.models import EffectSizeInfo
+
+    def _eff(prefix: str, short: str) -> EffectSizeInfo | None:
+        est = row.get(f"{prefix}_estimate")
+        if est is None:
+            return None
+        return EffectSizeInfo(
+            name_short=short,
+            estimate=float(est),  # type: ignore[arg-type]
+            ci_lower=row.get(f"{prefix}_ci_lower"),  # type: ignore[arg-type]
+            ci_upper=row.get(f"{prefix}_ci_upper"),  # type: ignore[arg-type]
+            se=row.get(f"{prefix}_se"),  # type: ignore[arg-type]
+        )
+
+    effect_sizes = [e for e in (_eff("or", "OR"), _eff("hr", "HR"), _eff("beta", "Beta")) if e]
+    class_acc = [e for e in (_eff("auroc", "AUROC"), _eff("cindex", "C-index")) if e]
+    n_ind = row.get("n_individuals")
+    return PerformanceInfo(
+        ppm_id=str(row.get("ppm_id") or ""),
+        effect_sizes=effect_sizes,
+        class_acc=class_acc,
+        sample_number=int(n_ind) if n_ind is not None else None,  # type: ignore[arg-type]
+        ancestry_broad=row.get("ancestry_broad"),  # type: ignore[arg-type]
+    )
 
 
 class PRSCatalog:
@@ -585,16 +627,25 @@ class PRSCatalog:
             return None
         return rows.row(0, named=True)
 
+    def _attach_performance(self, result: PRSResult) -> None:
+        """Populate ``result.performance`` from the best evaluation metric (F11)."""
+        best_df = self.best_performance(pgs_id=result.pgs_id).collect()
+        if best_df.height > 0:
+            result.performance = _performance_info_from_row(best_df.row(0, named=True))
+
     def compute_prs(
         self,
         vcf_path: Path | str,
         pgs_id: str,
         genome_build: str = "GRCh38",
         genotype_input_mode: str = "auto",
+        attach_performance: bool = False,
     ) -> PRSResult:
         """Compute PRS for a VCF file against a single PGS score.
 
         Looks up trait_reported from cached metadata instead of making a REST API call.
+        When ``attach_performance`` is True, also populates ``PRSResult.performance``
+        with the best evaluation metric (F11).
         """
         with start_action(
             action_type="prs_catalog:compute_prs",
@@ -604,7 +655,7 @@ class PRSCatalog:
             info = self.score_info_row(pgs_id)
             trait = info["trait_reported"] if info else None
 
-            return compute_prs(
+            result = compute_prs(
                 vcf_path=vcf_path,
                 scoring_file=pgs_id,
                 genome_build=genome_build,
@@ -613,6 +664,9 @@ class PRSCatalog:
                 trait_reported=trait,
                 genotype_input_mode=genotype_input_mode,
             )
+            if attach_performance:
+                self._attach_performance(result)
+            return result
 
     def compute_prs_batch(
         self,
@@ -623,6 +677,7 @@ class PRSCatalog:
         engine: str = "duckdb",
         genotypes_lf: pl.LazyFrame | None = None,
         memory_limit: str | None = None,
+        attach_performance: bool = False,
     ) -> "PRSBatchResult":
         """Compute PRS for a VCF file against multiple PGS scores.
 
@@ -763,6 +818,10 @@ class PRSCatalog:
 
                 gc.collect()
 
+            if attach_performance:
+                for r in results:
+                    self._attach_performance(r)
+
             return PRSBatchResult(
                 results=results,
                 outcomes=outcomes,
@@ -781,64 +840,141 @@ class PRSCatalog:
         std: float | None = None,
         panel: str = "1000g",
     ) -> tuple[float | None, str]:
-        """Estimate population percentile for a given PRS score using a 3-tier fallback.
+        """Estimate population percentile for a given PRS score (3-tier fallback).
+
+        Thin back-compat wrapper around :meth:`percentile_full` returning only
+        ``(percentile | None, method_label)``. See :meth:`percentile_full` for the
+        true z-score / reference mean-std and the coverage-aware reliability verdict.
+        """
+        res = self.percentile_full(
+            prs_score, pgs_id, ancestry=ancestry, mean=mean, std=std, panel=panel
+        )
+        return res.percentile, res.method
+
+    def percentile_full(
+        self,
+        prs_score: float,
+        pgs_id: str,
+        ancestry: str = "EUR",
+        mean: float = 0.0,
+        std: float | None = None,
+        panel: str = "1000g",
+        weight_mass_coverage: float | None = None,
+    ) -> PercentileResult:
+        """Estimate population percentile and expose the statistics behind it.
+
+        Three-tier fallback (same as :meth:`percentile`):
 
         Tier 1 — Reference panel (best): look up (pgs_id, ancestry) in the pre-computed
             reference distributions pulled from just-dna-seq/prs-percentiles.
-        Tier 2 — Theoretical (partial): compute from allele frequencies embedded in the
-            scoring file (only works for ~20% of PGS IDs). Only used when mean/std are
-            passed explicitly.
-        Tier 3 — AUROC approximation (rough): derive effective SD from Cohen's d
-            estimated from the best AUROC metric. Ancestry-agnostic.
+        Tier 2 — Theoretical (partial): allele-frequency mean/std passed explicitly.
+        Tier 3 — AUROC approximation (rough): effective SD from Cohen's d.
+
+        Unlike :meth:`percentile`, this returns the **true** ``z_score`` and the
+        ``reference_mean`` / ``reference_std`` used — so callers no longer re-derive z
+        by inverting the percentile (lossy at the 0/100 extremes). When
+        ``weight_mass_coverage`` (C_wt) is supplied and below
+        ``MIN_RELIABLE_WEIGHT_MASS_COVERAGE``, the result is flagged ``reliable=False``
+        with a caveat so a deflated low-coverage score can't emit an authoritative
+        extreme percentile.
 
         Args:
             prs_score: The computed PRS value.
             pgs_id: PGS Catalog Score ID.
             ancestry: 1000G superpopulation code (AFR, AMR, EAS, EUR, SAS).
-                      Defaults to EUR.
-            mean: Population mean to use when std is provided (Tier 2 path).
-            std: Population SD. When provided, skips reference lookup and uses directly.
+            mean: Population mean used when ``std`` is provided (Tier 2) or for Tier 3.
+            std: Population SD. When provided (>0), uses it directly (Tier 2).
             panel: Reference panel identifier for Tier 1 lookup.
+            weight_mass_coverage: Optional C_wt for the reliability verdict.
 
         Returns:
-            Tuple of (percentile | None, method_label) where method_label is one of
-            'reference_panel', 'theoretical', 'auroc_approx', or 'unavailable'.
+            A :class:`PercentileResult`.
         """
-        from just_prs.reference import ancestry_percentile
+        from just_prs.reference import ancestry_distribution_stats
+
+        pct: float | None = None
+        method = "unavailable"
+        z: float | None = None
+        ref_mean: float | None = None
+        ref_std: float | None = None
 
         if std is not None and std > 0:
             z = (prs_score - mean) / std
-            return round(_norm_cdf(z) * 100.0, 2), "theoretical"
-
-        ref_lf = self.reference_distributions(panel=panel)
-        pct = ancestry_percentile(prs_score, pgs_id, ancestry, ref_lf)
-        if pct is None:
-            self._refresh_reference_distributions(panel=panel)
+            pct = round(_norm_cdf(z) * 100.0, 2)
+            method = "theoretical"
+            ref_mean, ref_std = mean, std
+        else:
             ref_lf = self.reference_distributions(panel=panel)
-            pct = ancestry_percentile(prs_score, pgs_id, ancestry, ref_lf)
-        if pct is not None:
-            return pct, "reference_panel"
+            stats = ancestry_distribution_stats(pgs_id, ancestry, ref_lf)
+            if stats is None:
+                self._refresh_reference_distributions(panel=panel)
+                ref_lf = self.reference_distributions(panel=panel)
+                stats = ancestry_distribution_stats(pgs_id, ancestry, ref_lf)
+            if stats is not None:
+                ref_mean, ref_std = stats
+                z = (prs_score - ref_mean) / ref_std
+                pct = round(_norm_cdf(z) * 100.0, 2)
+                method = "reference_panel"
+            else:
+                best_df = self.best_performance(pgs_id=pgs_id).collect()
+                if best_df.height > 0:
+                    auroc = best_df.row(0, named=True).get("auroc_estimate")
+                    if auroc is not None and 0.5 < float(auroc) < 1.0:
+                        d = _auroc_to_cohens_d(float(auroc))
+                        if d is not None and d > 0:
+                            effective_std = math.sqrt(1.0 + d * d / 4.0)
+                            z = (prs_score - mean) / effective_std
+                            pct = round(_norm_cdf(z) * 100.0, 2)
+                            method = "auroc_approx"
+                            ref_mean, ref_std = mean, effective_std
 
-        best_df = self.best_performance(pgs_id=pgs_id).collect()
-        if best_df.height == 0:
-            return None, "unavailable"
+        reliable = True
+        caveat = ""
+        if (
+            pct is not None
+            and weight_mass_coverage is not None
+            and weight_mass_coverage < MIN_RELIABLE_WEIGHT_MASS_COVERAGE
+        ):
+            reliable = False
+            caveat = (
+                f"Only {weight_mass_coverage * 100:.0f}% of this score's effect-weight mass "
+                f"was matched in this genome (C_wt). The percentile is likely a low-coverage "
+                f"artifact, not an authoritative population position."
+            )
 
-        row = best_df.row(0, named=True)
-        auroc = row.get("auroc_estimate")
-        if auroc is None:
-            return None, "unavailable"
+        return PercentileResult(
+            percentile=pct,
+            method=method,
+            z_score=z,
+            reference_mean=ref_mean,
+            reference_std=ref_std,
+            reliable=reliable,
+            caveat=caveat,
+        )
 
-        auroc = float(auroc)
-        if auroc <= 0.5 or auroc >= 1.0:
-            return None, "unavailable"
+    def absolute_risk_from_score(
+        self,
+        pgs_id: str,
+        score: float,
+        ancestry: str = "EUR",
+        sex: str | None = None,
+        weight_mass_coverage: float | None = None,
+        panel: str = "1000g",
+    ) -> AbsoluteRiskBundle:
+        """Chain a raw PRS score to an absolute-risk bundle (F12 convenience).
 
-        d = _auroc_to_cohens_d(auroc)
-        if d is None or d <= 0:
-            return None, "unavailable"
-
-        effective_std = math.sqrt(1.0 + d * d / 4.0)
-        z = (prs_score - mean) / effective_std
-        return round(_norm_cdf(z) * 100.0, 2), "auroc_approx"
+        Resolves the percentile via :meth:`percentile_full` (using the **true**
+        z-score, not a percentile inversion) and feeds that z into
+        :meth:`absolute_risk_bundle`. Returns an empty bundle if no percentile /
+        z-score could be derived.
+        """
+        pr = self.percentile_full(
+            score, pgs_id, ancestry=ancestry, panel=panel,
+            weight_mass_coverage=weight_mass_coverage,
+        )
+        if pr.z_score is None:
+            return AbsoluteRiskBundle()
+        return self.absolute_risk_bundle(pgs_id, pr.z_score, sex=sex)
 
     def prevalence_table(self) -> pl.LazyFrame:
         """Return the prevalence LazyFrame, loading from cache or HF on first access.

@@ -18,8 +18,11 @@ from just_prs.models import (
     ArrayPRSResult,
     ChipGeneration,
     EnrichedPRSResult,
+    PercentileResult,
+    PerformanceInfo,
     PRSBatchOutcome,
     PRSBatchResult,
+    PRSResult,
     ReferenceDistribution,
     classify_coverage_tier,
 )

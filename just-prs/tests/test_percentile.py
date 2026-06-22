@@ -218,6 +218,48 @@ class TestPercentileEndToEnd:
         )
 
 
+class TestPercentileFull:
+    """Network-free tests of percentile_full via the theoretical (std-provided) path.
+
+    Providing ``std`` short-circuits the reference-panel and best-performance lookups,
+    so these never touch HuggingFace or the catalog parquets.
+    """
+
+    def test_theoretical_path_exposes_true_z(self) -> None:
+        from just_prs.prs_catalog import PRSCatalog
+
+        cat = PRSCatalog()
+        pr = cat.percentile_full(3.0, "PGSX", mean=1.0, std=2.0)
+        assert pr.method == "theoretical"
+        assert pr.reference_mean == 1.0
+        assert pr.reference_std == 2.0
+        assert pr.z_score == pytest.approx((3.0 - 1.0) / 2.0)
+        assert pr.percentile == round(_norm_cdf(pr.z_score) * 100.0, 2)
+        assert pr.reliable is True
+        assert pr.caveat == ""
+
+    def test_low_weight_mass_coverage_flags_unreliable(self) -> None:
+        from just_prs.prs_catalog import PRSCatalog
+
+        cat = PRSCatalog()
+        pr = cat.percentile_full(3.0, "PGSX", mean=1.0, std=2.0, weight_mass_coverage=0.05)
+        assert pr.percentile is not None  # value kept...
+        assert pr.reliable is False  # ...but flagged
+        assert pr.caveat != ""
+
+        pr_ok = cat.percentile_full(3.0, "PGSX", mean=1.0, std=2.0, weight_mass_coverage=0.9)
+        assert pr_ok.reliable is True
+        assert pr_ok.caveat == ""
+
+    def test_percentile_wrapper_matches_full(self) -> None:
+        from just_prs.prs_catalog import PRSCatalog
+
+        cat = PRSCatalog()
+        pr = cat.percentile_full(3.0, "PGSX", mean=1.0, std=2.0)
+        pct, method = cat.percentile(3.0, "PGSX", mean=1.0, std=2.0)
+        assert (pct, method) == (pr.percentile, pr.method)
+
+
 @pytest.mark.plink2
 class TestPercentileVsPlink2:
     """Cross-validate PRS scores against PLINK2 for scores with allele frequencies.

@@ -341,6 +341,21 @@ def compute_prs(
         has_maf_col = "allelefrequency_effect" in schema_names
         do_maf_fill = maf_fill and has_maf_col and not dosage_weight
 
+        # Per-variant weight mass for C_wt (weight-mass coverage). Standard additive
+        # scores use |effect_weight|; per-dosage (GenoBoost) scores have no single beta,
+        # so use the largest absolute per-dosage weight as the mass surrogate.
+        if dosage_weight:
+            variant_mass_expr = pl.max_horizontal(
+                pl.col("dosage_0_weight").abs(),
+                pl.col("dosage_1_weight").abs(),
+                pl.col("dosage_2_weight").abs(),
+            )
+        else:
+            variant_mass_expr = pl.col("effect_weight").abs()
+        weight_mass_total = float(
+            scoring_norm.select(variant_mass_expr.sum().alias("m")).collect().item() or 0.0
+        )
+
         if resolved_mode == GenotypeInputMode.VARIANT_ONLY:
             ref_known = pl.col("reference_allele").is_not_null() & (pl.col("reference_allele").str.len_chars() > 0)
             absent = pl.col("is_present").not_()
@@ -404,6 +419,11 @@ def compute_prs(
             (pl.col("is_present") & pl.col("is_no_call")).cast(pl.Int64).sum().alias("variants_no_call"),
             pl.col("is_maf_filled").cast(pl.Int64).sum().alias("variants_maf_filled"),
             pl.col("weighted_dosage").sum().alias("prs_score"),
+            (
+                pl.when(pl.col("resolved_dosage").is_not_null())
+                .then(variant_mass_expr)
+                .otherwise(0.0)
+            ).sum().alias("weight_mass_matched"),
         ).collect()
 
         variants_observed = int(agg["variants_observed"][0] or 0)
@@ -419,12 +439,19 @@ def compute_prs(
             prs_score = float(agg["prs_score"][0] or 0.0)
 
         match_rate = variants_matched / variants_total if variants_total > 0 else 0.0
+        weight_mass_matched = float(agg["weight_mass_matched"][0] or 0.0)
+        weight_mass_coverage = (
+            weight_mass_matched / weight_mass_total if weight_mass_total > 0 else None
+        )
 
         has_freqs = False
         theoretical_mean: float | None = None
         theoretical_std: float | None = None
         percentile: float | None = None
         percentile_method: str | None = None
+        z_score: float | None = None
+        reference_mean: float | None = None
+        reference_std: float | None = None
 
         stats = _compute_theoretical_stats(scoring_norm, schema_names)
         if stats is not None:
@@ -436,6 +463,9 @@ def compute_prs(
                 z = (prs_score - mean) / std
                 percentile = round(_norm_cdf(z) * 100.0, 2)
                 percentile_method = "theoretical"
+                z_score = z
+                reference_mean = mean
+                reference_std = std
             log_message(
                 message_type="prs:theoretical_stats",
                 pgs_id=pgs_id,
@@ -457,6 +487,9 @@ def compute_prs(
             variants_unscorable_absent=variants_unscorable_absent,
             variants_no_call=variants_no_call,
             variants_maf_filled=variants_maf_filled,
+            weight_mass_matched=weight_mass_matched,
+            weight_mass_total=weight_mass_total,
+            weight_mass_coverage=weight_mass_coverage,
             genotype_input_mode=resolved_mode.value,
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
@@ -464,6 +497,9 @@ def compute_prs(
             theoretical_std=theoretical_std,
             percentile=percentile,
             percentile_method=percentile_method,
+            z_score=z_score,
+            reference_mean=reference_mean,
+            reference_std=reference_std,
         )
 
 
@@ -615,12 +651,27 @@ def compute_prs_duckdb(
 
         dosage_weight = DOSAGE_WEIGHT_COLUMNS[0] in schema_names
         weighted_sql = _DUCKDB_WEIGHTED_DOSAGE_GENOBOOST if dosage_weight else _DUCKDB_WEIGHTED_DOSAGE_ADDITIVE
+        # Per-variant weight mass for C_wt: |effect_weight| (additive) or the largest
+        # absolute per-dosage weight (GenoBoost). ``variant_mass_sql`` is aliased ``s.``
+        # for the join CTE; ``mass_total_sql`` runs against the bare ``scoring`` table.
+        if dosage_weight:
+            variant_mass_sql = "greatest(abs(s.dosage_0_weight), abs(s.dosage_1_weight), abs(s.dosage_2_weight))"
+            mass_total_sql = "greatest(abs(dosage_0_weight), abs(dosage_1_weight), abs(dosage_2_weight))"
+        else:
+            variant_mass_sql = "abs(s.effect_weight)"
+            mass_total_sql = "abs(effect_weight)"
 
         mem_limit = memory_limit or _resolve_duckdb_memory_limit()
         conn = duckdb.connect(config={"memory_limit": mem_limit})
         try:
             conn.execute("SET arrow_large_buffer_size = true")
             conn.register("scoring", scoring_df.to_arrow())
+
+            weight_mass_total = float(
+                conn.execute(
+                    f"SELECT COALESCE(SUM({mass_total_sql}), 0.0) FROM scoring"
+                ).fetchone()[0]
+            )
 
             if genotypes_parquet is not None:
                 geno_from = f"read_parquet('{genotypes_parquet}')"
@@ -688,6 +739,7 @@ def compute_prs_duckdb(
                         s.*,
                         g.GT,
                         {resolved_dosage_sql} AS resolved_dosage,
+                        {variant_mass_sql} AS variant_mass,
                         {counter_sql}
                     {join_sql}
                     GROUP BY ALL
@@ -699,7 +751,8 @@ def compute_prs_duckdb(
                     COALESCE(SUM(variants_assumed_hom_ref), 0) AS variants_assumed_hom_ref,
                     COALESCE(SUM(variants_unscorable_absent), 0) AS variants_unscorable_absent,
                     COALESCE(SUM(variants_no_call), 0) AS variants_no_call,
-                    COALESCE(SUM(variants_maf_filled), 0) AS variants_maf_filled
+                    COALESCE(SUM(variants_maf_filled), 0) AS variants_maf_filled,
+                    COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL THEN variant_mass ELSE 0.0 END), 0.0) AS weight_mass_matched
                 FROM resolved s
             """).fetchone()
 
@@ -710,6 +763,7 @@ def compute_prs_duckdb(
             variants_unscorable_absent = int(row[4])
             variants_no_call = int(row[5])
             variants_maf_filled = int(row[6])
+            weight_mass_matched = float(row[7] or 0.0)
             variants_matched = observed_called + variants_assumed_hom_ref + variants_maf_filled
 
             has_freqs = False
@@ -717,6 +771,9 @@ def compute_prs_duckdb(
             theoretical_std: float | None = None
             percentile: float | None = None
             percentile_method: str | None = None
+            z_score: float | None = None
+            reference_mean: float | None = None
+            reference_std: float | None = None
 
             if "allelefrequency_effect" in schema_names and "effect_weight" in schema_names:
                 stats_row = conn.execute("""
@@ -744,6 +801,9 @@ def compute_prs_duckdb(
                         z = (prs_score - mean) / std
                         percentile = round(_norm_cdf(z) * 100.0, 2)
                         percentile_method = "theoretical"
+                        z_score = z
+                        reference_mean = mean
+                        reference_std = std
                     log_message(
                         message_type="prs:theoretical_stats",
                         pgs_id=pgs_id,
@@ -757,6 +817,9 @@ def compute_prs_duckdb(
             conn.close()
 
         match_rate = variants_matched / variants_total if variants_total > 0 else 0.0
+        weight_mass_coverage = (
+            weight_mass_matched / weight_mass_total if weight_mass_total > 0 else None
+        )
 
         return PRSResult(
             pgs_id=pgs_id,
@@ -769,6 +832,9 @@ def compute_prs_duckdb(
             variants_unscorable_absent=variants_unscorable_absent,
             variants_no_call=variants_no_call,
             variants_maf_filled=variants_maf_filled,
+            weight_mass_matched=weight_mass_matched,
+            weight_mass_total=weight_mass_total,
+            weight_mass_coverage=weight_mass_coverage,
             genotype_input_mode=resolved_mode.value,
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
@@ -776,6 +842,9 @@ def compute_prs_duckdb(
             theoretical_std=theoretical_std,
             percentile=percentile,
             percentile_method=percentile_method,
+            z_score=z_score,
+            reference_mean=reference_mean,
+            reference_std=reference_std,
         )
 
 

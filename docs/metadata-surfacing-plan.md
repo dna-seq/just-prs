@@ -1,5 +1,10 @@
 # Batch 2 — Metadata Surfacing & Convenience — Plan
 
+**Execution status (2026-06-22): F23, F4, and the F19 echo slice are IMPLEMENTED on this
+branch (additive, full suite green). F16 stays DEFERRED** — its denominator path lives in
+the MCP wrapper (`compute_prs_by_trait`), so reconciling it is REST-vs-bulk logic, not the
+small library change this batch was scoped to (the "split it out" guard below).
+
 Branch: `metadata-surfacing` (off `main`, which already has the scoring-foundations
 round: `C_wt`, `PercentileResult`, `percentile_full`, `attach_performance`). This is the
 **next easiest batch** after the foundations round — all additive, self-contained, no new

@@ -208,6 +208,13 @@ class PercentileResult(BaseModel):
     reference_std: float | None = Field(
         default=None, description="Reference distribution std used to standardize the score"
     )
+    ancestry: str | None = Field(
+        default=None,
+        description="Superpopulation of the reference distribution used (reference_panel method only)",
+    )
+    panel: str | None = Field(
+        default=None, description="Reference panel identifier used (reference_panel method only)"
+    )
     reliable: bool = Field(
         default=True,
         description="False when weight-mass coverage (C_wt) is too low to trust the percentile",
@@ -260,6 +267,14 @@ class PRSResult(BaseModel):
     genotype_input_mode: str = Field(
         default="plink_present_only",
         description="How absent genotype loci were interpreted during scoring",
+    )
+    detected_genome_build: str | None = Field(
+        default=None,
+        description="Genome build inferred from the VCF header/contigs (None if undetectable or genotypes were pre-normalized)",
+    )
+    build_mismatch: bool = Field(
+        default=False,
+        description="True when the detected VCF build differs from the genome_build used for scoring",
     )
     trait_reported: str | None = Field(default=None, description="Reported trait for the score")
     performance: PerformanceInfo | None = Field(
@@ -331,6 +346,8 @@ class EnrichedPRSResult(BaseModel):
     genotype_input_mode: str = ""
     has_allele_frequencies: bool = False
     genome_build: str = ""
+    detected_genome_build: str | None = None
+    build_mismatch: bool = False
     is_harmonized: bool = Field(
         False,
         description="True if the score's original build differs from the computation build (coordinates are lifted over)",
@@ -349,6 +366,8 @@ class EnrichedPRSResult(BaseModel):
     z_score: float | None = None
     reference_mean: float | None = None
     reference_std: float | None = None
+    reference_panel_ancestry: str | None = None
+    reference_panel: str | None = None
     percentile_reliable: bool = True
     percentile_caveat: str = ""
 

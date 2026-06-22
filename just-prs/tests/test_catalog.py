@@ -1,6 +1,36 @@
 """Integration tests for PGS Catalog REST API client."""
 
+from pathlib import Path
+
 from just_prs.catalog import PGSCatalogClient
+from just_prs.prs_catalog import PRSCatalog
+from just_prs.scoring import resolve_cache_dir
+from just_prs.vcf import read_genotypes
+
+
+def test_compute_prs_genotypes_lf_reuse_and_attach_performance(
+    vcf_path: Path, scoring_cache_dir: Path
+) -> None:
+    """F23: PRSCatalog.compute_prs accepts genotypes_lf and still attaches performance.
+
+    The reused-genotype-frame path must produce the same score as re-reading the VCF,
+    and attach_performance must populate PRSResult.performance in one call.
+    """
+    catalog = PRSCatalog(cache_dir=resolve_cache_dir())
+
+    from_vcf = catalog.compute_prs(vcf_path=vcf_path, pgs_id="PGS000001")
+
+    geno_lf = read_genotypes(vcf_path)
+    from_lf = catalog.compute_prs(
+        vcf_path=vcf_path,
+        pgs_id="PGS000001",
+        genotypes_lf=geno_lf,
+        attach_performance=True,
+    )
+
+    assert from_lf.score == from_vcf.score
+    assert from_lf.variants_matched == from_vcf.variants_matched
+    assert from_lf.performance is not None  # attach_performance honored on the reuse path
 
 
 def test_get_score_pgs000001() -> None:

@@ -605,7 +605,7 @@ def prs_results_table(
             "type": "metric_list",
             "compact": True,
             "maxColumns": 4,
-            "minCardWidth": 150,
+            "minCardWidth": 130,
             "gap": 8,
         },
         metric_list_config,
@@ -693,10 +693,10 @@ def prs_results_table(
 
 def trait_summary_table(
     state: type[rx.State],
-    bell_curve_height: int = 380,
+    bell_curve_height: int = 340,
     bell_curve_max_width: int = 1200,
     large_bell_curve_threshold: int = 4,
-    large_bell_curve_height: int = 460,
+    large_bell_curve_height: int = 400,
     large_bell_curve_max_width: int = 1600,
     detail_height: int | str = "auto",
     bell_curve_config: dict[str, Any] | None = None,
@@ -750,11 +750,20 @@ def trait_summary_table(
             "type": "metric_list",
             "compact": True,
             "maxColumns": 4,
-            "minCardWidth": 150,
+            "minCardWidth": 112,
+            "cardPadding": "5px 8px",
             "gap": 8,
         },
         metric_list_config,
     )
+    trait_header_cards = {
+        "type": "metric_list",
+        "compact": False,
+        "maxColumns": 1,
+        "minCardWidth": 360,
+        "cardPadding": "14px 18px",
+        "gap": 8,
+    }
     pgs_links = _merge_bell_curve_config(
         {
             "type": "link_list",
@@ -779,6 +788,7 @@ def trait_summary_table(
                         height="100%",
                         disable_row_selection_on_click=True,
                         detail_columns=[
+                            "trait_header",
                             "pgs_links",
                             "publication_links",
                             "percentile_chart",
@@ -788,6 +798,7 @@ def trait_summary_table(
                             "ai_ask",
                         ],
                         detail_labels={
+                            "trait_header": "Trait",
                             "pgs_links": "PGS Models Included",
                             "publication_links": "Source Studies",
                             "percentile_chart": "Where You Fall on the Bell Curve",
@@ -797,6 +808,7 @@ def trait_summary_table(
                             "ai_ask": "Ask AI for Interpretation",
                         },
                         detail_renderers={
+                            "trait_header": trait_header_cards,
                             "pgs_links": pgs_links,
                             "publication_links": pgs_links,
                             "key_metrics": metric_cards,
@@ -972,6 +984,32 @@ def _workbench_results(
     )
 
 
+def prs_workbench_mode_panel(
+    state: type[rx.State],
+    selector: Callable[[], rx.Component],
+    view_mode: str,
+    compute_label: str = "Compute PRS",
+    results_table_kwargs: dict[str, Any] | None = None,
+    trait_summary_kwargs: dict[str, Any] | None = None,
+    normalizing: Any | None = None,
+) -> rx.Component:
+    """Single By PRS or By Trait workbench panel.
+
+    The shared genotype source and genome-build bar can live outside the panel,
+    which lets host apps expose By PRS / By Trait as top-level tabs while still
+    reusing the same loaded genotypes.
+    """
+    return rx.vstack(
+        _workbench_mode_controls(state),
+        selector(),
+        _workbench_compute_button(state, compute_label, normalizing=normalizing),
+        _workbench_results(state, view_mode, results_table_kwargs, trait_summary_kwargs),
+        width="100%",
+        spacing="4",
+        padding="16px",
+    )
+
+
 def prs_workbench(
     source_section: rx.Component,
     prs_state: type[rx.State],
@@ -1019,29 +1057,23 @@ def prs_workbench(
             cursor="pointer",
         )
 
-    prs_content = rx.vstack(
-        _workbench_mode_controls(prs_state),
-        prs_scores_selector(prs_state, normalizing=normalizing),
-        _workbench_compute_button(prs_state, "Compute PRS", normalizing=normalizing),
-        _workbench_results(
-            prs_state, "individual", results_table_kwargs, trait_summary_kwargs
-        ),
-        width="100%",
-        spacing="4",
-        padding="16px",
+    prs_content = prs_workbench_mode_panel(
+        prs_state,
+        lambda: prs_scores_selector(prs_state, normalizing=normalizing),
+        "individual",
+        "Compute PRS",
+        results_table_kwargs,
+        trait_summary_kwargs,
+        normalizing,
     )
-    trait_content = rx.vstack(
-        _workbench_mode_controls(trait_state),
-        trait_selector(),
-        _workbench_compute_button(
-            trait_state, "Compute PRS for Selected Traits", normalizing=normalizing
-        ),
-        _workbench_results(
-            trait_state, "grouped", results_table_kwargs, trait_summary_kwargs
-        ),
-        width="100%",
-        spacing="4",
-        padding="16px",
+    trait_content = prs_workbench_mode_panel(
+        trait_state,
+        trait_selector,
+        "grouped",
+        "Compute PRS for Selected Traits",
+        results_table_kwargs,
+        trait_summary_kwargs,
+        normalizing,
     )
 
     return rx.theme(
@@ -1050,12 +1082,12 @@ def prs_workbench(
             build_bar if build_bar is not None else rx.fragment(),
             rx.tabs.root(
                 rx.tabs.list(
-                    _tab_trigger("Select by PRS", "list-checks", "prs"),
                     _tab_trigger("Select by Trait", "layers", "trait"),
+                    _tab_trigger("Select by PRS", "list-checks", "prs"),
                     size="2",
                 ),
-                rx.tabs.content(prs_content, value="prs", width="100%"),
                 rx.tabs.content(trait_content, value="trait", width="100%"),
+                rx.tabs.content(prs_content, value="prs", width="100%"),
                 value=mode_state.compute_mode,
                 on_change=mode_state.set_compute_mode,
                 width="100%",

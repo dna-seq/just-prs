@@ -1,26 +1,66 @@
-# just-prs
+# just-prs: The Polygenic Risk Score (PRS) Toolbox
 
 [![PyPI version](https://badge.fury.io/py/just-prs.svg)](https://pypi.org/project/just-prs/)
 [![PyPI version](https://badge.fury.io/py/prs-ui.svg)](https://pypi.org/project/prs-ui/)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
+[![Research use only](https://img.shields.io/badge/use-research%20only-orange.svg)](#research-use-only-interpreting-prs-results)
+[![Not medical advice](https://img.shields.io/badge/medical-not%20advice-red.svg)](#research-use-only-interpreting-prs-results)
+[![MCP ready](https://img.shields.io/badge/MCP-Claude%20%7C%20Cursor%20%7C%20Codex-blueviolet.svg)](https://github.com/dna-seq/just-prs-mcp)
+[![Web UI](https://img.shields.io/badge/UI-browser%20app-2ea44f.svg)](#web-ui)
 
-A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (PRS)** from the [PGS Catalog](https://www.pgscatalog.org/).
+`just-prs` is a Polygenic Risk Score (PRS) toolbox for working with the
+[PGS Catalog](https://www.pgscatalog.org/): normalize VCFs, search scores and
+traits, compute PRS values, compare them with reference populations, and estimate
+absolute disease risk.
 
-## Project Structure
+The goal is not to pretend PRS science is cleaner than it is. Published PRS can
+be contradictory, unevenly validated, ancestry-biased, or simply low quality.
+Instead of showing only a tiny hand-picked highlight reel, `just-prs` gives you
+the broader research landscape with quality signals, match rates, reference
+context, and warnings so you can inspect the evidence yourself.
 
-This is a **uv workspace** with three subprojects:
+Many human traits and common diseases, such as type 2 diabetes, coronary artery
+disease, height, and longevity, are **polygenic**: they are influenced by
+thousands of small genetic effects across the genome rather than one single
+"faulty gene". A PRS adds those small effects together and places your result
+relative to a reference population. It is not a diagnosis and does not guarantee
+an outcome; it is a way to visualize inherited predisposition and, where enough
+evidence is available, translate a percentile into an absolute-risk estimate.
 
-| Package | Directory | Description |
-|---|---|---|
-| **just-prs** | `just-prs/` | Core library: PRS computation, PGS Catalog client, VCF normalization, scoring files. Published to PyPI. |
-| **prs-ui** | `prs-ui/` | Reflex web UI for interactive PRS computation. Published to PyPI. |
-| **prs-pipeline** | `prs-pipeline/` | Dagster pipeline for computing reference distributions from population panels (1000G, HGDP+1kGP). |
+You can use it three ways:
 
-The workspace root is a non-published wrapper that depends on all three subprojects and provides convenience scripts (`uv run ui`, `uv run pipeline`).
+- **Open it in the browser** with the `prs-ui` web app: upload a VCF, browse
+  traits, compute scores, and inspect bell curves, absolute-risk estimates, and
+  plain-English explanations.
+- **Use it with Claude, Cursor, Codex, Antigravity, or other AI agents** through
+  [just-prs-mcp](https://github.com/dna-seq/just-prs-mcp): ask an agent to
+  download a public genome, normalize it, search the catalog, compute PRS, and
+  explain the result in chat.
+- **Run it from the CLI or Python** for scripts, notebooks, and pipelines:
+  Polars/DuckDB-backed VCF normalization, scoring-file parsing, variant matching,
+  batch scoring, and reference-panel workflows.
+
+## Contents
+
+- [Web UI](#web-ui)
+- [Use with Claude, Cursor, Codex, Antigravity, or other agents](#use-with-claude-cursor-codex-antigravity-or-other-agents)
+- [CLI and Python](#cli-and-python)
+- [Test Genomes (Quick Play)](#test-genomes-quick-play)
+- [Research Use Only: Interpreting PRS Results](#research-use-only-interpreting-prs-results)
+- [Installation](#installation)
+- [Features](#features)
+- [Why not PLINK2?](#why-not-plink2)
+- [Project Structure](#project-structure)
+- [Embedding PRS UI in Another Reflex App](#embedding-prs-ui-in-another-reflex-app)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [Data sources](#data-sources)
 
 ## Web UI
 
-An interactive [Reflex](https://reflex.dev/) web application for browsing PGS Catalog data and computing PRS scores.
+Prefer a browser? The [Reflex](https://reflex.dev/) app lets you upload a VCF,
+browse PGS Catalog traits and scores, compute PRS results, and inspect bell
+curves, absolute-risk context, and plain-English interpretations.
 
 ![PRS Compute UI — upload VCF, select scores, compute PRS](images/PRS_screenshot.jpg)
 
@@ -32,59 +72,281 @@ uv sync --all-packages
 
 # Launch the UI (shortcut defined in pyproject.toml)
 uv run ui
-
-# Or equivalently, from the prs-ui directory:
-cd prs-ui
-uv run reflex run
 ```
 
-The UI opens at http://localhost:3000 with three tabs: **Compute PRS**, **Metadata Sheets**, and **Scoring File**.
+The UI opens at http://localhost:3000 with three tabs: **Compute PRS**,
+**Metadata Sheets**, and **Scoring File**.
 
 ### Compute PRS (default tab)
 
-A single workbench with one shared, compact genotype source feeding two selection modes:
+A single workbench has one shared genotype source feeding two selection modes:
 
-1. **Upload a VCF once** — drag-and-drop or browse into the compact source at the top; genome build is auto-detected from `##reference` and `##contig` headers. The VCF is normalized (chr prefix stripped, genotype computed, quality filtered) — normalization is the slow step (shown with an ongoing progress indicator), and a normalized file is cached so re-uploading the same VCF is instant. A collapsed normalized-data preview is available. The same uploaded VCF powers **both** selection modes below. Until a VCF is loaded the score/trait tables are browsable but **read-only** (selection is disabled with an "upload a VCF" prompt).
-2. **Pick a mode** — switch between the **Select by PRS** and **Select by Trait** sub-tabs:
-   - **Select by PRS** — use checkboxes to pick individual scores (or "Select Filtered"), click **Compute PRS**, and get an **individual** results table: PRS score, AUROC, quality assessment, evaluation population/ancestry, match rate, matched/total variants, and effect sizes. Expand any row for a bell curve, absolute-risk context, and "Ask AI" prompts.
-   - **Select by Trait** — pick whole traits grouped from the PGS Catalog (e.g. "type 2 diabetes mellitus" with 32 models). All associated PGS models are computed together and **automatically grouped by trait** — a consensus summary with bell curves, outlier detection, and quality breakdown.
-3. **Download CSV** — export computed results via the **CSV** button above the results table.
+1. **Upload a VCF once** — the app detects the genome build, normalizes the VCF,
+   caches the normalized Parquet, and feeds both selection modes.
+2. **Select by PRS or by Trait** — compute individual PGS IDs, or pick a whole
+   trait such as type 2 diabetes and aggregate all associated PGS models into a
+   consensus summary.
+3. **Download CSV** — export computed results from the results table.
 
-Per-mode controls (scoring engine, ancestry for percentiles, "Include harmonized scores") and the shared genome-build selector sit above the sub-tabs, so a single upload + build selection applies to both modes.
+The metadata and scoring-file tabs are for browsing PGS Catalog sheets and
+streaming harmonized scoring files by PGS ID.
 
-### Metadata Sheets
+## Use with Claude, Cursor, Codex, Antigravity, or other agents
 
-Browse all 7 PGS Catalog metadata sheets in a MUI DataGrid with filtering and sorting. Select rows and download their scoring files with **Download Selected**.
+The MCP server lives at
+[github.com/dna-seq/just-prs-mcp](https://github.com/dna-seq/just-prs-mcp) and
+is published as `just-prs-mcp`, so Claude Code, Cursor, Codex, Antigravity, and
+other MCP-capable agents can launch it without cloning anything. This is a
+first-class path for non-developers too: you can ask the assistant what you want
+in plain language and let it call the PRS tools.
 
-### Scoring File
+For Claude Code:
 
-Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it in the grid.
+```bash
+claude mcp add just-prs -- uvx just-prs-mcp@latest stdio
+```
 
-| Environment variable | Default | Description |
-|---------------------|---------|-------------|
-| `PRS_CACHE_DIR` | OS-dependent (via `platformdirs`) | Root directory for cached metadata and scoring files |
+For Cursor, add this to `.cursor/mcp.json` in your project, or to your user MCP
+configuration:
 
-## Features
+```json
+{
+  "mcpServers": {
+    "just-prs": {
+      "command": "uvx",
+      "args": ["just-prs-mcp@latest", "stdio"],
+      "env": {
+        "PRS_MCP_MODE": "essentials"
+      }
+    }
+  }
+}
+```
 
-- **Pure Python alternative to PLINK2** for PRS scoring, genotype extraction, and variant file operations — see [Why not PLINK2?](#why-not-plink2) below
-- **`PRSCatalog`** — search scores, compute PRS, look up evaluation performance, and estimate absolute disease risk using cleaned bulk metadata (no REST API calls needed)
-- **Absolute disease risk estimation** — converts PRS percentiles into absolute disease probabilities using population prevalence data and published effect sizes. Two mathematical models: OR-per-SD and AUC-bivariate-normal (GenoPred-style). See [methodology](docs/absolute-risk-methodology.md)
-- **Disease prevalence data** — 3-tier automated sourcing: hand-curated seed data for ~50 common traits, GWAS Catalog cohort fractions parsed from free-text sample descriptions, and PGS Catalog evaluation cohorts. Consolidated into `trait_prevalence.parquet` and synced to HuggingFace
-- **Publication citations** — PRS scores are linked to their source papers with full citations (first author, title, journal, year, DOI)
-- **pgen operations** — read `.pgen`, `.pvar.zst`, `.psam` files, extract genotypes, match variants, and score PGS IDs directly in Python via `pgenlib` + polars + numpy
-- **Trait-grouped PRS analysis** — select entire traits (e.g. "type 2 diabetes") instead of individual PGS IDs; all associated models are computed and automatically aggregated into a consensus view with bell curves, outlier detection, and quality breakdown
-- **Reusable Reflex UI components** — `prs_workbench()` (the whole single-tab By PRS / By Trait layout with a pluggable, detachable genotype source), `vcf_source_section()`, `prs_shared_build_bar()`, `prs_section()`, `trait_summary_table()`, and sub-components (`prs_scores_selector`, `prs_results_table`, etc.) embed in any Reflex app via `PRSComputeStateMixin` and its loose-coupling `load_genotypes(path)` hook. Host apps with their own genotype source can pass a `normalizing=` state var to selectors/compute controls so PRS selection stays locked while their source is still preparing genotypes.
-- **VCF normalization** — `normalize_vcf()` strips chr prefix, renames id→rsid, computes genotype from GT, applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, and writes zstd-compressed Parquet
-- **Quality assessment** — `just_prs.quality` provides pure-logic helpers (`classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`) usable from any UI or script
-- **CSV export** — download computed PRS results as CSV from the web UI or programmatically
-- **Cleanup pipeline** — normalizes genome builds, renames columns to snake_case, parses performance metrics into structured numeric fields
-- **Scoring file parquet cache** — `parse_scoring_file()` transparently caches PGS scoring files as zstd-9 compressed parquet with [PGS Catalog spec](https://www.pgscatalog.org/downloads/#dl_ftp_scoring)-driven schema overrides and embedded header metadata, giving 5-60x faster reads and ~17% smaller files than `.txt.gz`
-- **Batch reference scoring** — `compute_reference_prs_batch()` scores all ~5,000+ PGS IDs against a reference panel in one call with error tracking, quality flags, and panel-aware output
-- **HuggingFace sync** — cleaned metadata, prevalence data, publications, and scoring parquets published to [just-dna-seq/pgs-catalog](https://huggingface.co/datasets/just-dna-seq/pgs-catalog), reference distributions to [just-dna-seq/prs-percentiles](https://huggingface.co/datasets/just-dna-seq/prs-percentiles) — auto-downloaded on first use
-- **Bulk download** the entire PGS Catalog metadata (~5,000+ scores) via EBI FTP
-- Compute PRS for one or many scores against a VCF file
-- All data saved as **Parquet** for fast downstream analysis with Polars
-- [Validated against PLINK2](docs/validation.md) — produces identical results (Pearson r = 1.0, relative differences < 5e-7)
+For Codex, use the equivalent MCP server configuration:
+
+```toml
+[mcp_servers.just-prs]
+command = "uvx"
+args = ["just-prs-mcp@latest", "stdio"]
+```
+
+For Antigravity or another MCP-capable assistant, add the same server command:
+`uvx just-prs-mcp@latest stdio`.
+
+Then ask your agent something like: "Download Anton's sample genome, normalize
+it, and compute the PRS score for type 2 diabetes."
+
+## CLI and Python
+
+Run one-off analyses, scripts, notebooks, and batch jobs directly from the
+terminal or Python.
+
+```bash
+# Compute PRS for a single score
+prs compute --vcf sample.vcf.gz --pgs-id PGS000001
+
+# Multiple scores at once
+prs compute --vcf sample.vcf.gz --pgs-id PGS000001,PGS000002,PGS000003
+
+# Normalize a VCF to Parquet (strip chr prefix, compute genotype, quality filter)
+prs normalize --vcf sample.vcf.gz --pass-filters "PASS,." --min-depth 10
+
+# Search the catalog
+prs catalog scores search --term "breast cancer"
+```
+
+```python
+import polars as pl
+from pathlib import Path
+
+from just_prs import PRSCatalog, VcfFilterConfig, normalize_vcf
+from just_prs.prs import compute_prs
+
+catalog = PRSCatalog()
+
+config = VcfFilterConfig(pass_filters=["PASS", "."], min_depth=10)
+parquet_path = normalize_vcf(Path("sample.vcf.gz"), Path("sample.parquet"), config=config)
+genotypes_lf = pl.scan_parquet(parquet_path)
+
+results = catalog.search("type 2 diabetes", genome_build="GRCh38").collect()
+result = compute_prs(
+    vcf_path="sample.vcf.gz",
+    scoring_file="PGS000001",
+    genome_build="GRCh38",
+    genotypes_lf=genotypes_lf,
+)
+print(f"Score: {result.score:.6f}, Match rate: {result.match_rate:.1%}")
+```
+
+## Test Genomes (Quick Play)
+
+You can try the toolbox without using your own genome. Two public WGS VCFs from
+the `just-dna-lite` authors are documented and ready for demos, testing, and
+agent workflows:
+
+1. **Anton Kulaga's Genome** (CC0 / Public Domain)
+   - **Zenodo Record**: [18370498](https://zenodo.org/records/18370498)
+   - **VCF File**: `antonkulaga.vcf` (~482 MB)
+   - **Direct URL**: `https://zenodo.org/api/records/18370498/files/antonkulaga.vcf/content`
+
+2. **Livia Zaharia's Genome** (CC-BY-4.0)
+   - **Zenodo Record**: [19487816](https://zenodo.org/records/19487816)
+   - **VCF File**: `SIMHIFQTILQ.hard-filtered.vcf.gz` (~349 MB)
+   - **Direct URL**: `https://zenodo.org/api/records/19487816/files/SIMHIFQTILQ.hard-filtered.vcf.gz/content`
+
+An MCP-enabled agent can fetch either genome with `download_sample_genome` using
+`sample="anton"` or `sample="livia"`. You can also download a VCF and upload it
+to the browser UI, or run the CLI directly:
+
+```bash
+curl -L -o anton.vcf "https://zenodo.org/api/records/18370498/files/antonkulaga.vcf/content"
+prs compute --vcf anton.vcf --pgs-id PGS000001
+```
+
+## Research Use Only: Interpreting PRS Results
+
+The UI is designed to make the messiness visible instead of hiding it. In this
+example, several PGS models for the same intelligence-related trait are shown
+together: their percentile positions on the bell curve, variant match rates,
+quality breakdown, outliers, and consensus summary are all visible at once.
+
+![Trait-first PRS interpretation example — multiple PGS models, match rates, quality summary, and consensus bell curve](images/intelligence.jpg)
+
+When reading a result like this, look at the whole panel, not only the largest
+percentile number:
+
+- **Bell curve and markers** show where each model places the genome relative to
+  a reference population; disagreement between markers is information, not a UI
+  bug.
+- **Variant match rate** shows whether each score had enough overlapping variants
+  in the genome file to be interpretable.
+- **Quality breakdown** separates high, moderate, low, and very-low-quality
+  models, so weak models do not silently count the same as better-supported ones.
+- **Outlier and consensus summaries** help you see whether a trait-level signal is
+  stable across models or dominated by one unusual score.
+- **Source links** let you inspect the underlying PGS Catalog entries instead of
+  trusting a single opaque number.
+
+### Why not show only a few "best" scores?
+
+Because that can create a false sense of certainty. Many people arrive with
+intuitions from medical-grade genetic testing: a narrow question, a validated
+gene or variant, and a relatively clear interpretation. PRS research is not like
+that. It is a broad, statistical, still-evolving literature where scores for the
+same trait can be inconsistent, weakly validated, ancestry-biased, or sensitive
+to how the phenotype was defined.
+
+`just-prs` is intentionally a toolbox, not a black-box verdict engine. It exposes
+many available PGS Catalog models, highlights quality and match-rate problems,
+groups scores by trait, and lets you see disagreement instead of hiding it. The
+point is to help you inspect the evidence, not to pretend the field has one clean
+answer for every trait.
+
+### Why do several PRS for the same trait give different answers?
+
+This is normal, and it is one of the main reasons the UI supports **trait-first**
+analysis instead of forcing you to pick a single PGS ID. The PGS Catalog often
+has many scores for the same broad trait, but they may have been trained on
+different cohorts, ancestries, phenotype definitions, genome builds, variant
+sets, and statistical methods. A "type 2 diabetes" score from one study is not
+necessarily the same model as a "type 2 diabetes" score from another study.
+
+So if four or five PRS models disagree, it usually means one or more of these is
+true: the models are measuring slightly different definitions of the trait; some
+models are lower quality; your VCF did not match enough variants for one score;
+the score was developed in an ancestry group unlike the reference population you
+are comparing against; or the published effect sizes simply do not generalize
+well to every person.
+
+### What does "research use only" actually mean here?
+
+It means you should not treat a PRS result as medical-grade evidence. Many people
+are used to genetic tests that look at a narrow, high-confidence question, such
+as a known pathogenic variant in a clinically validated gene. PRS are different:
+they are statistical models built from many small associations, often with modest
+predictive power and uneven validation.
+
+The [PGS Catalog](https://www.pgscatalog.org/) is an excellent research resource,
+but being listed there does **not** mean every score is clinically ready,
+high-quality, ancestry-portable, or useful for an individual decision. Some
+scores are exploratory, some are trained on small or narrow cohorts, some perform
+poorly outside the original study population, and some may match too few variants
+in your genome file to be interpretable.
+
+### Which PRS should I trust more?
+
+Prefer scores with better published evaluation metrics, higher variant match
+rates, relevant ancestry information, and agreement with other high-quality
+models for the same trait. Treat a single PRS as one research signal, not as a
+verdict. The trait summary view is designed to help you see consensus and
+outliers rather than overreacting to one score.
+
+### Does a high PRS mean I will get a disease?
+
+No. A PRS is not a diagnosis. It is a statistical estimate of inherited
+predisposition relative to a reference population. Environment, age, sex,
+family history, lifestyle, clinical biomarkers, and chance can matter as much as
+or more than common genetic variants.
+
+### What should I do with a worrying result?
+
+Do not panic, and do not make medical decisions from research-grade PRS output
+alone. If a result concerns you, especially if it matches your family history or
+clinical context, discuss it with a clinician or genetic counselor and confirm
+important findings through appropriate clinical testing.
+
+### Why does ancestry matter?
+
+PRS models are often strongest in populations similar to the people used to train
+and validate them. Many published PGS Catalog scores still come from cohorts with
+heavy European ancestry bias. `just-prs` can show reference percentiles across
+available population panels, but that does not make every score equally reliable
+for every ancestry.
+
+### What is linkage disequilibrium, and why does it matter?
+
+Many GWAS variants are not proven causal variants. They are often **tagging**
+nearby genomic regions because variants close together can be inherited together;
+this correlation pattern is called **linkage disequilibrium** (LD). LD patterns
+vary between populations, so a variant that tags risk well in one ancestry group
+may tag it poorly in another. This is one reason PRS can lose accuracy when moved
+outside the cohort where they were trained.
+
+### What is penetrance, and is PRS the same thing?
+
+**Penetrance** usually describes how often people with a specific high-impact
+variant develop a related disease. PRS are different: they combine thousands of
+common variants, each usually with a tiny effect. A high PRS does not mean a
+disease is inevitable, and a low PRS does not mean protection is guaranteed. It
+is a probabilistic signal, not a deterministic mutation report.
+
+### Why does coverage or match rate matter?
+
+A PRS scoring file may contain hundreds, thousands, or millions of variants, but
+your genome file may not contain all of them. Variants can be missing because the
+input is exome-only, array-derived, low coverage, filtered, in a different genome
+build, or lacks the alleles needed to score confidently. Low match rate means the
+score is being computed from an incomplete subset of the model, so the result may
+be weak or misleading. Always inspect matched variants, total variants, and
+assumed/missing loci before interpreting a score.
+
+### Why can population reference curves disagree?
+
+Reference percentiles answer "where does this score sit compared with this
+reference panel?" They do not prove that the original PGS model works equally
+well in that population. A score can have a percentile in several 1000 Genomes
+superpopulations while still being trained mostly in Europeans, calibrated on a
+different cohort, or affected by ancestry-specific LD and allele-frequency
+patterns.
+
+### What does absolute risk mean?
+
+Absolute risk tries to convert a relative PRS percentile into a real-world
+probability using trait prevalence and published performance data. This is useful
+for context, but it is only as good as the underlying prevalence estimate, model
+quality, and study population. When the evidence is weak or missing, the app
+should show that rather than pretending the number is precise.
 
 ## Installation
 
@@ -120,62 +382,25 @@ uv run ui
 
 Only the reference-panel / `.pgen` scoring features (`prs reference …`, `prs pgen …`, and the Dagster pipeline) are unavailable on native Windows. If you need those, run them under **WSL** or **Linux**, where `pgenlib` installs from a prebuilt wheel.
 
-## Quick Start
+## Features
 
-### CLI
-
-```bash
-# Compute PRS for a single score
-prs compute --vcf sample.vcf.gz --pgs-id PGS000001
-
-# Multiple scores at once
-prs compute --vcf sample.vcf.gz --pgs-id PGS000001,PGS000002,PGS000003
-
-# Normalize a VCF to Parquet (strip chr prefix, compute genotype, quality filter)
-prs normalize --vcf sample.vcf.gz --pass-filters "PASS,." --min-depth 10
-
-# Search the catalog
-prs catalog scores search --term "breast cancer"
-```
-
-### Python
-
-```python
-import polars as pl
-from just_prs import PRSCatalog, normalize_vcf, VcfFilterConfig
-from just_prs.prs import compute_prs
-from pathlib import Path
-
-catalog = PRSCatalog()
-
-# 1. Normalize VCF to Parquet (recommended as a first step)
-config = VcfFilterConfig(pass_filters=["PASS", "."], min_depth=10)
-parquet_path = normalize_vcf(Path("sample.vcf.gz"), Path("sample.parquet"), config=config)
-
-# 2. Load as a LazyFrame — memory-efficient, reusable across multiple PRS computations
-genotypes_lf = pl.scan_parquet(parquet_path)
-
-# Search for scores
-results = catalog.search("type 2 diabetes", genome_build="GRCh38").collect()
-
-# Compute PRS using a LazyFrame (avoids re-reading the VCF for each score)
-result = compute_prs(
-    vcf_path="sample.vcf.gz",
-    scoring_file="PGS000001",
-    genome_build="GRCh38",
-    genotypes_lf=genotypes_lf,
-)
-print(f"Score: {result.score:.6f}, Match rate: {result.match_rate:.1%}")
-
-# Batch computation
-results = catalog.compute_prs_batch(
-    vcf_path=Path("sample.vcf.gz"),
-    pgs_ids=["PGS000001", "PGS000002", "PGS000003"],
-)
-
-# Look up best evaluation performance for a score
-best = catalog.best_performance(pgs_id="PGS000001").collect()
-```
+- **PRS computation from VCF** — normalize VCFs to Parquet, compute one or many
+  PGS IDs, and inspect match rates, effect sizes, quality labels, percentiles,
+  and absolute-risk context.
+- **Trait-first analysis** — select a trait such as type 2 diabetes instead of a
+  single score; compute all associated PGS models and summarize agreement,
+  outliers, and quality.
+- **PGS Catalog metadata** — search cleaned score, trait, performance,
+  publication, prevalence, and scoring-file metadata without hand-parsing the
+  catalog sheets.
+- **Fast data engine** — Polars and DuckDB-backed scoring, zstd-compressed
+  Parquet caches, and HuggingFace sync for cleaned metadata and reference
+  distributions.
+- **Reference and pgen workflows** — optional Linux/WSL support for `.pgen`,
+  `.pvar.zst`, `.psam`, 1000G / HGDP+1kGP reference scoring, and PLINK2
+  cross-validation.
+- **Reusable UI components** — embed the PRS workbench or individual Reflex
+  components in another app via `PRSComputeStateMixin` and `load_genotypes(path)`.
 
 ## Why not PLINK2?
 
@@ -221,6 +446,20 @@ prs reference score-batch --limit 50 --panel hgdp_1kg  # HGDP+1kGP panel
 ```
 
 For cross-validation against PLINK2, use `prs reference compare PGS000001` which runs both engines and reports per-sample correlation and timing.
+
+## Project Structure
+
+This is a **uv workspace** with three subprojects:
+
+| Package | Directory | Description |
+|---|---|---|
+| **just-prs** | `just-prs/` | Core library: PRS computation, PGS Catalog client, VCF normalization, scoring files. Published to PyPI. |
+| **prs-ui** | `prs-ui/` | Reflex web UI for interactive PRS computation. Published to PyPI. |
+| **prs-pipeline** | `prs-pipeline/` | Dagster pipeline for computing reference distributions from population panels (1000G, HGDP+1kGP). |
+
+The workspace root is a non-published wrapper that depends on all three
+subprojects and provides convenience scripts such as `uv run ui` and
+`uv run pipeline`.
 
 ## Embedding PRS UI in Another Reflex App
 

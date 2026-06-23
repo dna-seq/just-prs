@@ -10,6 +10,24 @@ This project is a **uv workspace** with a non-published root wrapper and three s
 
 The workspace root (`pyproject.toml` at repo root) is a non-published wrapper named `just-prs-workspace`. It depends on all three subprojects and **must re-export all CLI entry points** from subprojects so that every command is available via `uv run <name>` from the workspace root. The pipeline CLI has three main commands: `pipeline run` (full pipeline with Dagster UI), `pipeline catalog` (catalog pipeline with Dagster UI), and `pipeline launch` (Dagster UI only, no specific job pre-selected). All three launch the Dagster UI by default. Use `--headless` on `run`/`catalog` for in-process execution without UI. Tests live in `just-prs/tests/`.
 
+## Agentic Capabilities & Test Genomes
+
+This repository is built with **AI-first / Agentic workflows** in mind. If you are an AI coding agent (like Claude Code, Cursor, Codex, etc.) working in this workspace, you should know that:
+
+1. **Model Context Protocol (MCP)**: The repository is paired with **[just-prs-mcp](https://github.com/dna-seq/just-prs-mcp)**, which exposes the core library's capabilities (catalog search, VCF normalization, PRS computation, absolute risk estimation, and reference panel scoring) as standard MCP tools.
+2. **Pre-configured Test Genomes**: For testing, benchmarking, or demonstration purposes, two public whole-genome sequencing (WGS) datasets are pre-configured and documented:
+   - **Anton Kulaga's Genome** (CC0 / Public Domain): [Zenodo Record 18370498](https://zenodo.org/records/18370498)
+     - VCF File: `antonkulaga.vcf` (~482 MB)
+     - Direct URL: `https://zenodo.org/api/records/18370498/files/antonkulaga.vcf/content`
+   - **Livia Zaharia's Genome** (CC-BY-4.0): [Zenodo Record 19487816](https://zenodo.org/records/19487816)
+     - VCF File: `SIMHIFQTILQ.hard-filtered.vcf.gz` (~349 MB)
+     - Direct URL: `https://zenodo.org/api/records/19487816/files/SIMHIFQTILQ.hard-filtered.vcf.gz/content`
+
+### Quick Play for Agents:
+If you need to verify or demonstrate any PRS functionality, do not hesitate to download or use these genomes.
+- If the `just-prs-mcp` server is running, you can use the `download_sample_genome` tool with `sample="anton"` or `sample="livia"`.
+- If you need to run tests or benchmarks, you can use the cached Zenodo download helpers already present in the test suite and benchmark scripts.
+
 **ALL PIPELINE COMMANDS LAUNCH DAGSTER UI BY DEFAULT (CRITICAL).** `pipeline run`, `pipeline catalog`, and `pipeline launch` all start the Dagster webserver with monitoring UI. Headless in-process execution is only available via the explicit `--headless` flag on `run`/`catalog`. The Dagster UI URL (`http://<host>:<port>`) must always be printed prominently at startup.
 
 **EVERY CLI THAT STARTS A SERVER MUST PRINT ITS URL (CRITICAL).** When any CLI command starts a web server or UI (Reflex UI via `uv run ui` or `uv run start`, Dagster UI via `pipeline run`/`catalog`/`launch`), the URL (`http://<host>:<port>`) must be printed prominently in the first lines of output so the user always knows where to open their browser.

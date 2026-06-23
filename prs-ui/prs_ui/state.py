@@ -19,6 +19,7 @@ from typing import Any, ClassVar
 import polars as pl
 import reflex as rx
 from reflex_mui_datagrid import LazyFrameGridMixin
+from reflex_mui_datagrid.lazyframe_grid import _get_cache, apply_filter_model
 
 from just_prs.ftp import (
     download_metadata_sheet,
@@ -74,8 +75,8 @@ class AppState(rx.State):
     status_message: str = ""
     pgs_id_input: str = "PGS000001"
     genome_build: str = "GRCh38"
-    active_tab: str = "compute"
-    compute_mode: str = "prs"
+    active_tab: str = "trait"
+    compute_mode: str = "trait"
 
     def set_pgs_id(self, value: str) -> None:
         self.pgs_id_input = value
@@ -611,6 +612,37 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
 
     def handle_lf_grid_scroll_end(self, params: dict) -> Any:
         """Load the next scroll chunk, then mark selected trait rows checked."""
+        yield from LazyFrameGridMixin.handle_lf_grid_scroll_end(self, params)
+        self._sync_loaded_trait_selection()
+
+    def _sync_loaded_trait_selection(self) -> None:
+        """Project durable trait selection onto the currently loaded grid rows."""
+        selected = set(self.selected_traits)
+        ids: list[int] = []
+        for row in self.lf_grid_rows:  # type: ignore[attr-defined]
+            trait = str(row.get("trait") or "")
+            row_id = row.get("__row_id__")
+            if trait in selected and row_id is not None:
+                ids.append(int(row_id))
+        self.lf_grid_row_selection_model = {"type": "include", "ids": ids}  # type: ignore[assignment]
+
+    def handle_lf_grid_filter(self, filter_model: dict) -> Any:
+        """Apply trait-grid filters, then restore trait checkbox selection."""
+        yield from LazyFrameGridMixin.handle_lf_grid_filter(self, filter_model)
+        self._sync_loaded_trait_selection()
+
+    def handle_lf_grid_sort(self, sort_model: list) -> Any:
+        """Apply trait-grid sorting, then restore trait checkbox selection."""
+        yield from LazyFrameGridMixin.handle_lf_grid_sort(self, sort_model)
+        self._sync_loaded_trait_selection()
+
+    def clear_lf_grid_filters(self) -> Any:
+        """Clear trait-grid filters, then restore trait checkbox selection."""
+        yield from LazyFrameGridMixin.clear_lf_grid_filters(self)
+        self._sync_loaded_trait_selection()
+
+    def handle_lf_grid_scroll_end(self, params: dict) -> Any:
+        """Load another trait-grid chunk, then restore checkbox selection."""
         yield from LazyFrameGridMixin.handle_lf_grid_scroll_end(self, params)
         self._sync_loaded_trait_selection()
 

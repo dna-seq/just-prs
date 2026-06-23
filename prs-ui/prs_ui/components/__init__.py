@@ -11,6 +11,7 @@ from prs_ui.components.prs_section import (
     prs_section,
     prs_shared_build_bar,
     prs_workbench,
+    prs_workbench_mode_panel,
     trait_summary_table,
 )
 from prs_ui.components.vcf_source import vcf_source_section
@@ -26,6 +27,7 @@ __all__ = [
     "prs_section",
     "prs_shared_build_bar",
     "prs_workbench",
+    "prs_workbench_mode_panel",
     "trait_summary_table",
     "vcf_source_section",
 ]

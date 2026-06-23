@@ -1848,7 +1848,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     def build_trait_summary(
         self,
         large_chart_threshold: int = 4,
-        large_chart_height: int = 520,
+        large_chart_height: int = 400,
         large_chart_max_width: int = 1800,
     ) -> None:
         """Group computed PRS rows by EFO ID and build a citizen-facing summary.
@@ -2085,95 +2085,101 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "labelMinGapZ": 0.18,
                 }
 
-            # Key metrics as structured data for metric_list renderer
-            key_metrics: list[dict[str, Any]] = []
+            trait_header: list[dict[str, Any]] = [{
+                "label": "Trait",
+                "value": trait,
+                "tone": "info",
+                "subtext": (
+                    f"{efo_id} · {len(rows)} PRS model(s)"
+                    if efo_id
+                    else f"{len(rows)} PRS model(s)"
+                ),
+            }]
+
+            # Key metrics as structured data for metric_list renderer.  Keep
+            # four headline cards first so the expanded trait panel scans well.
+            reliability_metrics: list[dict[str, Any]] = []
+            headline_metrics: list[dict[str, Any]] = []
+            secondary_metrics: list[dict[str, Any]] = []
             if reliability == "⚠ UNRELIABLE":
-                key_metrics.append({
+                reliability_metrics.append({
                     "label": "⚠ DATA UNRELIABLE",
                     "value": f"0 of {len(rows)} models usable",
                     "tone": "danger",
-                    "subtext": (
-                        "All models have <50% model coverage. "
-                        "Percentiles are unreliable because too little of each PRS model "
-                        "was found in this genome file. Check genome build and VCF coverage."
-                    ),
+                    "subtext": "Low model coverage; interpret cautiously.",
                 })
             elif reliability == "Partial match":
-                key_metrics.append({
+                reliability_metrics.append({
                     "label": "⚠ Partial data",
                     "value": f"{n_usable} of {len(rows)} models usable",
                     "tone": "warning",
-                    "subtext": (
-                        "Some models have <50% model coverage. "
-                        "Percentiles below are from usable models only."
-                    ),
+                    "subtext": "Percentiles use usable models only.",
                 })
             if best_model_pctl is not None:
                 best_usable_id = str(best_usable_row.get("pgs_id", "")) if best_usable_row else ""
-                key_metrics.append({
+                headline_metrics.append({
                     "label": f"Your Percentile ({best_usable_id})",
                     "value": f"{best_model_pctl:.1f}",
                     "tone": _percentile_tone(best_model_pctl),
-                    "subtext": "from highest-quality model with ≥50% model coverage",
+                    "subtext": "Best usable model (≥50% coverage)",
                 })
             elif reliability != "⚠ UNRELIABLE":
-                key_metrics.append({
+                headline_metrics.append({
                     "label": "Your Percentile",
                     "value": "N/A",
                     "tone": "neutral",
                     "subtext": "No usable model with reference data available",
                 })
             if median_pct is not None:
-                key_metrics.append({
+                headline_metrics.append({
                     "label": "Median Percentile",
                     "value": f"{median_pct:.1f}",
                     "tone": _percentile_tone(median_pct),
                     "subtext": f"across {len(pct_values)} usable model(s)" if usable_pct_by_id else "across all models (none usable)",
                 })
-            if mean_pct is not None:
-                key_metrics.append({
-                    "label": "Mean Percentile",
-                    "value": f"{mean_pct:.1f}",
-                    "tone": _percentile_tone(mean_pct),
-                    "subtext": "arithmetic average of usable models",
-                })
-            if std_pct is not None:
-                key_metrics.append({
-                    "label": "Model Spread (SD)",
-                    "value": f"{std_pct:.1f} pts",
-                    "tone": "warning" if std_pct > 15 else "neutral",
-                    "subtext": "standard deviation of model percentiles",
-                })
-            if best_risk and best_risk != "N/A":
-                key_metrics.append({
-                    "label": "Absolute Risk",
-                    "value": best_risk.split("(")[0].strip(),
-                    "tone": "warning" if best_user_pct is not None and pop_avg_pct is not None and best_user_pct > pop_avg_pct else "neutral",
-                    "subtext": f"pop. avg: {pop_avg_pct:.1f}%" if pop_avg_pct is not None else "best model",
-                })
-            key_metrics.append({
+            headline_metrics.append({
                 "label": "Models",
                 "value": f"{n_usable} usable / {len(rows)} total",
                 "tone": "danger" if n_usable == 0 else "warning" if n_usable < len(rows) else "neutral",
                 "subtext": f"{len(pct_by_id)} with percentiles",
             })
-
             best_sq = float(best_row.get("synthetic_quality") or 0)
             best_sq_label = str(best_row.get("synthetic_quality_label") or "")
             best_tier_metric = str(best_row.get("quality_tier_metric") or "No metric")
-            key_metrics.append({
+            headline_metrics.append({
                 "label": f"Best Model ({best_pgs_id})",
                 "value": f"{best_tier_metric} — score {best_sq:.0f}",
                 "tone": _synthetic_quality_tone(best_sq_label),
                 "subtext": f"Rank: {best_sq_label}; match {float(best_row.get('match_rate') or 0):.1f}%",
             })
+            if mean_pct is not None:
+                secondary_metrics.append({
+                    "label": "Mean Percentile",
+                    "value": f"{mean_pct:.1f}",
+                    "tone": _percentile_tone(mean_pct),
+                    "subtext": "Average of usable models",
+                })
+            if std_pct is not None:
+                secondary_metrics.append({
+                    "label": "Model Spread (SD)",
+                    "value": f"{std_pct:.1f} pts",
+                    "tone": "warning" if std_pct > 15 else "neutral",
+                    "subtext": "SD of model percentiles",
+                })
+            if best_risk and best_risk != "N/A":
+                secondary_metrics.append({
+                    "label": "Absolute Risk",
+                    "value": best_risk.split("(")[0].strip(),
+                    "tone": "warning" if best_user_pct is not None and pop_avg_pct is not None and best_user_pct > pop_avg_pct else "neutral",
+                    "subtext": f"pop. avg: {pop_avg_pct:.1f}%" if pop_avg_pct is not None else "best model",
+                })
 
             if len(rows) > 1:
                 worst_pgs_id = str(worst_row.get("pgs_id", ""))
                 worst_sq = float(worst_row.get("synthetic_quality") or 0)
                 worst_sq_label = str(worst_row.get("synthetic_quality_label") or "")
                 worst_tier_metric = str(worst_row.get("quality_tier_metric") or "No metric")
-                key_metrics.append({
+                secondary_metrics.append({
                     "label": f"Worst Model ({worst_pgs_id})",
                     "value": f"{worst_tier_metric} — score {worst_sq:.0f}",
                     "tone": _synthetic_quality_tone(worst_sq_label),
@@ -2181,21 +2187,22 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 })
 
             if risk_vs_average != "N/A":
-                key_metrics.append({
+                secondary_metrics.append({
                     "label": "Risk vs Average",
                     "value": risk_vs_average,
                     "tone": "warning" if best_user_pct is not None and pop_avg_pct is not None and best_user_pct > pop_avg_pct else "neutral",
-                    "subtext": "your risk compared to population average",
+                    "subtext": "Compared to population average",
                 })
             quality_dist = _quality_distribution(rows)
             quality_text = _format_quality_distribution(quality_dist)
             if sum(quality_dist.values()) > 0:
-                key_metrics.append({
+                secondary_metrics.append({
                     "label": "Quality Breakdown",
                     "value": quality_text,
                     "tone": _quality_distribution_tone(quality_dist),
                     "subtext": "Counts by PRS model quality label",
                 })
+            key_metrics = reliability_metrics + headline_metrics + secondary_metrics
 
             quick_flags: list[dict[str, Any]] = [
                 {"label": overall_signal, "tone": _trait_signal_tone(overall_signal)},
@@ -2304,6 +2311,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     for row in rows
                 }),
                 "publication_links": _publication_link_items(rows),
+                "trait_header": trait_header,
                 "key_metrics": key_metrics,
                 "confidence_segments": confidence_segments,
                 "percentile_chart": percentile_chart,

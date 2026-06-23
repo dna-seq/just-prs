@@ -585,8 +585,15 @@ def catalog_download(
 def compute(
     vcf: Annotated[Path, typer.Option("--vcf", "-v", help="Path to VCF file")],
     pgs_id: Annotated[
-        str, typer.Option("--pgs-id", "-p", help="PGS ID(s), comma-separated")
-    ],
+        Optional[str], typer.Option("--pgs-id", "-p", help="PGS ID(s), comma-separated")
+    ] = None,
+    scoring_file: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--scoring-file", "-s",
+            help="Local scoring file (.txt.gz or .parquet) instead of a PGS Catalog ID",
+        ),
+    ] = None,
     build: Annotated[
         str, typer.Option("--build", "-b", help="Genome build")
     ] = "GRCh38",
@@ -607,39 +614,62 @@ def compute(
         ),
     ] = "auto",
 ) -> None:
-    """Compute polygenic risk score(s) for a VCF file."""
-    pgs_ids = [pid.strip() for pid in pgs_id.split(",")]
+    """Compute polygenic risk score(s) for a VCF file.
 
-    console.print(f"Computing PRS for {len(pgs_ids)} score(s) on {vcf}...")
+    Use --pgs-id to score PGS Catalog models, or --scoring-file to score a
+    custom local scoring file (.txt.gz or .parquet with effect_allele,
+    effect_weight, and position columns).
+    """
+    if scoring_file and pgs_id:
+        console.print("[red]Provide either --pgs-id or --scoring-file, not both.[/red]")
+        raise typer.Exit(code=1)
+    if not scoring_file and not pgs_id:
+        console.print("[red]Provide --pgs-id or --scoring-file.[/red]")
+        raise typer.Exit(code=1)
 
-    results: list[PRSResult]
-    if len(pgs_ids) == 1:
-        with PGSCatalogClient() as client:
-            score_info = client.get_score(pgs_ids[0])
+    if scoring_file:
+        label = scoring_file.stem
+        console.print(f"Computing PRS from custom scoring file [cyan]{scoring_file}[/cyan] on {vcf}...")
         result = compute_prs(
             vcf_path=vcf,
-            scoring_file=pgs_ids[0],
+            scoring_file=scoring_file,
             genome_build=build,
             cache_dir=cache_dir,
-            pgs_id=pgs_ids[0],
-            trait_reported=score_info.trait_reported,
+            pgs_id=label,
             genotype_input_mode=genotype_input_mode,
         )
-        results = [result]
+        results: list[PRSResult] = [result]
     else:
-        batch = compute_prs_batch(
-            vcf_path=vcf,
-            pgs_ids=pgs_ids,
-            genome_build=build,
-            cache_dir=cache_dir,
-            genotype_input_mode=genotype_input_mode,
-        )
-        results = batch.results
-        if batch.failed_ids:
-            console.print(
-                f"[yellow]Warning: {batch.n_failed}/{batch.n_total} scores failed: "
-                f"{', '.join(batch.failed_ids)}[/yellow]"
+        pgs_ids = [pid.strip() for pid in pgs_id.split(",")]
+        console.print(f"Computing PRS for {len(pgs_ids)} score(s) on {vcf}...")
+
+        if len(pgs_ids) == 1:
+            with PGSCatalogClient() as client:
+                score_info = client.get_score(pgs_ids[0])
+            result = compute_prs(
+                vcf_path=vcf,
+                scoring_file=pgs_ids[0],
+                genome_build=build,
+                cache_dir=cache_dir,
+                pgs_id=pgs_ids[0],
+                trait_reported=score_info.trait_reported,
+                genotype_input_mode=genotype_input_mode,
             )
+            results = [result]
+        else:
+            batch = compute_prs_batch(
+                vcf_path=vcf,
+                pgs_ids=pgs_ids,
+                genome_build=build,
+                cache_dir=cache_dir,
+                genotype_input_mode=genotype_input_mode,
+            )
+            results = batch.results
+            if batch.failed_ids:
+                console.print(
+                    f"[yellow]Warning: {batch.n_failed}/{batch.n_total} scores failed: "
+                    f"{', '.join(batch.failed_ids)}[/yellow]"
+                )
 
     table = Table(title="PRS Results")
     table.add_column("PGS ID", style="cyan")

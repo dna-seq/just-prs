@@ -71,10 +71,10 @@ def faq_panel() -> rx.Component:
             "What is a polygenic risk score?",
             rx.text(
                 "A polygenic risk score combines many genetic variants into one number "
-                "using weights from scientific studies. It estimates genetic tendency "
-                "for a trait relative to a reference population. It is not a diagnosis, "
-                "and it does not include environment, family history, age, lifestyle, "
-                "or clinical measurements.",
+                "using weights from scientific studies (GWAS). It estimates genetic "
+                "predisposition for a trait relative to a reference population. It is "
+                "not a diagnosis, and it does not include environment, family history, "
+                "age, lifestyle, or clinical measurements.",
                 size="2",
                 line_height="1.6",
             ),
@@ -91,24 +91,133 @@ def faq_panel() -> rx.Component:
             ),
         ),
         _faq_item(
-            "How should I interpret the result?",
+            "Does a high PRS mean I will get a disease?",
+            rx.vstack(
+                rx.text(
+                    "No. Every complex trait has a heritability — the fraction of variation "
+                    "in a population explained by genetics. For most common diseases "
+                    "heritability is moderate (roughly 30–60 %). PRS never capture all of "
+                    "that heritability: current models typically explain only 5–15 % of "
+                    "total trait variance. This gap (missing heritability) exists because "
+                    "PRS are built from common variants with individually tiny effects, "
+                    "while rare variants, structural variation, and gene–environment "
+                    "interactions also contribute.",
+                    size="2",
+                    line_height="1.6",
+                ),
+                rx.text(
+                    "There is also a causality gap. GWAS variants used in PRS are usually "
+                    "not the causal variants — they are tag SNPs in linkage disequilibrium "
+                    "(LD) with the true causal loci. A PRS is a statistical proxy, not a "
+                    "mechanistic readout. A high PRS shifts your estimated risk upward "
+                    "relative to the reference population, but environment, age, sex, "
+                    "lifestyle, and clinical biomarkers often matter as much or more.",
+                    size="2",
+                    line_height="1.6",
+                ),
+                spacing="2",
+            ),
+        ),
+        _faq_item(
+            "Why do several PRS for the same trait give different answers?",
             rx.text(
-                "Look at the percentile, model quality, variant match rate, and whether "
-                "different scores for the same trait agree. A high percentile means your "
-                "score is high compared with the selected reference group, not that you "
-                "will certainly develop the condition. Low match rates or low model "
-                "quality should make the result less trusted.",
+                "This is normal. The PGS Catalog often has many scores for the same "
+                "broad trait, but they may have been trained on different cohorts, "
+                "ancestries, phenotype definitions, variant sets, and statistical "
+                "methods. Showing only a few 'best' scores would create a false sense "
+                "of certainty. Prefer scores with better published evaluation metrics, "
+                "higher variant match rates, and agreement with other high-quality "
+                "models for the same trait. The trait summary view is designed to help "
+                "you see consensus and outliers rather than overreacting to one score.",
                 size="2",
                 line_height="1.6",
             ),
         ),
         _faq_item(
-            "Why are there By PRS and By Trait tabs?",
+            "Why is my coverage / match rate so low?",
+            rx.vstack(
+                rx.text(
+                    "When you see a low match rate (e.g. 12 %) it means your genome file "
+                    "only contains that fraction of the variants the PRS model expects. "
+                    "Common reasons:",
+                    size="2",
+                    line_height="1.6",
+                ),
+                rx.text(
+                    "Microarray-based consumer tests (23andMe, AncestryDNA, MyHeritage, "
+                    "etc.) are not genome sequencing — they use genotyping chips that "
+                    "measure a fixed set of ~600–700k pre-selected SNP positions out of "
+                    "~3 billion base pairs. A PRS model may need variants that are simply "
+                    "not on the chip. Without imputation (statistical inference of missing "
+                    "genotypes from reference panels), microarray-derived VCFs will have "
+                    "low coverage for many PRS models. Imputation support in just-prs is "
+                    "in progress. Some consumer services (e.g. Dante Labs, ITDNA) offer "
+                    "real whole-genome sequencing — if yours provides a 30×+ WGS VCF, "
+                    "coverage should be substantially better.",
+                    size="2",
+                    line_height="1.6",
+                ),
+                rx.text(
+                    "Exome sequencing covers only protein-coding regions (~1–2 % of the "
+                    "genome), while most GWAS tag SNPs sit in non-coding regions. "
+                    "Low-pass WGS (< 4×) may not call low-confidence variants reliably. "
+                    "Genome build mismatches (GRCh37 vs GRCh38) will also cause positions "
+                    "not to match. Whole-genome sequencing at 30× or higher typically "
+                    "covers the vast majority of PRS variants directly.",
+                    size="2",
+                    line_height="1.6",
+                ),
+                spacing="2",
+            ),
+        ),
+        _faq_item(
+            "How is score quality determined?",
+            rx.vstack(
+                rx.text(
+                    "just-prs computes a synthetic quality score (0–100) from the model's "
+                    "published metadata, based on four factors: (1) discrimination metric "
+                    "— models are tiered by what performance data is available (AUROC or "
+                    "C-index is strongest, then beta, then OR/HR, then nothing); "
+                    "(2) cohort size — larger validation cohorts score higher; "
+                    "(3) match rate — fraction of scoring variants found in the sample; "
+                    "(4) harmonized penalty — 10 % reduction for coordinate-lifted scores.",
+                    size="2",
+                    line_height="1.6",
+                ),
+                rx.text(
+                    "After PRS computation on real genomes, a combined quality score "
+                    "blends the synthetic score (40 %) with practical signals: match-rate "
+                    "consistency (25 %), percentile stability (15 %), and absolute-risk "
+                    "concordance (20 %). The combined score drives the color-coded quality "
+                    "label (High / Normal / Moderate / Low) shown in the results.",
+                    size="2",
+                    line_height="1.6",
+                ),
+                spacing="2",
+            ),
+        ),
+        _faq_item(
+            "Why does ancestry matter?",
             rx.text(
-                "By PRS is for targeted analysis of known PGS Catalog models. By Trait "
-                "starts from a disease or phenotype name and computes related models "
-                "together, which is usually easier when you are exploring a health topic "
-                "rather than validating one specific score.",
+                "PRS models are strongest in populations similar to the training cohort. "
+                "Many published scores come from European-ancestry-heavy cohorts. "
+                "Accuracy drops across populations because (1) linkage disequilibrium "
+                "patterns vary — a tag SNP that works well in one ancestry group may tag "
+                "poorly in another, and (2) allele frequencies and effect sizes differ, "
+                "shifting score distributions. Reference percentiles across ancestry "
+                "panels do not prove the model works equally well in every population.",
+                size="2",
+                line_height="1.6",
+            ),
+        ),
+        _faq_item(
+            "What does absolute risk mean?",
+            rx.text(
+                "Absolute risk converts a relative PRS percentile into a real-world "
+                "probability using trait prevalence and published performance data. "
+                "This is useful for context, but it is only as good as the underlying "
+                "prevalence estimate, model quality, and study population. When the "
+                "evidence is weak or missing, the result should be treated with caution.",
                 size="2",
                 line_height="1.6",
             ),

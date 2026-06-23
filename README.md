@@ -8,16 +8,28 @@
 [![MCP ready](https://img.shields.io/badge/MCP-Claude%20%7C%20Cursor%20%7C%20Codex-blueviolet.svg)](https://github.com/dna-seq/just-prs-mcp)
 [![Web UI](https://img.shields.io/badge/UI-browser%20app-2ea44f.svg)](#web-ui)
 
-`just-prs` is a Polygenic Risk Score (PRS) toolbox for working with the
-[PGS Catalog](https://www.pgscatalog.org/): normalize VCFs, search scores and
-traits, compute PRS values, compare them with reference populations, and estimate
-absolute disease risk.
+`just-prs` is a Polygenic Risk Score (PRS) toolbox with access to **5,000+
+published scoring models** from the
+[PGS Catalog](https://www.pgscatalog.org/), covering thousands of traits and
+diseases. You can also bring **your own scoring files** — the Python API accepts
+any local `.txt.gz` or `.parquet` file with the standard columns, so you are not
+limited to what is in the catalog. Normalize VCFs, search scores and traits,
+compute PRS values, compare them with reference populations, and estimate
+absolute disease risk. When a result is hard to interpret, ask an AI assistant
+— `just-prs` integrates with
+**Claude, ChatGPT, Cursor, Codex, and other agents** via
+[MCP](https://github.com/dna-seq/just-prs-mcp), so you can compute a score and
+have it explained in plain language in the same conversation.
 
-The goal is not to pretend PRS science is cleaner than it is. Published PRS can
-be contradictory, unevenly validated, ancestry-biased, or simply low quality.
-Instead of showing only a tiny hand-picked highlight reel, `just-prs` gives you
-the broader research landscape with quality signals, match rates, reference
-context, and warnings so you can inspect the evidence yourself.
+Most PRS tools either hide the mess behind a single curated score or dump raw
+catalog data with no guidance. `just-prs` does neither — it exposes **every
+available model** for a trait and gives you the tools to decide which ones to
+trust: synthetic and combined quality scores, discrimination-tier labels,
+variant match rates, reference-panel percentiles across ancestry groups,
+absolute-risk estimates with confidence context, and trait-level summaries that
+show where models agree and where they don't. The goal is honesty, not
+simplicity theater: PRS science is noisy, and you deserve to see that noise
+together with the metrics that help you navigate it.
 
 Many human traits and common diseases, such as type 2 diabetes, coronary artery
 disease, height, and longevity, are **polygenic**: they are influenced by
@@ -143,11 +155,14 @@ Run one-off analyses, scripts, notebooks, and batch jobs directly from the
 terminal or Python.
 
 ```bash
-# Compute PRS for a single score
+# Compute PRS for a single PGS Catalog score
 prs compute --vcf sample.vcf.gz --pgs-id PGS000001
 
-# Multiple scores at once
+# Multiple catalog scores at once
 prs compute --vcf sample.vcf.gz --pgs-id PGS000001,PGS000002,PGS000003
+
+# Use your own scoring file instead of the PGS Catalog
+prs compute --vcf sample.vcf.gz --scoring-file my_custom_score.txt.gz
 
 # Normalize a VCF to Parquet (strip chr prefix, compute genotype, quality filter)
 prs normalize --vcf sample.vcf.gz --pass-filters "PASS,." --min-depth 10
@@ -169,7 +184,7 @@ config = VcfFilterConfig(pass_filters=["PASS", "."], min_depth=10)
 parquet_path = normalize_vcf(Path("sample.vcf.gz"), Path("sample.parquet"), config=config)
 genotypes_lf = pl.scan_parquet(parquet_path)
 
-results = catalog.search("type 2 diabetes", genome_build="GRCh38").collect()
+# Score a PGS Catalog model
 result = compute_prs(
     vcf_path="sample.vcf.gz",
     scoring_file="PGS000001",
@@ -177,6 +192,14 @@ result = compute_prs(
     genotypes_lf=genotypes_lf,
 )
 print(f"Score: {result.score:.6f}, Match rate: {result.match_rate:.1%}")
+
+# Or score a custom local file (any .txt.gz or .parquet with standard columns)
+result = compute_prs(
+    vcf_path="sample.vcf.gz",
+    scoring_file=Path("my_custom_score.txt.gz"),
+    genome_build="GRCh38",
+    genotypes_lf=genotypes_lf,
+)
 ```
 
 ## Test Genomes (Quick Play)
@@ -206,10 +229,10 @@ prs compute --vcf anton.vcf --pgs-id PGS000001
 
 ## Research Use Only: Interpreting PRS Results
 
-The UI is designed to make the messiness visible instead of hiding it. In this
-example, several PGS models for the same intelligence-related trait are shown
-together: their percentile positions on the bell curve, variant match rates,
-quality breakdown, outliers, and consensus summary are all visible at once.
+In this example, several PGS models for the same intelligence-related trait are
+shown together: their percentile positions on the bell curve, variant match
+rates, quality breakdown, outliers, and consensus summary are all visible at
+once.
 
 ![Trait-first PRS interpretation example — multiple PGS models, match rates, quality summary, and consensus bell curve](images/intelligence.jpg)
 
@@ -228,37 +251,6 @@ percentile number:
 - **Source links** let you inspect the underlying PGS Catalog entries instead of
   trusting a single opaque number.
 
-### Why not show only a few "best" scores?
-
-Because that can create a false sense of certainty. Many people arrive with
-intuitions from medical-grade genetic testing: a narrow question, a validated
-gene or variant, and a relatively clear interpretation. PRS research is not like
-that. It is a broad, statistical, still-evolving literature where scores for the
-same trait can be inconsistent, weakly validated, ancestry-biased, or sensitive
-to how the phenotype was defined.
-
-`just-prs` is intentionally a toolbox, not a black-box verdict engine. It exposes
-many available PGS Catalog models, highlights quality and match-rate problems,
-groups scores by trait, and lets you see disagreement instead of hiding it. The
-point is to help you inspect the evidence, not to pretend the field has one clean
-answer for every trait.
-
-### Why do several PRS for the same trait give different answers?
-
-This is normal, and it is one of the main reasons the UI supports **trait-first**
-analysis instead of forcing you to pick a single PGS ID. The PGS Catalog often
-has many scores for the same broad trait, but they may have been trained on
-different cohorts, ancestries, phenotype definitions, genome builds, variant
-sets, and statistical methods. A "type 2 diabetes" score from one study is not
-necessarily the same model as a "type 2 diabetes" score from another study.
-
-So if four or five PRS models disagree, it usually means one or more of these is
-true: the models are measuring slightly different definitions of the trait; some
-models are lower quality; your VCF did not match enough variants for one score;
-the score was developed in an ancestry group unlike the reference population you
-are comparing against; or the published effect sizes simply do not generalize
-well to every person.
-
 ### What does "research use only" actually mean here?
 
 It means you should not treat a PRS result as medical-grade evidence. Many people
@@ -274,71 +266,139 @@ scores are exploratory, some are trained on small or narrow cohorts, some perfor
 poorly outside the original study population, and some may match too few variants
 in your genome file to be interpretable.
 
-### Which PRS should I trust more?
+### Why do several PRS for the same trait give different answers, and which should I trust?
+
+This is normal, and it is one of the main reasons the UI supports **trait-first**
+analysis and shows many models instead of a hand-picked highlight reel. The PGS
+Catalog often has many scores for the same broad trait, but they may have been
+trained on different cohorts, ancestries, phenotype definitions, genome builds,
+variant sets, and statistical methods. A "type 2 diabetes" score from one study
+is not necessarily the same model as a "type 2 diabetes" score from another.
+
+So if four or five PRS models disagree, it usually means one or more of these is
+true: the models are measuring slightly different definitions of the trait; some
+models are lower quality; your VCF did not match enough variants for one score;
+the score was developed in an ancestry group unlike the reference population you
+are comparing against; or the published effect sizes simply do not generalize
+well to every person.
 
 Prefer scores with better published evaluation metrics, higher variant match
 rates, relevant ancestry information, and agreement with other high-quality
 models for the same trait. Treat a single PRS as one research signal, not as a
-verdict. The trait summary view is designed to help you see consensus and
+verdict; the trait summary view is designed to help you see consensus and
 outliers rather than overreacting to one score.
 
 ### Does a high PRS mean I will get a disease?
 
-No. A PRS is not a diagnosis. It is a statistical estimate of inherited
-predisposition relative to a reference population. Environment, age, sex,
-family history, lifestyle, clinical biomarkers, and chance can matter as much as
-or more than common genetic variants.
+No. Every complex trait has a **heritability** — the fraction of variation in a
+population explained by genetics. For most common diseases heritability is
+moderate (roughly 30–60 %; only a few traits like height or some autoimmune
+conditions reach higher). PRS never capture all of that heritability: current
+GWAS-based models typically explain only a fraction of it, sometimes as little as
+5–15 % of total trait variance. The gap between measured PRS prediction and true
+heritability — often called **missing heritability** — arises because PRS are
+built from common variants with individually tiny effects, while rare variants,
+structural variation, gene–gene interactions, and gene–environment interactions
+also contribute.
 
-### What should I do with a worrying result?
+There is also a **causality gap**. GWAS variants used in PRS are usually not the
+causal variants themselves. They are **tag SNPs** — markers in **linkage
+disequilibrium (LD)** with the true causal loci. A PRS is therefore a statistical
+proxy, not a mechanistic readout. When LD patterns differ (e.g. across
+ancestries), the tag can lose its signal entirely, which is one reason scores
+trained in one population often transfer poorly to another.
 
-Do not panic, and do not make medical decisions from research-grade PRS output
-alone. If a result concerns you, especially if it matches your family history or
-clinical context, discuss it with a clinician or genetic counselor and confirm
-important findings through appropriate clinical testing.
+In practice this means a high PRS shifts your estimated risk upward relative to
+the reference population, but the absolute magnitude of that shift is usually
+modest. Environment, age, sex, lifestyle, clinical biomarkers, and chance
+often matter as much as or more than the common-variant signal a PRS captures.
+A high PRS is not a diagnosis, and a low PRS is not a guarantee of protection.
 
 ### Why does ancestry matter?
 
 PRS models are often strongest in populations similar to the people used to train
 and validate them. Many published PGS Catalog scores still come from cohorts with
-heavy European ancestry bias. `just-prs` can show reference percentiles across
-available population panels, but that does not make every score equally reliable
-for every ancestry.
+heavy European ancestry bias. There are two main reasons accuracy drops across
+populations:
 
-### What is linkage disequilibrium, and why does it matter?
+1. **Linkage disequilibrium (LD).** Many GWAS variants are not proven causal
+   variants — they are **tagging** nearby genomic regions because variants close
+   together tend to be inherited together. LD patterns vary between populations,
+   so a variant that tags risk well in one ancestry group may tag it poorly in
+   another. This is one of the primary reasons PRS lose accuracy when applied
+   outside the cohort where they were trained.
 
-Many GWAS variants are not proven causal variants. They are often **tagging**
-nearby genomic regions because variants close together can be inherited together;
-this correlation pattern is called **linkage disequilibrium** (LD). LD patterns
-vary between populations, so a variant that tags risk well in one ancestry group
-may tag it poorly in another. This is one reason PRS can lose accuracy when moved
-outside the cohort where they were trained.
+2. **Allele frequencies and effect sizes.** The frequency of risk alleles and
+   their estimated effect sizes can differ across populations, shifting score
+   distributions and weakening the statistical signal the model was calibrated on.
 
-### What is penetrance, and is PRS the same thing?
-
-**Penetrance** usually describes how often people with a specific high-impact
-variant develop a related disease. PRS are different: they combine thousands of
-common variants, each usually with a tiny effect. A high PRS does not mean a
-disease is inevitable, and a low PRS does not mean protection is guaranteed. It
-is a probabilistic signal, not a deterministic mutation report.
-
-### Why does coverage or match rate matter?
-
-A PRS scoring file may contain hundreds, thousands, or millions of variants, but
-your genome file may not contain all of them. Variants can be missing because the
-input is exome-only, array-derived, low coverage, filtered, in a different genome
-build, or lacks the alleles needed to score confidently. Low match rate means the
-score is being computed from an incomplete subset of the model, so the result may
-be weak or misleading. Always inspect matched variants, total variants, and
-assumed/missing loci before interpreting a score.
-
-### Why can population reference curves disagree?
-
-Reference percentiles answer "where does this score sit compared with this
-reference panel?" They do not prove that the original PGS model works equally
+Because of this, reference percentiles ("where does this score sit compared with
+this reference panel?") do not prove that the original PGS model works equally
 well in that population. A score can have a percentile in several 1000 Genomes
 superpopulations while still being trained mostly in Europeans, calibrated on a
 different cohort, or affected by ancestry-specific LD and allele-frequency
-patterns.
+patterns. `just-prs` can show reference percentiles across available population
+panels, but that does not make every score equally reliable for every ancestry.
+
+### Why is my coverage / match rate so low?
+
+When you see a low match rate (e.g. 12 %) it means that out of all the variants
+the PRS model expects, your genome file only contains that fraction. The rest are
+missing — typically because:
+
+- **Microarray-based consumer tests (23andMe, AncestryDNA, MyHeritage, etc.)
+  are not genome sequencing,** despite marketing that sometimes implies
+  otherwise. These services use **genotyping microarrays** — chips that measure
+  a fixed set of ~600 k–700 k pre-selected SNP positions out of the ~3 billion
+  base pairs in your genome. A PRS model may require variants that simply are
+  not on the chip, and there is no way to recover them from the raw data without
+  **imputation** — a statistical method that infers missing genotypes from
+  population reference panels. `just-prs` has imputation support in progress,
+  but without it, microarray-derived VCFs will have low coverage for many PRS
+  models. Some consumer services (e.g. Dante Labs, ITDNA) do offer real
+  whole-genome sequencing — if yours provides a 30×+ WGS VCF, coverage should
+  be substantially better.
+- **Exome or gene-panel sequencing** covers only protein-coding regions (~1–2 %
+  of the genome), while most GWAS tag SNPs sit in non-coding regions.
+- **Low-pass whole-genome sequencing** (< 4×) may not call rare or low-confidence
+  variants reliably.
+- **Genome build mismatch** — if your VCF is in GRCh37 but the scoring file
+  expects GRCh38 coordinates (or vice versa), positions will not match.
+
+A score computed from 12 % of its intended variants is using a small fragment of
+the model. The result is not necessarily wrong, but it is noisier and less
+informative — like grading an exam when the student only answered a few
+questions. Always check matched vs. total variants before trusting a score.
+
+### How is score quality determined?
+
+Each PRS model in the PGS Catalog comes with different levels of validation
+evidence. `just-prs` computes a **synthetic quality score (0–100)** from the
+model's published metadata, combining four factors:
+
+1. **Discrimination metric** — the primary driver. Models are assigned to one of
+   four tiers based on what performance data is available:
+   - **T1a**: AUROC or C-index reported (strongest evidence for binary traits)
+   - **T1b**: regression beta only (continuous traits; slightly penalized because
+     beta-based scores show lower cross-genome stability in practice)
+   - **T2**: odds ratio or hazard ratio only (converted to approximate AUROC via
+     the probit transform Φ(ln(OR)/√2); penalized because direct discrimination
+     could have been measured)
+   - **T3**: no performance metric at all (assigned a floor score — the model is
+     published so presumably better than random, but not by much)
+2. **Cohort size** — log₁₀-scaled; a model validated in 300 k individuals scores
+   higher than one validated in 500.
+3. **Match rate** — fraction of scoring variants actually found in the sample.
+4. **Harmonized penalty** — a 10 % reduction for scores that required coordinate
+   liftover, since liftover can introduce mapping ambiguity.
+
+After PRS computation on real genomes, a **combined quality score** blends the
+synthetic score (40 %) with practical signals: match-rate consistency across
+genomes (25 %), percentile stability (15 %), and absolute-risk concordance
+(20 %). The combined score drives the color-coded quality label (High / Normal /
+Moderate / Low) shown in the UI. See
+[docs/prs-quality-score.md](docs/prs-quality-score.md) for the full methodology,
+tier boundaries, and validation against 604 GRCh38 models × 10 real genomes.
 
 ### What does absolute risk mean?
 
@@ -386,7 +446,8 @@ Only the reference-panel / `.pgen` scoring features (`prs reference …`, `prs p
 
 - **PRS computation from VCF** — normalize VCFs to Parquet, compute one or many
   PGS IDs, and inspect match rates, effect sizes, quality labels, percentiles,
-  and absolute-risk context.
+  and absolute-risk context. The Python API also accepts **custom scoring files**
+  (local `.txt.gz` or `.parquet`) — you are not limited to the PGS Catalog.
 - **Trait-first analysis** — select a trait such as type 2 diabetes instead of a
   single score; compute all associated PGS models and summarize agreement,
   outliers, and quality.

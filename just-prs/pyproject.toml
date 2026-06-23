@@ -1,6 +1,6 @@
 [project]
 name = "just-prs"
-version = "0.4.11"
+version = "0.4.12"
 description = "Polars-bio based tool to compute polygenic risk scores from PGS Catalog"
 readme = "README.md"
 authors = [
@@ -20,6 +20,7 @@ dependencies = [
     "platformdirs>=4.9.2",
     "zstandard>=0.23.0",
     "duckdb>=1.5.0",
+    "psutil>=5.9.0",
 ]
 
 [project.optional-dependencies]

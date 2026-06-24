@@ -89,6 +89,71 @@ _REFERENCE_PANEL_BUILDS = ("GRCh37", "GRCh38")
 
 
 # ---------------------------------------------------------------------------
+# Reference FASTA registry (precompute-only input for reference-allele tier B)
+# ---------------------------------------------------------------------------
+
+# The Ensembl primary-assembly FASTA is the universal REF-base source for the
+# reference-allele FASTA tier. It is touched ONLY by the precompute (faidx),
+# never at runtime. Ensembl uses unprefixed contigs (1..22, X, Y, MT), matching
+# this package's chr-stripped normalization. The assembly sequence is identical
+# across Ensembl releases, so the release is pinned but env-overridable; any
+# release that still hosts the file works.
+import os as _os
+
+_ENSEMBL_RELEASE = _os.environ.get("PRS_ENSEMBL_RELEASE", "113").strip() or "113"
+
+
+def _ensembl_fasta_url(build: str, species_file: str) -> str:
+    return (
+        f"https://ftp.ensembl.org/pub/release-{_ENSEMBL_RELEASE}/fasta/"
+        f"homo_sapiens/dna/{species_file}"
+    )
+
+
+REFERENCE_FASTA: dict[str, dict[str, str]] = {
+    "GRCh38": {
+        "url": _ensembl_fasta_url(
+            "GRCh38", "Homo_sapiens.GRCh38.dna.primary_assembly.fa.gz"
+        ),
+        "description": "Ensembl GRCh38 primary assembly (unprefixed contigs).",
+    },
+    "GRCh37": {
+        # GRCh37 lives on the dedicated grch37 archive endpoint.
+        "url": (
+            f"https://ftp.ensembl.org/pub/grch37/release-{_ENSEMBL_RELEASE}/fasta/"
+            "homo_sapiens/dna/Homo_sapiens.GRCh37.dna.primary_assembly.fa.gz"
+        ),
+        "description": "Ensembl GRCh37 primary assembly (unprefixed contigs).",
+    },
+}
+
+# Length of chromosome 1 per assembly — a cheap, unambiguous build fingerprint
+# (the contig *names* are identical across builds, so name alone cannot tell
+# GRCh37 from GRCh38). Used as the build/contig guard before trusting REF bases.
+REFERENCE_FASTA_CHR1_LENGTH: dict[str, int] = {
+    "GRCh38": 248_956_422,
+    "GRCh37": 249_250_621,
+}
+
+# A primary-assembly .fa.gz is ~900 MB; reject anything obviously truncated.
+_MIN_FASTA_GZ_BYTES = 100_000_000
+
+
+def _require_pysam() -> None:
+    """Raise ImportError with a helpful message if pysam is not installed."""
+    try:
+        import pysam as _pysam  # noqa: F401
+    except ImportError:
+        raise ImportError(
+            "pysam is required for the reference-allele FASTA tier (faidx) but is not "
+            "installed. On Linux/macOS install it with: pip install just-prs[reference] "
+            "(or uv sync). On Windows pysam is intentionally excluded (no Windows wheels) "
+            "— use WSL or Linux for the FASTA precompute. Runtime reference-allele "
+            "resolution reads a precomputed parquet and does NOT need pysam."
+        ) from None
+
+
+# ---------------------------------------------------------------------------
 # Batch scoring result models
 # ---------------------------------------------------------------------------
 
@@ -304,6 +369,121 @@ def download_reference_panel(
 
     log_message(message_type="reference:panel_extracted", dest=str(dest), panel=panel)
     return dest
+
+
+def reference_fasta_dir(cache_dir: Path | None = None) -> Path:
+    """Return the local directory where reference FASTA files are cached."""
+    base = cache_dir or resolve_cache_dir()
+    return base / "reference_fasta"
+
+
+def reference_fasta_path(genome_build: str = "GRCh38", cache_dir: Path | None = None) -> Path:
+    """Return the cached uncompressed FASTA path for a build (may not exist yet)."""
+    if genome_build not in REFERENCE_FASTA:
+        raise ValueError(
+            f"Unknown genome_build {genome_build!r}. Known: {list(REFERENCE_FASTA)}"
+        )
+    return reference_fasta_dir(cache_dir) / f"Homo_sapiens.{genome_build}.dna.primary_assembly.fa"
+
+
+def download_reference_fasta(
+    genome_build: str = "GRCh38",
+    cache_dir: Path | None = None,
+    overwrite: bool = False,
+) -> Path:
+    """Download + decompress the Ensembl primary-assembly FASTA and build its faidx.
+
+    This is a **precompute-only** resource for the reference-allele FASTA tier; it
+    is never read at runtime (runtime reads the small precomputed universe parquet).
+
+    Ensembl ships a *plain-gzip* ``.fa.gz`` which faidx cannot index, so the file
+    is decompressed to a plain ``.fa`` and the transient ``.gz`` is removed. The
+    ``.fai`` is built with ``pysam.faidx`` if missing.
+
+    Returns:
+        Path to the uncompressed ``.fa`` (with a sibling ``.fai``).
+    """
+    import gzip
+
+    _require_pysam()
+    import pysam
+
+    info = REFERENCE_FASTA.get(genome_build)
+    if info is None:
+        raise ValueError(
+            f"Unknown genome_build {genome_build!r}. Known: {list(REFERENCE_FASTA)}"
+        )
+
+    fa_path = reference_fasta_path(genome_build, cache_dir)
+    fai_path = fa_path.with_name(fa_path.name + ".fai")
+    fa_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if fa_path.exists() and fa_path.stat().st_size > 0 and not overwrite:
+        if not fai_path.exists():
+            pysam.faidx(str(fa_path))
+        log_message(
+            message_type="reference:fasta_already_exists",
+            path=str(fa_path),
+            genome_build=genome_build,
+        )
+        return fa_path
+
+    url = info["url"]
+    gz_tmp = fa_path.with_name(fa_path.name + ".gz.downloading")
+    fa_tmp = fa_path.with_name(fa_path.name + ".decompressing")
+    for stale in (gz_tmp, fa_tmp):
+        stale.unlink(missing_ok=True)
+
+    with start_action(
+        action_type="reference:download_fasta",
+        url=url,
+        genome_build=genome_build,
+        dest=str(fa_path),
+    ):
+        with httpx.stream("GET", url, follow_redirects=True, timeout=None) as r:
+            r.raise_for_status()
+            total = int(r.headers.get("content-length", 0))
+            downloaded = 0
+            with gz_tmp.open("wb") as f:
+                for chunk in r.iter_bytes(chunk_size=1024 * 1024):
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    if total:
+                        log_message(
+                            message_type="reference:fasta_download_progress",
+                            downloaded_mb=round(downloaded / 1e6, 1),
+                            total_mb=round(total / 1e6, 1),
+                        )
+
+        if gz_tmp.stat().st_size < _MIN_FASTA_GZ_BYTES:
+            size = gz_tmp.stat().st_size
+            gz_tmp.unlink(missing_ok=True)
+            raise ReferencePanelError(
+                f"Downloaded FASTA for {genome_build} is only {size} bytes "
+                f"(expected >= {_MIN_FASTA_GZ_BYTES}); refusing truncated/corrupt file."
+            )
+
+        try:
+            with gzip.open(gz_tmp, "rb") as src, fa_tmp.open("wb") as dst:
+                shutil.copyfileobj(src, dst, length=16 * 1024 * 1024)
+            gz_tmp.unlink(missing_ok=True)
+            if fa_tmp.stat().st_size == 0:
+                raise ReferencePanelError(f"Decompressed FASTA is empty: {genome_build}")
+            fa_tmp.replace(fa_path)
+        except Exception:
+            gz_tmp.unlink(missing_ok=True)
+            fa_tmp.unlink(missing_ok=True)
+            raise
+
+        pysam.faidx(str(fa_path))
+
+    log_message(
+        message_type="reference:fasta_ready",
+        path=str(fa_path),
+        genome_build=genome_build,
+        size_mb=round(fa_path.stat().st_size / 1e6, 1),
+    )
+    return fa_path
 
 
 def parse_psam(psam_path: Path) -> pl.DataFrame:

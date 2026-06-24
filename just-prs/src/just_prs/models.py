@@ -245,6 +245,14 @@ class PRSResult(BaseModel):
         default=0,
         description="Absent loci filled with population MAF dosage (2 * allelefrequency_effect) instead of being unscorable",
     )
+    variants_ref_resolved_panel: int = Field(
+        default=0,
+        description="Absent loci whose missing reference allele was resolved from the reference panel .pvar (subset of variants_assumed_hom_ref)",
+    )
+    variants_ref_resolved_fasta: int = Field(
+        default=0,
+        description="Absent loci whose missing reference allele was resolved from the reference FASTA faidx (subset of variants_assumed_hom_ref)",
+    )
     weight_mass_matched: float | None = Field(
         default=None,
         description="Sum of |effect_weight| over matched scoring variants (per-dosage formats use max|dosage_k_weight|)",

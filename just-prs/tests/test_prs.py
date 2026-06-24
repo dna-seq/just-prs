@@ -143,6 +143,67 @@ def test_variant_only_absent_hom_ref_inference(tmp_path: Path) -> None:
         assert result.match_rate == pytest.approx(2 / 3)
 
 
+def test_resolve_reference_fills_missing_ref_both_engines(tmp_path: Path) -> None:
+    """resolve_reference fills null reference_allele from the universe parquet,
+    dissolving variants_unscorable_absent and attributing the source per tier."""
+    geno_path = tmp_path / "variant_only.parquet"
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["0/1"],
+    }).write_parquet(geno_path)
+
+    scoring = pl.DataFrame({
+        "hm_chr": ["1", "1", "1", "1"],
+        "hm_pos": [100, 200, 300, 400],
+        "effect_allele": ["G", "T", "C", "A"],
+        "reference_allele": ["A", "T", None, None],  # 300 & 400 unknown
+        "effect_weight": [1.0, 2.0, 3.0, 0.5],
+    }).lazy()
+
+    # Precomputed REF universe: panel resolves 300 (C), FASTA resolves 400 (A).
+    universe_path = tmp_path / "reference_allele_universe.parquet"
+    pl.DataFrame({
+        "genome_build": ["GRCh38", "GRCh38"],
+        "chrom": ["1", "1"],
+        "pos": [300, 400],
+        "ref": ["C", "A"],
+        "ref_source": ["panel", "fasta"],
+    }).write_parquet(universe_path)
+
+    # Without resolution: 300 & 400 are unscorable (existing behaviour).
+    off = compute_prs(
+        vcf_path="", scoring_file=scoring, cache_dir=tmp_path, pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path), genotype_input_mode="variant_only",
+    )
+    assert off.score == pytest.approx(5.0)  # 1 (obs G) + 4 (hom-ref T/T)
+    assert off.variants_unscorable_absent == 2
+    assert off.variants_ref_resolved_panel == 0
+    assert off.variants_ref_resolved_fasta == 0
+
+    # With resolution: 300 (+6) and 400 (+1) recovered as hom-ref.
+    polars_result = compute_prs(
+        vcf_path="", scoring_file=scoring, cache_dir=tmp_path, pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path), genotype_input_mode="variant_only",
+        resolve_reference=True, reference_universe_path=universe_path,
+    )
+    duckdb_result = compute_prs_duckdb(
+        vcf_path="", scoring_file=scoring, cache_dir=tmp_path, pgs_id="PGSTEST",
+        genotypes_parquet=geno_path, genotype_input_mode="variant_only",
+        resolve_reference=True, reference_universe_path=universe_path,
+    )
+
+    for result in (polars_result, duckdb_result):
+        assert result.score == pytest.approx(12.0)  # 1 + 4 + 6 + 1
+        assert result.variants_unscorable_absent == 0
+        assert result.variants_assumed_hom_ref == 3
+        assert result.variants_ref_resolved_panel == 1
+        assert result.variants_ref_resolved_fasta == 1
+        assert result.variants_matched == 4
+
+
 def test_variant_only_differs_from_plink_present_only_when_ref_effect_absent(tmp_path: Path) -> None:
     """Present-only PLINK-compatible scoring skips absent loci that variant-only mode can infer."""
     geno_path = tmp_path / "variant_only.parquet"

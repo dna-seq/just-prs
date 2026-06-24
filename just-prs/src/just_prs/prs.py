@@ -248,6 +248,62 @@ def _norm_cdf(x: float) -> float:
     return 0.5 * math.erfc(-x / math.sqrt(2))
 
 
+def _apply_reference_resolution(
+    scoring_norm: pl.LazyFrame,
+    universe_path: Path | str | None,
+    do_resolve: bool,
+) -> pl.LazyFrame:
+    """Fill a missing ``reference_allele`` from the precomputed REF-universe parquet.
+
+    Adds a ``ref_resolved_source`` column (``panel`` / ``fasta`` / null) recording
+    where a previously-unknown reference allele was sourced. When resolution is off
+    or no universe is available, the column is still added (all-null) so downstream
+    aggregation can reference it unconditionally. Only positions whose
+    ``reference_allele`` was null/empty are filled; existing values always win.
+    """
+    schema = scoring_norm.collect_schema().names()
+    if not do_resolve or universe_path is None:
+        if "ref_resolved_source" not in schema:
+            scoring_norm = scoring_norm.with_columns(
+                pl.lit(None, dtype=pl.Utf8).alias("ref_resolved_source")
+            )
+        return scoring_norm
+
+    universe = (
+        pl.scan_parquet(universe_path)
+        .filter(pl.col("ref").is_not_null())
+        .select(
+            pl.col("chrom").cast(pl.Utf8).alias("_u_chrom"),
+            pl.col("pos").cast(pl.Int64).alias("_u_pos"),
+            pl.col("ref").cast(pl.Utf8).alias("_u_ref"),
+            pl.col("ref_source").cast(pl.Utf8).alias("_u_src"),
+        )
+    )
+    ref_unknown = pl.col("reference_allele").is_null() | (
+        pl.col("reference_allele").str.len_chars() == 0
+    )
+    fill_mask = ref_unknown & pl.col("_u_ref").is_not_null()
+    return (
+        scoring_norm.join(
+            universe,
+            left_on=["chr_name_norm", "chr_pos_norm"],
+            right_on=["_u_chrom", "_u_pos"],
+            how="left",
+        )
+        .with_columns(
+            pl.when(fill_mask)
+            .then(pl.col("_u_ref"))
+            .otherwise(pl.col("reference_allele"))
+            .alias("reference_allele"),
+            pl.when(fill_mask)
+            .then(pl.col("_u_src"))
+            .otherwise(pl.lit(None, dtype=pl.Utf8))
+            .alias("ref_resolved_source"),
+        )
+        .drop("_u_ref", "_u_src")
+    )
+
+
 def compute_prs(
     vcf_path: Path | str,
     scoring_file: Path | pl.LazyFrame | str,
@@ -258,6 +314,8 @@ def compute_prs(
     genotypes_lf: pl.LazyFrame | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
     maf_fill: bool = False,
+    resolve_reference: bool = False,
+    reference_universe_path: Path | str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score for a single VCF against a scoring file.
 
@@ -310,6 +368,14 @@ def compute_prs(
         schema_names = scoring_norm.collect_schema().names()
         variants_total = scoring_norm.select(pl.len()).collect().item()
         resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, genotypes_lf)
+
+        # Reference-allele resolution only affects the variant-only absent-locus
+        # path; in other modes absent loci are never imputed hom-ref.
+        scoring_norm = _apply_reference_resolution(
+            scoring_norm,
+            reference_universe_path,
+            resolve_reference and resolved_mode == GenotypeInputMode.VARIANT_ONLY,
+        )
 
         if resolved_mode == GenotypeInputMode.VARIANT_ONLY:
             joined = scoring_norm.join(
@@ -418,6 +484,8 @@ def compute_prs(
             (absent_expr & ref_known_expr.not_() & pl.col("is_maf_filled").not_()).cast(pl.Int64).sum().alias("variants_unscorable_absent"),
             (pl.col("is_present") & pl.col("is_no_call")).cast(pl.Int64).sum().alias("variants_no_call"),
             pl.col("is_maf_filled").cast(pl.Int64).sum().alias("variants_maf_filled"),
+            (absent_expr & (pl.col("ref_resolved_source") == "panel")).cast(pl.Int64).sum().alias("variants_ref_resolved_panel"),
+            (absent_expr & (pl.col("ref_resolved_source") == "fasta")).cast(pl.Int64).sum().alias("variants_ref_resolved_fasta"),
             pl.col("weighted_dosage").sum().alias("prs_score"),
             (
                 pl.when(pl.col("resolved_dosage").is_not_null())
@@ -431,6 +499,8 @@ def compute_prs(
         variants_unscorable_absent = int(agg["variants_unscorable_absent"][0] or 0)
         variants_no_call = int(agg["variants_no_call"][0] or 0)
         variants_maf_filled = int(agg["variants_maf_filled"][0] or 0)
+        variants_ref_resolved_panel = int(agg["variants_ref_resolved_panel"][0] or 0)
+        variants_ref_resolved_fasta = int(agg["variants_ref_resolved_fasta"][0] or 0)
         variants_matched = int(agg["observed_called"][0] or 0) + variants_assumed_hom_ref + variants_maf_filled
 
         if variants_matched == 0:
@@ -487,6 +557,8 @@ def compute_prs(
             variants_unscorable_absent=variants_unscorable_absent,
             variants_no_call=variants_no_call,
             variants_maf_filled=variants_maf_filled,
+            variants_ref_resolved_panel=variants_ref_resolved_panel,
+            variants_ref_resolved_fasta=variants_ref_resolved_fasta,
             weight_mass_matched=weight_mass_matched,
             weight_mass_total=weight_mass_total,
             weight_mass_coverage=weight_mass_coverage,
@@ -600,6 +672,8 @@ def compute_prs_duckdb(
     memory_limit: str | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
     maf_fill: bool = False,
+    resolve_reference: bool = False,
+    reference_universe_path: Path | str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score using DuckDB for the join and aggregation.
 
@@ -644,6 +718,12 @@ def compute_prs_duckdb(
     ):
         scoring_lf = _resolve_scoring(scoring_file, genome_build, cache_dir)
         scoring_norm = _normalize_scoring_columns(scoring_lf)
+        # Fill any missing reference_allele from the precomputed REF universe. Applied
+        # unconditionally (adds a null ref_resolved_source when off) so the SQL can
+        # reference s.ref_resolved_source; only the variant-only branch consumes it.
+        scoring_norm = _apply_reference_resolution(
+            scoring_norm, reference_universe_path, resolve_reference
+        )
 
         schema_names = scoring_norm.collect_schema().names()
         scoring_df = scoring_norm.collect()
@@ -705,7 +785,9 @@ def compute_prs_duckdb(
                         SUM(CASE WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
                         SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND NOT ({_DUCKDB_MAF_AVAILABLE_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
                         SUM(CASE WHEN g.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
-                        SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND {_DUCKDB_MAF_AVAILABLE_SQL} THEN 1 ELSE 0 END) AS variants_maf_filled
+                        SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND {_DUCKDB_MAF_AVAILABLE_SQL} THEN 1 ELSE 0 END) AS variants_maf_filled,
+                        SUM(CASE WHEN g.GT IS NULL AND s.ref_resolved_source = 'panel' THEN 1 ELSE 0 END) AS variants_ref_resolved_panel,
+                        SUM(CASE WHEN g.GT IS NULL AND s.ref_resolved_source = 'fasta' THEN 1 ELSE 0 END) AS variants_ref_resolved_fasta
                     """
                 else:
                     resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY
@@ -715,7 +797,9 @@ def compute_prs_duckdb(
                         SUM(CASE WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
                         SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
                         SUM(CASE WHEN g.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
-                        0 AS variants_maf_filled
+                        0 AS variants_maf_filled,
+                        SUM(CASE WHEN g.GT IS NULL AND s.ref_resolved_source = 'panel' THEN 1 ELSE 0 END) AS variants_ref_resolved_panel,
+                        SUM(CASE WHEN g.GT IS NULL AND s.ref_resolved_source = 'fasta' THEN 1 ELSE 0 END) AS variants_ref_resolved_fasta
                     """
             else:
                 join_sql = f"""
@@ -730,7 +814,9 @@ def compute_prs_duckdb(
                     0 AS variants_assumed_hom_ref,
                     0 AS variants_unscorable_absent,
                     SUM(CASE WHEN {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
-                    0 AS variants_maf_filled
+                    0 AS variants_maf_filled,
+                    0 AS variants_ref_resolved_panel,
+                    0 AS variants_ref_resolved_fasta
                 """
 
             row = conn.execute(f"""
@@ -752,6 +838,8 @@ def compute_prs_duckdb(
                     COALESCE(SUM(variants_unscorable_absent), 0) AS variants_unscorable_absent,
                     COALESCE(SUM(variants_no_call), 0) AS variants_no_call,
                     COALESCE(SUM(variants_maf_filled), 0) AS variants_maf_filled,
+                    COALESCE(SUM(variants_ref_resolved_panel), 0) AS variants_ref_resolved_panel,
+                    COALESCE(SUM(variants_ref_resolved_fasta), 0) AS variants_ref_resolved_fasta,
                     COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL THEN variant_mass ELSE 0.0 END), 0.0) AS weight_mass_matched
                 FROM resolved s
             """).fetchone()
@@ -763,7 +851,9 @@ def compute_prs_duckdb(
             variants_unscorable_absent = int(row[4])
             variants_no_call = int(row[5])
             variants_maf_filled = int(row[6])
-            weight_mass_matched = float(row[7] or 0.0)
+            variants_ref_resolved_panel = int(row[7])
+            variants_ref_resolved_fasta = int(row[8])
+            weight_mass_matched = float(row[9] or 0.0)
             variants_matched = observed_called + variants_assumed_hom_ref + variants_maf_filled
 
             has_freqs = False
@@ -832,6 +922,8 @@ def compute_prs_duckdb(
             variants_unscorable_absent=variants_unscorable_absent,
             variants_no_call=variants_no_call,
             variants_maf_filled=variants_maf_filled,
+            variants_ref_resolved_panel=variants_ref_resolved_panel,
+            variants_ref_resolved_fasta=variants_ref_resolved_fasta,
             weight_mass_matched=weight_mass_matched,
             weight_mass_total=weight_mass_total,
             weight_mass_coverage=weight_mass_coverage,

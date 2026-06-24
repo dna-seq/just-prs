@@ -24,11 +24,15 @@ dependencies = [
 
 [project.optional-dependencies]
 # pgenlib has no Windows wheels and its bundled C (libdeflate) fails to compile
-# with MSVC, so it is excluded on Windows. The UI / VCF PRS path never needs it
-# (reference.py imports pgenlib lazily and raises a clear ImportError if missing).
-# Windows users who need reference-panel / .pgen features should use WSL or Linux.
+# with MSVC, so it is excluded on Windows. pysam (htslib-backed faidx, used only
+# by the reference-allele FASTA tier at precompute time) likewise has no Windows
+# wheels, so it carries the same marker. The UI / VCF PRS path never needs either
+# (reference.py imports both lazily and raises a clear ImportError if missing); the
+# runtime reference-allele resolution reads a small precomputed parquet, not pysam.
+# Windows users who need reference-panel / .pgen / FASTA features should use WSL/Linux.
 reference = [
     "pgenlib>=0.93.0; sys_platform != 'win32'",
+    "pysam>=0.23.0; sys_platform != 'win32'",
 ]
 
 [project.scripts]

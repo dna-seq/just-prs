@@ -149,6 +149,153 @@ For Antigravity or another MCP-capable assistant, add the same server command:
 Then ask your agent something like: "Download Anton's sample genome, normalize
 it, and compute the PRS score for type 2 diabetes."
 
+## Claude Code skill (slash command)
+
+If you use [Claude Code](https://docs.anthropic.com/en/docs/claude-code) or
+[Antigravity](https://antigravity.ai), `just-prs` includes a `/prs` skill
+that teaches the assistant how to search the PGS Catalog, compute scores,
+generate Altair charts, and interpret results — all through the CLI and Python
+API, no MCP server needed.
+
+The skill source lives at
+[`docs/skills/prs/SKILL.md`](docs/skills/prs/SKILL.md) in the repo.
+
+**Workspace-level** (for contributors who clone this repo):
+
+```bash
+mkdir -p .claude/skills/prs
+ln -sf ../../../docs/skills/prs/SKILL.md .claude/skills/prs/SKILL.md
+```
+
+Then type `/prs BMI` or `/prs type 2 diabetes` in Claude Code to invoke it.
+
+**Personal-level** (available in all your projects):
+
+```bash
+mkdir -p ~/.claude/skills/prs
+curl -o ~/.claude/skills/prs/SKILL.md \
+  https://raw.githubusercontent.com/dna-seq/just-prs/main/docs/skills/prs/SKILL.md
+```
+
+After this, `/prs` is available in every Claude Code session. The skill uses
+`uvx just-prs` for CLI commands, so nothing needs to be pre-installed.
+
+**Antigravity**: same as personal-level — copy the `SKILL.md` to
+`~/.claude/skills/prs/` or to your Antigravity project's
+`.claude/skills/prs/` directory.
+
+**Skill vs MCP**: the `/prs` skill is a lightweight alternative to the MCP
+server. It teaches Claude how to call the CLI and Python API directly, while the
+MCP server exposes structured tool schemas with typed parameters. Use the skill
+for quick interactive sessions; use MCP when you need programmatic tool
+invocation from agents or multi-step pipelines. There is no one-click install
+URL for skills — MCP remains the easiest path for external users.
+
+## Visualization (charts)
+
+Altair-based chart generation is built in — bell curves, multi-ancestry
+overlays, trait-grouped scatter plots, and percentile strip charts.
+HTML (interactive with tooltips) and JSON (Vega-Lite spec) export works out of
+the box. For PNG/SVG raster export, install the `viz` extra:
+
+```bash
+pip install "just-prs[viz]"    # adds vl-convert-python for PNG/SVG
+```
+
+### CLI (`prs plot`)
+
+Generate charts directly from the terminal. Reference distributions are loaded
+from cache automatically (pulled from HuggingFace on first use).
+
+All plot commands accept `--vcf` (a file path or alias) to auto-compute PRS and
+plot in one step. See [VCF aliases](#vcf-aliases) below. PRS results are
+**cached per (VCF, PGS ID, build, ancestry)** — repeated plotting is instant.
+Use `--no-cache` to force recomputation.
+
+Trait matching is **exact by default** (case-insensitive). If no exact match
+is found, the command lists partial matches and exits. Use `--fuzzy` to
+compute PRS for all partial matches.
+
+```bash
+# One-liner: compute + plot for a trait using a VCF alias
+prs plot trait "type 1 diabetes" --vcf livia -o t1d.html --show-table
+prs plot trait BMI --vcf anton -o bmi.html --show-table
+
+# Fuzzy trait matching (substring)
+prs plot trait thrombosis --vcf anton -o dvt.html --fuzzy --show-table
+
+# Overlay all 5 population reference curves
+prs plot trait BMI --vcf anton -o bmi.html --show-table --all-ancestries
+
+# Or select specific populations
+prs plot trait BMI --vcf anton -o bmi.html --ancestries EUR,AFR,EAS
+
+# Single PGS bell curve for one ancestry
+prs plot bell-curve PGS000001 -o bell.html
+prs plot bell-curve PGS000001 -o bell.html -a AFR --user-score 0.274
+prs plot bell-curve PGS000001 --vcf anton -o bell.html
+
+# All five population curves overlaid (single PGS ID)
+prs plot multi-ancestry PGS000001 -o multi.html
+prs plot multi-ancestry PGS000001 --vcf livia -o multi.html
+prs plot multi-ancestry PGS000001 -o multi.html --ancestries EUR,AFR,EAS
+
+# Trait chart from pre-computed results JSON
+prs plot trait "type 2 diabetes" -o t2d.html --results my_results.json
+
+# Percentile strip chart (requires a JSON file with computed results)
+prs plot strip results.json -o strip.html --title "My PRS Report"
+
+# Force recompute (bypass result cache)
+prs plot trait BMI --vcf anton -o bmi.html --no-cache
+```
+
+Output format is auto-detected from the file extension (`.png`, `.svg`, `.html`, `.json`).
+PNG/SVG requires `just-prs[viz]`; HTML/JSON works out of the box.
+
+### Python API (`just_prs.viz`)
+
+Four chart functions are available:
+
+| Function | What it shows |
+|----------|--------------|
+| `plot_prs_bell_curve` | Single model + ancestry bell curve with user score marker |
+| `plot_prs_multi_ancestry` | Five population curves overlaid with user score line |
+| `plot_trait_scores` | Trait-grouped: N(0,1) reference + per-model z-score dots colored by quality, optional summary table |
+| `plot_prs_percentile_strip` | Horizontal strip with risk-colored bands and dots per score |
+
+All functions accept `width` and `height` parameters. `plot_trait_scores` adds
+`show_table=True` for a model details panel, `table_height` for sizing, and
+`ancestries` for multi-population overlays.
+Use `save_chart(chart, Path("output.png"))` to export — format is auto-detected
+from the file extension (`.png`, `.svg`, `.html`, `.json`).
+
+```python
+from just_prs.viz import plot_trait_scores, save_chart
+from pathlib import Path
+import polars as pl
+
+dists = pl.read_parquet("~/.cache/just-prs/percentiles/1000g_distributions.parquet")
+quality = pl.read_parquet("~/.cache/just-prs/percentiles/1000g_quality.parquet")
+
+chart = plot_trait_scores(
+    "BMI", dists, quality_df=quality,
+    user_results=my_results,        # list of dicts with pgs_id, score, match_rate
+    height=150, show_table=True,    # compact bell curve + model table
+)
+save_chart(chart, Path("bmi_report.html"))  # interactive with hover tooltips
+save_chart(chart, Path("bmi_report.png"))   # static with PGS ID labels on dots
+
+# Multi-ancestry overlay: all 5 population curves
+chart = plot_trait_scores(
+    "BMI", dists, quality_df=quality,
+    user_results=my_results,
+    ancestries=["AFR", "AMR", "EAS", "EUR", "SAS"],  # or a subset
+    height=250, show_table=True,
+)
+save_chart(chart, Path("bmi_all_pops.html"))
+```
+
 ## CLI and Python
 
 Run one-off analyses, scripts, notebooks, and batch jobs directly from the
@@ -202,6 +349,39 @@ result = compute_prs(
 )
 ```
 
+## VCF Aliases
+
+Named shortcuts for frequently used VCF files. Use aliases anywhere `--vcf` is
+accepted (`compute`, `plot bell-curve`, `plot multi-ancestry`, `plot trait`).
+
+Two built-in aliases point to the test genomes in the cache directory and
+**auto-download from Zenodo on first use**:
+
+| Alias | Points to | Zenodo |
+|-------|-----------|--------|
+| `anton` | `~/.cache/just-prs/genomes/antonkulaga.vcf` | [18370498](https://zenodo.org/records/18370498) (~482 MB) |
+| `livia` | `~/.cache/just-prs/genomes/SIMHIFQTILQ.hard-filtered.vcf.gz` | [19487816](https://zenodo.org/records/19487816) (~333 MB) |
+
+```bash
+# List all aliases (built-in + user-defined)
+prs alias list
+
+# Use aliases with any --vcf option — auto-downloads if not cached
+prs compute --vcf anton --pgs-id PGS000001
+prs plot trait "type 1 diabetes" --vcf livia -o t1d.html --show-table
+prs plot bell-curve PGS000001 --vcf anton -o bell.html
+
+# Add your own alias
+prs alias set mygenome /path/to/my/sample.vcf.gz
+
+# Remove a user alias
+prs alias remove mygenome
+```
+
+User aliases are stored in `~/.cache/just-prs/vcf_aliases.json` and override
+built-in aliases when names collide. `--vcf` checks for an existing file path
+first, then falls back to alias lookup.
+
 ## Test Genomes (Quick Play)
 
 You can try the toolbox without using your own genome. Two public WGS VCFs from
@@ -224,7 +404,7 @@ to the browser UI, or run the CLI directly:
 
 ```bash
 curl -L -o anton.vcf "https://zenodo.org/api/records/18370498/files/antonkulaga.vcf/content"
-prs compute --vcf anton.vcf --pgs-id PGS000001
+prs compute --vcf anton --pgs-id PGS000001
 ```
 
 ## Research Use Only: Interpreting PRS Results

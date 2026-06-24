@@ -58,6 +58,7 @@ pip install just-prs[reference]
 | `just_prs.reference` | Reference panel utilities and pgen operations: `download_reference_panel()` (panel-aware: `panel="1000g"` or `"hgdp_1kg"`), `parse_pvar()` (parse .pvar.zst with parquet caching), `parse_psam()` (parse .psam sample files), `read_pgen_genotypes()` (extract genotypes from .pgen via pgenlib), `match_scoring_to_pvar()` (allele-aware variant matching via polars — standalone use only), `compute_reference_prs_polars()` (single-PGS scoring using pgenlib + numpy; uses DuckDB for variant matching against pvar parquet to avoid loading 75M rows into memory), `compute_reference_prs_batch()` (memory-efficient batch scoring: resolves panel once via `_ResolvedRefPanel`, uses DuckDB for variant matching, aggregates distributions per PGS ID immediately and discards raw scores, returns `BatchScoringResult`), `compute_reference_prs_plink2()` (legacy, for cross-validation), `aggregate_distributions()`, `distribution_quality_issues()` (one row per non-finite/zero-variance distribution anomaly for manual triage and exclusion decisions), `enrich_distributions()` (join distributions with cleaned metadata: traits, EFO, AUROC, OR, C-index, ancestry), `ancestry_percentile()`, `ReferencePanelError`. Panel-aware constants: `REFERENCE_PANELS` dict, `DEFAULT_PANEL = "1000g"`. Result models: `ScoringOutcome` (per-ID outcome), `BatchScoringResult` (panel, distributions_df, outcomes, quality_df, distribution_issues_df — no raw scores held in memory). `_ResolvedRefPanel` caches file paths, psam, and variant count once per batch; variant matching uses DuckDB to scan the pvar parquet (~434 MB on disk) without materializing 75M rows in polars (~6 GB). |
 | `just_prs.chip_coverage` | Consumer-genotyping-chip coverage of PGS scoring files. `CHIPS` / `CHIPS_BY_ID` define supported chips (currently `gsa_v3` — Illumina Global Screening Array v3, the platform the current consumer market converged on: 23andMe v5, AncestryDNA v2, MyHeritage 2019+, FamilyTreeDNA v2, LivingDNA). `download_chip_manifest()` fetches the GSA **A2 (GRCh38)** manifest zip; `parse_gsa_manifest()` extracts ~648K typed `(chr_norm, pos)` markers; `chip_typed_positions()` caches unique positions to parquet; `compute_chip_coverage()` intersects each GRCh38 scoring parquet's `hm_chr`/`hm_pos` against the chip's typed positions and returns one row per `pgs_id × chip` with `n_typed`, `n_total`, `coverage_ratio`, and `array_ready` (bool: `coverage_ratio >= ARRAY_READY_THRESHOLD`, default 0.90, and the score has mapped coordinates). Answers "which PRS are array-ready vs imputation-required" per chip. **Coverage is a position-set intersection in a single build** — A2=GRCh38 means no liftover is needed against the GRCh38 harmonized scoring files. The GSA manifest is the shared platform core; it omits each vendor's custom add-on markers, so coverage is a slight under-estimate. Older arrays (Illumina OmniExpress — pre-2019 kits — and deCODEme Omni) are a different platform and not represented. **Imputation itself is per-individual and cannot be precomputed/downloaded** (it infers untyped genotypes from one person's observed alleles against a reference panel); only this static per-chip coverage map is precomputable. `PRSCatalog.scores()` left-joins the coverage (pivoted to wide per-chip columns `{chip}_array_ready` / `{chip}_coverage`) via `_load_chip_coverage()`, pulling `chip_coverage.parquet` from HF (`pull_chip_coverage`) on local miss — same lazy pattern as `quality_label`. |
 | `just_prs.arrays` | Consumer genotyping-array ingestion. `normalize_array()` parses a 23andMe / AncestryDNA raw file (`.txt`/`.txt.gz`/`.csv`/`.zip`) into the **same** normalized Parquet schema as `normalize_vcf()` (`chrom`, `pos`, `rsid`, `ref`, `alt`, `GT`, `genotype`), so `compute_prs()` / `compute_prs_duckdb()` consume array data unchanged. `detect_array_format()` auto-detects vendor (4-col 23andMe vs 5-col AncestryDNA). **Encoding trick:** arrays report observed alleles directly, so het `a1≠a2` → `ref=a1,alt=a2,GT="0/1"` and hom `a1==a2` → `ref=alt=a,GT="1/1"`, which makes the existing GT/ref/alt dosage logic count the effect allele correctly. Defaults to `genome_build="GRCh37"` (the build 23andMe v5 / AncestryDNA v2 report) — the caller must score against the matching GRCh37 harmonized file. **Known limitations** (documented, not silently handled): strand flips, indels (`I`/`D` codes), and hemizygous male X/Y (treated as homozygous). |
+| `just_prs.viz` | Altair-based PRS visualizations (altair is a core dependency; `viz` extra adds `vl-convert-python` for PNG/SVG export). `plot_prs_bell_curve()` (single model + ancestry), `plot_prs_multi_ancestry()` (five population curves overlaid), `plot_trait_scores()` (trait-grouped reference bell curve + per-model z-score dots colored by quality, optional summary table; `ancestries` parameter accepts a list of population codes to overlay multiple color-coded bell curves with independent color legends via `resolve_scale`), `plot_prs_percentile_strip()` (horizontal strip with risk bands and percentile dots). `save_chart(chart, path)` auto-detects format from extension (`.html`, `.json` work out of the box; `.png`, `.svg` require `viz` extra). CLI: `prs plot bell-curve`, `prs plot multi-ancestry`, `prs plot trait` (`--all-ancestries` / `--ancestries` for multi-population overlay, `--fuzzy` for substring trait matching, `--no-cache` to bypass result cache), `prs plot strip`. PRS results are cached per `(pgs_id, build, ancestry, vcf_size, vcf_mtime)` in `<cache>/results/prs_results_cache.json` for instant repeated plotting. |
 | `just_prs.vcf` | VCF reading via `polars-bio`, genome build detection, dosage computation |
 | `just_prs.scoring` | Download, parse, and cache PGS scoring files. `SCORING_FILE_SCHEMA` — comprehensive column type map from the PGS Catalog spec (30+ columns). `parse_scoring_file()` transparently reads/writes a parquet cache (zstd-9 compressed) alongside the `.txt.gz`, with header metadata embedded as file-level metadata. `scoring_parquet_path()` computes cache paths. `read_scoring_header()` reads PGS header metadata from parquet or `.txt.gz`. `load_scoring()` checks parquet cache first and skips `.txt.gz` download when it exists. |
 | `just_prs.ftp` | Bulk FTP/HTTPS downloads of raw metadata sheets and scoring files via `fsspec` |
@@ -190,6 +191,55 @@ best = catalog.best_performance(pgs_id="PGS000001").collect()
 ```
 
 **Via Web UI:** Open the Compute PRS tab and upload your VCF once (drag-and-drop) into the shared source at the top; the genome build is auto-detected. Then pick a sub-tab: **Select by PRS** to check individual scores and compute an individual results table, or **Select by Trait** to select entire trait groups (e.g. "type 2 diabetes mellitus") — all associated PGS models are computed and automatically grouped into a trait summary with consensus bell curves, outlier detection, and quality breakdown. Both sub-tabs share the same uploaded VCF.
+
+### VCF aliases (`prs alias`)
+
+Named shortcuts for frequently used VCF files. Built-in aliases `anton` and `livia` point to `~/.cache/just-prs/genomes/` and **auto-download from Zenodo** on first use. The `--vcf` option on `compute`, `plot bell-curve`, `plot multi-ancestry`, and `plot trait` accepts either a file path or an alias name.
+
+| Alias | File | Zenodo |
+|-------|------|--------|
+| `anton` | `antonkulaga.vcf` (~482 MB) | [18370498](https://zenodo.org/records/18370498) |
+| `livia` | `SIMHIFQTILQ.hard-filtered.vcf.gz` (~333 MB) | [19487816](https://zenodo.org/records/19487816) |
+
+User aliases are stored in `~/.cache/just-prs/vcf_aliases.json`. CLI commands: `prs alias list`, `prs alias set <name> <path>`, `prs alias remove <name>`. Downloads use atomic writes (`.tmp` + rename) and content-length validation to prevent truncated files.
+
+### Visualization via CLI (`prs plot`)
+
+Altair is a core dependency — HTML/JSON export works out of the box. PNG/SVG requires the `viz` extra (`pip install "just-prs[viz]"`). Reference distributions are loaded from cache automatically (pulled from HuggingFace on first use). All plot commands except `strip` accept `--vcf` (path or alias) to auto-compute PRS and plot in one step. PRS results are cached per `(pgs_id, build, ancestry, vcf_size, vcf_mtime)` — repeated plotting is instant. Use `--no-cache` to force recomputation. Trait matching is exact by default; use `--fuzzy` for substring matching.
+
+```bash
+# One-liner: compute + plot for a trait using an alias (auto-downloads VCF)
+prs plot trait "type 1 diabetes" --vcf livia -o t1d.html --show-table
+prs plot trait BMI --vcf anton -o bmi.html --show-table
+
+# Fuzzy trait matching (substring)
+prs plot trait thrombosis --vcf anton -o dvt.html --fuzzy --show-table
+
+# Overlay all 5 population reference curves on trait chart
+prs plot trait BMI --vcf anton -o bmi.html --show-table --all-ancestries
+
+# Or select specific populations
+prs plot trait BMI --vcf anton -o bmi.html --ancestries EUR,AFR,EAS
+
+# Single PGS bell curve with auto-computed score
+prs plot bell-curve PGS000001 --vcf anton -o bell.html
+prs plot bell-curve PGS000001 -o bell.html -a AFR --user-score 0.274
+
+# All five population curves overlaid (single PGS ID)
+prs plot multi-ancestry PGS000001 --vcf livia -o multi.html
+prs plot multi-ancestry PGS000001 -o multi.html --ancestries EUR,AFR,EAS
+
+# Trait-grouped from pre-computed results
+prs plot trait "type 2 diabetes" -o t2d.html --results my_results.json
+
+# Percentile strip chart (requires computed results JSON)
+prs plot strip results.json -o strip.html --title "My PRS Report"
+
+# Force recompute (bypass result cache)
+prs plot trait BMI --vcf anton -o bmi.html --no-cache
+```
+
+Output format is auto-detected from file extension (`.png`, `.svg`, `.html` with hover tooltips, `.json` Vega-Lite spec). All plot commands accept `--width`, `--height`, `--panel`, `--cache-dir`, and `--no-cache`. The `trait` and `strip` commands accept `--results` with a JSON file of user PRS results (list of `{pgs_id, score, percentile, ...}`).
 
 ### PLINK2 binary format operations
 
@@ -495,6 +545,8 @@ Override with the `PRS_CACHE_DIR` environment variable (or set it in `.env`).
 | `<cache>/normalized/` | Normalized VCF parquets (auto-populated by the web UI) |
 | `<cache>/reference_scores/{panel}/{pgs_id}/` | Per-ID reference panel scores (cached by `compute_reference_prs_batch`) |
 | `<cache>/percentiles/` | Distribution and quality parquets (`{panel}_distributions.parquet`, `{panel}_quality.parquet`, `{panel}_distribution_quality_issues.parquet`) |
+| `<cache>/results/` | PRS result cache (`prs_results_cache.json`) — keyed by `(pgs_id, build, ancestry, vcf_size, vcf_mtime)` for instant repeated plotting |
+| `<cache>/genomes/` | Built-in alias VCFs (auto-downloaded from Zenodo on first use of `--vcf anton` or `--vcf livia`) |
 | `<cache>/test-data/` | Test VCF files and fixtures |
 | `<cache>/plink2/` | Auto-downloaded PLINK2 binary |
 

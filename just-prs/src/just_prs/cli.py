@@ -583,7 +583,7 @@ def catalog_download(
 
 @app.command("compute")
 def compute(
-    vcf: Annotated[Path, typer.Option("--vcf", "-v", help="Path to VCF file")],
+    vcf: Annotated[str, typer.Option("--vcf", "-v", help="Path to VCF file or alias name (e.g. 'anton', 'livia')")],
     pgs_id: Annotated[
         Optional[str], typer.Option("--pgs-id", "-p", help="PGS ID(s), comma-separated")
     ] = None,
@@ -620,6 +620,8 @@ def compute(
     custom local scoring file (.txt.gz or .parquet with effect_allele,
     effect_weight, and position columns).
     """
+    vcf_path = _resolve_vcf(vcf, cache_dir)
+
     if scoring_file and pgs_id:
         console.print("[red]Provide either --pgs-id or --scoring-file, not both.[/red]")
         raise typer.Exit(code=1)
@@ -629,9 +631,9 @@ def compute(
 
     if scoring_file:
         label = scoring_file.stem
-        console.print(f"Computing PRS from custom scoring file [cyan]{scoring_file}[/cyan] on {vcf}...")
+        console.print(f"Computing PRS from custom scoring file [cyan]{scoring_file}[/cyan] on {vcf_path}...")
         result = compute_prs(
-            vcf_path=vcf,
+            vcf_path=vcf_path,
             scoring_file=scoring_file,
             genome_build=build,
             cache_dir=cache_dir,
@@ -641,13 +643,13 @@ def compute(
         results: list[PRSResult] = [result]
     else:
         pgs_ids = [pid.strip() for pid in pgs_id.split(",")]
-        console.print(f"Computing PRS for {len(pgs_ids)} score(s) on {vcf}...")
+        console.print(f"Computing PRS for {len(pgs_ids)} score(s) on {vcf_path}...")
 
         if len(pgs_ids) == 1:
             with PGSCatalogClient() as client:
                 score_info = client.get_score(pgs_ids[0])
             result = compute_prs(
-                vcf_path=vcf,
+                vcf_path=vcf_path,
                 scoring_file=pgs_ids[0],
                 genome_build=build,
                 cache_dir=cache_dir,
@@ -658,7 +660,7 @@ def compute(
             results = [result]
         else:
             batch = compute_prs_batch(
-                vcf_path=vcf,
+                vcf_path=vcf_path,
                 pgs_ids=pgs_ids,
                 genome_build=build,
                 cache_dir=cache_dir,
@@ -871,6 +873,267 @@ def _validate_pgs_id(pgs_id: str) -> str:
         )
         raise typer.Exit(code=1)
     return pgs_id
+
+
+# ---------------------------------------------------------------------------
+# VCF aliases — named shortcuts for frequently used genotype files
+# ---------------------------------------------------------------------------
+
+BUILTIN_ALIASES: dict[str, str] = {
+    "anton": "~/.cache/just-prs/genomes/antonkulaga.vcf",
+    "livia": "~/.cache/just-prs/genomes/SIMHIFQTILQ.hard-filtered.vcf.gz",
+}
+
+BUILTIN_ZENODO_URLS: dict[str, tuple[str, str]] = {
+    "anton": (
+        "https://zenodo.org/api/records/18370498/files/antonkulaga.vcf/content",
+        "antonkulaga.vcf",
+    ),
+    "livia": (
+        "https://zenodo.org/api/records/19487816/files/SIMHIFQTILQ.hard-filtered.vcf.gz/content",
+        "SIMHIFQTILQ.hard-filtered.vcf.gz",
+    ),
+}
+
+
+def _aliases_path(cache_dir: Path | None = None) -> Path:
+    cache = cache_dir or resolve_cache_dir()
+    return cache / "vcf_aliases.json"
+
+
+def _load_aliases(cache_dir: Path | None = None) -> dict[str, str]:
+    path = _aliases_path(cache_dir)
+    user_aliases: dict[str, str] = {}
+    if path.exists():
+        user_aliases = json.loads(path.read_text())
+    merged = {**BUILTIN_ALIASES, **user_aliases}
+    return merged
+
+
+def _save_user_aliases(aliases: dict[str, str], cache_dir: Path | None = None) -> None:
+    path = _aliases_path(cache_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(aliases, indent=2))
+
+
+def _download_builtin_vcf(alias: str, dest: Path) -> None:
+    """Download a built-in alias VCF from Zenodo."""
+    import httpx
+
+    url, _filename = BUILTIN_ZENODO_URLS[alias]
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    console.print(f"Downloading [cyan]{alias}[/cyan] genome from Zenodo...")
+    console.print(f"  URL: {url}")
+    console.print(f"  Destination: {dest}")
+
+    tmp_dest = dest.with_suffix(dest.suffix + ".tmp")
+    try:
+        with httpx.stream("GET", url, follow_redirects=True, timeout=600) as resp:
+            resp.raise_for_status()
+            total = int(resp.headers.get("content-length", 0))
+            downloaded = 0
+            last_pct_reported = -10
+            with open(tmp_dest, "wb") as f:
+                for chunk in resp.iter_bytes(chunk_size=1024 * 1024):
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    if total:
+                        pct = downloaded * 100 // total
+                        if pct >= last_pct_reported + 10:
+                            console.print(f"  {downloaded // (1024*1024)} / {total // (1024*1024)} MB ({pct}%)")
+                            last_pct_reported = pct
+        if total and downloaded < total:
+            tmp_dest.unlink(missing_ok=True)
+            console.print(f"[red]Download incomplete: got {downloaded} of {total} bytes.[/red]")
+            raise typer.Exit(code=1)
+        tmp_dest.rename(dest)
+    except Exception:
+        tmp_dest.unlink(missing_ok=True)
+        raise
+    console.print(f"[green]Downloaded {dest.name} ({downloaded // (1024*1024)} MB)[/green]")
+
+
+def _resolve_vcf(vcf_or_alias: str, cache_dir: Path | None = None) -> Path:
+    """Resolve a VCF path or alias name to an existing file Path.
+
+    For built-in aliases (anton, livia), auto-downloads from Zenodo if not cached.
+    """
+    p = Path(vcf_or_alias).expanduser()
+    if p.exists():
+        return p
+
+    aliases = _load_aliases(cache_dir)
+    lower = vcf_or_alias.lower().strip()
+    if lower in aliases:
+        resolved = Path(aliases[lower]).expanduser()
+        if not resolved.exists() and lower in BUILTIN_ZENODO_URLS:
+            _download_builtin_vcf(lower, resolved)
+        if not resolved.exists():
+            console.print(
+                f"[red]Alias '{vcf_or_alias}' points to {resolved} but the file does not exist.[/red]\n"
+                f"Set it with: prs alias set {lower} /path/to/file.vcf.gz"
+            )
+            raise typer.Exit(code=1)
+        return resolved
+
+    console.print(
+        f"[red]'{vcf_or_alias}' is neither an existing file nor a known alias.[/red]\n"
+        f"Known aliases: {', '.join(aliases) or '(none)'}\n"
+        f"Add one with: prs alias set {lower} /path/to/file.vcf.gz"
+    )
+    raise typer.Exit(code=1)
+
+
+# ---------------------------------------------------------------------------
+# PRS result cache — keyed by (vcf mtime+size, pgs_id, genome_build, ancestry)
+# ---------------------------------------------------------------------------
+
+def _results_cache_dir(cache_dir: Path | None = None) -> Path:
+    cache = cache_dir or resolve_cache_dir()
+    d = cache / "results"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _vcf_fingerprint(vcf_path: Path) -> str:
+    """Cheap fingerprint: file size + mtime (avoids hashing multi-GB VCFs)."""
+    stat = vcf_path.stat()
+    return f"{stat.st_size}_{int(stat.st_mtime)}"
+
+
+def _result_cache_key(vcf_path: Path, pgs_id: str, build: str, ancestry: str) -> str:
+    fp = _vcf_fingerprint(vcf_path)
+    return f"{pgs_id}_{build}_{ancestry}_{fp}"
+
+
+def _load_result_cache(cache_dir: Path | None = None) -> dict:
+    d = _results_cache_dir(cache_dir)
+    p = d / "prs_results_cache.json"
+    if p.exists():
+        try:
+            return json.loads(p.read_text())
+        except (json.JSONDecodeError, OSError):
+            return {}
+    return {}
+
+
+def _save_result_cache(cache: dict, cache_dir: Path | None = None) -> None:
+    d = _results_cache_dir(cache_dir)
+    p = d / "prs_results_cache.json"
+    p.write_text(json.dumps(cache, indent=2))
+
+
+def _get_cached_result(
+    vcf_path: Path, pgs_id: str, build: str, ancestry: str,
+    cache_dir: Path | None = None,
+) -> dict | None:
+    cache = _load_result_cache(cache_dir)
+    key = _result_cache_key(vcf_path, pgs_id, build, ancestry)
+    return cache.get(key)
+
+
+def _put_cached_result(
+    vcf_path: Path, pgs_id: str, build: str, ancestry: str,
+    result: dict, cache_dir: Path | None = None,
+) -> None:
+    cache = _load_result_cache(cache_dir)
+    key = _result_cache_key(vcf_path, pgs_id, build, ancestry)
+    cache[key] = result
+    _save_result_cache(cache, cache_dir)
+
+
+alias_app = typer.Typer(
+    name="alias",
+    help="Manage VCF aliases — named shortcuts for frequently used genotype files.",
+    no_args_is_help=True,
+)
+app.add_typer(alias_app, name="alias")
+
+
+@alias_app.command("list")
+def alias_list(
+    cache_dir: Annotated[
+        Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
+    ] = None,
+) -> None:
+    """List all VCF aliases (built-in and user-defined)."""
+    aliases = _load_aliases(cache_dir)
+    user_path = _aliases_path(cache_dir)
+    user_aliases: dict[str, str] = {}
+    if user_path.exists():
+        user_aliases = json.loads(user_path.read_text())
+
+    table = Table(title="VCF Aliases")
+    table.add_column("Alias", style="cyan")
+    table.add_column("Path", style="green")
+    table.add_column("Exists", justify="center")
+    table.add_column("Source", style="dim")
+
+    for name, path_str in sorted(aliases.items()):
+        resolved = Path(path_str).expanduser()
+        if resolved.exists():
+            exists = "[green]yes[/green]"
+        elif name in BUILTIN_ZENODO_URLS:
+            exists = "[yellow]auto-download[/yellow]"
+        else:
+            exists = "[red]no[/red]"
+        source = "user" if name in user_aliases else "built-in"
+        table.add_row(name, path_str, exists, source)
+
+    console.print(table)
+    not_cached = [n for n in BUILTIN_ZENODO_URLS if not Path(aliases.get(n, "")).expanduser().exists()]
+    if not_cached:
+        console.print(f"\n[dim]Built-in aliases ({', '.join(not_cached)}) will auto-download from Zenodo on first use.[/dim]")
+    console.print(f"[dim]User aliases file: {user_path}[/dim]")
+
+
+@alias_app.command("set")
+def alias_set(
+    name: Annotated[str, typer.Argument(help="Alias name (e.g. 'livia')")],
+    vcf_path: Annotated[Path, typer.Argument(help="Path to VCF file")],
+    cache_dir: Annotated[
+        Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
+    ] = None,
+) -> None:
+    """Set or update a VCF alias."""
+    if not vcf_path.exists():
+        console.print(f"[yellow]Warning: {vcf_path} does not exist yet.[/yellow]")
+
+    user_path = _aliases_path(cache_dir)
+    user_aliases: dict[str, str] = {}
+    if user_path.exists():
+        user_aliases = json.loads(user_path.read_text())
+
+    user_aliases[name.lower().strip()] = str(vcf_path.expanduser().resolve())
+    _save_user_aliases(user_aliases, cache_dir)
+    console.print(f"[green]Alias '{name}' → {vcf_path}[/green]")
+
+
+@alias_app.command("remove")
+def alias_remove(
+    name: Annotated[str, typer.Argument(help="Alias name to remove")],
+    cache_dir: Annotated[
+        Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
+    ] = None,
+) -> None:
+    """Remove a user-defined VCF alias."""
+    user_path = _aliases_path(cache_dir)
+    user_aliases: dict[str, str] = {}
+    if user_path.exists():
+        user_aliases = json.loads(user_path.read_text())
+
+    key = name.lower().strip()
+    if key in BUILTIN_ALIASES and key not in user_aliases:
+        console.print(f"[yellow]'{name}' is a built-in alias and cannot be removed (but you can override it with 'prs alias set').[/yellow]")
+        raise typer.Exit(code=1)
+
+    if key not in user_aliases:
+        console.print(f"[yellow]Alias '{name}' not found in user aliases.[/yellow]")
+        raise typer.Exit(code=1)
+
+    del user_aliases[key]
+    _save_user_aliases(user_aliases, cache_dir)
+    console.print(f"[green]Removed alias '{name}'.[/green]")
 
 
 @reference_app.command("score")
@@ -1850,6 +2113,576 @@ def pgen_score(
         console.print(f"  Scores parquet: {output}")
     else:
         console.print(f"\n[dim]Tip: use --output/-o to save results as parquet.[/dim]")
+
+
+# ---------------------------------------------------------------------------
+# plot subcommand group — Altair chart generation
+# ---------------------------------------------------------------------------
+
+plot_app = typer.Typer(
+    name="plot",
+    help="Generate PRS charts: bell curves, multi-ancestry overlays, trait plots, and percentile strips.",
+    no_args_is_help=True,
+)
+app.add_typer(plot_app, name="plot")
+
+
+def _load_distributions(
+    cache_dir: Path | None = None,
+    panel: str = "1000g",
+) -> tuple[pl.DataFrame, pl.DataFrame | None]:
+    """Load reference distributions and quality parquets from cache or HuggingFace."""
+    cache = cache_dir or resolve_cache_dir()
+    pctl_dir = cache / "percentiles"
+
+    dist_path = pctl_dir / f"{panel}_distributions.parquet"
+    quality_path = pctl_dir / f"{panel}_quality.parquet"
+
+    if not dist_path.exists():
+        console.print(f"Distributions not cached locally; pulling from HuggingFace...")
+        catalog = PRSCatalog(cache_dir=cache)
+        ref_dists = catalog.reference_distributions()
+        if ref_dists is None or ref_dists.height == 0:
+            console.print("[red]No reference distributions available. Run the pipeline or check HuggingFace.[/red]")
+            raise typer.Exit(code=1)
+        return ref_dists, pl.read_parquet(quality_path) if quality_path.exists() else None
+
+    dists = pl.read_parquet(dist_path)
+    quality = pl.read_parquet(quality_path) if quality_path.exists() else None
+    return dists, quality
+
+
+def _load_user_results(results_path: Path) -> list[dict]:
+    """Load user PRS results from a JSON file."""
+    import json as _json
+    data = _json.loads(results_path.read_text())
+    if isinstance(data, dict) and "results" in data:
+        data = data["results"]
+    if not isinstance(data, list):
+        console.print("[red]Results JSON must be a list of objects (or {\"results\": [...]}).[/red]")
+        raise typer.Exit(code=1)
+    return data
+
+
+def _compute_trait_results(
+    trait: str,
+    vcf_path: Path,
+    distributions_df: pl.DataFrame,
+    ancestry: str,
+    build: str,
+    max_scores: int,
+    cache: Path,
+    fuzzy: bool = False,
+    no_cache: bool = False,
+) -> list[dict]:
+    """Search for PGS models matching a trait, compute PRS, and return result dicts.
+
+    Exact match on trait_reported first. Falls back to substring match only with fuzzy=True.
+    Always lists the matched trait names before computing.
+    Uses a file-based result cache keyed by (vcf mtime+size, pgs_id, build, ancestry).
+    """
+    catalog = PRSCatalog(cache_dir=cache)
+    term = trait.strip().lower()
+
+    all_scores = catalog.scores(genome_build=build, include_harmonized=True)
+    exact_df = all_scores.filter(
+        pl.col("trait_reported").str.to_lowercase().eq(term)
+    ).collect()
+
+    if exact_df.height > 0:
+        scores_df = exact_df
+        match_type = "exact"
+    else:
+        fuzzy_df = catalog.search(trait, genome_build=build).collect()
+        if fuzzy_df.height == 0:
+            console.print(f"[red]No PGS scores found for trait '{trait}' ({build}).[/red]")
+            raise typer.Exit(code=1)
+
+        trait_names = fuzzy_df["trait_reported"].unique().sort().to_list()
+        if not fuzzy:
+            console.print(f"[yellow]No exact match for '{trait}'. Found {fuzzy_df.height} scores with partial matches:[/yellow]")
+            for t in trait_names:
+                n = fuzzy_df.filter(pl.col("trait_reported") == t).height
+                console.print(f"  - {t} ({n} scores)")
+            console.print(f"\n[dim]Add --fuzzy to compute PRS for these partial matches.[/dim]")
+            raise typer.Exit(code=1)
+
+        scores_df = fuzzy_df
+        match_type = "fuzzy"
+
+    trait_names = scores_df["trait_reported"].unique().sort().to_list()
+    pgs_ids = scores_df["pgs_id"].head(max_scores).to_list()
+
+    pgs_to_trait = {
+        row["pgs_id"]: row["trait_reported"]
+        for row in scores_df.select("pgs_id", "trait_reported").iter_rows(named=True)
+    }
+
+    console.print(f"Found [cyan]{scores_df.height}[/cyan] scores ({match_type} match) for {len(trait_names)} trait(s):")
+    for t in trait_names:
+        n = scores_df.filter(pl.col("trait_reported") == t).height
+        console.print(f"  - {t} ({n} scores)")
+
+    from just_prs.prs import compute_prs_duckdb
+
+    result_dicts: list[dict] = []
+    failed: list[str] = []
+    cached_count = 0
+
+    for i, pgs_id in enumerate(pgs_ids, 1):
+        trait_name = pgs_to_trait.get(pgs_id, "?")
+
+        if not no_cache:
+            hit = _get_cached_result(vcf_path, pgs_id, build, ancestry, cache)
+            if hit is not None:
+                cached_count += 1
+                hit.setdefault("trait_reported", trait_name)
+                result_dicts.append(hit)
+                console.print(
+                    f"[{i}/{len(pgs_ids)}] [cyan]{pgs_id}[/cyan] — {trait_name}  "
+                    f"[dim](cached) score={hit['score']:.6f}  percentile={hit.get('percentile')}[/dim]"
+                )
+                continue
+
+        console.print(f"[{i}/{len(pgs_ids)}] [cyan]{pgs_id}[/cyan] — {trait_name}")
+        try:
+            r = compute_prs_duckdb(
+                vcf_path=vcf_path,
+                scoring_file=pgs_id,
+                genome_build=build,
+                cache_dir=cache,
+                pgs_id=pgs_id,
+                trait_reported=trait_name,
+            )
+            pctl_result = catalog.percentile_full(r.score, r.pgs_id, ancestry=ancestry)
+            pctl = pctl_result.percentile
+            z_score = pctl_result.z_score
+
+            rd: dict = {
+                "pgs_id": r.pgs_id,
+                "score": r.score,
+                "percentile": pctl,
+                "z_score": z_score,
+                "match_rate": r.match_rate,
+                "variants_total": r.variants_total,
+                "variants_matched": r.variants_matched,
+                "trait_reported": trait_name,
+            }
+
+            if z_score is not None:
+                try:
+                    bundle = catalog.absolute_risk_bundle(r.pgs_id, z_score)
+                    if bundle.best_estimate is not None:
+                        be = bundle.best_estimate
+                        rd["absolute_risk"] = be.absolute_risk
+                        rd["risk_ratio"] = be.risk_ratio
+                        rd["population_prevalence"] = be.population_prevalence
+                        rd["risk_method"] = be.method_label
+                except Exception:
+                    pass
+
+            result_dicts.append(rd)
+            _put_cached_result(vcf_path, pgs_id, build, ancestry, rd, cache)
+
+            line = f"  score={r.score:.6f}  matched={r.variants_matched}/{r.variants_total}  percentile={pctl}"
+            if "risk_ratio" in rd:
+                line += f"  risk={rd['risk_ratio']:.2f}x"
+            if "absolute_risk" in rd:
+                line += f"  abs_risk={rd['absolute_risk']:.1%}"
+            console.print(line)
+        except Exception as exc:
+            failed.append(pgs_id)
+            console.print(f"  [red]failed: {exc}[/red]")
+
+    if failed:
+        console.print(f"\n[yellow]{len(failed)}/{len(pgs_ids)} scores failed: {', '.join(failed)}[/yellow]")
+    summary_parts = [f"[green]{len(result_dicts)}[/green] scores"]
+    if cached_count:
+        summary_parts.append(f"{cached_count} from cache")
+    if len(result_dicts) - cached_count > 0:
+        summary_parts.append(f"{len(result_dicts) - cached_count} computed")
+    console.print(f"\n{', '.join(summary_parts)}.")
+
+    scored = [r for r in result_dicts if r.get("percentile") is not None]
+    if scored:
+        pctls = sorted([r["percentile"] for r in scored])
+        median_pctl = pctls[len(pctls) // 2]
+        mean_pctl = sum(pctls) / len(pctls)
+        best_r = max(scored, key=lambda r: r["percentile"])
+
+        console.print("\n[bold]Key Statistics[/bold]")
+        console.print(f"  Your Percentile (best model):  [bold]{best_r['percentile']:.1f}[/bold]  ({best_r['pgs_id']})")
+        console.print(f"  Median Percentile:             [bold]{median_pctl:.1f}[/bold]  across {len(scored)} models")
+        console.print(f"  Mean Percentile:               {mean_pctl:.1f}")
+        if len(pctls) > 1:
+            import statistics
+            spread = statistics.pstdev(pctls)
+            console.print(f"  Model Spread (SD):             {spread:.1f} pts")
+
+        with_risk = [r for r in scored if "risk_ratio" in r]
+        if with_risk:
+            best_risk = max(with_risk, key=lambda r: r["percentile"])
+            rr = best_risk["risk_ratio"]
+            if rr >= 1.0:
+                console.print(f"  Risk vs Average:               [bold red]{rr:.2f}x[/bold red]  (higher than population average)")
+            else:
+                console.print(f"  Risk vs Average:               [bold green]{rr:.2f}x[/bold green]  (lower than population average)")
+
+        with_abs = [r for r in scored if "absolute_risk" in r]
+        if with_abs:
+            best_abs = max(with_abs, key=lambda r: r["percentile"])
+            ar = best_abs["absolute_risk"]
+            prev = best_abs.get("population_prevalence")
+            method = best_abs.get("risk_method", "")
+            risk_str = f"  Absolute Risk:                 [bold]{ar:.1%}[/bold]"
+            if prev is not None:
+                risk_str += f"  (pop. avg. {prev:.1%})"
+            if method:
+                risk_str += f"  [{method}]"
+            console.print(risk_str)
+
+    return result_dicts
+
+
+@plot_app.command("bell-curve")
+def plot_bell_curve_cmd(
+    pgs_id: Annotated[str, typer.Argument(help="PGS score ID (e.g. PGS000001)")],
+    output: Annotated[Path, typer.Option("--output", "-o", help="Output file (.png, .svg, .html, .json)")],
+    vcf: Annotated[
+        Optional[str], typer.Option("--vcf", "-v", help="VCF file path or alias (e.g. 'anton'). Auto-computes PRS.")
+    ] = None,
+    ancestry: Annotated[
+        str, typer.Option("--ancestry", "-a", help="Superpopulation code (AFR, AMR, EAS, EUR, SAS)")
+    ] = "EUR",
+    user_score: Annotated[
+        Optional[float], typer.Option("--user-score", "-s", help="User's PRS score to mark on the curve")
+    ] = None,
+    build: Annotated[
+        str, typer.Option("--build", "-b", help="Genome build (used with --vcf)")
+    ] = "GRCh38",
+    width: Annotated[int, typer.Option("--width", help="Chart width in pixels")] = 800,
+    height: Annotated[int, typer.Option("--height", help="Chart height in pixels")] = 350,
+    no_cache: Annotated[
+        bool, typer.Option("--no-cache", help="Bypass PRS result cache and recompute")
+    ] = False,
+    panel: Annotated[
+        str, typer.Option("--panel", help="Reference panel (1000g or hgdp_1kg)")
+    ] = "1000g",
+    cache_dir: Annotated[
+        Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
+    ] = None,
+) -> None:
+    """Plot a single PGS bell curve for one ancestry with optional user score marker.
+
+    Use --vcf (path or alias) to auto-compute PRS and mark it on the curve.
+    Use --user-score to mark a pre-computed score directly.
+
+    \b
+    Examples:
+      prs plot bell-curve PGS000001 -o bell.html
+      prs plot bell-curve PGS000001 -o bell.html -a AFR --user-score 0.274
+      prs plot bell-curve PGS000001 -o bell.html --vcf livia
+      prs plot bell-curve PGS000001 -o bell.html --vcf anton -a EUR
+    """
+    from just_prs.viz import plot_prs_bell_curve, save_chart
+
+    pgs_id = _validate_pgs_id(pgs_id)
+
+    if vcf and user_score is not None:
+        console.print("[red]Provide either --vcf or --user-score, not both.[/red]")
+        raise typer.Exit(code=1)
+
+    score: float | None = user_score
+    if vcf:
+        vcf_path = _resolve_vcf(vcf, cache_dir)
+        cache = cache_dir or resolve_cache_dir()
+        hit = None if no_cache else _get_cached_result(vcf_path, pgs_id, build, ancestry, cache)
+        if hit is not None:
+            score = hit["score"]
+            console.print(f"[dim](cached)[/dim] Score: [green]{score:.6f}[/green]")
+        else:
+            console.print(f"Computing PRS for [cyan]{pgs_id}[/cyan] on {vcf_path}...")
+            result = compute_prs(
+                vcf_path=vcf_path,
+                scoring_file=pgs_id,
+                genome_build=build,
+                cache_dir=cache,
+                pgs_id=pgs_id,
+            )
+            score = result.score
+            _put_cached_result(vcf_path, pgs_id, build, ancestry, {
+                "pgs_id": pgs_id, "score": score, "match_rate": result.match_rate,
+            }, cache)
+            console.print(f"Score: [green]{score:.6f}[/green] (matched {result.variants_matched}/{result.variants_total})")
+
+    dists, _ = _load_distributions(cache_dir, panel)
+
+    console.print(f"Plotting bell curve for [cyan]{pgs_id}[/cyan] ({ancestry})...")
+    chart = plot_prs_bell_curve(
+        pgs_id=pgs_id,
+        distributions_df=dists,
+        user_score=score,
+        ancestry=ancestry,
+        width=width,
+        height=height,
+    )
+    save_chart(chart, output)
+    console.print(f"[green]Saved to {output.resolve()}[/green]")
+
+
+@plot_app.command("multi-ancestry")
+def plot_multi_ancestry_cmd(
+    pgs_id: Annotated[str, typer.Argument(help="PGS score ID (e.g. PGS000001)")],
+    output: Annotated[Path, typer.Option("--output", "-o", help="Output file (.png, .svg, .html, .json)")],
+    vcf: Annotated[
+        Optional[str], typer.Option("--vcf", "-v", help="VCF file path or alias (e.g. 'anton'). Auto-computes PRS.")
+    ] = None,
+    user_score: Annotated[
+        Optional[float], typer.Option("--user-score", "-s", help="User's PRS score to mark on the chart")
+    ] = None,
+    build: Annotated[
+        str, typer.Option("--build", "-b", help="Genome build (used with --vcf)")
+    ] = "GRCh38",
+    ancestries: Annotated[
+        Optional[str], typer.Option("--ancestries", help="Comma-separated superpopulation codes (default: all)")
+    ] = None,
+    width: Annotated[int, typer.Option("--width", help="Chart width in pixels")] = 800,
+    height: Annotated[int, typer.Option("--height", help="Chart height in pixels")] = 350,
+    no_cache: Annotated[
+        bool, typer.Option("--no-cache", help="Bypass PRS result cache and recompute")
+    ] = False,
+    panel: Annotated[
+        str, typer.Option("--panel", help="Reference panel (1000g or hgdp_1kg)")
+    ] = "1000g",
+    cache_dir: Annotated[
+        Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
+    ] = None,
+) -> None:
+    """Plot overlaid bell curves for multiple ancestries on a single chart.
+
+    \b
+    Examples:
+      prs plot multi-ancestry PGS000001 -o multi.html
+      prs plot multi-ancestry PGS000001 -o multi.html --vcf anton
+      prs plot multi-ancestry PGS000001 -o multi.html --ancestries EUR,AFR,EAS
+      prs plot multi-ancestry PGS000001 -o multi.html --user-score 0.274
+    """
+    from just_prs.viz import plot_prs_multi_ancestry, save_chart
+
+    pgs_id = _validate_pgs_id(pgs_id)
+
+    if vcf and user_score is not None:
+        console.print("[red]Provide either --vcf or --user-score, not both.[/red]")
+        raise typer.Exit(code=1)
+
+    score: float | None = user_score
+    if vcf:
+        vcf_path = _resolve_vcf(vcf, cache_dir)
+        cache = cache_dir or resolve_cache_dir()
+        hit = None if no_cache else _get_cached_result(vcf_path, pgs_id, build, "EUR", cache)
+        if hit is not None:
+            score = hit["score"]
+            console.print(f"[dim](cached)[/dim] Score: [green]{score:.6f}[/green]")
+        else:
+            console.print(f"Computing PRS for [cyan]{pgs_id}[/cyan] on {vcf_path}...")
+            result = compute_prs(
+                vcf_path=vcf_path,
+                scoring_file=pgs_id,
+                genome_build=build,
+                cache_dir=cache,
+                pgs_id=pgs_id,
+            )
+            score = result.score
+            _put_cached_result(vcf_path, pgs_id, build, "EUR", {
+                "pgs_id": pgs_id, "score": score, "match_rate": result.match_rate,
+            }, cache)
+            console.print(f"Score: [green]{score:.6f}[/green] (matched {result.variants_matched}/{result.variants_total})")
+
+    dists, _ = _load_distributions(cache_dir, panel)
+
+    anc_list: list[str] | None = None
+    if ancestries:
+        anc_list = [a.strip().upper() for a in ancestries.split(",") if a.strip()]
+
+    console.print(f"Plotting multi-ancestry curves for [cyan]{pgs_id}[/cyan]...")
+    chart = plot_prs_multi_ancestry(
+        pgs_id=pgs_id,
+        distributions_df=dists,
+        user_score=score,
+        ancestries=anc_list,
+        width=width,
+        height=height,
+    )
+    save_chart(chart, output)
+    console.print(f"[green]Saved to {output.resolve()}[/green]")
+
+
+@plot_app.command("trait")
+def plot_trait_cmd(
+    trait: Annotated[str, typer.Argument(help="Trait name or substring (e.g. 'BMI', 'type 2 diabetes')")],
+    output: Annotated[Path, typer.Option("--output", "-o", help="Output file (.png, .svg, .html, .json)")],
+    vcf: Annotated[
+        Optional[str], typer.Option("--vcf", "-v", help="VCF file path or alias (e.g. 'anton', 'livia'). Auto-computes PRS for the trait.")
+    ] = None,
+    ancestry: Annotated[
+        str, typer.Option("--ancestry", "-a", help="Superpopulation code (AFR, AMR, EAS, EUR, SAS)")
+    ] = "EUR",
+    results: Annotated[
+        Optional[Path], typer.Option("--results", "-r", help="JSON file with user PRS results (list of {pgs_id, score, ...})")
+    ] = None,
+    build: Annotated[
+        str, typer.Option("--build", "-b", help="Genome build (used with --vcf)")
+    ] = "GRCh38",
+    max_scores: Annotated[
+        int, typer.Option("--max-scores", help="Max number of PGS models to show")
+    ] = 25,
+    show_table: Annotated[
+        bool, typer.Option("--show-table/--no-table", help="Append a model summary table below the bell curve")
+    ] = False,
+    width: Annotated[int, typer.Option("--width", help="Chart width in pixels")] = 900,
+    height: Annotated[int, typer.Option("--height", help="Bell curve height in pixels")] = 400,
+    fuzzy: Annotated[
+        bool, typer.Option("--fuzzy/--exact", help="Allow partial trait name matching (default: exact only)")
+    ] = False,
+    all_ancestries: Annotated[
+        bool, typer.Option("--all-ancestries/--single-ancestry", help="Overlay all 5 population bell curves (default: single ancestry)")
+    ] = False,
+    ancestries: Annotated[
+        Optional[str], typer.Option("--ancestries", help="Comma-separated population codes to overlay (e.g. EUR,AFR,EAS)")
+    ] = None,
+    no_cache: Annotated[
+        bool, typer.Option("--no-cache", help="Bypass PRS result cache and recompute all scores")
+    ] = False,
+    panel: Annotated[
+        str, typer.Option("--panel", help="Reference panel (1000g or hgdp_1kg)")
+    ] = "1000g",
+    cache_dir: Annotated[
+        Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
+    ] = None,
+) -> None:
+    """Plot trait-grouped visualization: reference bell curve with per-model quality dots.
+
+    Without --vcf or --results, shows model quality comparison as a dot strip.
+    With --vcf, auto-computes PRS for all matching scores and plots the results.
+    With --results, loads pre-computed results from a JSON file.
+
+    Trait matching is exact by default (case-insensitive). If no exact match is
+    found, the command lists partial matches and exits. Use --fuzzy to compute
+    PRS for all partial matches.
+
+    Use --all-ancestries to overlay all 5 population reference curves, or
+    --ancestries EUR,AFR,EAS to select specific populations.
+
+    PRS results are cached per (VCF, PGS ID, build, ancestry) so repeated
+    plotting is instant. Use --no-cache to force recomputation.
+
+    \b
+    Examples:
+      prs plot trait "Deep vein thrombosis" --vcf livia -o dvt.html --show-table
+      prs plot trait thrombosis --vcf livia -o dvt.html --fuzzy --show-table
+      prs plot trait BMI -o bmi.html --show-table --all-ancestries
+      prs plot trait "type 2 diabetes" --vcf anton -o t2d.html --ancestries EUR,AFR,EAS
+      prs plot trait "type 2 diabetes" -o t2d.html --results my_results.json
+    """
+    from just_prs.viz import plot_trait_scores, save_chart, save_trait_report
+
+    if vcf and results:
+        console.print("[red]Provide either --vcf or --results, not both.[/red]")
+        raise typer.Exit(code=1)
+
+    cache = cache_dir or resolve_cache_dir()
+    dists, quality = _load_distributions(cache_dir, panel)
+
+    user_results: list[dict] | None = None
+
+    if vcf:
+        vcf_path = _resolve_vcf(vcf, cache_dir)
+        user_results = _compute_trait_results(
+            trait, vcf_path, dists, ancestry, build, max_scores, cache,
+            fuzzy=fuzzy, no_cache=no_cache,
+        )
+    elif results:
+        user_results = _load_user_results(results)
+
+    anc_list: list[str] | None = None
+    if all_ancestries:
+        anc_list = ["AFR", "AMR", "EAS", "EUR", "SAS"]
+    elif ancestries:
+        anc_list = [a.strip().upper() for a in ancestries.split(",")]
+
+    html_report = user_results and output.suffix.lower() == ".html"
+
+    if html_report and anc_list is None:
+        anc_list = ["AFR", "AMR", "EAS", "EUR", "SAS"]
+
+    pop_label = ", ".join(anc_list) if anc_list else ancestry
+    console.print(f"Plotting trait chart for [cyan]{trait}[/cyan] ({pop_label})...")
+    chart = plot_trait_scores(
+        trait=trait,
+        distributions_df=dists,
+        quality_df=quality,
+        user_results=user_results,
+        ancestry=ancestry,
+        ancestries=anc_list,
+        max_scores=max_scores,
+        width=width,
+        height=height,
+        show_table=show_table and not html_report,
+    )
+    if html_report:
+        save_trait_report(chart, output, trait, user_results, ancestry)
+    else:
+        save_chart(chart, output)
+    console.print(f"[green]Saved to {output.resolve()}[/green]")
+
+
+@plot_app.command("strip")
+def plot_strip_cmd(
+    results: Annotated[Path, typer.Argument(help="JSON file with PRS results (list of {pgs_id, percentile, ...})")],
+    output: Annotated[Path, typer.Option("--output", "-o", help="Output file (.png, .svg, .html, .json)")],
+    title: Annotated[
+        str, typer.Option("--title", "-t", help="Chart title")
+    ] = "PRS Percentiles",
+    width: Annotated[int, typer.Option("--width", help="Chart width in pixels")] = 800,
+    height: Annotated[
+        Optional[int], typer.Option("--height", help="Chart height in pixels (default: auto-sized)")
+    ] = None,
+) -> None:
+    """Plot a horizontal percentile strip chart with risk-colored bands.
+
+    Input JSON must be a list of objects with at least 'pgs_id' and 'percentile' keys.
+    Optional keys: 'trait', 'label', 'quality_label'.
+
+    \b
+    Examples:
+      prs plot strip results.json -o strip.png
+      prs plot strip results.json -o strip.html --title "My PRS Report"
+    """
+    from just_prs.viz import plot_prs_percentile_strip, save_chart
+
+    user_results = _load_user_results(results)
+
+    missing = [r for r in user_results if "percentile" not in r or r["percentile"] is None]
+    if missing:
+        console.print(
+            f"[yellow]Warning: {len(missing)} result(s) missing 'percentile' field — "
+            f"they will be skipped.[/yellow]"
+        )
+        user_results = [r for r in user_results if r.get("percentile") is not None]
+
+    if not user_results:
+        console.print("[red]No results with valid percentiles to plot.[/red]")
+        raise typer.Exit(code=1)
+
+    console.print(f"Plotting percentile strip for [cyan]{len(user_results)}[/cyan] scores...")
+    chart = plot_prs_percentile_strip(
+        results=user_results,
+        title=title,
+        width=width,
+        height=height,
+    )
+    save_chart(chart, output)
+    console.print(f"[green]Saved to {output.resolve()}[/green]")
 
 
 def run() -> None:

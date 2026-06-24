@@ -9,11 +9,15 @@ from prs_pipeline.assets import (
     ebi_pgs_catalog_reference_panel,
     ebi_pgs_catalog_scoring_files,
     ebi_scoring_files_fingerprint,
+    ensembl_grch38_fasta,
     hf_chip_coverage,
     hf_ld_proxy_table,
     hf_prs_percentiles,
+    hf_reference_allele_universe,
     illumina_gsa_manifest,
     ld_proxy_table,
+    reference_allele_universe,
+    reference_fasta,
     reference_percentile_audit,
     reference_panel,
     reference_scores,
@@ -105,10 +109,27 @@ ld_proxy_pipeline = dg.define_asset_job(
     executor_def=in_process_executor,
 )
 
+reference_allele_pipeline = dg.define_asset_job(
+    name="reference_allele_pipeline",
+    selection=dg.AssetSelection.assets(
+        "reference_panel", "scoring_files", "scoring_files_parquet",
+        "reference_fasta", "reference_allele_universe", "hf_reference_allele_universe",
+    ) | dg.AssetSelection.checks_for_assets("reference_allele_universe"),
+    description=(
+        "Precompute the reference-allele universe: faidx the GRCh38 FASTA + reference "
+        "panel .pvar to resolve REF at every catalog scoring position lacking a "
+        "reference_allele, then publish the small parquet to HuggingFace. Recovers "
+        "genome-wide WGS coverage at runtime without shipping the 3 GB genome."
+    ),
+    hooks={resource_summary_hook},
+    executor_def=in_process_executor,
+)
+
 _full_pipeline_assets = dg.AssetSelection.assets(
     "ebi_reference_panel_fingerprint", "ebi_scoring_files_fingerprint",
     "reference_panel", "scoring_files", "scoring_files_parquet",
     "chip_coverage", "hf_chip_coverage",
+    "reference_fasta", "reference_allele_universe", "hf_reference_allele_universe",
     "reference_scores",
     "raw_pgs_metadata", "cleaned_pgs_metadata",
     "gwas_studies", "trait_prevalence", "trait_heritability",
@@ -119,6 +140,7 @@ full_pipeline = dg.define_asset_job(
     name="full_pipeline",
     selection=_full_pipeline_assets | dg.AssetSelection.checks_for_assets(
         "reference_scores", "hf_prs_percentiles", "cleaned_pgs_metadata", "chip_coverage",
+        "reference_allele_universe",
     ),
     description=(
         "Full pipeline: download reference panel, batch-score all PGS IDs, "
@@ -170,6 +192,7 @@ _assets = [
     ebi_pgs_catalog_reference_panel,
     ebi_pgs_catalog_scoring_files,
     illumina_gsa_manifest,
+    ensembl_grch38_fasta,
     ebi_reference_panel_fingerprint,
     ebi_scoring_files_fingerprint,
     scoring_files,
@@ -178,6 +201,9 @@ _assets = [
     hf_chip_coverage,
     hf_ld_proxy_table,
     ld_proxy_table,
+    reference_fasta,
+    reference_allele_universe,
+    hf_reference_allele_universe,
     reference_percentile_audit,
     reference_panel,
     reference_scores,
@@ -202,6 +228,7 @@ _unresolved_jobs = [
     catalog_pipeline,
     chip_coverage_pipeline,
     ld_proxy_pipeline,
+    reference_allele_pipeline,
     reference_percentile_audit_job,
     metadata_pipeline,
 ]

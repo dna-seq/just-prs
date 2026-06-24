@@ -42,6 +42,7 @@ from just_prs.quality import (
 from just_prs.reference import (
     BatchScoringResult,
     DEFAULT_PANEL,
+    REFERENCE_FASTA,
     REFERENCE_PANELS,
     ReferencePanelError,
     ScoringOutcome,
@@ -50,15 +51,18 @@ from just_prs.reference import (
     compute_reference_prs_batch,
     compute_reference_prs_polars,
     distribution_quality_issues,
+    download_reference_fasta,
     download_reference_panel,
     enrich_distributions,
     match_scoring_to_pvar,
     parse_psam,
     parse_pvar,
     read_pgen_genotypes,
+    reference_fasta_path,
     reference_panel_dir,
     reference_distribution_audit_issues,
 )
+from just_prs.reference_allele import resolve_reference_alleles
 from just_prs.scoring import resolve_cache_dir
 
 _meta = metadata("just-prs")

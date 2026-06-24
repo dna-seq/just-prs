@@ -1,5 +1,25 @@
 # RefCall / Reference-Allele Resolution — Plan (deferred coverage-recovery branch)
 
+> **Status (A + B implemented).** Items **A (reference-allele resolution)** and **B
+> (reference-FASTA resource)** are done, with a key design change from the original
+> sketch: instead of resolving REF on the fly per run, the catalog's scoring positions
+> are resolved **once** into a small `reference_allele_universe.parquet`
+> `(genome_build, chrom, pos, ref, ref_source)` and published to HF — the 3 GB genome
+> FASTA is a *precompute-only* input, never a runtime resource (no whole-genome parquet).
+> Verified upstream that polars-bio cannot do vcf→gvcf and that faidx via **pysam** (not
+> a bespoke reader) is the right FASTA tool. Implementation: `just_prs/reference_allele.py`
+> (`resolve_reference_alleles`), `reference.py` (`download_reference_fasta` /
+> `reference_fasta_path` / `REFERENCE_FASTA`), `prs.py` (`resolve_reference` flag +
+> `_apply_reference_resolution` + `variants_ref_resolved_panel/_fasta` counters on both
+> engines), `PRSCatalog.compute_prs(..., resolve_reference=True)` with HF pull-on-miss,
+> `hf.py` (`push_/pull_reference_allele_universe`), and the Dagster
+> `reference_allele_pipeline` (`ensembl_grch38_fasta` → `reference_fasta` →
+> `reference_allele_universe` → `hf_reference_allele_universe` + asset check). `pysam` is
+> in the `[reference]` extra with the `sys_platform != 'win32'` marker (precompute is
+> Linux/WSL; runtime reads the small parquet and never needs pysam). The flag defaults
+> **off** until the empirical WGS coverage gate passes. **Items C (gVCF END-block
+> expansion) and D (array ALL_SITES + maf_fill) remain TODO.**
+
 Branch: `refcall-resolution` (stacked on `scoring-foundations`). This is the deferred
 **full P1 / F15 / F22** work the demo-safe foundations round intentionally skipped. It is
 the lever that turns the ~50% genome-wide WGS coverage into near-complete coverage, and

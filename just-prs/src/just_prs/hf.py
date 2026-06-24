@@ -249,6 +249,65 @@ def push_reference_distributions(
             )
 
 
+REFERENCE_ALLELE_UNIVERSE_FILE = "reference_allele_universe.parquet"
+HF_REFERENCE_PREFIX = "data/reference"
+
+
+def push_reference_allele_universe(
+    parquet_path: Path,
+    repo_id: str = DEFAULT_HF_CATALOG_REPO,
+    token: str | None = None,
+) -> None:
+    """Upload the precomputed reference-allele universe to the catalog HF repo.
+
+    Stored as ``data/reference/reference_allele_universe.parquet`` — a small
+    ``(genome_build, chrom, pos, ref, ref_source)`` table keyed to the catalog's
+    scoring positions, consumed at runtime to fill missing reference alleles.
+    """
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:push_reference_allele_universe", repo_id=repo_id):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        api.upload_file(
+            path_or_fileobj=str(parquet_path),
+            path_in_repo=f"{HF_REFERENCE_PREFIX}/{REFERENCE_ALLELE_UNIVERSE_FILE}",
+            repo_id=repo_id,
+            repo_type="dataset",
+        )
+
+
+def pull_reference_allele_universe(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_CATALOG_REPO,
+    token: str | None = None,
+) -> Path | None:
+    """Download the reference-allele universe parquet from the catalog HF repo.
+
+    Returns the local path, or None if the repo does not host it yet.
+    """
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:pull_reference_allele_universe", repo_id=repo_id):
+        local_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            path = _hf_download_with_retry(
+                repo_id=repo_id,
+                filename=f"{HF_REFERENCE_PREFIX}/{REFERENCE_ALLELE_UNIVERSE_FILE}",
+                repo_type="dataset",
+                local_dir=local_dir,
+                token=resolved_token,
+            )
+        except (EntryNotFoundError, RepositoryNotFoundError):
+            return None
+        target = local_dir / REFERENCE_ALLELE_UNIVERSE_FILE
+        cached = Path(path)
+        if cached != target:
+            shutil.copy2(cached, target)
+        return target
+
+
 def push_reference_audit_sidecars(
     *,
     quality_report_path: Path | None = None,

@@ -45,6 +45,7 @@ from just_prs.hf import (
     push_ld_proxy_pgs_table,
     push_reference_audit_sidecars,
     push_chip_coverage,
+    push_reference_allele_universe,
     push_reference_distributions,
 )
 from just_prs.ld_proxy import (
@@ -54,13 +55,19 @@ from just_prs.ld_proxy import (
 )
 from just_prs.reference import (
     DEFAULT_PANEL,
+    REFERENCE_FASTA,
     REFERENCE_PANELS,
     REFERENCE_PANEL_URL,
+    _find_reference_panel_file,
     compute_reference_prs_batch,
+    download_reference_fasta,
     download_reference_panel,
     enrich_distributions,
     reference_distribution_audit_issues,
+    reference_fasta_path,
+    reference_panel_dir,
 )
+from just_prs.reference_allele import resolve_reference_alleles
 from prs_pipeline.fingerprint import fingerprint_http_resource
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
 from prs_pipeline.runtime import resource_tracker
@@ -113,6 +120,18 @@ illumina_gsa_manifest = SourceAsset(
         "scoring files without liftover."
     ),
     metadata={"url": CHIPS_BY_ID["gsa_v3"]["manifest_url"]},
+)
+
+ensembl_grch38_fasta = SourceAsset(
+    key="ensembl_grch38_fasta",
+    group_name="external",
+    description=(
+        "Ensembl GRCh38 primary-assembly FASTA (~900 MB gzip / ~3 GB uncompressed). "
+        "Universal reference-base source for the reference-allele FASTA tier. Touched "
+        "ONLY by the reference_allele_universe precompute (faidx), never at runtime. "
+        "Unprefixed contigs (1..22, X, Y, MT) match this package's normalized coords."
+    ),
+    metadata={"url": REFERENCE_FASTA["GRCh38"]["url"]},
 )
 
 
@@ -498,6 +517,191 @@ def hf_chip_coverage(
         "coverage_path": str(parquet_path),
         "n_rows": coverage.height,
         "n_scores": coverage["pgs_id"].n_unique() if coverage.height > 0 else 0,
+    })
+    return Output(url)
+
+
+# ---------------------------------------------------------------------------
+# Reference-allele universe — precompute REF at catalog scoring positions
+# ---------------------------------------------------------------------------
+
+def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> pl.DataFrame:
+    """Union of scoring positions that need reference-allele resolution.
+
+    Iterates every cached ``*_hmPOS_{build}.parquet`` (the chip_coverage pattern)
+    and collects unique ``(chrom, pos)`` where ``reference_allele`` is missing in
+    at least one record, carrying a conservative ``snv_only`` flag (True only when
+    effect/other alleles are single-base across every record at that position).
+    """
+    files = sorted(scores_dir.glob(f"*_hmPOS_{genome_build}.parquet"))
+    frames: list[pl.DataFrame] = []
+    for parquet_path in files:
+        schema = pl.scan_parquet(parquet_path).collect_schema().names()
+        if "hm_chr" in schema and "hm_pos" in schema:
+            chr_col, pos_col = "hm_chr", "hm_pos"
+        elif "chr_name" in schema and "chr_position" in schema:
+            chr_col, pos_col = "chr_name", "chr_position"
+        else:
+            continue
+        ea = pl.col("effect_allele").cast(pl.Utf8) if "effect_allele" in schema else pl.lit(None, dtype=pl.Utf8)
+        oa = pl.col("other_allele").cast(pl.Utf8) if "other_allele" in schema else pl.lit(None, dtype=pl.Utf8)
+        ra = pl.col("reference_allele").cast(pl.Utf8) if "reference_allele" in schema else pl.lit(None, dtype=pl.Utf8)
+        frame = (
+            pl.scan_parquet(parquet_path)
+            .select(
+                pl.col(chr_col).cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chrom"),
+                pl.col(pos_col).cast(pl.Int64).alias("pos"),
+                (
+                    (ea.str.len_chars() == 1).fill_null(False)
+                    & (oa.is_null() | (oa.str.len_chars() == 1))
+                ).alias("snv_only"),
+                (ra.is_null() | (ra.str.len_chars() == 0)).alias("ref_missing"),
+            )
+            .filter(pl.col("pos").is_not_null() & (pl.col("pos") > 0))
+            .group_by("chrom", "pos")
+            .agg(
+                pl.col("snv_only").min().alias("snv_only"),
+                pl.col("ref_missing").max().alias("ref_missing"),
+            )
+            .collect()
+        )
+        if frame.height:
+            frames.append(frame)
+
+    if not frames:
+        return pl.DataFrame(schema={"chrom": pl.Utf8, "pos": pl.Int64, "snv_only": pl.Boolean})
+
+    return (
+        pl.concat(frames, how="vertical")
+        .group_by("chrom", "pos")
+        .agg(
+            pl.col("snv_only").min().alias("snv_only"),
+            pl.col("ref_missing").max().alias("ref_missing"),
+        )
+        .filter(pl.col("ref_missing"))
+        .select("chrom", "pos", "snv_only")
+    )
+
+
+@asset(
+    group_name="download",
+    description=(
+        "Downloads + decompresses the Ensembl GRCh38 primary-assembly FASTA and "
+        "builds its faidx (~3 GB uncompressed). Precompute-only input for the "
+        "reference-allele FASTA tier; never read at runtime. Skips if already cached."
+    ),
+)
+def reference_fasta(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[Path]:
+    """Download the Ensembl GRCh38 FASTA and ensure its faidx exists."""
+    cache_dir = cache_dir_resource.get_path()
+    with resource_tracker("reference_fasta", context=context):
+        fa = download_reference_fasta("GRCh38", cache_dir=cache_dir, overwrite=_no_cache())
+    context.add_output_metadata({
+        "path": str(fa),
+        "size_mb": round(fa.stat().st_size / 1e6, 1),
+        "source_url": REFERENCE_FASTA["GRCh38"]["url"],
+    })
+    return Output(fa)
+
+
+@asset(
+    group_name="compute",
+    deps=[
+        AssetDep("scoring_files_parquet"),
+        AssetDep("reference_panel"),
+        AssetDep("reference_fasta"),
+    ],
+    description=(
+        "Precomputes the reference base at every catalog scoring position that is "
+        "missing a reference_allele. Panel tier (reference-panel .pvar REF, free, "
+        "indel-correct) then FASTA tier (single-base SNV faidx). Writes "
+        "percentiles/reference_allele_universe.parquet — a small "
+        "(genome_build, chrom, pos, ref, ref_source) table consumed at runtime to "
+        "dissolve variants_unscorable_absent on WGS inputs."
+    ),
+)
+def reference_allele_universe(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[pl.DataFrame]:
+    """Build and cache the catalog-wide reference-allele universe parquet."""
+    cache_dir = cache_dir_resource.get_path()
+    scores_dir = cache_dir / "scores"
+    out_dir = cache_dir / "percentiles"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "reference_allele_universe.parquet"
+    panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+    ref_dir = reference_panel_dir(cache_dir, panel=panel)
+    pvar_zst = _find_reference_panel_file(ref_dir, "GRCh38", ".pvar.zst")
+    fasta = reference_fasta_path("GRCh38", cache_dir)
+
+    with resource_tracker("reference_allele_universe", context=context):
+        targets = _ref_resolution_targets(scores_dir, "GRCh38")
+        context.log.info(f"{targets.height} catalog positions need reference-allele resolution")
+        result = resolve_reference_alleles(
+            targets,
+            "GRCh38",
+            panel_pvar_path=pvar_zst,
+            fasta_path=fasta,
+        )
+        result.write_parquet(out_path)
+
+    by_source = dict(
+        zip(*result.group_by("ref_source").len().to_dict(as_series=False).values())
+    ) if result.height else {}
+    n_total = result.height
+    n_resolved = n_total - int(by_source.get("unresolved", 0))
+    context.add_output_metadata({
+        "n_positions": n_total,
+        "n_panel": int(by_source.get("panel", 0)),
+        "n_fasta": int(by_source.get("fasta", 0)),
+        "n_unresolved": int(by_source.get("unresolved", 0)),
+        "resolved_ratio": round(n_resolved / n_total, 4) if n_total else 0.0,
+        "universe_path": str(out_path),
+    })
+    return Output(result)
+
+
+@asset(
+    group_name="upload",
+    ins={"universe": AssetIn("reference_allele_universe")},
+    description=(
+        "Uploads reference_allele_universe.parquet to the HuggingFace dataset "
+        "just-dna-seq/pgs-catalog (data/reference/). Published so the just-prs "
+        "runtime can fill missing reference alleles from a small parquet instead of "
+        "shipping the 3 GB genome. Named after the destination per lineage convention."
+    ),
+)
+def hf_reference_allele_universe(
+    context: AssetExecutionContext,
+    universe: pl.DataFrame,
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Publish the reference-allele universe parquet to HuggingFace."""
+    repo_id = hf_resource.catalog_repo
+    token = hf_resource.get_token()
+    parquet_path = cache_dir_resource.get_path() / "percentiles" / "reference_allele_universe.parquet"
+
+    if os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip():
+        context.log.info("TEST MODE: skipping HuggingFace push of reference_allele_universe.parquet.")
+        context.add_output_metadata({
+            "test_mode": True, "hf_push_skipped": True,
+            "universe_path": str(parquet_path), "n_rows": universe.height,
+        })
+        return Output(str(parquet_path))
+
+    with resource_tracker("hf_reference_allele_universe", context=context):
+        push_reference_allele_universe(parquet_path=parquet_path, repo_id=repo_id, token=token)
+
+    url = f"https://huggingface.co/datasets/{repo_id}"
+    context.log.info(f"Pushed reference_allele_universe.parquet to {url}")
+    context.add_output_metadata({
+        "repo_id": repo_id, "url": url,
+        "universe_path": str(parquet_path), "n_rows": universe.height,
     })
     return Output(url)
 

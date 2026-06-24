@@ -319,6 +319,14 @@ def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
         "score": enriched.score,
         "percentile": f"{enriched.percentile:.1f}" if enriched.percentile is not None else "",
         "percentile_method": enriched.percentile_method,
+        "percentile_reliable": enriched.percentile_reliable,
+        "percentile_caveat": enriched.percentile_caveat,
+        "weight_mass_coverage": enriched.weight_mass_coverage,
+        "z_score": enriched.z_score,
+        "reference_mean": enriched.reference_mean,
+        "reference_std": enriched.reference_std,
+        "reference_panel_ancestry": enriched.reference_panel_ancestry,
+        "reference_panel": enriched.reference_panel,
         "has_allele_frequencies": enriched.has_allele_frequencies,
         "match_rate": enriched.match_rate,
         "match_color": enriched.match_color,
@@ -329,6 +337,8 @@ def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
         "variants_unscorable_absent": enriched.variants_unscorable_absent,
         "variants_no_call": enriched.variants_no_call,
         "genotype_input_mode": enriched.genotype_input_mode,
+        "detected_genome_build": enriched.detected_genome_build,
+        "build_mismatch": enriched.build_mismatch,
         "effect_size": enriched.effect_size,
         "classification": enriched.classification,
         "auroc": f"{enriched.auroc:.3f}" if enriched.auroc is not None else "",
@@ -1186,7 +1196,17 @@ def _build_score_ai_prompt(row: dict[str, Any], limit: int) -> str:
         lines.append(f"Heritability (h²): {heritability}")
     if is_harmonized:
         orig = str(row.get("original_genome_build", "") or "")
-        lines.append(f"Note: harmonized score (lifted from {orig} to GRCh38)")
+        lines.append(
+            f"Note: harmonized score — coordinates lifted over from {orig or 'another build'} "
+            "to GRCh38. Liftover is never a complete, 100%-reliable remap, so some variants are "
+            "dropped or mismapped and coverage/percentile carry extra uncertainty."
+        )
+    if row.get("build_mismatch"):
+        detected = str(row.get("detected_genome_build", "") or "a different build")
+        lines.append(
+            f"Warning: the uploaded VCF was detected as {detected} but scored on GRCh38 — "
+            "match rate and percentile may be unreliable due to a genome-build mismatch."
+        )
     lines.append("")
     if limit >= 3000:
         lines.append(_QUALITY_METHODOLOGY)
@@ -2605,6 +2625,23 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             match_rate = float(r.get("match_rate") or 0.0)
             variants_matched = r.get("variants_matched", 0)
             variants_total = r.get("variants_total", 0)
+            # Weight-mass coverage (C_wt): the reliability signal the percentile
+            # is actually judged on (F9/F20) — distinct from the count match_rate.
+            cwt_raw = r.get("weight_mass_coverage")
+            cwt_value = float(cwt_raw) if isinstance(cwt_raw, int | float) else None
+            cwt_pct = cwt_value * 100.0 if cwt_value is not None else None
+            percentile_reliable = bool(r.get("percentile_reliable", True))
+            percentile_caveat = str(r.get("percentile_caveat") or "")
+            # VCF-build vs scoring-build mismatch (non-blocking warning).
+            build_mismatch = bool(r.get("build_mismatch"))
+            detected_build = str(r.get("detected_genome_build") or "")
+            scored_build = str(self.genome_build or "")  # type: ignore[attr-defined]
+            z_raw = r.get("z_score")
+            z_value = float(z_raw) if isinstance(z_raw, int | float) else None
+            ref_mean_raw = r.get("reference_mean")
+            ref_mean_v = float(ref_mean_raw) if isinstance(ref_mean_raw, int | float) else None
+            ref_std_raw = r.get("reference_std")
+            ref_std_v = float(ref_std_raw) if isinstance(ref_std_raw, int | float) else None
             population_values = [
                 float(item["value"])
                 for item in percentile_items
@@ -2663,13 +2700,42 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     ),
                 },
             ]
+            # Surface the C_wt reliability caveat prominently when the percentile
+            # is flagged unreliable — the value stays shown, never silently dropped.
+            if not percentile_reliable and percentile_caveat:
+                percentile_side_items.insert(0, {
+                    "label": "⚠ Low-coverage percentile",
+                    "value": f"C_wt {cwt_pct:.0f}%" if cwt_pct is not None else "Unreliable",
+                    "tone": "warning",
+                    "subtext": percentile_caveat,
+                })
+            # Non-blocking warning when the uploaded VCF's detected build differs
+            # from the build the score was computed on.
+            if build_mismatch:
+                percentile_side_items.insert(0, {
+                    "label": "⚠ Genome build mismatch",
+                    "value": f"VCF looks {detected_build}" if detected_build else "Build differs",
+                    "tone": "warning",
+                    "subtext": (
+                        f"This VCF was detected as {detected_build or 'a different build'} but was "
+                        f"scored on {scored_build or 'the selected build'}. Match rate and percentile "
+                        "may be unreliable — results are still shown, not blocked."
+                    ),
+                })
             if r.get("is_harmonized"):
                 orig_build = str(r.get("original_genome_build", "") or "")
                 percentile_side_items.append({
                     "label": "Build source",
                     "value": "Harmonized",
                     "tone": "warning",
-                    "subtext": f"Lifted from {orig_build}" if orig_build else "Coordinate liftover applied",
+                    "subtext": (
+                        f"Cross-build score lifted over from {orig_build} to {scored_build or 'GRCh38'}. "
+                        "Coordinate liftover is never a complete, 100%-reliable remap — some variants "
+                        "are dropped or mismapped, so coverage and percentile carry extra uncertainty."
+                        if orig_build
+                        else "Cross-build coordinate liftover applied; never a complete remap, so "
+                        "some variants are dropped or mismapped and carry extra uncertainty."
+                    ),
                 })
             if len(population_values) > 1:
                 percentile_side_items.append({
@@ -2798,6 +2864,32 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     ),
                 },
                 {
+                    "label": "Weight-mass coverage (C_wt)",
+                    "value": f"{cwt_pct:.0f}%" if cwt_pct is not None else "N/A",
+                    "tone": (
+                        "neutral" if cwt_pct is None
+                        else "danger" if cwt_pct < 20 else "good"
+                    ),
+                    "subtext": (
+                        "Share of the score's total effect-weight (Σ|β|) matched in this genome — "
+                        "the reliability signal the percentile is judged on. Unlike model coverage "
+                        "(plain variant count), this weights each variant by its effect size; below "
+                        "20% the percentile is treated as a low-coverage artifact."
+                    ),
+                },
+                {
+                    "label": "Standardized score (z)",
+                    "value": f"{z_value:.2f}" if z_value is not None else "N/A",
+                    "tone": "neutral",
+                    "subtext": (
+                        f"Your PRS is {z_value:+.2f} SD from the reference mean "
+                        f"(mean {ref_mean_v:.3g}, SD {ref_std_v:.3g}); the percentile is Φ(z)."
+                        if z_value is not None and ref_mean_v is not None and ref_std_v is not None
+                        else "How many standard deviations your score sits from the reference "
+                        "population mean; the percentile is derived from this."
+                    ),
+                },
+                {
                     "label": "Source study",
                     "value": _publication_display_label(r),
                     "tone": "neutral",
@@ -2876,6 +2968,19 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 suggestion_badges.append({
                     "label": "Match rate usable",
                     "tone": "good",
+                })
+            if not percentile_reliable:
+                suggestion_badges.insert(0, {
+                    "label": "⚠ Low weight-mass coverage — percentile may be a coverage artifact",
+                    "tone": "warning",
+                })
+            if build_mismatch:
+                suggestion_badges.insert(0, {
+                    "label": (
+                        f"⚠ Build mismatch — VCF looks {detected_build or 'different'}, "
+                        f"scored on {scored_build or 'selected build'}"
+                    ),
+                    "tone": "warning",
                 })
             if ref_audit_status in {"warning", "error"}:
                 suggestion_badges.append({
@@ -3300,13 +3405,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             return
         columns = [
             "pgs_id", "trait", "trait_efo_id", "is_harmonized", "score", "percentile", "absolute_risk",
+            "percentile_reliable", "percentile_caveat", "weight_mass_coverage",
+            "z_score", "reference_mean", "reference_std",
+            "reference_panel_ancestry", "reference_panel",
             "synthetic_quality", "synthetic_quality_label", "quality_tier", "quality_tier_metric",
             "heritability", "heritability_detail",
             "auroc", "quality_label",
             "match_rate", "variants_matched", "variants_total",
             "variants_observed", "variants_assumed_hom_ref",
             "variants_unscorable_absent", "variants_no_call",
-            "genotype_input_mode",
+            "genotype_input_mode", "detected_genome_build", "build_mismatch",
             "effect_size", "classification", "ancestry",
             "pgp_id", "citation", "publication_title", "publication_journal",
             "publication_date", "publication_pmid", "publication_doi",

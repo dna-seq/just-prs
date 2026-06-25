@@ -349,7 +349,7 @@ def compute_prs(
     genotypes_lf: pl.LazyFrame | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
     maf_fill: bool = False,
-    resolve_reference: bool = False,
+    resolve_reference: bool = True,
     reference_universe_path: Path | str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score for a single VCF against a scoring file.
@@ -711,7 +711,7 @@ def compute_prs_duckdb(
     memory_limit: str | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
     maf_fill: bool = False,
-    resolve_reference: bool = False,
+    resolve_reference: bool = True,
     reference_universe_path: Path | str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score using DuckDB for the join and aggregation.
@@ -1023,6 +1023,8 @@ def compute_prs_batch(
     engine: PRSEngine | str = PRSEngine.DUCKDB,
     genotypes_lf: pl.LazyFrame | None = None,
     memory_limit: str | None = None,
+    resolve_reference: bool = True,
+    reference_universe_path: Path | str | None = None,
 ) -> "PRSBatchResult":
     """Compute multiple PRS scores for a single VCF file.
 
@@ -1085,6 +1087,8 @@ def compute_prs_batch(
                             genotypes_lf=genotypes_lf,
                             memory_limit=memory_limit,
                             genotype_input_mode=genotype_input_mode,
+                            resolve_reference=resolve_reference,
+                            reference_universe_path=reference_universe_path,
                         )
                     else:
                         result = compute_prs(
@@ -1096,6 +1100,8 @@ def compute_prs_batch(
                             trait_reported=trait,
                             genotypes_lf=genotypes_lf,
                             genotype_input_mode=genotype_input_mode,
+                            resolve_reference=resolve_reference,
+                            reference_universe_path=reference_universe_path,
                         )
 
                     results.append(result)

@@ -9,9 +9,13 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "just-prs[reference]>=0.3.1",
-    "dagster>=1.13.7",
-    "dagster-webserver>=1.13.7",
-    "dagster-polars>=0.27.12",
+    # Cap below 2.0: the 2.0 transition removes SourceAsset (already deprecated
+    # here) among other breaking changes, so stay on the 1.x line until migrated.
+    # dagster-polars tracks core on the 0.x library scheme (jumps to 1.0 at core
+    # 2.0), so its mirror cap is <1.0.
+    "dagster>=1.13.7,<2.0",
+    "dagster-webserver>=1.13.7,<2.0",
+    "dagster-polars>=0.27.12,<1.0",
     "python-dotenv>=1.2.2",
     "typer>=0.24.1",
     "psutil>=7.2.2",

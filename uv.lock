@@ -1486,9 +1486,9 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
-    { name = "dagster", specifier = ">=1.13.7" },
-    { name = "dagster-polars", specifier = ">=0.27.12" },
-    { name = "dagster-webserver", specifier = ">=1.13.7" },
+    { name = "dagster", specifier = ">=1.13.7,<2.0" },
+    { name = "dagster-polars", specifier = ">=0.27.12,<1.0" },
+    { name = "dagster-webserver", specifier = ">=1.13.7,<2.0" },
     { name = "just-prs", extras = ["reference"], editable = "just-prs" },
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "python-dotenv", specifier = ">=1.2.2" },

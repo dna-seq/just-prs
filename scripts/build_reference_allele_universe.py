@@ -67,6 +67,12 @@ def main() -> int:
         help="Genome build to build the universe for (GRCh38 is unsuffixed, GRCh37 is _GRCh37-suffixed).",
     )
     parser.add_argument("--duckdb-memory-limit", default="20GB", help="DuckDB memory cap for the union step (default 20GB).")
+    parser.add_argument(
+        "--min-coverage",
+        type=float,
+        default=float(os.environ.get("PRS_PIPELINE_MIN_COVERAGE", "0.90")),
+        help="Refuse --push if scoring-parquet coverage of the catalog is below this (default 0.90).",
+    )
     args = parser.parse_args()
 
     os.environ.setdefault("PRS_DUCKDB_MEMORY_LIMIT", args.duckdb_memory_limit)
@@ -127,6 +133,29 @@ def main() -> int:
     print("=" * 60)
     if n_dupes or bad_fasta or resolved_null:
         print("VALIDATION FAILED — not safe to publish", file=sys.stderr)
+        return 1
+
+    # Completeness gate (robustness guarantee #4): the universe is built only from
+    # scoring parquets present on disk, so a download/convert gap silently shrinks
+    # it. Refuse to publish a short universe.
+    from just_prs.ftp import list_all_pgs_ids
+    from prs_pipeline.assets import _scoring_parquet_coverage
+
+    n_present, n_catalog, coverage, missing = _scoring_parquet_coverage(
+        cache / "scores", args.genome_build, list_all_pgs_ids()
+    )
+    print(
+        f"COVERAGE scoring_parquets={n_present}/{n_catalog} ratio={coverage:.4f} "
+        f"missing={len(missing)}{' e.g. ' + str(missing[:10]) if missing else ''}"
+    )
+    print("=" * 60)
+    if args.push and coverage < args.min_coverage:
+        print(
+            f"COVERAGE {coverage:.4f} < {args.min_coverage} — refusing to publish a "
+            f"short universe ({len(missing)} scores missing). Re-run to fill the gap, "
+            f"or lower --min-coverage to override.",
+            file=sys.stderr,
+        )
         return 1
 
     if args.push:

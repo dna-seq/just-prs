@@ -15,6 +15,7 @@ opt-in test (67 MB), gated behind ``JUST_PRS_DOWNLOAD_MANIFESTS=1`` so a clean
 clone never pulls it.
 """
 
+import contextlib
 import os
 from pathlib import Path
 
@@ -170,3 +171,108 @@ def test_gsa_a1_grch37_manifest_parses() -> None:
     positions = chip_typed_positions(Chip.GSA_V3, cache_dir, build="GRCh37")
     assert positions.height == positions.unique(["chr_norm", "pos"]).height
     assert (chip_manifest_dir(cache_dir) / "gsa_v3_GRCh37_positions.parquet").exists()
+
+
+# ---------------------------------------------------------------------------
+# Universe completeness gate (robustness #4) — _scoring_parquet_coverage
+# ---------------------------------------------------------------------------
+
+def test_scoring_parquet_coverage_counts_and_missing(tmp_path: Path) -> None:
+    """Coverage is over the catalog id set; missing ids are reported; the glob is
+    build-specific so a GRCh37 parquet never counts toward GRCh38 coverage."""
+    from prs_pipeline.assets import _scoring_parquet_coverage
+
+    scores = tmp_path / "scores"
+    scores.mkdir()
+    for pid in ("PGS000001", "PGS000002"):
+        pl.DataFrame({"a": [1]}).write_parquet(scores / f"{pid}_hmPOS_GRCh38.parquet")
+    catalog = ["PGS000001", "PGS000002", "PGS000003"]
+
+    n_present, n_catalog, coverage, missing = _scoring_parquet_coverage(scores, "GRCh38", catalog)
+    assert (n_present, n_catalog) == (2, 3)
+    assert coverage == pytest.approx(2 / 3)
+    assert missing == ["PGS000003"]
+
+    # A GRCh37 parquet for the missing id does NOT close the GRCh38 gap.
+    pl.DataFrame({"a": [1]}).write_parquet(scores / "PGS000003_hmPOS_GRCh37.parquet")
+    _, _, coverage38, missing38 = _scoring_parquet_coverage(scores, "GRCh38", catalog)
+    assert coverage38 == pytest.approx(2 / 3)
+    assert missing38 == ["PGS000003"]
+    # …but it counts for GRCh37.
+    _, _, coverage37, missing37 = _scoring_parquet_coverage(scores, "GRCh37", ["PGS000003"])
+    assert coverage37 == pytest.approx(1.0)
+    assert missing37 == []
+
+
+# ---------------------------------------------------------------------------
+# Scoring-file download hardening — bounded retry + logged failure
+# ---------------------------------------------------------------------------
+
+class _FakeRemote:
+    """Minimal fsspec file-like that yields its payload once then EOF."""
+
+    def __init__(self, data: bytes) -> None:
+        self._data = data
+        self._done = False
+
+    def read(self, _n: int) -> bytes:
+        if self._done:
+            return b""
+        self._done = True
+        return self._data
+
+    def __enter__(self) -> "_FakeRemote":
+        return self
+
+    def __exit__(self, *_a) -> bool:
+        return False
+
+
+def test_scoring_download_retries_then_succeeds(tmp_path: Path, monkeypatch) -> None:
+    """A transient drop on the first attempts is retried; a later success wins."""
+    import just_prs.ftp as ftp
+
+    monkeypatch.setattr(ftp, "_SCORING_DOWNLOAD_ATTEMPTS", 3)
+    monkeypatch.setattr(ftp.time, "sleep", lambda *_a: None)  # no real backoff in tests
+    calls = {"n": 0}
+
+    @contextlib.contextmanager
+    def fake_open(_url, _mode):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise OSError("transient connection drop")
+        yield _FakeRemote(b"weight\tdata\n")
+
+    monkeypatch.setattr(ftp.fsspec, "open", fake_open)
+
+    pgs, status = ftp._download_one_scoring_file("PGS000001", tmp_path, "GRCh37")
+    assert (pgs, status) == ("PGS000001", "downloaded")
+    assert calls["n"] == 3
+    assert (tmp_path / "PGS000001_hmPOS_GRCh37.txt.gz").read_bytes() == b"weight\tdata\n"
+
+
+def test_scoring_download_fails_after_attempts_and_logs(tmp_path: Path, monkeypatch) -> None:
+    """Persistent failure returns 'failed' after N attempts, leaves no partial
+    file, and logs the actual error (no longer swallowed silently)."""
+    import just_prs.ftp as ftp
+
+    monkeypatch.setattr(ftp, "_SCORING_DOWNLOAD_ATTEMPTS", 2)
+    monkeypatch.setattr(ftp.time, "sleep", lambda *_a: None)
+    calls = {"n": 0}
+    logs: list[dict] = []
+
+    @contextlib.contextmanager
+    def always_fail(_url, _mode):
+        calls["n"] += 1
+        raise OSError("EBI timeout")
+        yield  # pragma: no cover
+
+    monkeypatch.setattr(ftp.fsspec, "open", always_fail)
+    monkeypatch.setattr(ftp, "log_message", lambda **kw: logs.append(kw))
+
+    pgs, status = ftp._download_one_scoring_file("PGS000002", tmp_path, "GRCh38")
+    assert (pgs, status) == ("PGS000002", "failed")
+    assert calls["n"] == 2
+    assert not (tmp_path / "PGS000002_hmPOS_GRCh38.txt.gz").exists()
+    assert logs and logs[0]["message_type"] == "ftp:scoring_download_failed"
+    assert "EBI timeout" in logs[0]["error"]

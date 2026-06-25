@@ -4,6 +4,7 @@ import gzip
 import io
 import os
 import tempfile
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -306,6 +307,11 @@ class BulkDownloadResult:
     failed_ids: list[str] = field(default_factory=list)
 
 
+# Number of download attempts per scoring file (override via env). Large files
+# (100+ MB) occasionally drop under concurrency; a couple of retries absorb that.
+_SCORING_DOWNLOAD_ATTEMPTS = max(1, int(os.environ.get("PRS_SCORING_DOWNLOAD_ATTEMPTS", "3")))
+
+
 def _download_one_scoring_file(
     pgs_id: str,
     output_dir: Path,
@@ -333,23 +339,43 @@ def _download_one_scoring_file(
 
     url = _scoring_url(pgs_id, genome_build)
     tmp_path = output_path.with_suffix(".tmp")
-    try:
-        with fsspec.open(url, "rb") as remote:
-            with tmp_path.open("wb") as local:
-                while True:
-                    chunk = remote.read(65536)
-                    if not chunk:
-                        break
-                    local.write(chunk)
-        if tmp_path.stat().st_size == 0:
-            tmp_path.unlink()
-            return pgs_id, "failed"
-        tmp_path.rename(output_path)
-        return pgs_id, "downloaded"
-    except Exception:
-        if tmp_path.exists():
-            tmp_path.unlink()
-        return pgs_id, "failed"
+    # Bounded retry with capped exponential backoff: the largest harmonized files
+    # (100+ MB) are the ones that drop/time out under concurrent download, and a
+    # silent single-attempt failure silently shrinks the reference-allele universe
+    # downstream. The actual error is logged (not swallowed) so failures are
+    # diagnosable instead of a bare "failed".
+    last_error = "unknown"
+    for attempt in range(1, _SCORING_DOWNLOAD_ATTEMPTS + 1):
+        try:
+            with fsspec.open(url, "rb") as remote:
+                with tmp_path.open("wb") as local:
+                    while True:
+                        chunk = remote.read(65536)
+                        if not chunk:
+                            break
+                        local.write(chunk)
+            if tmp_path.stat().st_size == 0:
+                tmp_path.unlink()
+                last_error = "empty download (0 bytes)"
+            else:
+                tmp_path.rename(output_path)
+                return pgs_id, "downloaded"
+        except Exception as exc:
+            last_error = f"{type(exc).__name__}: {exc}"
+            if tmp_path.exists():
+                tmp_path.unlink()
+        if attempt < _SCORING_DOWNLOAD_ATTEMPTS:
+            time.sleep(min(2 ** (attempt - 1), 10))  # 1s, 2s, 4s, … capped at 10s
+
+    log_message(
+        message_type="ftp:scoring_download_failed",
+        pgs_id=pgs_id,
+        genome_build=genome_build,
+        url=url,
+        attempts=_SCORING_DOWNLOAD_ATTEMPTS,
+        error=last_error,
+    )
+    return pgs_id, "failed"
 
 
 def bulk_download_scoring_files(

@@ -187,12 +187,12 @@ def test_resolve_reference_fills_missing_ref_both_engines(tmp_path: Path) -> Non
     polars_result = compute_prs(
         vcf_path="", scoring_file=scoring, cache_dir=tmp_path, pgs_id="PGSTEST",
         genotypes_lf=pl.scan_parquet(geno_path), genotype_input_mode="variant_only",
-        resolve_reference=True, reference_universe_path=universe_path,
+        reference_restoration=True, reference_universe_path=universe_path,
     )
     duckdb_result = compute_prs_duckdb(
         vcf_path="", scoring_file=scoring, cache_dir=tmp_path, pgs_id="PGSTEST",
         genotypes_parquet=geno_path, genotype_input_mode="variant_only",
-        resolve_reference=True, reference_universe_path=universe_path,
+        reference_restoration=True, reference_universe_path=universe_path,
     )
 
     for result in (polars_result, duckdb_result):
@@ -202,6 +202,48 @@ def test_resolve_reference_fills_missing_ref_both_engines(tmp_path: Path) -> Non
         assert result.variants_ref_resolved_panel == 1
         assert result.variants_ref_resolved_fasta == 1
         assert result.variants_matched == 4
+
+
+def test_reference_restoration_scope_restricts_to_position_set(tmp_path: Path) -> None:
+    """A position-set scope fills only in-set absent loci; off-set absent stays unscorable
+    (the array/chip semantics — untyped positions must not be phantom hom-ref)."""
+    geno_path = tmp_path / "variant_only.parquet"
+    pl.DataFrame({
+        "chrom": ["1"], "pos": [100], "ref": ["A"], "alt": ["G"], "GT": ["0/1"],
+    }).write_parquet(geno_path)
+
+    scoring = pl.DataFrame({
+        "hm_chr": ["1", "1", "1"],
+        "hm_pos": [100, 300, 400],
+        "effect_allele": ["G", "C", "A"],
+        "reference_allele": ["A", None, None],  # 300 & 400 unknown
+        "effect_weight": [1.0, 3.0, 0.5],
+    }).lazy()
+
+    universe_path = tmp_path / "reference_allele_universe.parquet"
+    pl.DataFrame({
+        "genome_build": ["GRCh38", "GRCh38"],
+        "chrom": ["1", "1"], "pos": [300, 400], "ref": ["C", "A"],
+        "ref_source": ["panel", "fasta"],
+    }).write_parquet(universe_path)
+
+    # Scope = only position 300 → 400 must remain unscorable despite being in the universe.
+    scope = pl.DataFrame({"chrom": ["1"], "pos": [300]})
+    for engine_kwargs in (
+        {"genotypes_lf": pl.scan_parquet(geno_path)},
+        {"genotypes_parquet": geno_path},
+    ):
+        fn = compute_prs if "genotypes_lf" in engine_kwargs else compute_prs_duckdb
+        r = fn(
+            vcf_path="", scoring_file=scoring, cache_dir=tmp_path, pgs_id="PGSTEST",
+            genotype_input_mode="variant_only",
+            reference_restoration=scope, reference_universe_path=universe_path,
+            **engine_kwargs,
+        )
+        assert r.variants_ref_resolved_panel == 1   # 300 filled
+        assert r.variants_ref_resolved_fasta == 0   # 400 off-scope, not filled
+        assert r.variants_unscorable_absent == 1    # 400 stays unscorable
+        assert r.score == pytest.approx(7.0)        # 1 (obs) + 6 (300 hom-ref) ; 400 dropped
 
 
 def test_variant_only_differs_from_plink_present_only_when_ref_effect_absent(tmp_path: Path) -> None:

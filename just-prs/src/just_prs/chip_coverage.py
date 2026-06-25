@@ -21,10 +21,24 @@ different platform and are not represented by the GSA manifest.
 import io
 import zipfile
 from collections.abc import Callable
+from enum import StrEnum
 from pathlib import Path
 
 import polars as pl
 from eliot import start_action
+
+
+class Chip(StrEnum):
+    """Consumer genotyping-chip identifiers.
+
+    ``GSA_V3`` is the manifest-backed platform the current consumer market
+    converged on (23andMe v5, AncestryDNA v2, etc.). ``OMNIEXPRESS`` covers the
+    older v3/v4 kits that ``arrays.detect_chip_generation`` recognizes but for
+    which we ship no manifest yet (so it has no typed-position set).
+    """
+
+    GSA_V3 = "gsa_v3"
+    OMNIEXPRESS = "omniexpress"
 
 # ---------------------------------------------------------------------------
 # Chip definitions
@@ -48,7 +62,9 @@ CHIPS: list[dict[str, str]] = [
     },
 ]
 
-CHIPS_BY_ID: dict[str, dict[str, str]] = {chip["chip"]: chip for chip in CHIPS}
+# Keyed by the Chip enum. StrEnum members hash equal to their value, so legacy
+# string lookups (e.g. CHIPS_BY_ID["gsa_v3"]) still resolve.
+CHIPS_BY_ID: dict[Chip, dict[str, str]] = {Chip(chip["chip"]): chip for chip in CHIPS}
 
 # A PRS is considered "array-ready" (usable on raw consumer-array data without
 # imputation) when at least this fraction of its variants are directly typed on
@@ -77,7 +93,7 @@ def _normalize_chr_expr(col: str) -> pl.Expr:
     )
 
 
-def download_chip_manifest(chip: str, cache_dir: Path) -> Path:
+def download_chip_manifest(chip: Chip, cache_dir: Path) -> Path:
     """Download a chip manifest zip into the cache, skipping if already present.
 
     Args:
@@ -170,25 +186,42 @@ def parse_gsa_manifest(zip_path: Path) -> pl.DataFrame:
     return parsed
 
 
-def chip_typed_positions(chip: str, cache_dir: Path, force: bool = False) -> pl.DataFrame:
+def chip_typed_positions(
+    chip: Chip,
+    cache_dir: Path,
+    *,
+    build: str = "GRCh38",
+    force: bool = False,
+) -> pl.DataFrame:
     """Return unique typed (chr_norm, pos) positions for a chip, with parquet caching.
 
     Args:
         chip: Chip identifier.
         cache_dir: Root just-prs cache directory.
+        build: Genome build the typed positions are needed in. The shipped GSA
+            manifest is the A2 (GRCh38) manifest; GRCh37 (A1) is not wired yet, so
+            requesting a build other than the chip's manifest build raises
+            ``NotImplementedError`` (callers gate on this).
         force: If True, re-download and re-parse even when a cache exists.
 
     Returns:
         DataFrame with unique ``chr_norm``, ``pos`` columns.
     """
-    cache_path = chip_manifest_dir(cache_dir) / f"{chip}_positions.parquet"
+    spec = CHIPS_BY_ID[Chip(chip)]
+    if build != spec["build"]:
+        raise NotImplementedError(
+            f"chip {Chip(chip)} has only a {spec['build']} manifest; typed positions "
+            f"for build {build!r} are not wired yet (see docs/grch37-universe-build.md)."
+        )
+
+    cache_path = chip_manifest_dir(cache_dir) / f"{Chip(chip).value}_{build}_positions.parquet"
     if cache_path.exists() and not force:
         try:
             return pl.read_parquet(cache_path)
         except (pl.exceptions.ComputeError, OSError):
             cache_path.unlink(missing_ok=True)
 
-    zip_path = download_chip_manifest(chip, cache_dir)
+    zip_path = download_chip_manifest(Chip(chip), cache_dir)
     positions = parse_gsa_manifest(zip_path).select("chr_norm", "pos").unique()
     positions.write_parquet(cache_path)
     return positions
@@ -259,7 +292,7 @@ def compute_chip_coverage(
     ):
         for chip_index, spec in enumerate(chips):
             chip = spec["chip"]
-            typed = chip_typed_positions(chip, cache_dir).with_columns(
+            typed = chip_typed_positions(Chip(chip), cache_dir, build=spec["build"]).with_columns(
                 pl.lit(True).alias("typed")
             )
             for i, parquet_path in enumerate(score_files):

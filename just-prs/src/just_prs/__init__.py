@@ -5,6 +5,7 @@ from just_prs.arrays import detect_array_format, detect_chip_generation, normali
 from just_prs.chip_coverage import (
     CHIPS,
     CHIPS_BY_ID,
+    Chip,
     chip_typed_positions,
     compute_chip_coverage,
     parse_gsa_manifest,
@@ -27,7 +28,14 @@ from just_prs.models import (
     classify_coverage_tier,
 )
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
-from just_prs.prs import GenotypeInputMode, PRSEngine, compute_prs, compute_prs_batch, compute_prs_duckdb
+from just_prs.prs import (
+    GenotypeInputMode,
+    PRSEngine,
+    RestorationScope,
+    compute_prs,
+    compute_prs_batch,
+    compute_prs_duckdb,
+)
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.quality import (
     classify_combined_quality,
@@ -62,7 +70,7 @@ from just_prs.reference import (
     reference_panel_dir,
     reference_distribution_audit_issues,
 )
-from just_prs.reference_allele import resolve_reference_alleles
+from just_prs.reference_allele import RefSource, resolve_reference_alleles
 from just_prs.scoring import resolve_cache_dir
 
 _meta = metadata("just-prs")

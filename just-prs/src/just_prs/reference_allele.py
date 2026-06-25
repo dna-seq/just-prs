@@ -28,6 +28,7 @@ from ``reference.py`` but holds no PRS-specific state.
 
 from __future__ import annotations
 
+from enum import StrEnum
 from pathlib import Path
 
 import polars as pl
@@ -43,7 +44,13 @@ from just_prs.reference import (
     parse_pvar,
 )
 
-RefAlleleSource = str  # one of: "panel", "fasta", "unresolved"
+
+class RefSource(StrEnum):
+    """Where a resolved reference base came from (the ``ref_source`` column)."""
+
+    PANEL = "panel"
+    FASTA = "fasta"
+    UNRESOLVED = "unresolved"
 
 # Ensembl uses "MT" for the mitochondrion; normalized genotype chrom may be "M".
 _MITO_ALIASES = ("MT", "M")
@@ -251,7 +258,7 @@ def resolve_reference_alleles(
                 pvar_parquet = _pvar_parquet_cache_path(pvar_parquet)
             panel_res = _resolve_panel(positions, pvar_parquet, memory_limit)
 
-        resolved_panel = panel_res.with_columns(pl.lit("panel").alias("ref_source"))
+        resolved_panel = panel_res.with_columns(pl.lit(RefSource.PANEL.value).alias("ref_source"))
 
         # --- FASTA tier (positions not resolved by the panel) -------------
         remaining = positions.join(
@@ -259,7 +266,7 @@ def resolve_reference_alleles(
         )
         if fasta_path is not None and remaining.height > 0:
             fasta_res = _resolve_fasta(remaining, Path(fasta_path), genome_build)
-            resolved_fasta = fasta_res.with_columns(pl.lit("fasta").alias("ref_source"))
+            resolved_fasta = fasta_res.with_columns(pl.lit(RefSource.FASTA.value).alias("ref_source"))
         else:
             resolved_fasta = pl.DataFrame(
                 schema={"chrom": pl.Utf8, "pos": pl.Int64, "ref": pl.Utf8, "ref_source": pl.Utf8}
@@ -275,7 +282,7 @@ def resolve_reference_alleles(
             positions.select("chrom", "pos")
             .join(resolved, on=["chrom", "pos"], how="left")
             .with_columns(
-                pl.col("ref_source").fill_null("unresolved"),
+                pl.col("ref_source").fill_null(RefSource.UNRESOLVED.value),
                 pl.lit(genome_build).alias("genome_build"),
             )
             .select("genome_build", "chrom", "pos", "ref", "ref_source")

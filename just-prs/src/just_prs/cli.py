@@ -625,7 +625,7 @@ def compute(
                 "old behavior (absent loci with unknown reference stay unscorable)."
             ),
         ),
-    ] = True,
+    ] = False,
 ) -> None:
     """Compute polygenic risk score(s) for a VCF file.
 

@@ -533,24 +533,33 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
     least one record, with a conservative ``snv_only`` flag (True only when
     effect/other alleles are single-base across every record at that position).
 
-    Memory-safe for the full catalog: each file's small per-file dedup is streamed
-    to a temp parquet part on the cache volume, then the cross-file union is done by
-    DuckDB (which spills to disk, capped by ``PRS_DUCKDB_MEMORY_LIMIT``) — never an
-    in-memory concat of every catalog position at once (that OOMs: the summed
-    genome-wide positions are hundreds of millions of rows).
+    Memory-safe for the full catalog. Two structural choices keep it bounded:
+
+    1. Each file is filtered to its ``ref_missing`` positions **before** writing a
+       temp part. The target set is exactly "positions lacking a reference allele in
+       ≥1 file", so ref-present rows are never needed; ``snv_only`` is taken over the
+       ref-missing occurrences (the only ones the runtime ever fills), which is the
+       precise gate. Files with a fully populated ``reference_allele`` contribute
+       nothing. This shrinks the streamed input from "all catalog positions" (~10⁹
+       rows) to just the genuinely-unresolved positions.
+    2. The cross-file union runs in DuckDB with disk spill and is written straight to
+       a parquet via ``COPY`` — never materialised through ``.pl()`` (a huge Arrow
+       result + the aggregate state together is what OOM'd even at a 20 GB cap).
     """
     import shutil
 
     from just_prs.reference import _resolve_duckdb_memory_limit
 
     files = sorted(scores_dir.glob(f"*_hmPOS_{genome_build}.parquet"))
-    # Temp parts live on the cache volume (same large disk), never /tmp.
-    tmp_dir = scores_dir.parent / "_ref_targets_parts"
+    cache_root = scores_dir.parent
+    tmp_dir = cache_root / "_ref_targets_parts"  # on the cache volume, never /tmp
     if tmp_dir.exists():
         shutil.rmtree(tmp_dir)
     tmp_dir.mkdir(parents=True, exist_ok=True)
     spill_dir = tmp_dir / "duckdb_spill"
     spill_dir.mkdir(exist_ok=True)
+    result_path = cache_root / "_ref_targets_result.parquet"  # outside the glob
+    result_path.unlink(missing_ok=True)
 
     n_parts = 0
     for parquet_path in files:
@@ -576,11 +585,10 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
                 (ra.is_null() | (ra.str.len_chars() == 0)).alias("ref_missing"),
             )
             .filter(pl.col("pos").is_not_null() & (pl.col("pos") > 0))
+            # Only positions that lack a reference allele in THIS file are targets.
+            .filter(pl.col("ref_missing"))
             .group_by("chrom", "pos")
-            .agg(
-                pl.col("snv_only").min().alias("snv_only"),
-                pl.col("ref_missing").max().alias("ref_missing"),
-            )
+            .agg(pl.col("snv_only").min().alias("snv_only"))
             .collect()
         )
         if frame.height:
@@ -597,20 +605,23 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
     try:
         con.execute("SET arrow_large_buffer_size = true")
         con.execute(f"SET temp_directory = '{spill_dir}'")
-        # Large larger-than-memory aggregation: let DuckDB spill freely and drop
-        # insertion-order tracking (its own guidance for big GROUP BY / export).
         con.execute("SET preserve_insertion_order = false")
-        out = con.sql(
+        # Stream the deduped union straight to parquet (no in-memory Arrow result).
+        con.execute(
             f"""
-            SELECT chrom, pos, bool_and(snv_only) AS snv_only
-            FROM read_parquet('{tmp_dir}/*.parquet')
-            GROUP BY chrom, pos
-            HAVING bool_or(ref_missing)
+            COPY (
+                SELECT chrom, pos, bool_and(snv_only) AS snv_only
+                FROM read_parquet('{tmp_dir}/*.parquet')
+                GROUP BY chrom, pos
+            ) TO '{result_path}' (FORMAT PARQUET)
             """
-        ).pl()
+        )
     finally:
         con.close()
         shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    out = pl.read_parquet(result_path)
+    result_path.unlink(missing_ok=True)
     return out
 
 

@@ -562,10 +562,14 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
 
     files = sorted(scores_dir.glob(f"*_hmPOS_{genome_build}.parquet"))
     cache_root = scores_dir.parent
-    parts_dir = cache_root / "_ref_targets_parts"  # on the cache volume, never /tmp
+    # Build-namespaced scratch: a stopped/interrupted run leaves a _DONE marker +
+    # parts behind, and these are reused on the next run. Without the {build} suffix
+    # a GRCh38 run's parts would be reused by a subsequent GRCh37 run (skipping
+    # Phase 1), producing a GRCh37 universe filled with GRCh38 coordinates.
+    parts_dir = cache_root / f"_ref_targets_parts_{genome_build}"  # on the cache volume, never /tmp
     done_marker = parts_dir / "_DONE"
-    by_chrom = cache_root / "_ref_targets_bychrom"
-    result_dir = cache_root / "_ref_targets_result"
+    by_chrom = cache_root / f"_ref_targets_bychrom_{genome_build}"
+    result_dir = cache_root / f"_ref_targets_result_{genome_build}"
     spill_dir = parts_dir / "duckdb_spill"
 
     # --- Phase 1: stream each file's positions to a part (resumable) ----------

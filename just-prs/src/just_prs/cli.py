@@ -606,9 +606,45 @@ def compute(
             ),
         ),
     ] = "auto",
+    resolve_reference: Annotated[
+        bool,
+        typer.Option(
+            "--resolve-reference/--no-resolve-reference",
+            help=(
+                "Fill a scoring variant's missing reference allele from the "
+                "precomputed reference-allele universe so absent loci in a "
+                "variant-only WGS VCF score as homozygous-reference, recovering "
+                "genome-wide coverage. Use --no-resolve-reference to reproduce the "
+                "old behavior (absent loci with unknown reference stay unscorable)."
+            ),
+        ),
+    ] = True,
 ) -> None:
     """Compute polygenic risk score(s) for a VCF file."""
     pgs_ids = [pid.strip() for pid in pgs_id.split(",")]
+
+    # Resolve (and lazily pull) the reference-allele universe once.
+    universe_path: Optional[Path] = None
+    if resolve_reference:
+        from just_prs.hf import REFERENCE_ALLELE_UNIVERSE_FILE, pull_reference_allele_universe
+        from just_prs.scoring import resolve_cache_dir
+
+        ref_dir = resolve_cache_dir() / "reference"
+        candidate = ref_dir / REFERENCE_ALLELE_UNIVERSE_FILE
+        if not candidate.exists():
+            try:
+                pull_reference_allele_universe(ref_dir)
+            except Exception as exc:
+                console.print(
+                    f"[yellow]Could not fetch reference-allele universe ({exc}); "
+                    f"proceeding without resolution.[/yellow]"
+                )
+        universe_path = candidate if candidate.exists() else None
+        if universe_path is None:
+            console.print(
+                "[yellow]Reference-allele universe unavailable; "
+                "--resolve-reference is a no-op this run.[/yellow]"
+            )
 
     console.print(f"Computing PRS for {len(pgs_ids)} score(s) on {vcf}...")
 
@@ -624,6 +660,8 @@ def compute(
             pgs_id=pgs_ids[0],
             trait_reported=score_info.trait_reported,
             genotype_input_mode=genotype_input_mode,
+            resolve_reference=resolve_reference and universe_path is not None,
+            reference_universe_path=universe_path,
         )
         results = [result]
     else:
@@ -633,6 +671,8 @@ def compute(
             genome_build=build,
             cache_dir=cache_dir,
             genotype_input_mode=genotype_input_mode,
+            resolve_reference=resolve_reference and universe_path is not None,
+            reference_universe_path=universe_path,
         )
         results = batch.results
         if batch.failed_ids:

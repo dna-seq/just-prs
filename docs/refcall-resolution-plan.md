@@ -16,8 +16,14 @@
 > `reference_allele_pipeline` (`ensembl_grch38_fasta` → `reference_fasta` →
 > `reference_allele_universe` → `hf_reference_allele_universe` + asset check). `pysam` is
 > in the `[reference]` extra with the `sys_platform != 'win32'` marker (precompute is
-> Linux/WSL; runtime reads the small parquet and never needs pysam). The flag defaults
-> **off** until the empirical WGS coverage gate passes. **Items C (gVCF END-block
+> Linux/WSL; runtime reads the small parquet and never needs pysam). **Empirical gate
+> passed** on a real GRCh38 WGS VCF (genome-wide coverage ~27%→~99.9%,
+> `variants_unscorable_absent` ~7.5M→~6.6K), so `resolve_reference` now **defaults on**
+> across both engines, `PRSCatalog`, and `prs compute` (`--no-resolve-reference` /
+> `resolve_reference=False` reproduces the old behavior; degrades to a no-op when the
+> universe parquet is unavailable). The 34.9M-position universe (74.5% panel / 22.7%
+> fasta / 2.8% unresolved) is published at `just-dna-seq/pgs-catalog`
+> `data/reference/reference_allele_universe.parquet`. **Items C (gVCF END-block
 > expansion) and D (array ALL_SITES + maf_fill) remain TODO.**
 
 Branch: `refcall-resolution` (stacked on `scoring-foundations`). This is the deferred

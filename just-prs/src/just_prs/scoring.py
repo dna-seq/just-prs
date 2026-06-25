@@ -211,13 +211,29 @@ def _parse_gz_scoring_file(path: Path) -> tuple[pl.DataFrame, dict[str, str]]:
     present_cols = {c.strip() for c in col_header_line.split("\t")}
     overrides = {k: v for k, v in SCORING_FILE_SCHEMA.items() if k in present_cols}
 
+    # Position columns are declared Int64, but some harmonized files serialize them
+    # in scientific notation (e.g. "7.2e+07"), which a hard i64 parse rejects
+    # mid-file. Read Int64 columns as Float64 (which parses scientific notation)
+    # and cast back to Int64 afterwards — genomic positions are < 2^53 so the
+    # round-trip is exact. Without this, such files fail to convert and their score
+    # is silently dropped from the reference-allele universe.
+    int_cols = [k for k, v in overrides.items() if v == pl.Int64]
+    read_overrides = {
+        k: (pl.Float64 if v == pl.Int64 else v) for k, v in overrides.items()
+    }
+
     df = pl.read_csv(
         io.StringIO(tsv_content),
         separator="\t",
         infer_schema_length=10000,
         null_values=["", "NA", "None"],
-        schema_overrides=overrides,
+        schema_overrides=read_overrides,
     )
+
+    if int_cols:
+        df = df.with_columns(
+            [pl.col(c).cast(pl.Int64, strict=False) for c in int_cols]
+        )
 
     if "rsID" not in df.columns and "id" in df.columns:
         df = df.rename({"id": "rsID"})

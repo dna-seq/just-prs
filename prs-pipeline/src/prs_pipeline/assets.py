@@ -535,6 +535,28 @@ def hf_chip_coverage(
 # Reference-allele universe — precompute REF at catalog scoring positions
 # ---------------------------------------------------------------------------
 
+def _scoring_parquet_coverage(
+    scores_dir: Path, genome_build: str, catalog_ids: list[str]
+) -> tuple[int, int, float, list[str]]:
+    """Coverage of the catalog by cached ``*_hmPOS_{build}.parquet`` scoring files.
+
+    Returns ``(n_present, n_catalog, coverage_ratio, missing_ids)`` where coverage
+    is over the EBI catalog id set. The reference-allele universe is built only from
+    the parquets present on disk, so a download/convert gap silently shrinks it —
+    this is the completeness signal used to gate publishing (robustness guarantee #4).
+    """
+    present = {
+        p.name.split("_hmPOS_")[0]
+        for p in scores_dir.glob(f"*_hmPOS_{genome_build}.parquet")
+    }
+    catalog = set(catalog_ids)
+    n_catalog = len(catalog)
+    missing = sorted(catalog - present)
+    n_present = n_catalog - len(missing)
+    coverage = (n_present / n_catalog) if n_catalog else 0.0
+    return n_present, n_catalog, coverage, missing
+
+
 def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> pl.DataFrame:
     """Union of scoring positions that need reference-allele resolution.
 
@@ -727,6 +749,29 @@ def reference_allele_universe(
     pvar_zst = _find_reference_panel_file(ref_dir, build, ".pvar.zst")
     fasta = reference_fasta_path(build, cache_dir)
 
+    # Completeness signal: the universe is built only from scoring parquets present
+    # on disk, so a download/convert gap silently shrinks it. Log coverage vs the
+    # EBI catalog and warn below the floor (the build script enforces the hard
+    # publish gate). Guarded so an offline catalog-list fetch can't fail the build.
+    min_coverage = float(os.environ.get("PRS_PIPELINE_MIN_COVERAGE", "0.90"))
+    n_present = n_catalog = 0
+    scoring_coverage = 1.0
+    n_missing = 0
+    try:
+        n_present, n_catalog, scoring_coverage, missing = _scoring_parquet_coverage(
+            scores_dir, build, list_all_pgs_ids()
+        )
+        n_missing = len(missing)
+        if scoring_coverage < min_coverage:
+            context.log.warning(
+                f"Scoring-parquet coverage {scoring_coverage:.4f} "
+                f"({n_present}/{n_catalog}) is below the {min_coverage} floor for "
+                f"build {build}; {n_missing} scores missing (e.g. {missing[:10]}). "
+                f"The universe will be SHORT — the build script refuses --push below the floor."
+            )
+    except Exception as exc:  # offline / catalog-list fetch failed — don't block the build
+        context.log.warning(f"Could not compute scoring-parquet coverage: {exc}")
+
     with resource_tracker("reference_allele_universe", context=context):
         targets = _ref_resolution_targets(scores_dir, build)
         context.log.info(f"{targets.height} catalog positions need reference-allele resolution")
@@ -750,6 +795,10 @@ def reference_allele_universe(
         "n_fasta": int(by_source.get("fasta", 0)),
         "n_unresolved": int(by_source.get("unresolved", 0)),
         "resolved_ratio": round(n_resolved / n_total, 4) if n_total else 0.0,
+        "n_scoring_files": n_present,
+        "n_catalog_total": n_catalog,
+        "scoring_coverage_ratio": round(scoring_coverage, 4),
+        "n_scoring_missing": n_missing,
         "universe_path": str(out_path),
     })
     return Output(result)

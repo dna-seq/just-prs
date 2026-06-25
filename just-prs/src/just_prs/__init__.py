@@ -71,6 +71,14 @@ from just_prs.reference import (
     reference_distribution_audit_issues,
 )
 from just_prs.reference_allele import RefSource, resolve_reference_alleles
+from just_prs.liftover import (
+    LiftOver,
+    LiftoverConfigurationError,
+    LiftRecordResult,
+    download_chain_file,
+    get_liftover,
+    liftover_preflight,
+)
 from just_prs.scoring import resolve_cache_dir
 
 _meta = metadata("just-prs")

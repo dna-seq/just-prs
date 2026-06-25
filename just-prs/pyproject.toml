@@ -41,6 +41,13 @@ reference = [
 viz = [
     "vl-convert-python>=1.9.0",
 ]
+# pyliftover is pure-Python (no C extension), so it installs on every platform
+# including Windows — no sys_platform marker. It is imported lazily in
+# just_prs.liftover and raises a clear ImportError if missing, so the core
+# install does not require it.
+liftover = [
+    "pyliftover>=0.4",
+]
 
 [project.scripts]
 just-prs = "just_prs.cli:run"

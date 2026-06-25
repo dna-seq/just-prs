@@ -44,7 +44,12 @@ class Chip(StrEnum):
 # Chip definitions
 # ---------------------------------------------------------------------------
 
-CHIPS: list[dict[str, str]] = [
+_GSA_24V3_MANIFEST_BASE = (
+    "https://support.illumina.com/content/dam/illumina-support/documents/"
+    "downloads/productfiles/global-screening-array-24/v3-0/"
+)
+
+CHIPS: list[dict[str, object]] = [
     {
         "chip": "gsa_v3",
         "platform": "Illumina Global Screening Array v3.0",
@@ -52,19 +57,21 @@ CHIPS: list[dict[str, str]] = [
         # these add custom content on top of the same GSA backbone, so this single
         # manifest approximates them all. (Older v1/v2 kits used OmniExpress.)
         "consumer_products": "23andMe v5, AncestryDNA v2, MyHeritage (2019+), FamilyTreeDNA v2, LivingDNA",
+        # Primary/coverage build — the build chip-coverage labels are computed in
+        # (GRCh38 harmonized scoring files intersect the A2 manifest with no liftover).
         "build": "GRCh38",
-        # A2 manifest = GRCh38 coordinates (A1 = GRCh37). ~70 MB zip, ~654K markers.
-        "manifest_url": (
-            "https://support.illumina.com/content/dam/illumina-support/documents/"
-            "downloads/productfiles/global-screening-array-24/v3-0/"
-            "GSA-24v3-0-A2-manifest-file-csv.zip"
-        ),
+        # Per-build CSV manifests (~67 MB zip, ~654K markers each):
+        #   A2 = GRCh38 coordinates, A1 = GRCh37 coordinates.
+        "manifests": {
+            "GRCh38": f"{_GSA_24V3_MANIFEST_BASE}GSA-24v3-0-A2-manifest-file-csv.zip",
+            "GRCh37": f"{_GSA_24V3_MANIFEST_BASE}GSA-24v3-0-A1-manifest-file-csv.zip",
+        },
     },
 ]
 
 # Keyed by the Chip enum. StrEnum members hash equal to their value, so legacy
 # string lookups (e.g. CHIPS_BY_ID["gsa_v3"]) still resolve.
-CHIPS_BY_ID: dict[Chip, dict[str, str]] = {Chip(chip["chip"]): chip for chip in CHIPS}
+CHIPS_BY_ID: dict[Chip, dict[str, object]] = {Chip(chip["chip"]): chip for chip in CHIPS}
 
 # A PRS is considered "array-ready" (usable on raw consumer-array data without
 # imputation) when at least this fraction of its variants are directly typed on
@@ -93,21 +100,31 @@ def _normalize_chr_expr(col: str) -> pl.Expr:
     )
 
 
-def download_chip_manifest(chip: Chip, cache_dir: Path) -> Path:
+def download_chip_manifest(chip: Chip, cache_dir: Path, *, build: str = "GRCh38") -> Path:
     """Download a chip manifest zip into the cache, skipping if already present.
 
     Args:
         chip: Chip identifier (key of ``CHIPS_BY_ID``).
         cache_dir: Root just-prs cache directory.
+        build: Genome build whose manifest to fetch (``GRCh38`` → A2, ``GRCh37``
+            → A1 for GSA). Must be a key of the chip's ``manifests`` map.
 
     Returns:
         Path to the downloaded manifest zip.
     """
     import fsspec
 
-    spec = CHIPS_BY_ID[chip]
-    url = spec["manifest_url"]
-    dest = chip_manifest_dir(cache_dir) / f"{chip}_{Path(url).name}"
+    spec = CHIPS_BY_ID[Chip(chip)]
+    manifests: dict[str, str] = spec["manifests"]  # type: ignore[assignment]
+    if build not in manifests:
+        raise ValueError(
+            f"chip {Chip(chip)} has no manifest for build {build!r} "
+            f"(available: {sorted(manifests)})."
+        )
+    url = manifests[build]
+    # The dest filename embeds the manifest name (e.g. ...A1... / ...A2...), so
+    # builds never collide on disk.
+    dest = chip_manifest_dir(cache_dir) / f"{Chip(chip).value}_{Path(url).name}"
 
     if dest.exists() and dest.stat().st_size >= _MIN_MANIFEST_BYTES:
         return dest
@@ -198,20 +215,20 @@ def chip_typed_positions(
     Args:
         chip: Chip identifier.
         cache_dir: Root just-prs cache directory.
-        build: Genome build the typed positions are needed in. The shipped GSA
-            manifest is the A2 (GRCh38) manifest; GRCh37 (A1) is not wired yet, so
-            requesting a build other than the chip's manifest build raises
-            ``NotImplementedError`` (callers gate on this).
+        build: Genome build the typed positions are needed in. GSA ships both the
+            A2 (GRCh38) and A1 (GRCh37) manifests, so both builds are supported;
+            requesting a build the chip has no manifest for raises ``ValueError``.
         force: If True, re-download and re-parse even when a cache exists.
 
     Returns:
         DataFrame with unique ``chr_norm``, ``pos`` columns.
     """
     spec = CHIPS_BY_ID[Chip(chip)]
-    if build != spec["build"]:
-        raise NotImplementedError(
-            f"chip {Chip(chip)} has only a {spec['build']} manifest; typed positions "
-            f"for build {build!r} are not wired yet (see docs/grch37-universe-build.md)."
+    manifests: dict[str, str] = spec["manifests"]  # type: ignore[assignment]
+    if build not in manifests:
+        raise ValueError(
+            f"chip {Chip(chip)} has no manifest for build {build!r} "
+            f"(available: {sorted(manifests)})."
         )
 
     cache_path = chip_manifest_dir(cache_dir) / f"{Chip(chip).value}_{build}_positions.parquet"
@@ -221,7 +238,7 @@ def chip_typed_positions(
         except (pl.exceptions.ComputeError, OSError):
             cache_path.unlink(missing_ok=True)
 
-    zip_path = download_chip_manifest(Chip(chip), cache_dir)
+    zip_path = download_chip_manifest(Chip(chip), cache_dir, build=build)
     positions = parse_gsa_manifest(zip_path).select("chr_norm", "pos").unique()
     positions.write_parquet(cache_path)
     return positions
@@ -257,7 +274,7 @@ def _scoring_positions_lf(parquet_path: Path) -> pl.LazyFrame:
 def compute_chip_coverage(
     scores_dir: Path,
     cache_dir: Path,
-    chips: list[dict[str, str]] | None = None,
+    chips: list[dict[str, object]] | None = None,
     progress_callback: Callable[[dict[str, int]], None] | None = None,
 ) -> pl.DataFrame:
     """Compute per-PGS, per-chip direct-typing coverage of scoring-file variants.

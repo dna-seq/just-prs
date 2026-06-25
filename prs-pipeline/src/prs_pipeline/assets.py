@@ -78,6 +78,16 @@ def _no_cache() -> bool:
     return os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() in {"1", "true", "yes"}
 
 
+def _pipeline_genome_build() -> str:
+    """Genome build the universe lineage targets (``PRS_PIPELINE_GENOME_BUILD``).
+
+    Defaults to ``GRCh38``. The reference-allele-universe build script sets this
+    to ``GRCh37`` to produce the GRCh37 universe + scoring parquets without code
+    edits (see docs/grch37-universe-build.md).
+    """
+    return os.environ.get("PRS_PIPELINE_GENOME_BUILD", "GRCh38").strip() or "GRCh38"
+
+
 # ---------------------------------------------------------------------------
 # Source assets — external data that Dagster observes but does not create
 # ---------------------------------------------------------------------------
@@ -112,14 +122,14 @@ illumina_gsa_manifest = SourceAsset(
     key="illumina_gsa_manifest",
     group_name="external",
     description=(
-        "Illumina Global Screening Array v3.0 manifest (A2 = GRCh38 coordinates, "
-        "~70 MB zip, ~648K typed markers). The GSA is the platform underlying "
-        "23andMe v5 and AncestryDNA v2 consumer genotyping chips. Used to compute, "
-        "per PGS score, how many variants are directly typed on the array vs require "
-        "imputation. Coordinates are GRCh38 so they intersect the harmonized GRCh38 "
-        "scoring files without liftover."
+        "Illumina Global Screening Array v3.0 manifests (A2 = GRCh38, A1 = GRCh37 "
+        "coordinates; ~67 MB zip, ~648K typed markers each). The GSA is the platform "
+        "underlying 23andMe v5 and AncestryDNA v2 consumer genotyping chips. Used to "
+        "compute, per PGS score, how many variants are directly typed on the array vs "
+        "require imputation. Chip coverage uses the GRCh38 (A2) manifest so it "
+        "intersects the harmonized GRCh38 scoring files without liftover."
     ),
-    metadata={"url": CHIPS_BY_ID["gsa_v3"]["manifest_url"]},
+    metadata={"url": CHIPS_BY_ID["gsa_v3"]["manifests"]["GRCh38"]},
 )
 
 ensembl_grch38_fasta = SourceAsset(
@@ -189,7 +199,7 @@ def scoring_files(
     """Download all PGS scoring .txt.gz files from EBI FTP."""
     cache_dir = cache_dir_resource.get_path()
     scores_dir = cache_dir / "scores"
-    genome_build = "GRCh38"
+    genome_build = _pipeline_genome_build()
 
     context.log.info("Fetching PGS ID list from EBI FTP...")
     pgs_ids = list_all_pgs_ids()
@@ -665,14 +675,16 @@ def reference_fasta(
     context: AssetExecutionContext,
     cache_dir_resource: CacheDirResource,
 ) -> Output[Path]:
-    """Download the Ensembl GRCh38 FASTA and ensure its faidx exists."""
+    """Download the Ensembl primary-assembly FASTA and ensure its faidx exists."""
     cache_dir = cache_dir_resource.get_path()
+    build = _pipeline_genome_build()
     with resource_tracker("reference_fasta", context=context):
-        fa = download_reference_fasta("GRCh38", cache_dir=cache_dir, overwrite=_no_cache())
+        fa = download_reference_fasta(build, cache_dir=cache_dir, overwrite=_no_cache())
     context.add_output_metadata({
         "path": str(fa),
         "size_mb": round(fa.stat().st_size / 1e6, 1),
-        "source_url": REFERENCE_FASTA["GRCh38"]["url"],
+        "genome_build": build,
+        "source_url": REFERENCE_FASTA[build]["url"],
     })
     return Output(fa)
 
@@ -698,22 +710,25 @@ def reference_allele_universe(
     cache_dir_resource: CacheDirResource,
 ) -> Output[pl.DataFrame]:
     """Build and cache the catalog-wide reference-allele universe parquet."""
+    from just_prs.hf import reference_allele_universe_filename
+
     cache_dir = cache_dir_resource.get_path()
+    build = _pipeline_genome_build()
     scores_dir = cache_dir / "scores"
     out_dir = cache_dir / "percentiles"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "reference_allele_universe.parquet"
+    out_path = out_dir / reference_allele_universe_filename(build)
     panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
     ref_dir = reference_panel_dir(cache_dir, panel=panel)
-    pvar_zst = _find_reference_panel_file(ref_dir, "GRCh38", ".pvar.zst")
-    fasta = reference_fasta_path("GRCh38", cache_dir)
+    pvar_zst = _find_reference_panel_file(ref_dir, build, ".pvar.zst")
+    fasta = reference_fasta_path(build, cache_dir)
 
     with resource_tracker("reference_allele_universe", context=context):
-        targets = _ref_resolution_targets(scores_dir, "GRCh38")
+        targets = _ref_resolution_targets(scores_dir, build)
         context.log.info(f"{targets.height} catalog positions need reference-allele resolution")
         result = resolve_reference_alleles(
             targets,
-            "GRCh38",
+            build,
             panel_pvar_path=pvar_zst,
             fasta_path=fasta,
         )
@@ -725,6 +740,7 @@ def reference_allele_universe(
     n_total = result.height
     n_resolved = n_total - int(by_source.get("unresolved", 0))
     context.add_output_metadata({
+        "genome_build": build,
         "n_positions": n_total,
         "n_panel": int(by_source.get("panel", 0)),
         "n_fasta": int(by_source.get("fasta", 0)),
@@ -752,25 +768,31 @@ def hf_reference_allele_universe(
     hf_resource: HuggingFaceResource,
 ) -> Output[str]:
     """Publish the reference-allele universe parquet to HuggingFace."""
+    from just_prs.hf import reference_allele_universe_filename
+
     repo_id = hf_resource.catalog_repo
     token = hf_resource.get_token()
-    parquet_path = cache_dir_resource.get_path() / "percentiles" / "reference_allele_universe.parquet"
+    build = _pipeline_genome_build()
+    filename = reference_allele_universe_filename(build)
+    parquet_path = cache_dir_resource.get_path() / "percentiles" / filename
 
     if os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip():
-        context.log.info("TEST MODE: skipping HuggingFace push of reference_allele_universe.parquet.")
+        context.log.info(f"TEST MODE: skipping HuggingFace push of {filename}.")
         context.add_output_metadata({
-            "test_mode": True, "hf_push_skipped": True,
+            "test_mode": True, "hf_push_skipped": True, "genome_build": build,
             "universe_path": str(parquet_path), "n_rows": universe.height,
         })
         return Output(str(parquet_path))
 
     with resource_tracker("hf_reference_allele_universe", context=context):
-        push_reference_allele_universe(parquet_path=parquet_path, repo_id=repo_id, token=token)
+        push_reference_allele_universe(
+            parquet_path=parquet_path, repo_id=repo_id, token=token, genome_build=build
+        )
 
     url = f"https://huggingface.co/datasets/{repo_id}"
-    context.log.info(f"Pushed reference_allele_universe.parquet to {url}")
+    context.log.info(f"Pushed {filename} to {url}")
     context.add_output_metadata({
-        "repo_id": repo_id, "url": url,
+        "repo_id": repo_id, "url": url, "genome_build": build,
         "universe_path": str(parquet_path), "n_rows": universe.height,
     })
     return Output(url)
@@ -938,7 +960,7 @@ def reference_scores(
             pgs_ids=pgs_ids,
             ref_dir=ref_dir,
             cache_dir=cache_dir,
-            genome_build="GRCh38",
+            genome_build=_pipeline_genome_build(),
             panel=panel,
             skip_existing=skip_existing,
             output_subdir=output_subdir,

@@ -25,6 +25,7 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 import polars as pl
@@ -557,7 +558,11 @@ def _scoring_parquet_coverage(
     return n_present, n_catalog, coverage, missing
 
 
-def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> pl.DataFrame:
+def _ref_resolution_targets(
+    scores_dir: Path,
+    genome_build: str = "GRCh38",
+    log: "Callable[[str], None] | None" = None,
+) -> pl.DataFrame:
     """Union of scoring positions that need reference-allele resolution.
 
     Iterates every cached ``*_hmPOS_{build}.parquet`` (the chip_coverage pattern)
@@ -582,6 +587,7 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
 
     from just_prs.reference import _resolve_duckdb_memory_limit
 
+    _log = log or (lambda _m: None)
     files = sorted(scores_dir.glob(f"*_hmPOS_{genome_build}.parquet"))
     cache_root = scores_dir.parent
     # Build-namespaced scratch: a stopped/interrupted run leaves a _DONE marker +
@@ -604,7 +610,11 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
         if parts_dir.exists():
             shutil.rmtree(parts_dir)
         parts_dir.mkdir(parents=True, exist_ok=True)
-        for parquet_path in files:
+        n_files = len(files)
+        progress_every = max(n_files // 20, 50)
+        n_parts = 0
+        _log(f"ref-target Phase 1: scanning {n_files} {genome_build} scoring files for unresolved positions")
+        for idx, parquet_path in enumerate(files):
             schema = pl.scan_parquet(parquet_path).collect_schema().names()
             if "hm_chr" in schema and "hm_pos" in schema:
                 chr_col, pos_col = "hm_chr", "hm_pos"
@@ -634,6 +644,9 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
             )
             if frame.height:
                 frame.write_parquet(parts_dir / f"{parquet_path.stem}.parquet")
+                n_parts += 1
+            if (idx + 1) % progress_every == 0 or (idx + 1) == n_files:
+                _log(f"ref-target Phase 1: {idx + 1}/{n_files} files scanned ({n_parts} parts written)")
         done_marker.write_text("ok")
 
     part_files = list(parts_dir.glob("*.parquet"))
@@ -661,6 +674,7 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
         con.execute("SET preserve_insertion_order = false")
         con.execute("SET threads = 4")
         # Phase 2: repartition by chromosome (streaming; chrom encoded in the path).
+        _log(f"ref-target Phase 2: repartitioning {len(part_files)} parts by chromosome")
         con.execute(
             f"""
             COPY (SELECT chrom, pos, snv_only FROM read_parquet('{parts_dir}/*.parquet'))
@@ -668,7 +682,9 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
             """
         )
         # Phase 3: aggregate each chromosome partition independently.
-        for cdir in sorted(by_chrom.glob("chrom=*")):
+        chrom_dirs = sorted(by_chrom.glob("chrom=*"))
+        _log(f"ref-target Phase 3: aggregating {len(chrom_dirs)} chromosomes")
+        for ci, cdir in enumerate(chrom_dirs):
             cval = cdir.name.split("=", 1)[1].replace("'", "''")
             con.execute(
                 f"""
@@ -679,6 +695,7 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
                 ) TO '{result_dir}/chrom_{cval}.parquet' (FORMAT PARQUET)
                 """
             )
+            _log(f"ref-target Phase 3: {ci + 1}/{len(chrom_dirs)} chromosomes aggregated (chr{cval})")
     finally:
         con.close()
 
@@ -773,13 +790,19 @@ def reference_allele_universe(
         context.log.warning(f"Could not compute scoring-parquet coverage: {exc}")
 
     with resource_tracker("reference_allele_universe", context=context):
-        targets = _ref_resolution_targets(scores_dir, build)
-        context.log.info(f"{targets.height} catalog positions need reference-allele resolution")
+        targets = _ref_resolution_targets(scores_dir, build, log=context.log.info)
+        context.log.info(
+            f"{targets.height} catalog positions need reference-allele resolution; "
+            f"resolving REF (panel .pvar tier → FASTA SNV tier) — this step runs silently"
+        )
         result = resolve_reference_alleles(
             targets,
             build,
             panel_pvar_path=pvar_zst,
             fasta_path=fasta,
+        )
+        context.log.info(
+            f"reference-allele resolution complete: {result.height} rows; writing {out_path.name}"
         )
         result.write_parquet(out_path)
 

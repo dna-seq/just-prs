@@ -27,33 +27,39 @@ def _resolve_array_restoration(
 ) -> tuple[RestorationScope, Path | None]:
     """Resolve chip-aware reference restoration for an array, build-gated.
 
-    Hom-ref restoration at chip-typed positions is valid only when the array build,
-    the chip's typed-position manifest build, and a published reference-allele
-    universe all agree. Today only GRCh38 is published, while current consumer arrays
-    are GRCh37 — so this returns ``(False, None)`` (a no-op) for them until the GRCh37
-    universe lands (see docs/grch37-universe-build.md). Returns the scope + universe path.
+    Hom-ref restoration at chip-typed positions is valid only when the chip has a
+    typed-position manifest for the array build *and* a reference-allele universe is
+    published for that build. Both GRCh38 (A2) and GRCh37 (A1) GSA manifests ship, so
+    this unlocks per build as soon as the matching universe is available; it still
+    degrades to ``(False, None)`` (a no-op) when the chip lacks a manifest for the
+    build or the universe is not published yet (see docs/grch37-universe-build.md).
+    Returns the scope + build-matched universe path.
     """
-    from just_prs.hf import REFERENCE_ALLELE_UNIVERSE_FILE, pull_reference_allele_universe
+    from just_prs.hf import (
+        pull_reference_allele_universe,
+        reference_allele_universe_filename,
+    )
 
     try:
         chip = Chip(resolved_chip)
     except ValueError:
         return False, None
     spec = CHIPS_BY_ID.get(chip)
-    if spec is None or spec["build"] != genome_build:
+    manifests: dict[str, str] = spec["manifests"] if spec else {}  # type: ignore[assignment]
+    if not manifests or genome_build not in manifests:
         log_message(
             message_type="array_scoring:restoration_deferred",
             chip=str(chip),
             genome_build=genome_build,
-            reason="no build-matched chip manifest / reference universe",
+            reason="no build-matched chip manifest",
         )
         return False, None
 
     ref_dir = cache_dir / "reference"
-    candidate = ref_dir / REFERENCE_ALLELE_UNIVERSE_FILE
+    candidate = ref_dir / reference_allele_universe_filename(genome_build)
     if not candidate.exists():
         try:
-            pull_reference_allele_universe(ref_dir)
+            pull_reference_allele_universe(ref_dir, genome_build=genome_build)
         except Exception as exc:  # offline / not published — degrade to no-op
             log_message(message_type="array_scoring:no_reference_universe", reason=str(exc))
     if not candidate.exists():

@@ -633,24 +633,26 @@ class PRSCatalog:
         if best_df.height > 0:
             result.performance = _performance_info_from_row(best_df.row(0, named=True))
 
-    def _reference_universe_path(self) -> Path | None:
+    def _reference_universe_path(self, genome_build: str = "GRCh38") -> Path | None:
         """Resolve the cached reference-allele universe parquet, pulling on miss.
 
         Mirrors the ``_load_chip_coverage`` lazy-pull pattern: looks under
         ``reference/`` locally; on a miss, pulls once from the catalog HF dataset.
-        Returns None when unavailable (e.g. offline first run) so callers fall
-        back to the un-resolved behaviour.
+        The filename is build-aware (GRCh38 unsuffixed, others ``_<build>``), so
+        the universe is resolved for the same build the scores are computed in.
+        Returns None when unavailable (e.g. offline first run, or the build is
+        not published yet) so callers fall back to the un-resolved behaviour.
         """
         from just_prs.hf import (
-            REFERENCE_ALLELE_UNIVERSE_FILE,
             pull_reference_allele_universe,
+            reference_allele_universe_filename,
         )
 
         ref_dir = self._cache_dir / "reference"
-        path = ref_dir / REFERENCE_ALLELE_UNIVERSE_FILE
+        path = ref_dir / reference_allele_universe_filename(genome_build)
         if not path.exists():
             try:
-                pull_reference_allele_universe(ref_dir)
+                pull_reference_allele_universe(ref_dir, genome_build=genome_build)
             except Exception as exc:
                 logger.debug("Reference-allele universe HF pull failed: %s", exc)
         return path if path.exists() else None
@@ -690,7 +692,11 @@ class PRSCatalog:
                 trait_reported=trait,
                 genotype_input_mode=genotype_input_mode,
                 reference_restoration=reference_restoration,
-                reference_universe_path=self._reference_universe_path() if reference_restoration is not False else None,
+                reference_universe_path=(
+                    self._reference_universe_path(genome_build)
+                    if reference_restoration is not False
+                    else None
+                ),
             )
             if attach_performance:
                 self._attach_performance(result)
@@ -731,7 +737,11 @@ class PRSCatalog:
 
         resolved_engine = PRSEngine(engine)
         cache = self._cache_dir / "scores"
-        universe_path = self._reference_universe_path() if reference_restoration is not False else None
+        universe_path = (
+            self._reference_universe_path(genome_build)
+            if reference_restoration is not False
+            else None
+        )
 
         with start_action(
             action_type="prs_catalog:compute_prs_batch",

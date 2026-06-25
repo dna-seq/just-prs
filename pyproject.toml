@@ -4,7 +4,7 @@ version = "0.0.0"
 description = "Workspace root for just-prs, prs-ui, and prs-pipeline"
 requires-python = ">=3.13"
 dependencies = [
-    "just-prs[reference]",
+    "just-prs[reference,liftover]",
     "prs-ui",
     "prs-pipeline",
 ]

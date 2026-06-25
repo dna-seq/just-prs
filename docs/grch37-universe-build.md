@@ -1,10 +1,20 @@
-# Deferred: GRCh37 reference-allele universe (runnable overnight)
+# GRCh37 reference-allele universe (code wired; run the overnight build to publish)
 
-**Status: not built yet.** The published reference-allele universe is **GRCh38 only**.
-Current consumer genotyping arrays (23andMe, AncestryDNA) report **GRCh37**, so chip
-reference restoration (`array_scoring` → `_resolve_array_restoration`) **no-ops on
-GRCh37 today**. This doc is the worked-through, unattended-overnight plan to add honest
-GRCh37 support. It mirrors the GRCh38 build, which took a full night — run it the same way.
+**Status: code wired, data not built yet.** The universe lineage is now build-parameterized
+end-to-end (filename, HF push/pull, pipeline assets, build script) and the GSA **A1
+(GRCh37)** manifest is wired, so `chip_typed_positions(Chip.GSA_V3, build="GRCh37")` and the
+two restoration gates (`prs._normalize_restoration_scope`, `array_scoring._resolve_array_restoration`)
+**unlock automatically as soon as a GRCh37 universe parquet is published**. Until then they
+still degrade cleanly to a no-op. The remaining step is the long-pole **data build**: run the
+command below to download the ~5,385 `hmPOS_GRCh37` scoring files, build, validate, and
+publish `reference_allele_universe_GRCh37.parquet`. It mirrors the GRCh38 build (a full
+night) — run it the same way.
+
+The published GRCh38 universe keeps its historical unsuffixed filename
+(`reference_allele_universe.parquet`); GRCh37 (and any future build) is `_<build>`-suffixed
+(`reference_allele_universe_GRCh37.parquet`) via `hf.reference_allele_universe_filename(build)`.
+The pipeline build is selected by `PRS_PIPELINE_GENOME_BUILD` (set by the build script's
+`--genome-build`).
 
 ## Goal
 

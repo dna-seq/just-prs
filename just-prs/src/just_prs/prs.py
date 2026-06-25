@@ -266,9 +266,9 @@ def _normalize_restoration_scope(
 
     - ``False``/``None`` -> ``False`` (no restoration).
     - ``True`` -> ``True`` (the universe itself is the eligible set; no duplication).
-    - ``Chip`` -> the chip's typed positions for ``genome_build``; if the chip has no
-      manifest for that build (e.g. GRCh37 today) it degrades to ``False`` + a log,
-      never silently mis-fills.
+    - ``Chip`` -> the chip's typed positions for ``genome_build`` (GSA ships both
+      A2/GRCh38 and A1/GRCh37 manifests); if the chip has no manifest for that build
+      it degrades to ``False`` + a log, never silently mis-fills.
     - ``Path`` / ``pl.DataFrame`` -> a custom set (accepts ``chrom`` or ``chr_norm``).
     """
     if scope is False or scope is None:
@@ -278,7 +278,7 @@ def _normalize_restoration_scope(
     if isinstance(scope, Chip):
         try:
             positions = chip_typed_positions(scope, cache_dir, build=genome_build)
-        except NotImplementedError as exc:
+        except (NotImplementedError, ValueError) as exc:
             log_message(
                 message_type="prs:restoration_scope_unavailable",
                 chip=str(scope),

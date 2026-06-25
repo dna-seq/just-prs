@@ -552,76 +552,104 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
 
     files = sorted(scores_dir.glob(f"*_hmPOS_{genome_build}.parquet"))
     cache_root = scores_dir.parent
-    tmp_dir = cache_root / "_ref_targets_parts"  # on the cache volume, never /tmp
-    if tmp_dir.exists():
-        shutil.rmtree(tmp_dir)
-    tmp_dir.mkdir(parents=True, exist_ok=True)
-    spill_dir = tmp_dir / "duckdb_spill"
-    spill_dir.mkdir(exist_ok=True)
-    result_path = cache_root / "_ref_targets_result.parquet"  # outside the glob
-    result_path.unlink(missing_ok=True)
+    parts_dir = cache_root / "_ref_targets_parts"  # on the cache volume, never /tmp
+    done_marker = parts_dir / "_DONE"
+    by_chrom = cache_root / "_ref_targets_bychrom"
+    result_dir = cache_root / "_ref_targets_result"
+    spill_dir = parts_dir / "duckdb_spill"
 
-    n_parts = 0
-    for parquet_path in files:
-        schema = pl.scan_parquet(parquet_path).collect_schema().names()
-        if "hm_chr" in schema and "hm_pos" in schema:
-            chr_col, pos_col = "hm_chr", "hm_pos"
-        elif "chr_name" in schema and "chr_position" in schema:
-            chr_col, pos_col = "chr_name", "chr_position"
-        else:
-            continue
-        ea = pl.col("effect_allele").cast(pl.Utf8) if "effect_allele" in schema else pl.lit(None, dtype=pl.Utf8)
-        oa = pl.col("other_allele").cast(pl.Utf8) if "other_allele" in schema else pl.lit(None, dtype=pl.Utf8)
-        ra = pl.col("reference_allele").cast(pl.Utf8) if "reference_allele" in schema else pl.lit(None, dtype=pl.Utf8)
-        frame = (
-            pl.scan_parquet(parquet_path)
-            .select(
-                pl.col(chr_col).cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chrom"),
-                pl.col(pos_col).cast(pl.Int64).alias("pos"),
-                (
-                    (ea.str.len_chars() == 1).fill_null(False)
-                    & (oa.is_null() | (oa.str.len_chars() == 1))
-                ).alias("snv_only"),
-                (ra.is_null() | (ra.str.len_chars() == 0)).alias("ref_missing"),
+    # --- Phase 1: stream each file's positions to a part (resumable) ----------
+    # ``reference_allele`` is absent across the catalog (files carry other_allele),
+    # so ref_missing is true everywhere → every position is a target; the filter is
+    # a correct no-op here and still excludes ref-present rows where the column does
+    # exist. Guarded by a _DONE marker so a failed aggregation never re-streams the
+    # whole catalog (~2e9 rows across 5,385 files).
+    if not done_marker.exists():
+        if parts_dir.exists():
+            shutil.rmtree(parts_dir)
+        parts_dir.mkdir(parents=True, exist_ok=True)
+        for parquet_path in files:
+            schema = pl.scan_parquet(parquet_path).collect_schema().names()
+            if "hm_chr" in schema and "hm_pos" in schema:
+                chr_col, pos_col = "hm_chr", "hm_pos"
+            elif "chr_name" in schema and "chr_position" in schema:
+                chr_col, pos_col = "chr_name", "chr_position"
+            else:
+                continue
+            ea = pl.col("effect_allele").cast(pl.Utf8) if "effect_allele" in schema else pl.lit(None, dtype=pl.Utf8)
+            oa = pl.col("other_allele").cast(pl.Utf8) if "other_allele" in schema else pl.lit(None, dtype=pl.Utf8)
+            ra = pl.col("reference_allele").cast(pl.Utf8) if "reference_allele" in schema else pl.lit(None, dtype=pl.Utf8)
+            frame = (
+                pl.scan_parquet(parquet_path)
+                .select(
+                    pl.col(chr_col).cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chrom"),
+                    pl.col(pos_col).cast(pl.Int64).alias("pos"),
+                    (
+                        (ea.str.len_chars() == 1).fill_null(False)
+                        & (oa.is_null() | (oa.str.len_chars() == 1))
+                    ).alias("snv_only"),
+                    (ra.is_null() | (ra.str.len_chars() == 0)).alias("ref_missing"),
+                )
+                .filter(pl.col("pos").is_not_null() & (pl.col("pos") > 0))
+                .filter(pl.col("ref_missing"))
+                .group_by("chrom", "pos")
+                .agg(pl.col("snv_only").min().alias("snv_only"))
+                .collect()
             )
-            .filter(pl.col("pos").is_not_null() & (pl.col("pos") > 0))
-            # Only positions that lack a reference allele in THIS file are targets.
-            .filter(pl.col("ref_missing"))
-            .group_by("chrom", "pos")
-            .agg(pl.col("snv_only").min().alias("snv_only"))
-            .collect()
-        )
-        if frame.height:
-            frame.write_parquet(tmp_dir / f"{parquet_path.stem}.parquet")
-            n_parts += 1
+            if frame.height:
+                frame.write_parquet(parts_dir / f"{parquet_path.stem}.parquet")
+        done_marker.write_text("ok")
 
-    if n_parts == 0:
-        shutil.rmtree(tmp_dir, ignore_errors=True)
+    part_files = list(parts_dir.glob("*.parquet"))
+    if not part_files:
+        shutil.rmtree(parts_dir, ignore_errors=True)
         return pl.DataFrame(schema={"chrom": pl.Utf8, "pos": pl.Int64, "snv_only": pl.Boolean})
 
+    # --- Phase 2+3: per-chromosome union (bounds each GROUP BY to one chrom) ---
+    # The catalog-wide distinct-position set is ~10^8 rows; a single hash aggregate
+    # OOMs (DuckDB builds per-thread partial tables). Repartitioning by chromosome
+    # (a streaming, low-memory routing) then aggregating each chromosome separately
+    # keeps every GROUP BY bounded to one chromosome's positions.
     import duckdb
+
+    for d in (by_chrom, result_dir):
+        if d.exists():
+            shutil.rmtree(d)
+        d.mkdir(parents=True, exist_ok=True)
+    spill_dir.mkdir(exist_ok=True)
 
     con = duckdb.connect(config={"memory_limit": _resolve_duckdb_memory_limit()})
     try:
         con.execute("SET arrow_large_buffer_size = true")
         con.execute(f"SET temp_directory = '{spill_dir}'")
         con.execute("SET preserve_insertion_order = false")
-        # Stream the deduped union straight to parquet (no in-memory Arrow result).
+        con.execute("SET threads = 4")
+        # Phase 2: repartition by chromosome (streaming; chrom encoded in the path).
         con.execute(
             f"""
-            COPY (
-                SELECT chrom, pos, bool_and(snv_only) AS snv_only
-                FROM read_parquet('{tmp_dir}/*.parquet')
-                GROUP BY chrom, pos
-            ) TO '{result_path}' (FORMAT PARQUET)
+            COPY (SELECT chrom, pos, snv_only FROM read_parquet('{parts_dir}/*.parquet'))
+            TO '{by_chrom}' (FORMAT PARQUET, PARTITION_BY (chrom), OVERWRITE_OR_IGNORE)
             """
         )
+        # Phase 3: aggregate each chromosome partition independently.
+        for cdir in sorted(by_chrom.glob("chrom=*")):
+            cval = cdir.name.split("=", 1)[1].replace("'", "''")
+            con.execute(
+                f"""
+                COPY (
+                    SELECT '{cval}' AS chrom, pos, bool_and(snv_only) AS snv_only
+                    FROM read_parquet('{cdir}/*.parquet')
+                    GROUP BY pos
+                ) TO '{result_dir}/chrom_{cval}.parquet' (FORMAT PARQUET)
+                """
+            )
     finally:
         con.close()
-        shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    out = pl.read_parquet(result_path)
-    result_path.unlink(missing_ok=True)
+    out = pl.read_parquet(f"{result_dir}/*.parquet")
+    # Success — clean all scratch.
+    for d in (parts_dir, by_chrom, result_dir):
+        shutil.rmtree(d, ignore_errors=True)
     return out
 
 

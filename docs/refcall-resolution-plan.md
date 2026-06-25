@@ -18,13 +18,19 @@
 > in the `[reference]` extra with the `sys_platform != 'win32'` marker (precompute is
 > Linux/WSL; runtime reads the small parquet and never needs pysam). **Empirical gate
 > passed** on a real GRCh38 WGS VCF (genome-wide coverage ~27%→~99.9%,
-> `variants_unscorable_absent` ~7.5M→~6.6K), so `resolve_reference` now **defaults on**
-> across both engines, `PRSCatalog`, and `prs compute` (`--no-resolve-reference` /
-> `resolve_reference=False` reproduces the old behavior; degrades to a no-op when the
-> universe parquet is unavailable). The 34.9M-position universe (74.5% panel / 22.7%
-> fasta / 2.8% unresolved) is published at `just-dna-seq/pgs-catalog`
-> `data/reference/reference_allele_universe.parquet`. **Items C (gVCF END-block
-> expansion) and D (array ALL_SITES + maf_fill) remain TODO.**
+> `variants_unscorable_absent` ~7.5M→~6.6K). The 34.9M-position universe (74.5% panel /
+> 22.7% fasta / 2.8% unresolved) is published at `just-dna-seq/pgs-catalog`
+> `data/reference/reference_allele_universe.parquet` (reproduce with
+> `scripts/build_reference_allele_universe.py [--push]`).
+>
+> **`resolve_reference` defaults OFF (caller opts in).** It is correct only for
+> genome-wide variant-only WGS. A normalized array auto-infers `VARIANT_ONLY` (no
+> `NON_REF`/`RefCall` markers), so a blanket default-on would impute **phantom hom-ref**
+> at untyped off-chip positions — wrong. The proper input-type policy is: **WGS → on;
+> unknown → off; chips → a chip-aware restoration** (hom-ref only at chip-typed
+> positions, i.e. universe ∩ `chip_coverage` typed set, with arrays forced to
+> `ALL_SITES`). That chip path is the remaining **item D** work below. **Items C (gVCF
+> END-block expansion) and D (array ALL_SITES + chip-aware restoration) remain TODO.**
 
 Branch: `refcall-resolution` (stacked on `scoring-foundations`). This is the deferred
 **full P1 / F15 / F22** work the demo-safe foundations round intentionally skipped. It is

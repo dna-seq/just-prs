@@ -618,7 +618,7 @@ def compute(
                 "old behavior (absent loci with unknown reference stay unscorable)."
             ),
         ),
-    ] = True,
+    ] = False,
 ) -> None:
     """Compute polygenic risk score(s) for a VCF file."""
     pgs_ids = [pid.strip() for pid in pgs_id.split(",")]

@@ -662,7 +662,7 @@ class PRSCatalog:
         genome_build: str = "GRCh38",
         genotype_input_mode: str = "auto",
         attach_performance: bool = False,
-        resolve_reference: bool = True,
+        resolve_reference: bool = False,
     ) -> PRSResult:
         """Compute PRS for a VCF file against a single PGS score.
 
@@ -705,7 +705,7 @@ class PRSCatalog:
         genotypes_lf: pl.LazyFrame | None = None,
         memory_limit: str | None = None,
         attach_performance: bool = False,
-        resolve_reference: bool = True,
+        resolve_reference: bool = False,
     ) -> "PRSBatchResult":
         """Compute PRS for a VCF file against multiple PGS scores.
 

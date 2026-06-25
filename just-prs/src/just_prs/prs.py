@@ -24,9 +24,17 @@ class GenotypeInputMode(str, enum.Enum):
     ALL_SITES = "all_sites"
     PLINK_PRESENT_ONLY = "plink_present_only"
 
+from just_prs.chip_coverage import Chip, chip_typed_positions
 from just_prs.models import PRSResult
 from just_prs.scoring import DEFAULT_CACHE_DIR, load_scoring, parse_scoring_file
 from just_prs.vcf import compute_dosage_expr, detect_genome_build, read_genotypes
+
+# Restoration scope: which absent scoring positions may be hom-ref filled.
+#   False  -> off (no filling)
+#   True   -> the whole reference-allele universe (WGS; the universe index IS the set)
+#   Chip   -> chip-typed positions (array; eligible = chip set ∩ universe)
+#   Path / pl.DataFrame -> a custom (chrom,pos) set (embedder escape hatch)
+RestorationScope = bool | Chip | Path | pl.DataFrame
 
 
 def _normalize_genotype_columns(lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -283,21 +291,73 @@ def _detect_build_mismatch(
     return detected, mismatch
 
 
+def _normalize_restoration_scope(
+    scope: RestorationScope | None,
+    cache_dir: Path,
+    genome_build: str,
+) -> bool | pl.LazyFrame:
+    """Resolve a user-facing scope into ``True`` (whole universe), ``False`` (off),
+    or a ``(chrom, pos)`` LazyFrame (restricted set).
+
+    - ``False``/``None`` -> ``False`` (no restoration).
+    - ``True`` -> ``True`` (the universe itself is the eligible set; no duplication).
+    - ``Chip`` -> the chip's typed positions for ``genome_build``; if the chip has no
+      manifest for that build (e.g. GRCh37 today) it degrades to ``False`` + a log,
+      never silently mis-fills.
+    - ``Path`` / ``pl.DataFrame`` -> a custom set (accepts ``chrom`` or ``chr_norm``).
+    """
+    if scope is False or scope is None:
+        return False
+    if scope is True:
+        return True
+    if isinstance(scope, Chip):
+        try:
+            positions = chip_typed_positions(scope, cache_dir, build=genome_build)
+        except NotImplementedError as exc:
+            log_message(
+                message_type="prs:restoration_scope_unavailable",
+                chip=str(scope),
+                genome_build=genome_build,
+                reason=str(exc),
+            )
+            return False
+        return positions.lazy().pipe(_select_chrom_pos)
+    if isinstance(scope, pl.DataFrame):
+        return scope.lazy().pipe(_select_chrom_pos)
+    if isinstance(scope, (str, Path)):
+        return pl.scan_parquet(scope).pipe(_select_chrom_pos)
+    raise ValueError(f"Unsupported restoration scope: {scope!r}")
+
+
+def _select_chrom_pos(lf: pl.LazyFrame) -> pl.LazyFrame:
+    """Normalize a position-set frame to unique ``(chrom, pos)`` (accepts chr_norm)."""
+    cols = lf.collect_schema().names()
+    chrom_col = "chrom" if "chrom" in cols else ("chr_norm" if "chr_norm" in cols else None)
+    if chrom_col is None or "pos" not in cols:
+        raise ValueError(f"Position set must have (chrom|chr_norm, pos); got {cols}")
+    return lf.select(
+        pl.col(chrom_col).cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chrom"),
+        pl.col("pos").cast(pl.Int64),
+    ).unique()
+
+
 def _apply_reference_resolution(
     scoring_norm: pl.LazyFrame,
     universe_path: Path | str | None,
-    do_resolve: bool,
+    scope: bool | pl.LazyFrame,
 ) -> pl.LazyFrame:
-    """Fill a missing ``reference_allele`` from the precomputed REF-universe parquet.
+    """Fill a missing ``reference_allele`` from the precomputed REF-universe parquet,
+    restricted to the eligible ``scope``.
 
-    Adds a ``ref_resolved_source`` column (``panel`` / ``fasta`` / null) recording
-    where a previously-unknown reference allele was sourced. When resolution is off
-    or no universe is available, the column is still added (all-null) so downstream
-    aggregation can reference it unconditionally. Only positions whose
-    ``reference_allele`` was null/empty are filled; existing values always win.
+    ``scope`` is the *normalized* form from ``_normalize_restoration_scope``:
+    ``False`` -> no fill; ``True`` -> any universe position eligible (WGS); a
+    ``(chrom,pos)`` LazyFrame -> only positions in that set ∩ universe (array/chip).
+    Adds a ``ref_resolved_source`` column (``panel``/``fasta``/null) for accounting;
+    the column is always present so downstream aggregation can reference it. Only
+    positions whose ``reference_allele`` was null/empty are filled; existing values win.
     """
     schema = scoring_norm.collect_schema().names()
-    if not do_resolve or universe_path is None:
+    if scope is False or universe_path is None:
         if "ref_resolved_source" not in schema:
             scoring_norm = scoring_norm.with_columns(
                 pl.lit(None, dtype=pl.Utf8).alias("ref_resolved_source")
@@ -308,12 +368,22 @@ def _apply_reference_resolution(
         pl.scan_parquet(universe_path)
         .filter(pl.col("ref").is_not_null())
         .select(
-            pl.col("chrom").cast(pl.Utf8).alias("_u_chrom"),
-            pl.col("pos").cast(pl.Int64).alias("_u_pos"),
-            pl.col("ref").cast(pl.Utf8).alias("_u_ref"),
-            pl.col("ref_source").cast(pl.Utf8).alias("_u_src"),
+            pl.col("chrom").cast(pl.Utf8),
+            pl.col("pos").cast(pl.Int64),
+            pl.col("ref").cast(pl.Utf8),
+            pl.col("ref_source").cast(pl.Utf8),
         )
     )
+    if isinstance(scope, pl.LazyFrame):
+        # Restrict the eligible REF set to the scope (chip ∩ universe).
+        universe = universe.join(scope, on=["chrom", "pos"], how="semi")
+    universe = universe.select(
+        pl.col("chrom").alias("_u_chrom"),
+        pl.col("pos").alias("_u_pos"),
+        pl.col("ref").alias("_u_ref"),
+        pl.col("ref_source").alias("_u_src"),
+    )
+
     ref_unknown = pl.col("reference_allele").is_null() | (
         pl.col("reference_allele").str.len_chars() == 0
     )
@@ -349,7 +419,7 @@ def compute_prs(
     genotypes_lf: pl.LazyFrame | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
     maf_fill: bool = False,
-    resolve_reference: bool = False,
+    reference_restoration: RestorationScope = False,
     reference_universe_path: Path | str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score for a single VCF against a scoring file.
@@ -406,10 +476,13 @@ def compute_prs(
 
         # Reference-allele resolution only affects the variant-only absent-locus
         # path; in other modes absent loci are never imputed hom-ref.
+        restoration_scope = (
+            _normalize_restoration_scope(reference_restoration, cache_dir, genome_build)
+            if resolved_mode == GenotypeInputMode.VARIANT_ONLY
+            else False
+        )
         scoring_norm = _apply_reference_resolution(
-            scoring_norm,
-            reference_universe_path,
-            resolve_reference and resolved_mode == GenotypeInputMode.VARIANT_ONLY,
+            scoring_norm, reference_universe_path, restoration_scope
         )
 
         if resolved_mode == GenotypeInputMode.VARIANT_ONLY:
@@ -711,7 +784,7 @@ def compute_prs_duckdb(
     memory_limit: str | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
     maf_fill: bool = False,
-    resolve_reference: bool = False,
+    reference_restoration: RestorationScope = False,
     reference_universe_path: Path | str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score using DuckDB for the join and aggregation.
@@ -760,8 +833,11 @@ def compute_prs_duckdb(
         # Fill any missing reference_allele from the precomputed REF universe. Applied
         # unconditionally (adds a null ref_resolved_source when off) so the SQL can
         # reference s.ref_resolved_source; only the variant-only branch consumes it.
+        restoration_scope = _normalize_restoration_scope(
+            reference_restoration, cache_dir, genome_build
+        )
         scoring_norm = _apply_reference_resolution(
-            scoring_norm, reference_universe_path, resolve_reference
+            scoring_norm, reference_universe_path, restoration_scope
         )
 
         schema_names = scoring_norm.collect_schema().names()
@@ -1023,7 +1099,7 @@ def compute_prs_batch(
     engine: PRSEngine | str = PRSEngine.DUCKDB,
     genotypes_lf: pl.LazyFrame | None = None,
     memory_limit: str | None = None,
-    resolve_reference: bool = False,
+    reference_restoration: RestorationScope = False,
     reference_universe_path: Path | str | None = None,
 ) -> "PRSBatchResult":
     """Compute multiple PRS scores for a single VCF file.
@@ -1087,7 +1163,7 @@ def compute_prs_batch(
                             genotypes_lf=genotypes_lf,
                             memory_limit=memory_limit,
                             genotype_input_mode=genotype_input_mode,
-                            resolve_reference=resolve_reference,
+                            reference_restoration=reference_restoration,
                             reference_universe_path=reference_universe_path,
                         )
                     else:
@@ -1100,7 +1176,7 @@ def compute_prs_batch(
                             trait_reported=trait,
                             genotypes_lf=genotypes_lf,
                             genotype_input_mode=genotype_input_mode,
-                            resolve_reference=resolve_reference,
+                            reference_restoration=reference_restoration,
                             reference_universe_path=reference_universe_path,
                         )
 

@@ -28,13 +28,14 @@ indels (``I``/``D`` 23andMe codes won't match sequence effect alleles), and
 hemizygous male X/Y calls (a single observed allele is treated as homozygous).
 """
 
-import gzip
 import io
 import zipfile
 from pathlib import Path
 
 import polars as pl
 from eliot import log_message, start_action
+
+from just_prs.io_utils import open_maybe_compressed
 
 # Tokens that denote a missing/no-call allele across vendors.
 _MISSING_ALLELES = ["-", "0", ".", "?", ""]
@@ -47,9 +48,12 @@ ARRAY_FORMATS = ("23andme", "ancestrydna")
 
 
 def _read_array_text(path: Path) -> str:
-    """Read a raw array file as text, transparently handling .gz / .zip / plain."""
-    suffix = path.suffix.lower()
-    if suffix == ".zip":
+    """Read a raw array file as text, transparently handling .zip / gzip / plain.
+
+    gzip is detected by content (magic bytes), not extension, so a gzipped file
+    saved without a ``.gz`` suffix is still read correctly.
+    """
+    if path.suffix.lower() == ".zip":
         with zipfile.ZipFile(path) as zf:
             members = [n for n in zf.namelist() if not n.endswith("/")]
             if not members:
@@ -58,10 +62,8 @@ def _read_array_text(path: Path) -> str:
             data_members = [n for n in members if n.lower().endswith((".txt", ".csv"))]
             member = data_members[0] if data_members else members[0]
             return zf.read(member).decode("utf-8", errors="replace")
-    if suffix == ".gz":
-        with gzip.open(path, "rt", encoding="utf-8", errors="replace") as f:
-            return f.read()
-    return path.read_text(encoding="utf-8", errors="replace")
+    with open_maybe_compressed(path, "rt", encoding="utf-8", errors="replace") as f:
+        return f.read()
 
 
 def detect_array_format(text: str) -> str:

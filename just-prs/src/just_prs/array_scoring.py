@@ -13,10 +13,52 @@ import polars as pl
 from eliot import log_message, start_action
 
 from just_prs.arrays import detect_chip_generation, normalize_array
+from just_prs.chip_coverage import CHIPS_BY_ID, Chip
 from just_prs.ld_proxy import apply_ld_proxies, ld_proxy_pgs_path
 from just_prs.models import ArrayPRSResult, classify_coverage_tier
-from just_prs.prs import compute_prs, compute_prs_duckdb, PRSEngine
+from just_prs.prs import RestorationScope, compute_prs, compute_prs_duckdb, PRSEngine
 from just_prs.scoring import resolve_cache_dir
+
+
+def _resolve_array_restoration(
+    resolved_chip: str,
+    genome_build: str,
+    cache_dir: Path,
+) -> tuple[RestorationScope, Path | None]:
+    """Resolve chip-aware reference restoration for an array, build-gated.
+
+    Hom-ref restoration at chip-typed positions is valid only when the array build,
+    the chip's typed-position manifest build, and a published reference-allele
+    universe all agree. Today only GRCh38 is published, while current consumer arrays
+    are GRCh37 — so this returns ``(False, None)`` (a no-op) for them until the GRCh37
+    universe lands (see docs/grch37-universe-build.md). Returns the scope + universe path.
+    """
+    from just_prs.hf import REFERENCE_ALLELE_UNIVERSE_FILE, pull_reference_allele_universe
+
+    try:
+        chip = Chip(resolved_chip)
+    except ValueError:
+        return False, None
+    spec = CHIPS_BY_ID.get(chip)
+    if spec is None or spec["build"] != genome_build:
+        log_message(
+            message_type="array_scoring:restoration_deferred",
+            chip=str(chip),
+            genome_build=genome_build,
+            reason="no build-matched chip manifest / reference universe",
+        )
+        return False, None
+
+    ref_dir = cache_dir / "reference"
+    candidate = ref_dir / REFERENCE_ALLELE_UNIVERSE_FILE
+    if not candidate.exists():
+        try:
+            pull_reference_allele_universe(ref_dir)
+        except Exception as exc:  # offline / not published — degrade to no-op
+            log_message(message_type="array_scoring:no_reference_universe", reason=str(exc))
+    if not candidate.exists():
+        return False, None
+    return chip, candidate
 
 
 def compute_array_prs(
@@ -130,6 +172,14 @@ def compute_array_prs(
                     panel=panel,
                 )
 
+        # Chip-aware reference restoration (hom-ref at chip-typed positions only),
+        # build-gated: a no-op until a build-matched universe exists. Composes before
+        # maf_fill — a restored hom-ref locus is ref-known, so the dosage chain takes
+        # it ahead of the 2·MAF fill.
+        reference_restoration, reference_universe_path = _resolve_array_restoration(
+            resolved_chip, genome_build, resolved_cache
+        )
+
         if engine == PRSEngine.DUCKDB or engine == "DUCKDB":
             base_result = compute_prs_duckdb(
                 vcf_path=str(array_path),
@@ -141,6 +191,8 @@ def compute_array_prs(
                 genotypes_lf=genotypes_lf,
                 genotypes_parquet=str(norm_path),
                 maf_fill=maf_fill,
+                reference_restoration=reference_restoration,
+                reference_universe_path=reference_universe_path,
             )
         else:
             base_result = compute_prs(
@@ -152,6 +204,8 @@ def compute_array_prs(
                 trait_reported=trait_reported,
                 genotypes_lf=genotypes_lf,
                 maf_fill=maf_fill,
+                reference_restoration=reference_restoration,
+                reference_universe_path=reference_universe_path,
             )
 
         typed = base_result.variants_matched - base_result.variants_maf_filled - n_proxied

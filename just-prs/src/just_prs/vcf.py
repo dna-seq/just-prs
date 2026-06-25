@@ -1,12 +1,13 @@
 """VCF reading via polars-bio and genotype dosage extraction."""
 
-import gzip
 import re
 from pathlib import Path
 
 import polars as pl
 import polars_bio as pb
 from eliot import start_action
+
+from just_prs.io_utils import open_maybe_compressed
 
 GRCH38_CONTIG_LENGTHS: dict[str, int] = {
     "1": 248956422, "2": 242193529, "3": 198295559, "4": 190214555,
@@ -53,10 +54,9 @@ def detect_genome_build(vcf_path: Path | str) -> str | None:
         "GRCh37", "GRCh38", or None if detection fails
     """
     vcf_path = Path(vcf_path)
-    is_gzipped = vcf_path.name.endswith((".gz", ".bgz")) or _has_gzip_magic(vcf_path)
-    opener = gzip.open if is_gzipped else open
-
-    with opener(vcf_path, "rt") as fh:  # type: ignore[arg-type]
+    # Detect compression by content (magic bytes), not extension — a BGZF stream
+    # named .vcf must still be read decompressed, or the header read is garbage.
+    with open_maybe_compressed(vcf_path, "rt") as fh:
         contig_votes: dict[str, int] = {"GRCh37": 0, "GRCh38": 0}
 
         for line in fh:

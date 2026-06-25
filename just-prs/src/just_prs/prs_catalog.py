@@ -41,7 +41,7 @@ from just_prs.ontology import (
     expand_trait_ids_from_alias_columns,
     normalize_trait_id,
 )
-from just_prs.prs import compute_prs
+from just_prs.prs import RestorationScope, compute_prs
 from just_prs.reference import reference_distribution_audit_issues
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
@@ -663,7 +663,7 @@ class PRSCatalog:
         genotype_input_mode: str = "auto",
         attach_performance: bool = False,
         genotypes_lf: pl.LazyFrame | None = None,
-        resolve_reference: bool = False,
+        reference_restoration: RestorationScope = False,
     ) -> PRSResult:
         """Compute PRS for a VCF file against a single PGS score.
 
@@ -672,10 +672,10 @@ class PRSCatalog:
         with the best evaluation metric (F11). When ``genotypes_lf`` is provided, the
         pre-normalized genotype frame is reused instead of re-reading ``vcf_path`` — this
         is the single-score mirror of ``compute_prs_batch``, so a normalized Parquet can
-        be reused *and* best performance attached in one call (F23). When
-        ``resolve_reference`` is True, missing reference alleles are filled from the
-        precomputed REF universe (pulled from HF on cache miss) so absent WGS loci
-        recover coverage.
+        be reused *and* best performance attached in one call (F23). ``reference_restoration``
+        (``True`` for WGS, a ``Chip`` for arrays, or ``False`` to disable) fills missing
+        reference alleles from the precomputed REF universe (pulled from HF on cache miss)
+        so absent loci recover coverage within the chosen scope.
         """
         with start_action(
             action_type="prs_catalog:compute_prs",
@@ -694,8 +694,8 @@ class PRSCatalog:
                 trait_reported=trait,
                 genotypes_lf=genotypes_lf,
                 genotype_input_mode=genotype_input_mode,
-                resolve_reference=resolve_reference,
-                reference_universe_path=self._reference_universe_path() if resolve_reference else None,
+                reference_restoration=reference_restoration,
+                reference_universe_path=self._reference_universe_path() if reference_restoration is not False else None,
             )
             if attach_performance:
                 self._attach_performance(result)
@@ -711,15 +711,16 @@ class PRSCatalog:
         genotypes_lf: pl.LazyFrame | None = None,
         memory_limit: str | None = None,
         attach_performance: bool = False,
-        resolve_reference: bool = False,
+        reference_restoration: RestorationScope = False,
     ) -> "PRSBatchResult":
         """Compute PRS for a VCF file against multiple PGS scores.
 
         Memory-safe: uses DuckDB engine by default (spill-to-disk), runs
         gc.collect() after each score, continues on per-score errors, and
-        auto-retries once on corrupt parquet caches. When ``resolve_reference``
-        is True, missing reference alleles are filled from the precomputed REF
-        universe (resolved once before the loop).
+        auto-retries once on corrupt parquet caches. ``reference_restoration``
+        (``True`` for WGS, a ``Chip`` for arrays, ``False`` to disable) fills
+        missing reference alleles from the precomputed REF universe within the
+        chosen scope (the universe is resolved once before the loop).
 
         Uses cached metadata for trait lookup instead of per-score REST API calls.
         """
@@ -735,7 +736,7 @@ class PRSCatalog:
 
         resolved_engine = PRSEngine(engine)
         cache = self._cache_dir / "scores"
-        universe_path = self._reference_universe_path() if resolve_reference else None
+        universe_path = self._reference_universe_path() if reference_restoration is not False else None
 
         with start_action(
             action_type="prs_catalog:compute_prs_batch",
@@ -765,7 +766,7 @@ class PRSCatalog:
                             genotypes_lf=genotypes_lf,
                             memory_limit=memory_limit,
                             genotype_input_mode=genotype_input_mode,
-                            resolve_reference=resolve_reference,
+                            reference_restoration=reference_restoration,
                             reference_universe_path=universe_path,
                         )
                     else:
@@ -778,7 +779,7 @@ class PRSCatalog:
                             trait_reported=trait,
                             genotypes_lf=genotypes_lf,
                             genotype_input_mode=genotype_input_mode,
-                            resolve_reference=resolve_reference,
+                            reference_restoration=reference_restoration,
                             reference_universe_path=universe_path,
                         )
 
@@ -813,7 +814,7 @@ class PRSCatalog:
                                         genotypes_lf=genotypes_lf,
                                         memory_limit=memory_limit,
                                         genotype_input_mode=genotype_input_mode,
-                                        resolve_reference=resolve_reference,
+                                        reference_restoration=reference_restoration,
                                         reference_universe_path=universe_path,
                                     )
                                 else:
@@ -826,7 +827,7 @@ class PRSCatalog:
                                         trait_reported=trait,
                                         genotypes_lf=genotypes_lf,
                                         genotype_input_mode=genotype_input_mode,
-                                        resolve_reference=resolve_reference,
+                                        reference_restoration=reference_restoration,
                                         reference_universe_path=universe_path,
                                     )
                                 results.append(result)

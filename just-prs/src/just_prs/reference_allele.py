@@ -102,6 +102,7 @@ def _resolve_panel(positions: pl.DataFrame, pvar_parquet_path: Path, memory_limi
 
     con = duckdb.connect(config={"memory_limit": memory_limit})
     con.execute("SET arrow_large_buffer_size = true")
+    con.execute("SET preserve_insertion_order = false")
     con.register("positions", positions.select("chrom", "pos").to_arrow())
     query = f"""
         SELECT s.chrom AS chrom, s.pos AS pos, min(p."REF") AS ref

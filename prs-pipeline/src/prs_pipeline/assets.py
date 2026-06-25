@@ -597,6 +597,9 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
     try:
         con.execute("SET arrow_large_buffer_size = true")
         con.execute(f"SET temp_directory = '{spill_dir}'")
+        # Large larger-than-memory aggregation: let DuckDB spill freely and drop
+        # insertion-order tracking (its own guidance for big GROUP BY / export).
+        con.execute("SET preserve_insertion_order = false")
         out = con.sql(
             f"""
             SELECT chrom, pos, bool_and(snv_only) AS snv_only

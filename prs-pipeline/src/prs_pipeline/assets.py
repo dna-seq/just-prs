@@ -529,12 +529,30 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
     """Union of scoring positions that need reference-allele resolution.
 
     Iterates every cached ``*_hmPOS_{build}.parquet`` (the chip_coverage pattern)
-    and collects unique ``(chrom, pos)`` where ``reference_allele`` is missing in
-    at least one record, carrying a conservative ``snv_only`` flag (True only when
+    and returns unique ``(chrom, pos)`` where ``reference_allele`` is missing in at
+    least one record, with a conservative ``snv_only`` flag (True only when
     effect/other alleles are single-base across every record at that position).
+
+    Memory-safe for the full catalog: each file's small per-file dedup is streamed
+    to a temp parquet part on the cache volume, then the cross-file union is done by
+    DuckDB (which spills to disk, capped by ``PRS_DUCKDB_MEMORY_LIMIT``) — never an
+    in-memory concat of every catalog position at once (that OOMs: the summed
+    genome-wide positions are hundreds of millions of rows).
     """
+    import shutil
+
+    from just_prs.reference import _resolve_duckdb_memory_limit
+
     files = sorted(scores_dir.glob(f"*_hmPOS_{genome_build}.parquet"))
-    frames: list[pl.DataFrame] = []
+    # Temp parts live on the cache volume (same large disk), never /tmp.
+    tmp_dir = scores_dir.parent / "_ref_targets_parts"
+    if tmp_dir.exists():
+        shutil.rmtree(tmp_dir)
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    spill_dir = tmp_dir / "duckdb_spill"
+    spill_dir.mkdir(exist_ok=True)
+
+    n_parts = 0
     for parquet_path in files:
         schema = pl.scan_parquet(parquet_path).collect_schema().names()
         if "hm_chr" in schema and "hm_pos" in schema:
@@ -566,21 +584,31 @@ def _ref_resolution_targets(scores_dir: Path, genome_build: str = "GRCh38") -> p
             .collect()
         )
         if frame.height:
-            frames.append(frame)
+            frame.write_parquet(tmp_dir / f"{parquet_path.stem}.parquet")
+            n_parts += 1
 
-    if not frames:
+    if n_parts == 0:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
         return pl.DataFrame(schema={"chrom": pl.Utf8, "pos": pl.Int64, "snv_only": pl.Boolean})
 
-    return (
-        pl.concat(frames, how="vertical")
-        .group_by("chrom", "pos")
-        .agg(
-            pl.col("snv_only").min().alias("snv_only"),
-            pl.col("ref_missing").max().alias("ref_missing"),
-        )
-        .filter(pl.col("ref_missing"))
-        .select("chrom", "pos", "snv_only")
-    )
+    import duckdb
+
+    con = duckdb.connect(config={"memory_limit": _resolve_duckdb_memory_limit()})
+    try:
+        con.execute("SET arrow_large_buffer_size = true")
+        con.execute(f"SET temp_directory = '{spill_dir}'")
+        out = con.sql(
+            f"""
+            SELECT chrom, pos, bool_and(snv_only) AS snv_only
+            FROM read_parquet('{tmp_dir}/*.parquet')
+            GROUP BY chrom, pos
+            HAVING bool_or(ref_missing)
+            """
+        ).pl()
+    finally:
+        con.close()
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+    return out
 
 
 @asset(

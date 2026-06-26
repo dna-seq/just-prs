@@ -35,12 +35,6 @@ _BUILD_PATTERNS: list[tuple[re.Pattern[str], str]] = [
 _CONTIG_RE = re.compile(r"##contig=<.*?ID=(?:chr)?(\w+).*?length=(\d+)", re.IGNORECASE)
 
 
-def _has_gzip_magic(path: Path) -> bool:
-    """Return True when a file starts with the gzip magic bytes."""
-    with path.open("rb") as fh:
-        return fh.read(2) == b"\x1f\x8b"
-
-
 def detect_genome_build(vcf_path: Path | str) -> str | None:
     """Attempt to detect the genome build from a VCF file header.
 

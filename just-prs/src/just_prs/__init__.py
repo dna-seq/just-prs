@@ -77,6 +77,7 @@ from just_prs.liftover import (
     LiftRecordResult,
     download_chain_file,
     get_liftover,
+    lift_frame,
     liftover_preflight,
 )
 from just_prs.scoring import resolve_cache_dir

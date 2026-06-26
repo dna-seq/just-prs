@@ -351,6 +351,81 @@ def get_liftover(
     return LiftOver(source_build, target_build, cache_dir=cache_dir)
 
 
+def lift_frame(
+    df: "Any",  # pl.DataFrame
+    source_build: str,
+    target_build: str,
+    *,
+    chrom_col: str = "chrom",
+    pos_col: str = "pos",
+    cache_dir: Path | None = None,
+) -> "tuple[Any, Any]":  # (lifted_df, dropped_df)
+    """Lift a polars DataFrame's ``(chrom, pos)`` from one build to another.
+
+    Distinct positions are lifted once (deduplicated) and joined back, so a
+    600K-row array lifts in a couple of seconds. Returns ``(lifted, dropped)``:
+
+    - ``lifted``: rows that mapped on the ``+`` strand, with ``chrom_col``/
+      ``pos_col`` replaced by the target coordinates (all other columns and row
+      order preserved). ``pos_col`` becomes ``Int64`` and ``chrom_col`` ``Utf8``.
+    - ``dropped``: rows that failed to lift, with all original columns plus a
+      ``liftover_reason`` column (``missing_coordinates``, ``invalid_position``,
+      ``unmapped``, or ``strand_flipped``).
+
+    Used to lift both array genotypes and chip-typed position sets; it is
+    chip-agnostic.
+    """
+    import polars as pl
+
+    lifter = get_liftover(source_build, target_build, cache_dir=cache_dir)
+    keyed = df.with_columns(
+        pl.col(chrom_col).cast(pl.Utf8).alias("__lo_c"),
+        pl.col(pos_col).cast(pl.Int64, strict=False).alias("__lo_p"),
+    )
+    uniq = keyed.select("__lo_c", "__lo_p").unique()
+
+    mapping_rows: list[tuple[Any, Any, str | None, int | None, str | None]] = []
+    for c, p in uniq.iter_rows():
+        if c is None or p is None:
+            mapping_rows.append((c, p, None, None, "missing_coordinates"))
+            continue
+        full = lifter.lift_position_full(c, int(p))
+        if full is None:
+            mapping_rows.append((c, p, None, None, "unmapped"))
+            continue
+        tc, tp, strand = full
+        if strand != "+":
+            mapping_rows.append((c, p, None, None, "strand_flipped"))
+            continue
+        mapping_rows.append((c, p, tc, tp, None))
+
+    mapping = pl.DataFrame(
+        mapping_rows,
+        schema={
+            "__lo_c": pl.Utf8,
+            "__lo_p": pl.Int64,
+            "__lo_tc": pl.Utf8,
+            "__lo_tp": pl.Int64,
+            "liftover_reason": pl.Utf8,
+        },
+        orient="row",
+    )
+
+    joined = keyed.join(mapping, on=["__lo_c", "__lo_p"], how="left")
+    lifted = (
+        joined.filter(pl.col("liftover_reason").is_null())
+        .with_columns(
+            pl.col("__lo_tc").alias(chrom_col),
+            pl.col("__lo_tp").alias(pos_col),
+        )
+        .drop("__lo_c", "__lo_p", "__lo_tc", "__lo_tp", "liftover_reason")
+    )
+    dropped = joined.filter(pl.col("liftover_reason").is_not_null()).drop(
+        "__lo_c", "__lo_p", "__lo_tc", "__lo_tp"
+    )
+    return lifted, dropped
+
+
 def _ucsc_chrom(chrom: str) -> str:
     """pyliftover expects UCSC-style ``chrN`` contig names."""
     chrom = str(chrom).strip()

@@ -443,6 +443,18 @@ class ArrayPRSResult(PRSResult):
         default=0.0,
         description="Raw PRS score before LD-proxy weight adjustment",
     )
+    source_build: str | None = Field(
+        default=None,
+        description="Native genome build of the array coordinates before any liftover (e.g. GRCh37)",
+    )
+    lifted_to_build: str | None = Field(
+        default=None,
+        description="Target build the genotypes were lifted to before scoring (None if no liftover was applied)",
+    )
+    genotypes_lift_dropped: int = Field(
+        default=0,
+        description="Genotype records dropped during coordinate liftover (chain gap / strand flip); honestly unscorable, never assumed hom-ref",
+    )
 
 
 @dataclass

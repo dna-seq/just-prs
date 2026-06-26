@@ -662,16 +662,20 @@ def compute(
             ) from exc
 
     # Resolve (and lazily pull) the reference-allele universe once when on.
+    # Build-aware: GRCh37 restoration must use the GRCh37 universe, not GRCh38.
     universe_path: Optional[Path] = None
     if scope is not False:
-        from just_prs.hf import REFERENCE_ALLELE_UNIVERSE_FILE, pull_reference_allele_universe
+        from just_prs.hf import (
+            pull_reference_allele_universe,
+            reference_allele_universe_filename,
+        )
         from just_prs.scoring import resolve_cache_dir
 
         ref_dir = resolve_cache_dir() / "reference"
-        candidate = ref_dir / REFERENCE_ALLELE_UNIVERSE_FILE
+        candidate = ref_dir / reference_allele_universe_filename(build)
         if not candidate.exists():
             try:
-                pull_reference_allele_universe(ref_dir)
+                pull_reference_allele_universe(ref_dir, genome_build=build)
             except Exception as exc:
                 console.print(
                     f"[yellow]Could not fetch reference-allele universe ({exc}); "

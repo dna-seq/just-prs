@@ -613,10 +613,17 @@ class PRSCatalog:
             | pl.col("trait_efo").str.to_lowercase().str.contains(term, literal=True)
         )
 
-    def score_info_row(self, pgs_id: str) -> dict[str, object] | None:
+    def score_info_row(
+        self, pgs_id: str, genome_build: str | None = None
+    ) -> dict[str, object] | None:
         """Get cleaned score metadata for a single PGS ID as a dict.
 
-        Returns None if the PGS ID is not found.
+        Returns None if the PGS ID is not found. When ``genome_build`` is given,
+        an ``is_harmonized`` boolean is added — True when the score's original
+        development build differs from ``genome_build`` (i.e. it is scored via a
+        harmonized file rather than natively), mirroring :meth:`scores`.
+        ``is_harmonized`` is inherently build-relative, so it is only populated
+        when a target build is supplied (left absent otherwise rather than guessed).
         """
         rows = (
             self._ensure_scores()
@@ -625,7 +632,60 @@ class PRSCatalog:
         )
         if rows.height == 0:
             return None
-        return rows.row(0, named=True)
+        row = rows.row(0, named=True)
+        if genome_build is not None:
+            original = row.get("genome_build")
+            row["is_harmonized"] = original is not None and original != genome_build
+        return row
+
+    def reference_individual_scores(
+        self,
+        pgs_id: str,
+        superpopulation: str | None = None,
+        panel: str = "1000g",
+    ) -> pl.LazyFrame:
+        """Per-individual reference PRS scores for a PGS ID.
+
+        Reads the already-cached ``reference_scores/{panel}/{pgs_id}/scores.parquet``
+        (produced by the reference-scoring pipeline) and returns one row per
+        reference individual: ``iid``, ``superpopulation``, ``prs_score``. Unlike
+        :meth:`reference_distributions` (aggregated mean/std/percentiles), this
+        exposes the raw per-individual values needed to draw an empirical cohort
+        histogram. **No recompute and no download** — purely the local cache.
+
+        Args:
+            pgs_id: PGS Catalog Score ID.
+            superpopulation: Optional 1000G superpopulation filter (AFR/AMR/EAS/EUR/SAS).
+            panel: Reference panel (default ``"1000g"``).
+
+        Returns:
+            LazyFrame of ``(iid, superpopulation, prs_score)``.
+
+        Raises:
+            FileNotFoundError: when the per-individual scores are not cached
+                locally. They are produced by the reference-scoring pipeline
+                (``prs reference score-batch``) and are **not** published to
+                HuggingFace — only the aggregated distributions are. Use
+                :meth:`reference_distributions` for summary statistics.
+        """
+        scores_path = (
+            self._cache_dir / "reference_scores" / panel / pgs_id.upper() / "scores.parquet"
+        )
+        if not scores_path.exists():
+            raise FileNotFoundError(
+                f"No cached per-individual reference scores for {pgs_id} (panel={panel}) "
+                f"at {scores_path}. These are produced by the reference-scoring pipeline "
+                f"(prs reference score-batch) and are not published to HuggingFace; only "
+                f"aggregated distributions are. Use reference_distributions() for summary stats."
+            )
+        lf = pl.scan_parquet(scores_path).select(
+            pl.col("iid").cast(pl.Utf8),
+            pl.col("superpop").cast(pl.Utf8).alias("superpopulation"),
+            pl.col("score").cast(pl.Float64).alias("prs_score"),
+        )
+        if superpopulation is not None:
+            lf = lf.filter(pl.col("superpopulation") == superpopulation)
+        return lf
 
     def _attach_performance(self, result: PRSResult) -> None:
         """Populate ``result.performance`` from the best evaluation metric (F11)."""

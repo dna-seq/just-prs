@@ -374,6 +374,32 @@ def _apply_reference_resolution(
     )
 
 
+def _assert_sample_build_matches(
+    sample_build: str | None, genome_build: str, pgs_id: str
+) -> None:
+    """Guard against the silent cross-build dead-end.
+
+    When the caller knows the sample's genome build and it differs from the build
+    the scoring file is in, a join on ``(chrom, pos)`` would silently match ~0
+    variants and return a meaningless score. Raise a clear error instead. A no-op
+    when ``sample_build`` is None (build unknown) — never guesses.
+    """
+    if sample_build is None:
+        return
+    from just_prs.cleanup import BUILD_NORMALIZATION
+
+    s = BUILD_NORMALIZATION.get(sample_build, sample_build)
+    g = BUILD_NORMALIZATION.get(genome_build, genome_build)
+    if s != g:
+        raise ValueError(
+            f"Genome-build mismatch for {pgs_id}: sample genotypes are {sample_build!r} "
+            f"but scoring is {genome_build!r}. Matching on (chrom,pos) across builds would "
+            f"silently score ~0 variants. Lift the sample to {genome_build} first — e.g. "
+            f"compute_array_prs(..., target_build={genome_build!r}) for arrays, or "
+            f"just_prs.liftover.lift_frame(...) for a VCF — or pass the matching build."
+        )
+
+
 def compute_prs(
     vcf_path: Path | str,
     scoring_file: Path | pl.LazyFrame | str,
@@ -386,6 +412,7 @@ def compute_prs(
     maf_fill: bool = False,
     reference_restoration: RestorationScope = False,
     reference_universe_path: Path | str | None = None,
+    sample_build: str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score for a single VCF against a scoring file.
 
@@ -422,6 +449,7 @@ def compute_prs(
         PRSResult with computed score, match statistics, and optionally
         theoretical distribution stats and percentile.
     """
+    _assert_sample_build_matches(sample_build, genome_build, pgs_id)
     with start_action(
         action_type="prs:compute",
         vcf_path=str(vcf_path),
@@ -747,6 +775,7 @@ def compute_prs_duckdb(
     maf_fill: bool = False,
     reference_restoration: RestorationScope = False,
     reference_universe_path: Path | str | None = None,
+    sample_build: str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score using DuckDB for the join and aggregation.
 
@@ -783,6 +812,7 @@ def compute_prs_duckdb(
         PRSResult with computed score, match statistics, and optionally
         theoretical distribution stats and percentile.
     """
+    _assert_sample_build_matches(sample_build, genome_build, pgs_id)
     with start_action(
         action_type="prs:compute_duckdb",
         vcf_path=str(vcf_path),
@@ -1058,6 +1088,7 @@ def compute_prs_batch(
     memory_limit: str | None = None,
     reference_restoration: RestorationScope = False,
     reference_universe_path: Path | str | None = None,
+    sample_build: str | None = None,
 ) -> "PRSBatchResult":
     """Compute multiple PRS scores for a single VCF file.
 
@@ -1089,6 +1120,9 @@ def compute_prs_batch(
 
     if isinstance(engine, str):
         engine = PRSEngine(engine)
+
+    # All scores share one sample/scoring build — guard once up front.
+    _assert_sample_build_matches(sample_build, genome_build, "batch")
 
     with start_action(
         action_type="prs:compute_batch",

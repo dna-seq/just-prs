@@ -116,6 +116,40 @@ def test_lift_dropped_locus_is_absent_from_lifted_set(tmp_path: Path) -> None:
     assert dropped["liftover_reason"].to_list() == ["unmapped"]
 
 
+def test_sample_build_mismatch_raises(tmp_path: Path) -> None:
+    """B2: a known sample build that differs from the scoring build fails loudly
+    instead of silently scoring ~0 variants."""
+    norm = _normalized_grch37_array(tmp_path)
+    with pytest.raises(ValueError, match="(?i)build.*mismatch"):
+        compute_prs(
+            vcf_path="",
+            scoring_file=_SCORING_GRCH38.lazy(),
+            genome_build="GRCh38",
+            cache_dir=tmp_path,
+            pgs_id="T",
+            genotypes_lf=pl.scan_parquet(norm),
+            sample_build="GRCh37",
+        )
+
+
+def test_sample_build_match_alias_ok(tmp_path: Path) -> None:
+    """A matching sample build (via alias normalization) does not raise."""
+    norm = _normalized_grch37_array(tmp_path)
+    lifted, _ = lift_frame(pl.read_parquet(norm), "GRCh37", "GRCh38")
+    lifted_path = tmp_path / "lifted.parquet"
+    lifted.write_parquet(lifted_path)
+    result = compute_prs(
+        vcf_path="",
+        scoring_file=_SCORING_GRCH38.lazy(),
+        genome_build="GRCh38",
+        cache_dir=tmp_path,
+        pgs_id="T",
+        genotypes_lf=pl.scan_parquet(lifted_path),
+        sample_build="hg38",  # alias of GRCh38 -> no mismatch
+    )
+    assert result.variants_matched == 3
+
+
 @pytest.mark.skipif(
     os.environ.get("JUST_PRS_TEST_ARRAY_LIFT_E2E") != "1",
     reason="set JUST_PRS_TEST_ARRAY_LIFT_E2E=1 to run the full bridge (pulls 67 MB GSA A1 manifest + universe)",

@@ -79,9 +79,60 @@ PRS_CACHE_DIR=/data/just-dna-lite/just-prs PRS_DUCKDB_MEMORY_LIMIT=20GB \
   uv run python scripts/build_reference_allele_universe.py --genome-build GRCh37 --push
 ```
 
-## Verification
+## Build results (2026-06-26)
 
-- Universe validation (ref ∈ ACGTN, no dupes, panel/fasta/unresolved split logged).
-- Real GRCh37 array OFF-vs-ON recovery; restoration confined to chip-typed positions.
-- Engine parity (polars vs DuckDB) with the GRCh37 universe + `Chip.GSA_V3` scope.
-- No Windows/`pysam` regression (FASTA tier precompute-only, Linux/WSL).
+Both universes are built, validated, and published to HF `just-dna-seq/pgs-catalog`
+(`data/reference/`), each from all 5,385 `hmPOS_{build}` scoring parquets (coverage 5385/5385):
+
+| build | filename | rows | panel | fasta | unresolved | resolved |
+|-------|----------|------|-------|-------|------------|----------|
+| GRCh38 | `reference_allele_universe.parquet` (unsuffixed) | 34,929,041 | 26.01M | 7.93M | 0.99M | 97.16% |
+| GRCh37 | `reference_allele_universe_GRCh37.parquet` | 34,922,878 | 31.83M | 2.39M | 0.70M | 97.99% |
+
+Validation per build: `ref ∈ {A,C,G,T,N}`, no duplicate `(chrom,pos)`, no null in resolved rows.
+A parser fix landed during the build — some harmonized files serialize integer positions in
+scientific notation (e.g. `chr_position=7.2e+07`); `scoring._parse_gz_scoring_file` now reads
+Int64 columns as Float64 then casts (positions < 2^53 → exact). See also the publish
+**completeness gate** (refuses `--push` below `--min-coverage`) and download retry/logging.
+
+## Restoration validation (2026-06-26) — real consumer files
+
+OFF (no restoration) vs WGS (`True`, whole universe) vs CHIP (`Chip.GSA_V3`, GSA-typed ∩ universe),
+GRCh37, against PGS000337 (75,028 variants). Data sources are all **CC0 / public**:
+
+| file | vendor / format | markers | chip (auto-detect) | restoration path validated |
+|------|-----------------|---------|--------------------|----------------------------|
+| Corpas *father* (figshare 4491215, CC0) | 23andMe v3, 4-col TSV | 957,353 | `omniexpress` | forced GSA → mechanics + confinement |
+| *Jessica* (PGP/Arvados, public) | AncestryDNA V2, 5-col TSV (GSA) | 675,396 | **`gsa_v3` (auto)** | **runtime auto-path engages** |
+| *Dave* (PGP/Arvados, public) | MyHeritage 2018, comma-CSV | 704,479 | `omniexpress` (correct — pre-2019 MyHeritage *is* OmniExpress) | new CSV ingestion + forced GSA |
+
+Findings (consistent across all files, both engines):
+- **OFF** restores nothing; **WGS** restores every absent scoring locus (e.g. all 57,443 for
+  Corpas/PGS000337); **CHIP** restores only the GSA-typed subset (3,774), leaving the off-chip
+  absent unscorable — confinement is exact (`3,774 + 53,669 = 57,443`).
+- **Score is invariant** across modes (restored loci are hom-ref → 0 effect-allele dosage); what
+  improves is `variants_matched` / `match_rate` — the F15 lever disambiguates "low score" from
+  "low coverage", it does not move the score.
+- `_resolve_array_restoration` **auto-engages** for `gsa_v3`+GRCh37 (Jessica: matched 15,647 →
+  19,582, 3,935 restored) and **gracefully no-ops** for `omniexpress` (no manifest) — degradation
+  confirmed.
+
+Vendor-format coverage: 4-col TSV (23andMe), 5-col TSV (AncestryDNA), and comma-CSV
+(MyHeritage/FTDNA — ingestion added in `arrays.py`, commit `ea4fc63`). Re-encoding the real Corpas
+genotypes into all three formats yields byte-identical normalized output and identical restoration
+results, proving the parser is format-agnostic.
+
+Data-access note: PGP raw files now redirect to Arvados `collections.ac2it.arvadosapi.com`
+collections — some are public-readable but require a **browser User-Agent** (else they 401 as
+anti-bot); others are genuinely non-public (401 even with a UA). 23andMe-`_v5_`-named PGP files sit
+in non-public collections, but AncestryDNA V2 *is* the same Illumina GSA v3.0 platform as 23andMe
+v5 (`detect_chip_generation` even labels it "23andMe v5"), so Jessica's file covers the v5/GSA path.
+
+## Still open
+
+- Engine parity spot-check (polars vs DuckDB) on the GRCh37 universe + `Chip.GSA_V3` (numbers
+  above are DuckDB; polars path expected identical).
+- The runtime **GRCh37→38 liftover bridge** (restore-in-37 → lift→38 → score-in-38) is a separate
+  path under active development; confirm EBI-harmonize(38→37) vs pyliftover(37→38) round-trip.
+- No Windows/`pysam` regression (FASTA tier is precompute-only, Linux/WSL).
+- A **2019+** MyHeritage file would let the auto-path engage GSA (the 2018 sample is OmniExpress).

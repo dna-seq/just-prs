@@ -44,7 +44,7 @@ _MISSING_ALLELES = ["-", "0", ".", "?", ""]
 # 25 = pseudoautosomal (on X), 26 = mitochondrial.
 _CHR_NUMERIC_MAP = {"23": "X", "24": "Y", "25": "X", "26": "MT"}
 
-ARRAY_FORMATS = ("23andme", "ancestrydna")
+ARRAY_FORMATS = ("23andme", "ancestrydna", "myheritage")
 
 
 def _read_array_text(path: Path) -> str:
@@ -69,19 +69,28 @@ def _read_array_text(path: Path) -> str:
 def detect_array_format(text: str) -> str:
     """Detect the raw-array vendor format from file content.
 
-    Returns ``"23andme"`` (4 columns: rsid, chromosome, position, genotype) or
-    ``"ancestrydna"`` (5 columns: rsid, chromosome, position, allele1, allele2).
+    Returns one of:
+      - ``"23andme"`` — TAB-separated, 4 cols: rsid, chromosome, position, genotype.
+      - ``"ancestrydna"`` — TAB-separated, 5 cols: rsid, chromosome, position, allele1, allele2.
+      - ``"myheritage"`` — COMMA-separated (quoted), header ``RSID,CHROMOSOME,POSITION,RESULT``;
+        also covers FamilyTreeDNA, which ships the identical CSV layout.
     """
     lower = text[:4000].lower()
     if "23andme" in lower:
         return "23andme"
+    if "myheritage" in lower or "familytreedna" in lower or "family tree dna" in lower:
+        return "myheritage"
     if "ancestry" in lower:
         return "ancestrydna"
-    # Fall back to column count of the first non-comment, non-blank line.
+    # Fall back to delimiter/column shape of the first non-comment, non-blank line.
     for line in text.splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("#"):
             continue
+        # Comma-delimited with no tabs → the MyHeritage / FTDNA CSV family
+        # (header RSID,CHROMOSOME,POSITION,RESULT or quoted data rows).
+        if "," in stripped and "\t" not in stripped:
+            return "myheritage"
         n_cols = len(stripped.split("\t"))
         return "ancestrydna" if n_cols >= 5 else "23andme"
     raise ValueError("Could not detect array format: no data rows found.")
@@ -89,9 +98,11 @@ def detect_array_format(text: str) -> str:
 
 def _read_array_dataframe(text: str, array_format: str) -> pl.DataFrame:
     """Parse cleaned array text into a raw DataFrame with canonical column names."""
+    # MyHeritage / FTDNA are comma-separated (quoted) CSV; the others are TSV.
+    separator = "," if array_format == "myheritage" else "\t"
     df = pl.read_csv(
         io.StringIO(text),
-        separator="\t",
+        separator=separator,
         comment_prefix="#",
         has_header=False,
         infer_schema_length=0,  # all Utf8; we cast positions ourselves
@@ -100,6 +111,7 @@ def _read_array_dataframe(text: str, array_format: str) -> pl.DataFrame:
     if array_format == "ancestrydna":
         names = ["rsid", "chromosome", "position", "allele1", "allele2"]
     else:
+        # 23andMe ``genotype`` and MyHeritage/FTDNA ``RESULT`` are the same 2-char call.
         names = ["rsid", "chromosome", "position", "genotype"]
     # Map the first N columns; ignore any trailing junk columns.
     df = df.select(df.columns[: len(names)])
@@ -130,7 +142,7 @@ def normalize_array(
     genome_build: str = "GRCh37",
     array_format: str | None = None,
 ) -> Path:
-    """Parse a 23andMe / AncestryDNA raw file into a normalized genotype Parquet.
+    """Parse a 23andMe / AncestryDNA / MyHeritage raw file into a normalized genotype Parquet.
 
     The output schema matches ``normalize_vcf()`` (``chrom``, ``pos``, ``rsid``,
     ``ref``, ``alt``, ``GT``, ``genotype``) so it is a drop-in input to
@@ -144,7 +156,8 @@ def normalize_array(
             build 23andMe v5 / AncestryDNA v2 report). Used only for logging /
             provenance; positions are written as-is and must match the scoring
             file build chosen at compute time.
-        array_format: ``"23andme"`` or ``"ancestrydna"``; auto-detected when None.
+        array_format: ``"23andme"``, ``"ancestrydna"``, or ``"myheritage"`` (the
+            comma-CSV layout also used by FamilyTreeDNA); auto-detected when None.
 
     Returns:
         The *output_path* for convenience.

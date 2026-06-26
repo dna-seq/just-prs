@@ -36,10 +36,43 @@ rs400\t2\t4000\t0\t0
 rs500\t23\t5000\tC\tT
 """
 
+# Same five markers in MyHeritage layout: comma-CSV, quoted, RESULT = the call.
+# (FamilyTreeDNA ships the identical RSID,CHROMOSOME,POSITION,RESULT format.)
+_MYHERITAGE = """\
+# MyHeritage DNA raw data. For more info see www.myheritage.com
+RSID,CHROMOSOME,POSITION,RESULT
+"rs100","1","1000","AG"
+"rs200","1","2000","GG"
+"rs300","2","3000","AA"
+"rs400","2","4000","--"
+"rs500","X","5000","CT"
+"""
+
+# A bare FamilyTreeDNA-style CSV (no vendor name in header) — detected by shape.
+_FTDNA_BARE = """\
+RSID,CHROMOSOME,POSITION,RESULT
+"rs100","1","1000","AG"
+"rs200","1","2000","GG"
+"""
+
 
 def test_detect_format() -> None:
     assert detect_array_format(_23ANDME) == "23andme"
     assert detect_array_format(_ANCESTRY) == "ancestrydna"
+    assert detect_array_format(_MYHERITAGE) == "myheritage"
+    # Bare CSV with no vendor name → detected by comma delimiter (FTDNA family).
+    assert detect_array_format(_FTDNA_BARE) == "myheritage"
+
+
+def test_myheritage_matches_23andme(tmp_path: Path) -> None:
+    """MyHeritage comma-CSV normalizes identically to the 23andMe TSV layout."""
+    a = normalize_array(_write(tmp_path / "23.txt", _23ANDME), tmp_path / "a.parquet")
+    m = normalize_array(_write(tmp_path / "mh.csv", _MYHERITAGE), tmp_path / "m.parquet")
+    da = pl.read_parquet(a).sort("pos")
+    dm = pl.read_parquet(m).sort("pos")
+    assert da.select("chrom", "pos", "rsid", "GT", "genotype").equals(
+        dm.select("chrom", "pos", "rsid", "GT", "genotype")
+    )
 
 
 def test_23andme_normalization(tmp_path: Path) -> None:

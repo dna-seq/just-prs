@@ -666,6 +666,7 @@ class PRSCatalog:
         attach_performance: bool = False,
         genotypes_lf: pl.LazyFrame | None = None,
         reference_restoration: RestorationScope = False,
+        sample_build: str | None = None,
     ) -> PRSResult:
         """Compute PRS for a VCF file against a single PGS score.
 
@@ -702,6 +703,7 @@ class PRSCatalog:
                     if reference_restoration is not False
                     else None
                 ),
+                sample_build=sample_build,
             )
             if attach_performance:
                 self._attach_performance(result)
@@ -718,6 +720,7 @@ class PRSCatalog:
         memory_limit: str | None = None,
         attach_performance: bool = False,
         reference_restoration: RestorationScope = False,
+        sample_build: str | None = None,
     ) -> "PRSBatchResult":
         """Compute PRS for a VCF file against multiple PGS scores.
 
@@ -735,10 +738,14 @@ class PRSCatalog:
         from just_prs.models import PRSBatchOutcome, PRSBatchResult
         from just_prs.prs import (
             PRSEngine,
+            _assert_sample_build_matches,
             _is_corrupt_parquet_error,
             _remove_scoring_parquet_cache,
             compute_prs_duckdb,
         )
+
+        # All scores share one sample/scoring build — guard once up front.
+        _assert_sample_build_matches(sample_build, genome_build, "batch")
 
         resolved_engine = PRSEngine(engine)
         cache = self._cache_dir / "scores"

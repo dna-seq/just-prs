@@ -689,6 +689,17 @@ def compute(
             )
             scope = False
 
+    # Detect the sample's build from the VCF header so a build mismatch fails
+    # loudly instead of silently scoring ~0 variants. Unknown build -> no guard
+    # (never guesses; e.g. a normalized parquet has no header).
+    sample_build: Optional[str] = None
+    try:
+        from just_prs.vcf import detect_genome_build
+
+        sample_build = detect_genome_build(vcf_path)
+    except Exception:
+        sample_build = None
+
     if scoring_file:
         label = scoring_file.stem
         console.print(f"Computing PRS from custom scoring file [cyan]{scoring_file}[/cyan] on {vcf_path}...")
@@ -701,6 +712,7 @@ def compute(
             genotype_input_mode=genotype_input_mode,
             reference_restoration=scope,
             reference_universe_path=universe_path,
+            sample_build=sample_build,
         )
         results: list[PRSResult] = [result]
     else:
@@ -720,6 +732,7 @@ def compute(
                 genotype_input_mode=genotype_input_mode,
                 reference_restoration=scope,
                 reference_universe_path=universe_path,
+                sample_build=sample_build,
             )
             results = [result]
         else:
@@ -731,6 +744,7 @@ def compute(
                 genotype_input_mode=genotype_input_mode,
                 reference_restoration=scope,
                 reference_universe_path=universe_path,
+                sample_build=sample_build,
             )
             results = batch.results
             if batch.failed_ids:

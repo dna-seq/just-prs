@@ -633,6 +633,20 @@ def compute(
             ),
         ),
     ] = "off",
+    ancestry: Annotated[
+        bool,
+        typer.Option(
+            "--ancestry/--no-ancestry",
+            help="Infer the sample's genetic ancestry once and attach it to every result "
+                 "(consensus super-pop + confidence, finest population, informational mixture).",
+        ),
+    ] = False,
+    ancestry_prive: Annotated[
+        bool, typer.Option("--ancestry-prive/--no-ancestry-prive", help="Fold the local Privé 21-group reference into the ancestry consensus")
+    ] = False,
+    ancestry_aadr: Annotated[
+        bool, typer.Option("--ancestry-aadr/--no-ancestry-aadr", help="Fold the local AADR Human Origins panel (Slavic/Balkan) into the ancestry consensus")
+    ] = False,
 ) -> None:
     """Compute polygenic risk score(s) for a VCF file.
 
@@ -785,6 +799,32 @@ def compute(
         )
 
     console.print(table)
+
+    if ancestry and results:
+        base_cache = cache_dir.parent if cache_dir == DEFAULT_CACHE_DIR else cache_dir
+        catalog = PRSCatalog(cache_dir=base_cache)
+        sample_anc = catalog.infer_sample_ancestry(
+            vcf_path, sample_build=sample_build,
+            include_prive=ancestry_prive, include_aadr=ancestry_aadr,
+        )
+        for r in results:
+            r.sample_ancestry = sample_anc
+        if sample_anc is None:
+            console.print("[yellow]Sample ancestry: UNKNOWN (no model available or coverage too low).[/yellow]")
+        else:
+            fine = ""
+            if sample_anc.fine_population:
+                fc = f" {sample_anc.fine_confidence:.0%}" if sample_anc.fine_confidence is not None else ""
+                fine = f"  fine: [cyan]{sample_anc.fine_population}[/cyan]{fc} ({sample_anc.fine_panel})"
+            console.print(
+                f"[bold]Sample ancestry:[/bold] [green]{sample_anc.superpopulation}[/green] "
+                f"({sample_anc.confidence:.0%} conf, {sample_anc.n_methods} methods/"
+                f"{len(sample_anc.panels)} panels){fine}"
+            )
+            if sample_anc.mixture:
+                console.print(f"    mixture (informational): {_fmt_dist(sample_anc.mixture)}")
+            if sample_anc.fine_mixture:
+                console.print(f"    fine mixture: {_fmt_dist(sample_anc.fine_mixture)}")
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)

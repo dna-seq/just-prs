@@ -355,6 +355,10 @@ prs compute --vcf sample.vcf.gz --pgs-id PGS000001
 # Multiple catalog scores at once
 prs compute --vcf sample.vcf.gz --pgs-id PGS000001,PGS000002,PGS000003
 
+# Attach inferred sample ancestry to every result (super-pop + confidence,
+# finest population, informational mixture) — inferred once, shared across scores
+prs compute --vcf anton --pgs-id PGS000001,PGS000002 --ancestry --ancestry-aadr
+
 # Use your own scoring file instead of the PGS Catalog
 prs compute --vcf sample.vcf.gz --scoring-file my_custom_score.txt.gz
 

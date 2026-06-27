@@ -326,6 +326,10 @@ class PRSResult(BaseModel):
         default=None,
         description="Absolute disease risk estimate based on PRS z-score and prevalence data",
     )
+    sample_ancestry: "SampleAncestry | None" = Field(
+        default=None,
+        description="Inferred genetic ancestry of the sample (super-pop + confidence, fine population, informational mixture); populated when ancestry inference is requested",
+    )
 
 
 class EnrichedPRSResult(BaseModel):
@@ -561,6 +565,53 @@ class AncestryInference(BaseModel):
     )
 
 
+class SampleAncestry(BaseModel):
+    """Compact inferred-ancestry summary attached to a PRS result (advisory metadata).
+
+    A flat, UI-friendly projection of the richer ``AncestryConsensus`` /
+    ``AncestryInference``: the consensus super-population with its confidence, the
+    finest within-continent call available (with its own confidence and source panel),
+    and — purely informational — the admixture-style proportions. Fine-population calls
+    should be read together with ``fine_mixture`` (the soft distribution), not as a hard
+    label: tight-cluster regions (e.g. East-Slavic Russian/Ukrainian/Belarusian) collapse
+    to the plurality in the hard call while the mixture stays informative.
+    """
+
+    superpopulation: str = Field(
+        description="Consensus super-population (AFR/AMR/EAS/EUR/SAS) or 'UNKNOWN'"
+    )
+    confidence: float = Field(
+        default=0.0, description="Consensus posterior of the super-population label (0-1)"
+    )
+    fine_population: str | None = Field(
+        default=None, description="Finest within-continent population call available"
+    )
+    fine_confidence: float | None = Field(
+        default=None, description="Confidence (top-class posterior) of the fine call"
+    )
+    fine_panel: str | None = Field(
+        default=None, description="Panel that produced the fine-population call"
+    )
+    fine_mixture: dict[str, float] | None = Field(
+        default=None,
+        description="Informational soft proportions behind the fine call (sums ~1)",
+    )
+    mixture: dict[str, float] | None = Field(
+        default=None,
+        description="Informational super-population proportions (admixture fractions; sums ~1)",
+    )
+    mixture_method: str | None = Field(
+        default=None, description="Provenance of `mixture`: 'consensus' | 'pca_nnls' | 'prive_qp'"
+    )
+    source: str = Field(
+        default="consensus", description="'consensus' (fused) or a single panel name"
+    )
+    panels: list[str] = Field(
+        default_factory=list, description="Panels fused into the consensus"
+    )
+    n_methods: int = Field(default=0, description="Number of methods fused into the consensus")
+
+
 class AncestryConsensus(BaseModel):
     """Bayesian consensus super-population fused across panels and methods.
 
@@ -614,3 +665,8 @@ class AncestryCoherence(BaseModel):
         default=True, description="False when an ancestry mismatch likely degrades the percentile"
     )
     message: str = Field(default="", description="Plain-English explanation for the user")
+
+
+# Resolve the forward reference from PRSResult.sample_ancestry (SampleAncestry is
+# defined after PRSResult in this module).
+PRSResult.model_rebuild()

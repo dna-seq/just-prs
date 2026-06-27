@@ -176,6 +176,32 @@ def test_infer_ancestry_consensus(tmp_path):
     assert len(con.methods) == 4  # 2 panels x (knn + mixture)
 
 
+def test_infer_sample_ancestry_summary(tmp_path):
+    """Compact SampleAncestry: consensus super-pop + a separate fine-population call."""
+    md = tmp_path / "ancestry"
+    _info, freqB, p = _build_synthetic_model(md, panel="1000g")
+    _build_synthetic_model(md, panel="hgdp_1kg")
+    meta = tmp_path / "metadata"
+    meta.mkdir(parents=True)
+    for f in ("scores.parquet", "performance.parquet", "best_performance.parquet"):
+        pl.DataFrame({"pgs_id": ["PGS000001"]}).write_parquet(meta / f)
+    cat = PRSCatalog(cache_dir=tmp_path)
+    eas = RNG.binomial(2, freqB[:, None]).astype(np.int8).flatten()
+
+    sa = cat.infer_sample_ancestry(genotypes_lf=_genotypes_lf(eas, p),
+                                   panels=("1000g", "hgdp_1kg"))
+    assert sa is not None
+    # Super-pop comes from the canonical-5 consensus (never poisoned by fine labels).
+    assert sa.superpopulation == "EAS"
+    assert sa.confidence > 0.5
+    assert sa.mixture_method == "consensus"
+    assert sum(sa.mixture.values()) == pytest.approx(1.0, abs=0.01)
+    assert sa.n_methods == 4 and len(sa.panels) == 2
+    # Fine call resolved from the finest panel (HGDP here; population label "x").
+    assert sa.fine_population == "x"
+    assert sa.fine_panel == "hgdp_1kg"
+
+
 def test_coverage_floor_returns_unknown(tmp_path):
     md = tmp_path / "ancestry"
     _info, freqB, p = _build_synthetic_model(md)

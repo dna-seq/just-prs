@@ -1157,6 +1157,79 @@ class PRSCatalog:
                 logger.debug("Reference-allele universe HF pull failed: %s", exc)
         return path if path.exists() else None
 
+    # Panels tried (finest first) when picking the fine-population call for the
+    # compact SampleAncestry summary.
+    _FINE_PANEL_PRIORITY: tuple[str, ...] = ("aadr_ho", "hgdp_1kg", "1000g")
+
+    def infer_sample_ancestry(
+        self,
+        genotypes_path: Path | str | None = None,
+        *,
+        genotypes_lf: pl.LazyFrame | None = None,
+        panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
+        sample_build: str | None = None,
+        include_prive: bool = False,
+        include_aadr: bool = False,
+    ):
+        """Compact :class:`SampleAncestry` summary for attaching to PRS results.
+
+        Two complementary readouts from one VCF read: (1) the **super-population** comes
+        from :meth:`infer_ancestry_consensus` at ``resolution="superpop"`` — the fused
+        posterior over the canonical 5 super-pops is the label + confidence + informational
+        ``mixture``; (2) the **fine population** comes from a separate population-resolution
+        inference on the finest available panel (``_FINE_PANEL_PRIORITY``: ``aadr_ho`` when
+        included, else HGDP, else 1000G), carrying its own confidence + soft distribution.
+        Keeping the two separate is deliberate — fusing fine-label posteriors would not
+        canonicalize to super-pops and would flatten the consensus. Returns ``None`` when
+        the super-pop is UNKNOWN (no model available or coverage below the floor).
+        """
+        from just_prs.models import SampleAncestry
+        from just_prs.vcf import detect_genome_build, read_genotypes
+
+        # Read the genotypes once and reuse for both the super-pop consensus and the
+        # fine call (VCF read is the expensive step).
+        if genotypes_lf is None:
+            if genotypes_path is None:
+                raise ValueError("provide genotypes_path or genotypes_lf")
+            sample_build = sample_build or detect_genome_build(genotypes_path) or "GRCh38"
+            genotypes_lf = read_genotypes(genotypes_path)
+        genotypes_lf = genotypes_lf.collect().lazy()
+
+        con = self.infer_ancestry_consensus(
+            genotypes_lf=genotypes_lf, panels=panels, sample_build=sample_build,
+            include_prive=include_prive, include_aadr=include_aadr, resolution="superpop",
+        )
+        if con.consensus_superpopulation == "UNKNOWN":
+            return None
+
+        # Fine population: finest panel that is actually in play.
+        in_play = set(con.per_panel.keys()) | ({"aadr_ho"} if include_aadr else set())
+        fine_panel = next((p for p in self._FINE_PANEL_PRIORITY if p in in_play), None)
+        fine_pop = fine_conf = fine_mix = None
+        if fine_panel is not None:
+            fine = self.infer_ancestry(
+                genotypes_lf=genotypes_lf, panel=fine_panel,
+                sample_build=sample_build, resolution="population",
+            )
+            if fine.fine_population:
+                fine_pop, fine_conf, fine_mix = fine.fine_population, fine.confidence, fine.mixture
+            else:
+                fine_panel = None
+
+        return SampleAncestry(
+            superpopulation=con.consensus_superpopulation,
+            confidence=con.confidence,
+            fine_population=fine_pop,
+            fine_confidence=fine_conf,
+            fine_panel=fine_panel,
+            fine_mixture=fine_mix,
+            mixture=con.posterior or None,
+            mixture_method="consensus",
+            source="consensus",
+            panels=list(con.per_panel.keys()),
+            n_methods=len(con.methods),
+        )
+
     def compute_prs(
         self,
         vcf_path: Path | str,
@@ -1167,6 +1240,10 @@ class PRSCatalog:
         genotypes_lf: pl.LazyFrame | None = None,
         reference_restoration: RestorationScope = False,
         sample_build: str | None = None,
+        infer_ancestry: bool = False,
+        ancestry_panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
+        ancestry_include_prive: bool = False,
+        ancestry_include_aadr: bool = False,
     ) -> PRSResult:
         """Compute PRS for a VCF file against a single PGS score.
 
@@ -1207,6 +1284,12 @@ class PRSCatalog:
             )
             if attach_performance:
                 self._attach_performance(result)
+            if infer_ancestry:
+                result.sample_ancestry = self.infer_sample_ancestry(
+                    vcf_path, genotypes_lf=genotypes_lf, panels=ancestry_panels,
+                    sample_build=sample_build, include_prive=ancestry_include_prive,
+                    include_aadr=ancestry_include_aadr,
+                )
             return result
 
     def compute_prs_batch(
@@ -1221,6 +1304,10 @@ class PRSCatalog:
         attach_performance: bool = False,
         reference_restoration: RestorationScope = False,
         sample_build: str | None = None,
+        infer_ancestry: bool = False,
+        ancestry_panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
+        ancestry_include_prive: bool = False,
+        ancestry_include_aadr: bool = False,
     ) -> "PRSBatchResult":
         """Compute PRS for a VCF file against multiple PGS scores.
 
@@ -1384,6 +1471,16 @@ class PRSCatalog:
             if attach_performance:
                 for r in results:
                     self._attach_performance(r)
+
+            # Ancestry is a sample-level property — infer once and share across results.
+            if infer_ancestry and results:
+                sample_anc = self.infer_sample_ancestry(
+                    vcf_path, genotypes_lf=genotypes_lf, panels=ancestry_panels,
+                    sample_build=sample_build, include_prive=ancestry_include_prive,
+                    include_aadr=ancestry_include_aadr,
+                )
+                for r in results:
+                    r.sample_ancestry = sample_anc
 
             return PRSBatchResult(
                 results=results,

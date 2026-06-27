@@ -290,12 +290,14 @@ def build_ancestry_model(
 
 
 class _LoadedModel:
-    __slots__ = ("pca", "sites", "ref_labels", "ref_pcs", "meta")
+    __slots__ = ("pca", "sites", "ref_labels", "ref_fine_labels", "fine_to_broad", "ref_pcs", "meta")
 
-    def __init__(self, pca, sites, ref_labels, ref_pcs, meta):
+    def __init__(self, pca, sites, ref_labels, ref_fine_labels, fine_to_broad, ref_pcs, meta):
         self.pca = pca
         self.sites = sites
-        self.ref_labels = ref_labels
+        self.ref_labels = ref_labels          # super-population per reference sample
+        self.ref_fine_labels = ref_fine_labels  # fine population per reference sample
+        self.fine_to_broad = fine_to_broad    # {population: super-population}
         self.ref_pcs = ref_pcs
         self.meta = meta
 
@@ -322,7 +324,12 @@ def load_ancestry_model(model_dir: Path, panel: str, build: str) -> _LoadedModel
         dim_ref=int(meta["dim_ref"]), dim_stu=int(meta["dim_stu"]), dim_online=dim_online,
     )
     ref_labels = refpcs_df["superpop"].to_numpy()
-    return _LoadedModel(pca, sites, ref_labels, pca.pcs_ref, meta)
+    ref_fine_labels = refpcs_df["population"].to_numpy()
+    fine_to_broad = {
+        str(r["population"]): str(r["superpop"])
+        for r in refpcs_df.select("population", "superpop").unique().iter_rows(named=True)
+    }
+    return _LoadedModel(pca, sites, ref_labels, ref_fine_labels, fine_to_broad, pca.pcs_ref, meta)
 
 
 def _sample_dosage_vector(
@@ -386,13 +393,21 @@ def infer_ancestry(
     build: str,
     coverage_floor: float = DEFAULT_COVERAGE_FLOOR,
     assume_homref_absent: bool = True,
+    resolution: str = "superpop",
 ) -> AncestryInference:
     """Infer a single sample's ancestry against a (panel, build) reference model.
 
     ``assume_homref_absent`` (default True) treats model sites absent from the sample as
     hom-ref — correct for a variant-only VCF; set False for genotyping-array input.
+
+    ``resolution`` selects the classification granularity: ``"superpop"`` (default) →
+    continental super-populations; ``"population"`` → the model's fine populations (e.g.
+    HGDP's ``Russian``/``Orcadian``/…), with the broad super-pop rollup kept in
+    ``superpopulation`` and the fine call in ``fine_population``. Fine within-continent
+    resolution is limited by the model's PC depth and by biology (West-Slavic vs Germanic
+    barely separate on top PCs).
     """
-    with start_action(action_type="ancestry:infer", panel=panel, build=build):
+    with start_action(action_type="ancestry:infer", panel=panel, build=build, resolution=resolution):
         m = load_ancestry_model(model_dir, panel, build)
         dose = _sample_dosage_vector(m.sites, genotypes_lf, assume_homref_absent)
         n_model = int(m.sites.height)
@@ -410,10 +425,20 @@ def infer_ancestry(
         W = dose.reshape((-1, 1))
         pcs = project_samples(m.pca, W)[0]  # (dim_ref,)
         k = int(m.meta.get("knn_k", DEFAULT_KNN_K))
-        label, probs = _knn_predict(m.ref_pcs, m.ref_labels, pcs, k)
-        mixture = estimate_proportions(m.ref_pcs, m.ref_labels, pcs)
+        labels_ref = m.ref_fine_labels if resolution == "population" else m.ref_labels
+        label, probs = _knn_predict(m.ref_pcs, labels_ref, pcs, k)
+        mixture = estimate_proportions(m.ref_pcs, labels_ref, pcs)
+        # At population resolution the hard call is the fine population; keep the broad
+        # super-pop rollup in `superpopulation` so coherence/consumers still get a super-pop.
+        if resolution == "population":
+            superpop = m.fine_to_broad.get(label, label)
+            fine_population = label
+        else:
+            superpop = label
+            fine_population = None
         return AncestryInference(
-            panel=panel, genome_build=build, superpopulation=label,
+            panel=panel, genome_build=build, superpopulation=superpop,
+            fine_population=fine_population,
             probabilities=probs, pc_coords=[float(x) for x in pcs],
             n_variants_used=n_used, n_variants_model=n_model,
             coverage=coverage, confidence=float(probs.get(label, 0.0)),

@@ -38,6 +38,18 @@ Europe-SE 0.17 / Scandinavia 0.10 / Ireland 0.09 / UK 0.07). Caveats: GRCh37 (sa
 the recorded-variant intersection (Privé's documented method) rather than hom-ref padding — so it
 complements, not replaces, the hom-ref-robust 1000G default.
 
+**Fine-population resolution (implemented).** `infer_ancestry(..., resolution="population")` (CLI
+`--resolution population`) classifies at the model's fine-population level using the `population`
+labels the model already stores — no rebuild. On HGDP+1kGP it surfaces the 73 populations incl.
+East-Slavic **Russian** (population-LOO 0.81 overall, **Russian recall 25/25** at the existing 10
+PCs); the broad super-pop rollup is kept in `superpopulation`, the fine call in `fine_population`.
+**Limits:** bounded by PC depth and biology — West-Slavic (Polish) ≈ Germanic on top PCs, and HGDP
+has *only* Russian among Slavs, so an intermediate Ukrainian (anton) lands NW-European (CEU/GBR
+hard call; mixture FIN 0.26/GBR 0.24/CEU 0.23/Orcadian 0.14/… Russian 0.01). **Full Slavic
+granularity (Russian/Belarusian/Ukrainian/Polish/…) requires the AADR Human Origins panel** —
+scoped as Stage 2 in the fine-pops plan (heavier EIGENSTRAT build; West-Slavic separation still
+limited by biology).
+
 **Decision: keep it coupled inside `just-prs`** (`just_prs.ancestry`). An earlier draft scoped a
 standalone `just-ancestry` library with input/output interface contracts — that is **dropped for
 now** to avoid premature abstraction. A larger extraction is envisioned *later* and separately:

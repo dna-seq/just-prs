@@ -317,3 +317,30 @@ def test_build_prive_reference(tmp_path):
     assert len(meta["correction"]) == 16
     ref = pl.read_parquet(_ref_paths(out)["parquet"])
     assert {"load0", "load15", "Italy", "Japan", "chr", "pos", "a0", "a1"} <= set(ref.columns)
+
+
+def test_population_resolution(tmp_path):
+    """resolution='population' classifies fine pops + keeps the broad super-pop rollup."""
+    md = tmp_path / "ancestry"
+    p, na, nb = 1200, 200, 200
+    X, freqA, freqB = _two_pop_panel(p=p, na=na, nb=nb)
+    sites = pl.DataFrame({"chrom": ["1"] * p, "pos": list(range(1, p + 1)),
+                          "ref": ["A"] * p, "alt": ["G"] * p})
+    # distinct populations nested under super-pops
+    labels = pl.DataFrame({
+        "iid": [f"s{i}" for i in range(na + nb)],
+        "superpop": ["EUR"] * na + ["EAS"] * nb,
+        "population": ["French"] * na + ["Japanese"] * nb,
+    })
+    build_ancestry_model(X, sites, labels, panel="hgdp_1kg", build="GRCh38", model_dir=md)
+    eas = RNG.binomial(2, freqB[:, None]).astype(np.int8).flatten()
+    gt = _genotypes_lf(eas, p)
+
+    fine = infer_ancestry(md, gt, panel="hgdp_1kg", build="GRCh38", resolution="population")
+    assert fine.fine_population == "Japanese"      # fine call
+    assert fine.superpopulation == "EAS"           # broad rollup kept for coherence/consumers
+    assert "Japanese" in fine.probabilities
+
+    # default resolution unchanged: super-pop label, no fine call
+    broad = infer_ancestry(md, gt, panel="hgdp_1kg", build="GRCh38", resolution="superpop")
+    assert broad.superpopulation == "EAS" and broad.fine_population is None

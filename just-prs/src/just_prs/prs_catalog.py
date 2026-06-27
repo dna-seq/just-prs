@@ -790,8 +790,13 @@ class PRSCatalog:
         genotypes_lf: pl.LazyFrame | None = None,
         panel: str = "1000g",
         sample_build: str | None = None,
+        resolution: str = "superpop",
     ):
         """Infer a sample's genetic ancestry (super-population) — see AncestryInference.
+
+        ``resolution="population"`` classifies at the model's fine-population level (e.g.
+        HGDP ``Russian``); the broad super-pop is kept in ``superpopulation`` and the fine
+        call in ``fine_population``.
 
         Resolves the genome build implicitly to **GRCh38** when ``sample_build`` is not
         given and cannot be detected. If the resolved build differs from the model build,
@@ -830,7 +835,7 @@ class PRSCatalog:
                 panel=panel, genome_build=model_build, superpopulation="UNKNOWN",
                 confidence=0.0,
             )
-        return _infer(model_dir, genotypes_lf, panel=panel, build=model_build)
+        return _infer(model_dir, genotypes_lf, panel=panel, build=model_build, resolution=resolution)
 
     def infer_ancestry_consensus(
         self,

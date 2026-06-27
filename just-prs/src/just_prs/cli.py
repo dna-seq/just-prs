@@ -990,6 +990,10 @@ def ancestry_infer(
     prive: Annotated[
         bool, typer.Option("--prive/--no-prive", help="Fold the Privé 21-group reference into consensus/all (must be built locally)")
     ] = False,
+    resolution: Annotated[
+        str,
+        typer.Option("--resolution", "-r", help="superpop (continental) | population (fine pops, e.g. HGDP 'Russian'; use --panel hgdp_1kg). West-Slavic vs Germanic barely separate (biology)."),
+    ] = "superpop",
     build: Annotated[
         Optional[str], typer.Option("--build", "-b", help="Sample genome build (auto-detected; default GRCh38)")
     ] = None,
@@ -1009,14 +1013,16 @@ def ancestry_infer(
     panel_list = [p.strip() for p in panels.split(",") if p.strip()]
 
     if mode in ("label", "mixture"):
-        res = catalog.infer_ancestry(vcf_path, panel=panel, sample_build=build)
+        res = catalog.infer_ancestry(vcf_path, panel=panel, sample_build=build, resolution=resolution)
+        call = res.fine_population or res.superpopulation
         if mode == "label":
-            console.print(f"[bold]Ancestry ({panel}):[/bold] {res.superpopulation}  "
+            broad = f" → {res.superpopulation}" if res.fine_population else ""
+            console.print(f"[bold]Ancestry ({panel}, {resolution}):[/bold] {call}{broad}  "
                           f"(conf {res.confidence:.2f}, cov {res.coverage:.1%})")
             if res.probabilities:
                 console.print(f"    {_fmt_dist(res.probabilities)}")
         else:
-            console.print(f"[bold]Mixture ({panel}):[/bold] {_fmt_dist(res.mixture or {})}")
+            console.print(f"[bold]Mixture ({panel}, {resolution}):[/bold] {_fmt_dist(res.mixture or {})}")
         return
 
     if mode == "prive":

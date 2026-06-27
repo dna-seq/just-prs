@@ -40,8 +40,11 @@ from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
 from prs_pipeline.runtime import resource_tracker
 
 _AMBIGUOUS = {("A", "T"), ("T", "A"), ("C", "G"), ("G", "C")}
+# Ancestry models are built in GRCh38 only; GRCh37 samples are lifted to GRCh38 at
+# inference time (the hom-ref-absent imputation that makes projection work is inline at
+# the model's pruned sites, so a native GRCh37 model would be redundant compute).
 _DEFAULT_PANELS = ("1000g", "hgdp_1kg")
-_DEFAULT_BUILDS = ("GRCh38", "GRCh37")
+_DEFAULT_BUILDS = ("GRCh38",)
 
 
 def _selected(env_var: str, default: tuple[str, ...]) -> list[str]:

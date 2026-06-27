@@ -812,25 +812,25 @@ class PRSCatalog:
         else:
             build = sample_build or "GRCh38"
 
-        model_dir = self._ensure_ancestry_model(panel, build)
-        if model_dir is None:
-            # Try lifting to a build whose model is available (GRCh38 default target).
-            target = "GRCh38" if build != "GRCh38" else "GRCh37"
-            lifted_dir = self._ensure_ancestry_model(panel, target)
-            if lifted_dir is None:
-                return AncestryInference(
-                    panel=panel, genome_build=build, superpopulation="UNKNOWN",
-                    confidence=0.0,
-                )
+        # Ancestry models are GRCh38-only — canonicalize by lifting non-GRCh38 samples to
+        # GRCh38 (the hom-ref-absent imputation runs at the GRCh38 model's pruned sites
+        # post-lift, so a native GRCh37 model would be redundant).
+        model_build = "GRCh38"
+        if build != model_build:
             from just_prs.liftover import lift_frame
 
             lifted, _ = lift_frame(
-                genotypes_lf.collect(), build, target, chrom_col="chrom", pos_col="pos"
+                genotypes_lf.collect(), build, model_build, chrom_col="chrom", pos_col="pos"
             )
             genotypes_lf = lifted.lazy()
-            build, model_dir = target, lifted_dir
 
-        return _infer(model_dir, genotypes_lf, panel=panel, build=build)
+        model_dir = self._ensure_ancestry_model(panel, model_build)
+        if model_dir is None:
+            return AncestryInference(
+                panel=panel, genome_build=model_build, superpopulation="UNKNOWN",
+                confidence=0.0,
+            )
+        return _infer(model_dir, genotypes_lf, panel=panel, build=model_build)
 
     def assess_ancestry_coherence(
         self,

@@ -712,7 +712,7 @@ def status(
 @app.command(name="ancestry-model")
 def ancestry_model(
     panels: Annotated[str, typer.Option(help="Comma-separated panels to build (1000g,hgdp_1kg).")] = "1000g,hgdp_1kg",
-    builds: Annotated[str, typer.Option(help="Comma-separated builds to build (GRCh38,GRCh37).")] = "GRCh38,GRCh37",
+    builds: Annotated[str, typer.Option(help="Comma-separated builds (GRCh38 only; GRCh37 samples lift to GRCh38 at inference).")] = "GRCh38",
     headless: Annotated[bool, typer.Option("--headless", help="Run ancestry_model_pipeline in-process without Dagster UI.")] = False,
     host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
     port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,

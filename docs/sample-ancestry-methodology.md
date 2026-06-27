@@ -94,7 +94,7 @@ distributions): a heavy precompute artifact published to HF, a light pure-Python
 | Asset | Group | What it does |
 |---|---|---|
 | `pgsc_reference_panel` (SourceAsset) | `external` | PGS Catalog processed panels at EBI FTP (`pgsc_1000G_v1`, `pgsc_HGDP+1kGP_v1`; both GRCh37+GRCh38); URL in metadata |
-| `ancestry_pca_model` | `compute` | Build (or **ingest** the published PCA) per panel × build; persist artifact (§4). Metadata logs panel, build, n_pruned_variants, n_pcs, **leave-one-out accuracy** |
+| `ancestry_pca_model` | `compute` | Build the PCA per panel (GRCh38); persist artifact (§4). Metadata logs panel, build, n_pruned_variants, n_pcs, **leave-one-out accuracy** |
 | `hf_ancestry_model` | `upload` | Push artifact to `just-dna-seq/prs-percentiles` (`data/ancestry/`) |
 
 - Build path for the MVP: **prefer ingesting the PGS Catalog published reference PCA** (identical
@@ -105,10 +105,14 @@ distributions): a heavy precompute artifact published to HF, a light pure-Python
   shape matches `n_pcs`, every reference IID labelled, LOO accuracy ≥ threshold, no NaN/inf.
 - Robustness policy: mtime staleness vs source panel, coverage metadata, parquet-readability guard.
 
-**Both panels** (per the panel decision): 1000G (5 super-pops) **and** HGDP+1kGP (finer pops),
-each GRCh37+GRCh38. **Default = 1000G** (its 5 super-pops match the percentile + dev-ancestry
-vocabulary, so the verdict is coherent by construction); HGDP+1kGP offered for finer resolution,
-with its fine pops rolled up to the broad set for the comparison. Artifact filenames are panel- and
+**Both panels, GRCh38 only:** 1000G (5 super-pops) **and** HGDP+1kGP (finer pops), each built in
+**GRCh38 only** — a native GRCh37 model is redundant because the hom-ref-absent imputation that
+makes projection work is inline at the model's GRCh38 pruned sites, so a GRCh37 sample is simply
+**lifted to GRCh38** at inference (`infer_ancestry` canonicalizes to GRCh38 via `liftover`). This
+matches the project-wide lift-to-GRCh38 direction and halves the build/maintenance. **Default =
+1000G** (its 5 super-pops match the percentile + dev-ancestry vocabulary, so the verdict is
+coherent by construction); HGDP+1kGP offered for finer resolution, rolled up to the broad set for
+the comparison. Artifact filenames are panel- and
 build-aware (e.g. `ancestry_model_1000g_GRCh38.parquet`), matching the build-aware naming used by
 `reference_allele_universe[_<build>].parquet`.
 
@@ -245,7 +249,8 @@ inference is a few dozen lines of numpy — **implement dependency-free**; `scik
   test.
 - **Coverage stress:** down-sample to GSA-array density and to a sparse callset → graceful confidence
   decay and `UNKNOWN` below the floor.
-- **Cross-build round-trip:** a GRCh37 sample lifted to the GRCh38 model must match its native call.
+- **Cross-build:** a GRCh37 sample is lifted to GRCh38 and classifies consistently with the same
+  sample in native GRCh38 (no native GRCh37 model exists by design).
 
 ---
 

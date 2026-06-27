@@ -25,7 +25,13 @@ import polars as pl
 from dagster import AssetDep, AssetExecutionContext, Output, asset
 from eliot import start_action
 
-from just_prs.cleanup import best_performance_per_score, clean_performance_metrics, clean_publications, clean_scores
+from just_prs.cleanup import (
+    best_performance_per_score,
+    clean_performance_metrics,
+    clean_publications,
+    clean_score_development_samples,
+    clean_scores,
+)
 from just_prs.ftp import PGS_METADATA_BASE, download_metadata_sheet
 from just_prs.gwas import build_gwas_trait_summary, download_gwas_studies, download_gwas_trait_mappings
 from just_prs.heritability import (
@@ -52,10 +58,11 @@ def _no_cache() -> bool:
     group_name="download",
     deps=[AssetDep("ebi_scoring_files_fingerprint")],
     description=(
-        "Downloads three bulk metadata CSV sheets from the PGS Catalog FTP server "
+        "Downloads bulk metadata CSV sheets from the PGS Catalog FTP server "
         "and converts them to Parquet: scores (what each PGS measures), "
-        "performance_metrics (AUROC, OR, etc. from validation studies), and "
-        "evaluation_sample_sets (cohort details for each validation). "
+        "performance_metrics (AUROC, OR, etc. from validation studies), "
+        "evaluation_sample_sets (cohort details for each validation), publications, "
+        "and score_development_samples (per-stage development ancestry + sample size). "
         "These raw sheets contain verbose column names and inconsistent genome "
         "build labels that are normalised by the downstream cleaned_pgs_metadata asset."
     ),
@@ -75,7 +82,13 @@ def raw_pgs_metadata(
 
     with resource_tracker("raw_pgs_metadata", context=context):
         sheet_meta: dict[str, int] = {}
-        for sheet_name in ("scores", "performance_metrics", "evaluation_sample_sets", "publications"):
+        for sheet_name in (
+            "scores",
+            "performance_metrics",
+            "evaluation_sample_sets",
+            "publications",
+            "score_development_samples",
+        ):
             dest = raw_dir / f"{sheet_name}.parquet"
             with start_action(action_type="pipeline:download_metadata_sheet", sheet=sheet_name):
                 df = download_metadata_sheet(sheet_name, dest, overwrite=overwrite)
@@ -98,10 +111,12 @@ def raw_pgs_metadata(
         "Renames verbose column headers to snake_case, normalises genome build labels "
         "(hg19/hg37 → GRCh37, hg38 → GRCh38), and parses metric strings like "
         "'1.55 [1.52,1.58]' into numeric estimate/CI columns. "
-        "Produces three files: scores.parquet (score metadata), performance.parquet "
-        "(all validation results joined with evaluation cohort details), and "
+        "Produces: scores.parquet (score metadata), performance.parquet "
+        "(all validation results joined with evaluation cohort details), "
         "best_performance.parquet (one best-performing row per PGS ID, preferring "
-        "the largest European-ancestry cohort)."
+        "the largest European-ancestry cohort), publications.parquet, and "
+        "score_development_ancestry.parquet (per-PGS development ancestry "
+        "distribution + dev sample size for ancestry-coherence checks, F19/F21)."
     ),
 )
 def cleaned_pgs_metadata(
@@ -120,34 +135,42 @@ def cleaned_pgs_metadata(
             perf_df = pl.read_parquet(raw_dir / "performance_metrics.parquet")
             eval_df = pl.read_parquet(raw_dir / "evaluation_sample_sets.parquet")
             pub_df = pl.read_parquet(raw_dir / "publications.parquet")
+            dev_df = pl.read_parquet(raw_dir / "score_development_samples.parquet")
 
             scores_lf = clean_scores(scores_df)
             perf_lf = clean_performance_metrics(perf_df, eval_df)
             best_perf_lf = best_performance_per_score(perf_lf)
             pub_lf = clean_publications(pub_df)
+            dev_lf = clean_score_development_samples(dev_df)
 
             scores_out = scores_lf.collect()
             perf_out = perf_lf.collect()
             best_perf_out = best_perf_lf.collect()
             pub_out = pub_lf.collect()
+            dev_out = dev_lf.collect()
 
             scores_out.write_parquet(metadata_dir / "scores.parquet")
             perf_out.write_parquet(metadata_dir / "performance.parquet")
             best_perf_out.write_parquet(metadata_dir / "best_performance.parquet")
             pub_out.write_parquet(metadata_dir / "publications.parquet")
+            dev_out.write_parquet(metadata_dir / "score_development_ancestry.parquet")
 
     context.log.info(
         f"Cleaned metadata: {scores_out.height:,} scores, "
         f"{perf_out.height:,} performance rows, "
         f"{best_perf_out.height:,} best-performance rows, "
-        f"{pub_out.height:,} publications."
+        f"{pub_out.height:,} publications, "
+        f"{dev_out.height:,} development-ancestry rows."
     )
+    n_dev_multi = int(dev_out["dev_is_multi_ancestry"].sum()) if dev_out.height else 0
     context.add_output_metadata({
         "metadata_dir": str(metadata_dir),
         "n_scores": scores_out.height,
         "n_performance": perf_out.height,
         "n_best_performance": best_perf_out.height,
         "n_publications": pub_out.height,
+        "n_development_ancestry": dev_out.height,
+        "n_dev_multi_ancestry": n_dev_multi,
         "n_unique_pgs_ids": scores_out["pgs_id"].n_unique(),
     })
     return Output(metadata_dir)

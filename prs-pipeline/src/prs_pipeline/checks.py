@@ -10,9 +10,11 @@ configured as ``blocking=True`` to prevent downstream assets from executing
 when data quality is compromised.
 """
 
+import json
 import math
 import os
 
+import numpy as np
 import polars as pl
 from dagster import AssetCheckResult, AssetCheckSeverity, asset_check
 
@@ -614,6 +616,144 @@ def check_reference_allele_universe_valid(
     )
 
 
+# ---------------------------------------------------------------------------
+# cleaned_pgs_metadata — development-ancestry quality check (F19/F21)
+# ---------------------------------------------------------------------------
+
+
+@asset_check(
+    asset="cleaned_pgs_metadata",
+    description=(
+        "Verify score_development_ancestry.parquet: one row per PGS ID (no duplicates), "
+        "non-empty, dev_ancestry_distribution fractions sum to ~1, dev_is_multi_ancestry "
+        "agrees with dev_n_ancestries, and sample sizes are non-negative."
+    ),
+)
+def check_dev_ancestry_valid(
+    cache_dir_resource: CacheDirResource,
+) -> AssetCheckResult:
+    cache_dir = cache_dir_resource.get_path()
+    path = cache_dir / "metadata" / "score_development_ancestry.parquet"
+    if not path.exists():
+        return AssetCheckResult(
+            passed=False,
+            severity=AssetCheckSeverity.ERROR,
+            metadata={"error": "score_development_ancestry.parquet not found"},
+        )
+
+    df = pl.read_parquet(path)
+    n_rows = df.height
+    n_unique = df["pgs_id"].n_unique() if "pgs_id" in df.columns else 0
+    has_dupes = n_rows != n_unique
+
+    # distribution fractions sum to ~1 for every non-null row
+    bad_dist = 0
+    for j in df["dev_ancestry_distribution"].drop_nulls().to_list():
+        try:
+            total = sum(json.loads(j).values())
+        except (ValueError, TypeError):
+            bad_dist += 1
+            continue
+        if not math.isclose(total, 1.0, abs_tol=0.01):
+            bad_dist += 1
+
+    # multi-ancestry flag must agree with the distinct-ancestry count
+    flag_mismatch = df.filter(
+        pl.col("dev_is_multi_ancestry") != (pl.col("dev_n_ancestries") > 1)
+    ).height
+
+    neg_samples = df.filter(
+        (pl.col("dev_sample_size") < 0)
+        | (pl.col("dev_gwas_sample_size") < 0)
+        | (pl.col("dev_training_sample_size") < 0)
+    ).height
+
+    passed = (
+        n_rows > 0
+        and not has_dupes
+        and bad_dist == 0
+        and flag_mismatch == 0
+        and neg_samples == 0
+    )
+    return AssetCheckResult(
+        passed=passed,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "n_rows": n_rows,
+            "n_unique_pgs_ids": n_unique,
+            "has_duplicate_pgs_ids": has_dupes,
+            "n_bad_distribution_sums": bad_dist,
+            "n_multi_ancestry_flag_mismatch": flag_mismatch,
+            "n_negative_sample_sizes": neg_samples,
+            "n_multi_ancestry": int(df["dev_is_multi_ancestry"].sum()) if n_rows else 0,
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# ancestry_pca_model — reference-PCA model quality check
+# ---------------------------------------------------------------------------
+
+
+@asset_check(
+    asset="ancestry_pca_model",
+    description=(
+        "Verify each built ancestry model: artifacts present, loadings/refpcs shapes "
+        "consistent with n_pcs, every reference sample labelled, leave-one-out super-pop "
+        "accuracy >= 0.90, and no NaN/inf in loadings."
+    ),
+)
+def check_ancestry_model_valid(
+    cache_dir_resource: CacheDirResource,
+) -> AssetCheckResult:
+    cache_dir = cache_dir_resource.get_path()
+    model_dir = cache_dir / "ancestry"
+    metas = sorted(model_dir.glob("ancestry_model_*_meta.json"))
+    if not metas:
+        return AssetCheckResult(
+            passed=False,
+            severity=AssetCheckSeverity.ERROR,
+            metadata={"error": f"no ancestry models found in {model_dir}"},
+        )
+
+    issues: list[str] = []
+    accuracies: dict[str, float] = {}
+    for meta_path in metas:
+        meta = json.loads(meta_path.read_text())
+        tag = f"{meta.get('panel')}_{meta.get('build')}"
+        sites_path = model_dir / f"ancestry_model_{tag}.parquet"
+        refpcs_path = model_dir / f"ancestry_refpcs_{tag}.parquet"
+        if not sites_path.exists() or not refpcs_path.exists():
+            issues.append(f"{tag}: missing artifact parquet")
+            continue
+        dim_online = int(meta.get("dim_online", 0))
+        sites = pl.read_parquet(sites_path)
+        u_cols = [c for c in sites.columns if c.startswith("u")]
+        if len(u_cols) != dim_online:
+            issues.append(f"{tag}: {len(u_cols)} loading cols != dim_online {dim_online}")
+        load = sites.select(u_cols).to_numpy()
+        if not np.isfinite(load).all():
+            issues.append(f"{tag}: non-finite loadings")
+        refpcs = pl.read_parquet(refpcs_path)
+        if refpcs["superpop"].null_count() > 0:
+            issues.append(f"{tag}: unlabelled reference samples")
+        acc = float(meta.get("loo_accuracy", 0.0))
+        accuracies[tag] = acc
+        if acc < 0.90:
+            issues.append(f"{tag}: LOO accuracy {acc:.3f} < 0.90")
+
+    passed = len(issues) == 0
+    return AssetCheckResult(
+        passed=passed,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "n_models": len(metas),
+            "loo_accuracy": str({k: round(v, 4) for k, v in accuracies.items()}),
+            "issues": str(issues) if issues else "none",
+        },
+    )
+
+
 ALL_ASSET_CHECKS = [
     check_distributions_superpop_completeness,
     check_distributions_no_inf_nan,
@@ -622,6 +762,8 @@ ALL_ASSET_CHECKS = [
     check_distributions_sample_sizes,
     check_enriched_has_metadata_columns,
     check_cleaned_metadata_quality,
+    check_dev_ancestry_valid,
+    check_ancestry_model_valid,
     check_chip_coverage_valid,
     check_ld_proxy_table_valid,
     check_reference_allele_universe_valid,

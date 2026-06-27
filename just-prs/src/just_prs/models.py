@@ -521,3 +521,71 @@ class PRSBatchResult(BaseModel):
     n_ok: int = Field(default=0, description="Successfully computed")
     n_failed: int = Field(default=0, description="Failed IDs")
     failed_ids: list[str] = Field(default_factory=list, description="PGS IDs that failed")
+
+
+class AncestryInference(BaseModel):
+    """Inferred genetic ancestry of a single sample (Level-1 super-population call).
+
+    Produced by ``PRSCatalog.infer_ancestry()`` / ``just_prs.ancestry.infer_ancestry``.
+    ``probabilities`` are classifier posteriors (NOT genome-fraction admixture);
+    ``mixture`` is the forward-compatible admixture-fraction field, left None at
+    Level 1 and populated later by a proportions estimator (e.g. the Prive reference).
+    """
+
+    panel: str = Field(description="Reference panel identifier (e.g. '1000g', 'hgdp_1kg')")
+    genome_build: str = Field(description="Genome build the sample was projected in")
+    superpopulation: str = Field(
+        description="Predicted super-population (AFR/AMR/EAS/EUR/SAS) or 'UNKNOWN'"
+    )
+    probabilities: dict[str, float] = Field(
+        default_factory=dict, description="Classifier posterior per super-population (sums ~1)"
+    )
+    pc_coords: list[float] = Field(
+        default_factory=list, description="Projected principal-component coordinates"
+    )
+    n_variants_used: int = Field(default=0, description="Model sites matched in the sample")
+    n_variants_model: int = Field(default=0, description="Total sites in the ancestry model")
+    coverage: float = Field(default=0.0, description="n_variants_used / n_variants_model")
+    confidence: float = Field(
+        default=0.0, description="Top-class posterior (0-1); low => unreliable / UNKNOWN"
+    )
+    fine_population: str | None = Field(
+        default=None, description="Finer population call where the panel supports it"
+    )
+    mixture: dict[str, float] | None = Field(
+        default=None,
+        description="Ancestry FRACTIONS summing to ~1 (admixture); None at Level 1",
+    )
+    mixture_method: str | None = Field(
+        default=None, description="Provenance of `mixture`: 'pca_nnls' | 'prive_qp' | None"
+    )
+
+
+class AncestryCoherence(BaseModel):
+    """Score x sample x reference-panel ancestry coherence verdict (advisory).
+
+    Compares the sample's inferred super-population against the score's development
+    ancestry and the percentile reference panel's ancestry, all in the broad
+    super-population vocabulary. Advisory only (a reliability caveat), never a hard block.
+    """
+
+    level: str = Field(
+        description="coherent | panel_mismatch | dev_mismatch | both | unknown"
+    )
+    sample_superpopulation: str | None = Field(
+        default=None, description="Sample's inferred super-population"
+    )
+    panel_ancestry: str | None = Field(
+        default=None, description="Percentile reference-panel ancestry (broad)"
+    )
+    dev_ancestry: str | None = Field(
+        default=None, description="Score's dominant development ancestry (broad)"
+    )
+    dev_sample_fraction: float | None = Field(
+        default=None,
+        description="Fraction of the score's development cohort matching the sample's ancestry",
+    )
+    reliable: bool = Field(
+        default=True, description="False when an ancestry mismatch likely degrades the percentile"
+    )
+    message: str = Field(default="", description="Plain-English explanation for the user")

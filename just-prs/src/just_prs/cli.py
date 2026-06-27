@@ -67,6 +67,13 @@ pgen_app = typer.Typer(
 )
 app.add_typer(pgen_app, name="pgen")
 
+ancestry_app = typer.Typer(
+    name="ancestry",
+    help="Infer a sample's genetic ancestry (super-population) and check score×sample×panel coherence.",
+    no_args_is_help=True,
+)
+app.add_typer(ancestry_app, name="ancestry")
+
 console = Console()
 
 
@@ -953,6 +960,47 @@ def _validate_pgs_id(pgs_id: str) -> str:
         )
         raise typer.Exit(code=1)
     return pgs_id
+
+
+@ancestry_app.command("infer")
+def ancestry_infer(
+    vcf: Annotated[str, typer.Option("--vcf", "-v", help="VCF/array path or alias (e.g. 'anton', 'livia')")],
+    panel: Annotated[str, typer.Option("--panel", help="Reference panel: 1000g or hgdp_1kg")] = "1000g",
+    build: Annotated[
+        Optional[str], typer.Option("--build", "-b", help="Sample genome build (auto-detected; default GRCh38)")
+    ] = None,
+    cache_dir: Annotated[Optional[Path], typer.Option("--cache-dir", help="Cache directory (base, default ~/.cache/just-prs)")] = None,
+) -> None:
+    """Infer a sample's genetic ancestry (super-population) from a VCF/array."""
+    vcf_path = _resolve_vcf(vcf, cache_dir)
+    catalog = PRSCatalog(cache_dir=cache_dir)
+    res = catalog.infer_ancestry(vcf_path, panel=panel, sample_build=build)
+    console.print(f"[bold]Ancestry:[/bold] {res.superpopulation}  "
+                  f"(confidence {res.confidence:.2f}, coverage {res.coverage:.1%}, "
+                  f"{res.n_variants_used:,}/{res.n_variants_model:,} sites, panel {res.panel}/{res.genome_build})")
+    if res.probabilities:
+        top = sorted(res.probabilities.items(), key=lambda kv: -kv[1])
+        console.print("  " + ", ".join(f"{k} {v:.0%}" for k, v in top))
+
+
+@ancestry_app.command("check")
+def ancestry_check(
+    pgs_id: Annotated[str, typer.Argument(help="PGS score ID (e.g. PGS000001)")],
+    vcf: Annotated[str, typer.Option("--vcf", "-v", help="VCF/array path or alias")],
+    panel: Annotated[str, typer.Option("--panel", help="Reference panel: 1000g or hgdp_1kg")] = "1000g",
+    build: Annotated[Optional[str], typer.Option("--build", "-b", help="Sample genome build")] = None,
+    cache_dir: Annotated[Optional[Path], typer.Option("--cache-dir", help="Cache directory (base, default ~/.cache/just-prs)")] = None,
+) -> None:
+    """Check score×sample×panel ancestry coherence and print a plain-English verdict."""
+    vcf_path = _resolve_vcf(vcf, cache_dir)
+    catalog = PRSCatalog(cache_dir=cache_dir)
+    anc = catalog.infer_ancestry(vcf_path, panel=panel, sample_build=build)
+    verdict = catalog.assess_ancestry_coherence(pgs_id, anc)
+    color = "green" if verdict.reliable else "yellow"
+    console.print(f"[bold]Sample ancestry:[/bold] {anc.superpopulation}  "
+                  f"[bold]score dev:[/bold] {verdict.dev_ancestry or 'n/a'}  "
+                  f"[bold]panel:[/bold] {verdict.panel_ancestry or 'n/a'}")
+    console.print(f"[{color}]Coherence: {verdict.level}[/{color}] — {verdict.message}")
 
 
 # ---------------------------------------------------------------------------

@@ -21,6 +21,7 @@ CLEANED_PARQUET_FILES = [
     "performance.parquet",
     "best_performance.parquet",
     "publications.parquet",
+    "score_development_ancestry.parquet",
     "pgs_quality_scores.parquet",
 ]
 
@@ -251,6 +252,87 @@ def push_reference_distributions(
 
 REFERENCE_ALLELE_UNIVERSE_FILE = "reference_allele_universe.parquet"
 HF_REFERENCE_PREFIX = "data/reference"
+HF_ANCESTRY_PREFIX = "data/ancestry"
+
+
+def ancestry_model_basenames(panel: str, build: str) -> list[str]:
+    """The 3 artifact basenames for a (panel, build) ancestry model.
+
+    Mirrors ``just_prs.ancestry.artifact_paths`` naming (kept in sync here to avoid a
+    circular import). sites parquet, reference-PC parquet, and the meta JSON.
+    """
+    stem = f"ancestry_model_{panel}_{build}"
+    return [f"{stem}.parquet", f"ancestry_refpcs_{panel}_{build}.parquet", f"{stem}_meta.json"]
+
+
+def push_ancestry_model(
+    model_dir: Path,
+    panel: str,
+    build: str,
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+) -> None:
+    """Upload a (panel, build) ancestry-PCA model to ``data/ancestry/`` on the HF repo.
+
+    Uploads the small sites/refpcs parquets + meta JSON built by
+    ``just_prs.ancestry.build_ancestry_model`` (the reference genomes never ship).
+    """
+    resolved_token = _resolve_token(token)
+    with start_action(
+        action_type="hf:push_ancestry_model", repo_id=repo_id, panel=panel, build=build
+    ):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        for name in ancestry_model_basenames(panel, build):
+            src = model_dir / name
+            if not src.exists():
+                raise FileNotFoundError(f"ancestry model artifact missing: {src}")
+            api.upload_file(
+                path_or_fileobj=str(src),
+                path_in_repo=f"{HF_ANCESTRY_PREFIX}/{name}",
+                repo_id=repo_id,
+                repo_type="dataset",
+            )
+
+
+def pull_ancestry_model(
+    local_dir: Path,
+    panel: str,
+    build: str,
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+) -> Path | None:
+    """Download a (panel, build) ancestry model from ``data/ancestry/``.
+
+    Returns ``local_dir`` if the sites parquet was fetched, else None (not yet hosted).
+    """
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    resolved_token = _resolve_token(token)
+    with start_action(
+        action_type="hf:pull_ancestry_model", repo_id=repo_id, panel=panel, build=build
+    ):
+        local_dir.mkdir(parents=True, exist_ok=True)
+        got_sites = False
+        for name in ancestry_model_basenames(panel, build):
+            try:
+                path = _hf_download_with_retry(
+                    repo_id=repo_id,
+                    filename=f"{HF_ANCESTRY_PREFIX}/{name}",
+                    repo_type="dataset",
+                    local_dir=local_dir,
+                    token=resolved_token,
+                )
+            except (EntryNotFoundError, RepositoryNotFoundError):
+                continue
+            target = local_dir / name
+            cached = Path(path)
+            if cached != target:
+                shutil.copy2(cached, target)
+            if name.endswith(".parquet") and "refpcs" not in name:
+                got_sites = True
+        return local_dir if got_sites else None
 
 
 def reference_allele_universe_filename(genome_build: str = "GRCh38") -> str:

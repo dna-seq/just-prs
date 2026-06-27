@@ -707,3 +707,62 @@ def status(
         console.print(f"  {','.join(all_failed_ids[:20])}")
         if len(all_failed_ids) > 20:
             console.print(f"  [dim]... ({len(all_failed_ids)} total)[/dim]")
+
+
+@app.command(name="ancestry-model")
+def ancestry_model(
+    panels: Annotated[str, typer.Option(help="Comma-separated panels to build (1000g,hgdp_1kg).")] = "1000g,hgdp_1kg",
+    builds: Annotated[str, typer.Option(help="Comma-separated builds to build (GRCh38,GRCh37).")] = "GRCh38,GRCh37",
+    headless: Annotated[bool, typer.Option("--headless", help="Run ancestry_model_pipeline in-process without Dagster UI.")] = False,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
+) -> None:
+    """Build + publish the sample-ancestry reference-PCA model (Dagster UI by default).
+
+    \b
+    Runs the ``ancestry_model_pipeline`` job: plink2 QC + LD-prune (build-time only) of
+    the PGS Catalog reference panels, numpy SVD, KNN leave-one-out validation, then
+    publish the small per-(panel,build) model artifacts to HuggingFace. Runtime ancestry
+    inference is pure-Python and never needs plink2. Set --panels/--builds to limit scope
+    (the HGDP+1kGP panel is a ~16 GB download on first build).
+    """
+    dagster_home = _setup_dagster_home()
+    os.environ["PRS_ANCESTRY_PANELS"] = panels
+    os.environ["PRS_ANCESTRY_BUILDS"] = builds
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "ancestry_model_pipeline"
+
+    if headless:
+        _cancel_orphaned_runs()
+        console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+        console.print(f"[bold]Job:[/bold] ancestry_model_pipeline (panels={panels}, builds={builds})\n")
+
+        from prs_pipeline.definitions import defs
+
+        resolved_job = defs.get_job_def("ancestry_model_pipeline")
+        console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+        result = _execute_job(resolved_job)
+        if result.success:
+            console.print("\n[green bold]Job 'ancestry_model_pipeline' completed successfully.[/green bold]")
+        else:
+            console.print("\n[red bold]Job 'ancestry_model_pipeline' failed.[/red bold]")
+            for event in result.all_events:
+                if event.is_failure:
+                    console.print(f"  [red]{event.message}[/red]")
+            raise typer.Exit(code=1)
+        return
+
+    os.environ["PRS_PIPELINE_STARTUP_REQUEST_ID"] = uuid.uuid4().hex
+    _kill_port(port)
+    _cancel_orphaned_runs()
+    console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
+    console.print("[bold]Job 'ancestry_model_pipeline' will be submitted automatically on startup.[/bold]\n")
+
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])

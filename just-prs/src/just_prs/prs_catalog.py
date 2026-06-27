@@ -849,15 +849,22 @@ class PRSCatalog:
         panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
         sample_build: str | None = None,
         include_prive: bool = False,
+        include_aadr: bool = False,
+        resolution: str = "superpop",
     ):
         """Bayesian consensus ancestry fused across panels and methods — AncestryConsensus.
 
-        Runs single-panel inference on each panel (GRCh38 models; the sample is read +
-        lifted to GRCh38 once and reused) and fuses every available method — each panel's
-        KNN posterior and PCA-NNLS mixture — into one consensus super-population via a
-        Laplace-smoothed product-of-experts (:func:`just_prs.ancestry.bayesian_consensus`).
+        Runs single-panel inference on each panel and fuses every available method — each
+        panel's KNN posterior and PCA-NNLS mixture — into one consensus super-population via
+        a Laplace-smoothed product-of-experts (:func:`just_prs.ancestry.bayesian_consensus`).
+        The sample is read once; each panel's genotypes are lifted to that panel's model
+        build on demand (GRCh38 panels use the frame as-is, GRCh37 panels such as
+        ``aadr_ho`` are lifted 38→37), and lifts are memoized so each build is computed once.
         When ``include_prive`` and the Privé reference is built locally, its continental
         rollup is added as a third independent view (GRCh37 reference; lifted internally).
+        ``include_aadr`` appends the local-only AADR Human Origins panel to ``panels``.
+        ``resolution="population"`` makes each per-panel view carry its fine-population call
+        (``AncestryInference.fine_population``); the fused posterior stays at super-pop.
         """
         from just_prs.ancestry import bayesian_consensus
         from just_prs.ancestry import infer_ancestry as _infer
@@ -871,24 +878,36 @@ class PRSCatalog:
             genotypes_lf = read_genotypes(genotypes_path)
         else:
             build = sample_build or "GRCh38"
-        if build != "GRCh38":
-            from just_prs.liftover import lift_frame
+        # Materialize the sample once in its native build; lift per panel on demand.
+        native_frame = genotypes_lf.collect()
+        panel_list = list(panels)
+        if include_aadr and "aadr_ho" not in panel_list:
+            panel_list.append("aadr_ho")
 
-            lifted, _ = lift_frame(
-                genotypes_lf.collect(), build, "GRCh38", chrom_col="chrom", pos_col="pos"
-            )
-            genotypes_lf = lifted.lazy()
-        # Materialize once so each panel reuses the same frame (no double VCF scan).
-        genotypes_lf = genotypes_lf.collect().lazy()
+        _lift_cache: dict[str, pl.LazyFrame] = {build: native_frame.lazy()}
+
+        def _frame_for(model_build: str) -> pl.LazyFrame:
+            if model_build not in _lift_cache:
+                from just_prs.liftover import lift_frame
+
+                lifted, _ = lift_frame(
+                    native_frame, build, model_build, chrom_col="chrom", pos_col="pos"
+                )
+                _lift_cache[model_build] = lifted.lazy()
+            return _lift_cache[model_build]
 
         per_panel: dict[str, object] = {}
         methods: list[dict] = []
         dists: list[dict[str, float]] = []
-        for panel in panels:
-            model_dir = self._ensure_ancestry_model(panel, "GRCh38")
+        for panel in panel_list:
+            model_build = _ANCESTRY_PANEL_BUILD.get(panel, "GRCh38")
+            model_dir = self._ensure_ancestry_model(panel, model_build)
             if model_dir is None:
                 continue
-            res = _infer(model_dir, genotypes_lf, panel=panel, build="GRCh38")
+            res = _infer(
+                model_dir, _frame_for(model_build),
+                panel=panel, build=model_build, resolution=resolution,
+            )
             per_panel[panel] = res
             if res.superpopulation == "UNKNOWN":
                 continue
@@ -906,7 +925,7 @@ class PRSCatalog:
                 dists.append(res.mixture)
 
         if include_prive:
-            prive = self.infer_ancestry_prive(genotypes_lf=genotypes_lf, sample_build="GRCh38")
+            prive = self.infer_ancestry_prive(genotypes_lf=native_frame.lazy(), sample_build=build)
             if prive and prive.get("continental"):
                 cont = prive["continental"]
                 methods.append({

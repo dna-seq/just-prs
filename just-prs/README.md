@@ -63,6 +63,7 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 ## Features
 
 - **`PRSCatalog`** — search scores, compute PRS, and look up evaluation performance using cleaned bulk metadata (no REST API calls needed)
+- **Genetic ancestry inference** — infer a sample's super-population, admixture-style proportions, fine within-continent populations (HGDP `Russian`, AADR Slavic/Balkan), and a Bayesian cross-panel/method consensus, all pure-Python at runtime (`prs ancestry infer`; `PRSCatalog.infer_ancestry` / `infer_ancestry_consensus` / `infer_ancestry_prive` / `assess_ancestry_coherence`). See [docs/sample-ancestry-methodology.md](../docs/sample-ancestry-methodology.md)
 - **Reusable Reflex UI components** — `prs_section()` and sub-components (`prs_scores_selector`, `prs_results_table`, etc.) can be embedded in any Reflex app via `PRSComputeStateMixin`
 - **VCF normalization** — `normalize_vcf()` strips chr prefix, renames id→rsid, computes genotype from GT, applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, and writes zstd-compressed Parquet
 - **Quality assessment** — `just_prs.quality` provides pure-logic helpers (`classify_model_quality`, `interpret_prs_result`, `format_effect_size`, `format_classification`) usable from any UI or script

@@ -967,7 +967,8 @@ def _fmt_dist(d: dict) -> str:
 
 
 def _print_single(res, label: str) -> None:
-    console.print(f"[bold]{label}:[/bold] {res.superpopulation}  "
+    fine = f" → {res.fine_population}" if res.fine_population else ""
+    console.print(f"[bold]{label}:[/bold] {res.superpopulation}{fine}  "
                   f"(conf {res.confidence:.2f}, cov {res.coverage:.1%}, "
                   f"{res.n_variants_used:,}/{res.n_variants_model:,} sites, {res.panel}/{res.genome_build})")
     if res.probabilities:
@@ -983,16 +984,19 @@ def ancestry_infer(
         str,
         typer.Option("--mode", "-m", help="label | mixture | prive (21-group proportions) | consensus | all"),
     ] = "all",
-    panel: Annotated[str, typer.Option("--panel", help="Reference panel for label/mixture modes: 1000g or hgdp_1kg")] = "1000g",
+    panel: Annotated[str, typer.Option("--panel", help="Reference panel for label/mixture modes: 1000g | hgdp_1kg | aadr_ho")] = "1000g",
     panels: Annotated[
         str, typer.Option("--panels", help="Comma-separated panels fused in consensus/all modes")
     ] = "1000g,hgdp_1kg",
     prive: Annotated[
         bool, typer.Option("--prive/--no-prive", help="Fold the Privé 21-group reference into consensus/all (must be built locally)")
     ] = False,
+    aadr: Annotated[
+        bool, typer.Option("--aadr/--no-aadr", help="Fold the AADR Human Origins panel into consensus/all (Slavic/Balkan resolution; must be built locally)")
+    ] = False,
     resolution: Annotated[
         str,
-        typer.Option("--resolution", "-r", help="superpop (continental) | population (fine pops, e.g. HGDP 'Russian'; use --panel hgdp_1kg). West-Slavic vs Germanic barely separate (biology)."),
+        typer.Option("--resolution", "-r", help="superpop (continental) | population (fine pops: HGDP 'Russian', AADR Slavic/Balkan via --panel aadr_ho). Use the soft distribution, not the hard call — East Slavs ≈ one autosomal cluster."),
     ] = "superpop",
     build: Annotated[
         Optional[str], typer.Option("--build", "-b", help="Sample genome build (auto-detected; default GRCh38)")
@@ -1035,12 +1039,13 @@ def ancestry_infer(
         console.print(f"    21-group: {_fmt_dist(pr['proportions'])}")
         return
 
-    # consensus / all: fuse across panels (+ Privé with --prive)
+    # consensus / all: fuse across panels (+ Privé with --prive, + AADR with --aadr)
     con = catalog.infer_ancestry_consensus(
-        vcf_path, panels=tuple(panel_list), sample_build=build, include_prive=prive
+        vcf_path, panels=tuple(panel_list), sample_build=build,
+        include_prive=prive, include_aadr=aadr, resolution=resolution,
     )
     if mode == "all":
-        for p in panel_list:
+        for p in (*panel_list, *(["aadr_ho"] if aadr and "aadr_ho" not in panel_list else [])):
             r = con.per_panel.get(p)
             if r is not None:
                 _print_single(r, f"Panel {p}")

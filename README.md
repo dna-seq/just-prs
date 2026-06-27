@@ -296,6 +296,53 @@ chart = plot_trait_scores(
 save_chart(chart, Path("bmi_all_pops.html"))
 ```
 
+## Genetic ancestry inference
+
+PRS scores are developed and validated in specific ancestry groups, so knowing a
+sample's genetic ancestry is essential for interpreting a result. `just-prs` infers
+it directly from the genotypes — **pure-Python at runtime, no plink2/GPL binary**
+(the PCA models are built offline and pulled from HuggingFace on first use).
+
+```bash
+# Full readout: per-panel hard call + mixture, then a fused consensus (default)
+prs ancestry infer --vcf anton
+
+# Continental super-population only, single panel
+prs ancestry infer --vcf anton --mode label --panel 1000g
+
+# Ancestry proportions (admixture-style fractions) from one panel
+prs ancestry infer --vcf anton --mode mixture --panel hgdp_1kg
+
+# Fine populations (within-continent) — HGDP 'Russian', AADR Slavic/Balkan, etc.
+prs ancestry infer --vcf anton --panel hgdp_1kg --resolution population
+prs ancestry infer --vcf newton --panel aadr_ho   --resolution population
+
+# Bayesian consensus across every panel + method (+ Privé 21-group, + AADR Human Origins)
+prs ancestry infer --vcf newton --mode all --prive --aadr --resolution population
+
+# Check score × sample × panel ancestry coherence for a specific PGS
+prs ancestry check PGS000001 --vcf anton
+```
+
+Modes: `label` (KNN super-population call + posterior), `mixture` (PCA-NNLS
+proportions), `prive` (Privé/bigsnpr 21-group worldwide proportions), `consensus`
+(Laplace-smoothed product-of-experts fusing every method), and `all` (default —
+per-panel breakdown + consensus). Panels: `1000g` and `hgdp_1kg` (published on
+HuggingFace); `prive` and `aadr_ho` (Human Origins, finer Slavic/Balkan resolution)
+are **built locally** because of data-license terms.
+
+> **Reading fine populations:** within-continent calls are best read as *soft
+> proportions*, not a single hard label. East-Slavic populations
+> (Russian/Ukrainian/Belarusian) form roughly one autosomal cluster, so the hard
+> call collapses to the plurality while the mixture stays informative. West-Slavic
+> vs Germanic barely separate on the top PCs at all — this is biology, not a bug.
+
+From Python via `PRSCatalog`: `infer_ancestry(..., resolution=...)`,
+`infer_ancestry_consensus(..., include_prive=, include_aadr=, resolution=)`,
+`infer_ancestry_prive(...)`, and `assess_ancestry_coherence(pgs_id, ...)`. See
+[docs/sample-ancestry-methodology.md](docs/sample-ancestry-methodology.md) for the
+full method.
+
 ## CLI and Python
 
 Run one-off analyses, scripts, notebooks, and batch jobs directly from the

@@ -29,7 +29,9 @@ from just_prs.ancestry import build_ancestry_model
 from just_prs.hf import push_ancestry_model
 from just_prs.reference import (
     REFERENCE_PANELS,
-    parse_psam,
+    _build_name_tokens,
+    _ResolvedRefPanel,
+    download_reference_panel,
     parse_pvar,
     read_pgen_genotypes,
     reference_panel_dir,
@@ -64,20 +66,23 @@ def _resolve_plink2(cache_dir: Path) -> str:
     )
 
 
-def _panel_files(panel: str, build: str, cache_dir: Path) -> tuple[str, Path, Path, Path]:
-    """Resolve (pfile_prefix, pgen, psam, king_remove_file) for a panel x build."""
+def _panel_files(panel: str, build: str, cache_dir: Path):
+    """Resolve (pfile_prefix, psam_df, king_remove_file) for a panel x build.
+
+    Downloads the panel if missing (HGDP+1kGP is ~16 GB), then uses the robust
+    ``_ResolvedRefPanel`` resolver (handles GRCh38/hg38 token naming) so it works for
+    both 1000G and HGDP+1kGP. plink2 ``--pfile`` needs the pgen/pvar/psam to share a
+    prefix, which the PGS Catalog panels do.
+    """
+    download_reference_panel(cache_dir, panel=panel)  # no-op if already extracted
     ref_dir = reference_panel_dir(cache_dir, panel=panel)
-    pgens = sorted(ref_dir.glob(f"{build}*.pgen"))
-    if not pgens:
-        raise FileNotFoundError(f"no {build} .pgen in {ref_dir}")
-    pgen = pgens[0]
-    prefix = str(pgen)[: -len(".pgen")]
-    psams = sorted(ref_dir.glob(f"{build}*.psam"))
-    kings = sorted(ref_dir.glob(f"{build}*king.cutoff.out.id"))
-    if not psams:
-        raise FileNotFoundError(f"no {build} .psam in {ref_dir}")
+    resolved = _ResolvedRefPanel(ref_dir, genome_build=build)
+    prefix = str(resolved.pgen_path)[: -len(".pgen")]
+    tokens = _build_name_tokens(build)
+    kings = [k for k in sorted(ref_dir.glob("*king.cutoff.out.id"))
+             if any(t in k.name for t in tokens)]
     king = kings[0] if kings else None
-    return prefix, pgen, psams[0], king
+    return prefix, resolved.psam_df, king
 
 
 def _psam_iids(psam_path: Path) -> list[str]:
@@ -115,7 +120,7 @@ def _ld_pruned_panel(plink2: str, prefix: str, king: Path | None, workdir: Path,
 
 def _build_one(panel: str, build: str, cache_dir: Path, plink2: str, model_dir: Path, log) -> dict:
     """Build + persist one (panel, build) ancestry model. Returns build metadata."""
-    prefix, _pgen, psam, king = _panel_files(panel, build, cache_dir)
+    prefix, psam_df, king = _panel_files(panel, build, cache_dir)
     with tempfile.TemporaryDirectory(prefix=f"anc_{panel}_{build}_") as tmp:
         workdir = Path(tmp)
         pruned = _ld_pruned_panel(plink2, prefix, king, workdir, log)
@@ -141,8 +146,7 @@ def _build_one(panel: str, build: str, cache_dir: Path, plink2: str, model_dir: 
         genos = read_pgen_genotypes(pruned_pgen, pruned_pvar, var_idx, len(iids))  # (n_var x n_samp)
 
         # Labels from the ORIGINAL psam (plink2 may drop SuperPop/Population), aligned to IID order.
-        orig = parse_psam(psam)
-        lab = {r["iid"]: (r["superpop"], r["population"]) for r in orig.iter_rows(named=True)}
+        lab = {r["iid"]: (r["superpop"], r["population"]) for r in psam_df.iter_rows(named=True)}
         labels = pl.DataFrame({
             "iid": iids,
             "superpop": [lab.get(i, ("NR", "NR"))[0] for i in iids],

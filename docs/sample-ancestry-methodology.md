@@ -24,6 +24,20 @@ folds HGDP `CSA→SAS` and drops `MID`). `PRSCatalog.infer_ancestry_consensus` o
 newton → EUR on both panels, consensus EUR posterior 1.00 (agreement sharpens the posterior;
 the per-panel trace AMR ~2% is driven to ~0 by the unanimous KNN evidence).
 
+**Privé 21-group proportions (implemented, opt-in).** `just_prs.ancestry.prive` ports the
+bigsnpr worldwide-reference method (UKB, GRCh37): match → project onto 16 published PCs with the
+shrinkage `correction/2` → simplex-QP against the 21-group allele-frequency PC-centroids →
+proportions, rolled up to the canonical continental set (`prive_group_to_continental`: 4 Africa→AFR,
+9 Europe→EUR, Sri Lanka/Pakistan/Bangladesh→SAS, Asia-East/Japan/Philippines→EAS, South America→AMR,
+Middle East dropped). `PRSCatalog.infer_ancestry_prive` (and `--mode prive`) expose it;
+`infer_ancestry_consensus(include_prive=True)` / `--prive` fold its continental rollup into the
+fusion as a third independent reference. Validated on newton: continental EUR 0.98 / SAS 0.02
+(agrees with 1000G/HGDP) with finer within-Europe structure (Europe-NE 0.30 / Finland 0.20 /
+Europe-SE 0.17 / Scandinavia 0.10 / Ireland 0.09 / UK 0.07). Caveats: GRCh37 (sample lifted),
+**GPL data** (built locally, not HF-published pending license), thin AMR (South America only), and
+the recorded-variant intersection (Privé's documented method) rather than hom-ref padding — so it
+complements, not replaces, the hom-ref-robust 1000G default.
+
 **Decision: keep it coupled inside `just-prs`** (`just_prs.ancestry`). An earlier draft scoped a
 standalone `just-ancestry` library with input/output interface contracts — that is **dropped for
 now** to avoid premature abstraction. A larger extraction is envisioned *later* and separately:

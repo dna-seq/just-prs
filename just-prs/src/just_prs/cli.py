@@ -981,24 +981,28 @@ def ancestry_infer(
     vcf: Annotated[str, typer.Option("--vcf", "-v", help="VCF/array path or alias (e.g. 'anton', 'livia')")],
     mode: Annotated[
         str,
-        typer.Option("--mode", "-m", help="label (KNN hard call) | mixture (PCA-NNLS proportions) | consensus (Bayesian across panels+methods) | all"),
+        typer.Option("--mode", "-m", help="label | mixture | prive (21-group proportions) | consensus | all"),
     ] = "all",
     panel: Annotated[str, typer.Option("--panel", help="Reference panel for label/mixture modes: 1000g or hgdp_1kg")] = "1000g",
     panels: Annotated[
         str, typer.Option("--panels", help="Comma-separated panels fused in consensus/all modes")
     ] = "1000g,hgdp_1kg",
+    prive: Annotated[
+        bool, typer.Option("--prive/--no-prive", help="Fold the Privé 21-group reference into consensus/all (must be built locally)")
+    ] = False,
     build: Annotated[
         Optional[str], typer.Option("--build", "-b", help="Sample genome build (auto-detected; default GRCh38)")
     ] = None,
     cache_dir: Annotated[Optional[Path], typer.Option("--cache-dir", help="Cache directory (base, default ~/.cache/just-prs)")] = None,
 ) -> None:
-    """Infer a sample's genetic ancestry. Modes: label, mixture, consensus, all (default).
+    """Infer a sample's genetic ancestry. Modes: label, mixture, prive, consensus, all (default).
 
     \b
     - label:     single-panel KNN (fraposa) hard super-population call + posterior.
     - mixture:   single-panel PCA-NNLS ancestry proportions.
-    - consensus: Bayesian product-of-experts fusing every panel's KNN + mixture.
-    - all:       per-panel label + mixture for each fused panel, then the consensus.
+    - prive:     Privé/bigsnpr 21-group proportions (finer within-continent; GRCh37 ref, lifted).
+    - consensus: Bayesian product-of-experts fusing every panel's KNN + mixture (+ Privé with --prive).
+    - all:       per-panel label + mixture, the Privé breakdown (with --prive), then the consensus.
     """
     vcf_path = _resolve_vcf(vcf, cache_dir)
     catalog = PRSCatalog(cache_dir=cache_dir)
@@ -1015,13 +1019,28 @@ def ancestry_infer(
             console.print(f"[bold]Mixture ({panel}):[/bold] {_fmt_dist(res.mixture or {})}")
         return
 
-    # consensus / all: fuse across panels
-    con = catalog.infer_ancestry_consensus(vcf_path, panels=tuple(panel_list), sample_build=build)
+    if mode == "prive":
+        pr = catalog.infer_ancestry_prive(vcf_path, sample_build=build)
+        if pr is None:
+            console.print("[yellow]Privé reference not built locally (see just_prs.ancestry.prive.build_prive_reference).[/yellow]")
+            raise typer.Exit(code=1)
+        console.print(f"[bold]Privé continental:[/bold] {_fmt_dist(pr['continental'])}  "
+                      f"({pr['n_variants_used']:,} variants)")
+        console.print(f"    21-group: {_fmt_dist(pr['proportions'])}")
+        return
+
+    # consensus / all: fuse across panels (+ Privé with --prive)
+    con = catalog.infer_ancestry_consensus(
+        vcf_path, panels=tuple(panel_list), sample_build=build, include_prive=prive
+    )
     if mode == "all":
         for p in panel_list:
             r = con.per_panel.get(p)
             if r is not None:
                 _print_single(r, f"Panel {p}")
+        prive_m = next((m for m in con.methods if m["panel"] == "prive"), None)
+        if prive_m is not None:
+            console.print(f"[bold]Privé (21-group → continental):[/bold] {_fmt_dist(prive_m['distribution'])}")
     color = "green" if con.confidence >= 0.8 else "yellow"
     console.print(f"[bold {color}]Consensus:[/bold {color}] {con.consensus_superpopulation}  "
                   f"(posterior {con.confidence:.2f}, fused {len(con.methods)} methods across {len(con.per_panel)} panels)")

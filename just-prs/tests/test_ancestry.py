@@ -276,3 +276,44 @@ def test_prscatalog_infer_defaults_grch38(tmp_path):
     res = cat.infer_ancestry(genotypes_lf=_genotypes_lf(eas, p), panel="1000g")
     assert res.genome_build == "GRCh38"
     assert res.superpopulation == "EAS"
+
+
+def test_prive_group_to_continental():
+    from just_prs.ancestry.prive import prive_group_to_continental as g
+    # All 21 real Privé group names roll up correctly.
+    for n in ("Africa (West)", "Africa (South)", "Africa (East)", "Africa (North)"):
+        assert g(n) == "AFR"
+    for n in ("Ashkenazi", "Italy", "Europe (South East)", "Europe (North East)", "Finland",
+              "Scandinavia", "United Kingdom", "Ireland", "Europe (South West)"):
+        assert g(n) == "EUR"
+    for n in ("Sri Lanka", "Pakistan", "Bangladesh"):
+        assert g(n) == "SAS"
+    for n in ("Asia (East)", "Japan", "Philippines"):
+        assert g(n) == "EAS"
+    assert g("South America") == "AMR"
+    assert g("Middle East") is None  # no clean 1000G super-pop
+
+
+def test_build_prive_reference(tmp_path):
+    import json
+    from just_prs.ancestry.prive import build_prive_reference, _ref_paths
+
+    freq = tmp_path / "f.csv"
+    proj = tmp_path / "p.csv"
+    base = {"chr": ["1", "1", "2"], "pos": [10, 20, 30],
+            "a0": ["A", "C", "G"], "a1": ["G", "T", "A"], "rsid": ["r1", "r2", "r3"]}
+    pl.DataFrame({**base, "Italy": [0.1, 0.2, 0.3], "Japan": [0.8, 0.7, 0.6]}).write_csv(freq)
+    pcols = dict(base)
+    for i in range(1, 17):
+        pcols[f"PC{i}"] = [0.01 * i, 0.02 * i, 0.03 * i]
+    pl.DataFrame(pcols).write_csv(proj)
+
+    out = tmp_path / "out"
+    info = build_prive_reference(freq, proj, out)
+    assert info["n_variants"] == 3 and info["n_groups"] == 2
+    meta = json.loads(_ref_paths(out)["meta"].read_text())
+    assert meta["groups"] == ["Italy", "Japan"]
+    assert meta["group_to_continental"] == {"Italy": "EUR", "Japan": "EAS"}
+    assert len(meta["correction"]) == 16
+    ref = pl.read_parquet(_ref_paths(out)["parquet"])
+    assert {"load0", "load15", "Italy", "Japan", "chr", "pos", "a0", "a1"} <= set(ref.columns)

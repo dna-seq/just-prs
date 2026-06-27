@@ -839,6 +839,7 @@ class PRSCatalog:
         genotypes_lf: pl.LazyFrame | None = None,
         panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
         sample_build: str | None = None,
+        include_prive: bool = False,
     ):
         """Bayesian consensus ancestry fused across panels and methods — AncestryConsensus.
 
@@ -846,6 +847,8 @@ class PRSCatalog:
         lifted to GRCh38 once and reused) and fuses every available method — each panel's
         KNN posterior and PCA-NNLS mixture — into one consensus super-population via a
         Laplace-smoothed product-of-experts (:func:`just_prs.ancestry.bayesian_consensus`).
+        When ``include_prive`` and the Privé reference is built locally, its continental
+        rollup is added as a third independent view (GRCh37 reference; lifted internally).
         """
         from just_prs.ancestry import bayesian_consensus
         from just_prs.ancestry import infer_ancestry as _infer
@@ -893,6 +896,16 @@ class PRSCatalog:
                 })
                 dists.append(res.mixture)
 
+        if include_prive:
+            prive = self.infer_ancestry_prive(genotypes_lf=genotypes_lf, sample_build="GRCh38")
+            if prive and prive.get("continental"):
+                cont = prive["continental"]
+                methods.append({
+                    "panel": "prive", "method": "qp",
+                    "superpopulation": max(cont, key=cont.get), "distribution": cont,
+                })
+                dists.append(cont)
+
         if not dists:
             return AncestryConsensus(
                 consensus_superpopulation="UNKNOWN", per_panel=per_panel
@@ -905,6 +918,36 @@ class PRSCatalog:
             methods=methods,
             per_panel=per_panel,
         )
+
+    def infer_ancestry_prive(
+        self,
+        genotypes_path: Path | str | None = None,
+        *,
+        genotypes_lf: pl.LazyFrame | None = None,
+        sample_build: str | None = None,
+    ) -> dict[str, object] | None:
+        """Privé/bigsnpr 21-group ancestry proportions (finer resolution) — see prive.py.
+
+        Returns ``{"proportions": {group: frac}, "continental": {superpop: frac},
+        "n_variants_used": int}`` or None when the Privé reference is not built locally
+        (it is not published to HF — large GPL data; build via
+        ``just_prs.ancestry.prive.build_prive_reference``). GRCh38 samples are lifted to
+        the GRCh37 reference internally.
+        """
+        from just_prs.ancestry.prive import _ref_paths, estimate_prive_proportions
+        from just_prs.vcf import detect_genome_build, read_genotypes
+
+        ref_dir = self.ancestry_dir / "prive"
+        if not _ref_paths(ref_dir)["parquet"].exists():
+            return None
+        if genotypes_lf is None:
+            if genotypes_path is None:
+                raise ValueError("provide genotypes_path or genotypes_lf")
+            build = sample_build or detect_genome_build(genotypes_path) or "GRCh38"
+            genotypes_lf = read_genotypes(genotypes_path)
+        else:
+            build = sample_build or "GRCh38"
+        return estimate_prive_proportions(ref_dir, genotypes_lf, sample_build=build)
 
     def assess_ancestry_coherence(
         self,

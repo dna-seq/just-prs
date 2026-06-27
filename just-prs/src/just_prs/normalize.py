@@ -43,6 +43,20 @@ def _find_column_ci(schema_names: list[str], target: str) -> str | None:
     return None
 
 
+def _expand_pass_filters(pass_filters: list[str]) -> list[str]:
+    """Expand the FILTER allow-list to cover the VCF "missing" sentinel.
+
+    The VCF spec uses ``.`` for an unfiltered/missing FILTER, but ``polars-bio``
+    decodes ``.`` as an empty string ``""``. So a config of ``["PASS", "."]``
+    would never match GATK HaplotypeCaller-style records (FILTER=".") and would
+    drop every row. Treat ``.`` and ``""`` as the same "no filter applied" value.
+    """
+    allowed = set(pass_filters)
+    if "." in allowed or "" in allowed:
+        allowed.update({".", ""})
+    return list(allowed)
+
+
 def genotype_expr(
     gt_col: str = "GT", ref_col: str = "ref", alt_col: str = "alt"
 ) -> pl.Expr:
@@ -176,7 +190,7 @@ def normalize_vcf(
         # --- quality filters (applied on the materialized DataFrame) ---
         if config.pass_filters is not None:
             if "filter" in df.columns:
-                df = df.filter(pl.col("filter").is_in(config.pass_filters))
+                df = df.filter(pl.col("filter").is_in(_expand_pass_filters(config.pass_filters)))
 
         if config.min_depth is not None:
             dp_col = _find_column_ci(df.columns, "DP")

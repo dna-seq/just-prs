@@ -223,12 +223,25 @@ def load_ancestry_model(model_dir: Path, panel: str, build: str) -> _LoadedModel
     return _LoadedModel(pca, sites, ref_labels, pca.pcs_ref, meta)
 
 
-def _sample_dosage_vector(sites: pl.DataFrame, genotypes_lf: pl.LazyFrame) -> np.ndarray:
+def _sample_dosage_vector(
+    sites: pl.DataFrame, genotypes_lf: pl.LazyFrame, assume_homref_absent: bool = True
+) -> np.ndarray:
     """Effect-allele (ALT) dosage of the sample at each model site, in sites order.
 
     Allele-aware: counts the model ALT allele as observed in the sample (both
-    orientations). Sites absent in the sample, or with an allele-set mismatch, are
-    marked missing (``DEFAULT_MISSING``).
+    orientations). Site handling:
+
+    - present & alleles match -> observed ALT dosage (0/1/2);
+    - present but allele-set mismatch -> missing (``DEFAULT_MISSING``);
+    - **absent from the sample** -> hom-ref (ALT dosage 0) when ``assume_homref_absent``
+      (the correct default for a **variant-only VCF**, where a common site the sample is
+      hom-ref at is simply not emitted — the F15 hom-ref theme), else missing.
+
+    Treating absent common sites as missing→mean would shrink the projection toward the
+    population centroid and collapse every sparse WGS sample onto the central (Admixed
+    American) cluster — so hom-ref imputation of absent sites is essential here. (For a
+    genotyping *array*, absent means untyped, not hom-ref; pass
+    ``assume_homref_absent=False`` for array input.)
     """
     sample = (
         genotypes_lf.select(
@@ -248,15 +261,17 @@ def _sample_dosage_vector(sites: pl.DataFrame, genotypes_lf: pl.LazyFrame) -> np
     dose = compute_dosage_expr(
         gt_col="GT", ref_col="ref_s", alt_col="alt_s", effect_allele_col="effect_allele"
     )
-    allele_ok = (
-        pl.col("GT").is_not_null()
-        & (
-            ((pl.col("ref") == pl.col("ref_s")) & (pl.col("alt") == pl.col("alt_s")))
-            | ((pl.col("ref") == pl.col("alt_s")) & (pl.col("alt") == pl.col("ref_s")))
-        )
+    present = pl.col("GT").is_not_null()
+    allele_match = present & (
+        ((pl.col("ref") == pl.col("ref_s")) & (pl.col("alt") == pl.col("alt_s")))
+        | ((pl.col("ref") == pl.col("alt_s")) & (pl.col("alt") == pl.col("ref_s")))
     )
+    absent_value = 0.0 if assume_homref_absent else DEFAULT_MISSING
     joined = joined.with_columns(
-        pl.when(allele_ok).then(dose).otherwise(DEFAULT_MISSING).alias("_dose")
+        pl.when(allele_match).then(dose)
+        .when(~present).then(absent_value)  # absent in variant-only VCF -> hom-ref
+        .otherwise(DEFAULT_MISSING)          # present but allele mismatch -> missing
+        .alias("_dose")
     )
     return joined["_dose"].cast(pl.Float64).to_numpy()
 
@@ -268,11 +283,16 @@ def infer_ancestry(
     panel: str,
     build: str,
     coverage_floor: float = DEFAULT_COVERAGE_FLOOR,
+    assume_homref_absent: bool = True,
 ) -> AncestryInference:
-    """Infer a single sample's ancestry against a (panel, build) reference model."""
+    """Infer a single sample's ancestry against a (panel, build) reference model.
+
+    ``assume_homref_absent`` (default True) treats model sites absent from the sample as
+    hom-ref — correct for a variant-only VCF; set False for genotyping-array input.
+    """
     with start_action(action_type="ancestry:infer", panel=panel, build=build):
         m = load_ancestry_model(model_dir, panel, build)
-        dose = _sample_dosage_vector(m.sites, genotypes_lf)
+        dose = _sample_dosage_vector(m.sites, genotypes_lf, assume_homref_absent)
         n_model = int(m.sites.height)
         n_used = int(np.sum(dose != DEFAULT_MISSING))
         coverage = n_used / n_model if n_model else 0.0

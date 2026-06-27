@@ -100,12 +100,38 @@ def test_build_persists_and_infers(tmp_path):
     assert res.probabilities
 
 
+def test_variant_only_vcf_imputes_homref_absent(tmp_path):
+    """A variant-only VCF (hom-ref sites omitted) must still classify correctly.
+
+    Regression: treating absent common sites as missing→mean shrinks the projection
+    toward the centroid and collapses every sparse WGS sample onto the central (AMR)
+    cluster. Absent sites must be imputed hom-ref (ALT dosage 0).
+    """
+    md = tmp_path / "ancestry"
+    _info, freqB, p = _build_synthetic_model(md)
+    eas = RNG.binomial(2, freqB[:, None]).astype(np.int8).flatten()
+    # variant-only: keep only sites where the sample carries an ALT (dosage > 0)
+    full = _genotypes_lf(eas, p).collect()
+    variant_only = full.filter(pl.col("GT") != "0/0").lazy()
+
+    res = infer_ancestry(md, variant_only, panel="1000g", build="GRCh38")
+    assert res.superpopulation == "EAS"
+    assert res.coverage > 0.9  # absent hom-ref sites recovered
+
+    # With array semantics (absent = untyped), coverage drops to the observed fraction.
+    res_array = infer_ancestry(md, variant_only, panel="1000g", build="GRCh38",
+                               assume_homref_absent=False)
+    assert res_array.coverage < res.coverage
+
+
 def test_coverage_floor_returns_unknown(tmp_path):
     md = tmp_path / "ancestry"
     _info, freqB, p = _build_synthetic_model(md)
     eas = RNG.binomial(2, freqB[:, None]).astype(np.int8).flatten()
     sparse = _genotypes_lf(eas, p).collect().sample(fraction=0.1, seed=3).lazy()
-    res = infer_ancestry(md, sparse, panel="1000g", build="GRCh38", coverage_floor=0.2)
+    # array semantics (absent = untyped, not hom-ref) so sparse input is genuinely low-coverage
+    res = infer_ancestry(md, sparse, panel="1000g", build="GRCh38", coverage_floor=0.2,
+                         assume_homref_absent=False)
     assert res.superpopulation == "UNKNOWN"
     assert res.coverage < 0.2
 

@@ -30,8 +30,8 @@ from just_prs.hf import push_ancestry_model
 from just_prs.reference import (
     REFERENCE_PANELS,
     _build_name_tokens,
-    _ResolvedRefPanel,
     download_reference_panel,
+    parse_psam,
     parse_pvar,
     read_pgen_genotypes,
     reference_panel_dir,
@@ -72,20 +72,37 @@ def _resolve_plink2(cache_dir: Path) -> str:
 def _panel_files(panel: str, build: str, cache_dir: Path):
     """Resolve (pfile_prefix, psam_df, king_remove_file) for a panel x build.
 
-    Downloads the panel if missing (HGDP+1kGP is ~16 GB), then uses the robust
-    ``_ResolvedRefPanel`` resolver (handles GRCh38/hg38 token naming) so it works for
-    both 1000G and HGDP+1kGP. plink2 ``--pfile`` needs the pgen/pvar/psam to share a
-    prefix, which the PGS Catalog panels do.
+    Downloads the panel if missing (HGDP+1kGP is ~16 GB), then resolves pgen/psam by
+    build token via the lightweight ``_find_reference_panel_file`` (handles GRCh38/hg38
+    naming). **Crucially does NOT use ``_ResolvedRefPanel``**, which eagerly
+    ``parse_pvar``s the full panel pvar (tens of millions of rows → ~20 GB RSS → OOM on a
+    constrained VM). plink2 reads the panel pvar itself; we only ever materialize the
+    small *pruned* pvar later. plink2 ``--pfile`` needs pgen/pvar/psam to share a prefix,
+    which the PGS Catalog panels do.
     """
     download_reference_panel(cache_dir, panel=panel)  # no-op if already extracted
     ref_dir = reference_panel_dir(cache_dir, panel=panel)
-    resolved = _ResolvedRefPanel(ref_dir, genome_build=build)
-    prefix = str(resolved.pgen_path)[: -len(".pgen")]
-    tokens = _build_name_tokens(build)
-    kings = [k for k in sorted(ref_dir.glob("*king.cutoff.out.id"))
-             if any(t in k.name for t in tokens)]
+    tokens = tuple(t.lower() for t in _build_name_tokens(build))
+
+    def _resolve(ext: str) -> Path:
+        # Exclude macOS AppleDouble "._*" junk shipped inside the HGDP tarball.
+        cands = [
+            p for p in sorted(ref_dir.glob(f"*{ext}"))
+            if not p.name.startswith("._") and any(t in p.name.lower() for t in tokens)
+        ]
+        if not cands:
+            raise FileNotFoundError(f"no {ext} for {build} in {ref_dir}")
+        return cands[0]
+
+    pgen = _resolve(".pgen")
+    psam = _resolve(".psam")
+    prefix = str(pgen)[: -len(".pgen")]
+    kings = [
+        k for k in sorted(ref_dir.glob("*king.cutoff.out.id"))
+        if not k.name.startswith("._") and any(t in k.name.lower() for t in tokens)
+    ]
     king = kings[0] if kings else None
-    return prefix, resolved.psam_df, king
+    return prefix, parse_psam(psam), king
 
 
 def _psam_iids(psam_path: Path) -> list[str]:
@@ -103,19 +120,30 @@ def _run_plink2(plink2: str, args: list[str], log) -> None:
         raise RuntimeError(f"plink2 failed ({res.returncode}): {res.stderr[-2000:]}")
 
 
+def _plink2_mem_mb() -> int:
+    """Conservative plink2 --memory cap (MB): ~50% of total RAM, floor 2 GB."""
+    try:
+        import psutil
+
+        return max(2000, int(psutil.virtual_memory().total / 1e6 * 0.5))
+    except Exception:  # noqa: BLE001
+        return 4000
+
+
 def _ld_pruned_panel(plink2: str, prefix: str, king: Path | None, workdir: Path, log) -> str:
     """QC + LD-prune the panel, return a small pruned pfile prefix (vzs .pvar.zst)."""
     remove = ["--remove", str(king)] if king else []
+    mem = ["--memory", str(_plink2_mem_mb())]
     qc = [
         "--allow-extra-chr", "--autosome",
         "--maf", "0.05", "--min-alleles", "2", "--max-alleles", "2",
         "--snps-only", "just-acgt", "--rm-dup", "exclude-all", "--hwe", "1e-4",
     ]
     step1 = str(workdir / "step1")
-    _run_plink2(plink2, ["--pfile", prefix, "vzs", *remove, *qc,
+    _run_plink2(plink2, ["--pfile", prefix, "vzs", *mem, *remove, *qc,
                          "--indep-pairwise", "1000", "50", "0.05", "--out", step1], log)
     pruned = str(workdir / "pruned")
-    _run_plink2(plink2, ["--pfile", prefix, "vzs", "--allow-extra-chr", *remove,
+    _run_plink2(plink2, ["--pfile", prefix, "vzs", *mem, "--allow-extra-chr", *remove,
                          "--extract", f"{step1}.prune.in",
                          "--make-pgen", "vzs", "--out", pruned], log)
     return pruned

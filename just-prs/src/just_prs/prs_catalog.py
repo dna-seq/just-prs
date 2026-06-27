@@ -63,6 +63,10 @@ _DEV_ANCESTRY_REQUIRED_COLUMNS = {"pgs_id", "dev_ancestry_broad", "dev_ancestry_
 # Lean development-ancestry columns joined into the wide scores sheet.
 _DEV_ANCESTRY_SCORES_COLS = ["pgs_id", "dev_ancestry_broad", "dev_sample_size", "dev_is_multi_ancestry"]
 
+# Genome build each ancestry-panel model is built in (samples are lifted to it at inference).
+# The 1000G/HGDP models are GRCh38; the AADR Human Origins panel is GRCh37 (hg19).
+_ANCESTRY_PANEL_BUILD: dict[str, str] = {"aadr_ho": "GRCh37"}
+
 # Below this weight-mass coverage (C_wt), a percentile is treated as a likely
 # low-coverage artifact rather than an authoritative population position.
 MIN_RELIABLE_WEIGHT_MASS_COVERAGE: float = 0.20
@@ -820,7 +824,7 @@ class PRSCatalog:
         # Ancestry models are GRCh38-only — canonicalize by lifting non-GRCh38 samples to
         # GRCh38 (the hom-ref-absent imputation runs at the GRCh38 model's pruned sites
         # post-lift, so a native GRCh37 model would be redundant).
-        model_build = "GRCh38"
+        model_build = _ANCESTRY_PANEL_BUILD.get(panel, "GRCh38")
         if build != model_build:
             from just_prs.liftover import lift_frame
 

@@ -46,9 +46,27 @@ PCs); the broad super-pop rollup is kept in `superpopulation`, the fine call in 
 **Limits:** bounded by PC depth and biology — West-Slavic (Polish) ≈ Germanic on top PCs, and HGDP
 has *only* Russian among Slavs, so an intermediate Ukrainian (anton) lands NW-European (CEU/GBR
 hard call; mixture FIN 0.26/GBR 0.24/CEU 0.23/Orcadian 0.14/… Russian 0.01). **Full Slavic
-granularity (Russian/Belarusian/Ukrainian/Polish/…) requires the AADR Human Origins panel** —
-scoped as Stage 2 in the fine-pops plan (heavier EIGENSTRAT build; West-Slavic separation still
-limited by biology).
+granularity needs the AADR Human Origins panel** (Stage 2, below).
+
+**Stage 2 — AADR Human Origins `aadr_ho` panel (DONE).** `just_prs.ancestry.eigenstrat` reads the
+packed-`TGENO` `.geno` + `.snp`/`.ind`/`.anno`; `just_prs.ancestry.aadr.build_aadr_ho_model` selects
+**present-day West-Eurasian** individuals (`.anno` Date-BP = 0, non-QC, lat/lon bbox — ancient
+samples are excluded by design: they're archaeological-culture labels with pseudo-haploid/missing
+data, the thing you *project onto* a modern PCA, not build from), flips the reference-allele count
+to ALT dosage, QC-filters (autosomes, biallelic ACGT, drop ambiguous, MAF), and reuses
+`build_ancestry_model` (`dim_ref=20`). Built: 3,183 individuals, 194 populations, 185,066 GRCh37
+SNPs. Reference is **GRCh37** → `PRSCatalog` routes `aadr_ho` via `_ANCESTRY_PANEL_BUILD` to lift
+samples 38→37. Built locally, **not HF-published** (academic data license). Results — the **soft
+distribution is geographically correct**, the hard label is just the plurality of a tight cluster:
+anton (Ukrainian) → Russian 35% / Ukrainian 40% / Belarusian 10% (East-Slavic, Ukrainian-leaning);
+newton (Russian-Ukrainian) → Russian 70% / Belarusian 20% / Ukrainian 10% (East-Slavic,
+Russian-dominant); livia (Romanian) → Serbian 30% / Bulgarian 25% / **Moldavian 25%** / Gagauz 10%
+(Balkan/Romanian). **Hard-label limit (data-confirmed):** Russian LOO 89/98, but Ukrainian 0/13 /
+Belarusian 0/10 / Romanian 0/10 — East Slavs are essentially **one autosomal cluster**, so the
+minority adjacent labels collapse to the plurality neighbour (k=5 barely helps). **Use the soft
+proportions, not the hard call, for these tight-cluster regions** — Ukrainian-vs-Russian as a hard
+assignment is not achievable (biology + small/imbalanced n), but the East-Slavic / Balkan placement
+in the distribution is accurate and a large improvement over the continental panels.
 
 **Decision: keep it coupled inside `just-prs`** (`just_prs.ancestry`). An earlier draft scoped a
 standalone `just-ancestry` library with input/output interface contracts — that is **dropped for

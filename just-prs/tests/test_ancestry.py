@@ -344,3 +344,35 @@ def test_population_resolution(tmp_path):
     # default resolution unchanged: super-pop label, no fine call
     broad = infer_ancestry(md, gt, panel="hgdp_1kg", build="GRCh38", resolution="superpop")
     assert broad.superpopulation == "EAS" and broad.fine_population is None
+
+
+def test_tgeno_reader_roundtrip(tmp_path):
+    """Write a tiny packed TGENO, read it back, verify genotypes + missing handling."""
+    import math
+    from just_prs.ancestry.eigenstrat import read_tgeno, TGENO_HEADER_BYTES
+    n_ind, n_snp = 5, 7
+    rng = np.random.default_rng(0)
+    # 0/1/2 genotypes + some missing (3) — what read_tgeno returns as 0/1/2/-9
+    truth = rng.integers(0, 3, size=(n_ind, n_snp)).astype(np.int8)
+    truth[0, 1] = -9  # a missing call
+    rlen = math.ceil(n_snp / 4)
+    geno = tmp_path / "t.geno"
+    with open(geno, "wb") as fh:
+        fh.write(b"TGENO".ljust(TGENO_HEADER_BYTES, b"\x00"))
+        for i in range(n_ind):
+            vals = [3 if truth[i, j] == -9 else int(truth[i, j]) for j in range(n_snp)]
+            vals += [0] * (rlen * 4 - n_snp)
+            rec = bytearray(rlen)
+            for j, v in enumerate(vals):
+                rec[j // 4] |= (v & 3) << (6 - 2 * (j % 4))  # MSB-first
+            fh.write(bytes(rec))
+    got = read_tgeno(geno, n_ind, n_snp, np.array([0, 2, 4]))
+    assert np.array_equal(got, truth[[0, 2, 4]])
+    assert (got == -9).sum() == 1  # the injected missing
+
+
+def test_aadr_panel_lifts_to_grch37():
+    """PRSCatalog routes the aadr_ho panel to its GRCh37 model build (not GRCh38)."""
+    from just_prs.prs_catalog import _ANCESTRY_PANEL_BUILD
+    assert _ANCESTRY_PANEL_BUILD.get("aadr_ho") == "GRCh37"
+    assert _ANCESTRY_PANEL_BUILD.get("1000g", "GRCh38") == "GRCh38"

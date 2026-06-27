@@ -269,10 +269,13 @@ def push_ancestry_model(
     model_dir: Path,
     panel: str,
     build: str,
-    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    repo_id: str = DEFAULT_HF_CATALOG_REPO,
     token: str | None = None,
 ) -> None:
     """Upload a (panel, build) ancestry-PCA model to ``data/ancestry/`` on the HF repo.
+
+    Published to the catalog repo, alongside the reference-allele universes
+    (``data/reference/``), as build-time-precomputed reference data.
 
     Uploads the small sites/refpcs parquets + meta JSON built by
     ``just_prs.ancestry.build_ancestry_model`` (the reference genomes never ship).
@@ -300,7 +303,7 @@ def pull_ancestry_model(
     local_dir: Path,
     panel: str,
     build: str,
-    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    repo_id: str = DEFAULT_HF_CATALOG_REPO,
     token: str | None = None,
 ) -> Path | None:
     """Download a (panel, build) ancestry model from ``data/ancestry/``.

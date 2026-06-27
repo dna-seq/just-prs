@@ -236,7 +236,7 @@ def hf_ancestry_model(
     hf_resource: HuggingFaceResource,
 ) -> Output[str]:
     model_dir = cache_dir_resource.get_path() / "ancestry"
-    repo_id = hf_resource.percentiles_repo
+    repo_id = hf_resource.catalog_repo  # alongside the reference-allele universes
     token = hf_resource.get_token()
     ok = [r for r in models if "error" not in r]
 

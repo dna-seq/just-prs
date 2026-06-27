@@ -561,6 +561,31 @@ class AncestryInference(BaseModel):
     )
 
 
+class AncestryConsensus(BaseModel):
+    """Bayesian consensus super-population fused across panels and methods.
+
+    Combines the per-panel KNN posteriors and PCA-NNLS mixtures (1000G + HGDP+1kGP)
+    into one posterior over the canonical 5 super-populations via a Laplace-smoothed
+    product-of-experts. Agreement across methods sharpens the posterior; disagreement
+    flattens it. ``per_panel`` keeps the underlying single-panel inferences.
+    """
+
+    consensus_superpopulation: str = Field(
+        description="Fused consensus super-population (AFR/AMR/EAS/EUR/SAS) or 'UNKNOWN'"
+    )
+    posterior: dict[str, float] = Field(
+        default_factory=dict, description="Consensus posterior over canonical super-pops"
+    )
+    confidence: float = Field(default=0.0, description="Posterior of the consensus label")
+    methods: list[dict] = Field(
+        default_factory=list,
+        description="Fused inputs: [{panel, method, superpopulation, distribution}]",
+    )
+    per_panel: dict[str, "AncestryInference"] = Field(
+        default_factory=dict, description="Per-panel single-model inferences"
+    )
+
+
 class AncestryCoherence(BaseModel):
     """Score x sample x reference-panel ancestry coherence verdict (advisory).
 

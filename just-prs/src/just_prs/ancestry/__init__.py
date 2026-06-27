@@ -17,6 +17,7 @@ Artifact layout (under a model directory), per (panel, build):
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -36,6 +37,9 @@ __all__ = [
     "build_ancestry_model",
     "infer_ancestry",
     "estimate_proportions",
+    "bayesian_consensus",
+    "to_canonical_superpops",
+    "CANONICAL_SUPERPOPS",
     "load_ancestry_model",
     "artifact_paths",
     "DEFAULT_KNN_K",
@@ -76,6 +80,58 @@ def _knn_predict(
     probs = {str(u): float(c) / float(k) for u, c in zip(uniq, counts)}
     label = str(uniq[int(np.argmax(counts))])
     return label, probs
+
+
+# Canonical broad super-population vocabulary for cross-method consensus (1000G's 5).
+CANONICAL_SUPERPOPS = ("AFR", "AMR", "EAS", "EUR", "SAS")
+
+# Map a model's native labels to the canonical broad set. HGDP+1kGP uses gnomAD-style
+# labels: CSA (Central/South Asian) -> SAS; MID (Middle Eastern) has no clean 1000G
+# super-pop, so it is dropped and the remaining mass renormalized (rather than forcing a
+# wrong hard mapping).
+_LABEL_TO_CANONICAL = {
+    "AFR": "AFR", "AMR": "AMR", "EAS": "EAS", "EUR": "EUR", "SAS": "SAS", "CSA": "SAS",
+}
+
+
+def to_canonical_superpops(dist: dict[str, float]) -> dict[str, float]:
+    """Fold a method's label distribution onto the canonical 5 super-pops (renormalized)."""
+    out = {p: 0.0 for p in CANONICAL_SUPERPOPS}
+    for lab, v in dist.items():
+        canon = _LABEL_TO_CANONICAL.get(str(lab))
+        if canon is not None:
+            out[canon] += float(v)
+    total = sum(out.values())
+    return {k: (v / total if total > 0 else 0.0) for k, v in out.items()}
+
+
+def bayesian_consensus(
+    distributions: list[dict[str, float]],
+    prior: dict[str, float] | None = None,
+    smoothing: float = 1e-3,
+) -> tuple[str, dict[str, float]]:
+    """Fuse several per-method ancestry distributions into one consensus posterior.
+
+    Naive-Bayes product-of-experts over the canonical super-pops, treating each method
+    (e.g. the 1000G KNN posterior, the 1000G PCA-NNLS mixture, the HGDP KNN posterior,
+    the HGDP mixture) as independent evidence: ``posterior(pop) ∝ prior(pop) · Π_m
+    p_m(pop)``. Each method is canonicalized (:func:`to_canonical_superpops`) and
+    Laplace-smoothed so a method lacking a label cannot veto it. Computed in log-space.
+    Returns ``(consensus_label, posterior)``; agreement across methods sharpens the
+    posterior, disagreement flattens it (a natural confidence signal).
+    """
+    pops = CANONICAL_SUPERPOPS
+    logpost = {p: math.log(prior[p]) if (prior and prior.get(p, 0) > 0) else 0.0 for p in pops}
+    for dist in distributions:
+        canon = to_canonical_superpops(dist)
+        for p in pops:
+            logpost[p] += math.log(canon[p] + smoothing)
+    hi = max(logpost.values())
+    exps = {p: math.exp(logpost[p] - hi) for p in pops}
+    z = sum(exps.values()) or 1.0
+    posterior = {p: round(exps[p] / z, 4) for p in pops}
+    label = max(posterior, key=posterior.get)
+    return label, posterior
 
 
 def _project_simplex(v: np.ndarray) -> np.ndarray:

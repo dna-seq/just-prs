@@ -832,6 +832,80 @@ class PRSCatalog:
             )
         return _infer(model_dir, genotypes_lf, panel=panel, build=model_build)
 
+    def infer_ancestry_consensus(
+        self,
+        genotypes_path: Path | str | None = None,
+        *,
+        genotypes_lf: pl.LazyFrame | None = None,
+        panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
+        sample_build: str | None = None,
+    ):
+        """Bayesian consensus ancestry fused across panels and methods — AncestryConsensus.
+
+        Runs single-panel inference on each panel (GRCh38 models; the sample is read +
+        lifted to GRCh38 once and reused) and fuses every available method — each panel's
+        KNN posterior and PCA-NNLS mixture — into one consensus super-population via a
+        Laplace-smoothed product-of-experts (:func:`just_prs.ancestry.bayesian_consensus`).
+        """
+        from just_prs.ancestry import bayesian_consensus
+        from just_prs.ancestry import infer_ancestry as _infer
+        from just_prs.models import AncestryConsensus
+        from just_prs.vcf import detect_genome_build, read_genotypes
+
+        if genotypes_lf is None:
+            if genotypes_path is None:
+                raise ValueError("provide genotypes_path or genotypes_lf")
+            build = sample_build or detect_genome_build(genotypes_path) or "GRCh38"
+            genotypes_lf = read_genotypes(genotypes_path)
+        else:
+            build = sample_build or "GRCh38"
+        if build != "GRCh38":
+            from just_prs.liftover import lift_frame
+
+            lifted, _ = lift_frame(
+                genotypes_lf.collect(), build, "GRCh38", chrom_col="chrom", pos_col="pos"
+            )
+            genotypes_lf = lifted.lazy()
+        # Materialize once so each panel reuses the same frame (no double VCF scan).
+        genotypes_lf = genotypes_lf.collect().lazy()
+
+        per_panel: dict[str, object] = {}
+        methods: list[dict] = []
+        dists: list[dict[str, float]] = []
+        for panel in panels:
+            model_dir = self._ensure_ancestry_model(panel, "GRCh38")
+            if model_dir is None:
+                continue
+            res = _infer(model_dir, genotypes_lf, panel=panel, build="GRCh38")
+            per_panel[panel] = res
+            if res.superpopulation == "UNKNOWN":
+                continue
+            methods.append({
+                "panel": panel, "method": "knn",
+                "superpopulation": res.superpopulation, "distribution": res.probabilities,
+            })
+            dists.append(res.probabilities)
+            if res.mixture:
+                top = max(res.mixture, key=res.mixture.get)
+                methods.append({
+                    "panel": panel, "method": "mixture",
+                    "superpopulation": top, "distribution": res.mixture,
+                })
+                dists.append(res.mixture)
+
+        if not dists:
+            return AncestryConsensus(
+                consensus_superpopulation="UNKNOWN", per_panel=per_panel
+            )
+        label, posterior = bayesian_consensus(dists)
+        return AncestryConsensus(
+            consensus_superpopulation=label,
+            posterior=posterior,
+            confidence=posterior.get(label, 0.0),
+            methods=methods,
+            per_panel=per_panel,
+        )
+
     def assess_ancestry_coherence(
         self,
         pgs_id: str,

@@ -138,6 +138,44 @@ def test_mixture_proportions_populated(tmp_path):
     assert max(res.mixture, key=res.mixture.get) == "EAS"
 
 
+def test_bayesian_consensus_and_canonical():
+    from just_prs.ancestry import bayesian_consensus, to_canonical_superpops
+
+    # HGDP gnomAD labels fold to the canonical 5: CSA->SAS, MID dropped + renormalized.
+    canon = to_canonical_superpops({"EUR": 0.5, "CSA": 0.3, "MID": 0.2})
+    assert canon["SAS"] == pytest.approx(0.3 / 0.8)  # MID's 0.2 dropped, renormalized
+    assert canon["EUR"] == pytest.approx(0.5 / 0.8)
+    assert sum(canon.values()) == pytest.approx(1.0)
+
+    # Agreement across methods sharpens the posterior to ~1.
+    agree = [{"EUR": 0.9, "AMR": 0.1}, {"EUR": 0.85, "SAS": 0.15}, {"EUR": 1.0}]
+    label, post = bayesian_consensus(agree)
+    assert label == "EUR" and post["EUR"] > 0.95 and sum(post.values()) == pytest.approx(1.0)
+
+    # Disagreement flattens it (lower top posterior than the agreement case).
+    _, post_d = bayesian_consensus([{"EUR": 0.9}, {"EAS": 0.9}])
+    assert max(post_d.values()) < 0.95
+
+
+def test_infer_ancestry_consensus(tmp_path):
+    """Fuse two synthetic panels' KNN + mixture into a Bayesian consensus."""
+    md = tmp_path / "ancestry"
+    _info, freqB, p = _build_synthetic_model(md, panel="1000g")
+    _build_synthetic_model(md, panel="hgdp_1kg")  # second panel, same EUR/EAS structure
+    meta = tmp_path / "metadata"
+    meta.mkdir(parents=True)
+    for f in ("scores.parquet", "performance.parquet", "best_performance.parquet"):
+        pl.DataFrame({"pgs_id": ["PGS000001"]}).write_parquet(meta / f)
+    cat = PRSCatalog(cache_dir=tmp_path)
+    eas = RNG.binomial(2, freqB[:, None]).astype(np.int8).flatten()
+    con = cat.infer_ancestry_consensus(genotypes_lf=_genotypes_lf(eas, p),
+                                       panels=("1000g", "hgdp_1kg"))
+    assert con.consensus_superpopulation == "EAS"
+    assert sum(con.posterior.values()) == pytest.approx(1.0, abs=0.01)
+    assert len(con.per_panel) == 2
+    assert len(con.methods) == 4  # 2 panels x (knn + mixture)
+
+
 def test_coverage_floor_returns_unknown(tmp_path):
     md = tmp_path / "ancestry"
     _info, freqB, p = _build_synthetic_model(md)

@@ -962,25 +962,70 @@ def _validate_pgs_id(pgs_id: str) -> str:
     return pgs_id
 
 
+def _fmt_dist(d: dict) -> str:
+    return ", ".join(f"{k} {v:.0%}" for k, v in sorted(d.items(), key=lambda kv: -kv[1]) if v > 0.005)
+
+
+def _print_single(res, label: str) -> None:
+    console.print(f"[bold]{label}:[/bold] {res.superpopulation}  "
+                  f"(conf {res.confidence:.2f}, cov {res.coverage:.1%}, "
+                  f"{res.n_variants_used:,}/{res.n_variants_model:,} sites, {res.panel}/{res.genome_build})")
+    if res.probabilities:
+        console.print(f"    KNN (fraposa):  {_fmt_dist(res.probabilities)}")
+    if res.mixture:
+        console.print(f"    mixture (PCA-NNLS):  {_fmt_dist(res.mixture)}")
+
+
 @ancestry_app.command("infer")
 def ancestry_infer(
     vcf: Annotated[str, typer.Option("--vcf", "-v", help="VCF/array path or alias (e.g. 'anton', 'livia')")],
-    panel: Annotated[str, typer.Option("--panel", help="Reference panel: 1000g or hgdp_1kg")] = "1000g",
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="label (KNN hard call) | mixture (PCA-NNLS proportions) | consensus (Bayesian across panels+methods) | all"),
+    ] = "all",
+    panel: Annotated[str, typer.Option("--panel", help="Reference panel for label/mixture modes: 1000g or hgdp_1kg")] = "1000g",
+    panels: Annotated[
+        str, typer.Option("--panels", help="Comma-separated panels fused in consensus/all modes")
+    ] = "1000g,hgdp_1kg",
     build: Annotated[
         Optional[str], typer.Option("--build", "-b", help="Sample genome build (auto-detected; default GRCh38)")
     ] = None,
     cache_dir: Annotated[Optional[Path], typer.Option("--cache-dir", help="Cache directory (base, default ~/.cache/just-prs)")] = None,
 ) -> None:
-    """Infer a sample's genetic ancestry (super-population) from a VCF/array."""
+    """Infer a sample's genetic ancestry. Modes: label, mixture, consensus, all (default).
+
+    \b
+    - label:     single-panel KNN (fraposa) hard super-population call + posterior.
+    - mixture:   single-panel PCA-NNLS ancestry proportions.
+    - consensus: Bayesian product-of-experts fusing every panel's KNN + mixture.
+    - all:       per-panel label + mixture for each fused panel, then the consensus.
+    """
     vcf_path = _resolve_vcf(vcf, cache_dir)
     catalog = PRSCatalog(cache_dir=cache_dir)
-    res = catalog.infer_ancestry(vcf_path, panel=panel, sample_build=build)
-    console.print(f"[bold]Ancestry:[/bold] {res.superpopulation}  "
-                  f"(confidence {res.confidence:.2f}, coverage {res.coverage:.1%}, "
-                  f"{res.n_variants_used:,}/{res.n_variants_model:,} sites, panel {res.panel}/{res.genome_build})")
-    if res.probabilities:
-        top = sorted(res.probabilities.items(), key=lambda kv: -kv[1])
-        console.print("  " + ", ".join(f"{k} {v:.0%}" for k, v in top))
+    panel_list = [p.strip() for p in panels.split(",") if p.strip()]
+
+    if mode in ("label", "mixture"):
+        res = catalog.infer_ancestry(vcf_path, panel=panel, sample_build=build)
+        if mode == "label":
+            console.print(f"[bold]Ancestry ({panel}):[/bold] {res.superpopulation}  "
+                          f"(conf {res.confidence:.2f}, cov {res.coverage:.1%})")
+            if res.probabilities:
+                console.print(f"    {_fmt_dist(res.probabilities)}")
+        else:
+            console.print(f"[bold]Mixture ({panel}):[/bold] {_fmt_dist(res.mixture or {})}")
+        return
+
+    # consensus / all: fuse across panels
+    con = catalog.infer_ancestry_consensus(vcf_path, panels=tuple(panel_list), sample_build=build)
+    if mode == "all":
+        for p in panel_list:
+            r = con.per_panel.get(p)
+            if r is not None:
+                _print_single(r, f"Panel {p}")
+    color = "green" if con.confidence >= 0.8 else "yellow"
+    console.print(f"[bold {color}]Consensus:[/bold {color}] {con.consensus_superpopulation}  "
+                  f"(posterior {con.confidence:.2f}, fused {len(con.methods)} methods across {len(con.per_panel)} panels)")
+    console.print(f"    {_fmt_dist(con.posterior)}")
 
 
 @ancestry_app.command("check")

@@ -18,6 +18,7 @@ from just_prs.models import (
     AbsoluteRiskBundle,
     AbsoluteRiskEstimate,
     AncestryCoherence,
+    AncestryConsensus,
     AncestryInference,
     ArrayPRSResult,
     ChipGeneration,

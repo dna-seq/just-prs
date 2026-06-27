@@ -16,6 +16,14 @@ deferred** as a finer-resolution refinement (it needs a 1.7 GB GPL-data download
 reverse-engineered shrinkage `correction` vector, a QP solver, and GRCh37→38 liftover, and its
 groups roll up to the same continental level anyway).
 
+**Bayesian consensus (implemented):** `bayesian_consensus` fuses every available method —
+each panel's KNN posterior and PCA-NNLS mixture (1000G + HGDP+1kGP) — into one posterior over
+the canonical 5 super-pops via a Laplace-smoothed product-of-experts (`to_canonical_superpops`
+folds HGDP `CSA→SAS` and drops `MID`). `PRSCatalog.infer_ancestry_consensus` orchestrates it;
+`prs ancestry infer --mode label|mixture|consensus|all` exposes every mode. Cross-panel check:
+newton → EUR on both panels, consensus EUR posterior 1.00 (agreement sharpens the posterior;
+the per-panel trace AMR ~2% is driven to ~0 by the unanimous KNN evidence).
+
 **Decision: keep it coupled inside `just-prs`** (`just_prs.ancestry`). An earlier draft scoped a
 standalone `just-ancestry` library with input/output interface contracts — that is **dropped for
 now** to avoid premature abstraction. A larger extraction is envisioned *later* and separately:

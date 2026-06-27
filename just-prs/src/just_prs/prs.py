@@ -24,9 +24,17 @@ class GenotypeInputMode(str, enum.Enum):
     ALL_SITES = "all_sites"
     PLINK_PRESENT_ONLY = "plink_present_only"
 
+from just_prs.chip_coverage import Chip, chip_typed_positions
 from just_prs.models import PRSResult
 from just_prs.scoring import DEFAULT_CACHE_DIR, load_scoring, parse_scoring_file
 from just_prs.vcf import compute_dosage_expr, detect_genome_build, read_genotypes
+
+# Restoration scope: which absent scoring positions may be hom-ref filled.
+#   False  -> off (no filling)
+#   True   -> the whole reference-allele universe (WGS; the universe index IS the set)
+#   Chip   -> chip-typed positions (array; eligible = chip set ∩ universe)
+#   Path / pl.DataFrame -> a custom (chrom,pos) set (embedder escape hatch)
+RestorationScope = bool | Chip | Path | pl.DataFrame
 
 
 def _normalize_genotype_columns(lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -283,6 +291,150 @@ def _detect_build_mismatch(
     return detected, mismatch
 
 
+def _normalize_restoration_scope(
+    scope: RestorationScope | None,
+    cache_dir: Path,
+    genome_build: str,
+) -> bool | pl.LazyFrame:
+    """Resolve a user-facing scope into ``True`` (whole universe), ``False`` (off),
+    or a ``(chrom, pos)`` LazyFrame (restricted set).
+
+    - ``False``/``None`` -> ``False`` (no restoration).
+    - ``True`` -> ``True`` (the universe itself is the eligible set; no duplication).
+    - ``Chip`` -> the chip's typed positions for ``genome_build`` (GSA ships both
+      A2/GRCh38 and A1/GRCh37 manifests); if the chip has no manifest for that build
+      it degrades to ``False`` + a log, never silently mis-fills.
+    - ``Path`` / ``pl.DataFrame`` -> a custom set (accepts ``chrom`` or ``chr_norm``).
+    """
+    if scope is False or scope is None:
+        return False
+    if scope is True:
+        return True
+    if isinstance(scope, Chip):
+        try:
+            positions = chip_typed_positions(scope, cache_dir, build=genome_build)
+        except (NotImplementedError, ValueError) as exc:
+            log_message(
+                message_type="prs:restoration_scope_unavailable",
+                chip=str(scope),
+                genome_build=genome_build,
+                reason=str(exc),
+            )
+            return False
+        return positions.lazy().pipe(_select_chrom_pos)
+    if isinstance(scope, pl.DataFrame):
+        return scope.lazy().pipe(_select_chrom_pos)
+    if isinstance(scope, (str, Path)):
+        return pl.scan_parquet(scope).pipe(_select_chrom_pos)
+    raise ValueError(f"Unsupported restoration scope: {scope!r}")
+
+
+def _select_chrom_pos(lf: pl.LazyFrame) -> pl.LazyFrame:
+    """Normalize a position-set frame to unique ``(chrom, pos)`` (accepts chr_norm)."""
+    cols = lf.collect_schema().names()
+    chrom_col = "chrom" if "chrom" in cols else ("chr_norm" if "chr_norm" in cols else None)
+    if chrom_col is None or "pos" not in cols:
+        raise ValueError(f"Position set must have (chrom|chr_norm, pos); got {cols}")
+    return lf.select(
+        pl.col(chrom_col).cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chrom"),
+        pl.col("pos").cast(pl.Int64),
+    ).unique()
+
+
+def _apply_reference_resolution(
+    scoring_norm: pl.LazyFrame,
+    universe_path: Path | str | None,
+    scope: bool | pl.LazyFrame,
+) -> pl.LazyFrame:
+    """Fill a missing ``reference_allele`` from the precomputed REF-universe parquet,
+    restricted to the eligible ``scope``.
+
+    ``scope`` is the *normalized* form from ``_normalize_restoration_scope``:
+    ``False`` -> no fill; ``True`` -> any universe position eligible (WGS); a
+    ``(chrom,pos)`` LazyFrame -> only positions in that set ∩ universe (array/chip).
+    Adds a ``ref_resolved_source`` column (``panel``/``fasta``/null) for accounting;
+    the column is always present so downstream aggregation can reference it. Only
+    positions whose ``reference_allele`` was null/empty are filled; existing values win.
+    """
+    schema = scoring_norm.collect_schema().names()
+    if scope is False or universe_path is None:
+        if "ref_resolved_source" not in schema:
+            scoring_norm = scoring_norm.with_columns(
+                pl.lit(None, dtype=pl.Utf8).alias("ref_resolved_source")
+            )
+        return scoring_norm
+
+    universe = (
+        pl.scan_parquet(universe_path)
+        .filter(pl.col("ref").is_not_null())
+        .select(
+            pl.col("chrom").cast(pl.Utf8),
+            pl.col("pos").cast(pl.Int64),
+            pl.col("ref").cast(pl.Utf8),
+            pl.col("ref_source").cast(pl.Utf8),
+        )
+    )
+    if isinstance(scope, pl.LazyFrame):
+        # Restrict the eligible REF set to the scope (chip ∩ universe).
+        universe = universe.join(scope, on=["chrom", "pos"], how="semi")
+    universe = universe.select(
+        pl.col("chrom").alias("_u_chrom"),
+        pl.col("pos").alias("_u_pos"),
+        pl.col("ref").alias("_u_ref"),
+        pl.col("ref_source").alias("_u_src"),
+    )
+
+    ref_unknown = pl.col("reference_allele").is_null() | (
+        pl.col("reference_allele").str.len_chars() == 0
+    )
+    fill_mask = ref_unknown & pl.col("_u_ref").is_not_null()
+    return (
+        scoring_norm.join(
+            universe,
+            left_on=["chr_name_norm", "chr_pos_norm"],
+            right_on=["_u_chrom", "_u_pos"],
+            how="left",
+        )
+        .with_columns(
+            pl.when(fill_mask)
+            .then(pl.col("_u_ref"))
+            .otherwise(pl.col("reference_allele"))
+            .alias("reference_allele"),
+            pl.when(fill_mask)
+            .then(pl.col("_u_src"))
+            .otherwise(pl.lit(None, dtype=pl.Utf8))
+            .alias("ref_resolved_source"),
+        )
+        .drop("_u_ref", "_u_src")
+    )
+
+
+def _assert_sample_build_matches(
+    sample_build: str | None, genome_build: str, pgs_id: str
+) -> None:
+    """Guard against the silent cross-build dead-end.
+
+    When the caller knows the sample's genome build and it differs from the build
+    the scoring file is in, a join on ``(chrom, pos)`` would silently match ~0
+    variants and return a meaningless score. Raise a clear error instead. A no-op
+    when ``sample_build`` is None (build unknown) — never guesses.
+    """
+    if sample_build is None:
+        return
+    from just_prs.cleanup import BUILD_NORMALIZATION
+
+    s = BUILD_NORMALIZATION.get(sample_build, sample_build)
+    g = BUILD_NORMALIZATION.get(genome_build, genome_build)
+    if s != g:
+        raise ValueError(
+            f"Genome-build mismatch for {pgs_id}: sample genotypes are {sample_build!r} "
+            f"but scoring is {genome_build!r}. Matching on (chrom,pos) across builds would "
+            f"silently score ~0 variants. Lift the sample to {genome_build} first — e.g. "
+            f"compute_array_prs(..., target_build={genome_build!r}) for arrays, or "
+            f"just_prs.liftover.lift_frame(...) for a VCF — or pass the matching build."
+        )
+
+
 def compute_prs(
     vcf_path: Path | str,
     scoring_file: Path | pl.LazyFrame | str,
@@ -293,6 +445,9 @@ def compute_prs(
     genotypes_lf: pl.LazyFrame | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
     maf_fill: bool = False,
+    reference_restoration: RestorationScope = False,
+    reference_universe_path: Path | str | None = None,
+    sample_build: str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score for a single VCF against a scoring file.
 
@@ -329,6 +484,7 @@ def compute_prs(
         PRSResult with computed score, match statistics, and optionally
         theoretical distribution stats and percentile.
     """
+    _assert_sample_build_matches(sample_build, genome_build, pgs_id)
     with start_action(
         action_type="prs:compute",
         vcf_path=str(vcf_path),
@@ -345,6 +501,17 @@ def compute_prs(
         schema_names = scoring_norm.collect_schema().names()
         variants_total = scoring_norm.select(pl.len()).collect().item()
         resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, genotypes_lf)
+
+        # Reference-allele resolution only affects the variant-only absent-locus
+        # path; in other modes absent loci are never imputed hom-ref.
+        restoration_scope = (
+            _normalize_restoration_scope(reference_restoration, cache_dir, genome_build)
+            if resolved_mode == GenotypeInputMode.VARIANT_ONLY
+            else False
+        )
+        scoring_norm = _apply_reference_resolution(
+            scoring_norm, reference_universe_path, restoration_scope
+        )
 
         if resolved_mode == GenotypeInputMode.VARIANT_ONLY:
             joined = scoring_norm.join(
@@ -453,6 +620,8 @@ def compute_prs(
             (absent_expr & ref_known_expr.not_() & pl.col("is_maf_filled").not_()).cast(pl.Int64).sum().alias("variants_unscorable_absent"),
             (pl.col("is_present") & pl.col("is_no_call")).cast(pl.Int64).sum().alias("variants_no_call"),
             pl.col("is_maf_filled").cast(pl.Int64).sum().alias("variants_maf_filled"),
+            (absent_expr & (pl.col("ref_resolved_source") == "panel")).cast(pl.Int64).sum().alias("variants_ref_resolved_panel"),
+            (absent_expr & (pl.col("ref_resolved_source") == "fasta")).cast(pl.Int64).sum().alias("variants_ref_resolved_fasta"),
             pl.col("weighted_dosage").sum().alias("prs_score"),
             (
                 pl.when(pl.col("resolved_dosage").is_not_null())
@@ -466,6 +635,8 @@ def compute_prs(
         variants_unscorable_absent = int(agg["variants_unscorable_absent"][0] or 0)
         variants_no_call = int(agg["variants_no_call"][0] or 0)
         variants_maf_filled = int(agg["variants_maf_filled"][0] or 0)
+        variants_ref_resolved_panel = int(agg["variants_ref_resolved_panel"][0] or 0)
+        variants_ref_resolved_fasta = int(agg["variants_ref_resolved_fasta"][0] or 0)
         variants_matched = int(agg["observed_called"][0] or 0) + variants_assumed_hom_ref + variants_maf_filled
 
         if variants_matched == 0:
@@ -524,6 +695,8 @@ def compute_prs(
             variants_unscorable_absent=variants_unscorable_absent,
             variants_no_call=variants_no_call,
             variants_maf_filled=variants_maf_filled,
+            variants_ref_resolved_panel=variants_ref_resolved_panel,
+            variants_ref_resolved_fasta=variants_ref_resolved_fasta,
             weight_mass_matched=weight_mass_matched,
             weight_mass_total=weight_mass_total,
             weight_mass_coverage=weight_mass_coverage,
@@ -639,6 +812,9 @@ def compute_prs_duckdb(
     memory_limit: str | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
     maf_fill: bool = False,
+    reference_restoration: RestorationScope = False,
+    reference_universe_path: Path | str | None = None,
+    sample_build: str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score using DuckDB for the join and aggregation.
 
@@ -675,6 +851,7 @@ def compute_prs_duckdb(
         PRSResult with computed score, match statistics, and optionally
         theoretical distribution stats and percentile.
     """
+    _assert_sample_build_matches(sample_build, genome_build, pgs_id)
     with start_action(
         action_type="prs:compute_duckdb",
         vcf_path=str(vcf_path),
@@ -683,6 +860,15 @@ def compute_prs_duckdb(
     ):
         scoring_lf = _resolve_scoring(scoring_file, genome_build, cache_dir)
         scoring_norm = _normalize_scoring_columns(scoring_lf)
+        # Fill any missing reference_allele from the precomputed REF universe. Applied
+        # unconditionally (adds a null ref_resolved_source when off) so the SQL can
+        # reference s.ref_resolved_source; only the variant-only branch consumes it.
+        restoration_scope = _normalize_restoration_scope(
+            reference_restoration, cache_dir, genome_build
+        )
+        scoring_norm = _apply_reference_resolution(
+            scoring_norm, reference_universe_path, restoration_scope
+        )
 
         schema_names = scoring_norm.collect_schema().names()
         scoring_df = scoring_norm.collect()
@@ -744,7 +930,9 @@ def compute_prs_duckdb(
                         SUM(CASE WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
                         SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND NOT ({_DUCKDB_MAF_AVAILABLE_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
                         SUM(CASE WHEN g.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
-                        SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND {_DUCKDB_MAF_AVAILABLE_SQL} THEN 1 ELSE 0 END) AS variants_maf_filled
+                        SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND {_DUCKDB_MAF_AVAILABLE_SQL} THEN 1 ELSE 0 END) AS variants_maf_filled,
+                        SUM(CASE WHEN g.GT IS NULL AND s.ref_resolved_source = 'panel' THEN 1 ELSE 0 END) AS variants_ref_resolved_panel,
+                        SUM(CASE WHEN g.GT IS NULL AND s.ref_resolved_source = 'fasta' THEN 1 ELSE 0 END) AS variants_ref_resolved_fasta
                     """
                 else:
                     resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY
@@ -754,7 +942,9 @@ def compute_prs_duckdb(
                         SUM(CASE WHEN g.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
                         SUM(CASE WHEN g.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
                         SUM(CASE WHEN g.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
-                        0 AS variants_maf_filled
+                        0 AS variants_maf_filled,
+                        SUM(CASE WHEN g.GT IS NULL AND s.ref_resolved_source = 'panel' THEN 1 ELSE 0 END) AS variants_ref_resolved_panel,
+                        SUM(CASE WHEN g.GT IS NULL AND s.ref_resolved_source = 'fasta' THEN 1 ELSE 0 END) AS variants_ref_resolved_fasta
                     """
             else:
                 join_sql = f"""
@@ -769,7 +959,9 @@ def compute_prs_duckdb(
                     0 AS variants_assumed_hom_ref,
                     0 AS variants_unscorable_absent,
                     SUM(CASE WHEN {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
-                    0 AS variants_maf_filled
+                    0 AS variants_maf_filled,
+                    0 AS variants_ref_resolved_panel,
+                    0 AS variants_ref_resolved_fasta
                 """
 
             row = conn.execute(f"""
@@ -791,6 +983,8 @@ def compute_prs_duckdb(
                     COALESCE(SUM(variants_unscorable_absent), 0) AS variants_unscorable_absent,
                     COALESCE(SUM(variants_no_call), 0) AS variants_no_call,
                     COALESCE(SUM(variants_maf_filled), 0) AS variants_maf_filled,
+                    COALESCE(SUM(variants_ref_resolved_panel), 0) AS variants_ref_resolved_panel,
+                    COALESCE(SUM(variants_ref_resolved_fasta), 0) AS variants_ref_resolved_fasta,
                     COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL THEN variant_mass ELSE 0.0 END), 0.0) AS weight_mass_matched
                 FROM resolved s
             """).fetchone()
@@ -802,7 +996,9 @@ def compute_prs_duckdb(
             variants_unscorable_absent = int(row[4])
             variants_no_call = int(row[5])
             variants_maf_filled = int(row[6])
-            weight_mass_matched = float(row[7] or 0.0)
+            variants_ref_resolved_panel = int(row[7])
+            variants_ref_resolved_fasta = int(row[8])
+            weight_mass_matched = float(row[9] or 0.0)
             variants_matched = observed_called + variants_assumed_hom_ref + variants_maf_filled
 
             has_freqs = False
@@ -873,6 +1069,8 @@ def compute_prs_duckdb(
             variants_unscorable_absent=variants_unscorable_absent,
             variants_no_call=variants_no_call,
             variants_maf_filled=variants_maf_filled,
+            variants_ref_resolved_panel=variants_ref_resolved_panel,
+            variants_ref_resolved_fasta=variants_ref_resolved_fasta,
             weight_mass_matched=weight_mass_matched,
             weight_mass_total=weight_mass_total,
             weight_mass_coverage=weight_mass_coverage,
@@ -931,6 +1129,9 @@ def compute_prs_batch(
     engine: PRSEngine | str = PRSEngine.DUCKDB,
     genotypes_lf: pl.LazyFrame | None = None,
     memory_limit: str | None = None,
+    reference_restoration: RestorationScope = False,
+    reference_universe_path: Path | str | None = None,
+    sample_build: str | None = None,
 ) -> "PRSBatchResult":
     """Compute multiple PRS scores for a single VCF file.
 
@@ -963,6 +1164,9 @@ def compute_prs_batch(
     if isinstance(engine, str):
         engine = PRSEngine(engine)
 
+    # All scores share one sample/scoring build — guard once up front.
+    _assert_sample_build_matches(sample_build, genome_build, "batch")
+
     with start_action(
         action_type="prs:compute_batch",
         vcf_path=str(vcf_path),
@@ -993,6 +1197,8 @@ def compute_prs_batch(
                             genotypes_lf=genotypes_lf,
                             memory_limit=memory_limit,
                             genotype_input_mode=genotype_input_mode,
+                            reference_restoration=reference_restoration,
+                            reference_universe_path=reference_universe_path,
                         )
                     else:
                         result = compute_prs(
@@ -1004,6 +1210,8 @@ def compute_prs_batch(
                             trait_reported=trait,
                             genotypes_lf=genotypes_lf,
                             genotype_input_mode=genotype_input_mode,
+                            reference_restoration=reference_restoration,
+                            reference_universe_path=reference_universe_path,
                         )
 
                     results.append(result)

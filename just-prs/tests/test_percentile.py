@@ -260,6 +260,44 @@ class TestPercentileFull:
         assert (pct, method) == (pr.percentile, pr.method)
 
 
+class TestPercentileGate:
+    """The enrichment-layer gate that decides whether to resolve a percentile.
+
+    This is the fix for the ``match_rate problem``: percentiles must be gated on
+    weight-mass coverage (C_wt), not on the variant *count* match_rate, otherwise
+    high-information genome-wide scores (low count coverage, high C_wt) are
+    wrongly suppressed while trivial fully-matched toy scores pass (F9/F20).
+    """
+
+    def test_high_cwt_low_count_is_allowed(self) -> None:
+        # The regression target: a genome-wide score that matched only ~38% of
+        # its variants by COUNT but carries most of its weight mass must still
+        # get a percentile. Previously the 0.50 count gate suppressed it.
+        from just_prs.enrich import _percentile_allowed
+
+        assert _percentile_allowed(weight_mass_coverage=0.85, match_rate=0.38) is True
+
+    def test_low_cwt_is_still_allowed_and_flagged_downstream(self) -> None:
+        # A low-C_wt score is NOT suppressed at the gate — the value is kept and
+        # percentile_full flags it unreliable + caveat (see
+        # TestPercentileFull.test_low_weight_mass_coverage_flags_unreliable),
+        # never silently dropped.
+        from just_prs.enrich import _percentile_allowed
+
+        assert _percentile_allowed(weight_mass_coverage=0.05, match_rate=0.99) is True
+
+    def test_no_cwt_falls_back_to_count_gate(self) -> None:
+        # Dosage / no-weight scoring formats carry no weight mass, so the legacy
+        # count gate still applies as a last resort.
+        from just_prs.enrich import _percentile_allowed, MIN_PERCENTILE_MATCH_RATE
+
+        assert MIN_PERCENTILE_MATCH_RATE == 0.50
+        assert _percentile_allowed(weight_mass_coverage=None, match_rate=0.60) is True
+        assert _percentile_allowed(weight_mass_coverage=None, match_rate=0.30) is False
+        # Exactly at the boundary is allowed (>=).
+        assert _percentile_allowed(weight_mass_coverage=None, match_rate=0.50) is True
+
+
 @pytest.mark.plink2
 class TestPercentileVsPlink2:
     """Cross-validate PRS scores against PLINK2 for scores with allele frequencies.

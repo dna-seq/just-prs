@@ -545,6 +545,75 @@ def check_ld_proxy_table_valid(
     )
 
 
+@asset_check(
+    asset="reference_allele_universe",
+    description=(
+        "Validate the reference-allele universe: resolved REF bases are clean "
+        "(single A/C/G/T for the FASTA tier; non-empty for panel), ref_source is "
+        "one of {panel, fasta, unresolved}, unresolved rows carry a null ref, and "
+        "the table is non-empty."
+    ),
+)
+def check_reference_allele_universe_valid(
+    cache_dir_resource: CacheDirResource,
+) -> AssetCheckResult:
+    cache_dir = cache_dir_resource.get_path()
+    path = cache_dir / "percentiles" / "reference_allele_universe.parquet"
+    if not path.exists():
+        return AssetCheckResult(
+            passed=False,
+            severity=AssetCheckSeverity.ERROR,
+            metadata={"error": f"missing {path}"},
+        )
+
+    df = pl.read_parquet(path)
+    issues: list[str] = []
+
+    valid_sources = {"panel", "fasta", "unresolved"}
+    bad_sources = set(df["ref_source"].unique().to_list()) - valid_sources
+    if bad_sources:
+        issues.append(f"unexpected ref_source values: {bad_sources}")
+
+    # Resolved rows must have a non-null REF; unresolved must be null.
+    n_resolved_null = df.filter(
+        (pl.col("ref_source") != "unresolved") & pl.col("ref").is_null()
+    ).height
+    if n_resolved_null:
+        issues.append(f"{n_resolved_null} resolved rows with null ref")
+    n_unresolved_nonnull = df.filter(
+        (pl.col("ref_source") == "unresolved") & pl.col("ref").is_not_null()
+    ).height
+    if n_unresolved_nonnull:
+        issues.append(f"{n_unresolved_nonnull} unresolved rows with non-null ref")
+
+    # FASTA tier must be a single A/C/G/T base.
+    n_bad_fasta = df.filter(
+        (pl.col("ref_source") == "fasta")
+        & ~pl.col("ref").is_in(["A", "C", "G", "T"])
+    ).height
+    if n_bad_fasta:
+        issues.append(f"{n_bad_fasta} fasta rows with non-ACGT/multi-base ref")
+
+    # Unique positions (no duplicate (chrom,pos)).
+    n_dupes = df.height - df.select("chrom", "pos").n_unique()
+    if n_dupes:
+        issues.append(f"{n_dupes} duplicate (chrom,pos) rows")
+
+    passed = len(issues) == 0 and df.height > 0
+    n_unresolved = df.filter(pl.col("ref_source") == "unresolved").height
+    return AssetCheckResult(
+        passed=passed,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "n_positions": df.height,
+            "n_panel": df.filter(pl.col("ref_source") == "panel").height,
+            "n_fasta": df.filter(pl.col("ref_source") == "fasta").height,
+            "n_unresolved": n_unresolved,
+            "issues": str(issues) if issues else "none",
+        },
+    )
+
+
 ALL_ASSET_CHECKS = [
     check_distributions_superpop_completeness,
     check_distributions_no_inf_nan,
@@ -555,4 +624,5 @@ ALL_ASSET_CHECKS = [
     check_cleaned_metadata_quality,
     check_chip_coverage_valid,
     check_ld_proxy_table_valid,
+    check_reference_allele_universe_valid,
 ]

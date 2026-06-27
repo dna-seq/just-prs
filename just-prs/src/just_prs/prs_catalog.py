@@ -41,7 +41,7 @@ from just_prs.ontology import (
     expand_trait_ids_from_alias_columns,
     normalize_trait_id,
 )
-from just_prs.prs import compute_prs
+from just_prs.prs import RestorationScope, compute_prs
 from just_prs.reference import reference_distribution_audit_issues
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
@@ -613,10 +613,17 @@ class PRSCatalog:
             | pl.col("trait_efo").str.to_lowercase().str.contains(term, literal=True)
         )
 
-    def score_info_row(self, pgs_id: str) -> dict[str, object] | None:
+    def score_info_row(
+        self, pgs_id: str, genome_build: str | None = None
+    ) -> dict[str, object] | None:
         """Get cleaned score metadata for a single PGS ID as a dict.
 
-        Returns None if the PGS ID is not found.
+        Returns None if the PGS ID is not found. When ``genome_build`` is given,
+        an ``is_harmonized`` boolean is added — True when the score's original
+        development build differs from ``genome_build`` (i.e. it is scored via a
+        harmonized file rather than natively), mirroring :meth:`scores`.
+        ``is_harmonized`` is inherently build-relative, so it is only populated
+        when a target build is supplied (left absent otherwise rather than guessed).
         """
         rows = (
             self._ensure_scores()
@@ -625,13 +632,90 @@ class PRSCatalog:
         )
         if rows.height == 0:
             return None
-        return rows.row(0, named=True)
+        row = rows.row(0, named=True)
+        if genome_build is not None:
+            original = row.get("genome_build")
+            row["is_harmonized"] = original is not None and original != genome_build
+        return row
+
+    def reference_individual_scores(
+        self,
+        pgs_id: str,
+        superpopulation: str | None = None,
+        panel: str = "1000g",
+    ) -> pl.LazyFrame:
+        """Per-individual reference PRS scores for a PGS ID.
+
+        Reads the already-cached ``reference_scores/{panel}/{pgs_id}/scores.parquet``
+        (produced by the reference-scoring pipeline) and returns one row per
+        reference individual: ``iid``, ``superpopulation``, ``prs_score``. Unlike
+        :meth:`reference_distributions` (aggregated mean/std/percentiles), this
+        exposes the raw per-individual values needed to draw an empirical cohort
+        histogram. **No recompute and no download** — purely the local cache.
+
+        Args:
+            pgs_id: PGS Catalog Score ID.
+            superpopulation: Optional 1000G superpopulation filter (AFR/AMR/EAS/EUR/SAS).
+            panel: Reference panel (default ``"1000g"``).
+
+        Returns:
+            LazyFrame of ``(iid, superpopulation, prs_score)``.
+
+        Raises:
+            FileNotFoundError: when the per-individual scores are not cached
+                locally. They are produced by the reference-scoring pipeline
+                (``prs reference score-batch``) and are **not** published to
+                HuggingFace — only the aggregated distributions are. Use
+                :meth:`reference_distributions` for summary statistics.
+        """
+        scores_path = (
+            self._cache_dir / "reference_scores" / panel / pgs_id.upper() / "scores.parquet"
+        )
+        if not scores_path.exists():
+            raise FileNotFoundError(
+                f"No cached per-individual reference scores for {pgs_id} (panel={panel}) "
+                f"at {scores_path}. These are produced by the reference-scoring pipeline "
+                f"(prs reference score-batch) and are not published to HuggingFace; only "
+                f"aggregated distributions are. Use reference_distributions() for summary stats."
+            )
+        lf = pl.scan_parquet(scores_path).select(
+            pl.col("iid").cast(pl.Utf8),
+            pl.col("superpop").cast(pl.Utf8).alias("superpopulation"),
+            pl.col("score").cast(pl.Float64).alias("prs_score"),
+        )
+        if superpopulation is not None:
+            lf = lf.filter(pl.col("superpopulation") == superpopulation)
+        return lf
 
     def _attach_performance(self, result: PRSResult) -> None:
         """Populate ``result.performance`` from the best evaluation metric (F11)."""
         best_df = self.best_performance(pgs_id=result.pgs_id).collect()
         if best_df.height > 0:
             result.performance = _performance_info_from_row(best_df.row(0, named=True))
+
+    def _reference_universe_path(self, genome_build: str = "GRCh38") -> Path | None:
+        """Resolve the cached reference-allele universe parquet, pulling on miss.
+
+        Mirrors the ``_load_chip_coverage`` lazy-pull pattern: looks under
+        ``reference/`` locally; on a miss, pulls once from the catalog HF dataset.
+        The filename is build-aware (GRCh38 unsuffixed, others ``_<build>``), so
+        the universe is resolved for the same build the scores are computed in.
+        Returns None when unavailable (e.g. offline first run, or the build is
+        not published yet) so callers fall back to the un-resolved behaviour.
+        """
+        from just_prs.hf import (
+            pull_reference_allele_universe,
+            reference_allele_universe_filename,
+        )
+
+        ref_dir = self._cache_dir / "reference"
+        path = ref_dir / reference_allele_universe_filename(genome_build)
+        if not path.exists():
+            try:
+                pull_reference_allele_universe(ref_dir, genome_build=genome_build)
+            except Exception as exc:
+                logger.debug("Reference-allele universe HF pull failed: %s", exc)
+        return path if path.exists() else None
 
     def compute_prs(
         self,
@@ -641,6 +725,8 @@ class PRSCatalog:
         genotype_input_mode: str = "auto",
         attach_performance: bool = False,
         genotypes_lf: pl.LazyFrame | None = None,
+        reference_restoration: RestorationScope = False,
+        sample_build: str | None = None,
     ) -> PRSResult:
         """Compute PRS for a VCF file against a single PGS score.
 
@@ -649,7 +735,10 @@ class PRSCatalog:
         with the best evaluation metric (F11). When ``genotypes_lf`` is provided, the
         pre-normalized genotype frame is reused instead of re-reading ``vcf_path`` — this
         is the single-score mirror of ``compute_prs_batch``, so a normalized Parquet can
-        be reused *and* best performance attached in one call (F23).
+        be reused *and* best performance attached in one call (F23). ``reference_restoration``
+        (``True`` for WGS, a ``Chip`` for arrays, or ``False`` to disable) fills missing
+        reference alleles from the precomputed REF universe (pulled from HF on cache miss)
+        so absent loci recover coverage within the chosen scope.
         """
         with start_action(
             action_type="prs_catalog:compute_prs",
@@ -668,6 +757,13 @@ class PRSCatalog:
                 trait_reported=trait,
                 genotypes_lf=genotypes_lf,
                 genotype_input_mode=genotype_input_mode,
+                reference_restoration=reference_restoration,
+                reference_universe_path=(
+                    self._reference_universe_path(genome_build)
+                    if reference_restoration is not False
+                    else None
+                ),
+                sample_build=sample_build,
             )
             if attach_performance:
                 self._attach_performance(result)
@@ -683,12 +779,17 @@ class PRSCatalog:
         genotypes_lf: pl.LazyFrame | None = None,
         memory_limit: str | None = None,
         attach_performance: bool = False,
+        reference_restoration: RestorationScope = False,
+        sample_build: str | None = None,
     ) -> "PRSBatchResult":
         """Compute PRS for a VCF file against multiple PGS scores.
 
         Memory-safe: uses DuckDB engine by default (spill-to-disk), runs
         gc.collect() after each score, continues on per-score errors, and
-        auto-retries once on corrupt parquet caches.
+        auto-retries once on corrupt parquet caches. ``reference_restoration``
+        (``True`` for WGS, a ``Chip`` for arrays, ``False`` to disable) fills
+        missing reference alleles from the precomputed REF universe within the
+        chosen scope (the universe is resolved once before the loop).
 
         Uses cached metadata for trait lookup instead of per-score REST API calls.
         """
@@ -697,13 +798,22 @@ class PRSCatalog:
         from just_prs.models import PRSBatchOutcome, PRSBatchResult
         from just_prs.prs import (
             PRSEngine,
+            _assert_sample_build_matches,
             _is_corrupt_parquet_error,
             _remove_scoring_parquet_cache,
             compute_prs_duckdb,
         )
 
+        # All scores share one sample/scoring build — guard once up front.
+        _assert_sample_build_matches(sample_build, genome_build, "batch")
+
         resolved_engine = PRSEngine(engine)
         cache = self._cache_dir / "scores"
+        universe_path = (
+            self._reference_universe_path(genome_build)
+            if reference_restoration is not False
+            else None
+        )
 
         with start_action(
             action_type="prs_catalog:compute_prs_batch",
@@ -733,6 +843,8 @@ class PRSCatalog:
                             genotypes_lf=genotypes_lf,
                             memory_limit=memory_limit,
                             genotype_input_mode=genotype_input_mode,
+                            reference_restoration=reference_restoration,
+                            reference_universe_path=universe_path,
                         )
                     else:
                         result = compute_prs(
@@ -744,6 +856,8 @@ class PRSCatalog:
                             trait_reported=trait,
                             genotypes_lf=genotypes_lf,
                             genotype_input_mode=genotype_input_mode,
+                            reference_restoration=reference_restoration,
+                            reference_universe_path=universe_path,
                         )
 
                     results.append(result)
@@ -777,6 +891,8 @@ class PRSCatalog:
                                         genotypes_lf=genotypes_lf,
                                         memory_limit=memory_limit,
                                         genotype_input_mode=genotype_input_mode,
+                                        reference_restoration=reference_restoration,
+                                        reference_universe_path=universe_path,
                                     )
                                 else:
                                     result = compute_prs(
@@ -788,6 +904,8 @@ class PRSCatalog:
                                         trait_reported=trait,
                                         genotypes_lf=genotypes_lf,
                                         genotype_input_mode=genotype_input_mode,
+                                        reference_restoration=reference_restoration,
+                                        reference_universe_path=universe_path,
                                     )
                                 results.append(result)
                                 outcomes.append(PRSBatchOutcome(

@@ -252,6 +252,14 @@ class PRSResult(BaseModel):
         default=0,
         description="Absent loci filled with population MAF dosage (2 * allelefrequency_effect) instead of being unscorable",
     )
+    variants_ref_resolved_panel: int = Field(
+        default=0,
+        description="Absent loci whose missing reference allele was resolved from the reference panel .pvar (subset of variants_assumed_hom_ref)",
+    )
+    variants_ref_resolved_fasta: int = Field(
+        default=0,
+        description="Absent loci whose missing reference allele was resolved from the reference FASTA faidx (subset of variants_assumed_hom_ref)",
+    )
     weight_mass_matched: float | None = Field(
         default=None,
         description="Sum of |effect_weight| over matched scoring variants (per-dosage formats use max|dosage_k_weight|)",
@@ -453,6 +461,18 @@ class ArrayPRSResult(PRSResult):
     score_uncorrected: float = Field(
         default=0.0,
         description="Raw PRS score before LD-proxy weight adjustment",
+    )
+    source_build: str | None = Field(
+        default=None,
+        description="Native genome build of the array coordinates before any liftover (e.g. GRCh37)",
+    )
+    lifted_to_build: str | None = Field(
+        default=None,
+        description="Target build the genotypes were lifted to before scoring (None if no liftover was applied)",
+    )
+    genotypes_lift_dropped: int = Field(
+        default=0,
+        description="Genotype records dropped during coordinate liftover (chain gap / strand flip); honestly unscorable, never assumed hom-ref",
     )
 
 

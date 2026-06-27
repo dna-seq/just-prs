@@ -187,7 +187,7 @@ def run(
     test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
     test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
-    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, ld_proxy_pipeline, reference_percentile_audit_job.")] = "full_pipeline",
+    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, ld_proxy_pipeline, reference_allele_pipeline, reference_percentile_audit_job.")] = "full_pipeline",
     no_cache: Annotated[bool, typer.Option("--no-cache", help="Ignore on-disk caches and re-download/recompute everything.")] = False,
     headless: Annotated[bool, typer.Option("--headless", help="Run in-process without Dagster UI.")] = False,
     host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
@@ -403,6 +403,64 @@ def audit(
     console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
     console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
     console.print("[bold]Job 'reference_percentile_audit_job' will be submitted automatically on startup.[/bold]\n")
+
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])
+
+
+@app.command(name="reference-allele")
+def reference_allele(
+    panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
+    headless: Annotated[bool, typer.Option("--headless", help="Run reference_allele_pipeline in-process without Dagster UI.")] = False,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
+) -> None:
+    """Precompute + publish the reference-allele universe (Dagster UI by default).
+
+    \b
+    Runs the ``reference_allele_pipeline`` job: faidx the GRCh38 FASTA + reference
+    panel .pvar to resolve REF at every catalog scoring position lacking a
+    reference_allele, write percentiles/reference_allele_universe.parquet, and push
+    it to HuggingFace. Recovers genome-wide WGS coverage at runtime without shipping
+    the 3 GB genome. Memory-sensitive (parses the FASTA + 75M-row pvar) — prefer a
+    machine with adequate RAM.
+    """
+    dagster_home = _setup_dagster_home()
+    _set_pipeline_env(panel)
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "reference_allele_pipeline"
+
+    if headless:
+        _cancel_orphaned_runs()
+        console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+        console.print("[bold]Job:[/bold] reference_allele_pipeline (precompute REF universe → HF)\n")
+
+        from prs_pipeline.definitions import defs
+
+        resolved_job = defs.get_job_def("reference_allele_pipeline")
+        console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+        result = _execute_job(resolved_job)
+        if result.success:
+            console.print("\n[green bold]Job 'reference_allele_pipeline' completed successfully.[/green bold]")
+        else:
+            console.print("\n[red bold]Job 'reference_allele_pipeline' failed.[/red bold]")
+            for event in result.all_events:
+                if event.is_failure:
+                    console.print(f"  [red]{event.message}[/red]")
+            raise typer.Exit(code=1)
+        return
+
+    os.environ["PRS_PIPELINE_STARTUP_REQUEST_ID"] = uuid.uuid4().hex
+    _kill_port(port)
+    _cancel_orphaned_runs()
+    console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
+    console.print("[bold]Job 'reference_allele_pipeline' will be submitted automatically on startup.[/bold]\n")
 
     dagster_bin = str(Path(sys.executable).parent / "dagster")
     os.execvp(dagster_bin, [

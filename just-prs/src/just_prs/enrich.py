@@ -13,6 +13,7 @@ import polars as pl
 
 from just_prs.absolute_risk import _norm_ppf
 from just_prs.models import EnrichedPRSResult, PRSResult
+from just_prs.prs_catalog import MIN_RELIABLE_WEIGHT_MASS_COVERAGE
 from just_prs.quality import (
     classify_model_quality,
     classify_synthetic_quality,
@@ -35,6 +36,24 @@ SUPERPOPULATION_LABELS: dict[str, str] = {
     "SAS": "South Asian",
 }
 MIN_PERCENTILE_MATCH_RATE = 0.50
+
+
+def _percentile_allowed(weight_mass_coverage: float | None, match_rate: float) -> bool:
+    """Whether to resolve a percentile for a score on a given genome.
+
+    Judged on weight-mass coverage (C_wt) when known: a genome-wide score near
+    its achievable weight-mass ceiling is trustworthy even at modest variant-
+    *count* coverage, while a tiny score missing one high-|β| variant is not.
+    Gating on the count ``match_rate`` inverts this (F9/F20), so when C_wt is
+    known we always resolve the percentile and let ``percentile_full`` flag a
+    low-C_wt value as unreliable (the value is kept and surfaced with a caveat,
+    never silently dropped). Only when C_wt is unavailable — dosage / no-weight
+    scoring formats carry no weight mass — do we fall back to the legacy count
+    gate.
+    """
+    if weight_mass_coverage is not None:
+        return True
+    return match_rate >= MIN_PERCENTILE_MATCH_RATE
 
 
 def enrich_prs_result(
@@ -73,7 +92,11 @@ def enrich_prs_result(
     score_info = catalog.score_info_row(result.pgs_id)
     trait_efo_id = str(score_info.get("trait_efo_id") or "") if score_info else ""
 
-    percentile_allowed = result.match_rate >= MIN_PERCENTILE_MATCH_RATE
+    # Gate the percentile on weight-mass coverage (C_wt), not count match_rate
+    # (F9/F20) — see _percentile_allowed.
+    percentile_allowed = _percentile_allowed(
+        result.weight_mass_coverage, result.match_rate
+    )
 
     # --- Percentile resolution: result's own (theoretical) → catalog reference panel ---
     pct_value = result.percentile
@@ -109,6 +132,23 @@ def enrich_prs_result(
         ref_panel = pr.panel
         pct_reliable = pr.reliable
         pct_caveat = pr.caveat
+
+    # The theoretical percentile carried on the result (has_allele_frequencies)
+    # bypasses percentile_full, so apply the same C_wt reliability flag here so
+    # both percentile paths agree.
+    if (
+        pct_value is not None
+        and result.weight_mass_coverage is not None
+        and result.weight_mass_coverage < MIN_RELIABLE_WEIGHT_MASS_COVERAGE
+    ):
+        pct_reliable = False
+        if not pct_caveat:
+            pct_caveat = (
+                f"Only {result.weight_mass_coverage * 100:.0f}% of this score's "
+                f"effect-weight mass was matched in this genome (C_wt). The "
+                f"percentile is likely a low-coverage artifact, not an "
+                f"authoritative population position."
+            )
 
     # --- Per-population percentiles ---
     all_pop_values: dict[str, float] = {}

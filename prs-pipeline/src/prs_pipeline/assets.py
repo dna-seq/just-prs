@@ -25,6 +25,7 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 import polars as pl
@@ -45,6 +46,7 @@ from just_prs.hf import (
     push_ld_proxy_pgs_table,
     push_reference_audit_sidecars,
     push_chip_coverage,
+    push_reference_allele_universe,
     push_reference_distributions,
 )
 from just_prs.ld_proxy import (
@@ -54,13 +56,19 @@ from just_prs.ld_proxy import (
 )
 from just_prs.reference import (
     DEFAULT_PANEL,
+    REFERENCE_FASTA,
     REFERENCE_PANELS,
     REFERENCE_PANEL_URL,
+    _find_reference_panel_file,
     compute_reference_prs_batch,
+    download_reference_fasta,
     download_reference_panel,
     enrich_distributions,
     reference_distribution_audit_issues,
+    reference_fasta_path,
+    reference_panel_dir,
 )
+from just_prs.reference_allele import resolve_reference_alleles
 from prs_pipeline.fingerprint import fingerprint_http_resource
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
 from prs_pipeline.runtime import resource_tracker
@@ -69,6 +77,16 @@ from prs_pipeline.runtime import resource_tracker
 def _no_cache() -> bool:
     """Return True if PRS_PIPELINE_NO_CACHE is set (user passed --no-cache)."""
     return os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() in {"1", "true", "yes"}
+
+
+def _pipeline_genome_build() -> str:
+    """Genome build the universe lineage targets (``PRS_PIPELINE_GENOME_BUILD``).
+
+    Defaults to ``GRCh38``. The reference-allele-universe build script sets this
+    to ``GRCh37`` to produce the GRCh37 universe + scoring parquets without code
+    edits (see docs/grch37-universe-build.md).
+    """
+    return os.environ.get("PRS_PIPELINE_GENOME_BUILD", "GRCh38").strip() or "GRCh38"
 
 
 # ---------------------------------------------------------------------------
@@ -105,14 +123,26 @@ illumina_gsa_manifest = SourceAsset(
     key="illumina_gsa_manifest",
     group_name="external",
     description=(
-        "Illumina Global Screening Array v3.0 manifest (A2 = GRCh38 coordinates, "
-        "~70 MB zip, ~648K typed markers). The GSA is the platform underlying "
-        "23andMe v5 and AncestryDNA v2 consumer genotyping chips. Used to compute, "
-        "per PGS score, how many variants are directly typed on the array vs require "
-        "imputation. Coordinates are GRCh38 so they intersect the harmonized GRCh38 "
-        "scoring files without liftover."
+        "Illumina Global Screening Array v3.0 manifests (A2 = GRCh38, A1 = GRCh37 "
+        "coordinates; ~67 MB zip, ~648K typed markers each). The GSA is the platform "
+        "underlying 23andMe v5 and AncestryDNA v2 consumer genotyping chips. Used to "
+        "compute, per PGS score, how many variants are directly typed on the array vs "
+        "require imputation. Chip coverage uses the GRCh38 (A2) manifest so it "
+        "intersects the harmonized GRCh38 scoring files without liftover."
     ),
-    metadata={"url": CHIPS_BY_ID["gsa_v3"]["manifest_url"]},
+    metadata={"url": CHIPS_BY_ID["gsa_v3"]["manifests"]["GRCh38"]},
+)
+
+ensembl_grch38_fasta = SourceAsset(
+    key="ensembl_grch38_fasta",
+    group_name="external",
+    description=(
+        "Ensembl GRCh38 primary-assembly FASTA (~900 MB gzip / ~3 GB uncompressed). "
+        "Universal reference-base source for the reference-allele FASTA tier. Touched "
+        "ONLY by the reference_allele_universe precompute (faidx), never at runtime. "
+        "Unprefixed contigs (1..22, X, Y, MT) match this package's normalized coords."
+    ),
+    metadata={"url": REFERENCE_FASTA["GRCh38"]["url"]},
 )
 
 
@@ -170,7 +200,7 @@ def scoring_files(
     """Download all PGS scoring .txt.gz files from EBI FTP."""
     cache_dir = cache_dir_resource.get_path()
     scores_dir = cache_dir / "scores"
-    genome_build = "GRCh38"
+    genome_build = _pipeline_genome_build()
 
     context.log.info("Fetching PGS ID list from EBI FTP...")
     pgs_ids = list_all_pgs_ids()
@@ -503,6 +533,348 @@ def hf_chip_coverage(
 
 
 # ---------------------------------------------------------------------------
+# Reference-allele universe — precompute REF at catalog scoring positions
+# ---------------------------------------------------------------------------
+
+def _scoring_parquet_coverage(
+    scores_dir: Path, genome_build: str, catalog_ids: list[str]
+) -> tuple[int, int, float, list[str]]:
+    """Coverage of the catalog by cached ``*_hmPOS_{build}.parquet`` scoring files.
+
+    Returns ``(n_present, n_catalog, coverage_ratio, missing_ids)`` where coverage
+    is over the EBI catalog id set. The reference-allele universe is built only from
+    the parquets present on disk, so a download/convert gap silently shrinks it —
+    this is the completeness signal used to gate publishing (robustness guarantee #4).
+    """
+    present = {
+        p.name.split("_hmPOS_")[0]
+        for p in scores_dir.glob(f"*_hmPOS_{genome_build}.parquet")
+    }
+    catalog = set(catalog_ids)
+    n_catalog = len(catalog)
+    missing = sorted(catalog - present)
+    n_present = n_catalog - len(missing)
+    coverage = (n_present / n_catalog) if n_catalog else 0.0
+    return n_present, n_catalog, coverage, missing
+
+
+def _ref_resolution_targets(
+    scores_dir: Path,
+    genome_build: str = "GRCh38",
+    log: "Callable[[str], None] | None" = None,
+) -> pl.DataFrame:
+    """Union of scoring positions that need reference-allele resolution.
+
+    Iterates every cached ``*_hmPOS_{build}.parquet`` (the chip_coverage pattern)
+    and returns unique ``(chrom, pos)`` where ``reference_allele`` is missing in at
+    least one record, with a conservative ``snv_only`` flag (True only when
+    effect/other alleles are single-base across every record at that position).
+
+    Memory-safe for the full catalog. Two structural choices keep it bounded:
+
+    1. Each file is filtered to its ``ref_missing`` positions **before** writing a
+       temp part. The target set is exactly "positions lacking a reference allele in
+       ≥1 file", so ref-present rows are never needed; ``snv_only`` is taken over the
+       ref-missing occurrences (the only ones the runtime ever fills), which is the
+       precise gate. Files with a fully populated ``reference_allele`` contribute
+       nothing. This shrinks the streamed input from "all catalog positions" (~10⁹
+       rows) to just the genuinely-unresolved positions.
+    2. The cross-file union runs in DuckDB with disk spill and is written straight to
+       a parquet via ``COPY`` — never materialised through ``.pl()`` (a huge Arrow
+       result + the aggregate state together is what OOM'd even at a 20 GB cap).
+    """
+    import shutil
+
+    from just_prs.reference import _resolve_duckdb_memory_limit
+
+    _log = log or (lambda _m: None)
+    files = sorted(scores_dir.glob(f"*_hmPOS_{genome_build}.parquet"))
+    cache_root = scores_dir.parent
+    # Build-namespaced scratch: a stopped/interrupted run leaves a _DONE marker +
+    # parts behind, and these are reused on the next run. Without the {build} suffix
+    # a GRCh38 run's parts would be reused by a subsequent GRCh37 run (skipping
+    # Phase 1), producing a GRCh37 universe filled with GRCh38 coordinates.
+    parts_dir = cache_root / f"_ref_targets_parts_{genome_build}"  # on the cache volume, never /tmp
+    done_marker = parts_dir / "_DONE"
+    by_chrom = cache_root / f"_ref_targets_bychrom_{genome_build}"
+    result_dir = cache_root / f"_ref_targets_result_{genome_build}"
+    spill_dir = parts_dir / "duckdb_spill"
+
+    # --- Phase 1: stream each file's positions to a part (resumable) ----------
+    # ``reference_allele`` is absent across the catalog (files carry other_allele),
+    # so ref_missing is true everywhere → every position is a target; the filter is
+    # a correct no-op here and still excludes ref-present rows where the column does
+    # exist. Guarded by a _DONE marker so a failed aggregation never re-streams the
+    # whole catalog (~2e9 rows across 5,385 files).
+    if not done_marker.exists():
+        if parts_dir.exists():
+            shutil.rmtree(parts_dir)
+        parts_dir.mkdir(parents=True, exist_ok=True)
+        n_files = len(files)
+        progress_every = max(n_files // 20, 50)
+        n_parts = 0
+        _log(f"ref-target Phase 1: scanning {n_files} {genome_build} scoring files for unresolved positions")
+        for idx, parquet_path in enumerate(files):
+            schema = pl.scan_parquet(parquet_path).collect_schema().names()
+            if "hm_chr" in schema and "hm_pos" in schema:
+                chr_col, pos_col = "hm_chr", "hm_pos"
+            elif "chr_name" in schema and "chr_position" in schema:
+                chr_col, pos_col = "chr_name", "chr_position"
+            else:
+                continue
+            ea = pl.col("effect_allele").cast(pl.Utf8) if "effect_allele" in schema else pl.lit(None, dtype=pl.Utf8)
+            oa = pl.col("other_allele").cast(pl.Utf8) if "other_allele" in schema else pl.lit(None, dtype=pl.Utf8)
+            ra = pl.col("reference_allele").cast(pl.Utf8) if "reference_allele" in schema else pl.lit(None, dtype=pl.Utf8)
+            frame = (
+                pl.scan_parquet(parquet_path)
+                .select(
+                    pl.col(chr_col).cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chrom"),
+                    pl.col(pos_col).cast(pl.Int64).alias("pos"),
+                    (
+                        (ea.str.len_chars() == 1).fill_null(False)
+                        & (oa.is_null() | (oa.str.len_chars() == 1))
+                    ).alias("snv_only"),
+                    (ra.is_null() | (ra.str.len_chars() == 0)).alias("ref_missing"),
+                )
+                .filter(pl.col("pos").is_not_null() & (pl.col("pos") > 0))
+                .filter(pl.col("ref_missing"))
+                .group_by("chrom", "pos")
+                .agg(pl.col("snv_only").min().alias("snv_only"))
+                .collect()
+            )
+            if frame.height:
+                frame.write_parquet(parts_dir / f"{parquet_path.stem}.parquet")
+                n_parts += 1
+            if (idx + 1) % progress_every == 0 or (idx + 1) == n_files:
+                _log(f"ref-target Phase 1: {idx + 1}/{n_files} files scanned ({n_parts} parts written)")
+        done_marker.write_text("ok")
+
+    part_files = list(parts_dir.glob("*.parquet"))
+    if not part_files:
+        shutil.rmtree(parts_dir, ignore_errors=True)
+        return pl.DataFrame(schema={"chrom": pl.Utf8, "pos": pl.Int64, "snv_only": pl.Boolean})
+
+    # --- Phase 2+3: per-chromosome union (bounds each GROUP BY to one chrom) ---
+    # The catalog-wide distinct-position set is ~10^8 rows; a single hash aggregate
+    # OOMs (DuckDB builds per-thread partial tables). Repartitioning by chromosome
+    # (a streaming, low-memory routing) then aggregating each chromosome separately
+    # keeps every GROUP BY bounded to one chromosome's positions.
+    import duckdb
+
+    for d in (by_chrom, result_dir):
+        if d.exists():
+            shutil.rmtree(d)
+        d.mkdir(parents=True, exist_ok=True)
+    spill_dir.mkdir(exist_ok=True)
+
+    con = duckdb.connect(config={"memory_limit": _resolve_duckdb_memory_limit()})
+    try:
+        con.execute("SET arrow_large_buffer_size = true")
+        con.execute(f"SET temp_directory = '{spill_dir}'")
+        con.execute("SET preserve_insertion_order = false")
+        con.execute("SET threads = 4")
+        # Phase 2: repartition by chromosome (streaming; chrom encoded in the path).
+        _log(f"ref-target Phase 2: repartitioning {len(part_files)} parts by chromosome")
+        con.execute(
+            f"""
+            COPY (SELECT chrom, pos, snv_only FROM read_parquet('{parts_dir}/*.parquet'))
+            TO '{by_chrom}' (FORMAT PARQUET, PARTITION_BY (chrom), OVERWRITE_OR_IGNORE)
+            """
+        )
+        # Phase 3: aggregate each chromosome partition independently.
+        chrom_dirs = sorted(by_chrom.glob("chrom=*"))
+        _log(f"ref-target Phase 3: aggregating {len(chrom_dirs)} chromosomes")
+        for ci, cdir in enumerate(chrom_dirs):
+            cval = cdir.name.split("=", 1)[1].replace("'", "''")
+            con.execute(
+                f"""
+                COPY (
+                    SELECT '{cval}' AS chrom, pos, bool_and(snv_only) AS snv_only
+                    FROM read_parquet('{cdir}/*.parquet')
+                    GROUP BY pos
+                ) TO '{result_dir}/chrom_{cval}.parquet' (FORMAT PARQUET)
+                """
+            )
+            _log(f"ref-target Phase 3: {ci + 1}/{len(chrom_dirs)} chromosomes aggregated (chr{cval})")
+    finally:
+        con.close()
+
+    out = pl.read_parquet(f"{result_dir}/*.parquet")
+    # Success — clean all scratch.
+    for d in (parts_dir, by_chrom, result_dir):
+        shutil.rmtree(d, ignore_errors=True)
+    return out
+
+
+@asset(
+    group_name="download",
+    description=(
+        "Downloads + decompresses the Ensembl GRCh38 primary-assembly FASTA and "
+        "builds its faidx (~3 GB uncompressed). Precompute-only input for the "
+        "reference-allele FASTA tier; never read at runtime. Skips if already cached."
+    ),
+)
+def reference_fasta(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[Path]:
+    """Download the Ensembl primary-assembly FASTA and ensure its faidx exists."""
+    cache_dir = cache_dir_resource.get_path()
+    build = _pipeline_genome_build()
+    with resource_tracker("reference_fasta", context=context):
+        fa = download_reference_fasta(build, cache_dir=cache_dir, overwrite=_no_cache())
+    context.add_output_metadata({
+        "path": str(fa),
+        "size_mb": round(fa.stat().st_size / 1e6, 1),
+        "genome_build": build,
+        "source_url": REFERENCE_FASTA[build]["url"],
+    })
+    return Output(fa)
+
+
+@asset(
+    group_name="compute",
+    deps=[
+        AssetDep("scoring_files_parquet"),
+        AssetDep("reference_panel"),
+        AssetDep("reference_fasta"),
+    ],
+    description=(
+        "Precomputes the reference base at every catalog scoring position that is "
+        "missing a reference_allele. Panel tier (reference-panel .pvar REF, free, "
+        "indel-correct) then FASTA tier (single-base SNV faidx). Writes "
+        "percentiles/reference_allele_universe.parquet — a small "
+        "(genome_build, chrom, pos, ref, ref_source) table consumed at runtime to "
+        "dissolve variants_unscorable_absent on WGS inputs."
+    ),
+)
+def reference_allele_universe(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[pl.DataFrame]:
+    """Build and cache the catalog-wide reference-allele universe parquet."""
+    from just_prs.hf import reference_allele_universe_filename
+
+    cache_dir = cache_dir_resource.get_path()
+    build = _pipeline_genome_build()
+    scores_dir = cache_dir / "scores"
+    out_dir = cache_dir / "percentiles"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / reference_allele_universe_filename(build)
+    panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+    ref_dir = reference_panel_dir(cache_dir, panel=panel)
+    pvar_zst = _find_reference_panel_file(ref_dir, build, ".pvar.zst")
+    fasta = reference_fasta_path(build, cache_dir)
+
+    # Completeness signal: the universe is built only from scoring parquets present
+    # on disk, so a download/convert gap silently shrinks it. Log coverage vs the
+    # EBI catalog and warn below the floor (the build script enforces the hard
+    # publish gate). Guarded so an offline catalog-list fetch can't fail the build.
+    min_coverage = float(os.environ.get("PRS_PIPELINE_MIN_COVERAGE", "0.90"))
+    n_present = n_catalog = 0
+    scoring_coverage = 1.0
+    n_missing = 0
+    try:
+        n_present, n_catalog, scoring_coverage, missing = _scoring_parquet_coverage(
+            scores_dir, build, list_all_pgs_ids()
+        )
+        n_missing = len(missing)
+        if scoring_coverage < min_coverage:
+            context.log.warning(
+                f"Scoring-parquet coverage {scoring_coverage:.4f} "
+                f"({n_present}/{n_catalog}) is below the {min_coverage} floor for "
+                f"build {build}; {n_missing} scores missing (e.g. {missing[:10]}). "
+                f"The universe will be SHORT — the build script refuses --push below the floor."
+            )
+    except Exception as exc:  # offline / catalog-list fetch failed — don't block the build
+        context.log.warning(f"Could not compute scoring-parquet coverage: {exc}")
+
+    with resource_tracker("reference_allele_universe", context=context):
+        targets = _ref_resolution_targets(scores_dir, build, log=context.log.info)
+        context.log.info(
+            f"{targets.height} catalog positions need reference-allele resolution; "
+            f"resolving REF (panel .pvar tier → FASTA SNV tier) — this step runs silently"
+        )
+        result = resolve_reference_alleles(
+            targets,
+            build,
+            panel_pvar_path=pvar_zst,
+            fasta_path=fasta,
+        )
+        context.log.info(
+            f"reference-allele resolution complete: {result.height} rows; writing {out_path.name}"
+        )
+        result.write_parquet(out_path)
+
+    by_source = dict(
+        zip(*result.group_by("ref_source").len().to_dict(as_series=False).values())
+    ) if result.height else {}
+    n_total = result.height
+    n_resolved = n_total - int(by_source.get("unresolved", 0))
+    context.add_output_metadata({
+        "genome_build": build,
+        "n_positions": n_total,
+        "n_panel": int(by_source.get("panel", 0)),
+        "n_fasta": int(by_source.get("fasta", 0)),
+        "n_unresolved": int(by_source.get("unresolved", 0)),
+        "resolved_ratio": round(n_resolved / n_total, 4) if n_total else 0.0,
+        "n_scoring_files": n_present,
+        "n_catalog_total": n_catalog,
+        "scoring_coverage_ratio": round(scoring_coverage, 4),
+        "n_scoring_missing": n_missing,
+        "universe_path": str(out_path),
+    })
+    return Output(result)
+
+
+@asset(
+    group_name="upload",
+    ins={"universe": AssetIn("reference_allele_universe")},
+    description=(
+        "Uploads reference_allele_universe.parquet to the HuggingFace dataset "
+        "just-dna-seq/pgs-catalog (data/reference/). Published so the just-prs "
+        "runtime can fill missing reference alleles from a small parquet instead of "
+        "shipping the 3 GB genome. Named after the destination per lineage convention."
+    ),
+)
+def hf_reference_allele_universe(
+    context: AssetExecutionContext,
+    universe: pl.DataFrame,
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Publish the reference-allele universe parquet to HuggingFace."""
+    from just_prs.hf import reference_allele_universe_filename
+
+    repo_id = hf_resource.catalog_repo
+    token = hf_resource.get_token()
+    build = _pipeline_genome_build()
+    filename = reference_allele_universe_filename(build)
+    parquet_path = cache_dir_resource.get_path() / "percentiles" / filename
+
+    if os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip():
+        context.log.info(f"TEST MODE: skipping HuggingFace push of {filename}.")
+        context.add_output_metadata({
+            "test_mode": True, "hf_push_skipped": True, "genome_build": build,
+            "universe_path": str(parquet_path), "n_rows": universe.height,
+        })
+        return Output(str(parquet_path))
+
+    with resource_tracker("hf_reference_allele_universe", context=context):
+        push_reference_allele_universe(
+            parquet_path=parquet_path, repo_id=repo_id, token=token, genome_build=build
+        )
+
+    url = f"https://huggingface.co/datasets/{repo_id}"
+    context.log.info(f"Pushed {filename} to {url}")
+    context.add_output_metadata({
+        "repo_id": repo_id, "url": url, "genome_build": build,
+        "universe_path": str(parquet_path), "n_rows": universe.height,
+    })
+    return Output(url)
+
+
+# ---------------------------------------------------------------------------
 # Download asset — fetch reference panel into local cache
 # ---------------------------------------------------------------------------
 
@@ -664,7 +1036,7 @@ def reference_scores(
             pgs_ids=pgs_ids,
             ref_dir=ref_dir,
             cache_dir=cache_dir,
-            genome_build="GRCh38",
+            genome_build=_pipeline_genome_build(),
             panel=panel,
             skip_existing=skip_existing,
             output_subdir=output_subdir,

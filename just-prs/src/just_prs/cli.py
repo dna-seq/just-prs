@@ -613,6 +613,19 @@ def compute(
             ),
         ),
     ] = "auto",
+    reference_restoration: Annotated[
+        str,
+        typer.Option(
+            "--reference-restoration",
+            help=(
+                "Restore a scoring variant's missing reference allele from the "
+                "precomputed reference-allele universe so absent loci score as "
+                "homozygous-reference within a scope: 'off' (default; old behavior), "
+                "'wgs' (whole universe — for genome-wide variant-only WGS), or a chip "
+                "id (e.g. 'gsa_v3' — only chip-typed positions, for arrays)."
+            ),
+        ),
+    ] = "off",
 ) -> None:
     """Compute polygenic risk score(s) for a VCF file.
 
@@ -620,6 +633,9 @@ def compute(
     custom local scoring file (.txt.gz or .parquet with effect_allele,
     effect_weight, and position columns).
     """
+    from just_prs.chip_coverage import Chip
+    from just_prs.prs import RestorationScope
+
     vcf_path = _resolve_vcf(vcf, cache_dir)
 
     if scoring_file and pgs_id:
@@ -628,6 +644,61 @@ def compute(
     if not scoring_file and not pgs_id:
         console.print("[red]Provide --pgs-id or --scoring-file.[/red]")
         raise typer.Exit(code=1)
+
+    # Parse the restoration scope: off -> False, wgs -> True, else a Chip.
+    choice = reference_restoration.strip().lower()
+    scope: RestorationScope
+    if choice in ("off", "false", "none"):
+        scope = False
+    elif choice in ("wgs", "true", "universe"):
+        scope = True
+    else:
+        try:
+            scope = Chip(choice)
+        except ValueError as exc:
+            raise typer.BadParameter(
+                f"--reference-restoration must be 'off', 'wgs', or a chip id "
+                f"({', '.join(c.value for c in Chip)}); got {reference_restoration!r}"
+            ) from exc
+
+    # Resolve (and lazily pull) the reference-allele universe once when on.
+    # Build-aware: GRCh37 restoration must use the GRCh37 universe, not GRCh38.
+    universe_path: Optional[Path] = None
+    if scope is not False:
+        from just_prs.hf import (
+            pull_reference_allele_universe,
+            reference_allele_universe_filename,
+        )
+        from just_prs.scoring import resolve_cache_dir
+
+        ref_dir = resolve_cache_dir() / "reference"
+        candidate = ref_dir / reference_allele_universe_filename(build)
+        if not candidate.exists():
+            try:
+                pull_reference_allele_universe(ref_dir, genome_build=build)
+            except Exception as exc:
+                console.print(
+                    f"[yellow]Could not fetch reference-allele universe ({exc}); "
+                    f"proceeding without restoration.[/yellow]"
+                )
+        universe_path = candidate if candidate.exists() else None
+        if universe_path is None:
+            console.print(
+                "[yellow]Reference-allele universe unavailable; "
+                "--reference-restoration is a no-op this run.[/yellow]"
+            )
+            scope = False
+
+    # Detect the sample's build from the VCF header so a build mismatch fails
+    # loudly instead of silently scoring ~0 variants. Unknown build -> no guard
+    # (never guesses; e.g. a normalized parquet has no header).
+    sample_build: Optional[str] = None
+    try:
+        from just_prs.vcf import detect_genome_build
+
+        sample_build = detect_genome_build(vcf_path)
+    except Exception:
+        sample_build = None
 
     if scoring_file:
         label = scoring_file.stem
@@ -639,6 +710,9 @@ def compute(
             cache_dir=cache_dir,
             pgs_id=label,
             genotype_input_mode=genotype_input_mode,
+            reference_restoration=scope,
+            reference_universe_path=universe_path,
+            sample_build=sample_build,
         )
         results: list[PRSResult] = [result]
     else:
@@ -656,6 +730,9 @@ def compute(
                 pgs_id=pgs_ids[0],
                 trait_reported=score_info.trait_reported,
                 genotype_input_mode=genotype_input_mode,
+                reference_restoration=scope,
+                reference_universe_path=universe_path,
+                sample_build=sample_build,
             )
             results = [result]
         else:
@@ -665,6 +742,9 @@ def compute(
                 genome_build=build,
                 cache_dir=cache_dir,
                 genotype_input_mode=genotype_input_mode,
+                reference_restoration=scope,
+                reference_universe_path=universe_path,
+                sample_build=sample_build,
             )
             results = batch.results
             if batch.failed_ids:

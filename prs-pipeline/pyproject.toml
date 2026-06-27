@@ -13,11 +13,11 @@ dependencies = [
     # here) among other breaking changes, so stay on the 1.x line until migrated.
     # dagster-polars tracks core on the 0.x library scheme (jumps to 1.0 at core
     # 2.0), so its mirror cap is <1.0.
-    "dagster>=1.13.7,<2.0",
-    "dagster-webserver>=1.13.7,<2.0",
+    "dagster>=1.13.11,<2.0",
+    "dagster-webserver>=1.13.11,<2.0",
     "dagster-polars>=0.27.12,<1.0",
     "python-dotenv>=1.2.2",
-    "typer>=0.24.1",
+    "typer>=0.25.0",
     "psutil>=7.2.2",
 ]
 

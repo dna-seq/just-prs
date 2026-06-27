@@ -974,6 +974,20 @@ class PRSCatalog:
         )
         return res.percentile, res.method
 
+    def _reference_match_rate(self, pgs_id: str, panel: str = "1000g") -> float | None:
+        """Look up the reference panel's match rate for a PGS ID from quality data."""
+        quality_path = self._cache_dir / "percentiles" / f"{panel}_quality.parquet"
+        if not quality_path.exists():
+            return None
+        try:
+            q = pl.scan_parquet(quality_path).filter(pl.col("pgs_id") == pgs_id).collect()
+            if q.height > 0 and "match_rate" in q.columns:
+                val = q.row(0, named=True).get("match_rate")
+                return float(val) if val is not None else None
+        except Exception:
+            pass
+        return None
+
     def percentile_full(
         self,
         prs_score: float,
@@ -983,6 +997,7 @@ class PRSCatalog:
         std: float | None = None,
         panel: str = "1000g",
         weight_mass_coverage: float | None = None,
+        user_match_rate: float | None = None,
     ) -> PercentileResult:
         """Estimate population percentile and expose the statistics behind it.
 
@@ -997,7 +1012,8 @@ class PRSCatalog:
         ``reference_mean`` / ``reference_std`` used — so callers no longer re-derive z
         by inverting the percentile (lossy at the 0/100 extremes). When
         ``weight_mass_coverage`` (C_wt) is supplied and below
-        ``MIN_RELIABLE_WEIGHT_MASS_COVERAGE``, the result is flagged ``reliable=False``
+        ``MIN_RELIABLE_WEIGHT_MASS_COVERAGE``, or when ``user_match_rate`` is far below
+        the reference panel's match rate, the result is flagged ``reliable=False``
         with a caveat so a deflated low-coverage score can't emit an authoritative
         extreme percentile.
 
@@ -1009,6 +1025,10 @@ class PRSCatalog:
             std: Population SD. When provided (>0), uses it directly (Tier 2).
             panel: Reference panel identifier for Tier 1 lookup.
             weight_mass_coverage: Optional C_wt for the reliability verdict.
+            user_match_rate: Fraction of scoring variants matched in the user's genome
+                (0-1). Compared against the reference panel's match rate to detect
+                coverage mismatch that makes the raw score incomparable to the
+                reference distribution.
 
         Returns:
             A :class:`PercentileResult`.
@@ -1064,6 +1084,18 @@ class PRSCatalog:
                 f"was matched in this genome (C_wt). The percentile is likely a low-coverage "
                 f"artifact, not an authoritative population position."
             )
+
+        if reliable and pct is not None and user_match_rate is not None and method == "reference_panel":
+            ref_mr = self._reference_match_rate(pgs_id, panel=panel)
+            if ref_mr is not None and ref_mr > 0:
+                coverage_ratio = user_match_rate / ref_mr
+                if coverage_ratio < 0.5:
+                    reliable = False
+                    caveat = (
+                        f"Your genome matched {user_match_rate * 100:.0f}% of scoring variants "
+                        f"vs {ref_mr * 100:.0f}% in the reference panel. "
+                        f"The scores are on different scales and the percentile is not meaningful."
+                    )
 
         # Echo the reference-panel ancestry/panel actually used (F19) — only the
         # reference_panel method draws on a named superpopulation distribution.

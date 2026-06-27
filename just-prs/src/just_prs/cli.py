@@ -1109,7 +1109,19 @@ def _get_cached_result(
 ) -> dict | None:
     cache = _load_result_cache(cache_dir)
     key = _result_cache_key(vcf_path, pgs_id, build, ancestry)
-    return cache.get(key)
+    hit = cache.get(key)
+    if hit is not None:
+        z = hit.get("z_score")
+        if z is not None and abs(z) > 10:
+            hit["z_score"] = None
+            hit["percentile"] = None
+            hit.pop("risk_ratio", None)
+            hit.pop("absolute_risk", None)
+            hit.pop("population_prevalence", None)
+            hit.pop("risk_method", None)
+            cache[key] = hit
+            _save_result_cache(cache, cache_dir)
+    return hit
 
 
 def _put_cached_result(
@@ -2265,30 +2277,35 @@ def _compute_trait_results(
     term = trait.strip().lower()
 
     all_scores = catalog.scores(genome_build=build, include_harmonized=True)
-    exact_df = all_scores.filter(
-        pl.col("trait_reported").str.to_lowercase().eq(term)
-    ).collect()
 
-    if exact_df.height > 0:
-        scores_df = exact_df
-        match_type = "exact"
-    else:
+    if fuzzy:
         fuzzy_df = catalog.search(trait, genome_build=build).collect()
         if fuzzy_df.height == 0:
             console.print(f"[red]No PGS scores found for trait '{trait}' ({build}).[/red]")
             raise typer.Exit(code=1)
+        scores_df = fuzzy_df
+        match_type = "fuzzy"
+    else:
+        exact_df = all_scores.filter(
+            pl.col("trait_reported").str.to_lowercase().eq(term)
+        ).collect()
 
-        trait_names = fuzzy_df["trait_reported"].unique().sort().to_list()
-        if not fuzzy:
+        if exact_df.height > 0:
+            scores_df = exact_df
+            match_type = "exact"
+        else:
+            fuzzy_df = catalog.search(trait, genome_build=build).collect()
+            if fuzzy_df.height == 0:
+                console.print(f"[red]No PGS scores found for trait '{trait}' ({build}).[/red]")
+                raise typer.Exit(code=1)
+
+            trait_names = fuzzy_df["trait_reported"].unique().sort().to_list()
             console.print(f"[yellow]No exact match for '{trait}'. Found {fuzzy_df.height} scores with partial matches:[/yellow]")
             for t in trait_names:
                 n = fuzzy_df.filter(pl.col("trait_reported") == t).height
                 console.print(f"  - {t} ({n} scores)")
             console.print(f"\n[dim]Add --fuzzy to compute PRS for these partial matches.[/dim]")
             raise typer.Exit(code=1)
-
-        scores_df = fuzzy_df
-        match_type = "fuzzy"
 
     trait_names = scores_df["trait_reported"].unique().sort().to_list()
     pgs_ids = scores_df["pgs_id"].head(max_scores).to_list()
@@ -2297,6 +2314,25 @@ def _compute_trait_results(
         row["pgs_id"]: row["trait_reported"]
         for row in scores_df.select("pgs_id", "trait_reported").iter_rows(named=True)
     }
+    name_cols = ["pgs_id", "name"] if "name" in scores_df.columns else ["pgs_id"]
+    pgs_to_name = {
+        row["pgs_id"]: row.get("name", "")
+        for row in scores_df.select(name_cols).iter_rows(named=True)
+    } if "name" in scores_df.columns else {}
+
+    quality_cols = [c for c in ("pgs_id", "quality_label", "synthetic_score", "is_harmonized") if c in scores_df.columns]
+    pgs_to_quality: dict[str, dict] = {}
+    if "quality_label" in scores_df.columns:
+        for row in scores_df.select(quality_cols).iter_rows(named=True):
+            pgs_to_quality[row["pgs_id"]] = row
+
+    best_perf_df = catalog.best_performance().collect()
+    perf_cols = [c for c in ("pgs_id", "auroc_estimate", "or_estimate", "hr_estimate",
+                              "cindex_estimate", "n_individuals", "ancestry_broad") if c in best_perf_df.columns]
+    pgs_to_perf: dict[str, dict] = {}
+    if best_perf_df.height > 0:
+        for row in best_perf_df.select(perf_cols).iter_rows(named=True):
+            pgs_to_perf[row["pgs_id"]] = row
 
     console.print(f"Found [cyan]{scores_df.height}[/cyan] scores ({match_type} match) for {len(trait_names)} trait(s):")
     for t in trait_names:
@@ -2304,6 +2340,59 @@ def _compute_trait_results(
         console.print(f"  - {t} ({n} scores)")
 
     from just_prs.prs import compute_prs_duckdb
+
+    def attach_risk_context(rd: dict) -> None:
+        z_score = rd.get("z_score")
+        if z_score is None:
+            percentile = rd.get("percentile")
+            if percentile is None:
+                return
+            try:
+                from statistics import NormalDist
+
+                p = max(0.001, min(99.999, float(percentile))) / 100.0
+                z_score = NormalDist().inv_cdf(p)
+                rd["z_score"] = z_score
+            except (TypeError, ValueError):
+                return
+        try:
+            bundle = catalog.absolute_risk_bundle(str(rd["pgs_id"]), float(z_score))
+        except Exception:
+            return
+
+        if bundle.best_estimate is not None:
+            be = bundle.best_estimate
+            rd["absolute_risk"] = be.absolute_risk
+            rd["risk_ratio"] = be.risk_ratio
+            rd["population_prevalence"] = be.population_prevalence
+            rd["risk_method"] = be.method_label
+
+        h2_estimates = [est for est in bundle.estimates if est.h2_value is not None]
+        if h2_estimates:
+            h_parts: list[str] = []
+            h_metrics: list[dict[str, str]] = []
+            for est in h2_estimates:
+                population = est.ancestry or "combined"
+                source = est.h2_source or est.method_label
+                h_parts.append(f"{population} h²={est.h2_value:.3f} ({source})")
+                h_metrics.append({
+                    "population": population,
+                    "h2": f"{est.h2_value:.3f}",
+                    "source": source,
+                    "risk": f"{est.absolute_risk * 100:.1f}%",
+                    "ratio": f"{est.risk_ratio:.2f}x",
+                    "confidence": est.confidence,
+                })
+            rd["heritability"] = "; ".join(h_parts)
+            rd["heritability_metrics"] = h_metrics
+            rd["heritability_detail"] = (
+                "h² is population-level heritability: the fraction of trait variation "
+                "statistically associated with genetic differences in a studied population, "
+                "not an individual causal percentage."
+            )
+        else:
+            rd.setdefault("heritability", "No mapped h²")
+            rd.setdefault("heritability_detail", bundle.heritability_detail)
 
     result_dicts: list[dict] = []
     failed: list[str] = []
@@ -2317,6 +2406,8 @@ def _compute_trait_results(
             if hit is not None:
                 cached_count += 1
                 hit.setdefault("trait_reported", trait_name)
+                hit.setdefault("score_name", pgs_to_name.get(pgs_id, ""))
+                attach_risk_context(hit)
                 result_dicts.append(hit)
                 console.print(
                     f"[{i}/{len(pgs_ids)}] [cyan]{pgs_id}[/cyan] — {trait_name}  "
@@ -2334,12 +2425,20 @@ def _compute_trait_results(
                 pgs_id=pgs_id,
                 trait_reported=trait_name,
             )
-            pctl_result = catalog.percentile_full(r.score, r.pgs_id, ancestry=ancestry)
+            pctl_result = catalog.percentile_full(
+                r.score, r.pgs_id, ancestry=ancestry,
+                weight_mass_coverage=r.weight_mass_coverage,
+                user_match_rate=r.match_rate,
+            )
             pctl = pctl_result.percentile
             z_score = pctl_result.z_score
 
+            if not pctl_result.reliable:
+                console.print(f"  [yellow]⚠ {pctl_result.caveat}[/yellow]")
+
             rd: dict = {
                 "pgs_id": r.pgs_id,
+                "score_name": pgs_to_name.get(r.pgs_id, ""),
                 "score": r.score,
                 "percentile": pctl,
                 "z_score": z_score,
@@ -2347,19 +2446,26 @@ def _compute_trait_results(
                 "variants_total": r.variants_total,
                 "variants_matched": r.variants_matched,
                 "trait_reported": trait_name,
+                "reliable": pctl_result.reliable,
             }
 
-            if z_score is not None:
-                try:
-                    bundle = catalog.absolute_risk_bundle(r.pgs_id, z_score)
-                    if bundle.best_estimate is not None:
-                        be = bundle.best_estimate
-                        rd["absolute_risk"] = be.absolute_risk
-                        rd["risk_ratio"] = be.risk_ratio
-                        rd["population_prevalence"] = be.population_prevalence
-                        rd["risk_method"] = be.method_label
-                except Exception:
-                    pass
+            q = pgs_to_quality.get(r.pgs_id, {})
+            if q.get("quality_label"):
+                rd["quality_label"] = q["quality_label"]
+            if q.get("synthetic_score") is not None:
+                rd["synthetic_quality"] = q["synthetic_score"]
+            if q.get("is_harmonized"):
+                rd["is_harmonized"] = q["is_harmonized"]
+
+            p = pgs_to_perf.get(r.pgs_id, {})
+            if p.get("auroc_estimate") is not None:
+                rd["auroc"] = p["auroc_estimate"]
+            if p.get("or_estimate") is not None:
+                rd["or_estimate"] = p["or_estimate"]
+            if p.get("ancestry_broad"):
+                rd["eval_ancestry"] = p["ancestry_broad"]
+
+            attach_risk_context(rd)
 
             result_dicts.append(rd)
             _put_cached_result(vcf_path, pgs_id, build, ancestry, rd, cache)
@@ -2382,6 +2488,25 @@ def _compute_trait_results(
     if len(result_dicts) - cached_count > 0:
         summary_parts.append(f"{len(result_dicts) - cached_count} computed")
     console.print(f"\n{', '.join(summary_parts)}.")
+
+    for rd in result_dicts:
+        pid = rd.get("pgs_id", "")
+        if not rd.get("quality_label"):
+            q = pgs_to_quality.get(pid, {})
+            if q.get("quality_label"):
+                rd["quality_label"] = q["quality_label"]
+            if q.get("synthetic_score") is not None:
+                rd.setdefault("synthetic_quality", q["synthetic_score"])
+            if q.get("is_harmonized"):
+                rd.setdefault("is_harmonized", q["is_harmonized"])
+        if not rd.get("auroc"):
+            p = pgs_to_perf.get(pid, {})
+            if p.get("auroc_estimate") is not None:
+                rd.setdefault("auroc", p["auroc_estimate"])
+            if p.get("or_estimate") is not None:
+                rd.setdefault("or_estimate", p["or_estimate"])
+            if p.get("ancestry_broad"):
+                rd.setdefault("eval_ancestry", p["ancestry_broad"])
 
     scored = [r for r in result_dicts if r.get("percentile") is not None]
     if scored:
@@ -2675,16 +2800,20 @@ def plot_trait_cmd(
 
     user_results: list[dict] | None = None
 
+    sample_name: str | None = None
     if vcf:
         vcf_path = _resolve_vcf(vcf, cache_dir)
+        sample_name = vcf_path.name
         user_results = _compute_trait_results(
             trait, vcf_path, dists, ancestry, build, max_scores, cache,
             fuzzy=fuzzy, no_cache=no_cache,
         )
     elif results:
+        sample_name = results.name
         user_results = _load_user_results(results)
 
     anc_list: list[str] | None = None
+    default_visible: list[str] | None = None
     if all_ancestries:
         anc_list = ["AFR", "AMR", "EAS", "EUR", "SAS"]
     elif ancestries:
@@ -2694,6 +2823,7 @@ def plot_trait_cmd(
 
     if html_report and anc_list is None:
         anc_list = ["AFR", "AMR", "EAS", "EUR", "SAS"]
+        default_visible = [ancestry]
 
     pop_label = ", ".join(anc_list) if anc_list else ancestry
     console.print(f"Plotting trait chart for [cyan]{trait}[/cyan] ({pop_label})...")
@@ -2704,13 +2834,14 @@ def plot_trait_cmd(
         user_results=user_results,
         ancestry=ancestry,
         ancestries=anc_list,
+        default_visible_ancestries=default_visible,
         max_scores=max_scores,
         width=width,
         height=height,
         show_table=show_table and not html_report,
     )
     if html_report:
-        save_trait_report(chart, output, trait, user_results, ancestry)
+        save_trait_report(chart, output, trait, user_results, ancestry, sample_name=sample_name)
     else:
         save_chart(chart, output)
     console.print(f"[green]Saved to {output.resolve()}[/green]")

@@ -28,7 +28,10 @@ from reflex_mui_datagrid import (
 )
 
 from just_prs.prs import PRSEngine
+from just_prs.reference import SUPERPOPULATIONS
+from prs_ui.components.vega_chart import VegaLiteChart
 from prs_ui.grid_style import data_grid_scroll_container
+from prs_ui.mixin import SUPERPOPULATION_LABELS
 from prs_ui.state import GenomicGridState
 
 
@@ -138,40 +141,75 @@ def prs_engine_selector(state: type[rx.State]) -> rx.Component:
 
 
 def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
-    """Ancestry superpopulation selector for 1000G-based percentile lookup."""
-    return rx.hstack(
-        rx.text("Ancestry (for percentile):", size="2", weight="medium"),
-        rx.select(
-            ["AFR", "AMR", "EAS", "EUR", "SAS"],
-            value=state.selected_ancestry,
-            on_change=state.set_selected_ancestry,
+    """Reference-population controls for 1000G-based percentile lookup."""
+    checkbox_handlers = {
+        "AFR": state.set_reference_population_AFR,
+        "AMR": state.set_reference_population_AMR,
+        "EAS": state.set_reference_population_EAS,
+        "EUR": state.set_reference_population_EUR,
+        "SAS": state.set_reference_population_SAS,
+    }
+    checked_vars = {
+        "AFR": state.show_reference_AFR,
+        "AMR": state.show_reference_AMR,
+        "EAS": state.show_reference_EAS,
+        "EUR": state.show_reference_EUR,
+        "SAS": state.show_reference_SAS,
+    }
+    population_boxes = [
+        rx.checkbox(
+            f"{code} {SUPERPOPULATION_LABELS[code]}",
+            checked=checked_vars[code],
+            on_change=checkbox_handlers[code],
             size="2",
-        ),
-        rx.tooltip(
-            rx.icon("info", size=14, color="gray"),
-            content=(
-                "Select your ancestry group for percentile estimation. "
-                "AFR=African, AMR=American, EAS=East Asian, EUR=European, SAS=South Asian. "
-                "Percentiles are computed relative to 1000 Genomes reference individuals "
-                "in the selected group. Enable all populations to compute percentiles "
-                "for every available 1000G superpopulation. When reference data is unavailable, "
-                "a theoretical or AUROC-based approximation is used."
+        )
+        for code in SUPERPOPULATIONS
+    ]
+    return rx.vstack(
+        rx.hstack(
+            rx.text("Reference populations:", size="2", weight="medium"),
+            rx.badge("PRS-native default", color_scheme="blue", variant="soft", size="2"),
+            rx.tooltip(
+                rx.icon("info", size=14, color="gray"),
+                content=(
+                    "Each result uses the PGS model's closest available evaluation ancestry "
+                    "as its default reference population. Tick extra 1000 Genomes populations "
+                    "to add comparison curves and columns. AFR=African, AMR=American, "
+                    "EAS=East Asian, EUR=European, SAS=South Asian."
+                ),
             ),
+            rx.button(
+                "All",
+                on_click=state.select_all_reference_populations,
+                size="1",
+                variant="soft",
+            ),
+            rx.button(
+                "Native only",
+                on_click=state.clear_reference_populations,
+                size="1",
+                variant="soft",
+                color_scheme="gray",
+            ),
+            spacing="2",
+            align="center",
+            wrap="wrap",
         ),
-        rx.checkbox(
-            "All available populations",
-            checked=state.compute_all_populations,
-            on_change=state.set_compute_all_populations,
-            size="2",
-        ),
-        rx.checkbox(
-            "Refresh reference/audit cache",
-            checked=state.refresh_reference_cache_before_compute,
-            on_change=state.set_refresh_reference_cache_before_compute,
-            size="2",
+        rx.hstack(
+            *population_boxes,
+            rx.checkbox(
+                "Refresh reference/audit cache",
+                checked=state.refresh_reference_cache_before_compute,
+                on_change=state.set_refresh_reference_cache_before_compute,
+                size="2",
+            ),
+            spacing="3",
+            align="center",
+            wrap="wrap",
         ),
         spacing="2",
-        align="center",
+        align="start",
+        width="100%",
     )
 
 
@@ -850,6 +888,516 @@ def trait_summary_table(
     )
 
 
+# ---------------------------------------------------------------------------
+# Altair-based results: clickable table + always-visible chart panel
+# ---------------------------------------------------------------------------
+
+
+def _chart_mode_toggle(state: type[rx.State]) -> rx.Component:
+    """Single / Multi-ancestry chart toggle."""
+    return rx.segmented_control.root(
+        rx.segmented_control.item("Single ancestry", value="single"),
+        rx.segmented_control.item("All ancestries", value="multi"),
+        value=state.chart_mode,
+        on_change=state.set_chart_mode,
+        size="1",
+    )
+
+
+def _result_info_panel(state: type[rx.State]) -> rx.Component:
+    """Compact info panel showing metadata for the selected result."""
+    info = state.selected_result_info
+    return rx.cond(
+        state.selected_result_id != "",
+        rx.vstack(
+            rx.hstack(
+                rx.cond(
+                    info["pgs_id"].to(str) != "",  # type: ignore[union-attr]
+                    rx.badge(info["pgs_id"], color_scheme="blue", size="2"),  # type: ignore[index]
+                ),
+                rx.cond(
+                    info["trait"].to(str) != "",  # type: ignore[union-attr]
+                    rx.text(info["trait"], size="2", weight="bold", trim="both"),  # type: ignore[index]
+                ),
+                spacing="2",
+                align="center",
+                wrap="wrap",
+            ),
+            rx.hstack(
+                rx.cond(
+                    info["percentile"].to(str) != "None",  # type: ignore[union-attr]
+                    rx.hstack(
+                        rx.text("Percentile:", size="1", color="gray"),
+                        rx.text(info["percentile"], size="1", weight="bold"),  # type: ignore[index]
+                        spacing="1",
+                        align="center",
+                    ),
+                ),
+                rx.cond(
+                    info["quality_label"].to(str) != "",  # type: ignore[union-attr]
+                    rx.hstack(
+                        rx.text("Quality:", size="1", color="gray"),
+                        rx.badge(info["quality_label"], size="1", variant="soft"),  # type: ignore[index]
+                        spacing="1",
+                        align="center",
+                    ),
+                ),
+                rx.cond(
+                    info["match_rate"].to(str) != "None",  # type: ignore[union-attr]
+                    rx.hstack(
+                        rx.text("Match:", size="1", color="gray"),
+                        rx.text(info["match_rate"], size="1"),  # type: ignore[index]
+                        spacing="1",
+                        align="center",
+                    ),
+                ),
+                spacing="3",
+                align="center",
+                wrap="wrap",
+            ),
+            rx.cond(
+                info["summary"].to(str) != "",  # type: ignore[union-attr]
+                rx.text(info["summary"], size="1", color="var(--gray-11)"),  # type: ignore[index]
+            ),
+            spacing="2",
+            width="100%",
+            padding="8px 12px",
+            border="1px solid var(--gray-5)",
+            border_radius="var(--radius-2)",
+            background="var(--gray-2)",
+        ),
+    )
+
+
+def _trait_info_panel(state: type[rx.State]) -> rx.Component:
+    """Compact info panel for a selected trait."""
+    info = state.selected_result_info
+    return rx.cond(
+        state.selected_result_id != "",
+        rx.vstack(
+            rx.hstack(
+                rx.text(info["trait"], size="2", weight="bold", trim="both"),  # type: ignore[index]
+                rx.cond(
+                    info["n_models"].to(str) != "None",  # type: ignore[union-attr]
+                    rx.badge(
+                        rx.text(info["n_models"], " models"),  # type: ignore[index]
+                        color_scheme="blue",
+                        size="1",
+                    ),
+                ),
+                spacing="2",
+                align="center",
+                wrap="wrap",
+            ),
+            rx.hstack(
+                rx.cond(
+                    info["typical_percentile"].to(str) != "None",  # type: ignore[union-attr]
+                    rx.hstack(
+                        rx.text("Typical:", size="1", color="gray"),
+                        rx.text(info["typical_percentile"], size="1", weight="bold"),  # type: ignore[index]
+                        spacing="1",
+                        align="center",
+                    ),
+                ),
+                rx.cond(
+                    info["reliability"].to(str) != "None",  # type: ignore[union-attr]
+                    rx.hstack(
+                        rx.text("Reliability:", size="1", color="gray"),
+                        rx.badge(info["reliability"], size="1", variant="soft"),  # type: ignore[index]
+                        spacing="1",
+                        align="center",
+                    ),
+                ),
+                rx.cond(
+                    info["overall_signal"].to(str) != "None",  # type: ignore[union-attr]
+                    rx.hstack(
+                        rx.text("Signal:", size="1", color="gray"),
+                        rx.text(info["overall_signal"], size="1"),  # type: ignore[index]
+                        spacing="1",
+                        align="center",
+                    ),
+                ),
+                spacing="3",
+                align="center",
+                wrap="wrap",
+            ),
+            spacing="2",
+            width="100%",
+            padding="8px 12px",
+            border="1px solid var(--gray-5)",
+            border_radius="var(--radius-2)",
+            background="var(--gray-2)",
+        ),
+    )
+
+
+def prs_results_chart_panel(
+    state: type[rx.State],
+    chart_height: int = 400,
+    chart_width: int | str = 560,
+    show_info_panel: bool = True,
+    show_chart_mode_toggle: bool = True,
+    chart_actions: bool | dict = True,
+) -> rx.Component:
+    """Always-visible Altair chart panel for individual PRS results.
+
+    Shows a placeholder when nothing is selected; updates when a result
+    row is clicked.
+
+    Args:
+        state: Concrete state class (must mix in ``PRSComputeStateMixin``).
+        chart_height: Chart container height in pixels.
+        chart_width: Chart width — integer pixels or ``"container"`` for
+            responsive full-width.
+        show_info_panel: Show the compact metrics panel below the chart.
+        show_chart_mode_toggle: Show the single/multi-ancestry toggle.
+        chart_actions: Vega-Embed toolbar config.
+    """
+    return rx.cond(
+        state.selected_result_spec != {},
+        rx.vstack(
+            rx.hstack(
+                rx.icon("activity", size=16, color="var(--accent-9)"),
+                rx.text("Distribution", size="2", weight="bold"),
+                rx.spacer(),
+                _chart_mode_toggle(state) if show_chart_mode_toggle else rx.fragment(),
+                align="center",
+                spacing="2",
+                width="100%",
+            ),
+            rx.box(
+                VegaLiteChart.create(
+                    spec=state.selected_result_spec,
+                    options={"actions": chart_actions, "renderer": "canvas"},
+                    width="100%",
+                ),
+                width="100%",
+            ),
+            _result_info_panel(state) if show_info_panel else rx.fragment(),
+            spacing="3",
+            width="100%",
+            padding="12px",
+            border="1px solid var(--gray-5)",
+            border_radius="var(--radius-3)",
+            background="var(--color-background)",
+        ),
+    )
+
+
+def trait_results_chart_panel(
+    state: type[rx.State],
+    chart_height: int = 400,
+    show_info_panel: bool = True,
+    chart_actions: bool | dict = True,
+) -> rx.Component:
+    """Chart panel for trait-grouped results — visible only after row click.
+
+    Args:
+        state: Concrete state class (must mix in ``PRSComputeStateMixin``).
+        chart_height: Chart container height in pixels.
+        show_info_panel: Show the compact metrics panel below the chart.
+        chart_actions: Vega-Embed toolbar config.
+    """
+    return rx.vstack(
+        rx.hstack(
+            rx.icon("activity", size=16, color="var(--accent-9)"),
+            rx.text("Trait Distribution", size="2", weight="bold"),
+            rx.spacer(),
+            align="center",
+            spacing="2",
+            width="100%",
+        ),
+        rx.cond(
+            state.selected_result_spec != {},
+            rx.cond(
+                state.selected_result_html != "",
+                rx.el.iframe(
+                    src_doc=state.selected_result_html,
+                    width="100%",
+                    height=f"{max(chart_height + 420, 760)}px",
+                    style={
+                        "border": "0",
+                        "borderRadius": "var(--radius-2)",
+                        "background": "#fafafa",
+                    },
+                ),
+                rx.box(
+                    VegaLiteChart.create(
+                        spec=state.selected_result_spec,
+                        options={"actions": chart_actions, "renderer": "canvas"},
+                        width="100%",
+                    ),
+                    width="100%",
+                ),
+            ),
+            rx.callout(
+                "Select PRS result above to view the trait distribution.",
+                color_scheme="blue",
+                size="1",
+                width="100%",
+            ),
+        ),
+        _trait_info_panel(state) if show_info_panel else rx.fragment(),
+        spacing="3",
+        width="100%",
+        padding="12px",
+        border="1px solid var(--gray-5)",
+        border_radius="var(--radius-3)",
+        background="var(--color-background)",
+    )
+
+
+_CLICKABLE_ROW_SX = {
+    "& .MuiDataGrid-row": {
+        "cursor": "pointer !important",
+        "minHeight": "52px !important",
+        "maxHeight": "52px !important",
+        "borderBottom": "1px solid var(--accent-4)",
+        "transition": "background-color 120ms ease, box-shadow 120ms ease",
+    },
+    "& .MuiDataGrid-row *, & .MuiDataGrid-cell, & .MuiDataGrid-cellContent": {
+        "cursor": "pointer !important",
+        "userSelect": "none",
+    },
+    "& .MuiDataGrid-cell": {
+        "display": "flex",
+        "alignItems": "center",
+        "fontSize": "0.9rem",
+    },
+    "& .MuiDataGrid-row:hover": {
+        "backgroundColor": "var(--accent-3)",
+        "boxShadow": "inset 3px 0 0 var(--accent-9)",
+    },
+    "& .MuiDataGrid-row:hover .MuiDataGrid-cell": {
+        "color": "var(--accent-12)",
+    },
+}
+
+
+_CLICKABLE_GRID_WRAPPER_STYLE = {
+    "cursor": "pointer",
+    "& .MuiDataGrid-root": {"cursor": "pointer !important"},
+    "& .MuiDataGrid-main": {"cursor": "pointer !important"},
+    "& .MuiDataGrid-virtualScroller": {"cursor": "pointer !important"},
+    "& .MuiDataGrid-virtualScrollerContent": {"cursor": "pointer !important"},
+    "& .MuiDataGrid-virtualScrollerRenderZone": {"cursor": "pointer !important"},
+    "& .MuiDataGrid-row": {"cursor": "pointer !important"},
+    "& .MuiDataGrid-row *": {
+        "cursor": "pointer !important",
+        "userSelect": "none",
+    },
+    "& .MuiDataGrid-cell": {"cursor": "pointer !important"},
+    "& .MuiDataGrid-cellContent": {"cursor": "pointer !important"},
+}
+
+
+def _results_action_bar(state: type[rx.State], prompt: str) -> rx.Component:
+    """Instruction and explicit result deletion controls."""
+    return rx.hstack(
+        rx.box(
+            prompt,
+            flex="1",
+            padding="6px 10px",
+            border="1px solid var(--blue-6)",
+            border_radius="var(--radius-2)",
+            background="var(--blue-2)",
+            color="var(--blue-11)",
+            font_size="var(--font-size-1)",
+        ),
+        rx.button(
+            rx.icon("x", size=14),
+            "Remove selected",
+            on_click=state.remove_selected_result,
+            size="1",
+            variant="soft",
+            color_scheme="orange",
+        ),
+        rx.button(
+            rx.icon("trash-2", size=14),
+            "Clear all",
+            on_click=state.clear_prs_results,
+            size="1",
+            variant="soft",
+            color_scheme="red",
+        ),
+        spacing="2",
+        align="center",
+        width="100%",
+    )
+
+
+def prs_results_clickable_table(
+    state: type[rx.State],
+    table_height: str | None = None,
+) -> rx.Component:
+    """Compact PRS results DataGrid — click a row to chart it.
+
+    Args:
+        state: Concrete state class (must mix in ``PRSComputeStateMixin``).
+        table_height: CSS height for the results table container.
+    """
+    return rx.cond(
+        state.prs_results.length() > 0,  # type: ignore[operator]
+        rx.vstack(
+            _results_action_bar(
+                state,
+                "Select PRS result above to view its distribution.",
+            ),
+            rx.box(
+                data_grid_scroll_container(
+                    data_grid(
+                        rows=state.prs_results_rows,
+                        columns=state.prs_results_columns,
+                        column_grouping_model=state.prs_results_column_groups,
+                        row_id_field="id",
+                        pagination=False,
+                        hide_footer=True,
+                        density="standard",
+                        height="100%",
+                        row_height=52,
+                        column_header_height=40,
+                        disable_row_selection_on_click=True,
+                        on_row_click=state.select_prs_result,
+                        sx=_CLICKABLE_ROW_SX,
+                    ),
+                ),
+                height=table_height or state.prs_results_table_height,
+                width="100%",
+                overflow="hidden",
+                style=_CLICKABLE_GRID_WRAPPER_STYLE,
+            ),
+            spacing="1",
+            width="100%",
+        ),
+    )
+
+
+def trait_results_clickable_table(
+    state: type[rx.State],
+    table_height: str | None = None,
+) -> rx.Component:
+    """Compact trait summary DataGrid — click a row to chart it.
+
+    Args:
+        state: Concrete state class (must mix in ``PRSComputeStateMixin``).
+        table_height: CSS height for the trait table container.
+    """
+    return rx.cond(
+        (state.prs_results.length() > 0) & (state.prs_view_mode == "grouped"),  # type: ignore[operator]
+        rx.vstack(
+            _results_action_bar(
+                state,
+                "Select PRS result above to view the trait distribution.",
+            ),
+            rx.box(
+                data_grid_scroll_container(
+                    data_grid(
+                        rows=state.trait_summary_rows,
+                        columns=state.trait_summary_columns,
+                        row_id_field="id",
+                        pagination=False,
+                        hide_footer=True,
+                        density="standard",
+                        height="100%",
+                        row_height=52,
+                        column_header_height=40,
+                        disable_row_selection_on_click=True,
+                        on_row_click=state.select_trait_result,
+                        sx=_CLICKABLE_ROW_SX,
+                    ),
+                ),
+                height=table_height or state.trait_results_table_height,
+                width="100%",
+                overflow="hidden",
+                style=_CLICKABLE_GRID_WRAPPER_STYLE,
+            ),
+            spacing="1",
+            width="100%",
+        ),
+    )
+
+
+def prs_results_with_chart(
+    state: type[rx.State],
+    chart_height: int = 400,
+    table_height: str | None = None,
+    show_info_panel: bool = True,
+    show_chart_mode_toggle: bool = True,
+    show_header: bool = True,
+    chart_actions: bool | dict = True,
+) -> rx.Component:
+    """Stacked layout: compact clickable results table + Altair chart panel.
+
+    This is the Altair-based replacement for ``prs_results_table()``
+    (which uses accordion detail panels). The results table shows compact
+    rows; clicking a row populates the always-visible chart panel below.
+
+    Args:
+        state: Concrete state class (must mix in ``PRSComputeStateMixin``).
+        chart_height: Height of the chart panel in pixels.
+        table_height: CSS height of the results table.
+        show_info_panel: Show metrics panel below the chart.
+        show_chart_mode_toggle: Show single/multi-ancestry toggle.
+        show_header: Show the PRS Results header. Workbench callers render a
+            shared header above the active result view.
+        chart_actions: Vega-Embed toolbar config.
+    """
+    return rx.cond(
+        (state.prs_results.length() > 0) & (state.prs_view_mode == "individual"),  # type: ignore[operator]
+        rx.vstack(
+            _prs_disclaimers(state),
+            _prs_interpretation_guide(),
+            _prs_results_header(state, show_view_toggle=False) if show_header else rx.fragment(),
+            prs_results_clickable_table(state, table_height=table_height),
+            prs_results_chart_panel(
+                state,
+                chart_height=chart_height,
+                show_info_panel=show_info_panel,
+                show_chart_mode_toggle=show_chart_mode_toggle,
+                chart_actions=chart_actions,
+            ),
+            spacing="3",
+            width="100%",
+        ),
+    )
+
+
+def trait_results_with_chart(
+    state: type[rx.State],
+    chart_height: int = 400,
+    table_height: str | None = None,
+    show_info_panel: bool = True,
+    chart_actions: bool | dict = True,
+) -> rx.Component:
+    """Stacked layout: compact clickable trait table + Altair chart panel.
+
+    This is the Altair-based replacement for ``trait_summary_table()``
+    (which uses accordion detail panels). The trait table shows compact
+    rows; clicking a row populates the always-visible chart panel below.
+
+    Args:
+        state: Concrete state class (must mix in ``PRSComputeStateMixin``).
+        chart_height: Height of the chart panel in pixels.
+        table_height: CSS height of the trait table.
+        show_info_panel: Show metrics panel below the chart.
+        chart_actions: Vega-Embed toolbar config.
+    """
+    return rx.cond(
+        (state.prs_results.length() > 0) & (state.prs_view_mode == "grouped"),  # type: ignore[operator]
+        rx.vstack(
+            trait_results_clickable_table(state, table_height=table_height),
+            trait_results_chart_panel(
+                state,
+                chart_height=chart_height,
+                show_info_panel=show_info_panel,
+                chart_actions=chart_actions,
+            ),
+            spacing="3",
+            width="100%",
+        ),
+    )
+
+
 def prs_shared_build_bar(source_state: type[rx.State]) -> rx.Component:
     """Genome-build selector owned by a shared genotype source.
 
@@ -880,26 +1428,24 @@ def prs_shared_build_bar(source_state: type[rx.State]) -> rx.Component:
 
 def _workbench_mode_controls(state: type[rx.State]) -> rx.Component:
     """Per-mode controls (engine, ancestry, harmonized) for a consumer state."""
-    return rx.hstack(
-        prs_engine_selector(state),
-        rx.separator(orientation="vertical", size="2"),
+    return rx.vstack(
+        rx.hstack(
+            prs_engine_selector(state),
+            rx.separator(orientation="vertical", size="2"),
+            rx.checkbox(
+                "Include harmonized scores",
+                checked=state.include_harmonized,
+                on_change=state.set_include_harmonized,
+                size="2",
+            ),
+            spacing="4",
+            align="center",
+            wrap="wrap",
+            width="100%",
+        ),
         prs_ancestry_selector(state),
-        rx.separator(orientation="vertical", size="2"),
-        rx.checkbox(
-            "Include harmonized scores",
-            checked=state.include_harmonized,
-            on_change=state.set_include_harmonized,
-            size="2",
-        ),
-        rx.checkbox(
-            "Refresh reference/audit cache",
-            checked=state.refresh_reference_cache_before_compute,
-            on_change=state.set_refresh_reference_cache_before_compute,
-            size="2",
-        ),
-        spacing="4",
-        align="center",
-        wrap="wrap",
+        spacing="3",
+        align="start",
         width="100%",
     )
 
@@ -971,16 +1517,21 @@ def _workbench_results(
     results_table_kwargs: dict[str, Any] | None,
     trait_summary_kwargs: dict[str, Any] | None,
 ) -> rx.Component:
-    """Progress, results header, and the active workbench result table."""
-    table = (
-        trait_summary_table(state, **(trait_summary_kwargs or {}))
+    """Progress, results header, and the active workbench result view.
+
+    Uses the Altair-based click-to-select layout: compact clickable table
+    on top + always-visible chart panel below.
+    """
+    individual_kwargs = {**(results_table_kwargs or {}), "show_header": False}
+    result_view = (
+        trait_results_with_chart(state, **(trait_summary_kwargs or {}))
         if view_mode == "grouped"
-        else prs_results_table(state, **(results_table_kwargs or {}))
+        else prs_results_with_chart(state, **individual_kwargs)
     )
     return rx.fragment(
         prs_progress_section(state),
         _prs_results_header(state, show_view_toggle=False),
-        table,
+        result_view,
     )
 
 

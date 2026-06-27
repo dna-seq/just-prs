@@ -4,7 +4,7 @@ from pathlib import Path
 
 import polars as pl
 import polars_bio as pb
-from eliot import Message, start_action
+from eliot import start_action
 from pydantic import BaseModel, Field
 
 
@@ -124,7 +124,7 @@ def normalize_vcf(
         vcf_path=str(vcf_path),
         output_path=str(output_path),
         format_fields=format_fields,
-    ):
+    ) as action:
         lf = pb.scan_vcf(
             str(vcf_path),
             info_fields=[],
@@ -192,7 +192,7 @@ def normalize_vcf(
         if config.sex is not None and config.sex.lower() == "female":
             chr_y_count = df.filter(pl.col("chrom") == "Y").height
             if chr_y_count > 0:
-                Message.log(
+                action.log(
                     message_type="vcf:chrY_warning_female",
                     chr_y_variants=chr_y_count,
                     note="chrY variants found for a female sample. They are kept but may indicate sample mix-up.",
@@ -201,7 +201,7 @@ def normalize_vcf(
         output_path.parent.mkdir(parents=True, exist_ok=True)
         df.write_parquet(output_path, compression="zstd")
 
-        Message.log(
+        action.log(
             message_type="vcf:normalize_complete",
             rows=df.height,
             columns=df.columns,

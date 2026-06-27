@@ -14,7 +14,7 @@ import os
 import urllib.parse
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import polars as pl
 import reflex as rx
@@ -30,6 +30,14 @@ from just_prs.prs import PRSEngine, compute_prs, compute_prs_duckdb
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.reference import SUPERPOPULATIONS
 from just_prs.scoring import resolve_cache_dir
+from just_prs.viz import (
+    build_prs_ai_prompt,
+    plot_prs_bell_curve,
+    plot_prs_multi_ancestry,
+    plot_trait_scores,
+    trait_report_html,
+    _std_bell_curve_data,
+)
 
 SHEET_NAMES: list[str] = list(METADATA_FILES.keys())
 
@@ -63,6 +71,67 @@ SUPERPOPULATION_LABELS: dict[str, str] = {
     "EUR": "European",
     "SAS": "South Asian",
 }
+
+_RESULT_GRID_ROW_HEIGHT_PX = 52
+_RESULT_GRID_CHROME_HEIGHT_PX = 66
+_RESULT_GRID_GROUP_HEADER_HEIGHT_PX = 40
+
+
+def result_grid_height(row_count: int, max_visible_rows: int, grouped_headers: bool = False) -> str:
+    """Return a CSS height that fits rows, headers, borders, and scrollbars."""
+    visible_rows = min(max(row_count, 1), max_visible_rows)
+    header_height = _RESULT_GRID_CHROME_HEIGHT_PX
+    if grouped_headers:
+        header_height += _RESULT_GRID_GROUP_HEADER_HEIGHT_PX
+    return f"{header_height + visible_rows * _RESULT_GRID_ROW_HEIGHT_PX}px"
+
+
+def native_superpopulation_from_ancestry(ancestry: str | None, fallback: str = "EUR") -> str:
+    """Map PGS Catalog broad ancestry text to a 1000G superpopulation code."""
+    text = (ancestry or "").strip().lower()
+    fallback_code = fallback if fallback in SUPERPOPULATIONS else "EUR"
+    if not text:
+        return fallback_code
+    if any(term in text for term in ("multi", "multiple", "mixed", "other", "not reported")):
+        return fallback_code
+    if "south asian" in text or "sas" in text:
+        return "SAS"
+    if "east asian" in text or "eas" in text or "chinese" in text or "japanese" in text or "korean" in text:
+        return "EAS"
+    if "afric" in text or "afr" in text:
+        return "AFR"
+    if "hispanic" in text or "latin" in text or "admixed american" in text or "american" in text or "amr" in text:
+        return "AMR"
+    if "europe" in text or "eur" in text or "white" in text or "caucasian" in text:
+        return "EUR"
+    return fallback_code
+
+
+def reference_population_codes(
+    primary: str | None,
+    selected: Iterable[str],
+) -> list[str]:
+    """Return a de-duplicated list of reference populations to display."""
+    codes: list[str] = []
+    for code in [primary or "", *selected]:
+        normalized = str(code).upper()
+        if normalized in SUPERPOPULATIONS and normalized not in codes:
+            codes.append(normalized)
+    return codes
+
+
+def pgs_native_superpopulation(
+    best_perf_df: pl.DataFrame,
+    pgs_id: str,
+    fallback: str = "EUR",
+) -> str:
+    """Infer the closest 1000G reference population for a PGS model."""
+    if "pgs_id" not in best_perf_df.columns or "ancestry_broad" not in best_perf_df.columns:
+        return fallback if fallback in SUPERPOPULATIONS else "EUR"
+    rows = best_perf_df.filter(pl.col("pgs_id") == pgs_id).select("ancestry_broad")
+    if rows.height == 0:
+        return fallback if fallback in SUPERPOPULATIONS else "EUR"
+    return native_superpopulation_from_ancestry(rows.item(0, 0), fallback=fallback)
 
 
 def _resolve_cache_dir() -> Path:
@@ -441,30 +510,47 @@ def _unique_nonempty_values(rows: list[dict[str, Any]], field: str) -> list[str]
     return values
 
 
+def _merge_prs_results(existing: list[dict], new_rows: list[dict]) -> list[dict]:
+    """Prepend new PRS rows while replacing older rows for the same PGS ID."""
+    new_ids = {str(row.get("pgs_id") or "") for row in new_rows if row.get("pgs_id")}
+    preserved = [
+        row
+        for row in existing
+        if str(row.get("pgs_id") or "") not in new_ids
+    ]
+    return [*new_rows, *preserved]
+
+
+def _concise_trait_label(value: str) -> str:
+    """Collapse ontology labels that have an appended reported-trait alias list."""
+    label = value.strip()
+    if not label.endswith(")"):
+        return label
+
+    for idx in (pos for pos in range(len(label)) if label.startswith(" (", pos)):
+        suffix = label[idx + 2:-1]
+        if ";" in suffix or suffix.startswith("+") or " more" in suffix:
+            return label[:idx].strip()
+    return label
+
+
 def _trait_group_display_label(rows: list[dict[str, Any]]) -> tuple[str, list[str]]:
     """Build an honest label for a grouped trait summary row.
 
     PGS Catalog can map several reported traits to one ontology term.  The
-    grouped result is ontology-level, so the title should not pretend the
-    aggregate represents only whichever reported trait happened to sort first.
+    grouped result is ontology-level, so keep the visible title concise and
+    carry the reported aliases separately for the detail panel.
     """
     efo_labels = _unique_nonempty_values(rows, "trait_efo")
     reported_traits = _unique_nonempty_values(rows, "trait")
-    base_label = (
-        efo_labels[0]
+    label = (
+        _concise_trait_label(efo_labels[0])
         if efo_labels
-        else reported_traits[0]
+        else _concise_trait_label(reported_traits[0])
         if reported_traits
         else "Unlabeled trait"
     )
-    if len(reported_traits) <= 1:
-        return base_label, reported_traits
-
-    shown_traits = reported_traits[:4]
-    suffix = "; ".join(shown_traits)
-    if len(reported_traits) > len(shown_traits):
-        suffix = f"{suffix}; +{len(reported_traits) - len(shown_traits)} more"
-    return f"{base_label} ({suffix})", reported_traits
+    return label, reported_traits
 
 
 def _percentile_tone(percentile: float | None) -> str:
@@ -1039,269 +1125,69 @@ _AI_ASSISTANTS: list[dict[str, str]] = [
     },
 ]
 
-_METHODOLOGY_CONTEXT = (
-    "Methodology: percentiles were computed by scoring the 1000 Genomes Project "
-    "phase 3 reference panel (2,504 individuals, 5 superpopulations: AFR, AMR, "
-    "EAS, EUR, SAS) on GRCh38 harmonized scoring files from the PGS Catalog. "
-    "Each individual's PRS was computed as the sum of effect_weight * dosage "
-    "for matched variants, then percentiles were derived per superpopulation. "
-    "The user's VCF was scored with the same engine and placed on this distribution."
-)
+def _genome_file_label(path: str | None) -> str:
+    """Return a concise label for the genotype source used in AI prompts."""
+    if not path:
+        return ""
+    name = Path(path).name
+    for suffix in (".normalized.parquet", ".parquet"):
+        if name.endswith(suffix):
+            return name[: -len(suffix)] or name
+    return name
 
-_QUALITY_METHODOLOGY = (
-    "Quality scoring: each model gets a synthetic quality score (0-100) based on "
-    "four tiers: T1a (AUROC/C-index reported, no penalty), T1b (Beta only, 0.95 "
-    "penalty), T2 (OR/HR only, 0.90 penalty), T3 (no metric, 0.6 penalty). "
-    "The score also factors cohort size (log-scaled), model coverage, and a "
-    "harmonized-score penalty if coordinates were lifted over. "
-    "Quality labels: High (>=70), Normal (>=50), Moderate (>=30), Low (<30)."
-)
 
-_FORMAT_SINGLE_COMPACT = (
-    "Reply in under 150 words. Start with ONE bold sentence verdict, "
-    "then 2-3 bullet points (percentile meaning, confidence, context). "
-    "Do NOT assume health — this may be a behavioral/physical/cognitive trait. "
-    "PRS is genetic predisposition, not a measurement. Be honest about limitations."
-)
+def _trait_heritability_summary(rows: list[dict[str, Any]]) -> tuple[str, str, list[dict[str, Any]]]:
+    """Summarize distinct h2 estimates across a trait group."""
+    metric_by_key: dict[tuple[str, str, str], dict[str, Any]] = {}
+    detail_parts: list[str] = []
+    text_parts: list[str] = []
 
-_FORMAT_ADDENDUM = (
-    "After the main section, you MAY add a clearly separated section "
-    "(use a horizontal rule ---) with additional commentary: caveats, "
-    "ancestry considerations, trait-specific biology, or links to further reading. "
-    "This optional section has no word limit but should earn its length — "
-    "only include it if you have genuinely useful additional context."
-)
+    for row in rows:
+        metrics = row.get("heritability_metrics", [])
+        if isinstance(metrics, list):
+            for metric in metrics:
+                if not isinstance(metric, dict):
+                    continue
+                key = (
+                    str(metric.get("population") or ""),
+                    str(metric.get("h2") or ""),
+                    str(metric.get("source") or ""),
+                )
+                if key in metric_by_key or not key[1]:
+                    continue
+                metric_by_key[key] = metric
 
-_FORMAT_SINGLE_FULL = (
-    "Structure your response EXACTLY as follows (keep this part under 250 words):\n"
-    "1. **Verdict** — one bold sentence (e.g. 'Your genetic score for [trait] is "
-    "moderately elevated (74th percentile) with moderate confidence.')\n"
-    "2. **Key numbers** — 2-4 bullet points: percentile meaning, match quality, "
-    "model confidence in plain language.\n"
-    "3. **Context** — 1-2 sentences: what this trait IS (health, behavioral, "
-    "physical, cognitive — do NOT assume health), how much genetics vs environment "
-    "matters, why PRS is one factor among many.\n"
-    "4. **What to do** — 1-2 sentences: only if actionable (screening for health "
-    "traits). For non-health traits, say no action is needed and why.\n"
-    "Citizen scientist audience — clarity and honesty over length.\n\n"
-    + _FORMAT_ADDENDUM
-)
+        h_text = str(row.get("heritability") or "").strip()
+        if h_text and h_text not in {"N/A", "No mapped h²"} and h_text not in text_parts:
+            text_parts.append(h_text)
+        h_detail = str(row.get("heritability_detail") or "").strip()
+        if h_detail and h_detail not in detail_parts:
+            detail_parts.append(h_detail)
 
-_FORMAT_TRAIT_COMPACT = (
-    "Reply in under 150 words. Start with ONE bold sentence verdict about the "
-    "combined result, then 3 bullet points: model agreement, percentile meaning, "
-    "confidence level. Do NOT assume health — this may be a non-health trait. "
-    "PRS is genetic predisposition, not a measurement. Be honest about limitations."
-)
-
-_FORMAT_TRAIT_FULL = (
-    "Structure your response EXACTLY as follows (keep this part under 300 words):\n"
-    "1. **Verdict** — one bold sentence (e.g. 'Five models consistently place your "
-    "[trait] score in the top 10% with moderate confidence.')\n"
-    "2. **Model agreement** — 2-3 bullet points: do models agree, percentile "
-    "spread, which model is best and why.\n"
-    "3. **What the percentile means** — 1-2 sentences in plain language. This is "
-    "a genetic predisposition score, not a measurement of the trait itself.\n"
-    "4. **Confidence** — 1-2 sentences: combine model coverage, quality tier, and "
-    "number of high-quality models into an honest statement.\n"
-    "5. **Context & actions** — 1-2 sentences: what this trait IS (health, "
-    "behavioral, physical, cognitive — do NOT assume health), and whether any "
-    "action makes sense. For non-health traits, say no action is needed.\n"
-    "Citizen scientist audience — clarity and honesty over length.\n\n"
-    + _FORMAT_ADDENDUM
-)
+    metrics = list(metric_by_key.values())
+    if metrics:
+        parts = [
+            f"{metric.get('population', 'Population')} h²={metric.get('h2', 'N/A')}"
+            + (f" ({metric.get('source')})" if metric.get("source") else "")
+            for metric in metrics[:4]
+        ]
+        if len(metrics) > 4:
+            parts.append(f"+{len(metrics) - 4} more")
+        return "; ".join(parts), " | ".join(detail_parts), metrics
+    if text_parts:
+        return " | ".join(text_parts[:3]), " | ".join(detail_parts), []
+    return "No mapped h²", "No mapped population-level heritability estimate.", []
 
 
 def _get_char_limit(assistant: dict[str, str]) -> int:
     return int(os.environ.get(assistant["limit_env"], assistant["default_limit"]))
 
 
-def _build_score_ai_prompt(row: dict[str, Any], limit: int) -> str:
-    pgs_id = str(row.get("pgs_id") or "")
-    trait = str(row.get("trait") or "unknown trait")
-    efo = str(row.get("trait_efo_id") or "")
-    pct = row.get("percentile", "")
-    score = row.get("score", "")
-    match_rate = row.get("match_rate", "")
-    quality = str(row.get("quality_label") or "N/A")
-    sq = row.get("synthetic_quality", "")
-    auroc = row.get("auroc", "")
-    abs_risk = str(row.get("absolute_risk_text") or row.get("absolute_risk") or "")
-    effect = str(row.get("effect_size") or "")
-    classification = str(row.get("classification") or "")
-    ancestry = str(row.get("ancestry") or "")
-    heritability = str(row.get("heritability") or "")
-    variants_matched = row.get("variants_matched", "")
-    variants_total = row.get("variants_total", "")
-    variants_observed = int(row.get("variants_observed") or 0)
-    variants_assumed_hom_ref = int(row.get("variants_assumed_hom_ref") or 0)
-    variants_unscorable_absent = int(row.get("variants_unscorable_absent") or 0)
-    variants_no_call = int(row.get("variants_no_call") or 0)
-    method = str(row.get("percentile_method") or "")
-    reference_audit_status = str(row.get("reference_audit_status") or "")
-    reference_audit_issues = _reference_audit_issue_text(str(row.get("reference_audit_issues") or ""))
-    is_harmonized = row.get("is_harmonized", False)
-    risk_agreement = str(row.get("risk_agreement") or "")
-    publication_label = _publication_display_label(row)
-
-    lines = [
-        f"Interpret this Polygenic Risk Score (PRS) result for a citizen scientist.",
-        "",
-        f"Trait: {trait}" + (f" (EFO: {efo})" if efo else ""),
-        f"PGS ID: {pgs_id}  https://www.pgscatalog.org/score/{pgs_id}/",
-    ]
-    lines.extend(_source_link_prompt_lines([row], [pgs_id]))
-    lines.append("")
-    if pct:
-        lines.append(f"Percentile: {pct} (method: {method})")
-    if reference_audit_status in {"warning", "error"}:
-        lines.append(
-            f"Reference percentile audit status: {reference_audit_status}. "
-            f"Issues: {reference_audit_issues or 'see audit sidecar'}."
-        )
-    if score:
-        lines.append(f"Raw PRS value: {score}")
-    if variants_matched and variants_total:
-        lines.append(
-            f"Model coverage: {variants_matched}/{variants_total} markers found "
-            f"in this genome file ({match_rate}%). Explain that low coverage "
-            "means the score used only part of the PRS model."
-        )
-        if variants_unscorable_absent or variants_assumed_hom_ref or variants_no_call:
-            lines.append(
-                "Coverage breakdown: "
-                f"{variants_observed} observed, "
-                f"{variants_assumed_hom_ref} safely inferred as homozygous-reference, "
-                f"{variants_unscorable_absent} unavailable because the reference allele was unknown, "
-                f"{variants_no_call} present but no-called."
-            )
-    elif match_rate:
-        lines.append(f"Model coverage: {match_rate}%")
-    if publication_label != "Publication metadata unavailable":
-        lines.append(f"Source publication: {publication_label}")
-    lines.append(f"Quality tier: {quality}" + (f" (synthetic score: {sq}/100)" if sq else ""))
-    if auroc and str(auroc) != "N/A":
-        lines.append(f"AUROC: {auroc}")
-    if effect:
-        lines.append(f"Effect size: {effect}")
-    if classification:
-        lines.append(f"Classification metric: {classification}")
-    if abs_risk and abs_risk != "N/A":
-        lines.append(f"Absolute risk: {abs_risk}")
-    if risk_agreement:
-        lines.append(f"Risk method agreement: {risk_agreement}")
-    if ancestry:
-        lines.append(f"Evaluation ancestry: {ancestry}")
-    if heritability and heritability != "N/A":
-        lines.append(f"Heritability (h²): {heritability}")
-    if is_harmonized:
-        orig = str(row.get("original_genome_build", "") or "")
-        lines.append(
-            f"Note: harmonized score — coordinates lifted over from {orig or 'another build'} "
-            "to GRCh38. Liftover is never a complete, 100%-reliable remap, so some variants are "
-            "dropped or mismapped and coverage/percentile carry extra uncertainty."
-        )
-    if row.get("build_mismatch"):
-        detected = str(row.get("detected_genome_build", "") or "a different build")
-        lines.append(
-            f"Warning: the uploaded VCF was detected as {detected} but scored on GRCh38 — "
-            "match rate and percentile may be unreliable due to a genome-build mismatch."
-        )
-    lines.append("")
-    if limit >= 3000:
-        lines.append(_QUALITY_METHODOLOGY)
-        lines.append("")
-        lines.append(_METHODOLOGY_CONTEXT)
-        lines.append("")
-        lines.append(_FORMAT_SINGLE_FULL)
-    elif limit >= 1500:
-        lines.append(_FORMAT_SINGLE_FULL)
-    else:
-        lines.append(_FORMAT_SINGLE_COMPACT)
-    prompt = "\n".join(lines)
-    if len(prompt) > limit:
-        prompt = prompt[:limit - 3] + "..."
-    return prompt
-
-
-def _build_trait_ai_prompt(row: dict[str, Any], limit: int) -> str:
-    trait = str(row.get("trait") or "unknown trait")
-    efo = str(row.get("trait_efo_id") or "")
-    n_models = row.get("n_models", 0)
-    n_usable = row.get("usable_models", 0)
-    typical = row.get("typical_percentile", "N/A")
-    consistency = str(row.get("consistency") or "")
-    signal = str(row.get("overall_signal") or "")
-    best_id = str(row.get("best_pgs_id") or "")
-    best_pctl = row.get("best_model_pctl", "N/A")
-    best_risk = str(row.get("best_absolute_risk") or "N/A")
-    risk_vs_avg = str(row.get("risk_vs_average") or "N/A")
-    best_quality = str(row.get("best_quality") or "N/A")
-    pct_range = str(row.get("percentile_range") or "N/A")
-    pct_std = row.get("percentile_std", "N/A")
-    reliability = str(row.get("reliability") or "")
-    best_match = row.get("best_match_rate", "")
-    high_q = row.get("high_confidence_models", 0)
-    high_q_median = row.get("high_confidence_median", "N/A")
-    outlier_ids = str(row.get("outlier_ids") or "")
-    pgs_ids = str(row.get("pgs_ids") or "")
-    pgs_id_list = [
-        pgs_id.strip()
-        for pgs_id in pgs_ids.split(",")
-        if pgs_id.strip()
-    ]
-
-    lines = [
-        f"Interpret these combined Polygenic Risk Score (PRS) results "
-        f"for \"{trait}\"" + (f" (EFO: {efo})" if efo else "") + ".",
-        "",
-        f"Models computed: {n_models} total, {n_usable} usable (>=50% model coverage)",
-        f"PGS IDs: {pgs_ids}",
-    ]
-    lines.extend(_source_link_prompt_lines([], pgs_id_list, str(row.get("publication_links") or "")))
-    lines.append("")
-    if best_id:
-        lines.append(
-            f"Best model: {best_id} (pctl: {best_pctl}, quality: {best_quality})"
-            f"  https://www.pgscatalog.org/score/{best_id}/"
-        )
-    lines.append(f"Median percentile (usable): {typical}")
-    lines.append(f"Percentile range: {pct_range} (SD: {pct_std})")
-    lines.append(f"Consistency: {consistency}")
-    lines.append(f"Overall signal: {signal}")
-    if reliability:
-        lines.append(f"Reliability: {reliability}")
-    if best_match:
-        lines.append(f"Best model coverage: {best_match:.1f}%")
-    lines.append(f"High-quality models: {high_q}" + (f" (median pctl: {high_q_median})" if high_q else ""))
-    if outlier_ids:
-        lines.append(f"Outlier models: {outlier_ids}")
-    if best_risk and best_risk != "N/A":
-        lines.append(f"Absolute risk (best model): {best_risk}")
-    if risk_vs_avg and risk_vs_avg != "N/A":
-        lines.append(f"Risk vs population average: {risk_vs_avg}")
-    lines.append("")
-    if limit >= 3000:
-        lines.append(_QUALITY_METHODOLOGY)
-        lines.append("")
-        lines.append(_METHODOLOGY_CONTEXT)
-        lines.append("")
-        lines.append(_FORMAT_TRAIT_FULL)
-    elif limit >= 1500:
-        lines.append(_FORMAT_TRAIT_FULL)
-    else:
-        lines.append(_FORMAT_TRAIT_COMPACT)
-    prompt = "\n".join(lines)
-    if len(prompt) > limit:
-        prompt = prompt[:limit - 3] + "..."
-    return prompt
-
-
-def _build_ai_links(prompt_fn: Any, row: dict[str, Any]) -> list[dict[str, Any]]:
+def _build_ai_links(prompt_kind: Literal["score", "trait_summary"], row: dict[str, Any]) -> list[dict[str, Any]]:
     links: list[dict[str, Any]] = []
     for assistant in _AI_ASSISTANTS:
         limit = _get_char_limit(assistant)
-        prompt = prompt_fn(row, limit)
+        prompt = build_prs_ai_prompt(prompt_kind, row=row, limit=limit)
         encoded = urllib.parse.quote(prompt, safe="")
         url = assistant["base_url"] + encoded
         link: dict[str, Any] = {
@@ -1313,7 +1199,7 @@ def _build_ai_links(prompt_fn: Any, row: dict[str, Any]) -> list[dict[str, Any]]
             link["iconUrl"] = assistant["iconUrl"]
         links.append(link)
     other_limit = int(os.environ.get("PRS_AI_OTHER_MAX_CHARS", "6000"))
-    other_prompt = prompt_fn(row, other_limit)
+    other_prompt = build_prs_ai_prompt(prompt_kind, row=row, limit=other_limit)
     links.append({
         "label": "Other LLMs ⓘ",
         "copyText": other_prompt,
@@ -1423,14 +1309,37 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     prs_genotypes_path: str = ""
     selected_ancestry: str = "EUR"
     compute_all_populations: bool = False
+    selected_reference_populations: list[str] = []
+    show_reference_AFR: bool = False
+    show_reference_AMR: bool = False
+    show_reference_EAS: bool = False
+    show_reference_EUR: bool = False
+    show_reference_SAS: bool = False
     show_all_risk_estimates: bool = True
     include_harmonized: bool = True
     refresh_reference_cache_before_compute: bool = False
     prs_catalog_query: str = ""
 
+    # --- Chart selection state (Altair / Vega-Lite) ---
+    selected_result_id: str = ""
+    selected_result_spec: dict = {}
+    selected_result_html: str = ""
+    selected_result_info: dict = {}
+    chart_mode: str = "single"
+
     _scores_initialized: bool = False
     _compute_scores_lf: pl.LazyFrame | None = None
     _prs_genotypes_lf: pl.LazyFrame | None = None
+
+    @rx.var
+    def prs_results_table_height(self) -> str:
+        """CSS height for the clickable PRS result table."""
+        return result_grid_height(len(self.prs_results_rows), 6, grouped_headers=True)
+
+    @rx.var
+    def trait_results_table_height(self) -> str:
+        """CSS height for the clickable trait result table."""
+        return result_grid_height(len(self.trait_summary_rows), 4)
 
     def set_prs_view_mode(self, mode: str | list[str]) -> None:
         """Switch between 'individual' and 'grouped' result views."""
@@ -1453,6 +1362,71 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     def set_compute_all_populations(self, value: bool) -> None:
         """Enable/disable percentile lookup for all available superpopulations."""
         self.compute_all_populations = bool(value)
+        self.selected_reference_populations = list(SUPERPOPULATIONS) if self.compute_all_populations else []
+        self._sync_reference_population_flags()
+        if self.prs_results:
+            self._build_prs_results_grid()
+
+    def set_reference_population(self, code: str, value: bool) -> None:
+        """Toggle a 1000G population as an explicit comparison population."""
+        normalized = code.upper()
+        if normalized not in SUPERPOPULATIONS:
+            return
+        selected = [sp for sp in self.selected_reference_populations if sp in SUPERPOPULATIONS]
+        if value and normalized not in selected:
+            selected.append(normalized)
+        if not value:
+            selected = [sp for sp in selected if sp != normalized]
+        self.selected_reference_populations = selected
+        self.compute_all_populations = len(selected) == len(SUPERPOPULATIONS)
+        self._sync_reference_population_flags()
+        if self.prs_results:
+            self._build_prs_results_grid()
+
+    def set_reference_population_AFR(self, value: bool) -> None:
+        """Toggle African reference percentiles."""
+        self.set_reference_population("AFR", value)
+
+    def set_reference_population_AMR(self, value: bool) -> None:
+        """Toggle American reference percentiles."""
+        self.set_reference_population("AMR", value)
+
+    def set_reference_population_EAS(self, value: bool) -> None:
+        """Toggle East Asian reference percentiles."""
+        self.set_reference_population("EAS", value)
+
+    def set_reference_population_EUR(self, value: bool) -> None:
+        """Toggle European reference percentiles."""
+        self.set_reference_population("EUR", value)
+
+    def set_reference_population_SAS(self, value: bool) -> None:
+        """Toggle South Asian reference percentiles."""
+        self.set_reference_population("SAS", value)
+
+    def clear_reference_populations(self) -> None:
+        """Show only the per-PRS native reference population."""
+        self.selected_reference_populations = []
+        self.compute_all_populations = False
+        self._sync_reference_population_flags()
+        if self.prs_results:
+            self._build_prs_results_grid()
+
+    def select_all_reference_populations(self) -> None:
+        """Show every available 1000G superpopulation."""
+        self.selected_reference_populations = list(SUPERPOPULATIONS)
+        self.compute_all_populations = True
+        self._sync_reference_population_flags()
+        if self.prs_results:
+            self._build_prs_results_grid()
+
+    def _sync_reference_population_flags(self) -> None:
+        """Keep checkbox booleans aligned with the selected comparison list."""
+        selected = set(self.selected_reference_populations)
+        self.show_reference_AFR = "AFR" in selected
+        self.show_reference_AMR = "AMR" in selected
+        self.show_reference_EAS = "EAS" in selected
+        self.show_reference_EUR = "EUR" in selected
+        self.show_reference_SAS = "SAS" in selected
 
     def set_show_all_risk_estimates(self, value: bool) -> None:
         """Toggle multi-method absolute risk estimate display."""
@@ -1679,6 +1653,15 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         columns = [
             ColumnDef(field="trait", header_name="Trait", min_width=180, flex=1),
             ColumnDef(field="trait_efo_id", header_name="EFO ID", min_width=140),
+            ColumnDef(
+                field="heritability",
+                header_name="Heritability (h²)",
+                min_width=260,
+                description=(
+                    "Population-level heritability: the fraction of trait variation "
+                    "statistically associated with genetic differences in a studied population."
+                ),
+            ),
             ColumnDef(
                 field="reliability", header_name="Data Reliability", min_width=160,
                 cell_renderer_type="badge",
@@ -2004,6 +1987,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             )
             best_risk = str(best_row.get("absolute_risk") or "N/A")
             best_pgs_id = str(best_row.get("pgs_id", ""))
+            heritability, heritability_detail, heritability_metrics = _trait_heritability_summary(rows)
+            genome_file = _genome_file_label(self.prs_genotypes_path)
             best_auroc_str = str(best_row.get("auroc", ""))
             best_auroc: float | None = None
             if best_auroc_str:
@@ -2158,6 +2143,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "subtext": f"across {len(pct_values)} usable model(s)" if usable_pct_by_id else "across all models (none usable)",
                 })
             headline_metrics.append({
+                "label": "Heritability (h²)",
+                "value": heritability,
+                "tone": "neutral" if heritability != "No mapped h²" else "warning",
+                "subtext": (
+                    "Population-level heredity context, not an individual causal percentage"
+                    if heritability != "No mapped h²"
+                    else "No mapped population-level estimate for this trait"
+                ),
+            })
+            headline_metrics.append({
                 "label": "Models",
                 "value": f"{n_usable} usable / {len(rows)} total",
                 "tone": "danger" if n_usable == 0 else "warning" if n_usable < len(rows) else "neutral",
@@ -2193,7 +2188,6 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "tone": "warning" if best_user_pct is not None and pop_avg_pct is not None and best_user_pct > pop_avg_pct else "neutral",
                     "subtext": f"pop. avg: {pop_avg_pct:.1f}%" if pop_avg_pct is not None else "best model",
                 })
-
             if len(rows) > 1:
                 worst_pgs_id = str(worst_row.get("pgs_id", ""))
                 worst_sq = float(worst_row.get("synthetic_quality") or 0)
@@ -2305,6 +2299,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "best_absolute_risk": best_risk,
                 "population_average": f"{pop_avg_pct:.1f}%" if pop_avg_pct is not None else "N/A",
                 "risk_vs_average": risk_vs_average,
+                "risk_agreement": str(best_row.get("risk_agreement") or ""),
+                "heritability": heritability,
+                "heritability_detail": heritability_detail,
+                "heritability_metrics": heritability_metrics,
+                "genome_file": genome_file,
                 "best_model_pctl": round(best_model_pctl, 1) if best_model_pctl is not None else "N/A",
                 "highest_percentile": round(max_pct, 1) if max_pct is not None else "N/A",
                 "typical_percentile": round(median_pct, 1) if median_pct is not None else "N/A",
@@ -2339,7 +2338,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "outlier_summary": outlier_detail,
             })
             summary_rows[-1]["ai_ask"] = json.dumps(
-                _build_ai_links(_build_trait_ai_prompt, summary_rows[-1])
+                _build_ai_links("trait_summary", summary_rows[-1])
             )
 
         self.trait_summary_rows = summary_rows
@@ -2380,6 +2379,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ),
             ColumnDef(field="trait", header_name="Trait", min_width=150, flex=1),
             ColumnDef(
+                field="heritability",
+                header_name="Heritability (h²)",
+                min_width=260,
+                description=(
+                    "Population-level heritability for the trait, not an individual causal percentage."
+                ),
+            ),
+            ColumnDef(
                 field="match_reliability", header_name="Reliability", min_width=150,
                 cell_renderer_type="badge",
                 cell_renderer_config={
@@ -2413,8 +2420,13 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             ),
         ]
 
-        if self.compute_all_populations:
-            for sp in SUPERPOPULATIONS:
+        comparison_populations = [
+            sp
+            for sp in self.selected_reference_populations
+            if sp in SUPERPOPULATIONS
+        ]
+        if comparison_populations:
+            for sp in comparison_populations:
                 fg, bg = _POP_COLORS[sp]
                 cols.append(ColumnDef(
                     field=f"pct_{sp}_num",
@@ -2429,8 +2441,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 ))
             self.prs_results_column_groups = [{
                 "groupId": "pop_percentiles",
-                "headerName": "Percentiles by Population (1000G)",
-                "children": [{"field": f"pct_{sp}_num"} for sp in SUPERPOPULATIONS],
+                "headerName": "Comparison Percentiles (1000G)",
+                "children": [{"field": f"pct_{sp}_num"} for sp in comparison_populations],
             }]
         else:
             self.prs_results_column_groups = []
@@ -2584,17 +2596,26 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
             percentile_items: list[dict[str, Any]] = []
             percentile_outliers: list[str] = []
-            if self.compute_all_populations:
-                for sp in SUPERPOPULATIONS:
-                    pct_for_pop = _parse_percent_text(r.get(f"pct_{sp}"))
-                    if pct_for_pop is not None:
-                        percentile_items.append({
-                            "label": SUPERPOPULATION_LABELS.get(sp, sp),
-                            "value": pct_for_pop,
-                            "tone": _percentile_tone(pct_for_pop),
-                        })
-                        if pct_for_pop >= 90 or pct_for_pop < 10:
-                            percentile_outliers.append(SUPERPOPULATION_LABELS.get(sp, sp))
+            primary_pop = str(r.get("selected_ancestry") or self.selected_ancestry)
+            displayed_populations = reference_population_codes(
+                primary_pop,
+                self.selected_reference_populations,
+            )
+            for sp in displayed_populations:
+                pct_for_pop = _parse_percent_text(r.get(f"pct_{sp}"))
+                if pct_for_pop is None and sp == primary_pop and isinstance(pct_num, float):
+                    pct_for_pop = pct_num
+                if pct_for_pop is not None:
+                    label = SUPERPOPULATION_LABELS.get(sp, sp)
+                    if sp == primary_pop:
+                        label = f"{label} (native/default)"
+                    percentile_items.append({
+                        "label": label,
+                        "value": pct_for_pop,
+                        "tone": _percentile_tone(pct_for_pop),
+                    })
+                    if pct_for_pop >= 90 or pct_for_pop < 10:
+                        percentile_outliers.append(SUPERPOPULATION_LABELS.get(sp, sp))
             if not percentile_items and isinstance(pct_num, float):
                 selected_pop = str(r.get("selected_ancestry") or self.selected_ancestry)
                 percentile_items.append({
@@ -2658,6 +2679,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             row_summary = str(r.get("summary") or "").strip()
             if row_summary and row_summary not in chart_takeaway:
                 chart_takeaway = f"{chart_takeaway} {row_summary}"
+            h2_summary, _, _ = _trait_heritability_summary([r])
             percentile_side_items: list[dict[str, Any]] = [
                 {
                     "label": "Your percentile",
@@ -2681,6 +2703,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                         absolute_risk_value,
                         percentile_value,
                         risk_ratio,
+                    ),
+                },
+                {
+                    "label": "Heritability (h²)",
+                    "value": h2_summary,
+                    "tone": "neutral" if h2_summary != "No mapped h²" else "warning",
+                    "subtext": (
+                        "Population-level heredity context"
+                        if h2_summary != "No mapped h²"
+                        else "No mapped population-level estimate"
                     ),
                 },
                 {
@@ -2747,7 +2779,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             percentile_chart = {
                 "score": percentile_value,
                 "scoreLabel": (
-                    f"You: {pct_num:.1f} of 100 ({r.get('selected_ancestry') or self.selected_ancestry})"
+                    f"You: {pct_num:.1f} of 100 ({primary_pop})"
                     if percentile_value is not None
                     else "No percentile"
                 ),
@@ -2770,6 +2802,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                         absolute_risk_value,
                         pct_num if isinstance(pct_num, float) else None,
                         risk_ratio,
+                    ),
+                },
+                {
+                    "label": "Heritability (h²)",
+                    "value": h2_summary,
+                    "tone": "neutral" if h2_summary != "No mapped h²" else "warning",
+                    "subtext": (
+                        "Population-level heredity: trait variation statistically associated with genetics, not a personal causal percentage."
                     ),
                 },
                 {
@@ -3005,6 +3045,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "reference_audit_label": reference_audit_label,
                 "auroc": auroc_num,
                 "quality_label": r.get("quality_label", ""),
+                "heritability": h2_summary,
                 "ancestry": r.get("ancestry", ""),
                 "reference_status": r.get("reference_status", ""),
                 "match_rate": r.get("match_rate", 0),
@@ -3031,7 +3072,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "population_percentiles_chart": percentile_chart,
                 "population_percentiles_summary": chart_takeaway,
                 "result_suggestions": suggestion_badges,
-                "ai_ask": json.dumps(_build_ai_links(_build_score_ai_prompt, r)),
+                "ai_ask": json.dumps(_build_ai_links("score", r)),
             }
 
             if self.show_all_risk_estimates:
@@ -3039,8 +3080,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     field = f"risk_{method_label_key.replace(' ', '_').replace('²', '2').replace('(', '').replace(')', '')}"
                     row[field] = risk_text
 
-            if self.compute_all_populations:
-                for sp in SUPERPOPULATIONS:
+            if comparison_populations:
+                for sp in comparison_populations:
                     val_str = r.get(f"pct_{sp}", "")
                     val_num: float | str = "N/A"
                     if val_str:
@@ -3287,9 +3328,6 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         total = len(self.selected_pgs_ids)
         self.prs_computing = True
         self.prs_progress = 0
-        self.prs_results = []
-        self.trait_summary_rows = []
-        self.trait_summary_visible = False
         self.low_match_warning = False
         self.status_message = f"Computing PRS for {total} score(s)..."  # type: ignore[attr-defined]
         yield
@@ -3370,19 +3408,25 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     genotypes_lf=pre_genotypes,
                 )
 
+            native_ancestry = pgs_native_superpopulation(
+                best_perf_df,
+                pgs_id,
+                fallback=self.selected_ancestry,
+            )
             enriched = enrich_prs_result(
                 result,
                 _catalog,
                 best_perf_df,
                 genome_build=self.genome_build,  # type: ignore[attr-defined]
-                selected_ancestry=self.selected_ancestry,
-                compute_all_populations=self.compute_all_populations,
+                selected_ancestry=native_ancestry,
+                compute_all_populations=True,
                 is_harmonized=harmonized_lookup.get(pgs_id, False),
             )
 
             row = _enriched_to_row_dict(enriched)
             row["trait_efo"] = str(info.get("trait_efo") or "") if info else ""
             row["original_genome_build"] = original_build_lookup.get(pgs_id, "")
+            row["genome_file"] = _genome_file_label(self.prs_genotypes_path)
             row.update(publication_lookup.get(pgs_id, {}))
 
             if result.match_rate < 0.1:
@@ -3390,14 +3434,88 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
             results.append(row)
 
-        self.prs_results = results
+        self.prs_results = _merge_prs_results(self.prs_results, results)
         self._build_prs_results_grid()
-        self.low_match_warning = any_low_match
+        self.low_match_warning = any_low_match or any(
+            float(row.get("match_rate") or 0.0) < 10.0
+            for row in self.prs_results
+        )
         self.prs_computing = False
         self.prs_progress = 100
-        self.status_message = f"Computed {total} PRS score(s)"  # type: ignore[attr-defined]
-        if self.prs_view_mode == "grouped" and results:
+        self.status_message = (
+            f"Added/updated {len(results)} PRS result(s); "
+            f"{len(self.prs_results)} total result(s)."
+        )  # type: ignore[attr-defined]
+        if self.prs_view_mode == "grouped" and self.prs_results:
             self.build_trait_summary()
+
+    def _reset_selected_result(self) -> None:
+        """Clear the selected chart/report state."""
+        self.selected_result_id = ""
+        self.selected_result_spec = {}
+        self.selected_result_html = ""
+        self.selected_result_info = {}
+
+    def clear_prs_results(self) -> None:
+        """Clear all accumulated PRS results."""
+        self.prs_results = []
+        self.prs_results_rows = []
+        self.prs_results_columns = []
+        self.prs_results_column_groups = []
+        self.trait_summary_rows = []
+        self.trait_summary_visible = False
+        self.low_match_warning = False
+        self._reset_selected_result()
+        self.status_message = "Cleared all PRS results."  # type: ignore[attr-defined]
+
+    def remove_selected_result(self) -> None:
+        """Remove the selected PRS result or selected trait group."""
+        if not self.selected_result_id:
+            self.status_message = "Select a result row before removing it."  # type: ignore[attr-defined]
+            return
+
+        removed_ids: set[str] = set()
+        if self.prs_view_mode == "grouped":
+            selected_trait = self.selected_result_id
+            for trait_row in self.trait_summary_rows:
+                trait = str(trait_row.get("trait") or "")
+                if trait != selected_trait:
+                    continue
+                removed_ids = {
+                    pgs_id.strip()
+                    for pgs_id in str(trait_row.get("pgs_ids") or "").split(",")
+                    if pgs_id.strip()
+                }
+                break
+        else:
+            removed_ids = {self.selected_result_id}
+
+        if not removed_ids:
+            self.status_message = "No matching result found to remove."  # type: ignore[attr-defined]
+            return
+
+        before = len(self.prs_results)
+        self.prs_results = [
+            row
+            for row in self.prs_results
+            if str(row.get("pgs_id") or "") not in removed_ids
+        ]
+        removed_count = before - len(self.prs_results)
+        self._reset_selected_result()
+        self._build_prs_results_grid()
+        if self.prs_view_mode == "grouped" and self.prs_results:
+            self.build_trait_summary()
+        else:
+            self.trait_summary_rows = []
+            self.trait_summary_visible = False
+        self.low_match_warning = any(
+            float(row.get("match_rate") or 0.0) < 10.0
+            for row in self.prs_results
+        )
+        self.status_message = (
+            f"Removed {removed_count} PRS result(s); "
+            f"{len(self.prs_results)} result(s) remain."
+        )  # type: ignore[attr-defined]
 
     def download_prs_results_csv(self) -> Any:
         """Build a CSV from prs_results and trigger a browser download."""
@@ -3434,4 +3552,283 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         for row in self.prs_results:
             writer.writerow(row)
         return rx.download(data=buf.getvalue(), filename="prs_results.csv")
+
+    # ------------------------------------------------------------------
+    # Chart selection (Altair / Vega-Lite)
+    # ------------------------------------------------------------------
+
+    def _get_distributions_df(self) -> pl.DataFrame | None:
+        """Load reference distributions for chart rendering."""
+        try:
+            lf = _catalog.reference_distributions(panel="1000g")
+            return lf.collect()
+        except Exception:
+            return None
+
+    def _result_by_pgs_id(self, pgs_id: str) -> dict | None:
+        for r in self.prs_results:
+            if r.get("pgs_id") == pgs_id:
+                return r
+        return None
+
+    def _build_result_info(self, result: dict) -> dict:
+        """Build the info panel dict for a selected result."""
+        pgs_id = result.get("pgs_id", "")
+        info: dict[str, Any] = {
+            "pgs_id": pgs_id,
+            "trait": result.get("trait", ""),
+            "score": result.get("score"),
+            "percentile": result.get("percentile"),
+            "percentile_method": result.get("percentile_method", ""),
+            "quality_label": result.get("quality_label", ""),
+            "match_rate": result.get("match_rate"),
+            "variants_matched": result.get("variants_matched"),
+            "variants_total": result.get("variants_total"),
+            "ancestry": result.get("ancestry", ""),
+            "effect_size": result.get("effect_size", ""),
+            "classification": result.get("classification", ""),
+            "summary": result.get("summary", ""),
+            "absolute_risk_percent": result.get("absolute_risk_percent"),
+            "population_average_percent": result.get("population_average_percent"),
+            "risk_ratio_value": result.get("risk_ratio_value"),
+            "heritability": result.get("heritability"),
+            "heritability_detail": result.get("heritability_detail", ""),
+            "reference_status": result.get("reference_status", ""),
+            "is_harmonized": result.get("is_harmonized", False),
+        }
+        return info
+
+    @staticmethod
+    def _set_container_width(spec: dict) -> dict:
+        """Patch a Vega-Lite spec to use responsive container width."""
+        spec["width"] = "container"
+        if "vconcat" in spec:
+            for sub in spec["vconcat"]:
+                sub["width"] = "container"
+        if "hconcat" in spec:
+            for sub in spec["hconcat"]:
+                sub["width"] = "container"
+        return spec
+
+    def _generate_chart_spec(
+        self, pgs_id: str, result: dict, mode: str = "single"
+    ) -> dict:
+        """Generate a Vega-Lite spec dict for a single PRS result."""
+        dist_df = self._get_distributions_df()
+        if dist_df is None or dist_df.height == 0:
+            return self._generate_default_spec()
+
+        user_score: float | None = None
+        raw_score = result.get("score")
+        if raw_score is not None:
+            try:
+                user_score = float(raw_score)
+            except (ValueError, TypeError):
+                pass
+
+        ancestry = self.selected_ancestry  # type: ignore[attr-defined]
+
+        try:
+            if mode == "multi":
+                chart = plot_prs_multi_ancestry(
+                    pgs_id,
+                    dist_df,
+                    user_score=user_score,
+                    width=560,
+                    height=300,
+                )
+            else:
+                chart = plot_prs_bell_curve(
+                    pgs_id,
+                    dist_df,
+                    user_score=user_score,
+                    ancestry=ancestry,
+                    width=560,
+                    height=300,
+                )
+            return self._set_container_width(chart.to_dict())
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            return self._generate_default_spec()
+
+    def _generate_trait_chart_spec(self, trait_display: str) -> dict:
+        """Generate a Vega-Lite spec dict for a trait group."""
+        dist_df = self._get_distributions_df()
+        if dist_df is None or dist_df.height == 0:
+            return self._generate_default_spec()
+
+        ancestry = self.selected_ancestry  # type: ignore[attr-defined]
+
+        trait_row = None
+        for tr in self.trait_summary_rows:
+            if tr.get("trait") == trait_display:
+                trait_row = tr
+                break
+
+        pgs_ids: set[str] = set()
+        if trait_row and trait_row.get("pgs_ids"):
+            pgs_ids = {pid.strip() for pid in str(trait_row["pgs_ids"]).split(",") if pid.strip()}
+
+        user_results = [
+            r for r in self.prs_results
+            if r.get("pgs_id") in pgs_ids and r.get("score") is not None
+        ] if pgs_ids else [
+            r for r in self.prs_results
+            if r.get("score") is not None
+        ]
+        chart_user_results = []
+        for row in user_results:
+            chart_row = dict(row)
+            absolute_risk_percent = row.get("absolute_risk_percent")
+            population_average_percent = row.get("population_average_percent")
+            chart_row["absolute_risk"] = (
+                float(absolute_risk_percent) / 100.0
+                if isinstance(absolute_risk_percent, int | float)
+                else row.get("absolute_risk")
+            )
+            chart_row["population_prevalence"] = (
+                float(population_average_percent) / 100.0
+                if isinstance(population_average_percent, int | float)
+                else None
+            )
+            chart_row["risk_ratio"] = (
+                float(row["risk_ratio_value"])
+                if isinstance(row.get("risk_ratio_value"), int | float)
+                else None
+            )
+            chart_user_results.append(chart_row)
+
+        display_trait = _concise_trait_label(str(trait_row.get("trait") or trait_display)) if trait_row else _concise_trait_label(trait_display)
+        search_trait = user_results[0].get("trait", "") if user_results else display_trait
+
+        try:
+            chart = plot_trait_scores(
+                search_trait,
+                dist_df,
+                user_results=chart_user_results,
+                ancestry=ancestry,
+                ancestries=["AFR", "AMR", "EAS", "EUR", "SAS"],
+                default_visible_ancestries=[ancestry],
+                title=f"{display_trait} — {len(user_results)} model(s)" if user_results else display_trait,
+                width=560,
+                height=300,
+                show_table=False,
+            )
+            self.selected_result_html = trait_report_html(
+                chart,
+                display_trait,
+                chart_user_results,
+                ancestry,
+                sample_name=_genome_file_label(self.prs_genotypes_path),
+            )
+            return self._set_container_width(chart.to_dict())
+        except Exception:
+            import traceback
+            traceback.print_exc()
+            self.selected_result_html = ""
+            return self._generate_default_spec()
+
+    @staticmethod
+    def _generate_default_spec() -> dict:
+        """Placeholder bell curve spec shown when no result is selected."""
+        import altair as alt
+
+        curve = _std_bell_curve_data(n_points=150)
+        source = alt.Data(values=curve)
+        area = (
+            alt.Chart(source)
+            .mark_area(opacity=0.15, color="#455A64")
+            .encode(
+                x=alt.X("z_score:Q", title="Z-Score"),
+                y=alt.Y("density:Q", title="Density"),
+            )
+        )
+        line = (
+            alt.Chart(source)
+            .mark_line(color="#455A64", strokeWidth=1.5, opacity=0.5)
+            .encode(x="z_score:Q", y="density:Q")
+        )
+        label = (
+            alt.Chart(alt.Data(values=[{"z_score": 0, "density": 0.42, "text": "Select a result to view its distribution"}]))
+            .mark_text(fontSize=14, color="#999")
+            .encode(x="z_score:Q", y="density:Q", text="text:N")
+        )
+        chart = (
+            alt.layer(area, line, label)
+            .properties(width="container", height=300, title="PRS Distribution")
+            .configure_axis(grid=False)
+            .configure_view(strokeWidth=0)
+        )
+        return chart.to_dict()
+
+    @staticmethod
+    def _extract_row_field(event: dict, field: str) -> str:
+        """Extract a field from a MUI DataGrid on_row_click event.
+
+        MUI passes ``{id, row: {field: value, ...}, ...}`` — the actual
+        row data lives under the ``"row"`` key.
+        """
+        row_data = event.get("row") or event
+        return str(row_data.get(field, "") or "")
+
+    def select_prs_result(self, event: dict) -> None:
+        """Handle row click on the PRS results table — generate chart for the selected result."""
+        pgs_id = self._extract_row_field(event, "pgs_id")
+        if not pgs_id:
+            return
+
+        result = self._result_by_pgs_id(pgs_id)
+        if result is None:
+            return
+
+        self.selected_result_id = pgs_id
+        self.selected_result_info = self._build_result_info(result)
+        self.selected_result_html = ""
+        self.selected_result_spec = self._generate_chart_spec(
+            pgs_id, result, mode=self.chart_mode,
+        )
+
+    def select_trait_result(self, event: dict) -> None:
+        """Handle row click on the trait summary table — generate trait chart."""
+        raw_trait = self._extract_row_field(event, "trait")
+        if not raw_trait:
+            return
+
+        trait = _concise_trait_label(raw_trait)
+        self.selected_result_id = trait
+        self.selected_result_info = {"trait": trait}
+
+        trait_row = None
+        for tr in self.trait_summary_rows:
+            row_trait = str(tr.get("trait") or "")
+            if row_trait == raw_trait or _concise_trait_label(row_trait) == trait:
+                trait_row = tr
+                break
+        if trait_row:
+            self.selected_result_info.update({
+                "n_models": trait_row.get("n_models"),
+                "typical_percentile": trait_row.get("typical_percentile"),
+                "best_model_pctl": trait_row.get("best_model_pctl"),
+                "best_pgs_id": trait_row.get("best_pgs_id"),
+                "reliability": trait_row.get("reliability"),
+                "overall_signal": trait_row.get("overall_signal"),
+                "best_absolute_risk": trait_row.get("best_absolute_risk"),
+                "population_average": trait_row.get("population_average"),
+            })
+
+        self.selected_result_html = ""
+        self.selected_result_spec = self._generate_trait_chart_spec(trait)
+
+    def set_chart_mode(self, mode: str | list[str]) -> None:
+        """Toggle between single-ancestry and multi-ancestry chart view."""
+        self.chart_mode = mode if isinstance(mode, str) else (mode[0] if mode else "single")
+        if not self.selected_result_id or not self.prs_results:
+            return
+        result = self._result_by_pgs_id(self.selected_result_id)
+        if result is not None:
+            self.selected_result_html = ""
+            self.selected_result_spec = self._generate_chart_spec(
+                self.selected_result_id, result, mode=mode,
+            )
 

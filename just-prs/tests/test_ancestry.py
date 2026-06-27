@@ -124,6 +124,20 @@ def test_variant_only_vcf_imputes_homref_absent(tmp_path):
     assert res_array.coverage < res.coverage
 
 
+def test_mixture_proportions_populated(tmp_path):
+    """Level-2: infer returns simplex ancestry proportions dominated by the true pop."""
+    md = tmp_path / "ancestry"
+    _info, freqB, p = _build_synthetic_model(md)
+    eas = RNG.binomial(2, freqB[:, None]).astype(np.int8).flatten()
+    res = infer_ancestry(md, _genotypes_lf(eas, p), panel="1000g", build="GRCh38")
+    assert res.mixture_method == "pca_nnls"
+    assert res.mixture is not None
+    assert sum(res.mixture.values()) == pytest.approx(1.0, abs=0.01)
+    assert all(v >= -1e-6 for v in res.mixture.values())
+    # dominant component is the true (EAS) population
+    assert max(res.mixture, key=res.mixture.get) == "EAS"
+
+
 def test_coverage_floor_returns_unknown(tmp_path):
     md = tmp_path / "ancestry"
     _info, freqB, p = _build_synthetic_model(md)

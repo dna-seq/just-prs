@@ -5,7 +5,16 @@ Module `just_prs.ancestry` (vendored FRAPOSA OADP, MIT), `PRSCatalog.infer_ances
 `assess_ancestry_coherence`, `prs ancestry infer|check`, HF sync, and the Dagster
 `ancestry_model_pipeline` (plink2 LD-prune + numpy SVD, `check_ancestry_model_valid`).
 Validated: real 1000G/GRCh38 build → **leave-one-out super-pop accuracy 0.9965** over 53,526
-pruned variants / 2,575 unrelated samples. Stage 2 (Privé Level-2 proportions) remains TODO.
+pruned variants / 2,575 unrelated samples; real WGS samples (anton/livia/newton) → EUR conf
+1.00 at ~99% coverage (after the variant-only hom-ref-absent fix). **Level-2 ancestry
+*proportions* also shipped** via `estimate_proportions` — a pure-numpy simplex-constrained
+least-squares (`mixture_method="pca_nnls"`) of the sample's PC vector onto our own 1000G
+super-population centroids, so proportions share the EUR/EAS/AFR/AMR/SAS vocabulary of the
+percentile panel (e.g. newton → EUR 0.976 / AMR 0.022 / EAS 0.002). This realises Level 2 on
+the coherent in-house model rather than the Privé reference — the **Privé 21-group ingestion is
+deferred** as a finer-resolution refinement (it needs a 1.7 GB GPL-data download, a
+reverse-engineered shrinkage `correction` vector, a QP solver, and GRCh37→38 liftover, and its
+groups roll up to the same continental level anyway).
 
 **Decision: keep it coupled inside `just-prs`** (`just_prs.ancestry`). An earlier draft scoped a
 standalone `just-ancestry` library with input/output interface contracts — that is **dropped for

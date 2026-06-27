@@ -35,6 +35,7 @@ from just_prs.vcf import compute_dosage_expr
 __all__ = [
     "build_ancestry_model",
     "infer_ancestry",
+    "estimate_proportions",
     "load_ancestry_model",
     "artifact_paths",
     "DEFAULT_KNN_K",
@@ -75,6 +76,51 @@ def _knn_predict(
     probs = {str(u): float(c) / float(k) for u, c in zip(uniq, counts)}
     label = str(uniq[int(np.argmax(counts))])
     return label, probs
+
+
+def _project_simplex(v: np.ndarray) -> np.ndarray:
+    """Euclidean projection of ``v`` onto the probability simplex (sum=1, >=0)."""
+    u = np.sort(v)[::-1]
+    css = np.cumsum(u) - 1.0
+    ind = np.arange(1, len(v) + 1)
+    cond = u - css / ind > 0
+    rho = ind[cond][-1]
+    theta = css[cond][-1] / rho
+    return np.maximum(v - theta, 0.0)
+
+
+def _simplex_lstsq(M: np.ndarray, y: np.ndarray, iters: int = 800) -> np.ndarray:
+    """argmin_w ||M w - y||^2 s.t. w >= 0, sum(w) = 1 (pure-numpy projected gradient)."""
+    k = M.shape[1]
+    MtM = M.T @ M
+    Mty = M.T @ y
+    L = float(np.linalg.norm(MtM, 2)) or 1.0
+    eta = 1.0 / L
+    w = np.full(k, 1.0 / k)
+    for _ in range(iters):
+        w = _project_simplex(w - eta * 2.0 * (MtM @ w - Mty))
+    return w
+
+
+def estimate_proportions(
+    ref_pcs: np.ndarray, ref_labels: np.ndarray, pcs: np.ndarray, n_pcs: int | None = None
+) -> dict[str, float]:
+    """PCA-derived ancestry **proportions** (Level 2) for one projected sample.
+
+    Expresses the sample's PC vector ``pcs`` as a non-negative, sum-to-one combination
+    of the reference super-population centroids in PC space (simplex-constrained least
+    squares). An admixed individual lies between clusters, so this recovers fractional
+    ancestry (e.g. ``{EUR: 0.63, EAS: 0.27, SAS: 0.10}``) over the model's own
+    super-population vocabulary — coherent with the percentile panel. Approximate
+    (projection-space, not haplotype admixture); ``mixture_method="pca_nnls"``.
+    """
+    d = pcs.shape[0] if n_pcs is None else min(n_pcs, pcs.shape[0])
+    labels = sorted({str(x) for x in ref_labels.tolist()})
+    M = np.column_stack([
+        ref_pcs[ref_labels == lab, :d].mean(axis=0) for lab in labels
+    ])  # (d x k) super-pop centroids
+    w = _simplex_lstsq(M, pcs[:d])
+    return {lab: round(float(wi), 4) for lab, wi in zip(labels, w)}
 
 
 def _loo_accuracy(ref_pcs: np.ndarray, ref_labels: np.ndarray, k: int) -> float:
@@ -309,9 +355,11 @@ def infer_ancestry(
         pcs = project_samples(m.pca, W)[0]  # (dim_ref,)
         k = int(m.meta.get("knn_k", DEFAULT_KNN_K))
         label, probs = _knn_predict(m.ref_pcs, m.ref_labels, pcs, k)
+        mixture = estimate_proportions(m.ref_pcs, m.ref_labels, pcs)
         return AncestryInference(
             panel=panel, genome_build=build, superpopulation=label,
             probabilities=probs, pc_coords=[float(x) for x in pcs],
             n_variants_used=n_used, n_variants_model=n_model,
             coverage=coverage, confidence=float(probs.get(label, 0.0)),
+            mixture=mixture, mixture_method="pca_nnls",
         )

@@ -7,10 +7,13 @@ cleanup transforms, search, and percentile computation.
 import polars as pl
 import pytest
 
+import json
+
 from just_prs.cleanup import (
     best_performance_per_score,
     clean_performance_metrics,
     clean_publications,
+    clean_score_development_samples,
     clean_scores,
     normalize_genome_build,
     parse_metric_string,
@@ -50,8 +53,62 @@ def raw_publications_df() -> pl.DataFrame:
 
 
 @pytest.fixture(scope="module")
+def raw_dev_samples_df() -> pl.DataFrame:
+    cache_path = RAW_METADATA_DIR / "score_development_samples.parquet"
+    return download_metadata_sheet("score_development_samples", cache_path)
+
+
+@pytest.fixture(scope="module")
 def catalog() -> PRSCatalog:
     return PRSCatalog(cache_dir=CACHE_DIR)
+
+
+@pytest.fixture(scope="module")
+def dev(raw_dev_samples_df: pl.DataFrame) -> pl.DataFrame:
+    return clean_score_development_samples(raw_dev_samples_df).collect()
+
+
+class TestCleanScoreDevelopmentSamples:
+    """Real-data invariants for the F19/F21 development-ancestry aggregation."""
+
+    def test_one_row_per_pgs_id(self, dev: pl.DataFrame, raw_dev_samples_df: pl.DataFrame) -> None:
+        # Set equality against the source: every PGS in the raw sheet appears once.
+        assert dev.height == dev["pgs_id"].n_unique()
+        raw_ids = set(raw_dev_samples_df["Polygenic Score (PGS) ID"].to_list())
+        assert set(dev["pgs_id"].to_list()) == raw_ids
+
+    def test_distribution_fractions_sum_to_one(self, dev: pl.DataFrame) -> None:
+        for j in dev["dev_ancestry_distribution"].drop_nulls().to_list():
+            assert sum(json.loads(j).values()) == pytest.approx(1.0, abs=0.01)
+
+    def test_dominant_matches_largest_fraction(self, dev: pl.DataFrame) -> None:
+        # dev_ancestry_broad must be the largest-fraction bucket in the distribution.
+        sample = dev.filter(pl.col("dev_ancestry_distribution").is_not_null()).head(500)
+        for row in sample.iter_rows(named=True):
+            dist = json.loads(row["dev_ancestry_distribution"])
+            top = max(dist.items(), key=lambda kv: kv[1])[0]
+            assert row["dev_ancestry_broad"] == top
+
+    def test_multi_ancestry_flag_consistent(self, dev: pl.DataFrame) -> None:
+        mismatched = dev.filter(
+            pl.col("dev_is_multi_ancestry") != (pl.col("dev_n_ancestries") > 1)
+        )
+        assert mismatched.height == 0
+
+    def test_sample_size_is_max_of_stages(self, dev: pl.DataFrame) -> None:
+        bad = dev.filter(
+            pl.col("dev_sample_size")
+            != pl.max_horizontal("dev_gwas_sample_size", "dev_training_sample_size")
+        )
+        assert bad.height == 0
+        assert dev["dev_sample_size"].min() >= 0
+
+    def test_known_score_european(self, dev: pl.DataFrame) -> None:
+        # PGS000001 is a single-ancestry European GWAS-discovery score.
+        row = dev.filter(pl.col("pgs_id") == "PGS000001").row(0, named=True)
+        assert row["dev_ancestry_broad"] == "European"
+        assert row["dev_is_multi_ancestry"] is False
+        assert row["dev_sample_size"] > 0
 
 
 class TestParseMetricString:

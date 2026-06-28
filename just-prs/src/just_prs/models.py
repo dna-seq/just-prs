@@ -326,6 +326,10 @@ class PRSResult(BaseModel):
         default=None,
         description="Absolute disease risk estimate based on PRS z-score and prevalence data",
     )
+    sample_ancestry: "SampleAncestry | None" = Field(
+        default=None,
+        description="Inferred genetic ancestry of the sample (super-pop + confidence, fine population, informational mixture); populated when ancestry inference is requested",
+    )
 
 
 class EnrichedPRSResult(BaseModel):
@@ -521,3 +525,148 @@ class PRSBatchResult(BaseModel):
     n_ok: int = Field(default=0, description="Successfully computed")
     n_failed: int = Field(default=0, description="Failed IDs")
     failed_ids: list[str] = Field(default_factory=list, description="PGS IDs that failed")
+
+
+class AncestryInference(BaseModel):
+    """Inferred genetic ancestry of a single sample (Level-1 super-population call).
+
+    Produced by ``PRSCatalog.infer_ancestry()`` / ``just_prs.ancestry.infer_ancestry``.
+    ``probabilities`` are classifier posteriors (NOT genome-fraction admixture);
+    ``mixture`` is the forward-compatible admixture-fraction field, left None at
+    Level 1 and populated later by a proportions estimator (e.g. the Prive reference).
+    """
+
+    panel: str = Field(description="Reference panel identifier (e.g. '1000g', 'hgdp_1kg')")
+    genome_build: str = Field(description="Genome build the sample was projected in")
+    superpopulation: str = Field(
+        description="Predicted super-population (AFR/AMR/EAS/EUR/SAS) or 'UNKNOWN'"
+    )
+    probabilities: dict[str, float] = Field(
+        default_factory=dict, description="Classifier posterior per super-population (sums ~1)"
+    )
+    pc_coords: list[float] = Field(
+        default_factory=list, description="Projected principal-component coordinates"
+    )
+    n_variants_used: int = Field(default=0, description="Model sites matched in the sample")
+    n_variants_model: int = Field(default=0, description="Total sites in the ancestry model")
+    coverage: float = Field(default=0.0, description="n_variants_used / n_variants_model")
+    confidence: float = Field(
+        default=0.0, description="Top-class posterior (0-1); low => unreliable / UNKNOWN"
+    )
+    fine_population: str | None = Field(
+        default=None, description="Finer population call where the panel supports it"
+    )
+    mixture: dict[str, float] | None = Field(
+        default=None,
+        description="Ancestry FRACTIONS summing to ~1 (admixture); None at Level 1",
+    )
+    mixture_method: str | None = Field(
+        default=None, description="Provenance of `mixture`: 'pca_nnls' | 'prive_qp' | None"
+    )
+
+
+class SampleAncestry(BaseModel):
+    """Compact inferred-ancestry summary attached to a PRS result (advisory metadata).
+
+    A flat, UI-friendly projection of the richer ``AncestryConsensus`` /
+    ``AncestryInference``: the consensus super-population with its confidence, the
+    finest within-continent call available (with its own confidence and source panel),
+    and — purely informational — the admixture-style proportions. Fine-population calls
+    should be read together with ``fine_mixture`` (the soft distribution), not as a hard
+    label: tight-cluster regions (e.g. East-Slavic Russian/Ukrainian/Belarusian) collapse
+    to the plurality in the hard call while the mixture stays informative.
+    """
+
+    superpopulation: str = Field(
+        description="Consensus super-population (AFR/AMR/EAS/EUR/SAS) or 'UNKNOWN'"
+    )
+    confidence: float = Field(
+        default=0.0, description="Consensus posterior of the super-population label (0-1)"
+    )
+    fine_population: str | None = Field(
+        default=None, description="Finest within-continent population call available"
+    )
+    fine_confidence: float | None = Field(
+        default=None, description="Confidence (top-class posterior) of the fine call"
+    )
+    fine_panel: str | None = Field(
+        default=None, description="Panel that produced the fine-population call"
+    )
+    fine_mixture: dict[str, float] | None = Field(
+        default=None,
+        description="Informational soft proportions behind the fine call (sums ~1)",
+    )
+    mixture: dict[str, float] | None = Field(
+        default=None,
+        description="Informational super-population proportions (admixture fractions; sums ~1)",
+    )
+    mixture_method: str | None = Field(
+        default=None, description="Provenance of `mixture`: 'consensus' | 'pca_nnls' | 'prive_qp'"
+    )
+    source: str = Field(
+        default="consensus", description="'consensus' (fused) or a single panel name"
+    )
+    panels: list[str] = Field(
+        default_factory=list, description="Panels fused into the consensus"
+    )
+    n_methods: int = Field(default=0, description="Number of methods fused into the consensus")
+
+
+class AncestryConsensus(BaseModel):
+    """Bayesian consensus super-population fused across panels and methods.
+
+    Combines the per-panel KNN posteriors and PCA-NNLS mixtures (1000G + HGDP+1kGP)
+    into one posterior over the canonical 5 super-populations via a Laplace-smoothed
+    product-of-experts. Agreement across methods sharpens the posterior; disagreement
+    flattens it. ``per_panel`` keeps the underlying single-panel inferences.
+    """
+
+    consensus_superpopulation: str = Field(
+        description="Fused consensus super-population (AFR/AMR/EAS/EUR/SAS) or 'UNKNOWN'"
+    )
+    posterior: dict[str, float] = Field(
+        default_factory=dict, description="Consensus posterior over canonical super-pops"
+    )
+    confidence: float = Field(default=0.0, description="Posterior of the consensus label")
+    methods: list[dict] = Field(
+        default_factory=list,
+        description="Fused inputs: [{panel, method, superpopulation, distribution}]",
+    )
+    per_panel: dict[str, "AncestryInference"] = Field(
+        default_factory=dict, description="Per-panel single-model inferences"
+    )
+
+
+class AncestryCoherence(BaseModel):
+    """Score x sample x reference-panel ancestry coherence verdict (advisory).
+
+    Compares the sample's inferred super-population against the score's development
+    ancestry and the percentile reference panel's ancestry, all in the broad
+    super-population vocabulary. Advisory only (a reliability caveat), never a hard block.
+    """
+
+    level: str = Field(
+        description="coherent | panel_mismatch | dev_mismatch | both | unknown"
+    )
+    sample_superpopulation: str | None = Field(
+        default=None, description="Sample's inferred super-population"
+    )
+    panel_ancestry: str | None = Field(
+        default=None, description="Percentile reference-panel ancestry (broad)"
+    )
+    dev_ancestry: str | None = Field(
+        default=None, description="Score's dominant development ancestry (broad)"
+    )
+    dev_sample_fraction: float | None = Field(
+        default=None,
+        description="Fraction of the score's development cohort matching the sample's ancestry",
+    )
+    reliable: bool = Field(
+        default=True, description="False when an ancestry mismatch likely degrades the percentile"
+    )
+    message: str = Field(default="", description="Plain-English explanation for the user")
+
+
+# Resolve the forward reference from PRSResult.sample_ancestry (SampleAncestry is
+# defined after PRSResult in this module).
+PRSResult.model_rebuild()

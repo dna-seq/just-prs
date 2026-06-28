@@ -36,6 +36,11 @@ from prs_pipeline.metadata_assets import (
 from prs_pipeline.checks import ALL_ASSET_CHECKS
 from prs_pipeline.resources import CacheDirResource, HuggingFaceResource
 from prs_pipeline.sensors import make_all_sensors
+from prs_pipeline.ancestry_assets import (
+    ancestry_pca_model,
+    hf_ancestry_model,
+    pgsc_reference_panel,
+)
 from prs_pipeline.utils import resource_summary_hook
 
 download_reference_data = dg.define_asset_job(
@@ -125,6 +130,20 @@ reference_allele_pipeline = dg.define_asset_job(
     executor_def=in_process_executor,
 )
 
+ancestry_model_pipeline = dg.define_asset_job(
+    name="ancestry_model_pipeline",
+    selection=dg.AssetSelection.assets(
+        "ancestry_pca_model", "hf_ancestry_model",
+    ) | dg.AssetSelection.checks_for_assets("ancestry_pca_model"),
+    description=(
+        "Build the sample-ancestry reference-PCA model (plink2 LD-prune + numpy SVD, "
+        "per panel x build) and publish it to HuggingFace. plink2 is build-time only; "
+        "runtime ancestry inference is pure-Python."
+    ),
+    hooks={resource_summary_hook},
+    executor_def=in_process_executor,
+)
+
 _full_pipeline_assets = dg.AssetSelection.assets(
     "ebi_reference_panel_fingerprint", "ebi_scoring_files_fingerprint",
     "reference_panel", "scoring_files", "scoring_files_parquet",
@@ -204,6 +223,9 @@ _assets = [
     reference_fasta,
     reference_allele_universe,
     hf_reference_allele_universe,
+    pgsc_reference_panel,
+    ancestry_pca_model,
+    hf_ancestry_model,
     reference_percentile_audit,
     reference_panel,
     reference_scores,
@@ -229,6 +251,7 @@ _unresolved_jobs = [
     chip_coverage_pipeline,
     ld_proxy_pipeline,
     reference_allele_pipeline,
+    ancestry_model_pipeline,
     reference_percentile_audit_job,
     metadata_pipeline,
 ]

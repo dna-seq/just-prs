@@ -1,5 +1,6 @@
 from importlib.metadata import metadata
 
+from just_prs.ancestry import infer_ancestry
 from just_prs.array_scoring import compute_array_prs
 from just_prs.arrays import detect_array_format, detect_chip_generation, normalize_array
 from just_prs.chip_coverage import (
@@ -16,6 +17,9 @@ from just_prs.models import (
     AbsoluteRisk,
     AbsoluteRiskBundle,
     AbsoluteRiskEstimate,
+    AncestryCoherence,
+    AncestryConsensus,
+    AncestryInference,
     ArrayPRSResult,
     ChipGeneration,
     EnrichedPRSResult,

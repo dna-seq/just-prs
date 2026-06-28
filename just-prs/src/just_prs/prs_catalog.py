@@ -18,11 +18,13 @@ from just_prs.cleanup import (
     best_performance_per_score,
     clean_performance_metrics,
     clean_publications,
+    clean_score_development_samples,
     clean_scores,
 )
 from just_prs.ftp import download_metadata_sheet, _atomic_write_parquet
 from just_prs.hf import (
     distributions_filename,
+    pull_ancestry_model,
     pull_chip_coverage,
     pull_cleaned_parquets,
     pull_reference_distributions,
@@ -54,9 +56,47 @@ _HARMONIZABLE_BUILDS: dict[str, set[str]] = {
 
 _PUBLICATIONS_REQUIRED_COLUMNS = {"pgp_id"}
 
+# Cleaned development-ancestry parquet (F19/F21: per-score development ancestry +
+# dev sample size from the score_development_samples sheet, keyed by pgs_id).
+DEV_ANCESTRY_FILE = "score_development_ancestry.parquet"
+_DEV_ANCESTRY_REQUIRED_COLUMNS = {"pgs_id", "dev_ancestry_broad", "dev_ancestry_distribution"}
+# Lean development-ancestry columns joined into the wide scores sheet.
+_DEV_ANCESTRY_SCORES_COLS = ["pgs_id", "dev_ancestry_broad", "dev_sample_size", "dev_is_multi_ancestry"]
+
+# Genome build each ancestry-panel model is built in (samples are lifted to it at inference).
+# The 1000G/HGDP models are GRCh38; the AADR Human Origins panel is GRCh37 (hg19).
+_ANCESTRY_PANEL_BUILD: dict[str, str] = {"aadr_ho": "GRCh37"}
+
 # Below this weight-mass coverage (C_wt), a percentile is treated as a likely
 # low-coverage artifact rather than an authoritative population position.
 MIN_RELIABLE_WEIGHT_MASS_COVERAGE: float = 0.20
+
+# PGS Catalog "Broad Ancestry Category" -> 1000G super-population code, for the
+# ancestry-coherence verdict. Admixed/unspecified labels map to None (ambiguous, no veto).
+_PGS_BROAD_TO_SUPERPOP: dict[str, str] = {
+    "European": "EUR",
+    "East Asian": "EAS",
+    "South Asian": "SAS",
+    "African American or Afro-Caribbean": "AFR",
+    "Sub-Saharan African": "AFR",
+    "African unspecified": "AFR",
+    "Hispanic or Latin American": "AMR",
+    "Native American": "AMR",
+}
+
+
+def _broad_to_superpop(label: str | None) -> str | None:
+    """Map a PGS broad-ancestry label (possibly comma-joined/admixed) to a super-pop.
+
+    Returns None when the label is missing, multi-ancestry, or not confidently mappable
+    (so the coherence verdict abstains rather than guesses).
+    """
+    if not label:
+        return None
+    parts = [p.strip() for p in label.split(",") if p.strip()]
+    if len(parts) != 1:
+        return None  # admixed / multi-category -> ambiguous
+    return _PGS_BROAD_TO_SUPERPOP.get(parts[0])
 
 
 def _performance_info_from_row(row: dict[str, object]) -> PerformanceInfo:
@@ -109,6 +149,7 @@ class PRSCatalog:
         self._perf_lf: pl.LazyFrame | None = None
         self._best_perf_lf: pl.LazyFrame | None = None
         self._publications_lf: pl.LazyFrame | None = None
+        self._dev_ancestry_lf: pl.LazyFrame | None = None
         self._quality_lf: pl.LazyFrame | None = None
         self._chip_coverage_lf: pl.LazyFrame | None = None
         self._chip_coverage_loaded = False
@@ -159,18 +200,24 @@ class PRSCatalog:
         perf_df = download_metadata_sheet("performance_metrics", raw_dir / "performance_metrics.parquet")
         eval_df = download_metadata_sheet("evaluation_sample_sets", raw_dir / "evaluation_sample_sets.parquet")
         pub_df = download_metadata_sheet("publications", raw_dir / "publications.parquet")
+        dev_df = download_metadata_sheet(
+            "score_development_samples", raw_dir / "score_development_samples.parquet"
+        )
 
         scores_lf = clean_scores(scores_df)
         perf_lf = clean_performance_metrics(perf_df, eval_df)
         best_perf_lf = best_performance_per_score(perf_lf)
         pub_lf = clean_publications(pub_df)
+        dev_lf = clean_score_development_samples(dev_df)
 
         self.metadata_dir.mkdir(parents=True, exist_ok=True)
         _atomic_write_parquet(scores_lf.collect(), self.metadata_dir / "scores.parquet")
         _atomic_write_parquet(perf_lf.collect(), self.metadata_dir / "performance.parquet")
         _atomic_write_parquet(best_perf_lf.collect(), self.metadata_dir / "best_performance.parquet")
         _atomic_write_parquet(pub_lf.collect(), self.metadata_dir / "publications.parquet")
+        _atomic_write_parquet(dev_lf.collect(), self.metadata_dir / DEV_ANCESTRY_FILE)
 
+        self._dev_ancestry_lf = dev_lf
         return scores_lf, perf_lf, best_perf_lf, pub_lf
 
     def _publication_schema_is_valid(self, lf: pl.LazyFrame) -> bool:
@@ -193,6 +240,42 @@ class PRSCatalog:
         except Exception as exc:
             logger.warning("Unable to rebuild publications metadata: %s", exc)
             return None
+
+    def _dev_ancestry_schema_is_valid(self, lf: pl.LazyFrame) -> bool:
+        """Return whether a development-ancestry LazyFrame supports the F19/F21 surface."""
+        columns = set(lf.collect_schema().names())
+        return _DEV_ANCESTRY_REQUIRED_COLUMNS <= columns
+
+    def _rebuild_dev_ancestry(self) -> pl.LazyFrame | None:
+        """Rebuild cleaned development-ancestry metadata from the raw cache or FTP."""
+        raw_path = self.raw_metadata_dir / "score_development_samples.parquet"
+        try:
+            raw_df = download_metadata_sheet("score_development_samples", raw_path)
+            dev_lf = clean_score_development_samples(raw_df)
+            if not self._dev_ancestry_schema_is_valid(dev_lf):
+                logger.warning("Cleaned development-ancestry metadata lacks required columns")
+                return None
+            self.metadata_dir.mkdir(parents=True, exist_ok=True)
+            _atomic_write_parquet(dev_lf.collect(), self.metadata_dir / DEV_ANCESTRY_FILE)
+            return dev_lf
+        except Exception as exc:
+            logger.warning("Unable to rebuild development-ancestry metadata: %s", exc)
+            return None
+
+    def _load_dev_ancestry_from_cache(self) -> pl.LazyFrame | None:
+        """Load optional cleaned development-ancestry metadata, rebuilding stale caches.
+
+        Older caches predate this sheet, so a missing or schema-incompatible file
+        is rebuilt from the raw FTP sheet (cheap, ~12K rows) rather than failing.
+        """
+        dev_path = self.metadata_dir / DEV_ANCESTRY_FILE
+        if not dev_path.exists():
+            return self._rebuild_dev_ancestry()
+        dev_lf = pl.scan_parquet(dev_path)
+        if self._dev_ancestry_schema_is_valid(dev_lf):
+            return dev_lf
+        logger.info("Rebuilding stale development-ancestry metadata at %s", dev_path)
+        return self._rebuild_dev_ancestry()
 
     def _load_quality_from_cache(self) -> pl.LazyFrame | None:
         """Load optional quality scores parquet (synced from HF)."""
@@ -271,6 +354,7 @@ class PRSCatalog:
                 self._perf_lf = pl.scan_parquet(self.metadata_dir / "performance.parquet")
                 self._best_perf_lf = pl.scan_parquet(self.metadata_dir / "best_performance.parquet")
                 self._publications_lf = self._load_publications_from_cache()
+                self._dev_ancestry_lf = self._load_dev_ancestry_from_cache()
                 self._quality_lf = self._load_quality_from_cache()
                 return
 
@@ -279,6 +363,7 @@ class PRSCatalog:
                 self._perf_lf = pl.scan_parquet(self.metadata_dir / "performance.parquet")
                 self._best_perf_lf = pl.scan_parquet(self.metadata_dir / "best_performance.parquet")
                 self._publications_lf = self._load_publications_from_cache()
+                self._dev_ancestry_lf = self._load_dev_ancestry_from_cache()
                 self._quality_lf = self._load_quality_from_cache()
                 return
 
@@ -326,11 +411,15 @@ class PRSCatalog:
             perf_df = download_metadata_sheet("performance_metrics", raw_dir / "performance_metrics.parquet", overwrite=True)
             eval_df = download_metadata_sheet("evaluation_sample_sets", raw_dir / "evaluation_sample_sets.parquet", overwrite=True)
             pub_df = download_metadata_sheet("publications", raw_dir / "publications.parquet", overwrite=True)
+            dev_df = download_metadata_sheet(
+                "score_development_samples", raw_dir / "score_development_samples.parquet", overwrite=True
+            )
 
             scores_lf = clean_scores(scores_df)
             perf_lf = clean_performance_metrics(perf_df, eval_df)
             best_perf_lf = best_performance_per_score(perf_lf)
             pub_lf = clean_publications(pub_df)
+            dev_lf = clean_score_development_samples(dev_df)
 
             paths: dict[str, Path] = {}
             for name, lf in [
@@ -338,6 +427,7 @@ class PRSCatalog:
                 ("performance", perf_lf),
                 ("best_performance", best_perf_lf),
                 ("publications", pub_lf),
+                (DEV_ANCESTRY_FILE.removesuffix(".parquet"), dev_lf),
             ]:
                 p = dest / f"{name}.parquet"
                 lf.collect().write_parquet(p)
@@ -347,6 +437,7 @@ class PRSCatalog:
             self._perf_lf = perf_lf
             self._best_perf_lf = best_perf_lf
             self._publications_lf = pub_lf
+            self._dev_ancestry_lf = dev_lf
 
         return paths
 
@@ -537,6 +628,11 @@ class PRSCatalog:
             self._chip_coverage_loaded = True
         if self._chip_coverage_lf is not None:
             lf = lf.join(self._chip_coverage_lf, on="pgs_id", how="left")
+        if self._dev_ancestry_lf is not None:
+            dev_cols = self._dev_ancestry_lf.select(
+                [c for c in _DEV_ANCESTRY_SCORES_COLS if c in self._dev_ancestry_lf.collect_schema().names()]
+            )
+            lf = lf.join(dev_cols, on="pgs_id", how="left")
         return lf
 
     def performance(self, pgs_id: str | None = None) -> pl.LazyFrame:
@@ -584,6 +680,32 @@ class PRSCatalog:
         lf = self._publications_lf
         if pgp_id is not None:
             lf = lf.filter(pl.col("pgp_id").eq(pgp_id))
+        return lf
+
+    def development_ancestry(self, pgs_id: str | None = None) -> pl.LazyFrame | None:
+        """Return per-score development-ancestry metadata (F19/F21), one row per PGS ID.
+
+        Surfaces the *development* (training/discovery) ancestry — distinct from
+        the *evaluation* ancestry exposed via :meth:`best_performance` — derived
+        from the PGS Catalog ``score_development_samples`` sheet. Columns include
+        ``dev_ancestry_broad`` (dominant, sample-weighted), ``dev_ancestries``
+        (distinct categories), ``dev_ancestry_distribution`` (JSON
+        ``{ancestry: fraction}``), ``dev_is_multi_ancestry``, ``dev_sample_size``
+        (larger of GWAS/training stage totals), and per-stage breakdowns. This is
+        the structured input a score x sample x panel coherence check would read.
+
+        Returns None when the development-ancestry parquet is unavailable (e.g. an
+        offline first run that could neither pull from HF nor reach FTP).
+
+        Args:
+            pgs_id: If provided, filter to this specific PGS ID.
+        """
+        self._load_all()
+        if self._dev_ancestry_lf is None:
+            return None
+        lf = self._dev_ancestry_lf
+        if pgs_id is not None:
+            lf = lf.filter(pl.col("pgs_id").eq(pgs_id.upper()))
         return lf
 
     def search(
@@ -636,7 +758,325 @@ class PRSCatalog:
         if genome_build is not None:
             original = row.get("genome_build")
             row["is_harmonized"] = original is not None and original != genome_build
+        if self._dev_ancestry_lf is not None:
+            dev_rows = self._dev_ancestry_lf.filter(pl.col("pgs_id").eq(pgs_id.upper())).collect()
+            if dev_rows.height:
+                dev = dev_rows.row(0, named=True)
+                row.update({k: v for k, v in dev.items() if k != "pgs_id"})
         return row
+
+    @property
+    def ancestry_dir(self) -> Path:
+        """Directory for cached ancestry-PCA models (pulled from HF)."""
+        return self._cache_dir / "ancestry"
+
+    def _ensure_ancestry_model(self, panel: str, build: str) -> Path | None:
+        """Return the local ancestry-model dir, pulling from HF on a miss.
+
+        Mirrors the ``_load_chip_coverage`` lazy-pull pattern. Returns None when the
+        model is unavailable (e.g. offline first run with nothing cached).
+        """
+        from just_prs.ancestry import artifact_paths
+
+        model_dir = self.ancestry_dir
+        if artifact_paths(model_dir, panel, build)["sites"].exists():
+            return model_dir
+        try:
+            pull_ancestry_model(model_dir, panel, build)
+        except Exception as exc:  # noqa: BLE001 - lazy pull is best-effort
+            logger.debug("Ancestry model HF pull failed: %s", exc)
+        return model_dir if artifact_paths(model_dir, panel, build)["sites"].exists() else None
+
+    def infer_ancestry(
+        self,
+        genotypes_path: Path | str | None = None,
+        *,
+        genotypes_lf: pl.LazyFrame | None = None,
+        panel: str = "1000g",
+        sample_build: str | None = None,
+        resolution: str = "superpop",
+    ):
+        """Infer a sample's genetic ancestry (super-population) — see AncestryInference.
+
+        ``resolution="population"`` classifies at the model's fine-population level (e.g.
+        HGDP ``Russian``); the broad super-pop is kept in ``superpopulation`` and the fine
+        call in ``fine_population``.
+
+        Resolves the genome build implicitly to **GRCh38** when ``sample_build`` is not
+        given and cannot be detected. If the resolved build differs from the model build,
+        the genotypes are lifted via :mod:`just_prs.liftover`. The model is pulled from HF
+        on a local-cache miss. Runtime is pure-Python (no plink2).
+
+        Provide either ``genotypes_path`` (VCF/array/normalized parquet) or ``genotypes_lf``.
+        """
+        from just_prs.ancestry import infer_ancestry as _infer
+        from just_prs.models import AncestryInference
+        from just_prs.vcf import detect_genome_build, read_genotypes
+
+        if genotypes_lf is None:
+            if genotypes_path is None:
+                raise ValueError("provide genotypes_path or genotypes_lf")
+            build = sample_build or detect_genome_build(genotypes_path) or "GRCh38"
+            genotypes_lf = read_genotypes(genotypes_path)
+        else:
+            build = sample_build or "GRCh38"
+
+        # Ancestry models are GRCh38-only — canonicalize by lifting non-GRCh38 samples to
+        # GRCh38 (the hom-ref-absent imputation runs at the GRCh38 model's pruned sites
+        # post-lift, so a native GRCh37 model would be redundant).
+        model_build = _ANCESTRY_PANEL_BUILD.get(panel, "GRCh38")
+        if build != model_build:
+            from just_prs.liftover import lift_frame
+
+            lifted, _ = lift_frame(
+                genotypes_lf.collect(), build, model_build, chrom_col="chrom", pos_col="pos"
+            )
+            genotypes_lf = lifted.lazy()
+
+        model_dir = self._ensure_ancestry_model(panel, model_build)
+        if model_dir is None:
+            return AncestryInference(
+                panel=panel, genome_build=model_build, superpopulation="UNKNOWN",
+                confidence=0.0,
+            )
+        return _infer(model_dir, genotypes_lf, panel=panel, build=model_build, resolution=resolution)
+
+    def infer_ancestry_consensus(
+        self,
+        genotypes_path: Path | str | None = None,
+        *,
+        genotypes_lf: pl.LazyFrame | None = None,
+        panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
+        sample_build: str | None = None,
+        include_prive: bool = False,
+        include_aadr: bool = False,
+        resolution: str = "superpop",
+    ):
+        """Bayesian consensus ancestry fused across panels and methods — AncestryConsensus.
+
+        Runs single-panel inference on each panel and fuses every available method — each
+        panel's KNN posterior and PCA-NNLS mixture — into one consensus super-population via
+        a Laplace-smoothed product-of-experts (:func:`just_prs.ancestry.bayesian_consensus`).
+        The sample is read once; each panel's genotypes are lifted to that panel's model
+        build on demand (GRCh38 panels use the frame as-is, GRCh37 panels such as
+        ``aadr_ho`` are lifted 38→37), and lifts are memoized so each build is computed once.
+        When ``include_prive`` and the Privé reference is built locally, its continental
+        rollup is added as a third independent view (GRCh37 reference; lifted internally).
+        ``include_aadr`` appends the local-only AADR Human Origins panel to ``panels``.
+        ``resolution="population"`` makes each per-panel view carry its fine-population call
+        (``AncestryInference.fine_population``); the fused posterior stays at super-pop.
+        """
+        from just_prs.ancestry import bayesian_consensus
+        from just_prs.ancestry import infer_ancestry as _infer
+        from just_prs.models import AncestryConsensus
+        from just_prs.vcf import detect_genome_build, read_genotypes
+
+        if genotypes_lf is None:
+            if genotypes_path is None:
+                raise ValueError("provide genotypes_path or genotypes_lf")
+            build = sample_build or detect_genome_build(genotypes_path) or "GRCh38"
+            genotypes_lf = read_genotypes(genotypes_path)
+        else:
+            build = sample_build or "GRCh38"
+        # Materialize the sample once in its native build; lift per panel on demand.
+        native_frame = genotypes_lf.collect()
+        panel_list = list(panels)
+        if include_aadr and "aadr_ho" not in panel_list:
+            panel_list.append("aadr_ho")
+
+        _lift_cache: dict[str, pl.LazyFrame] = {build: native_frame.lazy()}
+
+        def _frame_for(model_build: str) -> pl.LazyFrame:
+            if model_build not in _lift_cache:
+                from just_prs.liftover import lift_frame
+
+                lifted, _ = lift_frame(
+                    native_frame, build, model_build, chrom_col="chrom", pos_col="pos"
+                )
+                _lift_cache[model_build] = lifted.lazy()
+            return _lift_cache[model_build]
+
+        per_panel: dict[str, object] = {}
+        methods: list[dict] = []
+        dists: list[dict[str, float]] = []
+        for panel in panel_list:
+            model_build = _ANCESTRY_PANEL_BUILD.get(panel, "GRCh38")
+            model_dir = self._ensure_ancestry_model(panel, model_build)
+            if model_dir is None:
+                continue
+            res = _infer(
+                model_dir, _frame_for(model_build),
+                panel=panel, build=model_build, resolution=resolution,
+            )
+            per_panel[panel] = res
+            if res.superpopulation == "UNKNOWN":
+                continue
+            methods.append({
+                "panel": panel, "method": "knn",
+                "superpopulation": res.superpopulation, "distribution": res.probabilities,
+            })
+            dists.append(res.probabilities)
+            if res.mixture:
+                top = max(res.mixture, key=res.mixture.get)
+                methods.append({
+                    "panel": panel, "method": "mixture",
+                    "superpopulation": top, "distribution": res.mixture,
+                })
+                dists.append(res.mixture)
+
+        if include_prive:
+            prive = self.infer_ancestry_prive(genotypes_lf=native_frame.lazy(), sample_build=build)
+            if prive and prive.get("continental"):
+                cont = prive["continental"]
+                methods.append({
+                    "panel": "prive", "method": "qp",
+                    "superpopulation": max(cont, key=cont.get), "distribution": cont,
+                })
+                dists.append(cont)
+
+        if not dists:
+            return AncestryConsensus(
+                consensus_superpopulation="UNKNOWN", per_panel=per_panel
+            )
+        label, posterior = bayesian_consensus(dists)
+        return AncestryConsensus(
+            consensus_superpopulation=label,
+            posterior=posterior,
+            confidence=posterior.get(label, 0.0),
+            methods=methods,
+            per_panel=per_panel,
+        )
+
+    def infer_ancestry_prive(
+        self,
+        genotypes_path: Path | str | None = None,
+        *,
+        genotypes_lf: pl.LazyFrame | None = None,
+        sample_build: str | None = None,
+    ) -> dict[str, object] | None:
+        """Privé/bigsnpr 21-group ancestry proportions (finer resolution) — see prive.py.
+
+        Returns ``{"proportions": {group: frac}, "continental": {superpop: frac},
+        "n_variants_used": int}`` or None when the Privé reference is not built locally
+        (it is not published to HF — large GPL data; build via
+        ``just_prs.ancestry.prive.build_prive_reference``). GRCh38 samples are lifted to
+        the GRCh37 reference internally.
+        """
+        from just_prs.ancestry.prive import _ref_paths, estimate_prive_proportions
+        from just_prs.vcf import detect_genome_build, read_genotypes
+
+        ref_dir = self.ancestry_dir / "prive"
+        if not _ref_paths(ref_dir)["parquet"].exists():
+            return None
+        if genotypes_lf is None:
+            if genotypes_path is None:
+                raise ValueError("provide genotypes_path or genotypes_lf")
+            build = sample_build or detect_genome_build(genotypes_path) or "GRCh38"
+            genotypes_lf = read_genotypes(genotypes_path)
+        else:
+            build = sample_build or "GRCh38"
+        return estimate_prive_proportions(ref_dir, genotypes_lf, sample_build=build)
+
+    def assess_ancestry_coherence(
+        self,
+        pgs_id: str,
+        ancestry: "AncestryInference | str | None" = None,
+        *,
+        genome_build: str | None = None,
+    ):
+        """Score x sample x panel ancestry coherence verdict — see AncestryCoherence.
+
+        ``ancestry`` may be a precomputed :class:`AncestryInference`, a bare
+        super-population string, or None (verdict abstains on the sample leg). Compares
+        against the score's development ancestry (``development_ancestry``) and the
+        percentile reference-panel ancestry. Advisory only.
+        """
+        from just_prs.models import AncestryCoherence, AncestryInference
+
+        sample_sp: str | None = None
+        if isinstance(ancestry, AncestryInference):
+            sample_sp = ancestry.superpopulation
+        elif isinstance(ancestry, str):
+            sample_sp = ancestry
+        if sample_sp == "UNKNOWN":
+            sample_sp = None
+
+        # Score development ancestry (broad + distribution) from the cleaned sheet.
+        dev_sp: str | None = None
+        dev_frac: float | None = None
+        dev_lf = self.development_ancestry(pgs_id)
+        if dev_lf is not None:
+            rows = dev_lf.collect()
+            if rows.height:
+                r = rows.row(0, named=True)
+                dev_sp = _broad_to_superpop(r.get("dev_ancestry_broad"))
+                dist_json = r.get("dev_ancestry_distribution")
+                if dist_json and sample_sp:
+                    import json as _json
+
+                    dist = _json.loads(dist_json)
+                    # Sum fractions of broad labels that map to the sample's super-pop.
+                    dev_frac = sum(
+                        float(v) for k, v in dist.items()
+                        if _broad_to_superpop(k) == sample_sp
+                    )
+
+        # Panel leg: can the percentile use a reference distribution for the SAMPLE's
+        # super-pop? If the sample's super-pop has no precomputed distribution for this
+        # score, the percentile falls back to a non-matching population -> panel_mismatch.
+        panel_sp: str | None = None
+        panel_mismatch = False
+        if sample_sp:
+            try:
+                status = self.reference_data_status(pgs_id)
+                avail = {str(s) for s in status.get("available_superpopulations", [])}
+                if avail:
+                    panel_sp = sample_sp if sample_sp in avail else sorted(avail)[0]
+                    panel_mismatch = sample_sp not in avail
+            except Exception:  # noqa: BLE001 - panel context is best-effort
+                panel_sp = None
+        dev_mismatch = bool(
+            sample_sp and (
+                (dev_sp is not None and dev_sp != sample_sp)
+                or (dev_frac is not None and dev_frac < 0.25)
+            )
+        )
+        if sample_sp is None:
+            level = "unknown"
+        elif panel_mismatch and dev_mismatch:
+            level = "both"
+        elif panel_mismatch:
+            level = "panel_mismatch"
+        elif dev_mismatch:
+            level = "dev_mismatch"
+        else:
+            level = "coherent"
+
+        msgs = {
+            "coherent": "Your inferred genetic ancestry matches this score's development "
+            "population and the reference distribution, so its percentile should be "
+            "reasonably calibrated for you.",
+            "dev_mismatch": "This polygenic score was developed mainly in a different "
+            "genetic-ancestry population than your inferred ancestry, so its percentile "
+            "may be less accurate for you.",
+            "panel_mismatch": "The reference distribution used for the percentile comes "
+            "from a different genetic-ancestry population than yours, so the percentile "
+            "may be less accurate for you.",
+            "both": "Both this score's development population and the reference "
+            "distribution differ from your inferred genetic ancestry, so treat the "
+            "percentile with caution.",
+            "unknown": "Your genetic ancestry could not be inferred confidently, so "
+            "ancestry coherence with this score cannot be assessed.",
+        }
+        return AncestryCoherence(
+            level=level,
+            sample_superpopulation=sample_sp,
+            panel_ancestry=panel_sp,
+            dev_ancestry=dev_sp,
+            dev_sample_fraction=dev_frac,
+            reliable=level in ("coherent", "unknown"),
+            message=msgs[level],
+        )
 
     def reference_individual_scores(
         self,
@@ -717,6 +1157,79 @@ class PRSCatalog:
                 logger.debug("Reference-allele universe HF pull failed: %s", exc)
         return path if path.exists() else None
 
+    # Panels tried (finest first) when picking the fine-population call for the
+    # compact SampleAncestry summary.
+    _FINE_PANEL_PRIORITY: tuple[str, ...] = ("aadr_ho", "hgdp_1kg", "1000g")
+
+    def infer_sample_ancestry(
+        self,
+        genotypes_path: Path | str | None = None,
+        *,
+        genotypes_lf: pl.LazyFrame | None = None,
+        panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
+        sample_build: str | None = None,
+        include_prive: bool = False,
+        include_aadr: bool = False,
+    ):
+        """Compact :class:`SampleAncestry` summary for attaching to PRS results.
+
+        Two complementary readouts from one VCF read: (1) the **super-population** comes
+        from :meth:`infer_ancestry_consensus` at ``resolution="superpop"`` — the fused
+        posterior over the canonical 5 super-pops is the label + confidence + informational
+        ``mixture``; (2) the **fine population** comes from a separate population-resolution
+        inference on the finest available panel (``_FINE_PANEL_PRIORITY``: ``aadr_ho`` when
+        included, else HGDP, else 1000G), carrying its own confidence + soft distribution.
+        Keeping the two separate is deliberate — fusing fine-label posteriors would not
+        canonicalize to super-pops and would flatten the consensus. Returns ``None`` when
+        the super-pop is UNKNOWN (no model available or coverage below the floor).
+        """
+        from just_prs.models import SampleAncestry
+        from just_prs.vcf import detect_genome_build, read_genotypes
+
+        # Read the genotypes once and reuse for both the super-pop consensus and the
+        # fine call (VCF read is the expensive step).
+        if genotypes_lf is None:
+            if genotypes_path is None:
+                raise ValueError("provide genotypes_path or genotypes_lf")
+            sample_build = sample_build or detect_genome_build(genotypes_path) or "GRCh38"
+            genotypes_lf = read_genotypes(genotypes_path)
+        genotypes_lf = genotypes_lf.collect().lazy()
+
+        con = self.infer_ancestry_consensus(
+            genotypes_lf=genotypes_lf, panels=panels, sample_build=sample_build,
+            include_prive=include_prive, include_aadr=include_aadr, resolution="superpop",
+        )
+        if con.consensus_superpopulation == "UNKNOWN":
+            return None
+
+        # Fine population: finest panel that is actually in play.
+        in_play = set(con.per_panel.keys()) | ({"aadr_ho"} if include_aadr else set())
+        fine_panel = next((p for p in self._FINE_PANEL_PRIORITY if p in in_play), None)
+        fine_pop = fine_conf = fine_mix = None
+        if fine_panel is not None:
+            fine = self.infer_ancestry(
+                genotypes_lf=genotypes_lf, panel=fine_panel,
+                sample_build=sample_build, resolution="population",
+            )
+            if fine.fine_population:
+                fine_pop, fine_conf, fine_mix = fine.fine_population, fine.confidence, fine.mixture
+            else:
+                fine_panel = None
+
+        return SampleAncestry(
+            superpopulation=con.consensus_superpopulation,
+            confidence=con.confidence,
+            fine_population=fine_pop,
+            fine_confidence=fine_conf,
+            fine_panel=fine_panel,
+            fine_mixture=fine_mix,
+            mixture=con.posterior or None,
+            mixture_method="consensus",
+            source="consensus",
+            panels=list(con.per_panel.keys()),
+            n_methods=len(con.methods),
+        )
+
     def compute_prs(
         self,
         vcf_path: Path | str,
@@ -727,6 +1240,10 @@ class PRSCatalog:
         genotypes_lf: pl.LazyFrame | None = None,
         reference_restoration: RestorationScope = False,
         sample_build: str | None = None,
+        infer_ancestry: bool = False,
+        ancestry_panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
+        ancestry_include_prive: bool = False,
+        ancestry_include_aadr: bool = False,
     ) -> PRSResult:
         """Compute PRS for a VCF file against a single PGS score.
 
@@ -767,6 +1284,12 @@ class PRSCatalog:
             )
             if attach_performance:
                 self._attach_performance(result)
+            if infer_ancestry:
+                result.sample_ancestry = self.infer_sample_ancestry(
+                    vcf_path, genotypes_lf=genotypes_lf, panels=ancestry_panels,
+                    sample_build=sample_build, include_prive=ancestry_include_prive,
+                    include_aadr=ancestry_include_aadr,
+                )
             return result
 
     def compute_prs_batch(
@@ -781,6 +1304,10 @@ class PRSCatalog:
         attach_performance: bool = False,
         reference_restoration: RestorationScope = False,
         sample_build: str | None = None,
+        infer_ancestry: bool = False,
+        ancestry_panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
+        ancestry_include_prive: bool = False,
+        ancestry_include_aadr: bool = False,
     ) -> "PRSBatchResult":
         """Compute PRS for a VCF file against multiple PGS scores.
 
@@ -944,6 +1471,16 @@ class PRSCatalog:
             if attach_performance:
                 for r in results:
                     self._attach_performance(r)
+
+            # Ancestry is a sample-level property — infer once and share across results.
+            if infer_ancestry and results:
+                sample_anc = self.infer_sample_ancestry(
+                    vcf_path, genotypes_lf=genotypes_lf, panels=ancestry_panels,
+                    sample_build=sample_build, include_prive=ancestry_include_prive,
+                    include_aadr=ancestry_include_aadr,
+                )
+                for r in results:
+                    r.sample_ancestry = sample_anc
 
             return PRSBatchResult(
                 results=results,

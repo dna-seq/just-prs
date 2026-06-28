@@ -5,6 +5,7 @@ into cleaned LazyFrames with normalized genome builds, snake_case column names,
 parsed metric strings, and only the columns needed for PRS computation and search.
 """
 
+import json
 import re
 
 import polars as pl
@@ -267,3 +268,163 @@ def best_performance_per_score(perf_lf: pl.LazyFrame) -> pl.LazyFrame:
 
     best = df.sort("_rank_score", descending=True).group_by("pgs_id").first()
     return best.drop("_rank_score").lazy()
+
+
+# ---------------------------------------------------------------------------
+# Development-sample ancestry (score_development_samples sheet)
+# ---------------------------------------------------------------------------
+
+# Raw score_development_samples columns -> snake_case (only those we use).
+_DEV_SAMPLES_COLUMN_RENAME: dict[str, str] = {
+    "Polygenic Score (PGS) ID": "pgs_id",
+    "Stage of PGS Development": "stage_raw",
+    "Number of Individuals": "n_individuals",
+    "Broad Ancestry Category": "ancestry_broad",
+    "Ancestry (e.g. French, Chinese)": "ancestry_free",
+    "Additional Ancestry Description": "ancestry_additional",
+}
+
+# Stage labels in the raw score_development_samples sheet.
+_DEV_STAGE_GWAS = "Source of Variant Associations (GWAS)"
+_DEV_STAGE_TRAINING = "Score Development/Training"
+
+
+def rename_dev_samples_columns(lf: pl.LazyFrame) -> pl.LazyFrame:
+    """Rename raw score_development_samples columns to snake_case (keep only used)."""
+    current_cols = set(lf.collect_schema().names())
+    rename_map = {k: v for k, v in _DEV_SAMPLES_COLUMN_RENAME.items() if k in current_cols}
+    return lf.select([pl.col(old).alias(new) for old, new in rename_map.items()])
+
+
+def _split_broad_ancestries(label: str) -> list[str]:
+    """Split a PGS Catalog broad-ancestry label into individual categories.
+
+    The "Broad Ancestry Category" field can list several comma-separated
+    categories for an admixed cohort (e.g. "European, East Asian").
+    """
+    return [part.strip() for part in label.split(",") if part.strip()]
+
+
+def _dominant_ancestry_distribution(
+    labels: list[str | None], weights: list[float]
+) -> tuple[str | None, dict[str, float]]:
+    """Sample-weighted distribution over broad-ancestry label buckets.
+
+    Returns ``(dominant_bucket, {bucket: fraction})``. Buckets are the raw label
+    strings (admixed labels are kept intact). Rows with a null/blank label are
+    ignored; when every weight is non-positive (sample sizes unreported), the
+    present buckets are weighted equally. Dominant ties break alphabetically for
+    determinism.
+    """
+    bucket_w: dict[str, float] = {}
+    for label, w in zip(labels, weights):
+        if label is None or not label.strip():
+            continue
+        bucket_w[label.strip()] = bucket_w.get(label.strip(), 0.0) + max(w, 0.0)
+    if not bucket_w:
+        return None, {}
+    total = sum(bucket_w.values())
+    if total <= 0:
+        bucket_w = {k: 1.0 for k in bucket_w}
+        total = float(len(bucket_w))
+    dist = {k: v / total for k, v in bucket_w.items()}
+    dominant = sorted(dist.items(), key=lambda kv: (-kv[1], kv[0]))[0][0]
+    return dominant, dist
+
+
+def _summarize_dev_samples(pgs_id: str, sub: pl.DataFrame) -> dict[str, object]:
+    """Collapse one PGS ID's development-sample rows into a single summary dict."""
+    stages = sub["stage_raw"].to_list()
+    labels = sub["ancestry_broad"].to_list()
+    n_list = [float(n) if n is not None else 0.0 for n in sub["n_individuals"].to_list()]
+
+    dominant, dist = _dominant_ancestry_distribution(labels, n_list)
+
+    anc_set: set[str] = set()
+    for label in labels:
+        if label:
+            anc_set.update(_split_broad_ancestries(label))
+    ancestries = sorted(anc_set)
+
+    def _stage_n(stage: str) -> int:
+        return int(sum(n for n, s in zip(n_list, stages) if s == stage))
+
+    def _stage_dominant(stage: str) -> str | None:
+        s_labels = [lbl for lbl, s in zip(labels, stages) if s == stage]
+        s_w = [n for n, s in zip(n_list, stages) if s == stage]
+        return _dominant_ancestry_distribution(s_labels, s_w)[0]
+
+    gwas_n = _stage_n(_DEV_STAGE_GWAS)
+    train_n = _stage_n(_DEV_STAGE_TRAINING)
+
+    dist_json = (
+        json.dumps({k: round(v, 4) for k, v in sorted(dist.items(), key=lambda kv: (-kv[1], kv[0]))})
+        if dist
+        else None
+    )
+
+    return {
+        "pgs_id": pgs_id,
+        "dev_ancestry_broad": dominant,
+        "dev_ancestries": ancestries,
+        "dev_n_ancestries": len(ancestries),
+        "dev_is_multi_ancestry": len(ancestries) > 1,
+        "dev_ancestry_distribution": dist_json,
+        "dev_sample_size": max(gwas_n, train_n),
+        "dev_gwas_sample_size": gwas_n,
+        "dev_training_sample_size": train_n,
+        "gwas_ancestry_broad": _stage_dominant(_DEV_STAGE_GWAS),
+        "training_ancestry_broad": _stage_dominant(_DEV_STAGE_TRAINING),
+    }
+
+
+_DEV_ANCESTRY_SCHEMA: dict[str, pl.DataType] = {
+    "pgs_id": pl.Utf8,
+    "dev_ancestry_broad": pl.Utf8,
+    "dev_ancestries": pl.List(pl.Utf8),
+    "dev_n_ancestries": pl.Int64,
+    "dev_is_multi_ancestry": pl.Boolean,
+    "dev_ancestry_distribution": pl.Utf8,
+    "dev_sample_size": pl.Int64,
+    "dev_gwas_sample_size": pl.Int64,
+    "dev_training_sample_size": pl.Int64,
+    "gwas_ancestry_broad": pl.Utf8,
+    "training_ancestry_broad": pl.Utf8,
+}
+
+
+def clean_score_development_samples(df: pl.DataFrame) -> pl.LazyFrame:
+    """Aggregate the score_development_samples sheet to one row per PGS ID.
+
+    Surfaces the *development* (training) ancestry — distinct from the
+    *evaluation* ancestry that ``clean_performance_metrics`` already exposes —
+    so callers can judge score x sample x panel ancestry coherence (F19). The
+    raw sheet carries up to ~75 rows per PGS spanning two stages — "Source of
+    Variant Associations (GWAS)" (discovery) and "Score Development/Training"
+    (tuning) — each optionally broken down by ancestry. They collapse into the
+    columns described by :data:`_DEV_ANCESTRY_SCHEMA`:
+
+    - ``dev_ancestry_broad`` — dominant broad ancestry, sample-size weighted
+      across all stages (the headline for a quick coherence check)
+    - ``dev_ancestries`` / ``dev_n_ancestries`` / ``dev_is_multi_ancestry`` —
+      distinct broad ancestries present (admixed labels split), cardinality, flag
+    - ``dev_ancestry_distribution`` — JSON ``{broad_ancestry: fraction}``
+      (sample-weighted, descending) — the structured input a coherence veto reads
+    - ``dev_sample_size`` — development cohort size (the larger of the GWAS and
+      training stage totals, avoiding cross-stage double counting)
+    - ``dev_gwas_sample_size`` / ``dev_training_sample_size`` — per-stage totals
+    - ``gwas_ancestry_broad`` / ``training_ancestry_broad`` — dominant per stage
+    """
+    renamed = rename_dev_samples_columns(df.lazy()).collect()
+    for col, dtype in (("stage_raw", pl.Utf8), ("n_individuals", pl.Float64), ("ancestry_broad", pl.Utf8)):
+        if col not in renamed.columns:
+            renamed = renamed.with_columns(pl.lit(None, dtype=dtype).alias(col))
+    if "pgs_id" not in renamed.columns or renamed.height == 0:
+        return pl.DataFrame(schema=_DEV_ANCESTRY_SCHEMA).lazy()
+
+    records: list[dict[str, object]] = []
+    for key, sub in renamed.group_by("pgs_id", maintain_order=True):
+        pid = key[0] if isinstance(key, tuple) else key
+        records.append(_summarize_dev_samples(str(pid), sub))
+
+    return pl.DataFrame(records, schema=_DEV_ANCESTRY_SCHEMA).lazy()

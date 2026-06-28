@@ -67,6 +67,13 @@ pgen_app = typer.Typer(
 )
 app.add_typer(pgen_app, name="pgen")
 
+ancestry_app = typer.Typer(
+    name="ancestry",
+    help="Infer a sample's genetic ancestry (super-population) and check score×sample×panel coherence.",
+    no_args_is_help=True,
+)
+app.add_typer(ancestry_app, name="ancestry")
+
 console = Console()
 
 
@@ -626,6 +633,20 @@ def compute(
             ),
         ),
     ] = "off",
+    ancestry: Annotated[
+        bool,
+        typer.Option(
+            "--ancestry/--no-ancestry",
+            help="Infer the sample's genetic ancestry once and attach it to every result "
+                 "(consensus super-pop + confidence, finest population, informational mixture).",
+        ),
+    ] = False,
+    ancestry_prive: Annotated[
+        bool, typer.Option("--ancestry-prive/--no-ancestry-prive", help="Fold the local Privé 21-group reference into the ancestry consensus")
+    ] = False,
+    ancestry_aadr: Annotated[
+        bool, typer.Option("--ancestry-aadr/--no-ancestry-aadr", help="Fold the local AADR Human Origins panel (Slavic/Balkan) into the ancestry consensus")
+    ] = False,
 ) -> None:
     """Compute polygenic risk score(s) for a VCF file.
 
@@ -778,6 +799,32 @@ def compute(
         )
 
     console.print(table)
+
+    if ancestry and results:
+        base_cache = cache_dir.parent if cache_dir == DEFAULT_CACHE_DIR else cache_dir
+        catalog = PRSCatalog(cache_dir=base_cache)
+        sample_anc = catalog.infer_sample_ancestry(
+            vcf_path, sample_build=sample_build,
+            include_prive=ancestry_prive, include_aadr=ancestry_aadr,
+        )
+        for r in results:
+            r.sample_ancestry = sample_anc
+        if sample_anc is None:
+            console.print("[yellow]Sample ancestry: UNKNOWN (no model available or coverage too low).[/yellow]")
+        else:
+            fine = ""
+            if sample_anc.fine_population:
+                fc = f" {sample_anc.fine_confidence:.0%}" if sample_anc.fine_confidence is not None else ""
+                fine = f"  fine: [cyan]{sample_anc.fine_population}[/cyan]{fc} ({sample_anc.fine_panel})"
+            console.print(
+                f"[bold]Sample ancestry:[/bold] [green]{sample_anc.superpopulation}[/green] "
+                f"({sample_anc.confidence:.0%} conf, {sample_anc.n_methods} methods/"
+                f"{len(sample_anc.panels)} panels){fine}"
+            )
+            if sample_anc.mixture:
+                console.print(f"    mixture (informational): {_fmt_dist(sample_anc.mixture)}")
+            if sample_anc.fine_mixture:
+                console.print(f"    fine mixture: {_fmt_dist(sample_anc.fine_mixture)}")
 
     if output is not None:
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -953,6 +1000,122 @@ def _validate_pgs_id(pgs_id: str) -> str:
         )
         raise typer.Exit(code=1)
     return pgs_id
+
+
+def _fmt_dist(d: dict) -> str:
+    return ", ".join(f"{k} {v:.0%}" for k, v in sorted(d.items(), key=lambda kv: -kv[1]) if v > 0.005)
+
+
+def _print_single(res, label: str) -> None:
+    fine = f" → {res.fine_population}" if res.fine_population else ""
+    console.print(f"[bold]{label}:[/bold] {res.superpopulation}{fine}  "
+                  f"(conf {res.confidence:.2f}, cov {res.coverage:.1%}, "
+                  f"{res.n_variants_used:,}/{res.n_variants_model:,} sites, {res.panel}/{res.genome_build})")
+    if res.probabilities:
+        console.print(f"    KNN (fraposa):  {_fmt_dist(res.probabilities)}")
+    if res.mixture:
+        console.print(f"    mixture (PCA-NNLS):  {_fmt_dist(res.mixture)}")
+
+
+@ancestry_app.command("infer")
+def ancestry_infer(
+    vcf: Annotated[str, typer.Option("--vcf", "-v", help="VCF/array path or alias (e.g. 'anton', 'livia')")],
+    mode: Annotated[
+        str,
+        typer.Option("--mode", "-m", help="label | mixture | prive (21-group proportions) | consensus | all"),
+    ] = "all",
+    panel: Annotated[str, typer.Option("--panel", help="Reference panel for label/mixture modes: 1000g | hgdp_1kg | aadr_ho")] = "1000g",
+    panels: Annotated[
+        str, typer.Option("--panels", help="Comma-separated panels fused in consensus/all modes")
+    ] = "1000g,hgdp_1kg",
+    prive: Annotated[
+        bool, typer.Option("--prive/--no-prive", help="Fold the Privé 21-group reference into consensus/all (must be built locally)")
+    ] = False,
+    aadr: Annotated[
+        bool, typer.Option("--aadr/--no-aadr", help="Fold the AADR Human Origins panel into consensus/all (Slavic/Balkan resolution; must be built locally)")
+    ] = False,
+    resolution: Annotated[
+        str,
+        typer.Option("--resolution", "-r", help="superpop (continental) | population (fine pops: HGDP 'Russian', AADR Slavic/Balkan via --panel aadr_ho). Use the soft distribution, not the hard call — East Slavs ≈ one autosomal cluster."),
+    ] = "superpop",
+    build: Annotated[
+        Optional[str], typer.Option("--build", "-b", help="Sample genome build (auto-detected; default GRCh38)")
+    ] = None,
+    cache_dir: Annotated[Optional[Path], typer.Option("--cache-dir", help="Cache directory (base, default ~/.cache/just-prs)")] = None,
+) -> None:
+    """Infer a sample's genetic ancestry. Modes: label, mixture, prive, consensus, all (default).
+
+    \b
+    - label:     single-panel KNN (fraposa) hard super-population call + posterior.
+    - mixture:   single-panel PCA-NNLS ancestry proportions.
+    - prive:     Privé/bigsnpr 21-group proportions (finer within-continent; GRCh37 ref, lifted).
+    - consensus: Bayesian product-of-experts fusing every panel's KNN + mixture (+ Privé with --prive).
+    - all:       per-panel label + mixture, the Privé breakdown (with --prive), then the consensus.
+    """
+    vcf_path = _resolve_vcf(vcf, cache_dir)
+    catalog = PRSCatalog(cache_dir=cache_dir)
+    panel_list = [p.strip() for p in panels.split(",") if p.strip()]
+
+    if mode in ("label", "mixture"):
+        res = catalog.infer_ancestry(vcf_path, panel=panel, sample_build=build, resolution=resolution)
+        call = res.fine_population or res.superpopulation
+        if mode == "label":
+            broad = f" → {res.superpopulation}" if res.fine_population else ""
+            console.print(f"[bold]Ancestry ({panel}, {resolution}):[/bold] {call}{broad}  "
+                          f"(conf {res.confidence:.2f}, cov {res.coverage:.1%})")
+            if res.probabilities:
+                console.print(f"    {_fmt_dist(res.probabilities)}")
+        else:
+            console.print(f"[bold]Mixture ({panel}, {resolution}):[/bold] {_fmt_dist(res.mixture or {})}")
+        return
+
+    if mode == "prive":
+        pr = catalog.infer_ancestry_prive(vcf_path, sample_build=build)
+        if pr is None:
+            console.print("[yellow]Privé reference not built locally (see just_prs.ancestry.prive.build_prive_reference).[/yellow]")
+            raise typer.Exit(code=1)
+        console.print(f"[bold]Privé continental:[/bold] {_fmt_dist(pr['continental'])}  "
+                      f"({pr['n_variants_used']:,} variants)")
+        console.print(f"    21-group: {_fmt_dist(pr['proportions'])}")
+        return
+
+    # consensus / all: fuse across panels (+ Privé with --prive, + AADR with --aadr)
+    con = catalog.infer_ancestry_consensus(
+        vcf_path, panels=tuple(panel_list), sample_build=build,
+        include_prive=prive, include_aadr=aadr, resolution=resolution,
+    )
+    if mode == "all":
+        for p in (*panel_list, *(["aadr_ho"] if aadr and "aadr_ho" not in panel_list else [])):
+            r = con.per_panel.get(p)
+            if r is not None:
+                _print_single(r, f"Panel {p}")
+        prive_m = next((m for m in con.methods if m["panel"] == "prive"), None)
+        if prive_m is not None:
+            console.print(f"[bold]Privé (21-group → continental):[/bold] {_fmt_dist(prive_m['distribution'])}")
+    color = "green" if con.confidence >= 0.8 else "yellow"
+    console.print(f"[bold {color}]Consensus:[/bold {color}] {con.consensus_superpopulation}  "
+                  f"(posterior {con.confidence:.2f}, fused {len(con.methods)} methods across {len(con.per_panel)} panels)")
+    console.print(f"    {_fmt_dist(con.posterior)}")
+
+
+@ancestry_app.command("check")
+def ancestry_check(
+    pgs_id: Annotated[str, typer.Argument(help="PGS score ID (e.g. PGS000001)")],
+    vcf: Annotated[str, typer.Option("--vcf", "-v", help="VCF/array path or alias")],
+    panel: Annotated[str, typer.Option("--panel", help="Reference panel: 1000g or hgdp_1kg")] = "1000g",
+    build: Annotated[Optional[str], typer.Option("--build", "-b", help="Sample genome build")] = None,
+    cache_dir: Annotated[Optional[Path], typer.Option("--cache-dir", help="Cache directory (base, default ~/.cache/just-prs)")] = None,
+) -> None:
+    """Check score×sample×panel ancestry coherence and print a plain-English verdict."""
+    vcf_path = _resolve_vcf(vcf, cache_dir)
+    catalog = PRSCatalog(cache_dir=cache_dir)
+    anc = catalog.infer_ancestry(vcf_path, panel=panel, sample_build=build)
+    verdict = catalog.assess_ancestry_coherence(pgs_id, anc)
+    color = "green" if verdict.reliable else "yellow"
+    console.print(f"[bold]Sample ancestry:[/bold] {anc.superpopulation}  "
+                  f"[bold]score dev:[/bold] {verdict.dev_ancestry or 'n/a'}  "
+                  f"[bold]panel:[/bold] {verdict.panel_ancestry or 'n/a'}")
+    console.print(f"[{color}]Coherence: {verdict.level}[/{color}] — {verdict.message}")
 
 
 # ---------------------------------------------------------------------------

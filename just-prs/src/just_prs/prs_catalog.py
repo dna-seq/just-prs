@@ -43,7 +43,12 @@ from just_prs.ontology import (
     expand_trait_ids_from_alias_columns,
     normalize_trait_id,
 )
-from just_prs.prs import RestorationScope, compute_prs
+from just_prs.prs import (
+    ReferenceUniverse,
+    RestorationScope,
+    compute_prs,
+    prepare_reference_universe,
+)
 from just_prs.reference import reference_distribution_audit_issues
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
@@ -1157,6 +1162,37 @@ class PRSCatalog:
                 logger.debug("Reference-allele universe HF pull failed: %s", exc)
         return path if path.exists() else None
 
+    def prepare_reference_universe(
+        self,
+        genome_build: str = "GRCh38",
+        *,
+        reference_restoration: RestorationScope = True,
+    ) -> ReferenceUniverse | None:
+        """Parse the reference-allele universe once for reuse across many scores.
+
+        Resolves (and HF-pulls on miss) the build-aware universe parquet, then
+        parses it once into an in-memory :class:`ReferenceUniverse`. Pass the
+        returned handle into :meth:`compute_prs` / :meth:`compute_prs_batch`
+        (``reference_universe=``) so the ~34M-row universe is not re-parsed per
+        score. ``reference_restoration`` selects the scope baked into the handle
+        (``True`` = whole universe for WGS, a ``Chip`` for arrays). Returns
+        ``None`` when restoration is off or the universe is unavailable.
+        """
+        if reference_restoration is False:
+            return None
+        path = self._reference_universe_path(genome_build)
+        if path is None:
+            return None
+        from just_prs.prs import _normalize_restoration_scope
+
+        scope = _normalize_restoration_scope(
+            reference_restoration, self._cache_dir, genome_build
+        )
+        if scope is False:
+            return None
+        sub = scope if isinstance(scope, pl.LazyFrame) else None
+        return prepare_reference_universe(path, genome_build=genome_build, scope=sub)
+
     # Panels tried (finest first) when picking the fine-population call for the
     # compact SampleAncestry summary.
     _FINE_PANEL_PRIORITY: tuple[str, ...] = ("aadr_ho", "hgdp_1kg", "1000g")
@@ -1239,6 +1275,7 @@ class PRSCatalog:
         attach_performance: bool = False,
         genotypes_lf: pl.LazyFrame | None = None,
         reference_restoration: RestorationScope = False,
+        reference_universe: ReferenceUniverse | None = None,
         sample_build: str | None = None,
         infer_ancestry: bool = False,
         ancestry_panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
@@ -1277,9 +1314,10 @@ class PRSCatalog:
                 reference_restoration=reference_restoration,
                 reference_universe_path=(
                     self._reference_universe_path(genome_build)
-                    if reference_restoration is not False
+                    if reference_restoration is not False and reference_universe is None
                     else None
                 ),
+                reference_universe=reference_universe,
                 sample_build=sample_build,
             )
             if attach_performance:
@@ -1303,6 +1341,7 @@ class PRSCatalog:
         memory_limit: str | None = None,
         attach_performance: bool = False,
         reference_restoration: RestorationScope = False,
+        reference_universe: ReferenceUniverse | None = None,
         sample_build: str | None = None,
         infer_ancestry: bool = False,
         ancestry_panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
@@ -1336,11 +1375,12 @@ class PRSCatalog:
 
         resolved_engine = PRSEngine(engine)
         cache = self._cache_dir / "scores"
-        universe_path = (
-            self._reference_universe_path(genome_build)
-            if reference_restoration is not False
-            else None
-        )
+        # Parse the catalog-wide universe once (unless an injected handle was given)
+        # so each per-score compute reuses the in-memory table instead of re-parsing.
+        if reference_universe is None and reference_restoration is not False:
+            reference_universe = self.prepare_reference_universe(
+                genome_build, reference_restoration=reference_restoration
+            )
 
         with start_action(
             action_type="prs_catalog:compute_prs_batch",
@@ -1371,7 +1411,7 @@ class PRSCatalog:
                             memory_limit=memory_limit,
                             genotype_input_mode=genotype_input_mode,
                             reference_restoration=reference_restoration,
-                            reference_universe_path=universe_path,
+                            reference_universe=reference_universe,
                         )
                     else:
                         result = compute_prs(
@@ -1384,7 +1424,7 @@ class PRSCatalog:
                             genotypes_lf=genotypes_lf,
                             genotype_input_mode=genotype_input_mode,
                             reference_restoration=reference_restoration,
-                            reference_universe_path=universe_path,
+                            reference_universe=reference_universe,
                         )
 
                     results.append(result)
@@ -1419,7 +1459,7 @@ class PRSCatalog:
                                         memory_limit=memory_limit,
                                         genotype_input_mode=genotype_input_mode,
                                         reference_restoration=reference_restoration,
-                                        reference_universe_path=universe_path,
+                                        reference_universe=reference_universe,
                                     )
                                 else:
                                     result = compute_prs(
@@ -1432,7 +1472,7 @@ class PRSCatalog:
                                         genotypes_lf=genotypes_lf,
                                         genotype_input_mode=genotype_input_mode,
                                         reference_restoration=reference_restoration,
-                                        reference_universe_path=universe_path,
+                                        reference_universe=reference_universe,
                                     )
                                 results.append(result)
                                 outcomes.append(PRSBatchOutcome(

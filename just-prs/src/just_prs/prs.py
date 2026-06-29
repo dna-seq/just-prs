@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import enum
 import math
+from dataclasses import dataclass
 from pathlib import Path
 
 import duckdb
@@ -35,6 +36,104 @@ from just_prs.vcf import compute_dosage_expr, detect_genome_build, read_genotype
 #   Chip   -> chip-typed positions (array; eligible = chip set ∩ universe)
 #   Path / pl.DataFrame -> a custom (chrom,pos) set (embedder escape hatch)
 RestorationScope = bool | Chip | Path | pl.DataFrame
+
+
+# Columns the universe REF lookup is reduced to (and the order callers can rely on).
+_UNIVERSE_COLUMNS = ("chrom", "pos", "ref", "ref_source")
+
+
+@dataclass(frozen=True)
+class ReferenceUniverse:
+    """A parsed, in-memory reference-allele universe, prepared once and reused.
+
+    The reference-allele universe is **catalog-wide and identical for every PGS
+    ID** (~34M rows). Parsing it and joining it against the scoring file on every
+    ``compute_prs`` call is the dominant cost when reference restoration is on.
+    Build this handle once via :func:`prepare_reference_universe` and pass it into
+    ``compute_prs`` / ``compute_prs_duckdb`` / ``compute_prs_batch`` via
+    ``reference_universe=`` so the per-score path skips both the re-parse and the
+    34M-row hash. This is the dependency-injection entry point: an embedder (e.g.
+    just-dna-lite) can prepare/subset the universe itself and inject it.
+
+    ``table`` is the eligible REF set reduced to ``(chrom, pos, ref, ref_source)``,
+    filtered to non-null ``ref`` and de-duplicated on ``(chrom, pos)``. When
+    ``scoped`` is True the table was already restricted to a restoration scope
+    (e.g. a chip's typed positions ∩ universe); when False it is the whole
+    universe (WGS — every universe position is eligible).
+    """
+
+    table: pl.DataFrame
+    genome_build: str
+    scoped: bool = False
+    source_path: Path | None = None
+
+    @property
+    def n_positions(self) -> int:
+        """Number of eligible ``(chrom, pos)`` REF positions in this universe."""
+        return self.table.height
+
+
+def prepare_reference_universe(
+    source: Path | str | pl.DataFrame | pl.LazyFrame,
+    *,
+    genome_build: str = "GRCh38",
+    scope: pl.DataFrame | pl.LazyFrame | None = None,
+) -> ReferenceUniverse:
+    """Parse the reference-allele universe once into an in-memory :class:`ReferenceUniverse`.
+
+    Call this once before scoring many PGS IDs against the same sample, then pass
+    the returned handle into ``compute_prs``/``compute_prs_duckdb``/
+    ``compute_prs_batch`` (``reference_universe=``). It eliminates the per-score
+    re-parse of the ~34M-row universe parquet.
+
+    Args:
+        source: A path to the universe parquet, or an already-loaded
+            ``pl.DataFrame``/``pl.LazyFrame`` (dependency-injection: an embedder may
+            supply its own pre-loaded/subset universe). Must expose
+            ``chrom, pos, ref, ref_source`` columns.
+        genome_build: Build the universe is in — recorded on the handle for tracing.
+        scope: Optional ``(chrom, pos)`` position set to restrict the eligible REF
+            set to (chip ∩ universe). Accepts ``chrom`` or ``chr_norm``. When given,
+            the handle is marked ``scoped=True`` and the subsetting is paid here once.
+
+    Returns:
+        A :class:`ReferenceUniverse` whose ``table`` is the eligible REF set.
+    """
+    source_path: Path | None = None
+    if isinstance(source, (str, Path)):
+        source_path = Path(source)
+        universe_lf = pl.scan_parquet(source)
+    elif isinstance(source, pl.DataFrame):
+        universe_lf = source.lazy()
+    elif isinstance(source, pl.LazyFrame):
+        universe_lf = source
+    else:
+        raise TypeError(f"Unsupported reference-universe source: {type(source)!r}")
+
+    universe_lf = (
+        universe_lf.filter(pl.col("ref").is_not_null())
+        .select(
+            pl.col("chrom").cast(pl.Utf8),
+            pl.col("pos").cast(pl.Int64),
+            pl.col("ref").cast(pl.Utf8),
+            pl.col("ref_source").cast(pl.Utf8),
+        )
+    )
+
+    scoped = False
+    if scope is not None:
+        scope_lf = (scope.lazy() if isinstance(scope, pl.DataFrame) else scope).pipe(
+            _select_chrom_pos
+        )
+        universe_lf = universe_lf.join(scope_lf, on=["chrom", "pos"], how="semi")
+        scoped = True
+
+    return ReferenceUniverse(
+        table=universe_lf.collect(),
+        genome_build=genome_build,
+        scoped=scoped,
+        source_path=source_path,
+    )
 
 
 def _normalize_genotype_columns(lf: pl.LazyFrame) -> pl.LazyFrame:
@@ -341,48 +440,82 @@ def _select_chrom_pos(lf: pl.LazyFrame) -> pl.LazyFrame:
     ).unique()
 
 
+def _resolve_reference_universe(
+    *,
+    reference_universe: ReferenceUniverse | None,
+    reference_universe_path: Path | str | None,
+    reference_restoration: RestorationScope,
+    resolved_mode: GenotypeInputMode,
+    genome_build: str,
+    cache_dir: Path,
+) -> ReferenceUniverse | None:
+    """Resolve the effective :class:`ReferenceUniverse` for one compute call.
+
+    Restoration only engages in ``variant_only`` mode. A pre-built
+    ``reference_universe`` handle takes precedence (dependency injection — the
+    scope is already baked in). Otherwise, when restoration is requested and a
+    universe path is available, the universe is parsed once from that path (this
+    fallback is what keeps the un-injected single-call path correct, though it
+    re-parses per call — inject a handle to avoid that). Returns ``None`` when
+    restoration is off or unavailable.
+    """
+    if resolved_mode != GenotypeInputMode.VARIANT_ONLY:
+        return None
+    if reference_universe is not None:
+        return reference_universe
+    if reference_restoration is False or reference_universe_path is None:
+        return None
+    scope = _normalize_restoration_scope(reference_restoration, cache_dir, genome_build)
+    if scope is False:
+        return None
+    sub = scope if isinstance(scope, pl.LazyFrame) else None
+    return prepare_reference_universe(
+        reference_universe_path, genome_build=genome_build, scope=sub
+    )
+
+
 def _apply_reference_resolution(
     scoring_norm: pl.LazyFrame,
-    universe_path: Path | str | None,
-    scope: bool | pl.LazyFrame,
+    universe: ReferenceUniverse | None,
 ) -> pl.LazyFrame:
-    """Fill a missing ``reference_allele`` from the precomputed REF-universe parquet,
-    restricted to the eligible ``scope``.
+    """Fill a missing ``reference_allele`` from a prepared :class:`ReferenceUniverse`.
 
-    ``scope`` is the *normalized* form from ``_normalize_restoration_scope``:
-    ``False`` -> no fill; ``True`` -> any universe position eligible (WGS); a
-    ``(chrom,pos)`` LazyFrame -> only positions in that set ∩ universe (array/chip).
+    ``universe`` is the eligible REF set (already scope-restricted — whole universe
+    for WGS, chip ∩ universe for arrays). ``None`` means restoration is off.
+
     Adds a ``ref_resolved_source`` column (``panel``/``fasta``/null) for accounting;
     the column is always present so downstream aggregation can reference it. Only
     positions whose ``reference_allele`` was null/empty are filled; existing values win.
+
+    The join is **flipped** so the small scoring side is hashed, not the 34M-row
+    universe: the universe is first reduced (via a semi-join) to just the scoring
+    positions — streaming the 34M in-memory rows and hashing the small scoring key
+    set — yielding a lookup of at most one row per scoring position, which is then
+    left-joined back. This is ~6× faster than hashing the full universe and produces
+    results identical to the previous ``scoring.join(universe, how="left")``.
     """
     schema = scoring_norm.collect_schema().names()
-    if scope is False or universe_path is None:
+    if universe is None:
         if "ref_resolved_source" not in schema:
             scoring_norm = scoring_norm.with_columns(
                 pl.lit(None, dtype=pl.Utf8).alias("ref_resolved_source")
             )
         return scoring_norm
 
-    universe = (
-        pl.scan_parquet(universe_path)
-        .filter(pl.col("ref").is_not_null())
-        .select(
-            pl.col("chrom").cast(pl.Utf8),
-            pl.col("pos").cast(pl.Int64),
-            pl.col("ref").cast(pl.Utf8),
-            pl.col("ref_source").cast(pl.Utf8),
-        )
-    )
-    if isinstance(scope, pl.LazyFrame):
-        # Restrict the eligible REF set to the scope (chip ∩ universe).
-        universe = universe.join(scope, on=["chrom", "pos"], how="semi")
-    universe = universe.select(
+    universe_lf = universe.table.lazy().select(
         pl.col("chrom").alias("_u_chrom"),
         pl.col("pos").alias("_u_pos"),
         pl.col("ref").alias("_u_ref"),
         pl.col("ref_source").alias("_u_src"),
     )
+    # Hash the small scoring side: reduce the universe to scoring positions first.
+    scoring_positions = scoring_norm.select(
+        pl.col("chr_name_norm").alias("_u_chrom"),
+        pl.col("chr_pos_norm").alias("_u_pos"),
+    ).unique()
+    ref_lookup = universe_lf.join(
+        scoring_positions, on=["_u_chrom", "_u_pos"], how="semi"
+    ).collect()
 
     ref_unknown = pl.col("reference_allele").is_null() | (
         pl.col("reference_allele").str.len_chars() == 0
@@ -390,7 +523,7 @@ def _apply_reference_resolution(
     fill_mask = ref_unknown & pl.col("_u_ref").is_not_null()
     return (
         scoring_norm.join(
-            universe,
+            ref_lookup.lazy(),
             left_on=["chr_name_norm", "chr_pos_norm"],
             right_on=["_u_chrom", "_u_pos"],
             how="left",
@@ -447,6 +580,7 @@ def compute_prs(
     maf_fill: bool = False,
     reference_restoration: RestorationScope = False,
     reference_universe_path: Path | str | None = None,
+    reference_universe: ReferenceUniverse | None = None,
     sample_build: str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score for a single VCF against a scoring file.
@@ -503,15 +637,18 @@ def compute_prs(
         resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, genotypes_lf)
 
         # Reference-allele resolution only affects the variant-only absent-locus
-        # path; in other modes absent loci are never imputed hom-ref.
-        restoration_scope = (
-            _normalize_restoration_scope(reference_restoration, cache_dir, genome_build)
-            if resolved_mode == GenotypeInputMode.VARIANT_ONLY
-            else False
+        # path; in other modes absent loci are never imputed hom-ref. A prepared
+        # universe handle (dependency injection) is reused as-is; otherwise it is
+        # parsed once from reference_universe_path.
+        ref_universe = _resolve_reference_universe(
+            reference_universe=reference_universe,
+            reference_universe_path=reference_universe_path,
+            reference_restoration=reference_restoration,
+            resolved_mode=resolved_mode,
+            genome_build=genome_build,
+            cache_dir=cache_dir,
         )
-        scoring_norm = _apply_reference_resolution(
-            scoring_norm, reference_universe_path, restoration_scope
-        )
+        scoring_norm = _apply_reference_resolution(scoring_norm, ref_universe)
 
         if resolved_mode == GenotypeInputMode.VARIANT_ONLY:
             joined = scoring_norm.join(
@@ -814,6 +951,7 @@ def compute_prs_duckdb(
     maf_fill: bool = False,
     reference_restoration: RestorationScope = False,
     reference_universe_path: Path | str | None = None,
+    reference_universe: ReferenceUniverse | None = None,
     sample_build: str | None = None,
 ) -> PRSResult:
     """Compute a polygenic risk score using DuckDB for the join and aggregation.
@@ -860,15 +998,33 @@ def compute_prs_duckdb(
     ):
         scoring_lf = _resolve_scoring(scoring_file, genome_build, cache_dir)
         scoring_norm = _normalize_scoring_columns(scoring_lf)
-        # Fill any missing reference_allele from the precomputed REF universe. Applied
-        # unconditionally (adds a null ref_resolved_source when off) so the SQL can
-        # reference s.ref_resolved_source; only the variant-only branch consumes it.
-        restoration_scope = _normalize_restoration_scope(
-            reference_restoration, cache_dir, genome_build
+
+        # Resolve the genotype input mode up front (cheap — schema + 1-row probe)
+        # so reference restoration can be gated on variant_only before the scoring
+        # frame is collected. ``geno_mode_lf`` is reused for DuckDB registration
+        # below so the VCF/parquet is not read twice.
+        if genotypes_parquet is not None:
+            geno_mode_lf = _normalize_genotype_columns(pl.scan_parquet(genotypes_parquet))
+        elif genotypes_lf is not None:
+            geno_mode_lf = _normalize_genotype_columns(genotypes_lf)
+        else:
+            geno_mode_lf = read_genotypes(vcf_path)
+        resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, geno_mode_lf)
+
+        # Fill any missing reference_allele from the precomputed REF universe (only
+        # engages in variant_only mode). A prepared handle is reused as-is
+        # (dependency injection); otherwise it is parsed once from the path.
+        # ``_apply_reference_resolution`` always adds a ``ref_resolved_source``
+        # column (null when off) so the SQL can reference ``s.ref_resolved_source``.
+        ref_universe = _resolve_reference_universe(
+            reference_universe=reference_universe,
+            reference_universe_path=reference_universe_path,
+            reference_restoration=reference_restoration,
+            resolved_mode=resolved_mode,
+            genome_build=genome_build,
+            cache_dir=cache_dir,
         )
-        scoring_norm = _apply_reference_resolution(
-            scoring_norm, reference_universe_path, restoration_scope
-        )
+        scoring_norm = _apply_reference_resolution(scoring_norm, ref_universe)
 
         schema_names = scoring_norm.collect_schema().names()
         scoring_df = scoring_norm.collect()
@@ -900,19 +1056,12 @@ def compute_prs_duckdb(
 
             if genotypes_parquet is not None:
                 geno_from = f"read_parquet('{genotypes_parquet}')"
-                geno_mode_lf = _normalize_genotype_columns(pl.scan_parquet(genotypes_parquet))
-            elif genotypes_lf is not None:
-                geno_lf = _normalize_genotype_columns(genotypes_lf)
-                conn.register("genotypes_tbl", geno_lf.collect().to_arrow())
-                geno_from = "genotypes_tbl"
-                geno_mode_lf = geno_lf
             else:
-                geno_lf = read_genotypes(vcf_path)
-                conn.register("genotypes_tbl", geno_lf.collect().to_arrow())
+                # genotypes_lf / VCF path: materialize the already-resolved
+                # geno_mode_lf to Arrow and register it (read once).
+                conn.register("genotypes_tbl", geno_mode_lf.collect().to_arrow())
                 geno_from = "genotypes_tbl"
-                geno_mode_lf = geno_lf
 
-            resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, geno_mode_lf)
             has_maf_col_ddb = "allelefrequency_effect" in schema_names
             do_maf_fill_ddb = maf_fill and has_maf_col_ddb and not dosage_weight
 
@@ -1131,6 +1280,7 @@ def compute_prs_batch(
     memory_limit: str | None = None,
     reference_restoration: RestorationScope = False,
     reference_universe_path: Path | str | None = None,
+    reference_universe: ReferenceUniverse | None = None,
     sample_build: str | None = None,
 ) -> "PRSBatchResult":
     """Compute multiple PRS scores for a single VCF file.
@@ -1138,6 +1288,11 @@ def compute_prs_batch(
     Memory-safe: uses DuckDB engine by default (spill-to-disk), runs
     ``gc.collect()`` after each score, continues on per-score errors
     instead of crashing, and auto-retries once on corrupt parquet caches.
+
+    When reference restoration is requested and no ``reference_universe`` handle
+    is injected, the universe is parsed **once** here (from
+    ``reference_universe_path``) and reused for every score, so the ~34M-row
+    universe is never re-parsed per score.
 
     Args:
         vcf_path: Path to VCF file
@@ -1166,6 +1321,18 @@ def compute_prs_batch(
 
     # All scores share one sample/scoring build — guard once up front.
     _assert_sample_build_matches(sample_build, genome_build, "batch")
+
+    # Resolve the reference-allele universe once for the whole batch (it is
+    # catalog-wide and identical for every score). An injected handle wins;
+    # otherwise parse it once from the path so each per-score compute reuses the
+    # in-memory table instead of re-parsing 34M rows.
+    if reference_universe is None and reference_restoration is not False and reference_universe_path is not None:
+        scope = _normalize_restoration_scope(reference_restoration, cache_dir, genome_build)
+        if scope is not False:
+            sub = scope if isinstance(scope, pl.LazyFrame) else None
+            reference_universe = prepare_reference_universe(
+                reference_universe_path, genome_build=genome_build, scope=sub
+            )
 
     with start_action(
         action_type="prs:compute_batch",
@@ -1199,6 +1366,7 @@ def compute_prs_batch(
                             genotype_input_mode=genotype_input_mode,
                             reference_restoration=reference_restoration,
                             reference_universe_path=reference_universe_path,
+                            reference_universe=reference_universe,
                         )
                     else:
                         result = compute_prs(
@@ -1212,6 +1380,7 @@ def compute_prs_batch(
                             genotype_input_mode=genotype_input_mode,
                             reference_restoration=reference_restoration,
                             reference_universe_path=reference_universe_path,
+                            reference_universe=reference_universe,
                         )
 
                     results.append(result)
@@ -1245,6 +1414,9 @@ def compute_prs_batch(
                                         genotypes_lf=genotypes_lf,
                                         memory_limit=memory_limit,
                                         genotype_input_mode=genotype_input_mode,
+                                        reference_restoration=reference_restoration,
+                                        reference_universe_path=reference_universe_path,
+                                        reference_universe=reference_universe,
                                     )
                                 else:
                                     result = compute_prs(
@@ -1256,6 +1428,9 @@ def compute_prs_batch(
                                         trait_reported=trait,
                                         genotypes_lf=genotypes_lf,
                                         genotype_input_mode=genotype_input_mode,
+                                        reference_restoration=reference_restoration,
+                                        reference_universe_path=reference_universe_path,
+                                        reference_universe=reference_universe,
                                     )
                                 results.append(result)
                                 outcomes.append(PRSBatchOutcome(

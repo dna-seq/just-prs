@@ -6,7 +6,13 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from just_prs.prs import PRSEngine, compute_prs, compute_prs_batch, compute_prs_duckdb
+from just_prs.prs import (
+    PRSEngine,
+    compute_prs,
+    compute_prs_batch,
+    compute_prs_duckdb,
+    prepare_reference_universe,
+)
 from just_prs.vcf import read_genotypes
 
 
@@ -244,6 +250,95 @@ def test_reference_restoration_scope_restricts_to_position_set(tmp_path: Path) -
         assert r.variants_ref_resolved_fasta == 0   # 400 off-scope, not filled
         assert r.variants_unscorable_absent == 1    # 400 stays unscorable
         assert r.score == pytest.approx(7.0)        # 1 (obs) + 6 (300 hom-ref) ; 400 dropped
+
+
+def test_prepared_universe_handle_matches_path_both_engines(tmp_path: Path) -> None:
+    """An injected ReferenceUniverse handle (dependency injection) produces results
+    identical to passing reference_universe_path — the prepare-once fast path must
+    not change the score or the per-tier accounting."""
+    geno_path = tmp_path / "variant_only.parquet"
+    pl.DataFrame({
+        "chrom": ["1"], "pos": [100], "ref": ["A"], "alt": ["G"], "GT": ["0/1"],
+    }).write_parquet(geno_path)
+
+    scoring = pl.DataFrame({
+        "hm_chr": ["1", "1", "1", "1"],
+        "hm_pos": [100, 200, 300, 400],
+        "effect_allele": ["G", "T", "C", "A"],
+        "reference_allele": ["A", "T", None, None],
+        "effect_weight": [1.0, 2.0, 3.0, 0.5],
+    }).lazy()
+
+    universe_path = tmp_path / "reference_allele_universe.parquet"
+    pl.DataFrame({
+        "genome_build": ["GRCh38", "GRCh38"],
+        "chrom": ["1", "1"], "pos": [300, 400], "ref": ["C", "A"],
+        "ref_source": ["panel", "fasta"],
+    }).write_parquet(universe_path)
+
+    handle = prepare_reference_universe(universe_path, genome_build="GRCh38")
+    assert handle.n_positions == 2
+    assert handle.scoped is False
+
+    for fn, geno_kwargs in (
+        (compute_prs, {"genotypes_lf": pl.scan_parquet(geno_path)}),
+        (compute_prs_duckdb, {"genotypes_parquet": geno_path}),
+    ):
+        via_path = fn(
+            vcf_path="", scoring_file=scoring, cache_dir=tmp_path, pgs_id="PGSTEST",
+            genotype_input_mode="variant_only",
+            reference_restoration=True, reference_universe_path=universe_path,
+            **geno_kwargs,
+        )
+        via_handle = fn(
+            vcf_path="", scoring_file=scoring, cache_dir=tmp_path, pgs_id="PGSTEST",
+            genotype_input_mode="variant_only",
+            reference_universe=handle,
+            **geno_kwargs,
+        )
+        # Pure dependency injection: no path, restoration left at its False default —
+        # the handle's presence is the intent.
+        assert via_handle.score == pytest.approx(via_path.score)
+        assert via_handle.score == pytest.approx(12.0)
+        assert via_handle.variants_ref_resolved_panel == via_path.variants_ref_resolved_panel == 1
+        assert via_handle.variants_ref_resolved_fasta == via_path.variants_ref_resolved_fasta == 1
+        assert via_handle.variants_unscorable_absent == via_path.variants_unscorable_absent == 0
+
+
+def test_prepared_universe_handle_respects_baked_scope(tmp_path: Path) -> None:
+    """A handle prepared with a scope restricts the eligible REF set; off-scope absent
+    loci stay unscorable even though they exist in the universe."""
+    geno_path = tmp_path / "variant_only.parquet"
+    pl.DataFrame({
+        "chrom": ["1"], "pos": [100], "ref": ["A"], "alt": ["G"], "GT": ["0/1"],
+    }).write_parquet(geno_path)
+    scoring = pl.DataFrame({
+        "hm_chr": ["1", "1", "1"],
+        "hm_pos": [100, 300, 400],
+        "effect_allele": ["G", "C", "A"],
+        "reference_allele": ["A", None, None],
+        "effect_weight": [1.0, 3.0, 0.5],
+    }).lazy()
+    universe = pl.DataFrame({
+        "chrom": ["1", "1"], "pos": [300, 400], "ref": ["C", "A"],
+        "ref_source": ["panel", "fasta"],
+    })
+
+    handle = prepare_reference_universe(
+        universe, scope=pl.DataFrame({"chrom": ["1"], "pos": [300]})
+    )
+    assert handle.scoped is True
+    assert handle.n_positions == 1
+
+    r = compute_prs(
+        vcf_path="", scoring_file=scoring, cache_dir=tmp_path, pgs_id="PGSTEST",
+        genotypes_lf=pl.scan_parquet(geno_path), genotype_input_mode="variant_only",
+        reference_universe=handle,
+    )
+    assert r.variants_ref_resolved_panel == 1   # 300 filled
+    assert r.variants_ref_resolved_fasta == 0   # 400 off-scope, not filled
+    assert r.variants_unscorable_absent == 1
+    assert r.score == pytest.approx(7.0)
 
 
 def test_variant_only_differs_from_plink_present_only_when_ref_effect_absent(tmp_path: Path) -> None:

@@ -40,10 +40,12 @@ from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs import (
     GenotypeInputMode,
     PRSEngine,
+    ReferenceUniverse,
     RestorationScope,
     compute_prs,
     compute_prs_batch,
     compute_prs_duckdb,
+    prepare_reference_universe,
 )
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.quality import (

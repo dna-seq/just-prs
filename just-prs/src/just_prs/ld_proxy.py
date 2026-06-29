@@ -14,6 +14,8 @@ The LD table is precomputed from a reference panel (1000G) by the Dagster pipeli
 and cached on HuggingFace. Consumer-side code only does a parquet join.
 """
 
+import time
+import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -57,6 +59,7 @@ DEFAULT_LD_CHUNK_SIZE_BP = 250_000
 DEFAULT_LD_MAX_TARGETS_PER_CHUNK = 256
 DEFAULT_LD_TARGET_BATCH_SIZE = 10_000
 DEFAULT_LD_PROXY_FLUSH_ROWS = 50_000
+DEFAULT_LD_UNIVERSE_BATCH_SIZE = 1_000_000  # off-chip universe positions per serial batch
 DEFAULT_LD_MEMORY_LIMIT_PERCENT = 65
 DEFAULT_LD_DUCKDB_MEMORY_GB = 4.0
 DEFAULT_LD_REQUIRE_EXPLICIT_SCOPE = True
@@ -71,6 +74,7 @@ class LDProxyBuildResult:
     n_untyped: int
     n_proxied: int
     mean_r2: float | None
+    capped: bool = False  # True when skipped because n_untyped exceeded the cap
 
 
 @dataclass(frozen=True)
@@ -115,8 +119,45 @@ class LDProxyBatchResult:
         return sum(1 for outcome in self.outcomes if outcome.status == "failed")
 
     @property
+    def n_skipped(self) -> int:
+        return sum(1 for outcome in self.outcomes if outcome.status == "skipped")
+
+    @property
     def coverage_ratio(self) -> float:
-        return (self.n_ok + self.n_cached) / self.n_total if self.n_total > 0 else 0.0
+        # Skipped (intentionally capped) scores are excluded from the denominator —
+        # they are a deliberate scope choice, not a coverage failure.
+        denom = self.n_total - self.n_skipped
+        return (self.n_ok + self.n_cached) / denom if denom > 0 else 0.0
+
+
+@dataclass(frozen=True)
+class LDProxyMergeResult:
+    """Summary for the dedup-merge of per-PGS intermediates into one table."""
+
+    path: Path
+    n_input_rows: int
+    n_rows: int
+    n_targets: int
+    n_sources: int
+    mean_r2: float | None
+
+    @property
+    def dedup_ratio(self) -> float:
+        """Fraction of pre-dedup rows eliminated as cross-PGS duplicates."""
+        return 1.0 - (self.n_rows / self.n_input_rows) if self.n_input_rows > 0 else 0.0
+
+
+@dataclass(frozen=True)
+class LDProxyUniverseResult:
+    """Summary for a universe-driven (1M-batch) LD-proxy build + merge."""
+
+    table_path: Path
+    n_offchip: int
+    batch_size: int
+    n_batches: int
+    n_batches_built: int
+    n_batches_cached: int
+    merge: "LDProxyMergeResult"
 
     @property
     def paths(self) -> dict[str, str]:
@@ -153,13 +194,18 @@ class _ResolvedLDProxyInputs:
 
 
 def ld_proxy_table_path(cache_dir: Path, chip: str, build: str, panel: str = "1000g") -> Path:
-    """Return the legacy local cache path for a combined LD-proxy table parquet."""
+    """Return the path of the single published (merged) LD-proxy table parquet."""
     return cache_dir / "percentiles" / f"{panel}_ld_proxy_{chip}_{build}.parquet"
 
 
 def ld_proxy_dir(cache_dir: Path, chip: str, build: str, panel: str = "1000g") -> Path:
-    """Return the canonical per-PGS LD-proxy cache directory."""
+    """Return the per-PGS LD-proxy intermediates directory (interactive/single-score)."""
     return cache_dir / "percentiles" / "ld_proxy" / panel / chip / build
+
+
+def ld_proxy_universe_dir(cache_dir: Path, chip: str, build: str, panel: str = "1000g") -> Path:
+    """Return the directory of per-batch universe LD-proxy intermediates."""
+    return ld_proxy_dir(cache_dir, chip, build, panel) / "universe"
 
 
 def ld_proxy_pgs_path(
@@ -653,7 +699,7 @@ def _resolve_ld_proxy_inputs(
 ) -> _ResolvedLDProxyInputs:
     """Resolve reference-panel and chip inputs shared by LD-proxy builds."""
     from just_prs.chip_coverage import chip_typed_positions
-    from just_prs.reference import parse_psam
+    from just_prs.reference import _find_reference_panel_file, parse_psam
 
     _log_ld_stage("load_chip_typed_positions_start", chip=chip)
     typed_positions = chip_typed_positions(chip, cache_dir)
@@ -668,9 +714,12 @@ def _resolve_ld_proxy_inputs(
         "pos": typed_positions["pos"],
     })
 
-    pvar_zst_path = ref_dir / f"{build}_1000G_ALL.pvar.zst"
-    if not pvar_zst_path.exists():
-        pvar_zst_path = next(ref_dir.glob("*.pvar.zst"))
+    # Resolve all panel files by build token so we never cross builds — the 1000g
+    # panel dir holds both GRCh37 and GRCh38 .pgen/.pvar.zst/.psam, and a plain
+    # glob picks the first alphabetically (GRCh37), which would pair a GRCh38 pvar
+    # with a GRCh37 pgen and crash pgenlib on the variant-count mismatch. This is
+    # also panel-agnostic (works for hgdp_1kg).
+    pvar_zst_path = _find_reference_panel_file(ref_dir, build, ".pvar.zst")
 
     _log_ld_stage("ensure_pvar_parquet_start", pvar_zst_path=str(pvar_zst_path))
     pvar_parquet_path = _ensure_pvar_parquet(pvar_zst_path)
@@ -685,8 +734,8 @@ def _resolve_ld_proxy_inputs(
     _log_ld_stage("count_pvar_variants_done", pvar_variant_ct=int(pvar_variant_ct))
 
     _log_ld_stage("parse_psam_start")
-    psam = parse_psam(next(ref_dir.glob("*.psam")))
-    pgen_path = next(ref_dir.glob("*.pgen"))
+    psam = parse_psam(_find_reference_panel_file(ref_dir, build, ".psam"))
+    pgen_path = _find_reference_panel_file(ref_dir, build, ".pgen")
     n_samples = psam.height
     _log_ld_stage(
         "parse_psam_done",
@@ -867,11 +916,18 @@ def _process_chromosome(
     n_proxied = 0
     sum_r2 = 0.0
 
+    # Unique per-call token: multiple target-batches for the SAME chromosome run as
+    # separate _process_chromosome calls sharing one parts_dir. A part name keyed only
+    # by (chrom, part_idx) collides across calls — later batches overwrite earlier ones
+    # (lost proxies) and the returned path list double-references survivors (duplicate
+    # rows). The uuid makes every part file globally unique.
+    call_tag = uuid.uuid4().hex[:12]
+
     def _flush_rows() -> None:
         nonlocal part_idx
         if output_dir is None or not result_rows:
             return
-        part_path = output_dir / f"ld_proxy_chr{chrom}_{part_idx:05d}.parquet"
+        part_path = output_dir / f"ld_proxy_chr{chrom}_{call_tag}_{part_idx:05d}.parquet"
         pl.DataFrame(result_rows, schema=LD_PROXY_TABLE_SCHEMA).write_parquet(part_path)
         part_paths.append(part_path)
         result_rows.clear()
@@ -970,8 +1026,12 @@ def _process_chromosome(
 
                 window_r = r_matrix[ti, local_lo:local_hi]
                 best_in_window = int(np.argmax(np.abs(window_r)))
-                best_r = float(window_r[best_in_window])
-                best_r2 = best_r * best_r
+                # Pearson r is mathematically in [-1, 1]; clamp to absorb tiny
+                # floating-point overshoot (e.g. r = 1.0000000002 on a near-perfect
+                # proxy) so r_squared never exceeds 1.0 and validate_ld_proxy_table
+                # / the asset check accept the row.
+                best_r = min(1.0, max(-1.0, float(window_r[best_in_window])))
+                best_r2 = min(1.0, best_r * best_r)
 
                 if best_r2 >= min_r2:
                     best_orig_idx = int(typed_pos_order[cand_lo + local_lo + best_in_window])
@@ -1189,6 +1249,26 @@ def build_ld_proxy_table(
                 n_total_scoring=n_scoring,
                 n_typed_on_chip=typed_df.height,
             )
+
+            # Cap: genome-wide scores with millions of off-chip targets cost ~tens of
+            # minutes each and are not meaningfully array-scorable. Skip them (write an
+            # empty schema-valid table so resume treats them as done) and report
+            # n_untyped so the skipped set's cost can be estimated. 0 disables the cap.
+            max_untyped = int(os.environ.get("PRS_LD_MAX_UNTYPED_TARGETS", "2000000"))
+            if max_untyped > 0 and n_untyped > max_untyped:
+                con.close()
+                _log_ld_stage("skip_too_large", n_untyped=int(n_untyped), max_untyped_targets=max_untyped)
+                log_message(
+                    message_type="ld_proxy:skipped_too_large",
+                    n_untyped=int(n_untyped),
+                    max_untyped_targets=max_untyped,
+                )
+                if output_path is not None:
+                    pl.DataFrame(schema=LD_PROXY_TABLE_SCHEMA).write_parquet(output_path)
+                    return LDProxyBuildResult(
+                        path=output_path, n_untyped=n_untyped, n_proxied=0, mean_r2=None, capped=True,
+                    )
+                return pl.DataFrame(schema=LD_PROXY_TABLE_SCHEMA)
 
             env_workers = os.environ.get("PRS_LD_MAX_WORKERS")
             n_workers = max_workers or (int(env_workers) if env_workers else DEFAULT_LD_MAX_WORKERS)
@@ -1476,6 +1556,7 @@ def build_ld_proxy_for_pgs_id(
         n_untyped=result.n_untyped,
         n_proxied=validated.n_proxied,
         mean_r2=validated.mean_r2,
+        capped=result.capped,
     )
 
 
@@ -1597,7 +1678,7 @@ def build_ld_proxy_batch(
                     elapsed = time.monotonic() - start_time
                     outcomes.append(LDProxyOutcome(
                         pgs_id=pgs_id,
-                        status="ok",
+                        status="skipped" if result.capped else "ok",
                         path=result.path,
                         n_untyped=result.n_untyped,
                         n_proxied=result.n_proxied,
@@ -1656,4 +1737,329 @@ def build_ld_proxy_batch(
         outcomes=outcomes,
         quality_df=quality_df,
         output_dir=output_dir,
+    )
+
+
+def merge_ld_proxy_tables(intermediates_dir: Path, output_path: Path) -> LDProxyMergeResult:
+    """Reduce per-PGS LD-proxy intermediates into one deduplicated table.
+
+    The per-PGS parquets are local build intermediates kept only for resumability
+    (gap detection / per-PGS retry). The *published* artifact is a single table:
+    LD proxies are keyed by genomic position (the schema has no ``pgs_id`` column),
+    so a target shared by N scores is byte-identical across N files. We stream all
+    ``PGS*.parquet`` files (excluding ``_quality.parquet``), deduplicate on
+    ``(target_chr, target_pos)``, and sink one parquet.
+
+    The dedup is **lossless**: proxy selection is position-deterministic (same
+    target → same best in-window proxy, independent of which PGS referenced it),
+    so every duplicate row for a target is identical. The merge is streamed
+    (``scan`` → ``unique`` → ``sink_parquet``) so the pre-dedup union is never
+    materialized, honoring the LD memory guardrail. The write is atomic
+    (temp file → ``replace``).
+
+    Args:
+        intermediates_dir: Directory of per-PGS ``PGS*.parquet`` files.
+        output_path: Destination single-table parquet path.
+
+    Returns:
+        LDProxyMergeResult with input/output/target counts and mean r².
+    """
+    with start_action(
+        action_type="ld_proxy:merge_tables",
+        intermediates_dir=str(intermediates_dir),
+        output_path=str(output_path),
+    ):
+        files = sorted(
+            p for p in intermediates_dir.glob("*.parquet") if not p.name.startswith("_")
+        )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = output_path.with_name(output_path.name + ".tmp")
+        tmp_path.unlink(missing_ok=True)
+
+        if not files:
+            # Nothing built yet — write a schema-correct empty table so downstream
+            # readers and the asset check find a valid (if empty) artifact.
+            pl.DataFrame(schema=LD_PROXY_TABLE_SCHEMA).write_parquet(tmp_path)
+            tmp_path.replace(output_path)
+            log_message(message_type="ld_proxy:merge_empty", output_path=str(output_path))
+            return LDProxyMergeResult(
+                path=output_path, n_input_rows=0, n_rows=0, n_targets=0,
+                n_sources=0, mean_r2=None,
+            )
+
+        n_input_rows = int(
+            pl.scan_parquet(files).select(pl.len()).collect().item()
+        )
+        (
+            pl.scan_parquet(files)
+            .unique(subset=["target_chr", "target_pos"], keep="first")
+            .sink_parquet(tmp_path)
+        )
+        tmp_path.replace(output_path)
+
+        stats = (
+            pl.scan_parquet(output_path)
+            .select(
+                pl.len().alias("n_rows"),
+                pl.struct("target_chr", "target_pos").n_unique().alias("n_targets"),
+                pl.col("r_squared").mean().alias("mean_r2"),
+            )
+            .collect()
+        )
+        n_rows = int(stats["n_rows"][0])
+        n_targets = int(stats["n_targets"][0])
+        mean_r2 = float(stats["mean_r2"][0]) if n_rows > 0 and stats["mean_r2"][0] is not None else None
+
+        result = LDProxyMergeResult(
+            path=output_path,
+            n_input_rows=n_input_rows,
+            n_rows=n_rows,
+            n_targets=n_targets,
+            n_sources=len(files),
+            mean_r2=mean_r2,
+        )
+        log_message(
+            message_type="ld_proxy:merge_complete",
+            n_sources=result.n_sources,
+            n_input_rows=result.n_input_rows,
+            n_rows=result.n_rows,
+            n_targets=result.n_targets,
+            dedup_ratio=round(result.dedup_ratio, 4),
+            mean_r2=result.mean_r2,
+        )
+        return result
+
+
+def _materialize_offchip_universe(
+    universe_parquet: Path,
+    typed_df: pl.DataFrame,
+    build: str,
+    out_path: Path,
+    duckdb_temp_dir: Path | None = None,
+) -> int:
+    """Write the off-chip catalog positions to a parquet, interleaved by chromosome.
+
+    The universe (``reference_allele_universe[_<build>].parquet``) is the sample-agnostic
+    union of every catalog scoring position (~35M for GRCh38; the ``ref_missing`` filter
+    that built it is a no-op because no scoring file carries a reference allele). Off-chip =
+    universe minus the chip's typed positions.
+
+    Two structural choices keep this memory-safe and the downstream build parallel:
+
+    1. The whole thing runs in **DuckDB with disk spill** and streams straight to a parquet
+       via ``COPY`` — the ~35M-row set is never materialized into a resident Python frame
+       (holding it is what pushed ``pgenlib.PgenReader`` over the RLIMIT_AS cap).
+    2. Rows are ordered by ``ROW_NUMBER() OVER (PARTITION BY chrom ORDER BY pos)`` then chrom,
+       i.e. **round-robin across chromosomes**, so a contiguous 1M-row slice spans all
+       chromosomes — ``build_ld_proxy_table`` parallelises across chromosomes, so this keeps
+       every batch's workers busy (a ``(chrom,pos)`` sort would make early batches single-
+       chromosome and serialise them). The order is deterministic, so batch *i* is stable
+       across resumes.
+
+    Returns the number of off-chip positions written.
+    """
+    import duckdb
+
+    from just_prs.reference import _resolve_duckdb_memory_limit
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    has_build = "genome_build" in pl.scan_parquet(universe_parquet).collect_schema().names()
+    typed_arrow = typed_df.rename({"chr": "chr_name_norm", "pos": "chr_pos_norm"}).to_arrow()
+
+    con = duckdb.connect(config={"memory_limit": _resolve_duckdb_memory_limit()})
+    try:
+        con.execute("SET preserve_insertion_order = false")
+        if duckdb_temp_dir is not None:
+            duckdb_temp_dir.mkdir(parents=True, exist_ok=True)
+            con.execute(f"SET temp_directory = '{duckdb_temp_dir}'")
+        con.register("typed", typed_arrow)
+        build_filter = f"WHERE genome_build = '{build}'" if has_build else ""
+        con.execute(
+            f"""
+            COPY (
+                WITH u AS (
+                    SELECT DISTINCT
+                        regexp_replace(CAST(chrom AS VARCHAR), '^(chr|CHR|Chr)', '') AS chr_name_norm,
+                        CAST(pos AS BIGINT) AS chr_pos_norm
+                    FROM read_parquet('{_sql_literal(universe_parquet)}')
+                    {build_filter}
+                ),
+                off AS (
+                    SELECT u.chr_name_norm, u.chr_pos_norm
+                    FROM u
+                    LEFT JOIN typed t
+                      ON t.chr_name_norm = u.chr_name_norm AND t.chr_pos_norm = u.chr_pos_norm
+                    WHERE t.chr_pos_norm IS NULL
+                )
+                SELECT chr_name_norm, chr_pos_norm
+                FROM off
+                ORDER BY ROW_NUMBER() OVER (PARTITION BY chr_name_norm ORDER BY chr_pos_norm),
+                         chr_name_norm
+            ) TO '{_sql_literal(out_path)}' (FORMAT PARQUET)
+            """
+        )
+        return int(
+            con.execute(f"SELECT count(*) FROM read_parquet('{_sql_literal(out_path)}')").fetchone()[0]
+        )
+    finally:
+        con.close()
+
+
+def _offchip_materialize_main(argv: list[str]) -> None:
+    """Subprocess entry point for off-chip materialization (see below for why)."""
+    from just_prs.chip_coverage import chip_typed_positions
+
+    universe_parquet, chip, build, cache_dir, out_path, duckdb_temp_dir = argv[:6]
+    typed = chip_typed_positions(chip, Path(cache_dir))
+    typed_df = pl.DataFrame({"chr": typed["chr_norm"], "pos": typed["pos"]})
+    _materialize_offchip_universe(
+        Path(universe_parquet), typed_df, build, Path(out_path),
+        duckdb_temp_dir=Path(duckdb_temp_dir) if duckdb_temp_dir else None,
+    )
+
+
+def _materialize_offchip_universe_subprocess(
+    universe_parquet: Path, chip: str, build: str, cache_dir: Path,
+    out_path: Path, duckdb_temp_dir: Path,
+) -> None:
+    """Run the DuckDB materialize in a child process so its (large, glibc-retained)
+    virtual memory is fully returned to the OS on exit — before the parent opens the
+    concurrent ``pgenlib`` readers under the ``RLIMIT_AS`` cap. Running both in one
+    process pushes the readers over the cap (the materialize's freed arenas are not
+    returned), which manifests as ``MemoryError`` in ``PgenReader.__cinit__``.
+    """
+    import subprocess
+    import sys
+
+    snippet = "import sys; from just_prs.ld_proxy import _offchip_materialize_main; _offchip_materialize_main(sys.argv[1:])"
+    subprocess.run(
+        [sys.executable, "-c", snippet,
+         str(universe_parquet), chip, build, str(cache_dir), str(out_path), str(duckdb_temp_dir)],
+        check=True,
+    )
+
+
+def build_ld_proxy_over_universe(
+    universe_parquet: Path,
+    chip: str,
+    build: str,
+    ref_dir: Path,
+    cache_dir: Path,
+    panel: str = "1000g",
+    batch_size: int = DEFAULT_LD_UNIVERSE_BATCH_SIZE,
+    max_positions: int | None = None,
+    window_kb: int = DEFAULT_PROXY_WINDOW_KB,
+    min_r2: float = DEFAULT_MIN_R2,
+    max_workers: int | None = None,
+    chunk_size_bp: int | None = None,
+    max_targets_per_chunk: int | None = None,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
+) -> LDProxyUniverseResult:
+    """Build the catalog LD-proxy table once over the off-chip universe, in serial batches.
+
+    This computes a proxy for **every off-chip catalog position exactly once** — the
+    minimal possible work — instead of recomputing shared targets per PGS. Positions are
+    processed in fixed ``batch_size`` (default 1M) serial slices; each slice is built by
+    ``build_ld_proxy_table`` (which itself chunks per-chromosome, so peak RSS is bounded by
+    the chunk, not the batch) and written to a resumable per-batch parquet. The batches are
+    then dedup-merged into the single published table. Memory is deterministic (~position
+    list + shared allele offsets + per-chunk genotypes); wall-time is linear in the number
+    of off-chip positions, so the ETA is clear after the first batch.
+
+    Reference-panel inputs are resolved once and shared across all batches.
+    """
+    resolved = _resolve_ld_proxy_inputs(
+        chip=chip, build=build, ref_dir=ref_dir, cache_dir=cache_dir,
+    )
+    batch_dir = ld_proxy_universe_dir(cache_dir, chip, build, panel)
+    batch_dir.mkdir(parents=True, exist_ok=True)
+
+    # Materialize off-chip positions to a parquet on disk (memory-safe, interleaved by
+    # chromosome). Slices are read from disk per batch — the full set is never resident.
+    offchip_parquet = batch_dir / "_offchip_positions.parquet"
+    if not _output_is_fresh(offchip_parquet, [universe_parquet]):
+        offchip_parquet.unlink(missing_ok=True)
+        # Materialize in a subprocess so DuckDB's virtual memory is fully reclaimed
+        # before the parent opens pgenlib readers under RLIMIT_AS.
+        _materialize_offchip_universe_subprocess(
+            universe_parquet, chip, build, cache_dir, offchip_parquet,
+            batch_dir / "_duckdb_spill",
+        )
+    n_total_offchip = int(
+        pl.scan_parquet(offchip_parquet).select(pl.len()).collect().item()
+    )
+    n_offchip = (
+        min(n_total_offchip, max_positions) if (max_positions and max_positions > 0) else n_total_offchip
+    )
+    n_batches = (n_offchip + batch_size - 1) // batch_size
+
+    log_message(
+        message_type="ld_proxy:universe_start",
+        chip=chip, build=build, panel=panel,
+        n_offchip=n_offchip, batch_size=batch_size, n_batches=n_batches,
+    )
+
+    n_built = 0
+    n_cached = 0
+    elapsed_built: list[float] = []
+    with start_action(
+        action_type="ld_proxy:build_universe",
+        chip=chip, build=build, panel=panel, n_offchip=n_offchip, n_batches=n_batches,
+    ):
+        for i in range(n_batches):
+            out_path = batch_dir / f"batch_{i:05d}.parquet"
+            if _output_is_fresh(out_path, [universe_parquet, resolved.pvar_zst_path]):
+                n_cached += 1
+                if progress_callback is not None:
+                    progress_callback({
+                        "batch_index": i + 1, "n_batches": n_batches,
+                        "status": "cached", "n_built": n_built, "n_cached": n_cached,
+                    })
+                continue
+
+            start_time = time.monotonic()
+            batch_lf = pl.scan_parquet(offchip_parquet).slice(i * batch_size, batch_size)
+            tmp_path = out_path.with_name(f".{out_path.name}.tmp")
+            tmp_path.unlink(missing_ok=True)
+            build_ld_proxy_table(
+                chip=chip, build=build, ref_dir=ref_dir, cache_dir=cache_dir, panel=panel,
+                scoring_variants_lf=batch_lf,
+                window_kb=window_kb, min_r2=min_r2,
+                max_workers=max_workers, chunk_size_bp=chunk_size_bp,
+                max_targets_per_chunk=max_targets_per_chunk,
+                output_path=tmp_path, resolved_inputs=resolved,
+            )
+            tmp_path.replace(out_path)
+            elapsed = time.monotonic() - start_time
+            elapsed_built.append(elapsed)
+            n_built += 1
+            mean_elapsed = sum(elapsed_built) / len(elapsed_built)
+            eta_sec = mean_elapsed * (n_batches - (i + 1))
+            log_message(
+                message_type="ld_proxy:universe_batch_done",
+                batch_index=i + 1, n_batches=n_batches,
+                elapsed_sec=round(elapsed, 1), mean_batch_sec=round(mean_elapsed, 1),
+                eta_sec=round(eta_sec),
+            )
+            if progress_callback is not None:
+                progress_callback({
+                    "batch_index": i + 1, "n_batches": n_batches,
+                    "status": "built", "n_built": n_built, "n_cached": n_cached,
+                    "elapsed_sec": elapsed, "eta_sec": eta_sec,
+                })
+
+    merge = merge_ld_proxy_tables(batch_dir, ld_proxy_table_path(cache_dir, chip, build, panel))
+    log_message(
+        message_type="ld_proxy:universe_complete",
+        n_offchip=n_offchip, n_batches=n_batches, n_built=n_built, n_cached=n_cached,
+        table_rows=merge.n_rows, table_targets=merge.n_targets,
+    )
+    return LDProxyUniverseResult(
+        table_path=merge.path,
+        n_offchip=n_offchip,
+        batch_size=batch_size,
+        n_batches=n_batches,
+        n_batches_built=n_built,
+        n_batches_cached=n_cached,
+        merge=merge,
     )

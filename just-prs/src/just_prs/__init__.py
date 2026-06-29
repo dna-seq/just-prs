@@ -12,7 +12,12 @@ from just_prs.chip_coverage import (
     parse_gsa_manifest,
 )
 from just_prs.enrich import enrich_prs_result
-from just_prs.ld_proxy import apply_ld_proxies, build_ld_proxy_table, ld_proxy_table_path
+from just_prs.ld_proxy import (
+    apply_ld_proxies,
+    build_ld_proxy_table,
+    ld_proxy_table_path,
+    merge_ld_proxy_tables,
+)
 from just_prs.models import (
     AbsoluteRisk,
     AbsoluteRiskBundle,

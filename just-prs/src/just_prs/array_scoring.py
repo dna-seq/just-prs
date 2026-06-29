@@ -14,7 +14,7 @@ from eliot import log_message, start_action
 
 from just_prs.arrays import detect_chip_generation, normalize_array
 from just_prs.chip_coverage import CHIPS_BY_ID, Chip, chip_manifest_dir, chip_typed_positions
-from just_prs.ld_proxy import apply_ld_proxies, ld_proxy_pgs_path
+from just_prs.ld_proxy import apply_ld_proxies, ld_proxy_table_path
 from just_prs.liftover import lift_frame
 from just_prs.models import ArrayPRSResult, classify_coverage_tier
 from just_prs.prs import RestorationScope, compute_prs, compute_prs_duckdb, PRSEngine
@@ -288,12 +288,14 @@ def compute_array_prs(
         scoring_lf_for_proxy = None
 
         if ld_proxy and chip_gen.ld_proxy_available:
-            ld_path = ld_proxy_pgs_path(resolved_cache, pgs_id, resolved_chip, effective_build, panel)
+            # One deduplicated table per panel × chip × build — pulled once and
+            # reused across every scored PGS (the join in apply_ld_proxies is on
+            # target position, not pgs_id).
+            ld_path = ld_proxy_table_path(resolved_cache, resolved_chip, effective_build, panel)
 
             if not ld_path.exists():
-                from just_prs.hf import pull_ld_proxy_pgs_table
-                pulled = pull_ld_proxy_pgs_table(
-                    pgs_id=pgs_id,
+                from just_prs.hf import pull_ld_proxy_table
+                pulled = pull_ld_proxy_table(
                     chip=resolved_chip,
                     build=effective_build,
                     local_dir=ld_path.parent,

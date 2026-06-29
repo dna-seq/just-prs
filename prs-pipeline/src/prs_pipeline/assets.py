@@ -43,16 +43,21 @@ from just_prs.ftp import PGS_FTP_BASE, PGS_SCORES_LIST_URL, bulk_download_scorin
 from just_prs.hf import (
     DEFAULT_HF_PERCENTILES_REPO,
     pull_reference_distributions,
-    push_ld_proxy_pgs_table,
+    push_ld_proxy_table,
     push_reference_audit_sidecars,
     push_chip_coverage,
     push_reference_allele_universe,
     push_reference_distributions,
+    reference_allele_universe_filename,
 )
 from just_prs.ld_proxy import (
     _ld_hard_memory_limit,
     _ld_memory_limit_bytes,
     build_ld_proxy_batch,
+    build_ld_proxy_over_universe,
+    ld_proxy_dir,
+    ld_proxy_table_path,
+    merge_ld_proxy_tables,
 )
 from just_prs.reference import (
     DEFAULT_PANEL,
@@ -1631,27 +1636,13 @@ def ld_proxy_table(
     total_ok = 0
     total_cached = 0
     total_failed = 0
+    total_skipped = 0
+    skipped_untyped_sum = 0
+    total_merged_rows = 0
 
     for chip, build in _LD_PROXY_CHIP_BUILD_COMBOS:
-        pgs_ids_spec = os.environ.get("PRS_LD_PGS_IDS", "").strip()
-        if pgs_ids_spec:
-            pgs_ids = [pid.strip().upper() for pid in pgs_ids_spec.split(",") if pid.strip()]
-            scope_label = f"pgs:{len(pgs_ids)}"
-        elif os.environ.get("PRS_LD_LIMIT_TARGETS", "").strip():
-            limit = int(os.environ["PRS_LD_LIMIT_TARGETS"].strip())
-            pgs_ids = list_all_pgs_ids()[:limit]
-            scope_label = f"limit:{limit}"
-        elif os.environ.get("PRS_LD_FULL_CATALOG", "").strip().lower() in {"1", "true", "yes"}:
-            pgs_ids = list_all_pgs_ids()
-            scope_label = "full_catalog"
-        else:
-            raise ValueError(
-                "LD proxy requires an explicit scope: set PRS_LD_PGS_IDS, "
-                "PRS_LD_LIMIT_TARGETS, or PRS_LD_FULL_CATALOG=1."
-            )
-
         label = f"{panel}_{chip}_{build}"
-        context.log.info(f"Building LD proxy batch: {label} ({scope_label}, {len(pgs_ids)} PGS IDs)")
+        table_path = ld_proxy_table_path(cache_dir, chip, build, panel)
 
         hard_limit = _ld_memory_limit_bytes()
         if hard_limit is not None:
@@ -1661,47 +1652,82 @@ def ld_proxy_table(
         else:
             context.log.warning("LD proxy memory guard is disabled.")
 
-        def _progress(payload: dict) -> None:
-            if "pgs_id" in payload:
-                context.log.info(
-                    f"  [{label}] PGS {payload['index']}/{payload['total']} "
-                    f"{payload['pgs_id']} status={payload['status']} "
-                    f"ok={payload['n_ok']} failed={payload['n_failed']}"
-                )
-            elif "chromosome" in payload:
-                context.log.info(
-                    f"  [{label}] chr batch {payload['chrom_index']}/{payload['n_chromosomes']} "
-                    f"({payload['chromosome']}), {payload['n_proxies_found']} proxies so far"
-                )
+        pgs_ids_spec = os.environ.get("PRS_LD_PGS_IDS", "").strip()
 
-        try:
+        if pgs_ids_spec:
+            # Targeted/interactive path: build specific scores per-PGS, then merge the
+            # per-PGS intermediates. (The catalog table is built via the universe path.)
+            pgs_ids = [pid.strip().upper() for pid in pgs_ids_spec.split(",") if pid.strip()]
+            context.log.info(f"Building LD proxy (per-PGS): {label} ({len(pgs_ids)} PGS IDs)")
+
+            def _progress(payload: dict) -> None:
+                if "pgs_id" in payload:
+                    context.log.info(
+                        f"  [{label}] PGS {payload['index']}/{payload['total']} "
+                        f"{payload['pgs_id']} status={payload['status']} "
+                        f"ok={payload['n_ok']} failed={payload['n_failed']}"
+                    )
+
+            try:
+                with _ld_hard_memory_limit(), resource_tracker(f"ld_proxy_{label}", context=context):
+                    build_result = build_ld_proxy_batch(
+                        pgs_ids=pgs_ids, chip=chip, build=build, ref_dir=ref_dir,
+                        cache_dir=cache_dir, panel=panel, skip_existing=not no_cache,
+                        progress_callback=_progress,
+                    )
+            except FileNotFoundError as e:
+                context.log.warning(f"Skipping {label}: {e}")
+                continue
+            total_ok += build_result.n_ok
+            total_cached += build_result.n_cached
+            total_failed += build_result.n_failed
+            total_skipped += build_result.n_skipped
+            merge_result = merge_ld_proxy_tables(ld_proxy_dir(cache_dir, chip, build, panel), table_path)
+        else:
+            # Catalog path: compute a proxy for every off-chip catalog position exactly
+            # once, over the sample-agnostic reference-allele universe, in 1M-row serial
+            # batches (resumable per batch) → streaming dedup-merge → single table.
+            # PRS_LD_LIMIT_TARGETS bounds the number of off-chip positions (pilot).
+            universe_parquet = percentiles_dir / reference_allele_universe_filename(build)
+            if not universe_parquet.exists():
+                context.log.warning(
+                    f"Skipping {label}: universe parquet missing ({universe_parquet.name}). "
+                    "Build it with scripts/build_reference_allele_universe.py."
+                )
+                continue
+            limit_spec = os.environ.get("PRS_LD_LIMIT_TARGETS", "").strip()
+            max_positions = int(limit_spec) if limit_spec else None
+            scope_label = f"limit:{max_positions}" if max_positions else "full_universe"
+            context.log.info(f"Building LD proxy (universe, {scope_label}): {label}")
+
+            def _uprogress(payload: dict) -> None:
+                if payload.get("status") == "built":
+                    context.log.info(
+                        f"  [{label}] batch {payload['batch_index']}/{payload['n_batches']} "
+                        f"built in {payload['elapsed_sec']:.0f}s, "
+                        f"ETA {payload['eta_sec'] / 3600:.1f}h"
+                    )
+
             with _ld_hard_memory_limit(), resource_tracker(f"ld_proxy_{label}", context=context):
-                build_result = build_ld_proxy_batch(
-                    pgs_ids=pgs_ids,
-                    chip=chip,
-                    build=build,
-                    ref_dir=ref_dir,
-                    cache_dir=cache_dir,
-                    panel=panel,
-                    skip_existing=not no_cache,
-                    progress_callback=_progress,
+                uni = build_ld_proxy_over_universe(
+                    universe_parquet=universe_parquet, chip=chip, build=build,
+                    ref_dir=ref_dir, cache_dir=cache_dir, panel=panel,
+                    max_positions=max_positions, progress_callback=_uprogress,
                 )
-        except FileNotFoundError as e:
-            context.log.warning(f"Skipping {label}: {e}")
-            continue
+            merge_result = uni.merge
+            context.log.info(
+                f"  {label}: off-chip universe={uni.n_offchip}, batches={uni.n_batches} "
+                f"(built={uni.n_batches_built}, cached={uni.n_batches_cached})"
+            )
 
-        results.update(build_result.paths)
-        n_proxies = int(
-            build_result.quality_df.select(pl.col("n_proxied").fill_null(0).sum().alias("n")).item()
-        ) if build_result.quality_df.height > 0 else 0
-        total_proxied += n_proxies
-        total_ok += build_result.n_ok
-        total_cached += build_result.n_cached
-        total_failed += build_result.n_failed
+        results[label] = str(table_path)
+        total_proxied += merge_result.n_rows
+        total_merged_rows += merge_result.n_rows
         context.log.info(
-            f"  {label}: total={build_result.n_total}, ok={build_result.n_ok}, "
-            f"cached={build_result.n_cached}, failed={build_result.n_failed}, "
-            f"coverage={build_result.coverage_ratio:.1%}, proxies={n_proxies}"
+            f"  {label}: merged → {merge_result.n_rows} rows "
+            f"({merge_result.n_targets} unique targets, mean_r2="
+            f"{merge_result.mean_r2 if merge_result.mean_r2 is not None else 'n/a'}) "
+            f"→ {table_path.name}"
         )
 
     context.add_output_metadata({
@@ -1709,9 +1735,13 @@ def ld_proxy_table(
         "combinations": str(_LD_PROXY_CHIP_BUILD_COMBOS),
         "panel": panel,
         "total_proxies": total_proxied,
+        "total_merged_rows": total_merged_rows,
         "n_ok": total_ok,
         "n_cached": total_cached,
         "n_failed": total_failed,
+        "n_skipped_over_cap": total_skipped,
+        "skipped_untyped_sum": skipped_untyped_sum,
+        "max_untyped_targets": int(os.environ.get("PRS_LD_MAX_UNTYPED_TARGETS", "2000000")),
         "coverage_ratio": round((total_ok + total_cached) / max(total_ok + total_cached + total_failed, 1), 4),
         "paths": str(results),
     })
@@ -1727,10 +1757,11 @@ def ld_proxy_table(
     group_name="upload",
     ins={"ld_tables": AssetIn("ld_proxy_table")},
     description=(
-        "Uploads per-PGS LD-proxy table parquets to the HuggingFace dataset "
-        "just-dna-seq/prs-percentiles. Published so compute_array_prs() can "
-        "auto-download the per-PGS table and apply LD-proxy substitution for consumer "
-        "array users. Named after the destination per lineage convention."
+        "Uploads the merged LD-proxy table parquet (one deduplicated table per "
+        "panel × chip × build) to the HuggingFace dataset just-dna-seq/prs-percentiles. "
+        "Published so compute_array_prs() can pull the single table once and apply "
+        "LD-proxy substitution for consumer array users. Named after the destination "
+        "per lineage convention."
     ),
 )
 def hf_ld_proxy_table(
@@ -1739,7 +1770,7 @@ def hf_ld_proxy_table(
     cache_dir_resource: CacheDirResource,
     hf_resource: HuggingFaceResource,
 ) -> Output[str]:
-    """Publish LD-proxy table parquets to HuggingFace."""
+    """Publish the merged LD-proxy table parquet(s) to HuggingFace."""
     repo_id = hf_resource.percentiles_repo
     token = hf_resource.get_token()
     panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
@@ -1758,18 +1789,20 @@ def hf_ld_proxy_table(
 
     pushed = 0
     with resource_tracker("hf_ld_proxy_table", context=context):
-        for pgs_id, path_str in sorted(ld_tables.items()):
+        # ld_tables maps "{panel}_{chip}_{build}" → merged single-table path.
+        for chip, build in _LD_PROXY_CHIP_BUILD_COMBOS:
+            label = f"{panel}_{chip}_{build}"
+            path_str = ld_tables.get(label)
+            if path_str is None:
+                context.log.warning(f"No merged LD proxy table for {label}, skipping upload.")
+                continue
             parquet_path = Path(path_str)
             if not parquet_path.exists():
                 context.log.warning(f"LD proxy table file missing: {parquet_path}, skipping upload.")
                 continue
 
-            # Current asset only builds one chip/build combo, but infer from the
-            # combo list to keep upload metadata explicit.
-            chip, build = _LD_PROXY_CHIP_BUILD_COMBOS[0]
-            push_ld_proxy_pgs_table(
+            push_ld_proxy_table(
                 parquet_path=parquet_path,
-                pgs_id=pgs_id,
                 chip=chip,
                 build=build,
                 panel=panel,
@@ -1777,8 +1810,7 @@ def hf_ld_proxy_table(
                 token=token,
             )
             pushed += 1
-            if pushed == 1 or pushed % 250 == 0 or pushed == len(ld_tables):
-                context.log.info(f"Pushed {pushed}/{len(ld_tables)} LD proxy parquets to {repo_id}")
+            context.log.info(f"Pushed merged LD proxy table {parquet_path.name} to {repo_id}")
 
     url = f"https://huggingface.co/datasets/{repo_id}"
     context.add_output_metadata({

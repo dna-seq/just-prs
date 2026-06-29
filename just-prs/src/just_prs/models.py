@@ -342,6 +342,7 @@ class EnrichedPRSResult(BaseModel):
 
     pgs_id: str
     trait: str = ""
+    trait_efo: str = Field("", description="EFO trait label (the trait-grouping key the UI selector uses)")
     trait_efo_id: str = Field("", description="EFO/MONDO/OBA/HP trait ontology ID(s) from PGS Catalog")
     score: float = 0.0
     variants_matched: int = 0

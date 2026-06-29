@@ -384,6 +384,7 @@ def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
     row: dict[str, Any] = {
         "pgs_id": enriched.pgs_id,
         "trait": enriched.trait,
+        "trait_efo": enriched.trait_efo,
         "trait_efo_id": enriched.trait_efo_id,
         "score": enriched.score,
         "percentile": f"{enriched.percentile:.1f}" if enriched.percentile is not None else "",
@@ -532,6 +533,32 @@ def _concise_trait_label(value: str) -> str:
         if ";" in suffix or suffix.startswith("+") or " more" in suffix:
             return label[:idx].strip()
     return label
+
+
+def _trait_group_key(row: dict[str, Any]) -> str:
+    """Grouping key for a PRS result row.
+
+    Identical to the key the trait *selector* groups by — the ``trait_efo`` label,
+    falling back to the reported ``trait`` — so a trait the user selected as one
+    group always renders as one group. It deliberately does NOT key on
+    ``trait_efo_id``: a selected group whose members don't all carry an EFO id
+    (some empty, some present) would otherwise fragment into several summary rows,
+    and a partially-computed group would lose members across rows.
+    """
+    key = str(row.get("trait_efo") or "").strip()
+    if not key:
+        key = str(row.get("trait") or "Unlabeled trait").strip()
+    return key.casefold()
+
+
+def _group_prs_rows_by_trait(
+    rows: list[dict[str, Any]],
+) -> list[list[dict[str, Any]]]:
+    """Group PRS result rows into trait groups, preserving first-seen order."""
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(_trait_group_key(row), []).append(row)
+    return list(grouped.values())
 
 
 def _trait_group_display_label(rows: list[dict[str, Any]]) -> tuple[str, list[str]]:
@@ -1865,15 +1892,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.status_message = "Compute PRS results before building a trait summary."  # type: ignore[attr-defined]
             return
 
-        grouped: dict[str, list[dict[str, Any]]] = {}
-        for row in self.prs_results:
-            efo_id = str(row.get("trait_efo_id") or "").strip()
-            if not efo_id:
-                efo_id = str(row.get("trait") or "Unlabeled trait").strip().casefold()
-            grouped.setdefault(efo_id, []).append(row)
-
         summary_rows: list[dict[str, Any]] = []
-        for index, rows in enumerate(grouped.values()):
+        for index, rows in enumerate(_group_prs_rows_by_trait(self.prs_results)):
             rows.sort(key=lambda r: float(r.get("synthetic_quality") or 0), reverse=True)
 
             trait, reported_traits = _trait_group_display_label(rows)

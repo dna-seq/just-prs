@@ -1,8 +1,10 @@
 from prs_ui.mixin import (
     _concise_trait_label,
     _genome_file_label,
+    _group_prs_rows_by_trait,
     _merge_prs_results,
     _trait_group_display_label,
+    _trait_group_key,
     _trait_heritability_summary,
     native_superpopulation_from_ancestry,
     reference_population_codes,
@@ -66,6 +68,38 @@ def test_trait_group_label_strips_preconcatenated_alias_suffix() -> None:
 
     assert label == "type 1 diabetes mellitus"
     assert reported_traits == ["Type 1 diabetes (T1D)"]
+
+
+def test_trait_grouping_keeps_one_selected_group_despite_mixed_efo_id() -> None:
+    """A trait selected as one group (same trait_efo) must stay one summary group
+    even when its members don't all carry a trait_efo_id — grouping keys on the
+    trait_efo label (the selector's key), not trait_efo_id.  Regression for the
+    fragmentation bug where a partially-/inconsistently-mapped group split apart."""
+    rows = [
+        {"pgs_id": "PGS0010", "trait": "Body mass index", "trait_efo": "body mass index", "trait_efo_id": ""},
+        {"pgs_id": "PGS0011", "trait": "Body mass index", "trait_efo": "body mass index", "trait_efo_id": ""},
+        {"pgs_id": "PGS0012", "trait": "Body mass index", "trait_efo": "body mass index", "trait_efo_id": "EFO_0004340"},
+    ]
+
+    groups = _group_prs_rows_by_trait(rows)
+
+    assert len(groups) == 1
+    assert [r["pgs_id"] for r in groups[0]] == ["PGS0010", "PGS0011", "PGS0012"]
+
+
+def test_trait_grouping_falls_back_to_reported_trait_without_efo_label() -> None:
+    """Rows lacking a trait_efo label group by the reported trait, and distinct
+    traits stay in distinct groups (first-seen order preserved)."""
+    rows = [
+        {"pgs_id": "PGS1", "trait": "Asthma", "trait_efo": "", "trait_efo_id": ""},
+        {"pgs_id": "PGS2", "trait": "Type 2 diabetes", "trait_efo": "type 2 diabetes mellitus", "trait_efo_id": "MONDO_0005148"},
+        {"pgs_id": "PGS3", "trait": "asthma", "trait_efo": "", "trait_efo_id": ""},
+    ]
+
+    groups = _group_prs_rows_by_trait(rows)
+
+    assert [[r["pgs_id"] for r in g] for g in groups] == [["PGS1", "PGS3"], ["PGS2"]]
+    assert _trait_group_key(rows[0]) == _trait_group_key(rows[2]) == "asthma"
 
 
 def test_concise_trait_label_preserves_regular_parenthetical_names() -> None:

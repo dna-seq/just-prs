@@ -88,9 +88,10 @@ def enrich_prs_result(
     match_pct = round(result.match_rate * 100, 1)
     match_color = "red" if match_pct < 10 else ("orange" if match_pct < 50 else "green")
 
-    # --- EFO ID from catalog ---
+    # --- EFO label + ID from catalog ---
     score_info = catalog.score_info_row(result.pgs_id)
     trait_efo_id = str(score_info.get("trait_efo_id") or "") if score_info else ""
+    trait_efo = str(score_info.get("trait_efo") or "") if score_info else ""
 
     # Gate the percentile on weight-mass coverage (C_wt), not count match_rate
     # (F9/F20) — see _percentile_allowed.
@@ -252,6 +253,7 @@ def enrich_prs_result(
     return EnrichedPRSResult(
         pgs_id=result.pgs_id,
         trait=result.trait_reported or "",
+        trait_efo=trait_efo,
         trait_efo_id=trait_efo_id,
         score=round(result.score, 6),
         variants_matched=result.variants_matched,

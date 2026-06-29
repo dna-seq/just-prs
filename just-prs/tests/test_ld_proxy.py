@@ -19,12 +19,16 @@ from just_prs.ld_proxy import (
     DEFAULT_MIN_R2,
     LD_PROXY_TABLE_COLUMNS,
     LD_PROXY_TABLE_SCHEMA,
+    LDProxyBatchResult,
+    LDProxyOutcome,
     _pearson_r_one_vs_many,
     apply_ld_proxies,
     build_ld_proxy_batch,
+    ld_proxy_dir,
     ld_proxy_pgs_path,
     ld_proxy_quality_path,
     ld_proxy_table_path,
+    merge_ld_proxy_tables,
     validate_ld_proxy_table,
 )
 
@@ -285,6 +289,150 @@ class TestPearsonROneVsMany:
         for i in range(5):
             expected = np.corrcoef(target, candidates[i])[0, 1]
             assert r[i] == pytest.approx(expected, abs=1e-10)
+
+
+def _proxy_row(t_chr: str, t_pos: int, p_pos: int, r2: float, r_signed: float) -> dict:
+    return {
+        "target_chr": t_chr, "target_pos": t_pos, "target_ref": "A", "target_alt": "G",
+        "proxy_chr": t_chr, "proxy_pos": p_pos, "proxy_rsid": f"rs{p_pos}",
+        "proxy_ref": "C", "proxy_alt": "T", "r_squared": r2, "r_signed": r_signed,
+    }
+
+
+def test_materialize_offchip_universe(tmp_path: Path) -> None:
+    """Universe → off-chip parquet: build filter, chr-norm, dedup, anti-join typed."""
+    from just_prs.ld_proxy import _materialize_offchip_universe
+
+    universe = pl.DataFrame({
+        "genome_build": ["GRCh38", "GRCh38", "GRCh38", "GRCh38", "GRCh37"],
+        "chrom":        ["chr1",   "1",      "1",      "2",      "1"],
+        "pos":          [100,      200,      200,      300,      999],
+        "ref":          ["A",      "C",      "C",      "G",      "T"],
+        "ref_source":   ["panel"] * 5,
+    })
+    uni_path = tmp_path / "reference_allele_universe.parquet"
+    universe.write_parquet(uni_path)
+
+    # Chip types (1, 100) — that position must be excluded as on-chip.
+    typed_df = pl.DataFrame({"chr": ["1"], "pos": [100]})
+    out_path = tmp_path / "offchip.parquet"
+
+    n = _materialize_offchip_universe(uni_path, typed_df, "GRCh38", out_path)
+
+    off = pl.read_parquet(out_path)
+    assert set(off.columns) == {"chr_name_norm", "chr_pos_norm"}
+    got = set(zip(off["chr_name_norm"].to_list(), off["chr_pos_norm"].to_list()))
+    # GRCh37 row dropped; chr1:100 on-chip dropped; (1,200) deduped.
+    assert got == {("1", 200), ("2", 300)}
+    assert n == 2
+
+
+def test_batch_result_skipped_accounting() -> None:
+    """Capped (skipped) scores are counted separately and excluded from coverage."""
+    outcomes = [
+        LDProxyOutcome(pgs_id="PGS_A", status="ok", n_proxied=10),
+        LDProxyOutcome(pgs_id="PGS_B", status="skipped", n_untyped=6_000_000, n_proxied=0),
+        LDProxyOutcome(pgs_id="PGS_C", status="cached", n_proxied=5),
+        LDProxyOutcome(pgs_id="PGS_D", status="failed", error="boom"),
+    ]
+    r = LDProxyBatchResult(
+        panel="1000g", chip="gsa_v3", build="GRCh38",
+        outcomes=outcomes, quality_df=pl.DataFrame(), output_dir=Path("/x"),
+    )
+    assert r.n_total == 4
+    assert r.n_ok == 1
+    assert r.n_cached == 1
+    assert r.n_failed == 1
+    assert r.n_skipped == 1
+    # coverage excludes the skipped score from the denominator:
+    # (ok + cached) / (total - skipped) = 2 / 3.
+    assert r.coverage_ratio == pytest.approx(2 / 3)
+
+
+def test_merge_ld_proxy_tables_lossless_dedup(tmp_path: Path) -> None:
+    """Per-PGS intermediates merge into one position-deduplicated table, losslessly.
+
+    Two PGS share target (1, 1000) with the byte-identical proxy row (proxy choice
+    is position-deterministic), and each has one unique target. The merged table
+    must have exactly one row per distinct (target_chr, target_pos), and equal the
+    direct position-deduped union of all input rows.
+    """
+    cache = tmp_path / "cache"
+    intermediates = ld_proxy_dir(cache, "gsa_v3", "GRCh38", "1000g")
+    intermediates.mkdir(parents=True)
+
+    shared = _proxy_row("1", 1000, 1500, 0.90, 0.95)
+    _make_ld_table([shared, _proxy_row("1", 2000, 2400, 0.88, -0.80)]).write_parquet(
+        intermediates / "PGS000001.parquet"
+    )
+    _make_ld_table([shared, _proxy_row("2", 3000, 3300, 0.82, 0.91)]).write_parquet(
+        intermediates / "PGS000002.parquet"
+    )
+    # A _quality sidecar must be excluded from the merge.
+    pl.DataFrame({"pgs_id": ["PGS000001"], "status": ["ok"]}).write_parquet(
+        intermediates / "_quality.parquet"
+    )
+
+    out_path = ld_proxy_table_path(cache, "gsa_v3", "GRCh38", "1000g")
+    result = merge_ld_proxy_tables(intermediates, out_path)
+
+    assert result.path == out_path
+    assert out_path.exists()
+    assert result.n_sources == 2  # _quality.parquet excluded
+    assert result.n_input_rows == 4  # 2 + 2 before dedup
+    assert result.n_rows == 3  # (1,1000), (1,2000), (2,3000)
+    assert result.n_targets == 3
+    assert result.dedup_ratio == pytest.approx(0.25)
+
+    merged = pl.read_parquet(out_path)
+    validate_ld_proxy_table(merged)
+    # One row per distinct target — equals the position-deduped union.
+    assert merged.height == merged.select("target_chr", "target_pos").n_unique()
+    expected_targets = {("1", 1000), ("1", 2000), ("2", 3000)}
+    got_targets = set(zip(merged["target_chr"].to_list(), merged["target_pos"].to_list()))
+    assert got_targets == expected_targets
+    # The shared target kept its (identical) proxy row.
+    shared_row = merged.filter((pl.col("target_chr") == "1") & (pl.col("target_pos") == 1000))
+    assert shared_row["proxy_pos"][0] == 1500
+    assert shared_row["r_signed"][0] == pytest.approx(0.95)
+
+
+def test_merge_ld_proxy_tables_empty_dir(tmp_path: Path) -> None:
+    """No intermediates → a schema-correct empty table is still written."""
+    cache = tmp_path / "cache"
+    intermediates = ld_proxy_dir(cache, "gsa_v3", "GRCh38", "1000g")
+    intermediates.mkdir(parents=True)
+
+    out_path = ld_proxy_table_path(cache, "gsa_v3", "GRCh38", "1000g")
+    result = merge_ld_proxy_tables(intermediates, out_path)
+
+    assert out_path.exists()
+    assert result.n_rows == 0
+    assert result.n_sources == 0
+    assert result.mean_r2 is None
+    empty = pl.read_parquet(out_path)
+    assert empty.height == 0
+    assert set(empty.columns) == set(LD_PROXY_TABLE_COLUMNS)
+
+
+def test_merge_ld_proxy_tables_atomic_overwrite(tmp_path: Path) -> None:
+    """Re-merging overwrites the prior table and leaves no .tmp residue."""
+    cache = tmp_path / "cache"
+    intermediates = ld_proxy_dir(cache, "gsa_v3", "GRCh38", "1000g")
+    intermediates.mkdir(parents=True)
+    _make_ld_table([_proxy_row("1", 1000, 1500, 0.90, 0.95)]).write_parquet(
+        intermediates / "PGS000001.parquet"
+    )
+    out_path = ld_proxy_table_path(cache, "gsa_v3", "GRCh38", "1000g")
+
+    merge_ld_proxy_tables(intermediates, out_path)
+    _make_ld_table([_proxy_row("1", 2000, 2500, 0.85, 0.90)]).write_parquet(
+        intermediates / "PGS000002.parquet"
+    )
+    result = merge_ld_proxy_tables(intermediates, out_path)
+
+    assert result.n_rows == 2
+    assert not out_path.with_name(out_path.name + ".tmp").exists()
 
 
 def test_apply_proxies_from_parquet(tmp_path: Path) -> None:

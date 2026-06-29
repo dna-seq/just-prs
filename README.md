@@ -582,13 +582,16 @@ missing — typically because:
   otherwise. These services use **genotyping microarrays** — chips that measure
   a fixed set of ~600 k–700 k pre-selected SNP positions out of the ~3 billion
   base pairs in your genome. A PRS model may require variants that simply are
-  not on the chip, and there is no way to recover them from the raw data without
-  **imputation** — a statistical method that infers missing genotypes from
-  population reference panels. `just-prs` has imputation support in progress,
-  but without it, microarray-derived VCFs will have low coverage for many PRS
-  models. Some consumer services (e.g. Dante Labs, ITDNA) do offer real
-  whole-genome sequencing — if yours provides a 30×+ WGS VCF, coverage should
-  be substantially better.
+  not on the chip. `just-prs` recovers many of these without full imputation via
+  **LD-proxy substitution** — for an untyped scoring variant it uses a nearby
+  chip-typed variant in high LD as a surrogate (weight scaled by the signed
+  correlation), from a precomputed per-panel table. This is published for the
+  `1000g` panel (GSA v3 / GRCh38); scoring arrays against the `hgdp_1kg` panel is
+  wired in code but pending its data builds — see
+  [docs/hgdp_1kg-array-scoring.md](docs/hgdp_1kg-array-scoring.md). LD-proxy lifts
+  coverage but does not fully replace imputation; some consumer services (e.g.
+  Dante Labs, ITDNA) offer real whole-genome sequencing — if yours provides a
+  30×+ WGS VCF, coverage should be substantially better.
 - **Exome or gene-panel sequencing** covers only protein-coding regions (~1–2 %
   of the genome), while most GWAS tag SNPs sit in non-coding regions.
 - **Low-pass whole-genome sequencing** (< 4×) may not call rare or low-confidence

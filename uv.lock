@@ -999,7 +999,7 @@ wheels = [
 
 [[package]]
 name = "just-prs"
-version = "0.5.1"
+version = "0.6.0"
 source = { editable = "just-prs" }
 dependencies = [
     { name = "altair" },
@@ -1525,7 +1525,7 @@ wheels = [
 
 [[package]]
 name = "prs-pipeline"
-version = "0.2.7"
+version = "0.2.8"
 source = { editable = "prs-pipeline" }
 dependencies = [
     { name = "dagster" },

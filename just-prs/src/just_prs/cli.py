@@ -1934,6 +1934,96 @@ def reference_backfill_quality(
     console.print(f"  Audit issues: errors={n_errors}, warnings={n_warnings}")
 
 
+@reference_app.command("audit")
+def reference_audit(
+    panel: Annotated[
+        str, typer.Option("--panel", help="Reference panel (1000g or hgdp_1kg)."),
+    ] = "1000g",
+    severity: Annotated[
+        str, typer.Option("--severity", help="Which issues to show: error, warn, or all."),
+    ] = "error",
+    show_ids: Annotated[
+        bool, typer.Option("--show-ids/--no-show-ids", help="List the affected PGS IDs."),
+    ] = True,
+    cache_dir: Annotated[
+        Optional[Path], typer.Option("--cache-dir", help="Override cache directory."),
+    ] = None,
+) -> None:
+    """Show reference-distribution audit issues — the PGS IDs filtered as untrustworthy.
+
+    Reports exactly what ``PRSCatalog.reference_distributions()`` excludes on read:
+    every PGS ID with an ``ERROR``-severity audit issue is dropped so the UI never
+    surfaces percentiles from a degenerate or low-coverage reference distribution.
+    Reads ``{panel}_distribution_quality_issues.parquet`` when present, otherwise
+    recomputes from ``{panel}_distributions.parquet`` + ``{panel}_quality.parquet``.
+    """
+    import polars as pl
+    from rich.table import Table
+
+    from just_prs.reference import REFERENCE_PANELS, reference_distribution_audit_issues
+
+    if panel not in REFERENCE_PANELS:
+        console.print(f"[red]Unknown panel {panel!r}. Known: {list(REFERENCE_PANELS)}[/red]")
+        raise typer.Exit(code=1)
+    sev = severity.lower()
+    if sev not in {"error", "warn", "all"}:
+        console.print(f"[red]--severity must be one of error|warn|all (got {severity!r}).[/red]")
+        raise typer.Exit(code=1)
+
+    cache = cache_dir or resolve_cache_dir()
+    pdir = cache / "percentiles"
+    dist_path = pdir / f"{panel}_distributions.parquet"
+    issue_path = pdir / f"{panel}_distribution_quality_issues.parquet"
+    quality_path = pdir / f"{panel}_quality.parquet"
+
+    if not dist_path.exists():
+        console.print(f"[red]No distributions parquet at {dist_path}. Run `prs reference score-batch` first.[/red]")
+        raise typer.Exit(code=1)
+
+    dist_df = pl.read_parquet(dist_path)
+    n_total = dist_df.select("pgs_id").n_unique()
+    if issue_path.exists():
+        issues = pl.read_parquet(issue_path)
+        source = "sidecar"
+    else:
+        quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
+        issues = reference_distribution_audit_issues(dist_df, quality_df)
+        source = "recomputed"
+
+    err_ids = issues.filter(pl.col("severity") == "ERROR").select("pgs_id").unique()
+    warn_ids = issues.filter(pl.col("severity") == "WARN").select("pgs_id").unique()
+    console.print(f"[bold]Reference audit — panel={panel}[/bold]  ({source}: {issue_path.name if source=='sidecar' else 'no sidecar'})")
+    console.print(
+        f"  distributions: {n_total} PGS IDs | "
+        f"[red]ERROR (filtered on read): {err_ids.height}[/red] | "
+        f"[yellow]WARN (kept, flagged): {warn_ids.height}[/yellow]"
+    )
+
+    want = {"error": ["ERROR"], "warn": ["WARN"], "all": ["ERROR", "WARN"]}[sev]
+    view = issues.filter(pl.col("severity").is_in(want))
+    if view.height == 0:
+        console.print(f"\n[green]No {sev}-severity audit issues.[/green]")
+        return
+
+    breakdown = (
+        view.group_by("severity", "issue")
+        .agg(pl.col("pgs_id").n_unique().alias("n_pgs"))
+        .sort(["severity", "n_pgs"], descending=[False, True])
+    )
+    table = Table(title=f"{panel} audit issues by type")
+    table.add_column("severity")
+    table.add_column("issue")
+    table.add_column("n_pgs", justify="right")
+    for row in breakdown.iter_rows(named=True):
+        colour = "red" if row["severity"] == "ERROR" else "yellow"
+        table.add_row(f"[{colour}]{row['severity']}[/{colour}]", row["issue"], str(row["n_pgs"]))
+    console.print(table)
+
+    if show_ids:
+        ids = view.select("pgs_id").unique().sort("pgs_id")["pgs_id"].to_list()
+        console.print(f"\n[bold]Affected PGS IDs ({len(ids)}):[/bold] " + ", ".join(ids))
+
+
 @reference_app.command("download")
 def reference_download(
     cache_dir: Annotated[

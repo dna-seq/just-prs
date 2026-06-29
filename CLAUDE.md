@@ -297,7 +297,13 @@ prs reference compare PGS000001
 # Test multiple PGS IDs with automated validation
 prs reference test-score
 prs reference test-score --pgs-ids PGS000001,PGS000003,PGS000007
+
+# Show which reference PGS IDs are filtered as untrustworthy (what reference_distributions() drops on read)
+prs reference audit --panel 1000g                 # ERROR-severity (filtered) breakdown + affected IDs
+prs reference audit --panel 1000g --severity all  # also show WARN (kept-but-flagged) issues
 ```
+
+`prs reference audit` is a lightweight, read-only inspector of `{panel}_distribution_quality_issues.parquet` (recomputed from `{panel}_distributions.parquet` + `{panel}_quality.parquet` if the sidecar is absent). It mirrors exactly what `PRSCatalog.reference_distributions()` excludes — every PGS ID with an `ERROR`-severity audit issue (e.g. `quality_low_match_rate`, zero-variance, non-finite, quantile-ordering) is dropped so the UI never surfaces percentiles from a degenerate/low-coverage reference distribution. Distinct from the heavy `uv run pipeline audit` job, which recomputes and *uploads* the sidecars.
 
 **Via Python API (batch scoring — primary workflow):**
 

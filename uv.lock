@@ -999,7 +999,7 @@ wheels = [
 
 [[package]]
 name = "just-prs"
-version = "0.6.0"
+version = "0.6.1"
 source = { editable = "just-prs" }
 dependencies = [
     { name = "altair" },

@@ -1141,14 +1141,14 @@ def trait_results_chart_panel(
                     rx.el.iframe(
                         src_doc=state.selected_result_html,
                         width="100%",
-                        height="760px",
+                        height=state.selected_result_html_height,
                         custom_attrs={"id": _PRS_REPORT_IFRAME_ID},
                         style={
                             "border": "0",
                             "borderRadius": "var(--radius-2)",
                             "background": "#fafafa",
                             "display": "block",
-                            "minHeight": "760px",
+                            "minHeight": "600px",
                             "transition": "height 120ms ease",
                         },
                     ),

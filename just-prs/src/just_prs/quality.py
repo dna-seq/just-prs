@@ -110,25 +110,129 @@ def synthetic_quality_score(
     return round(100.0 * discrimination * cohort_factor * match_factor * penalty * harmonized_factor, 1)
 
 
+#: AUROC penalty applied to harmonized (cross-build, e.g. GRCh37→GRCh38 lifted)
+#: scores when classifying quality.  Coordinate liftover drops/mismaps a fraction
+#: of variants by design, so a lifted score is inherently less trustworthy than a
+#: natively-built one.  The High/Moderate AUROC bands here are 0.1 wide
+#: (High ≥0.7, Moderate ≥0.6), so 0.05 demotes a model by ~half a tier — and a
+#: harmonized model with no discrimination metric is dropped one tier outright.
+_HARMONIZED_AUROC_PENALTY = 0.05
+
+#: Coverage thresholds for quality, expressed on **weight-mass coverage (C_wt)** —
+#: the fraction of the score's effect-weight mass actually carried by observed
+#: genotypes.  C_wt is used instead of the count match_rate because WGS
+#: reference-restoration fills absent loci as hom-ref, inflating count match_rate
+#: to ~100% for every model (destroying its discriminative power) while leaving
+#: C_wt honest (restored hom-ref carries zero dosage, so zero matched weight).
+#: For chips — where coverage genuinely varies — C_wt still tracks real coverage,
+#: so it stays a valid, discriminative signal there.  0.20 mirrors
+#: ``prs_catalog.MIN_RELIABLE_WEIGHT_MASS_COVERAGE`` (below it the percentile is
+#: already flagged unreliable); 0.50 = "well covered" (half the weight mass).
+_MIN_RELIABLE_COVERAGE = 0.20
+_WELL_COVERED_COVERAGE = 0.50
+
+
 def classify_model_quality(
-    match_rate: float,
+    coverage: float,
     auroc: float | None,
+    is_harmonized: bool = False,
 ) -> tuple[str, str]:
-    """Classify overall model quality from match rate and AUROC.
+    """Classify overall model quality from weight-mass coverage and AUROC.
+
+    ``coverage`` is the score's **weight-mass coverage (C_wt)** when available
+    (callers fall back to the count match_rate only when C_wt is unknown).  See
+    the module constants for why C_wt rather than count match_rate.
 
     Returns (label, color_name) where color_name is a semantic token
     (e.g. "green", "red") that UIs can map to their own palette.
+
+    ``is_harmonized`` demotes cross-build lifted scores (less reliable by
+    design): AUROC is penalized by ``_HARMONIZED_AUROC_PENALTY`` before banding,
+    and a harmonized score with no discrimination metric drops Moderate→Low.
     """
-    if match_rate < 0.1:
+    if coverage < _MIN_RELIABLE_COVERAGE:
         return "Very Low", "red"
     if auroc is not None:
-        if match_rate >= 0.5 and auroc >= 0.7:
+        eff_auroc = auroc - _HARMONIZED_AUROC_PENALTY if is_harmonized else auroc
+        if coverage >= _WELL_COVERED_COVERAGE and eff_auroc >= 0.7:
             return "High", "green"
-        if match_rate >= 0.5 and auroc >= 0.6:
+        if eff_auroc >= 0.6:
             return "Moderate", "yellow"
-    if match_rate >= 0.5:
-        return "Moderate", "yellow"
-    return "Low", "orange"
+    # Reliable coverage but no strong discrimination metric: a native score gets
+    # the benefit of the doubt (Moderate); a cross-build lifted one drops to Low.
+    return ("Low", "orange") if is_harmonized else ("Moderate", "yellow")
+
+
+#: Quality tiers that count as "top of the scale".  When every model in a cohort
+#: lands here the absolute heatmap is a single colour and useless, which triggers
+#: the relative re-scaling below.
+_TOP_QUALITY_KEYS = frozenset({"high", "moderate"})
+
+#: Low-quality band width for the relative re-scale, in score units (0–1 scale).
+#: The worst model and everything within this margin above it are marked "low";
+#: 0.05 (5 points of a 0–100 synthetic score) gives a visible bottom band.
+_RELATIVE_LOW_MARGIN = 0.05
+
+
+def relative_quality_keys(
+    scores: list[float | None],
+    *,
+    margin: float = _RELATIVE_LOW_MARGIN,
+) -> list[str | None] | None:
+    """Stretch a cohort's quality across the palette relative to its own range.
+
+    Quality colouring is comparative: if every model classifies into the top
+    tiers (e.g. a WGS sample where C_wt ≈ 1.0 for all), the heatmap is uniformly
+    green and hides the real ranking.  This re-anchors the low-quality threshold
+    at **worst score + ``margin``** (so the weakest model for this user, plus any
+    within ``margin`` of it, read as low) and **stretch-transforms** the rest of
+    the cohort across ``moderate``/``high`` by min–max normalising to the cohort
+    range, so the gradient becomes visible again.
+
+    ``scores`` are on a 0–1 scale (e.g. ``synthetic_quality / 100``).  Returns a
+    parallel list of tier keys, or ``None`` when there is nothing to spread
+    (fewer than two scored models, or a range no wider than ``margin``).
+    """
+    present = [s for s in scores if s is not None]
+    if len(present) < 2:
+        return None
+    worst, best = min(present), max(present)
+    span = best - worst
+    if span <= margin:
+        return None
+    low_cut = worst + margin
+    keys: list[str | None] = []
+    for s in scores:
+        if s is None:
+            keys.append(None)
+            continue
+        if s <= low_cut:
+            keys.append("low")
+        else:
+            # Stretch the whole cohort onto 0–1; split the surviving (non-low)
+            # models at the midpoint of that stretched range into moderate/high.
+            norm = (s - worst) / span
+            keys.append("high" if norm >= 0.5 else "moderate")
+    return keys
+
+
+def rescale_quality_if_degenerate(
+    tiers: list[str | None],
+    scores: list[float | None],
+    *,
+    margin: float = _RELATIVE_LOW_MARGIN,
+) -> list[str | None]:
+    """Return relative tier keys when the absolute scale is degenerate, else ``tiers``.
+
+    "Degenerate" = every (present) model sits in :data:`_TOP_QUALITY_KEYS`, so
+    the absolute heatmap can't discriminate.  When some model is already below
+    Moderate the absolute scale carries information and is left untouched.
+    """
+    present_tiers = [t for t in tiers if t]
+    if not present_tiers or any(t not in _TOP_QUALITY_KEYS for t in present_tiers):
+        return list(tiers)
+    relative = relative_quality_keys(scores, margin=margin)
+    return relative if relative is not None else list(tiers)
 
 
 #: Normalize any quality *label* (from ``classify_model_quality`` /

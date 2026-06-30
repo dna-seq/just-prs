@@ -17,10 +17,12 @@ import math
 from just_prs.models import AbsoluteRisk, AbsoluteRiskBundle, AbsoluteRiskEstimate
 
 #: Absolute risk is asymptotic — a logistic/liability model can approach but
-#: never reach certainty, so a PRS estimate of a literal 100% is always an
-#: artifact of clamping.  Cap just below 1.0 so the strongest predisposition
-#: reads "99.9%" (very high, near-certain) rather than the impossible "100.0%".
+#: never reach either certainty or impossibility, so a PRS estimate of a literal
+#: 100% (or 0%) is always an artifact of clamping.  Bound it just inside (0, 1)
+#: so the strongest predisposition reads ">99.9%" and the weakest "<0.01%"
+#: rather than the impossible "100.0%" / "0.0%".
 _MAX_ABSOLUTE_RISK = 0.999
+_MIN_ABSOLUTE_RISK = 0.0001
 
 
 def _norm_cdf(x: float) -> float:
@@ -105,7 +107,7 @@ def estimate_absolute_risk_or(
     baseline_odds = prevalence / (1.0 - prevalence)
     user_odds = baseline_odds * (or_per_sd ** z_score)
     user_risk = user_odds / (1.0 + user_odds)
-    user_risk = max(0.0, min(_MAX_ABSOLUTE_RISK, user_risk))
+    user_risk = max(_MIN_ABSOLUTE_RISK, min(_MAX_ABSOLUTE_RISK, user_risk))
 
     return AbsoluteRisk(
         absolute_risk=round(user_risk, 6),
@@ -210,7 +212,7 @@ def estimate_absolute_risk_auc(
     else:
         user_risk = K * phi_case / phi_combined
 
-    user_risk = max(0.0, min(_MAX_ABSOLUTE_RISK, user_risk))
+    user_risk = max(_MIN_ABSOLUTE_RISK, min(_MAX_ABSOLUTE_RISK, user_risk))
 
     return AbsoluteRisk(
         absolute_risk=round(user_risk, 6),
@@ -354,7 +356,7 @@ def estimate_absolute_risk_h2(
         denominator = 0.01
 
     user_risk = _norm_cdf((shifted - t) / denominator)
-    user_risk = max(0.0, min(_MAX_ABSOLUTE_RISK, user_risk))
+    user_risk = max(_MIN_ABSOLUTE_RISK, min(_MAX_ABSOLUTE_RISK, user_risk))
 
     ancestry_label = f" {ancestry}" if ancestry else ""
     method_label = f"h²{ancestry_label} ({h2_source})" if h2_source else f"h² liability{ancestry_label}"

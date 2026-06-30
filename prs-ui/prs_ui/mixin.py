@@ -1351,6 +1351,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     selected_result_id: str = ""
     selected_result_spec: dict = {}
     selected_result_html: str = ""
+    # Pre-estimated pixel height for the report iframe, sized from the model
+    # count so it renders ~correct immediately instead of mounting short and
+    # visibly growing (the residual "jumping height").  The in-iframe postMessage
+    # auto-height then trims any leftover slack.  Default covers a small report.
+    selected_result_html_height: str = "900px"
     selected_result_info: dict = {}
     chart_mode: str = "single"
 
@@ -3742,6 +3747,13 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 ancestry,
                 sample_name=_genome_file_label(self.prs_genotypes_path),
             )
+            # Bandaid for the residual "jumping height": estimate the report
+            # height from the model count (stat cards + chart + AI buttons ≈
+            # 900px base, then ~3 median rows + one row per model at ~40px) so
+            # the iframe mounts near its final size.  Capped so a huge trait
+            # group doesn't produce an absurd frame; postMessage trims the rest.
+            n_models = len(chart_user_results)
+            self.selected_result_html_height = f"{min(900 + (n_models + 3) * 40, 4200)}px"
             return self._set_container_width(chart.to_dict())
         except Exception:
             import traceback

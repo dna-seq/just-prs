@@ -45,7 +45,7 @@ def _quality_comparison_df() -> pl.DataFrame:
             beta_estimate=beta_est,
             n_individuals=n_individuals,
         )
-        coarse_label, _ = classify_model_quality(match_rate=1.0, auroc=auroc)
+        coarse_label, _ = classify_model_quality(coverage=1.0, auroc=auroc)
         if auroc is not None:
             tier = "T1a-AUROC"
         elif cindex is not None:
@@ -156,9 +156,9 @@ def test_tier3_lower_than_tier2_at_same_cohort() -> None:
 # ---------------------------------------------------------------------------
 
 def test_synthetic_quality_score_does_not_change_coarse_classifier() -> None:
-    assert classify_model_quality(match_rate=0.5, auroc=0.7) == ("High", "green")
-    assert classify_model_quality(match_rate=0.5, auroc=0.59) == ("Moderate", "yellow")
-    assert classify_model_quality(match_rate=0.09, auroc=0.9) == ("Very Low", "red")
+    assert classify_model_quality(coverage=0.5, auroc=0.7) == ("High", "green")
+    assert classify_model_quality(coverage=0.5, auroc=0.59) == ("Moderate", "yellow")
+    assert classify_model_quality(coverage=0.09, auroc=0.9) == ("Very Low", "red")
 
 
 def test_filtered_grch38_numeric_quality_concords_with_coarse_low_grades() -> None:

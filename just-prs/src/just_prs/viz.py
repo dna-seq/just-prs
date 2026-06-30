@@ -16,7 +16,7 @@ from typing import Any, Literal
 import altair as alt
 import polars as pl
 
-from just_prs.quality import resolve_quality_key
+from just_prs.quality import rescale_quality_if_degenerate, resolve_quality_key
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +98,53 @@ def _format_percent_like(value: object) -> str:
         return "—"
     percent = number if abs(number) > 1.0 else number * 100.0
     return f"{percent:.1f}%"
+
+
+#: Explains what the "Quality" column/colours mean — they are relative on three
+#: axes at once, so a "low" is not necessarily a bad model in absolute terms.
+_QUALITY_NOTE_HTML = (
+    '<div class="quality-note">'
+    '<div class="qn-title">How to read “Quality”</div>'
+    "Quality is <b>relative on three axes at once</b>, not an absolute grade:"
+    "<ul>"
+    "<li><b>The model itself</b> — its published predictive power (AUROC / effect "
+    "size) and the size of the study it was trained on.</li>"
+    "<li><b>How well it fits your sample</b> — the share of the model’s effect-weight "
+    "your genotypes actually cover (C<sub>wt</sub>); cross-build (e.g. GRCh37→GRCh38) "
+    "lifted models are demoted because liftover is lossy by design.</li>"
+    "<li><b>How it ranks within this trait’s models</b> — when every model scores "
+    "high for you the colour scale is stretched across this set, so the strongest "
+    "stay green and the weakest turn orange.</li>"
+    "</ul>"
+    "So a <b>“low” here can still be a sound model</b> — it may simply trail the "
+    "others for this trait or cover less of your genotype."
+    "</div>"
+)
+
+
+# Absolute risk is asymptotic: it can approach but never reach 100% or 0%, so the
+# extremes are rendered as bounds (">99.9%", "<0.01%") instead of the impossible
+# "100.0%" / "0.0%".  Mirrors the source clamp in absolute_risk.py.
+_ABS_RISK_DISPLAY_MAX = 0.999
+_ABS_RISK_DISPLAY_MIN = 0.0001
+
+
+def _format_absolute_risk(value: object) -> str:
+    """Format an absolute-risk value, showing the extremes as bounds.
+
+    Numeric values (fractions or 0–100 percents) clamp to ``>99.9%`` / ``<0.01%``
+    at the asymptotic extremes.  Preformatted strings (e.g.
+    ``"10.0% (pop. avg: 8.3%)"``) are passed through unchanged.
+    """
+    number = _parse_float(value)
+    if number is None:
+        return _format_percent_like(value)
+    frac = number / 100.0 if number > 1.0 else number
+    if frac >= _ABS_RISK_DISPLAY_MAX:
+        return ">99.9%"
+    if frac <= _ABS_RISK_DISPLAY_MIN:
+        return "<0.01%"
+    return f"{frac * 100.0:.1f}%"
 
 
 def _bell_curve_data(
@@ -431,9 +478,11 @@ def plot_trait_scores(
         pct_user: float | None = None
         match_rate: float | None = None
         user_quality_label: str | None = None
+        user_synthetic_quality: float | None = None
         if pgs_id in user_lookup:
             ur = user_lookup[pgs_id]
             user_quality_label = ur.get("quality_label") or None
+            user_synthetic_quality = _parse_float(ur.get("synthetic_quality"))
             z_user = _parse_float(ur.get("z_score"))
             pct_user = _parse_float(ur.get("percentile"))
             match_rate = _parse_float(ur.get("match_rate"))
@@ -476,6 +525,7 @@ def plot_trait_scores(
             "score_name": score_name or "",
             "trait_reported": trait_reported,
             "quality": tier,
+            "synthetic_quality": user_synthetic_quality,
             "n_variants": n_var,
             "n_variants_label": n_var_label,
             "auroc": auroc,
@@ -620,6 +670,24 @@ def plot_trait_scores(
 
     user_marks = [m for m in model_meta if m["z_score"] is not None]
     has_user = len(user_marks) > 0
+
+    # When every scored model lands in the top tiers the dot heatmap is uniformly
+    # green; re-colour the user's models relative to their own cohort (ranked on
+    # synthetic quality) so the gradient is visible.  No-op otherwise.  Keep the
+    # report table (trait_report_html) in sync — both call the same helper.
+    if has_user:
+        _rescaled = rescale_quality_if_degenerate(
+            [m["quality"] for m in user_marks],
+            [
+                (m["synthetic_quality"] / 100.0)
+                if m.get("synthetic_quality") is not None
+                else None
+                for m in user_marks
+            ],
+        )
+        for _m, _k in zip(user_marks, _rescaled):
+            if _k is not None:
+                _m["quality"] = _k
 
     if has_user:
         import random
@@ -1841,6 +1909,23 @@ def trait_report_html(
                 n_var=int(n_var_val) if n_var_val is not None else None,
                 auroc=_parse_float(r.get("auroc")),
             )
+
+    # If the absolute scale bunches every model into the top tiers (e.g. a WGS
+    # sample where C_wt ≈ 1.0 for all), re-colour relative to this cohort so the
+    # quality heatmap stays informative instead of uniformly green.  Ranks on the
+    # model-intrinsic synthetic quality (which keeps spread even when coverage is
+    # uniform).  No-op when the absolute scale already discriminates.
+    def _sq_norm(row: dict) -> float | None:
+        sq = _parse_float(row.get("synthetic_quality"))
+        return sq / 100.0 if sq is not None else None
+
+    rescaled = rescale_quality_if_degenerate(
+        [r.get("quality") for r in scored],
+        [_sq_norm(r) for r in scored],
+    )
+    for r, key in zip(scored, rescaled):
+        if key is not None:
+            r["quality"] = key
     spec_json = chart.to_json()
 
     stats_html = ""
@@ -1949,7 +2034,7 @@ def trait_report_html(
             cards.append(
                 f'<div class="stat-card">'
                 f'<div class="stat-label">Absolute Risk</div>'
-                f'<div class="stat-value">{_format_percent_like(ar)}</div>'
+                f'<div class="stat-value">{_format_absolute_risk(ar)}</div>'
                 f'<div class="stat-sub">{" | ".join(sub_parts)}</div></div>'
             )
 
@@ -2058,7 +2143,7 @@ def trait_report_html(
                 ar = r.get("absolute_risk")
                 prev = r.get("population_prevalence")
                 if ar is not None:
-                    ar_s = _format_percent_like(ar)
+                    ar_s = _format_absolute_risk(ar)
                     if prev is not None:
                         ar_s += f" (avg {_format_percent_like(prev)})"
                     cells.append(f"<td>{ar_s}</td>")
@@ -2090,6 +2175,8 @@ def trait_report_html(
             + "</tbody></table>"
         )
 
+    quality_note_html = _QUALITY_NOTE_HTML if scored else ""
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2120,6 +2207,11 @@ h1 {{ font-size: 1.4em; margin-bottom: 4px; }}
 .trait-cell {{ max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #555; }}
 .h2-cell {{ max-width: 260px; white-space: normal; color: #444; font-size: 0.88em; }}
 .q-dot {{ display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }}
+.quality-note {{ margin-top: 16px; padding: 12px 16px; background: #f0f4f8; border: 1px solid #d6e0ea; border-left: 4px solid #1565c0; border-radius: 8px; font-size: 0.85em; color: #44525e; line-height: 1.5; }}
+.quality-note .qn-title {{ font-weight: 700; color: #1565c0; margin-bottom: 6px; }}
+.quality-note ul {{ margin: 6px 0 0; padding-left: 18px; }}
+.quality-note li {{ margin: 3px 0; }}
+.quality-note b {{ color: #2d3a44; }}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/vega@6"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@6"></script>
@@ -2131,6 +2223,7 @@ h1 {{ font-size: 1.4em; margin-bottom: 4px; }}
 {stats_html}
 <div id="vis"></div>
 {table_html}
+{quality_note_html}
 {ai_html}
 <script>
 // Report its true content height to the embedding parent so the host iframe can

@@ -211,7 +211,17 @@ def enrich_prs_result(
         reliable=pct_reliable,
         caveat=pct_caveat,
     )
-    quality_label, quality_color = classify_model_quality(result.match_rate, auroc_val)
+    # Quality is judged on weight-mass coverage (C_wt), not the count match_rate
+    # which WGS reference-restoration inflates to ~100% for every model.  Fall
+    # back to the count match_rate only when C_wt was not computed.
+    quality_coverage = (
+        result.weight_mass_coverage
+        if result.weight_mass_coverage is not None
+        else result.match_rate
+    )
+    quality_label, quality_color = classify_model_quality(
+        quality_coverage, auroc_val, is_harmonized=is_harmonized
+    )
 
     # --- Reference status (after percentile lookups which may trigger HF refresh) ---
     ref_status = catalog.reference_data_status(result.pgs_id, panel="1000g")

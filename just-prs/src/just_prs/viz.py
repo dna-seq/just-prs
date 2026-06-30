@@ -16,6 +16,8 @@ from typing import Any, Literal
 import altair as alt
 import polars as pl
 
+from just_prs.quality import resolve_quality_key
+
 logger = logging.getLogger(__name__)
 
 
@@ -414,17 +416,6 @@ def plot_trait_scores(
         for ur in user_results:
             user_lookup[ur["pgs_id"]] = ur
 
-    def _quality_tier(n_var: int | None, auroc: float | None) -> str:
-        if auroc is not None and auroc >= 0.7:
-            return "high"
-        if n_var is not None and n_var >= 100_000:
-            return "high"
-        if n_var is not None and n_var >= 10_000:
-            return "moderate"
-        if n_var is not None and n_var >= 100:
-            return "low"
-        return "very_low"
-
     has_name_col = "name" in sub.columns
 
     model_meta: list[dict] = []
@@ -434,14 +425,15 @@ def plot_trait_scores(
         mean, std = row_dict["mean"], row_dict["std"]
         n_var = row_dict.get("variants_total") or row_dict.get("n_variants") or 0
         auroc = row_dict.get("auroc_estimate")
-        tier = _quality_tier(n_var, auroc)
         n_var_label = f"{n_var:,}" if n_var else "?"
 
         z_user: float | None = None
         pct_user: float | None = None
         match_rate: float | None = None
+        user_quality_label: str | None = None
         if pgs_id in user_lookup:
             ur = user_lookup[pgs_id]
+            user_quality_label = ur.get("quality_label") or None
             z_user = _parse_float(ur.get("z_score"))
             pct_user = _parse_float(ur.get("percentile"))
             match_rate = _parse_float(ur.get("match_rate"))
@@ -469,6 +461,15 @@ def plot_trait_scores(
         reliable = True
         if pgs_id in user_lookup:
             reliable = user_lookup[pgs_id].get("reliable", True)
+
+        # Prefer the genotype-aware quality label carried on the scored result;
+        # fall back to variant/AUROC only for reference-context models that the
+        # user never scored.  All classification lives in just_prs.quality.
+        tier = resolve_quality_key(
+            label=user_quality_label,
+            n_var=int(n_var) if n_var else None,
+            auroc=_parse_float(auroc),
+        )
 
         model_meta.append({
             "pgs_id": pgs_id,
@@ -1818,7 +1819,6 @@ def trait_report_html(
     - Key Statistics panel (percentile, risk vs average, absolute risk)
     - "Ask AI" buttons linking to Claude, ChatGPT, Perplexity with a pre-built prompt
     """
-    import json as _json
     import urllib.parse
 
     scored = [
@@ -1826,29 +1826,84 @@ def trait_report_html(
         for r in user_results
         if (percentile := _parse_float(r.get("percentile"))) is not None
     ]
+    # Stamp each model with the same canonical quality tier the chart uses so the
+    # table, the quality-stratified median rows, and the headline cohort-median
+    # cards all agree with the chart's High/Moderate/Low grouping.  Classification
+    # lives in just_prs.quality.resolve_quality_key — never reinvent it here.
+    # ``scored`` holds copies (``{**r, ...}``), so this never mutates caller dicts.
+    for r in scored:
+        if not r.get("quality"):
+            n_var_val = _parse_float(r.get("variants_total"))
+            if n_var_val is None:
+                n_var_val = _parse_float(r.get("n_variants"))
+            r["quality"] = resolve_quality_key(
+                label=r.get("quality_label"),
+                n_var=int(n_var_val) if n_var_val is not None else None,
+                auroc=_parse_float(r.get("auroc")),
+            )
     spec_json = chart.to_json()
 
     stats_html = ""
     ai_html = ""
 
+    def _median(values: list[float | None]) -> float | None:
+        """Median of the present values (robust to outliers on either tail)."""
+        present = sorted(v for v in values if v is not None)
+        return present[len(present) // 2] if present else None
+
+    def _risk_fraction(value: object) -> float | None:
+        """Normalize an absolute-risk/prevalence value to a 0–1 fraction.
+
+        Accepts raw fractions (0.12), percentages (12.0) and preformatted
+        strings like ``"10.0% (pop. avg: 8.3%)"`` by reading the leading number.
+        """
+        number = _parse_float(value)
+        if number is None and isinstance(value, str) and value.strip():
+            number = _parse_float(value.strip().split("%", maxsplit=1)[0].split()[-1])
+        if number is None:
+            return None
+        return number / 100.0 if number > 1.0 else number
+
+    def _trusted_cohort(rows: list[dict]) -> tuple[list[dict], str]:
+        """The most trustworthy cohort whose medians drive the headline cards.
+
+        Headline numbers must reflect the centre of the good models — the same
+        High / High+Moderate / All medians the chart draws — not a single model.
+        Ranking the cards by one "best" model let a lone low-coverage outlier on
+        either tail (e.g. an 800-variant model reading the 100th percentile)
+        dictate the whole report.  Prefer high-quality models, then add
+        moderate, then fall back to every scored model.
+        """
+        for keys, name in (
+            ({"high"}, "high-quality"),
+            ({"high", "moderate"}, "high/moderate-quality"),
+        ):
+            cohort = [r for r in rows if r.get("quality") in keys]
+            if cohort:
+                return cohort, name
+        return rows, "all"
+
     if scored:
         pctls = sorted([r["percentile"] for r in scored])
         median_pctl = pctls[len(pctls) // 2]
-        mean_pctl = sum(pctls) / len(pctls)
-        best = max(scored, key=lambda r: r["percentile"])
+        cohort, cohort_name = _trusted_cohort(scored)
+        cohort_pctl = _median([r["percentile"] for r in cohort])
 
         cards = []
-        cards.append(
-            f'<div class="stat-card">'
-            f'<div class="stat-label">Your Percentile (best model)</div>'
-            f'<div class="stat-value">{best["percentile"]:.1f}</div>'
-            f'<div class="stat-sub">{best["pgs_id"]}</div></div>'
-        )
+        # When a trustworthy sub-cohort exists, headline its median; otherwise the
+        # "Median Percentile (all)" card below already carries the same number.
+        if cohort_pctl is not None and cohort_name != "all":
+            cards.append(
+                f'<div class="stat-card">'
+                f'<div class="stat-label">Your Percentile ({cohort_name})</div>'
+                f'<div class="stat-value">{cohort_pctl:.1f}</div>'
+                f'<div class="stat-sub">median of {len(cohort)} model(s)</div></div>'
+            )
         cards.append(
             f'<div class="stat-card">'
             f'<div class="stat-label">Median Percentile</div>'
             f'<div class="stat-value">{median_pctl:.1f}</div>'
-            f'<div class="stat-sub">across {len(scored)} models</div></div>'
+            f'<div class="stat-sub">across all {len(scored)} models</div></div>'
         )
         cards.append(
             f'<div class="stat-card">'
@@ -1865,38 +1920,37 @@ def trait_report_html(
                 f'<div class="stat-sub">population-level heredity context</div></div>'
             )
 
-        with_risk = [r for r in scored if "risk_ratio" in r]
-        if with_risk:
-            br = max(with_risk, key=lambda r: r["percentile"])
-            rr = _parse_float(br.get("risk_ratio"))
-            if rr is None:
-                rr = 0.0
+        with_risk = [r for r in cohort if _parse_float(r.get("risk_ratio")) is not None]
+        rr = _median([_parse_float(r.get("risk_ratio")) for r in with_risk])
+        if rr is not None:
             color = "#C62828" if rr >= 1.0 else "#2E7D32"
             direction = "higher" if rr >= 1.0 else "lower"
             cards.append(
                 f'<div class="stat-card">'
                 f'<div class="stat-label">Risk vs Average</div>'
                 f'<div class="stat-value" style="color:{color}">{rr:.2f}x</div>'
-                f'<div class="stat-sub">{direction} than population</div></div>'
+                f'<div class="stat-sub">{direction} than population · median of {len(with_risk)} {cohort_name} model(s)</div></div>'
             )
 
-        with_abs = [r for r in scored if "absolute_risk" in r]
-        if with_abs:
-            ba = max(with_abs, key=lambda r: r["percentile"])
-            ar = ba["absolute_risk"]
-            prev = ba.get("population_prevalence")
-            method = ba.get("risk_method", "")
+        with_abs = [r for r in cohort if _risk_fraction(r.get("absolute_risk")) is not None]
+        ar = _median([_risk_fraction(r.get("absolute_risk")) for r in with_abs])
+        if ar is not None:
+            prev = _median([_risk_fraction(r.get("population_prevalence")) for r in with_abs])
+            method = next(
+                (str(r.get("risk_method")) for r in with_abs if r.get("risk_method")),
+                "",
+            )
             sub_parts = []
             if prev:
                 sub_parts.append(f"pop. avg. {_format_percent_like(prev)}")
+            sub_parts.append(f"median of {len(with_abs)} {cohort_name} model(s)")
             if method:
                 sub_parts.append(method)
-            sub_text = " | ".join(sub_parts) if sub_parts else ""
             cards.append(
                 f'<div class="stat-card">'
                 f'<div class="stat-label">Absolute Risk</div>'
                 f'<div class="stat-value">{_format_percent_like(ar)}</div>'
-                f'<div class="stat-sub">{sub_text}</div></div>'
+                f'<div class="stat-sub">{" | ".join(sub_parts)}</div></div>'
             )
 
         if len(pctls) > 1:
@@ -2079,7 +2133,23 @@ h1 {{ font-size: 1.4em; margin-bottom: 4px; }}
 {table_html}
 {ai_html}
 <script>
-vegaEmbed('#vis', {spec_json}, {{actions: true, width: Math.max(800, window.innerWidth - 80)}}).catch(console.error);
+// Report its true content height to the embedding parent so the host iframe can
+// size itself to the content instead of guessing a fixed height (the root cause
+// of the "jumping height" — a fixed iframe height clips a 65-model table or
+// leaves a tall empty gap).  Harmless when opened standalone (parent === self).
+function _prsPostHeight() {{
+  var h = Math.max(
+    document.body.scrollHeight, document.documentElement.scrollHeight,
+    document.body.offsetHeight, document.documentElement.offsetHeight
+  );
+  parent.postMessage({{type: 'prs-report-height', height: h}}, '*');
+}}
+vegaEmbed('#vis', {spec_json}, {{actions: true, width: Math.max(800, window.innerWidth - 80)}})
+  .then(_prsPostHeight)
+  .catch(console.error);
+window.addEventListener('load', _prsPostHeight);
+window.addEventListener('resize', _prsPostHeight);
+if (window.ResizeObserver) {{ new ResizeObserver(_prsPostHeight).observe(document.body); }}
 </script>
 </body>
 </html>"""

@@ -131,6 +131,54 @@ def classify_model_quality(
     return "Low", "orange"
 
 
+#: Normalize any quality *label* (from ``classify_model_quality`` /
+#: ``classify_synthetic_quality`` / ``classify_combined_quality``) to one of the
+#: four lowercase tier keys used for chart colors and table dots.  "Normal" is a
+#: synthetic-score band that sits between high and moderate; it maps to the
+#: moderate color so the four-color palette stays stable.
+_QUALITY_LABEL_TO_KEY: dict[str, str] = {
+    "high": "high",
+    "normal": "moderate",
+    "moderate": "moderate",
+    "low": "low",
+    "very low": "very_low",
+    "very_low": "very_low",
+}
+
+
+def resolve_quality_key(
+    label: str | None = None,
+    n_var: int | None = None,
+    auroc: float | None = None,
+) -> str:
+    """Resolve a model's quality tier key: ``high`` / ``moderate`` / ``low`` / ``very_low``.
+
+    This is the single source of truth shared by the trait chart and the HTML
+    report table, so the two can never disagree (the table previously read a
+    ``quality`` key that was never populated and silently defaulted every model
+    to ``"low"`` while the chart used a separate variant-count heuristic).
+
+    Prefers the genotype-aware quality *label* already attached to a scored
+    result (``classify_model_quality``).  Only when no label exists — e.g. a
+    reference-panel model shown for context that was never scored against a
+    genome — does it fall back to a metadata-only estimate from variant count
+    and AUROC.
+    """
+    if label:
+        key = _QUALITY_LABEL_TO_KEY.get(label.strip().lower())
+        if key:
+            return key
+    if auroc is not None and auroc >= 0.7:
+        return "high"
+    if n_var is not None and n_var >= 100_000:
+        return "high"
+    if n_var is not None and n_var >= 10_000:
+        return "moderate"
+    if n_var is not None and n_var >= 100:
+        return "low"
+    return "very_low"
+
+
 _PERCENTILE_METHOD_DESC: dict[str, str] = {
     "reference_panel": "from a reference-panel population distribution",
     "theoretical": "theoretical, from allele frequencies in the scoring file",

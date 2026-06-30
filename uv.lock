@@ -999,7 +999,7 @@ wheels = [
 
 [[package]]
 name = "just-prs"
-version = "0.7.1"
+version = "0.7.2"
 source = { editable = "just-prs" }
 dependencies = [
     { name = "altair" },
@@ -1550,7 +1550,7 @@ requires-dist = [
 
 [[package]]
 name = "prs-ui"
-version = "0.3.9"
+version = "0.3.10"
 source = { editable = "prs-ui" }
 dependencies = [
     { name = "just-prs" },

@@ -35,6 +35,25 @@ from prs_ui.mixin import SUPERPOPULATION_LABELS
 from prs_ui.state import GenomicGridState
 
 
+#: DOM id of the trait-report iframe + the listener that auto-sizes it to the
+#: report's posted content height.  Replaces fixed-height guesses (the "jumping
+#: height" root cause): the report HTML (just_prs.viz.trait_report_html) posts
+#: ``{type:'prs-report-height', height}`` and this sets the iframe height to it.
+_PRS_REPORT_IFRAME_ID = "prs-trait-report"
+_PRS_REPORT_AUTOHEIGHT_JS = (
+    "(function(){"
+    "if(window.__prsReportHeightListener)return;"
+    "window.__prsReportHeightListener=true;"
+    "window.addEventListener('message',function(e){"
+    "var d=e&&e.data;"
+    "if(!d||d.type!=='prs-report-height'||!d.height)return;"
+    "var f=document.getElementById('" + _PRS_REPORT_IFRAME_ID + "');"
+    "if(f){f.style.height=(d.height+8)+'px';}"
+    "});"
+    "})();"
+)
+
+
 def _resolve_normalizing(normalizing: Any | None = None) -> Any:
     """Return the source normalizing signal for reusable PRS controls."""
     return GenomicGridState.vcf_normalizing if normalizing is None else normalizing
@@ -1111,15 +1130,28 @@ def trait_results_chart_panel(
             state.selected_result_spec != {},
             rx.cond(
                 state.selected_result_html != "",
-                rx.el.iframe(
-                    src_doc=state.selected_result_html,
-                    width="100%",
-                    height=f"{max(chart_height + 420, 760)}px",
-                    style={
-                        "border": "0",
-                        "borderRadius": "var(--radius-2)",
-                        "background": "#fafafa",
-                    },
+                rx.fragment(
+                    # The report iframe auto-sizes to its content: the embedded
+                    # report posts its true height (postMessage), and this
+                    # listener applies it.  This replaces the old fixed-height
+                    # guess that clipped tall reports / left empty gaps (the
+                    # "jumping height" root cause).  Host-side bandaid heights
+                    # are no longer needed.
+                    rx.script(_PRS_REPORT_AUTOHEIGHT_JS),
+                    rx.el.iframe(
+                        src_doc=state.selected_result_html,
+                        width="100%",
+                        height="760px",
+                        custom_attrs={"id": _PRS_REPORT_IFRAME_ID},
+                        style={
+                            "border": "0",
+                            "borderRadius": "var(--radius-2)",
+                            "background": "#fafafa",
+                            "display": "block",
+                            "minHeight": "760px",
+                            "transition": "height 120ms ease",
+                        },
+                    ),
                 ),
                 rx.box(
                     VegaLiteChart.create(

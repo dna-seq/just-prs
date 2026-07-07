@@ -27,19 +27,47 @@ GRCH37_CONTIG_LENGTHS: dict[str, int] = {
     "21": 48129895, "22": 51304566, "X": 155270560, "Y": 59373566,
 }
 
+# ``b37`` is matched only as a standalone token so paths like ``.../lib37/`` or
+# ``sub37`` don't masquerade as a build name; ``GRCh38``/``hg38`` and their 37
+# counterparts are distinctive enough to match anywhere.
 _BUILD_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"GRCh38|hg38", re.IGNORECASE), "GRCh38"),
-    (re.compile(r"GRCh37|hg19|b37", re.IGNORECASE), "GRCh37"),
+    (re.compile(r"GRCh37|hg19|\bb37\b", re.IGNORECASE), "GRCh37"),
 ]
 
+# Header keys whose value names the build directly. ``##reference=`` is the VCF
+# standard; the DRAGEN/aligner lines carry the build inside the reference path
+# (``--ht-reference=.../hg38/...``) or assembly flag (``--variant-annotation-assembly GRCh38``)
+# even when no ``##reference=`` line is emitted, as is the case for DRAGEN output.
+_BUILD_HINT_PREFIXES: tuple[str, ...] = (
+    "##reference=",
+    "##assembly=",
+    "##DRAGENCommandLine=",
+    "##source=",
+)
+
 _CONTIG_RE = re.compile(r"##contig=<.*?ID=(?:chr)?(\w+).*?length=(\d+)", re.IGNORECASE)
+
+
+def _build_from_hint_line(line: str) -> str | None:
+    """Return the build named by a header hint line, or None if ambiguous."""
+    for pattern, build in _BUILD_PATTERNS:
+        if pattern.search(line):
+            return build
+    return None
 
 
 def detect_genome_build(vcf_path: Path | str) -> str | None:
     """Attempt to detect the genome build from a VCF file header.
 
-    Inspects ``##reference=`` lines for known build names (GRCh38, hg19, etc.)
-    and ``##contig=`` lines for chromosome lengths matching GRCh37 or GRCh38.
+    Detection is layered, preferring explicit evidence over inference:
+
+    1. Build names in known header keys — ``##reference=``, ``##assembly=``,
+       and aligner command lines (``##DRAGENCommandLine=``, ``##source=``).
+       DRAGEN VCFs omit ``##reference=`` and only name the build inside the
+       reference path / ``--variant-annotation-assembly`` flag, so those lines
+       are scanned too.
+    2. ``##contig=`` chromosome lengths voted against GRCh37 / GRCh38 tables.
 
     Args:
         vcf_path: Path to VCF file (plain text or gzipped)
@@ -57,10 +85,12 @@ def detect_genome_build(vcf_path: Path | str) -> str | None:
             if not line.startswith("##"):
                 break
 
-            if line.startswith("##reference="):
-                for pattern, build in _BUILD_PATTERNS:
-                    if pattern.search(line):
-                        return build
+            # ``assembly=`` also appears as a ``##contig`` attribute (e.g.
+            # ``##contig=<ID=chr1,...,assembly=GRCh38>``), another explicit signal.
+            if line.startswith(_BUILD_HINT_PREFIXES) or "assembly=" in line.lower():
+                build = _build_from_hint_line(line)
+                if build is not None:
+                    return build
 
             m = _CONTIG_RE.match(line)
             if m:

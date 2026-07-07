@@ -186,8 +186,9 @@ def relative_quality_keys(
     green and hides the real ranking.  This re-anchors the low-quality threshold
     at **worst score + ``margin``** (so the weakest model for this user, plus any
     within ``margin`` of it, read as low) and **stretch-transforms** the rest of
-    the cohort across ``moderate``/``high`` by min–max normalising to the cohort
-    range, so the gradient becomes visible again.
+    the cohort across ``moderate``/``high`` by min–max normalising to the
+    *surviving* range ``[worst + margin, best]`` — so the moderate/high threshold
+    moves with the low anchor and all three tiers stay proportionally spread.
 
     ``scores`` are on a 0–1 scale (e.g. ``synthetic_quality / 100``).  Returns a
     parallel list of tier keys, or ``None`` when there is nothing to spread
@@ -200,7 +201,12 @@ def relative_quality_keys(
     span = best - worst
     if span <= margin:
         return None
+    # The low band is the bottom `margin` above the worst model.  The moderate/
+    # high threshold is then re-anchored to the *surviving* range [low_cut, best]
+    # — not the full [worst, best] — so moving the low anchor moves the medium
+    # threshold with it, keeping all three tiers proportionally spread.
     low_cut = worst + margin
+    hi_span = best - low_cut  # > 0 because span > margin
     keys: list[str | None] = []
     for s in scores:
         if s is None:
@@ -209,10 +215,8 @@ def relative_quality_keys(
         if s <= low_cut:
             keys.append("low")
         else:
-            # Stretch the whole cohort onto 0–1; split the surviving (non-low)
-            # models at the midpoint of that stretched range into moderate/high.
-            norm = (s - worst) / span
-            keys.append("high" if norm >= 0.5 else "moderate")
+            rel = (s - low_cut) / hi_span  # 0..1 across the non-low range
+            keys.append("high" if rel >= 0.5 else "moderate")
     return keys
 
 

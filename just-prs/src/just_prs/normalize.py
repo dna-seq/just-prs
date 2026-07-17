@@ -3,9 +3,10 @@
 from pathlib import Path
 
 import polars as pl
-import polars_bio as pb
 from eliot import start_action
 from pydantic import BaseModel, Field
+
+from just_prs.vcf import scan_vcf
 
 
 class VcfFilterConfig(BaseModel):
@@ -139,11 +140,10 @@ def normalize_vcf(
         output_path=str(output_path),
         format_fields=format_fields,
     ) as action:
-        lf = pb.scan_vcf(
-            str(vcf_path),
+        lf = scan_vcf(
+            vcf_path,
             info_fields=[],
             format_fields=format_fields,
-            use_zero_based=False,
         )
 
         columns = lf.collect_schema().names()

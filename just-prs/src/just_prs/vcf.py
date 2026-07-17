@@ -1,13 +1,67 @@
 """VCF reading via polars-bio and genotype dosage extraction."""
 
+import hashlib
 import re
 from pathlib import Path
+from threading import Lock
 
 import polars as pl
 import polars_bio as pb
 from eliot import start_action
 
 from just_prs.io_utils import open_maybe_compressed
+
+_VCF_REGISTRATION_LOCK = Lock()
+_REGISTERED_VCF_TABLES: set[str] = set()
+
+
+def _vcf_registration_key(path: Path | str, info_fields: list[str] | None) -> str:
+    """Build a stable table key that changes when a local VCF is replaced."""
+    source = str(path)
+    local_path = Path(path)
+    if local_path.is_file():
+        stat = local_path.stat()
+        source = f"{local_path.resolve()}:{stat.st_size}:{stat.st_mtime_ns}"
+    fields = "*" if info_fields is None else ",".join(sorted(info_fields))
+    digest = hashlib.sha256(f"{source}:{fields}".encode()).hexdigest()[:24]
+    return f"just_prs_vcf_{digest}"
+
+
+def scan_vcf(
+    path: Path | str,
+    *,
+    info_fields: list[str] | None = None,
+    format_fields: list[str] | None = None,
+) -> pl.LazyFrame:
+    """Return a VCF scan that is safe to execute concurrently.
+
+    ``polars_bio.scan_vcf`` re-registers a stem-derived table whenever a LazyFrame
+    executes. Concurrent scans of the same path therefore panic with "table already
+    exists". Registering each source once under a content-aware unique name and
+    querying that named table avoids the conflicting execution-time registration.
+
+    polars-bio discovers FORMAT fields from the header for named registrations.
+    Callers still project ``format_fields`` from the returned frame.
+    """
+    table_name = _vcf_registration_key(path, info_fields)
+    with _VCF_REGISTRATION_LOCK:
+        if table_name not in _REGISTERED_VCF_TABLES:
+            pb.register_vcf(
+                str(path),
+                name=table_name,
+                info_fields=info_fields,
+                chunk_size=8,
+                concurrent_fetches=1,
+            )
+            _REGISTERED_VCF_TABLES.add(table_name)
+    # Named registration currently exposes DataFusion's native zero-based,
+    # half-open coordinates even though register_vcf documents one-based output.
+    # Restore the one-based start expected from scan_vcf(use_zero_based=False);
+    # the half-open end already equals the corresponding one-based closed end.
+    return pb.sql(f'SELECT * FROM "{table_name}"').with_columns(
+        (pl.col("start") + 1).alias("start")
+    )
+
 
 GRCH38_CONTIG_LENGTHS: dict[str, int] = {
     "1": 248956422, "2": 242193529, "3": 198295559, "4": 190214555,
@@ -133,10 +187,9 @@ def read_genotypes(vcf_path: Path | str) -> pl.LazyFrame:
                 lf = lf.rename({"start": "pos"})
             return lf
     with start_action(action_type="vcf:read_genotypes", vcf_path=str(vcf_path)):
-        lf = pb.scan_vcf(
-            str(vcf_path),
+        lf = scan_vcf(
+            vcf_path,
             format_fields=["GT"],
-            use_zero_based=False,
         )
         lf = lf.select([
             pl.col("chrom").cast(pl.Utf8).str.replace("(?i)^chr", "").alias("chrom"),

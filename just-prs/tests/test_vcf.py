@@ -1,9 +1,11 @@
 """Tests for VCF header handling."""
 
 import gzip
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from threading import Barrier
 
-from just_prs.vcf import detect_genome_build
+from just_prs.vcf import detect_genome_build, read_genotypes
 
 
 _GRCH38_HEADER = """\
@@ -36,6 +38,13 @@ _CONTIG_ASSEMBLY_HEADER = """\
 ##fileformat=VCFv4.2
 ##contig=<ID=chr1,length=248956422,assembly=GRCh38>
 #CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample
+"""
+
+_MINIMAL_VCF = """\
+##fileformat=VCFv4.2
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tsample
+1\t100\trs1\tA\tG\t.\tPASS\t.\tGT\t0/1
 """
 
 
@@ -84,3 +93,20 @@ def test_detect_genome_build_ignores_b37_substring(tmp_path: Path) -> None:
 
     # hg38 in the same line wins; b37 inside "lib37" is not a standalone token.
     assert detect_genome_build(src) == "GRCh38"
+
+
+def test_read_genotypes_same_vcf_is_thread_safe(tmp_path: Path) -> None:
+    """Parallel requests must not race polars-bio's shared table registration."""
+    src = tmp_path / "shared.vcf"
+    src.write_text(_MINIMAL_VCF, encoding="utf-8")
+    workers = 8
+    ready = Barrier(workers)
+
+    def read_position(_: int) -> int:
+        ready.wait()
+        return int(read_genotypes(src).select("pos").collect().item())
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        positions = list(executor.map(read_position, range(workers)))
+
+    assert positions == [100] * workers

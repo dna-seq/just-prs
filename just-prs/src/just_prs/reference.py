@@ -280,6 +280,65 @@ def _reference_panel_complete(ref_dir: Path) -> bool:
     return True
 
 
+def _extract_panel_tarball(tarball: Path, dest: Path) -> None:
+    """Extract a panel tarball to ``dest`` and discard the archive.
+
+    The tarball is a **transient download artifact**: once the panel is
+    extracted and validated it is dead weight (7 GB for 1000G, 15 GB for
+    HGDP+1kGP).  It used to be unlinked only on the failure path, so a
+    successful download kept both forever — 22 GB across the two panels.
+
+    Set ``PRS_KEEP_PANEL_TARBALL=1`` to retain it for debugging.
+
+    Raises:
+        ReferencePanelError: if the extracted panel is missing required files.
+    """
+    import zstandard as zstd
+
+    tmp_dest = dest.with_name(f"{dest.name}.extracting")
+    if tmp_dest.exists():
+        shutil.rmtree(tmp_dest)
+
+    keep_tarball = _os.environ.get("PRS_KEEP_PANEL_TARBALL", "0") == "1"
+
+    with start_action(action_type="reference:extract_panel", tarball=str(tarball)):
+        tmp_dest.mkdir(parents=True, exist_ok=True)
+        try:
+            with tarball.open("rb") as fh:
+                dctx = zstd.ZstdDecompressor()
+                with dctx.stream_reader(fh) as reader:
+                    with tarfile.open(fileobj=reader, mode="r|") as tar:
+                        # filter="data" becomes the default in Python 3.14 and
+                        # rejects absolute paths, escaping symlinks and special
+                        # files — correct for an archive fetched over the network.
+                        tar.extractall(tmp_dest, filter="data")
+            if not _reference_panel_complete(tmp_dest):
+                raise ReferencePanelError(
+                    f"Extracted reference panel is incomplete: {tmp_dest}"
+                )
+            tmp_dest.replace(dest)
+        except Exception:
+            shutil.rmtree(tmp_dest, ignore_errors=True)
+            tarball.unlink(missing_ok=True)
+            raise
+
+        if keep_tarball:
+            log_message(
+                message_type="reference:panel_tarball_kept",
+                tarball=str(tarball),
+                reason="PRS_KEEP_PANEL_TARBALL=1",
+            )
+            return
+
+        reclaimed = tarball.stat().st_size if tarball.exists() else 0
+        tarball.unlink(missing_ok=True)
+        log_message(
+            message_type="reference:panel_tarball_discarded",
+            tarball=str(tarball),
+            reclaimed_bytes=reclaimed,
+        )
+
+
 def download_reference_panel(
     cache_dir: Path | None = None,
     overwrite: bool = False,
@@ -343,29 +402,7 @@ def download_reference_panel(
                             total_mb=round(total / 1e6, 1),
                         )
 
-    tmp_dest = dest.with_name(f"{dest.name}.extracting")
-    if tmp_dest.exists():
-        shutil.rmtree(tmp_dest)
-
-    with start_action(action_type="reference:extract_panel", tarball=str(tarball)):
-        import zstandard as zstd
-
-        tmp_dest.mkdir(parents=True, exist_ok=True)
-        try:
-            with tarball.open("rb") as fh:
-                dctx = zstd.ZstdDecompressor()
-                with dctx.stream_reader(fh) as reader:
-                    with tarfile.open(fileobj=reader, mode="r|") as tar:
-                        tar.extractall(tmp_dest)
-            if not _reference_panel_complete(tmp_dest):
-                raise ReferencePanelError(
-                    f"Extracted reference panel is incomplete: {tmp_dest}"
-                )
-            tmp_dest.replace(dest)
-        except Exception:
-            shutil.rmtree(tmp_dest, ignore_errors=True)
-            tarball.unlink(missing_ok=True)
-            raise
+    _extract_panel_tarball(tarball, dest)
 
     log_message(message_type="reference:panel_extracted", dest=str(dest), panel=panel)
     return dest
@@ -1825,17 +1862,9 @@ def _compute_reference_match_metadata(
 ) -> tuple[int, int, float]:
     """Compute scoring-file/reference-panel variant match counts without reading pgen genotypes."""
     from just_prs.prs import _normalize_scoring_columns
-    from just_prs.scoring import download_scoring_file, parse_scoring_file, scoring_parquet_path
+    from just_prs.scoring import ensure_scoring_file, parse_scoring_file
 
-    parquet_path = scoring_parquet_path(pgs_id, scores_cache, genome_build)
-    if parquet_path.exists():
-        scoring_file = parquet_path
-    else:
-        scoring_file = download_scoring_file(
-            pgs_id=pgs_id,
-            output_dir=scores_cache,
-            genome_build=genome_build,
-        )
+    scoring_file = ensure_scoring_file(pgs_id, scores_cache, genome_build)
     scoring_df = _normalize_scoring_columns(parse_scoring_file(scoring_file)).collect()
     variants_total = scoring_df.height
     variants_matched = resolved.match_scoring(scoring_df).height
@@ -2330,7 +2359,7 @@ def compute_reference_prs_batch(
         and a quality DataFrame.  Raw per-sample scores are NOT held in
         memory — they are written to disk per PGS ID and discarded.
     """
-    from just_prs.scoring import download_scoring_file, scoring_parquet_path
+    from just_prs.scoring import ensure_scoring_file, scoring_parquet_path
 
     scores_cache = cache_dir / "scores"
     scores_cache.mkdir(parents=True, exist_ok=True)
@@ -2463,31 +2492,7 @@ def compute_reference_prs_batch(
 
             t0 = time.monotonic()
             try:
-                parquet_path = scoring_parquet_path(pgs_id, scores_cache, genome_build)
-                parquet_valid = False
-                if parquet_path.exists():
-                    try:
-                        pl.scan_parquet(parquet_path).collect_schema()
-                        parquet_valid = True
-                    except Exception as _pq_exc:
-                        log_message(
-                            message_type="reference:batch_scoring_cache_corrupt",
-                            pgs_id=pgs_id,
-                            path=str(parquet_path),
-                            error=str(_pq_exc),
-                        )
-                        try:
-                            parquet_path.unlink()
-                        except OSError:
-                            pass
-                if parquet_valid:
-                    scoring_file = parquet_path
-                else:
-                    scoring_file = download_scoring_file(
-                        pgs_id=pgs_id,
-                        output_dir=scores_cache,
-                        genome_build=genome_build,
-                    )
+                scoring_file = ensure_scoring_file(pgs_id, scores_cache, genome_build)
                 df = compute_reference_prs_polars(
                     pgs_id=pgs_id,
                     scoring_file=scoring_file,

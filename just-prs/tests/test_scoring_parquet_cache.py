@@ -264,3 +264,105 @@ def test_download_scoring_as_parquet_replaces_corrupt_existing(
     assert df.select("pgs_id", "chr_name", "effect_weight").to_dicts() == [
         {"pgs_id": pgs_id, "chr_name": "1", "effect_weight": 0.5}
     ]
+
+
+# ---------------------------------------------------------------------------
+# Parquet-only managed-cache invariant (ensure_scoring_file)
+# ---------------------------------------------------------------------------
+
+
+def _fake_gz(cache_dir: Path, pgs_id: str, build: str = "GRCh38") -> Path:
+    """Write a minimal but real PGS scoring .txt.gz into a managed cache dir."""
+    import gzip
+
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    gz_path = cache_dir / f"{pgs_id}_hmPOS_{build}.txt.gz"
+    body = (
+        f"###PGS CATALOG SCORING FILE\n"
+        f"#pgs_id={pgs_id}\n"
+        f"#genome_build={build}\n"
+        "rsID\tchr_name\tchr_position\teffect_allele\tother_allele\teffect_weight\n"
+        "rs1\t1\t1000\tA\tG\t0.1\n"
+        "rs2\t2\t2000\tC\tT\t-0.2\n"
+    )
+    with gzip.open(gz_path, "wt") as fh:
+        fh.write(body)
+    return gz_path
+
+
+def test_ensure_scoring_file_discards_gz_after_verified_conversion(tmp_path: Path) -> None:
+    """The managed cache must end up holding parquet only."""
+    from just_prs.scoring import ensure_scoring_file
+
+    scores = tmp_path / "scores"
+    gz_path = _fake_gz(scores, "PGS000001")
+
+    result = ensure_scoring_file("PGS000001", scores, "GRCh38")
+
+    assert result.suffix == ".parquet"
+    assert result.exists()
+    assert not gz_path.exists(), "the .txt.gz must not survive a verified conversion"
+    assert {p.name for p in scores.iterdir()} == {"PGS000001_hmPOS_GRCh38.parquet"}
+    assert pl.read_parquet(result).height == 2
+
+
+def test_ensure_scoring_file_parquet_hit_makes_no_network_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A cached parquet must short-circuit before any download is attempted.
+
+    This is the regression that made six CLI paths re-fetch a .txt.gz they
+    already had as parquet: download_scoring_file only ever checked for the gz.
+    """
+    import just_prs.scoring as scoring_mod
+    from just_prs.scoring import ensure_scoring_file
+
+    scores = tmp_path / "scores"
+    _fake_gz(scores, "PGS000001")
+    first = ensure_scoring_file("PGS000001", scores, "GRCh38")
+
+    def _explode(*args: object, **kwargs: object) -> Path:
+        raise AssertionError("download attempted despite a readable parquet cache")
+
+    monkeypatch.setattr(scoring_mod, "download_scoring_file", _explode)
+    again = ensure_scoring_file("PGS000001", scores, "GRCh38")
+
+    assert again == first
+
+
+def test_ensure_scoring_file_rebuilds_corrupt_parquet(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A truncated parquet must be discarded and re-fetched, not trusted."""
+    import just_prs.scoring as scoring_mod
+    from just_prs.scoring import ensure_scoring_file
+
+    scores = tmp_path / "scores"
+    corrupt = scores / "PGS000001_hmPOS_GRCh38.parquet"
+    scores.mkdir(parents=True)
+    corrupt.write_bytes(b"PAR1-not-really")
+
+    monkeypatch.setattr(
+        scoring_mod,
+        "download_scoring_file",
+        lambda pgs_id, out_dir, build: _fake_gz(out_dir, pgs_id, build),
+    )
+    result = ensure_scoring_file("PGS000001", scores, "GRCh38")
+
+    assert pl.read_parquet(result).height == 2
+    assert not (scores / "PGS000001_hmPOS_GRCh38.txt.gz").exists()
+
+
+def test_parse_scoring_file_never_deletes_a_user_supplied_file(tmp_path: Path) -> None:
+    """Safety regression: only the managed cache owns the gz lifecycle.
+
+    ``prs compute --scoring-file my.txt.gz`` routes a user's own file straight
+    into ``parse_scoring_file``; deleting it there would destroy user data.
+    """
+    user_dir = tmp_path / "my-files"
+    gz_path = _fake_gz(user_dir, "PGS000001")
+
+    lf = parse_scoring_file(gz_path)
+
+    assert lf.collect().height == 2
+    assert gz_path.exists(), "parse_scoring_file must never delete its input"

@@ -268,11 +268,13 @@ def scoring_files(
     group_name="compute",
     deps=[AssetDep("scoring_files")],
     description=(
-        "Converts all downloaded PGS scoring .txt.gz files to parquet caches "
-        "with spec-driven schema overrides and zstd-9 compression. "
-        "By default keeps the original .txt.gz files; set env var "
-        "PRS_PIPELINE_DELETE_GZ=1 to delete them after verified conversion "
-        "(saves ~5.5 GB for the full catalog). "
+        "Drains any legacy PGS scoring .txt.gz into parquet caches with "
+        "spec-driven schema overrides and zstd-9 compression, discarding each "
+        ".txt.gz once its parquet is verified readable. "
+        "The scores cache holds parquet only: keeping both formats costs ~124 GB "
+        "for a two-build catalog and buys ~7% of compression. "
+        "scoring_files already converts inline, so in the steady state this asset "
+        "finds nothing and acts as a verifier. "
         "Failures are tracked per-file without aborting the loop and written "
         "to a conversion_failures.parquet report for post-hoc error analysis. "
         "The reference_scores asset depends on this to ensure all scoring "
@@ -283,7 +285,7 @@ def scoring_files_parquet(
     context: AssetExecutionContext,
     cache_dir_resource: CacheDirResource,
 ) -> Output[int]:
-    """Convert all scoring .txt.gz files to parquet caches."""
+    """Convert any remaining scoring .txt.gz to parquet and discard the gz."""
     import datetime
 
     from eliot import log_message as _log
@@ -292,10 +294,6 @@ def scoring_files_parquet(
 
     cache_dir = cache_dir_resource.get_path()
     scores_dir = cache_dir / "scores"
-    delete_gz = os.environ.get("PRS_PIPELINE_DELETE_GZ", "0") == "1"
-
-    if delete_gz:
-        context.log.info("PRS_PIPELINE_DELETE_GZ=1: will delete .txt.gz after verified conversion")
 
     gz_files = sorted(scores_dir.glob("*_hmPOS_*.txt.gz"))
     total = len(gz_files)
@@ -352,9 +350,8 @@ def scoring_files_parquet(
             if use_existing_cache:
                 already_cached += 1
                 total_parquet_bytes += parquet_path.stat().st_size
-                if delete_gz and gz_path.exists():
-                    gz_path.unlink()
-                    deleted_gz_count += 1
+                gz_path.unlink(missing_ok=True)
+                deleted_gz_count += 1
             else:
                 try:
                     lf = parse_scoring_file(gz_path)
@@ -367,9 +364,10 @@ def scoring_files_parquet(
                     total_parquet_bytes += parquet_path.stat().st_size
                     converted += 1
 
-                    if delete_gz:
-                        gz_path.unlink()
-                        deleted_gz_count += 1
+                    # Parquet verified: the gz is redundant.  Keeping it would
+                    # double the catalog on disk (~124 GB for two builds).
+                    gz_path.unlink(missing_ok=True)
+                    deleted_gz_count += 1
                 except Exception as exc:
                     failed += 1
                     failures.append({
@@ -415,7 +413,7 @@ def scoring_files_parquet(
         "coverage_ratio": round(coverage_ratio, 4),
         "converted": converted,
         "deleted_gz_files": deleted_gz_count,
-        "delete_gz_enabled": delete_gz,
+        "reclaimed_gz_bytes": total_gz_bytes,
         "failure_report_path": failure_report_path,
         "total_gz_bytes": total_gz_bytes,
         "total_parquet_bytes": total_parquet_bytes,

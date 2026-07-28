@@ -14,6 +14,8 @@ import fsspec
 import polars as pl
 from eliot import log_message, start_action
 
+from just_prs.scoring import parquet_cache_is_readable, parse_scoring_file
+
 PGS_FTP_BASE = "https://ftp.ebi.ac.uk/pub/databases/spot/pgs"
 PGS_SCORES_LIST_URL = f"{PGS_FTP_BASE}/pgs_scores_list.txt"
 PGS_METADATA_BASE = f"{PGS_FTP_BASE}/metadata"
@@ -65,17 +67,6 @@ def _atomic_write_parquet(df: pl.DataFrame, dest: Path) -> None:
         except OSError:
             pass
         raise
-
-
-def _parquet_cache_is_readable(path: Path) -> bool:
-    """Return whether an existing parquet cache can be scanned by Polars."""
-    if not path.exists() or path.stat().st_size == 0:
-        return False
-    try:
-        pl.scan_parquet(path).collect_schema()
-        return True
-    except Exception:
-        return False
 
 
 def download_metadata_sheet(
@@ -213,7 +204,7 @@ def download_scoring_as_parquet(
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / f"{pgs_id}.parquet"
         if output_path.exists() and not overwrite:
-            if _parquet_cache_is_readable(output_path):
+            if parquet_cache_is_readable(output_path):
                 return output_path
             log_message(
                 message_type="ftp:scoring_parquet_cache_corrupt",
@@ -312,26 +303,65 @@ class BulkDownloadResult:
 _SCORING_DOWNLOAD_ATTEMPTS = max(1, int(os.environ.get("PRS_SCORING_DOWNLOAD_ATTEMPTS", "3")))
 
 
+def _convert_and_discard_gz(gz_path: Path, parquet_path: Path) -> bool:
+    """Parse a freshly downloaded gz to parquet and unlink the gz.
+
+    Converting inline keeps peak disk bounded by the files in flight.  Deferring
+    it to a later pass means the whole catalog's ``.txt.gz`` accumulates first —
+    124 GB for a two-build cache — before a single byte is reclaimed.
+
+    Returns whether the parquet was produced; on failure the gz is kept so the
+    caller still has the data.
+    """
+    try:
+        parse_scoring_file(gz_path)
+    except Exception as exc:
+        log_message(
+            message_type="ftp:scoring_parquet_convert_failed",
+            gz_path=str(gz_path),
+            error=f"{type(exc).__name__}: {exc}",
+        )
+        return False
+
+    if not parquet_cache_is_readable(parquet_path):
+        log_message(
+            message_type="ftp:scoring_parquet_unreadable_after_convert",
+            gz_path=str(gz_path),
+            parquet_path=str(parquet_path),
+        )
+        return False
+
+    gz_path.unlink(missing_ok=True)
+    return True
+
+
 def _download_one_scoring_file(
     pgs_id: str,
     output_dir: Path,
     genome_build: str,
+    convert: bool = True,
 ) -> tuple[str, str]:
     """Download a single scoring .txt.gz file via fsspec. Returns (pgs_id, status).
 
     Status is one of: "cached" (.txt.gz exists), "parquet_cached" (parquet
     cache exists so .txt.gz is not needed), "downloaded", or "failed".
+
+    With ``convert`` (the default) the gz is parsed to parquet and discarded
+    immediately, upholding the parquet-only invariant of the managed cache.
     """
     filename = f"{pgs_id}_hmPOS_{genome_build}.txt.gz"
     output_path = output_dir / filename
-    if output_path.exists() and output_path.stat().st_size > 0:
-        return pgs_id, "cached"
-
     parquet_path = output_dir / f"{pgs_id}_hmPOS_{genome_build}.parquet"
-    if parquet_path.exists() and parquet_path.stat().st_size > 0:
-        if _parquet_cache_is_readable(parquet_path):
+
+    if parquet_cache_is_readable(parquet_path):
+        return pgs_id, "parquet_cached"
+    parquet_path.unlink(missing_ok=True)
+
+    if output_path.exists() and output_path.stat().st_size > 0:
+        # Legacy cache: a gz survives from before the parquet-only invariant.
+        if convert and _convert_and_discard_gz(output_path, parquet_path):
             return pgs_id, "parquet_cached"
-        parquet_path.unlink(missing_ok=True)
+        return pgs_id, "cached"
 
     # Remove stale 0-byte file from a previous failed download
     if output_path.exists():
@@ -359,6 +389,8 @@ def _download_one_scoring_file(
                 last_error = "empty download (0 bytes)"
             else:
                 tmp_path.rename(output_path)
+                if convert:
+                    _convert_and_discard_gz(output_path, parquet_path)
                 return pgs_id, "downloaded"
         except Exception as exc:
             last_error = f"{type(exc).__name__}: {exc}"
@@ -385,24 +417,27 @@ def bulk_download_scoring_files(
     max_workers: int | None = None,
     progress_every: int | None = None,
     progress_callback: Callable[[dict[str, int]], None] | None = None,
+    convert: bool = True,
 ) -> BulkDownloadResult:
-    """Bulk-download harmonized PGS scoring .txt.gz files via fsspec.
+    """Bulk-download harmonized PGS scoring files via fsspec.
 
     Uses direct HTTPS URLs to the EBI FTP server (no REST API calls).
     Downloads concurrently with a configurable number of workers and
-    skips files that already exist on disk.
+    skips scores whose parquet cache is already present and readable.
 
     Concurrency and progress frequency can be set via env vars
     ``PRS_DOWNLOAD_WORKERS`` and ``PRS_DOWNLOAD_PROGRESS_EVERY``.
 
     Args:
         pgs_ids: List of PGS IDs to download.
-        output_dir: Directory to save the .txt.gz files.
+        output_dir: Managed scores cache directory.
         genome_build: Genome build (GRCh37 or GRCh38).
         max_workers: Number of concurrent download threads.
             Defaults to ``PRS_DOWNLOAD_WORKERS`` env var or 4.
         progress_every: Log progress every N completed files.
             Defaults to ``PRS_DOWNLOAD_PROGRESS_EVERY`` env var or 100.
+        convert: Convert each download to parquet and discard the ``.txt.gz``
+            immediately, keeping peak disk bounded by the files in flight.
 
     Returns:
         BulkDownloadResult with counts of downloaded, cached, and failed files.
@@ -426,7 +461,9 @@ def bulk_download_scoring_files(
         completed = 0
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
             futures = {
-                pool.submit(_download_one_scoring_file, pgs_id, output_dir, genome_build): pgs_id
+                pool.submit(
+                    _download_one_scoring_file, pgs_id, output_dir, genome_build, convert
+                ): pgs_id
                 for pgs_id in pgs_ids
             }
             import time

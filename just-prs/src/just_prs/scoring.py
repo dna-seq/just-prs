@@ -178,6 +178,24 @@ def scoring_parquet_path(
     return cache_dir / f"{pgs_id}_hmPOS_{genome_build}.parquet"
 
 
+def parquet_cache_is_readable(path: Path) -> bool:
+    """Return whether an existing parquet cache can be scanned by Polars.
+
+    A file that exists but cannot be parsed (truncated write, OOM-killed flush,
+    disk-full during a copy) is worse than a missing file: existence checks pass
+    and recomputation is skipped, but every later read raises.  Callers guarding
+    a cache with ``skip_existing`` semantics must use this instead of
+    ``Path.exists()``.
+    """
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    try:
+        pl.scan_parquet(path).collect_schema()
+        return True
+    except Exception:
+        return False
+
+
 # ---------------------------------------------------------------------------
 # Core parsing + caching
 # ---------------------------------------------------------------------------
@@ -475,6 +493,81 @@ def download_scoring_file(
         )
 
 
+def ensure_scoring_file(
+    pgs_id: str,
+    cache_dir: Path = DEFAULT_CACHE_DIR,
+    genome_build: str = "GRCh38",
+    force: bool = False,
+) -> Path:
+    """Resolve a PGS ID to a readable parquet in the managed cache.
+
+    **Managed-cache invariant: the scores cache holds parquet only.**  A
+    ``.txt.gz`` is a transient download artifact, unlinked as soon as the
+    parquet is verified readable.  Keeping both formats doubles the catalog on
+    disk for roughly 7% of compression gain — measured at 124 GB of redundant
+    ``.txt.gz`` across a two-build cache.
+
+    This is the single entry point for resolving a PGS ID against the managed
+    cache, and deliberately the only place that owns the gz lifecycle:
+    :func:`parse_scoring_file` never deletes its input, so a user-supplied
+    scoring file handed to it directly is never touched.
+
+    Args:
+        pgs_id: PGS Catalog score ID.
+        cache_dir: Managed scores cache directory.
+        genome_build: Genome build (``GRCh37`` or ``GRCh38``).
+        force: Discard any cached copy and re-download.
+
+    Returns:
+        Path to the parquet cache.  Falls back to the ``.txt.gz`` path only if
+        the parquet could not be written, so the data is never lost.
+    """
+    with start_action(
+        action_type="scoring:ensure",
+        pgs_id=pgs_id,
+        genome_build=genome_build,
+    ):
+        parquet = scoring_parquet_path(pgs_id, cache_dir, genome_build)
+        gz_path = cache_dir / f"{pgs_id}_hmPOS_{genome_build}.txt.gz"
+
+        if force:
+            parquet.unlink(missing_ok=True)
+            gz_path.unlink(missing_ok=True)
+        elif parquet_cache_is_readable(parquet):
+            log_message(
+                message_type="scoring:parquet_cache_hit",
+                pgs_id=pgs_id,
+                parquet_path=str(parquet),
+            )
+            return parquet
+        elif parquet.exists():
+            log_message(
+                message_type="scoring:parquet_cache_corrupt",
+                pgs_id=pgs_id,
+                parquet_path=str(parquet),
+            )
+            parquet.unlink(missing_ok=True)
+
+        downloaded = download_scoring_file(pgs_id, cache_dir, genome_build)
+        parse_scoring_file(downloaded)
+
+        if parquet_cache_is_readable(parquet):
+            downloaded.unlink(missing_ok=True)
+            log_message(
+                message_type="scoring:gz_discarded",
+                pgs_id=pgs_id,
+                parquet_path=str(parquet),
+            )
+            return parquet
+
+        log_message(
+            message_type="scoring:parquet_cache_unavailable",
+            pgs_id=pgs_id,
+            gz_path=str(downloaded),
+        )
+        return downloaded
+
+
 def load_scoring(
     pgs_id: str,
     cache_dir: Path = DEFAULT_CACHE_DIR,
@@ -482,9 +575,8 @@ def load_scoring(
 ) -> pl.LazyFrame:
     """Download (if needed) and parse a PGS scoring file, with local caching.
 
-    Checks for a parquet cache first — if it exists, the ``.txt.gz`` download
-    is skipped entirely.  Handles corrupt or partially-written cache files
-    gracefully by falling back to re-download + re-parse.
+    Thin wrapper over :func:`ensure_scoring_file` — see there for the
+    parquet-only cache invariant.
 
     Args:
         pgs_id: PGS Catalog score ID
@@ -494,33 +586,4 @@ def load_scoring(
     Returns:
         LazyFrame with scoring file data
     """
-    with start_action(
-        action_type="scoring:load",
-        pgs_id=pgs_id,
-        genome_build=genome_build,
-    ):
-        parquet = scoring_parquet_path(pgs_id, cache_dir, genome_build)
-        if parquet.exists():
-            try:
-                lf = pl.scan_parquet(parquet)
-                lf.collect_schema()
-                log_message(
-                    message_type="scoring:load_from_parquet_cache",
-                    pgs_id=pgs_id,
-                    parquet_path=str(parquet),
-                )
-                return lf
-            except Exception as exc:
-                log_message(
-                    message_type="scoring:load_parquet_cache_corrupt",
-                    pgs_id=pgs_id,
-                    parquet_path=str(parquet),
-                    error=str(exc),
-                )
-                try:
-                    parquet.unlink()
-                except OSError:
-                    pass
-
-        path = download_scoring_file(pgs_id, cache_dir, genome_build)
-        return parse_scoring_file(path)
+    return parse_scoring_file(ensure_scoring_file(pgs_id, cache_dir, genome_build))

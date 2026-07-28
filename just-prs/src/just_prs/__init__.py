@@ -91,7 +91,13 @@ from just_prs.liftover import (
     lift_frame,
     liftover_preflight,
 )
-from just_prs.scoring import resolve_cache_dir
+from just_prs.cache_audit import (
+    ArtifactClass,
+    CacheAuditReport,
+    CacheProfile,
+    scan_cache,
+)
+from just_prs.scoring import ensure_scoring_file, resolve_cache_dir
 
 _meta = metadata("just-prs")
 __version__: str = _meta["Version"]

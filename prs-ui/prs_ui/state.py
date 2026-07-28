@@ -23,10 +23,10 @@ from reflex_mui_datagrid.lazyframe_grid import _get_cache, apply_filter_model
 
 from just_prs.ftp import (
     download_metadata_sheet,
-    download_scoring_as_parquet,
     stream_scoring_file,
 )
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
+from just_prs.scoring import ensure_scoring_file
 from just_prs.vcf import detect_genome_build
 
 from prs_ui.mixin import (
@@ -178,18 +178,26 @@ class MetadataGridState(LazyFrameGridMixin, AppState):
         self._sync_loaded_metadata_selection()
 
     def download_selected_scoring_files(self) -> Any:
-        """Download scoring files for selected PGS IDs to the local cache."""
+        """Pre-warm the compute cache with scoring files for the selected PGS IDs.
+
+        Writes to the **canonical** managed cache (``<cache>/scores``) via
+        ``ensure_scoring_file``, so a later PRS computation reuses these files.
+        This previously wrote ``<cache>/scoring/{build}/{pgs_id}.parquet`` — a
+        layout with a different filename *and* a different schema (it injected a
+        ``pgs_id`` column) that no reader ever consulted, so every download was
+        stored twice and the compute path re-fetched anyway.
+        """
         if not self.metadata_selected_ids:
             self.status_message = "No scores selected."
             return
         total = len(self.metadata_selected_ids)
-        output_dir = Path(self.cache_dir) / "scoring" / self.genome_build
+        output_dir = Path(self.cache_dir) / "scores"
         self.status_message = f"Saving {total} scoring file(s) to cache..."
         yield
         for i, pgs_id in enumerate(self.metadata_selected_ids, start=1):
             self.status_message = f"Saving {i}/{total}: {pgs_id}..."
             yield
-            download_scoring_as_parquet(pgs_id, output_dir, genome_build=self.genome_build)
+            ensure_scoring_file(pgs_id, output_dir, genome_build=self.genome_build)
         self.status_message = f"Saved {total} scoring file(s) to {output_dir}"
 
 

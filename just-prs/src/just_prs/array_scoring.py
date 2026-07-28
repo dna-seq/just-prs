@@ -405,14 +405,27 @@ def _load_scoring_lf(
     genome_build: str,
     cache_dir: Path,
 ) -> pl.LazyFrame | None:
-    """Load a scoring file as a LazyFrame for LD-proxy pre-processing."""
+    """Load a scoring file as a LazyFrame for LD-proxy pre-processing.
+
+    Returns ``None`` when the scoring file cannot be resolved, which makes the
+    caller skip LD-proxying rather than fail the whole scoring run.
+    """
     if isinstance(scoring_file, pl.LazyFrame):
         return scoring_file
 
-    from just_prs.scoring import load_scoring
+    from just_prs.scoring import load_scoring, parse_scoring_file
+
+    # load_scoring resolves a PGS ID against the managed cache; a Path is a
+    # user-supplied file that must be parsed in place and never cached/deleted.
+    if isinstance(scoring_file, Path):
+        return parse_scoring_file(scoring_file)
 
     try:
-        lf, _header = load_scoring(scoring_file, genome_build=genome_build, cache_dir=cache_dir)
-        return lf
-    except Exception:
+        return load_scoring(scoring_file, genome_build=genome_build, cache_dir=cache_dir)
+    except (OSError, RuntimeError, pl.exceptions.PolarsError) as exc:
+        log_message(
+            message_type="array_scoring:ld_proxy_scoring_load_failed",
+            scoring_file=str(scoring_file),
+            error=f"{type(exc).__name__}: {exc}",
+        )
         return None

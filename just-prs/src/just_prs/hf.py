@@ -1,5 +1,6 @@
 """HuggingFace Hub integration for pushing/pulling cleaned PGS metadata parquets."""
 
+import json
 import os
 import shutil
 import time
@@ -8,9 +9,11 @@ from pathlib import Path
 
 import polars as pl
 from dotenv import load_dotenv
-from eliot import start_action, Message
+from eliot import log_message, start_action
 from huggingface_hub import HfApi, hf_hub_download
 import huggingface_hub.constants as _hf_constants
+
+from just_prs.scoring import parquet_cache_is_readable
 
 DEFAULT_HF_PERCENTILES_REPO = "just-dna-seq/prs-percentiles"
 DEFAULT_HF_CATALOG_REPO = "just-dna-seq/pgs-catalog"
@@ -111,6 +114,109 @@ def _resolve_token(token: str | None = None) -> str | None:
     return os.environ.get("HF_TOKEN")
 
 
+def _artifact_is_readable(path: Path) -> bool:
+    """Validate a downloaded artifact before it is published under its final name."""
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    if path.suffix == ".parquet":
+        return parquet_cache_is_readable(path)
+    if path.suffix == ".json":
+        try:
+            json.loads(path.read_text())
+            return True
+        except (ValueError, OSError):
+            return False
+    return True
+
+
+def _prune_empty_parents(start: Path, stop: Path) -> None:
+    """Remove empty directories from ``start`` upward, stopping below ``stop``."""
+    current = start
+    while current != stop and stop in current.parents:
+        try:
+            current.rmdir()
+        except OSError:
+            return  # not empty, or gone already
+        current = current.parent
+
+
+def _pull_flat(
+    repo_id: str,
+    hf_path: str,
+    local_dir: Path,
+    token: str | None,
+    target_name: str | None = None,
+) -> Path:
+    """Download an HF file and land it **flat** in ``local_dir``. Zero copies.
+
+    ``hf_hub_download`` replicates the repo's directory structure under
+    ``local_dir`` and offers no flat option (``subfolder`` is merged into
+    ``filename`` before resolution).  The rest of this codebase expects the flat
+    name, so the file must be relocated.  Doing that with ``shutil.copy2`` — as
+    this module used to — leaves the nested original behind and **doubles every
+    artifact on disk** on every pull.
+
+    ``os.replace`` is used instead: both paths live under ``local_dir``, so the
+    rename is always same-filesystem (no ``EXDEV``, no copy fallback needed) and
+    allocates no data blocks, so unlike a copy it cannot truncate on a full disk.
+
+    HF's own ``local_dir`` cache-hit requires the nested file to be present, so
+    moving it means a later pull re-downloads.  That costs nothing here: every
+    caller is gated on the flat file first (see :func:`needs_pull`) and never
+    reaches HF when the artifact is already good.
+
+    The artifact is validated **before** being published under its final name,
+    so a corrupt download can never occupy the path the rest of the system
+    trusts.  On failure the nested file is removed so HF re-fetches rather than
+    serving a bad cache hit.
+
+    Raises:
+        RuntimeError: if the downloaded artifact fails validation.
+    """
+    downloaded = Path(
+        _hf_download_with_retry(
+            repo_id=repo_id,
+            filename=hf_path,
+            repo_type="dataset",
+            local_dir=local_dir,
+            token=token,
+        )
+    )
+    target = local_dir / (target_name or Path(hf_path).name)
+    if downloaded == target:
+        return target
+
+    if not _artifact_is_readable(downloaded):
+        downloaded.unlink(missing_ok=True)
+        _prune_empty_parents(downloaded.parent, local_dir)
+        raise RuntimeError(
+            f"HF artifact {repo_id}/{hf_path} failed validation after download; "
+            "refusing to publish it to the cache"
+        )
+
+    target.parent.mkdir(parents=True, exist_ok=True)
+    os.replace(downloaded, target)
+    _prune_empty_parents(downloaded.parent, local_dir)
+    return target
+
+
+def needs_pull(path: Path) -> bool:
+    """Whether an HF-backed artifact must be (re-)fetched.
+
+    Existence alone is not enough: a file that exists but cannot be parsed is
+    never re-pulled by an ``if not path.exists()`` gate, so it poisons the cache
+    permanently and every read fails.  An unreadable artifact is unlinked here so
+    the next pull repairs it (robustness guarantee 8).
+    """
+    if not path.exists():
+        return True
+    if _artifact_is_readable(path):
+        return False
+    log_message(message_type="hf:cached_artifact_unreadable", path=str(path))
+    path.unlink(missing_ok=True)
+    return True
+
+
 def pull_reference_distributions(
     local_dir: Path,
     repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
@@ -142,43 +248,31 @@ def pull_reference_distributions(
         local_dir.mkdir(parents=True, exist_ok=True)
 
         for candidate in [panel_file, REFERENCE_DISTRIBUTIONS_FILE]:
-            hf_path = f"{HF_DATA_PREFIX}/{candidate}"
             try:
-                path = _hf_download_with_retry(
+                target = _pull_flat(
                     repo_id=repo_id,
-                    filename=hf_path,
-                    repo_type="dataset",
+                    hf_path=f"{HF_DATA_PREFIX}/{candidate}",
                     local_dir=local_dir,
                     token=resolved_token,
+                    target_name=panel_file,
                 )
             except (EntryNotFoundError, RepositoryNotFoundError):
                 continue
 
-            target = local_dir / panel_file
-            hf_cached = Path(path)
-            if hf_cached != target:
-                import shutil
-                shutil.copy2(hf_cached, target)
             for sidecar in [
                 f"{panel}_quality.parquet",
                 f"{panel}_distribution_quality_issues.parquet",
                 f"{panel}_distribution_audit_summary.json",
             ]:
                 try:
-                    sidecar_path = _hf_download_with_retry(
+                    _pull_flat(
                         repo_id=repo_id,
-                        filename=f"{HF_DATA_PREFIX}/{sidecar}",
-                        repo_type="dataset",
+                        hf_path=f"{HF_DATA_PREFIX}/{sidecar}",
                         local_dir=local_dir,
                         token=resolved_token,
                     )
                 except EntryNotFoundError:
                     continue
-                sidecar_cached = Path(sidecar_path)
-                sidecar_target = local_dir / sidecar
-                if sidecar_cached != sidecar_target:
-                    import shutil
-                    shutil.copy2(sidecar_cached, sidecar_target)
             return target
 
         logging.getLogger(__name__).debug(
@@ -320,19 +414,14 @@ def pull_ancestry_model(
         got_sites = False
         for name in ancestry_model_basenames(panel, build):
             try:
-                path = _hf_download_with_retry(
+                _pull_flat(
                     repo_id=repo_id,
-                    filename=f"{HF_ANCESTRY_PREFIX}/{name}",
-                    repo_type="dataset",
+                    hf_path=f"{HF_ANCESTRY_PREFIX}/{name}",
                     local_dir=local_dir,
                     token=resolved_token,
                 )
             except (EntryNotFoundError, RepositoryNotFoundError):
                 continue
-            target = local_dir / name
-            cached = Path(path)
-            if cached != target:
-                shutil.copy2(cached, target)
             if name.endswith(".parquet") and "refpcs" not in name:
                 got_sites = True
         return local_dir if got_sites else None
@@ -402,20 +491,14 @@ def pull_reference_allele_universe(
     ):
         local_dir.mkdir(parents=True, exist_ok=True)
         try:
-            path = _hf_download_with_retry(
+            return _pull_flat(
                 repo_id=repo_id,
-                filename=f"{HF_REFERENCE_PREFIX}/{filename}",
-                repo_type="dataset",
+                hf_path=f"{HF_REFERENCE_PREFIX}/{filename}",
                 local_dir=local_dir,
                 token=resolved_token,
             )
         except (EntryNotFoundError, RepositoryNotFoundError):
             return None
-        target = local_dir / filename
-        cached = Path(path)
-        if cached != target:
-            shutil.copy2(cached, target)
-        return target
 
 
 def push_reference_audit_sidecars(
@@ -470,10 +553,9 @@ def pull_chip_coverage(
     with start_action(action_type="hf:pull_chip_coverage", repo_id=repo_id):
         local_dir.mkdir(parents=True, exist_ok=True)
         try:
-            path = _hf_download_with_retry(
+            return _pull_flat(
                 repo_id=repo_id,
-                filename=f"{HF_DATA_PREFIX}/chip_coverage.parquet",
-                repo_type="dataset",
+                hf_path=f"{HF_DATA_PREFIX}/chip_coverage.parquet",
                 local_dir=local_dir,
                 token=resolved_token,
             )
@@ -482,12 +564,6 @@ def pull_chip_coverage(
                 "chip_coverage.parquet not found on HF (%s)", repo_id,
             )
             return None
-        target = local_dir / "chip_coverage.parquet"
-        hf_cached = Path(path)
-        if hf_cached != target:
-            import shutil
-            shutil.copy2(hf_cached, target)
-        return target
 
 
 def push_chip_coverage(
@@ -549,10 +625,9 @@ def pull_ld_proxy_table(
     with start_action(action_type="hf:pull_ld_proxy_table", chip=chip, build=build, panel=panel, repo_id=repo_id):
         local_dir.mkdir(parents=True, exist_ok=True)
         try:
-            path = _hf_download_with_retry(
+            return _pull_flat(
                 repo_id=repo_id,
-                filename=f"{HF_DATA_PREFIX}/{filename}",
-                repo_type="dataset",
+                hf_path=f"{HF_DATA_PREFIX}/{filename}",
                 local_dir=local_dir,
                 token=resolved_token,
             )
@@ -561,12 +636,6 @@ def pull_ld_proxy_table(
                 "LD proxy table %s not found on HF (%s)", filename, repo_id,
             )
             return None
-        target = local_dir / filename
-        hf_cached = Path(path)
-        if hf_cached != target:
-            import shutil as _shutil
-            _shutil.copy2(hf_cached, target)
-        return target
 
 
 def push_ld_proxy_table(
@@ -864,7 +933,7 @@ def _upload_large_folder_with_retry(
             last_exc = exc
             if attempt < max_retries:
                 delay = base_delay * (2 ** (attempt - 1))
-                Message.log(
+                log_message(
                     message_type="hf:upload_retry",
                     attempt=attempt,
                     max_retries=max_retries,
@@ -873,7 +942,7 @@ def _upload_large_folder_with_retry(
                 )
                 time.sleep(delay)
             else:
-                Message.log(
+                log_message(
                     message_type="hf:upload_failed",
                     attempts=max_retries,
                     error=str(exc),
@@ -1056,18 +1125,13 @@ def pull_cleaned_parquets(
         downloaded: list[Path] = []
         for filename in CLEANED_PARQUET_FILES:
             try:
-                path = _hf_download_with_retry(
+                target = _pull_flat(
                     repo_id=repo_id,
-                    filename=f"{HF_DATA_PREFIX}/metadata/{filename}",
-                    repo_type="dataset",
+                    hf_path=f"{HF_DATA_PREFIX}/metadata/{filename}",
                     local_dir=local_dir,
                     token=resolved_token,
                 )
             except EntryNotFoundError:
                 continue
-            target = local_dir / filename
-            hf_cached = Path(path)
-            if hf_cached != target:
-                shutil.copy2(hf_cached, target)
             downloaded.append(target)
         return downloaded

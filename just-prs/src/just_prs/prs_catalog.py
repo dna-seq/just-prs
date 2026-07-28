@@ -26,6 +26,7 @@ from just_prs.hf import (
     distributions_filename,
     pull_ancestry_model,
     pull_chip_coverage,
+    needs_pull,
     pull_cleaned_parquets,
     pull_reference_distributions,
 )
@@ -299,7 +300,7 @@ class PRSCatalog:
         Returns None when no coverage data is available (e.g. offline first run).
         """
         cov_path = self._cache_dir / "percentiles" / "chip_coverage.parquet"
-        if not cov_path.exists():
+        if needs_pull(cov_path):
             try:
                 pull_chip_coverage(self._cache_dir / "percentiles")
             except Exception as exc:
@@ -500,8 +501,8 @@ class PRSCatalog:
         local = self.percentiles_dir / panel_file
         legacy = self.percentiles_dir / "reference_distributions.parquet"
 
-        if not local.exists():
-            if panel == "1000g" and legacy.exists():
+        if needs_pull(local):
+            if panel == "1000g" and not needs_pull(legacy):
                 local = legacy
                 self._ref_dist_source[panel] = "local_legacy_cache"
             else:
@@ -784,7 +785,7 @@ class PRSCatalog:
         from just_prs.ancestry import artifact_paths
 
         model_dir = self.ancestry_dir
-        if artifact_paths(model_dir, panel, build)["sites"].exists():
+        if not needs_pull(artifact_paths(model_dir, panel, build)["sites"]):
             return model_dir
         try:
             pull_ancestry_model(model_dir, panel, build)
@@ -1155,7 +1156,7 @@ class PRSCatalog:
 
         ref_dir = self._cache_dir / "reference"
         path = ref_dir / reference_allele_universe_filename(genome_build)
-        if not path.exists():
+        if needs_pull(path):
             try:
                 pull_reference_allele_universe(ref_dir, genome_build=genome_build)
             except Exception as exc:

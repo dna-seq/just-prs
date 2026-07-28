@@ -17,7 +17,12 @@ from just_prs.models import PRSResult
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs import compute_prs, compute_prs_batch
 from just_prs.prs_catalog import PRSCatalog
-from just_prs.scoring import DEFAULT_CACHE_DIR, download_scoring_file, resolve_cache_dir
+from just_prs.scoring import (
+    DEFAULT_CACHE_DIR,
+    download_scoring_file,
+    ensure_scoring_file,
+    resolve_cache_dir,
+)
 
 app = typer.Typer(
     name="just-prs",
@@ -397,25 +402,24 @@ def bulk_push_catalog(
         bool,
         typer.Option("--skip-download", help="Skip downloading, only convert and upload what is cached"),
     ] = False,
-    delete_gz: Annotated[
-        bool,
-        typer.Option("--delete-gz", help="Delete .txt.gz files after verified parquet conversion"),
-    ] = False,
 ) -> None:
     """Download, convert, and upload PGS Catalog scoring files + metadata to HuggingFace.
 
     \b
     Full pipeline in one command:
-    1. Download all scoring .txt.gz files from EBI FTP (skips existing)
-    2. Convert each .txt.gz to parquet (skips existing)
+    1. Download all scoring files from EBI FTP (skips those already cached as parquet)
+    2. Drain any legacy .txt.gz left by an older cache into parquet
     3. Build cleaned metadata parquets if missing
     4. Upload everything to the HF dataset repo
 
+    The scores cache holds parquet only: each .txt.gz is discarded as soon as its
+    parquet is verified readable.
+
     Token is read from .env file or HF_TOKEN environment variable.
     """
-    from just_prs.ftp import bulk_download_scoring_files
+    from just_prs.ftp import _convert_and_discard_gz, bulk_download_scoring_files
     from just_prs.hf import push_pgs_catalog
-    from just_prs.scoring import _scoring_parquet_cache_path, parse_scoring_file
+    from just_prs.scoring import _scoring_parquet_cache_path
 
     cache = resolve_cache_dir()
     scores_dir = cache / "scores"
@@ -456,67 +460,36 @@ def bulk_push_catalog(
             f"failed={result.failed}"
         )
 
-    console.print(f"\n[bold]Step 2/4:[/bold] Converting .txt.gz to parquet...")
+    console.print("\n[bold]Step 2/4:[/bold] Draining legacy .txt.gz into parquet...")
     gz_files = sorted(scores_dir.glob("*_hmPOS_*.txt.gz"))
-    converted = 0
-    already_cached = 0
-    failed = 0
-    deleted = 0
-    
-    import time
-    last_log_time = time.monotonic()
     total_gz = len(gz_files)
-    
+    converted = 0
+    failed = 0
+
+    import time
+
+    last_log_time = time.monotonic()
+
     for i, gz_path in enumerate(gz_files):
-        parquet_path = _scoring_parquet_cache_path(gz_path)
-        if parquet_path.exists():
-            try:
-                pl.scan_parquet(parquet_path).collect_schema()
-                already_cached += 1
-                if delete_gz:
-                    gz_path.unlink()
-                    deleted += 1
-            except Exception as exc:
-                console.print(f"  [yellow]{parquet_path.name}: corrupt cache removed ({exc})[/yellow]")
-                parquet_path.unlink(missing_ok=True)
-                try:
-                    lf = parse_scoring_file(gz_path)
-                    lf.select(pl.len()).collect()
-                    if parquet_path.exists():
-                        converted += 1
-                        if delete_gz:
-                            gz_path.unlink()
-                            deleted += 1
-                    else:
-                        failed += 1
-                except Exception as parse_exc:
-                    failed += 1
-                    console.print(f"  [red]{gz_path.name}: {parse_exc}[/red]")
+        if _convert_and_discard_gz(gz_path, _scoring_parquet_cache_path(gz_path)):
+            converted += 1
         else:
-            try:
-                lf = parse_scoring_file(gz_path)
-                lf.select(pl.len()).collect()
-                if parquet_path.exists():
-                    converted += 1
-                    if delete_gz:
-                        gz_path.unlink()
-                        deleted += 1
-                else:
-                    failed += 1
-            except Exception as exc:
-                failed += 1
-                console.print(f"  [red]{gz_path.name}: {exc}[/red]")
-                
+            failed += 1
+            console.print(f"  [red]{gz_path.name}: conversion failed, .txt.gz kept[/red]")
+
         current_time = time.monotonic()
         if (i + 1) % 500 == 0 or (current_time - last_log_time > 15.0) or (i + 1) == total_gz:
             last_log_time = current_time
             percent = ((i + 1) / total_gz) * 100 if total_gz > 0 else 0
-            console.print(f"  Parquet conversion: [cyan]{i + 1}/{total_gz}[/cyan] ([yellow]{percent:.1f}%[/yellow]) "
-                          f"converted={converted} cached={already_cached} failed={failed}")
-    console.print(
-        f"  converted={converted}, already_cached={already_cached}, "
-        f"failed={failed}, deleted_gz={deleted}"
-    )
+            console.print(
+                f"  Draining: [cyan]{i + 1}/{total_gz}[/cyan] "
+                f"([yellow]{percent:.1f}%[/yellow]) converted={converted} failed={failed}"
+            )
+
+    if total_gz == 0:
+        console.print("  No legacy .txt.gz found — cache is parquet-only.")
+    else:
+        console.print(f"  converted={converted}, failed={failed}")
 
     console.print(f"\n[bold]Step 3/4:[/bold] Building cleaned metadata...")
     if not all((metadata_dir / f).exists() for f in ("scores.parquet", "performance.parquet", "best_performance.parquet")):
@@ -687,6 +660,7 @@ def compute(
     universe_path: Optional[Path] = None
     if scope is not False:
         from just_prs.hf import (
+            needs_pull,
             pull_reference_allele_universe,
             reference_allele_universe_filename,
         )
@@ -694,7 +668,7 @@ def compute(
 
         ref_dir = resolve_cache_dir() / "reference"
         candidate = ref_dir / reference_allele_universe_filename(build)
-        if not candidate.exists():
+        if needs_pull(candidate):
             try:
                 pull_reference_allele_universe(ref_dir, genome_build=build)
             except Exception as exc:
@@ -1305,6 +1279,180 @@ alias_app = typer.Typer(
 app.add_typer(alias_app, name="alias")
 
 
+cache_app = typer.Typer(
+    help="Inspect the just-prs cache — size accounting and duplication canary.",
+    no_args_is_help=True,
+)
+app.add_typer(cache_app, name="cache")
+
+
+@cache_app.command("report")
+def cache_report(
+    cache_dir: Annotated[
+        Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
+    ] = None,
+    primary_build: Annotated[
+        str,
+        typer.Option("--primary-build", help="Genome build this host serves"),
+    ] = "GRCh38",
+    profile: Annotated[
+        str,
+        typer.Option("--profile", help="Expected artifact set: warm (compute-only) or rebuild"),
+    ] = "warm",
+    top: Annotated[
+        int, typer.Option("--top", help="Show only the N largest entries")
+    ] = 20,
+    as_json: Annotated[
+        bool, typer.Option("--json", help="Emit the full report as JSON for monitoring")
+    ] = False,
+    strict: Annotated[
+        bool, typer.Option("--strict", help="Exit non-zero when any ERROR flag fires")
+    ] = False,
+) -> None:
+    """Report cache composition, excess vs the expected warm state, and duplication flags.
+
+    Read-only. Classifies every path into runtime / warm-catalog / secondary-build /
+    leak / rebuild / dev / unknown, so artifacts that should never reach a
+    compute-only host — a second genome build, a reference panel, a leftover
+    .txt.gz — show up as an explicit signal instead of silent growth.
+
+    Use --strict from cron as a disk-growth canary.
+    """
+    from just_prs.cache_audit import (
+        ArtifactClass,
+        CacheProfile,
+        FlagSeverity,
+        format_bytes,
+        scan_cache,
+    )
+
+    resolved_cache = cache_dir or resolve_cache_dir()
+    try:
+        resolved_profile = CacheProfile(profile)
+    except ValueError:
+        console.print(
+            f"[red]Unknown profile {profile!r}. Choose from: "
+            f"{', '.join(p.value for p in CacheProfile)}[/red]"
+        )
+        raise typer.Exit(code=2)
+
+    try:
+        report = scan_cache(
+            resolved_cache, primary_build=primary_build, profile=resolved_profile
+        )
+    except FileNotFoundError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=2)
+
+    if as_json:
+        console.print_json(report.model_dump_json())
+        raise typer.Exit(code=1 if (strict and report.has_errors) else 0)
+
+    console.print(
+        f"\n[bold]Cache:[/bold] {report.cache_dir}   "
+        f"[bold]profile:[/bold] {report.profile.value}   "
+        f"[bold]build:[/bold] {report.primary_build}"
+    )
+    console.print(
+        f"[bold]Total:[/bold] {format_bytes(report.total_bytes)} "
+        f"in {report.n_files:,} files"
+    )
+
+    class_table = Table(title="By artifact class")
+    class_table.add_column("Class", style="cyan")
+    class_table.add_column("Size", justify="right")
+    class_table.add_column("Expected here", justify="center")
+    expected_classes = {
+        c for c in ArtifactClass if report.by_class.get(c, 0) or c is ArtifactClass.RUNTIME
+    }
+    for cls in ArtifactClass:
+        size = report.by_class.get(cls, 0)
+        if not size and cls not in expected_classes:
+            continue
+        is_expected = report.expected_bytes and cls in {
+            ArtifactClass.RUNTIME,
+            ArtifactClass.WARM_CATALOG,
+        }
+        if report.profile is CacheProfile.REBUILD:
+            is_expected = cls not in {
+                ArtifactClass.LEAK,
+                ArtifactClass.DEV,
+                ArtifactClass.UNKNOWN,
+            }
+        mark = "[green]yes[/green]" if is_expected else "[yellow]no[/yellow]"
+        if size == 0:
+            mark = "[dim]—[/dim]"
+        class_table.add_row(cls.value, format_bytes(size), mark)
+    console.print(class_table)
+
+    cat = report.catalog
+    console.print(
+        f"\n[bold]Expected ({report.profile.value}):[/bold] "
+        f"{format_bytes(report.expected_bytes)}    "
+        f"[bold]Excess:[/bold] "
+        f"{'[red]' if report.delta_bytes > 0 else '[green]'}"
+        f"{format_bytes(report.delta_bytes)}[/]"
+    )
+    console.print(
+        f"[dim]Warm catalog: {cat.n_primary_parquet:,}/{cat.n_projected:,} "
+        f"{cat.primary_build} scores ({cat.ratio:.1%}), "
+        f"{format_bytes(cat.warm_bytes)} of ~{format_bytes(cat.projected_full_bytes)} "
+        f"projected full[/dim]"
+    )
+
+    entry_table = Table(title=f"Largest entries (top {top})")
+    entry_table.add_column("Path", style="green", no_wrap=False)
+    entry_table.add_column("Class", style="cyan")
+    entry_table.add_column("Size", justify="right")
+    entry_table.add_column("Files", justify="right")
+    for entry in report.entries[:top]:
+        entry_table.add_row(
+            entry.path,
+            entry.artifact_class.value,
+            format_bytes(entry.bytes),
+            f"{entry.n_files:,}",
+        )
+    console.print(entry_table)
+
+    if not report.flags:
+        console.print("\n[green]No flags — cache matches the expected profile.[/green]")
+    else:
+        severity_style = {
+            FlagSeverity.ERROR: "red",
+            FlagSeverity.WARN: "yellow",
+            FlagSeverity.INFO: "dim",
+        }
+        console.print("\n[bold]Flags[/bold]")
+        for flag in report.flags:
+            style = severity_style[flag.severity]
+            size = f" ({format_bytes(flag.bytes)}, {flag.n_files:,} files)" if flag.bytes else ""
+            console.print(f"  [{style}]{flag.severity.value.upper():5}[/{style}] "
+                          f"[bold]{flag.code}[/bold]{size}")
+            console.print(f"        {flag.message}")
+            if flag.paths:
+                shown = ", ".join(flag.paths[:4])
+                more = f" (+{len(flag.paths) - 4} more)" if len(flag.paths) > 4 else ""
+                console.print(f"        [dim]paths: {shown}{more}[/dim]")
+
+        hints = [f.reclaim_hint for f in report.flags if f.reclaim_hint]
+        if hints:
+            # Sum the LEAK class, not the flags: a path can be named by more than
+            # one flag (a stray root .txt.gz is both a gz leak and a stray), and
+            # summing flag bytes would count it twice.
+            reclaimable = sum(
+                e.bytes for e in report.entries if e.artifact_class is ArtifactClass.LEAK
+            )
+            console.print(
+                f"\n[bold]Reclaimable now: {format_bytes(reclaimable)}[/bold] "
+                "[dim](review before running — this tool never deletes)[/dim]"
+            )
+            for hint in hints:
+                console.print(f"  [dim]${'  '}[/dim] {hint}")
+
+    if strict and report.has_errors:
+        raise typer.Exit(code=1)
+
+
 @alias_app.command("list")
 def alias_list(
     cache_dir: Annotated[
@@ -1418,7 +1566,7 @@ def reference_score(
         )
         raise typer.Exit(code=1)
 
-    scoring_file = download_scoring_file(pgs_id, cache / "scores", genome_build=build)
+    scoring_file = ensure_scoring_file(pgs_id, cache / "scores", genome_build=build)
 
     out_dir = cache / "reference_scores" / f"{pgs_id}_polars"
     console.print(
@@ -1492,7 +1640,7 @@ def reference_score_plink2(
         )
         raise typer.Exit(code=1)
 
-    scoring_file = download_scoring_file(pgs_id, cache / "scores", genome_build=build)
+    scoring_file = ensure_scoring_file(pgs_id, cache / "scores", genome_build=build)
 
     out_dir = cache / "reference_scores" / pgs_id
     console.print(f"Scoring [cyan]{pgs_id}[/cyan] ({build}) against 1000G via [bold]PLINK2[/bold]...")
@@ -1597,7 +1745,7 @@ def reference_test_score(
 
     for pgs_id in ids:
         status = "[green]PASS[/green]"
-        scoring_file = download_scoring_file(pgs_id, cache / "scores", genome_build=build)
+        scoring_file = ensure_scoring_file(pgs_id, cache / "scores", genome_build=build)
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
             out_dir = Path(tmpdir)
@@ -2101,7 +2249,7 @@ def reference_compare(
         console.print(f"[red]PLINK2 binary not found at {plink2_bin}.[/red]")
         raise typer.Exit(code=1)
 
-    scoring_file = download_scoring_file(pgs_id, cache / "scores", genome_build=build)
+    scoring_file = ensure_scoring_file(pgs_id, cache / "scores", genome_build=build)
 
     # --- Run PLINK2 engine ---
     console.print(f"\n[bold]Engine 1: PLINK2 --score[/bold]")
@@ -2415,7 +2563,7 @@ def pgen_score(
     pgs_id = _validate_pgs_id(pgs_id)
     cache = cache_dir or resolve_cache_dir()
 
-    scoring_file = download_scoring_file(pgs_id, cache / "scores", genome_build=build)
+    scoring_file = ensure_scoring_file(pgs_id, cache / "scores", genome_build=build)
 
     import tempfile
     with tempfile.TemporaryDirectory() as tmpdir:

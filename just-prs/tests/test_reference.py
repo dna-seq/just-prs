@@ -618,3 +618,80 @@ class TestPRSCatalogPercentile:
             assert method2 == "reference_panel"
             assert pct2 == pytest.approx(50.0, abs=0.1)
             assert pull_calls["count"] == 1
+
+
+# ---------------------------------------------------------------------------
+# Panel tarball lifecycle — the archive is spent once the panel is extracted
+# ---------------------------------------------------------------------------
+
+
+def _make_panel_tarball(tmp_path, *, complete: bool = True):
+    """Build a small real .tar.zst holding a minimal panel layout."""
+    import tarfile
+
+    import zstandard as zstd
+
+    payload = tmp_path / "payload"
+    payload.mkdir()
+    builds = ("GRCh37", "GRCh38") if complete else ("GRCh38",)
+    (payload / "panel.psam").write_text("#IID\tSEX\nHG00096\t1\n")
+    for build in builds:
+        (payload / f"{build}_1000G_ALL.pgen").write_bytes(b"\x6c\x1b\x02fake-pgen")
+        (payload / f"{build}_1000G_ALL.pvar.zst").write_bytes(b"fake-pvar")
+
+    plain_tar = tmp_path / "panel.tar"
+    with tarfile.open(plain_tar, "w") as tar:
+        for item in sorted(payload.iterdir()):
+            tar.add(item, arcname=item.name)
+
+    tarball = tmp_path / "pgsc_test_v1.tar.zst"
+    tarball.write_bytes(zstd.ZstdCompressor().compress(plain_tar.read_bytes()))
+    plain_tar.unlink()
+    return tarball
+
+
+def test_extract_panel_tarball_discards_the_archive(tmp_path):
+    """A successful extraction must not leave the tarball behind.
+
+    Retaining it cost 22 GB across the two panels: the unlink previously lived
+    only on the failure path, so every *successful* download kept both copies.
+    """
+    from just_prs.reference import _extract_panel_tarball
+
+    tarball = _make_panel_tarball(tmp_path)
+    dest = tmp_path / "pgsc_test_v1"
+
+    _extract_panel_tarball(tarball, dest)
+
+    assert dest.is_dir()
+    assert (dest / "panel.psam").exists()
+    assert not tarball.exists(), "the spent tarball must be discarded on success"
+
+
+def test_extract_panel_tarball_honours_keep_env(tmp_path, monkeypatch):
+    """An explicit opt-out is available for debugging."""
+    from just_prs.reference import _extract_panel_tarball
+
+    monkeypatch.setenv("PRS_KEEP_PANEL_TARBALL", "1")
+    tarball = _make_panel_tarball(tmp_path)
+    dest = tmp_path / "pgsc_test_v1"
+
+    _extract_panel_tarball(tarball, dest)
+
+    assert dest.is_dir()
+    assert tarball.exists()
+
+
+def test_extract_panel_tarball_cleans_up_on_incomplete_panel(tmp_path):
+    """An incomplete extraction must leave neither a partial panel nor the tarball."""
+    from just_prs.reference import ReferencePanelError, _extract_panel_tarball
+
+    tarball = _make_panel_tarball(tmp_path, complete=False)
+    dest = tmp_path / "pgsc_test_v1"
+
+    with pytest.raises(ReferencePanelError, match="incomplete"):
+        _extract_panel_tarball(tarball, dest)
+
+    assert not dest.exists()
+    assert not dest.with_name(f"{dest.name}.extracting").exists()
+    assert not tarball.exists()

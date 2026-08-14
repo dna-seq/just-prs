@@ -4,7 +4,13 @@ import polars as pl
 import pytest
 
 from just_prs.prs_catalog import PRSCatalog
-from just_prs.quality import classify_model_quality, synthetic_quality_score
+from just_prs.quality import (
+    classify_model_quality,
+    classify_synthetic_quality,
+    rescale_quality_if_degenerate,
+    resolve_quality_key,
+    synthetic_quality_score,
+)
 from just_prs.scoring import resolve_cache_dir
 
 
@@ -159,6 +165,51 @@ def test_synthetic_quality_score_does_not_change_coarse_classifier() -> None:
     assert classify_model_quality(coverage=0.5, auroc=0.7) == ("High", "green")
     assert classify_model_quality(coverage=0.5, auroc=0.59) == ("Moderate", "yellow")
     assert classify_model_quality(coverage=0.09, auroc=0.9) == ("Very Low", "red")
+
+
+def test_compound_score_applies_match_factor() -> None:
+    """docs/prs-quality-score.md: score = disc × cohort × match × penalty.
+
+    A large-cohort beta IQ score at 42.8% coverage cannot be High (≥70).
+    Passing 42.8 (percent) must not clamp to 1.0 and look fully covered.
+    """
+    full = synthetic_quality_score(beta_estimate=0.149, n_individuals=350_000)
+    partial = synthetic_quality_score(
+        beta_estimate=0.149, n_individuals=350_000, match_rate=0.428,
+    )
+    partial_pct = synthetic_quality_score(
+        beta_estimate=0.149, n_individuals=350_000, match_rate=42.8,
+    )
+    assert full == pytest.approx(54.1, abs=0.5)
+    assert partial == pytest.approx(full * 0.428, abs=0.5)
+    assert partial_pct == pytest.approx(partial, abs=0.1)
+    assert classify_synthetic_quality(partial)[0] == "Low"
+
+
+def test_poor_count_match_is_not_high_even_for_million_variant_score() -> None:
+    """PGS003724-style: 42.8% match, no AUROC, 1.1M variants must not be High."""
+    assert classify_model_quality(coverage=0.428, auroc=None) == ("Moderate", "yellow")
+    assert classify_model_quality(coverage=42.8, auroc=None) == ("Moderate", "yellow")
+    assert resolve_quality_key(n_var=1_110_292, coverage=42.8) == "moderate"
+    assert resolve_quality_key(label="Moderate", n_var=1_110_292) == "moderate"
+
+
+def test_rescale_does_not_promote_poorly_covered_model_to_high() -> None:
+    keys = rescale_quality_if_degenerate(
+        ["moderate", "moderate"],
+        [0.90, 0.40],
+        coverages=[0.428, 0.95],
+    )
+    assert keys[0] == "moderate"
+    assert keys[1] != "high"
+
+    promoted = rescale_quality_if_degenerate(
+        ["moderate", "moderate"],
+        [0.40, 0.90],
+        coverages=[0.428, 0.95],
+    )
+    assert promoted[0] == "moderate"
+    assert promoted[1] == "high"
 
 
 def test_filtered_grch38_numeric_quality_concords_with_coarse_low_grades() -> None:

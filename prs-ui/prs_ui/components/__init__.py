@@ -18,6 +18,7 @@ from prs_ui.components.prs_section import (
     trait_results_chart_panel,
     trait_results_clickable_table,
     trait_results_with_chart,
+    trait_summary_controls,
     trait_summary_table,
 )
 from prs_ui.components.vcf_source import vcf_source_section
@@ -42,6 +43,7 @@ __all__ = [
     "trait_results_chart_panel",
     "trait_results_clickable_table",
     "trait_results_with_chart",
+    "trait_summary_controls",
     "trait_summary_table",
     "vcf_source_section",
     "vega_chart",

@@ -43,6 +43,105 @@ def test_plot_trait_scores_accepts_preformatted_absolute_risk() -> None:
 
     assert "PRS Report: type 1 diabetes mellitus" in html
     assert "10.0% (pop. avg: 8.3%)" in html
+    assert "Median (selected)" in html
+    assert "Median (high quality)" not in html
+    assert "Median (all models)" not in html
+    assert "<!-- prs-dashboard" in html
+
+
+def test_plot_trait_scores_exposes_in_chart_visibility_bindings() -> None:
+    distributions = pl.DataFrame(
+        {
+            "pgs_id": ["PGS000001", "PGS000002"],
+            "superpopulation": ["EUR", "EUR"],
+            "mean": [0.0, 0.0],
+            "std": [1.0, 1.0],
+            "trait_reported": ["type 1 diabetes mellitus", "type 1 diabetes mellitus"],
+            "n_variants": [1000, 800],
+        },
+    )
+    user_results = [
+        {
+            "pgs_id": "PGS000001",
+            "score": 0.2,
+            "percentile": 58.0,
+            "z_score": 0.2,
+            "pct_EUR": 58.0,
+            "match_rate": 76.0,
+            "quality_label": "High",
+            "reliable": True,
+        },
+        {
+            "pgs_id": "PGS000002",
+            "score": -0.4,
+            "percentile": 34.0,
+            "z_score": -0.4,
+            "pct_EUR": 34.0,
+            "match_rate": 20.0,
+            "quality_label": "Low",
+            "reliable": True,
+        },
+    ]
+
+    spec = plot_trait_scores(
+        "type 1 diabetes mellitus",
+        distributions,
+        user_results=user_results,
+        show_table=False,
+    ).to_dict()
+    params = spec.get("params") or []
+    param_names = {param.get("name") for param in params}
+
+    assert {"showHigh", "showModerate", "showLow", "showVeryLow", "modelSelect"} <= param_names
+    assert "modelScope" not in param_names
+    assert "percentileSource" not in param_names
+    show_high = next(param for param in params if param["name"] == "showHigh")
+    assert show_high["value"] is True
+    assert show_high["bind"]["input"] == "checkbox"
+
+
+def test_plot_trait_scores_median_line_matches_scoped_card_median() -> None:
+    """Regression (screenshot bug): chart said 'Median: 94th' while the card said 83.3.
+
+    The chart's median annotation must be the same scoped median percentile the
+    dashboard card shows — never a private upper-middle-element recomputation.
+    """
+    distributions = pl.DataFrame(
+        {
+            "pgs_id": [f"PGS00000{i}" for i in range(1, 7)],
+            "superpopulation": ["EUR"] * 6,
+            "mean": [0.0] * 6,
+            "std": [1.0] * 6,
+            "trait_reported": ["intelligence"] * 6,
+            "n_variants": [1000] * 6,
+        },
+    )
+    percentiles = [10.0, 20.0, 30.0, 90.0, 95.0, 99.0]  # true median 60, upper-middle 90
+    user_results = [
+        {
+            "pgs_id": f"PGS00000{i + 1}",
+            "score": 0.1,
+            "percentile": pct,
+            "match_rate": 0.9,
+            "quality_label": "High",
+        }
+        for i, pct in enumerate(percentiles)
+    ]
+
+    spec = plot_trait_scores(
+        "intelligence",
+        distributions,
+        user_results=user_results,
+        show_table=False,
+        model_scope="all",
+        percentile_source="native",
+    ).to_dict()
+
+    import json
+
+    spec_json = json.dumps(spec)
+    assert "Median: 60th" in spec_json
+    assert "Median: 90th" not in spec_json
 
 
 def test_trait_prompt_prioritizes_sample_risk_and_heritability() -> None:
@@ -80,7 +179,7 @@ def test_trait_prompt_prioritizes_sample_risk_and_heritability() -> None:
     )
 
     assert "Genome/VCF input: livia.vcf.gz" in prompt
-    assert "Absolute risk (best model): 12.0% (pop. avg. 8.0%) [h2-liability]" in prompt
+    assert "Absolute risk (only model with risk data): 12.0% (pop. avg: 8.0%) [h2-liability]" in prompt
     assert "Heritability (h²): European h²=0.550 (Pan-UKBB)" in prompt
     assert "h²-liability risk estimates: European h²=0.550 (Pan-UKBB): risk 12.0%, 1.50x vs average, medium" in prompt
     assert "For disease traits, discuss absolute risk and risk elevation vs population average" in prompt

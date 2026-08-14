@@ -98,6 +98,12 @@ from just_prs.cache_audit import (
     scan_cache,
 )
 from just_prs.scoring import ensure_scoring_file, resolve_cache_dir
+from just_prs.trait_summary import (
+    TraitSummaryStats,
+    best_of_label,
+    summarize_heritability,
+    summarize_trait_rows,
+)
 
 _meta = metadata("just-prs")
 __version__: str = _meta["Version"]

@@ -1714,7 +1714,9 @@ class PRSCatalog:
         )
         if pr.z_score is None:
             return AbsoluteRiskBundle()
-        return self.absolute_risk_bundle(pgs_id, pr.z_score, sex=sex)
+        return self.absolute_risk_bundle(
+            pgs_id, pr.z_score, sex=sex, selected_ancestry=ancestry,
+        )
 
     def prevalence_table(self) -> pl.LazyFrame:
         """Return the prevalence LazyFrame, loading from cache or HF on first access.
@@ -1867,6 +1869,7 @@ class PRSCatalog:
         pgs_id: str,
         z_score: float,
         sex: str | None = None,
+        selected_ancestry: str | None = None,
     ) -> AbsoluteRiskBundle:
         """Compute ALL available absolute risk estimates for a PGS score.
 
@@ -1882,11 +1885,14 @@ class PRSCatalog:
             pgs_id: PGS Catalog Score ID.
             z_score: PRS z-score (SDs from population mean).
             sex: Optional sex filter for sex-specific prevalence.
+            selected_ancestry: Preferred 1000G superpopulation (e.g. ``EUR``)
+                for prevalence-row choice and h² estimate order.
 
         Returns:
             AbsoluteRiskBundle with all available estimates.
         """
         from just_prs.absolute_risk import estimate_all_absolute_risks
+        from just_prs.trait_summary import prefer_prevalence_row, sort_by_selected_ancestry
 
         score_info = self.score_info_row(pgs_id)
         if score_info is None:
@@ -1931,7 +1937,7 @@ class PRSCatalog:
                 heritability_trait_ids=expanded_efo_ids,
             )
 
-        prev_row = prev_rows.row(0, named=True)
+        prev_row = prefer_prevalence_row(prev_rows.to_dicts(), selected_ancestry) or prev_rows.row(0, named=True)
         prevalence = prev_row.get("prevalence")
         if prevalence is None or prevalence <= 0 or prevalence >= 1.0:
             return AbsoluteRiskBundle()
@@ -2000,6 +2006,11 @@ class PRSCatalog:
                     "confidence": h2_row.get("confidence", "moderate"),
                     "source_detail": h2_row.get("source_detail", ""),
                 })
+        h2_estimates = sort_by_selected_ancestry(
+            h2_estimates,
+            selected_ancestry,
+            label_key="ancestry",
+        )
 
         if h2_df.height == 0:
             heritability_status = "table_unavailable"

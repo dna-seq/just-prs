@@ -2757,7 +2757,9 @@ def _compute_trait_results(
             except (TypeError, ValueError):
                 return
         try:
-            bundle = catalog.absolute_risk_bundle(str(rd["pgs_id"]), float(z_score))
+            bundle = catalog.absolute_risk_bundle(
+                str(rd["pgs_id"]), float(z_score), selected_ancestry=ancestry,
+            )
         except Exception:
             return
 

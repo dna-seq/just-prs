@@ -17,6 +17,18 @@ import altair as alt
 import polars as pl
 
 from just_prs.quality import rescale_quality_if_degenerate, resolve_quality_key
+from just_prs.trait_summary import (
+    NO_MAPPED_H2,
+    best_of_label,
+    format_heritability_risk_prompt,
+    format_percentile_with_panel,
+    is_high_quality_model,
+    is_usable_model,
+    parse_percentile,
+    risk_basis_label,
+    summarize_heritability,
+    summarize_trait_rows,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +72,32 @@ def _norm_pdf(x: float, mu: float = 0.0, sigma: float = 1.0) -> float:
 
 def _norm_cdf(x: float) -> float:
     return 0.5 * (1.0 + math.erf(x / math.sqrt(2.0)))
+
+
+def _norm_ppf(p: float) -> float:
+    """Inverse standard-normal CDF."""
+    from statistics import NormalDist
+
+    return NormalDist().inv_cdf(min(max(float(p), 1e-9), 1.0 - 1e-9))
+
+
+def _trait_visibility_params() -> tuple[list[alt.Parameter], str]:
+    """Checkbox bindings that only show or hide chart marks."""
+    show_high = alt.param(name="showHigh", value=True, bind=alt.binding_checkbox(name="High"))
+    show_moderate = alt.param(
+        name="showModerate", value=True, bind=alt.binding_checkbox(name="Moderate"),
+    )
+    show_low = alt.param(name="showLow", value=True, bind=alt.binding_checkbox(name="Low"))
+    show_very_low = alt.param(
+        name="showVeryLow", value=True, bind=alt.binding_checkbox(name="Very low"),
+    )
+    quality_filter = (
+        "(datum.quality == 'high' && showHigh) || "
+        "(datum.quality == 'moderate' && showModerate) || "
+        "(datum.quality == 'low' && showLow) || "
+        "(datum.quality == 'very_low' && showVeryLow)"
+    )
+    return [show_high, show_moderate, show_low, show_very_low], quality_filter
 
 
 def _finite_float(value: object) -> float | None:
@@ -372,6 +410,8 @@ def plot_trait_scores(
     height: int = 250,
     show_table: bool = False,
     table_height: int | None = None,
+    model_scope: str = "usable",
+    percentile_source: str = "native",
 ) -> alt.LayerChart | alt.VConcatChart:
     """Trait-grouped visualization: reference bell curve + per-model user percentile scatter.
 
@@ -382,6 +422,9 @@ def plot_trait_scores(
     When ``ancestries`` is provided (e.g. ``["EUR", "AFR", "EAS", "AMR", "SAS"]``),
     overlays one color-coded bell curve per population instead of the single gray
     N(0,1) reference.  User dots are z-normalized against ``ancestry`` (the primary).
+    Quality-tier checkboxes only change which dots are visible. Dashboard
+    card numbers are computed separately from the quality-threshold and
+    population dropdowns.
 
     Trait matching is case-insensitive and substring-based: ``"BMI"`` matches
     ``"Body mass index (BMI)"`` as well as ``"Body mass index"``.
@@ -403,6 +446,9 @@ def plot_trait_scores(
         height: Bell curve chart height in pixels.
         show_table: If True, append a model summary table below the bell curve.
         table_height: Height of the summary table in pixels (default: auto-sized from row count).
+        model_scope: Quality-dropdown scope for the in-chart median line, so the
+            "Median: Nth" annotation matches the dashboard cards exactly.
+        percentile_source: Percentile resolution ("native"/"selected") for the median line.
 
     Returns:
         An Altair LayerChart (bell curve only) or VConcatChart (bell curve + table).
@@ -477,8 +523,13 @@ def plot_trait_scores(
         z_user: float | None = None
         pct_user: float | None = None
         match_rate: float | None = None
+        coverage: float | None = None
         user_quality_label: str | None = None
         user_synthetic_quality: float | None = None
+        z_selected: float | None = None
+        pct_selected: float | None = None
+        mark_is_usable = False
+        mark_is_high_quality = False
         if pgs_id in user_lookup:
             ur = user_lookup[pgs_id]
             user_quality_label = ur.get("quality_label") or None
@@ -486,12 +537,22 @@ def plot_trait_scores(
             z_user = _parse_float(ur.get("z_score"))
             pct_user = _parse_float(ur.get("percentile"))
             match_rate = _parse_float(ur.get("match_rate"))
+            coverage = _parse_float(ur.get("weight_mass_coverage"))
+            if coverage is None:
+                coverage = match_rate
             score_value = _parse_float(ur.get("score"))
             if z_user is None and score_value is not None and std > 0:
                 z_candidate = (score_value - mean) / std
                 if abs(z_candidate) <= 10:
                     z_user = z_candidate
                     pct_user = _norm_cdf(z_user) * 100
+            if z_user is None and pct_user is not None:
+                z_user = _norm_ppf(pct_user / 100.0)
+            pct_selected = parse_percentile(ur.get(f"pct_{ancestry}"))
+            if pct_selected is not None:
+                z_selected = _norm_ppf(pct_selected / 100.0)
+            mark_is_usable = is_usable_model(ur)
+            mark_is_high_quality = is_high_quality_model(ur)
         if match_rate is None:
             match_rate = row_dict.get("match_rate")
 
@@ -518,6 +579,7 @@ def plot_trait_scores(
             label=user_quality_label,
             n_var=int(n_var) if n_var else None,
             auroc=_parse_float(auroc),
+            coverage=coverage,
         )
 
         model_meta.append({
@@ -531,8 +593,13 @@ def plot_trait_scores(
             "auroc": auroc,
             "auroc_label": f"AUROC={auroc:.2f}" if auroc is not None else "",
             "z_score": z_user,
+            "z_selected": z_selected,
             "percentile": pct_user,
+            "percentile_selected": pct_selected,
+            "is_usable": mark_is_usable,
+            "is_high_quality": mark_is_high_quality,
             "match_rate": match_rate,
+            "coverage": coverage,
             "risk_ratio": risk_ratio,
             "absolute_risk": absolute_risk,
             "population_prevalence": population_prevalence,
@@ -670,6 +737,14 @@ def plot_trait_scores(
 
     user_marks = [m for m in model_meta if m["z_score"] is not None]
     has_user = len(user_marks) > 0
+    quality_params, quality_filter = _trait_visibility_params()
+    model_select = alt.selection_point(name="modelSelect", fields=["pgs_id"], toggle="true")
+    z_display_expr = "datum.z_native_display"
+    density_expr = (
+        f"exp(-0.5 * datum.z_display * datum.z_display) / {math.sqrt(2 * math.pi)} "
+        "+ datum.jitter"
+    )
+    visibility_params = [*quality_params, model_select]
 
     # When every scored model lands in the top tiers the dot heatmap is uniformly
     # green; re-colour the user's models relative to their own cohort (ranked on
@@ -684,6 +759,7 @@ def plot_trait_scores(
                 else None
                 for m in user_marks
             ],
+            coverages=[m.get("coverage") for m in user_marks],
         )
         for _m, _k in zip(user_marks, _rescaled):
             if _k is not None:
@@ -694,9 +770,10 @@ def plot_trait_scores(
         rng = random.Random(42)
         for um in user_marks:
             z_c = max(-3.4, min(3.4, um["z_score"]))
+            um["z_native_display"] = z_c
             um["z_display"] = z_c
-            base_density = _norm_pdf(z_c)
-            um["density"] = base_density + rng.uniform(-0.02, 0.04)
+            um["jitter"] = rng.uniform(-0.02, 0.04)
+            um["density"] = _norm_pdf(z_c) + um["jitter"]
 
         for um in user_marks:
             um["short_id"] = um["pgs_id"].replace("PGS00", "").replace("PGS0", "").replace("PGS", "")
@@ -705,9 +782,7 @@ def plot_trait_scores(
         reliable_marks = [m for m in user_marks if m.get("reliable", True)]
         unreliable_marks = [m for m in user_marks if not m.get("reliable", True)]
 
-        model_select = alt.selection_point(fields=["pgs_id"], toggle="true")
-
-        sorted_marks = sorted(user_marks, key=lambda m: m["z_display"])
+        sorted_marks = sorted(user_marks, key=lambda m: m["z_native_display"])
         for i, um in enumerate(sorted_marks):
             um["label_dy"] = -14 if i % 2 == 0 else 18
 
@@ -721,36 +796,42 @@ def plot_trait_scores(
             alt.Tooltip("z_score:Q", title="Z-score", format=".2f"),
             alt.Tooltip("reliability:N", title="Reliability"),
         ]
+        quality_color = alt.Color(
+            "quality:N",
+            scale=alt.Scale(domain=q_domain, range=q_range),
+            title="Model quality",
+            legend=None,
+        )
+
+        def _scoped_chart(values: list[dict]) -> alt.Chart:
+            return (
+                alt.Chart(alt.Data(values=values))
+                .transform_filter(quality_filter)
+                .transform_calculate(z_display=z_display_expr, density=density_expr)
+            )
 
         if reliable_marks:
-            reliable_source = alt.Data(values=reliable_marks)
+            reliable_base = _scoped_chart(reliable_marks)
             fg_layers.append(
-                alt.Chart(reliable_source)
-                .mark_rule(strokeDash=[3, 3], strokeWidth=1)
-                .encode(
+                reliable_base.mark_rule(strokeDash=[3, 3], strokeWidth=1).encode(
                     x="z_display:Q",
                     color=alt.Color("quality:N", scale=alt.Scale(domain=q_domain, range=q_range), legend=None),
                     opacity=alt.condition(model_select, alt.value(0.35), alt.value(0.08)),
                 )
             )
             fg_layers.append(
-                alt.Chart(reliable_source)
-                .mark_point(size=55, filled=True, strokeWidth=1, stroke="white")
-                .encode(
+                reliable_base.mark_point(size=55, filled=True, strokeWidth=1, stroke="white").encode(
                     x="z_display:Q",
                     y="density:Q",
-                    color=alt.Color("quality:N", scale=alt.Scale(domain=q_domain, range=q_range), title="Model quality"),
+                    color=quality_color,
                     tooltip=common_tooltip,
                     opacity=alt.condition(model_select, alt.value(0.9), alt.value(0.15)),
                     size=alt.condition(model_select, alt.value(70), alt.value(30)),
                 )
-                .add_params(model_select)
             )
             for um in reliable_marks:
                 fg_layers.append(
-                    alt.Chart(alt.Data(values=[um]))
-                    .mark_text(fontSize=10, dy=um["label_dy"], fontWeight="bold")
-                    .encode(
+                    _scoped_chart([um]).mark_text(fontSize=10, dy=um["label_dy"], fontWeight="bold").encode(
                         x="z_display:Q",
                         y="density:Q",
                         text="short_id:N",
@@ -760,20 +841,16 @@ def plot_trait_scores(
                 )
 
         if unreliable_marks:
-            unreliable_source = alt.Data(values=unreliable_marks)
+            unreliable_base = _scoped_chart(unreliable_marks)
             fg_layers.append(
-                alt.Chart(unreliable_source)
-                .mark_rule(strokeDash=[2, 4], strokeWidth=0.5)
-                .encode(
+                unreliable_base.mark_rule(strokeDash=[2, 4], strokeWidth=0.5).encode(
                     x="z_display:Q",
                     color=alt.Color("quality:N", scale=alt.Scale(domain=q_domain, range=q_range), legend=None),
                     opacity=alt.condition(model_select, alt.value(0.2), alt.value(0.05)),
                 )
             )
             fg_layers.append(
-                alt.Chart(unreliable_source)
-                .mark_point(size=40, filled=False, strokeWidth=1.5)
-                .encode(
+                unreliable_base.mark_point(size=40, filled=False, strokeWidth=1.5).encode(
                     x="z_display:Q",
                     y="density:Q",
                     color=alt.Color("quality:N", scale=alt.Scale(domain=q_domain, range=q_range), legend=None),
@@ -784,9 +861,7 @@ def plot_trait_scores(
             )
             for um in unreliable_marks:
                 fg_layers.append(
-                    alt.Chart(alt.Data(values=[um]))
-                    .mark_text(fontSize=9, dy=um["label_dy"], fontStyle="italic")
-                    .encode(
+                    _scoped_chart([um]).mark_text(fontSize=9, dy=um["label_dy"], fontStyle="italic").encode(
                         x="z_display:Q",
                         y="density:Q",
                         text="short_id:N",
@@ -795,35 +870,41 @@ def plot_trait_scores(
                     )
                 )
 
-        _MEDIAN_STYLE: dict[str, dict] = {
-            "high": {"color": "#2E7D32", "width": 2, "dash": [6, 3], "prefix": "High"},
-            "high+mod": {"color": "#1565C0", "width": 2, "dash": [6, 3], "prefix": "High+Mod"},
-            "all": {"color": "#D32F2F", "width": 3, "dash": [], "prefix": "All"},
-        }
-        high_z = [m["z_score"] for m in user_marks if m.get("quality") == "high"]
-        hm_z = [m["z_score"] for m in user_marks if m.get("quality") in ("high", "moderate")]
-        all_z = [m["z_score"] for m in user_marks]
-        median_tiers: list[tuple[str, list[float]]] = []
-        if high_z:
-            median_tiers.append(("high", high_z))
-        if hm_z and len(hm_z) != len(high_z):
-            median_tiers.append(("high+mod", hm_z))
-        median_tiers.append(("all", all_z))
-
-        for tier_idx, (tier, z_list) in enumerate(median_tiers):
-            sz = sorted(z_list)
-            mz = sz[len(sz) // 2]
-            mp = _norm_cdf(mz) * 100
-            sty = _MEDIAN_STYLE[tier]
+        # The median annotation is a dashboard number: it must equal the scoped
+        # median-percentile card (Quality/Population dropdowns), never a private
+        # recomputation over all dots.  The old ``all_z[len(all_z)//2]`` picked
+        # the upper-middle element (94th for a 6-model group whose true median
+        # was 83rd) and ignored the dropdowns entirely.
+        median_stats = summarize_trait_rows(
+            list(user_results or []),
+            model_scope=model_scope,
+            selected_ancestry=ancestry,
+            percentile_source=percentile_source,
+        )
+        mz: float | None = None
+        median_label = ""
+        if median_stats.median_pct is not None:
+            mz = _norm_ppf(median_stats.median_pct / 100.0)
+            median_label = f"Median: {median_stats.median_pct:.0f}th"
+        else:
+            all_z = sorted(m["z_score"] for m in user_marks if m.get("z_score") is not None)
+            if all_z:
+                mid = len(all_z) // 2
+                mz = all_z[mid] if len(all_z) % 2 else (all_z[mid - 1] + all_z[mid]) / 2.0
+                median_label = f"Median: {_norm_cdf(mz) * 100:.0f}th"
+        if mz is not None:
             fg_layers.append(
                 alt.Chart(alt.Data(values=[{"z_score": mz}]))
-                .mark_rule(color=sty["color"], strokeWidth=sty["width"], strokeDash=sty["dash"])
+                .mark_rule(color="#D32F2F", strokeWidth=2)
                 .encode(x="z_score:Q")
             )
-            label_y = 0.56 + tier_idx * 0.035
             fg_layers.append(
-                alt.Chart(alt.Data(values=[{"z_score": mz, "density": label_y, "label": f"{sty['prefix']}: {mp:.0f}th"}]))
-                .mark_text(fontSize=14, fontWeight="bold", color=sty["color"], align="left", dx=5)
+                alt.Chart(alt.Data(values=[{
+                    "z_score": mz,
+                    "density": 0.56,
+                    "label": median_label,
+                }]))
+                .mark_text(fontSize=14, fontWeight="bold", color="#D32F2F", align="left", dx=5)
                 .encode(x="z_score:Q", y="density:Q", text="label:N")
             )
 
@@ -851,6 +932,9 @@ def plot_trait_scores(
             alt.layer(*bg_layers)
             .properties(width=width, height=height, title=chart_title)
         )
+
+    if has_user:
+        bell = bell.add_params(*visibility_params)
 
     if not show_table:
         return bell.configure_axis(
@@ -1398,78 +1482,39 @@ def _source_link_prompt_lines(
     return lines
 
 
-def _heritability_prompt_summary(user_results: list[dict]) -> str:
+def _heritability_prompt_summary(
+    user_results: list[dict],
+    selected_ancestry: str = "EUR",
+    restrict_to_selected: bool = False,
+) -> str:
     """Return a compact, de-duplicated h2 summary for AI prompts."""
-    metric_by_key: dict[tuple[str, str, str], dict] = {}
-    text_parts: list[str] = []
-    for row in user_results:
-        metrics = row.get("heritability_metrics", [])
-        if isinstance(metrics, list):
-            for metric in metrics:
-                if not isinstance(metric, dict):
-                    continue
-                key = (
-                    str(metric.get("population") or ""),
-                    str(metric.get("h2") or ""),
-                    str(metric.get("source") or ""),
-                )
-                if key[1] and key not in metric_by_key:
-                    metric_by_key[key] = metric
-        h_text = str(row.get("heritability") or "").strip()
-        if h_text and h_text not in {"N/A", "No mapped h²"} and h_text not in text_parts:
-            text_parts.append(h_text)
-
-    if metric_by_key:
-        metrics = list(metric_by_key.values())
-        parts = [
-            f"{metric.get('population', 'Population')} h²={metric.get('h2', 'N/A')}"
-            + (f" ({metric.get('source')})" if metric.get("source") else "")
-            for metric in metrics[:4]
-        ]
-        if len(metrics) > 4:
-            parts.append(f"+{len(metrics) - 4} more")
-        return "; ".join(parts)
-    return " | ".join(text_parts[:3])
+    text, _, _ = summarize_heritability(
+        user_results,
+        selected_ancestry=selected_ancestry,
+        restrict_to_selected=restrict_to_selected,
+    )
+    if text in {NO_MAPPED_H2, ""}:
+        return ""
+    return text
 
 
-def _heritability_risk_prompt_summary(user_results: list[dict[str, Any]]) -> str:
+def _heritability_risk_prompt_summary(
+    user_results: list[dict[str, Any]],
+    selected_ancestry: str = "EUR",
+    restrict_to_selected: bool = False,
+) -> str:
     """Return h2-liability risk estimates for prompts when available."""
-    metric_by_key: dict[tuple[str, str, str, str, str], dict[str, Any]] = {}
-    for row in user_results:
-        metrics = row.get("heritability_metrics", [])
-        if not isinstance(metrics, list):
-            continue
-        for metric in metrics:
-            if not isinstance(metric, dict):
-                continue
-            risk = _clean_metadata_text(metric.get("risk"))
-            ratio = _clean_metadata_text(metric.get("ratio"))
-            if not risk and not ratio:
-                continue
-            key = (
-                _clean_metadata_text(metric.get("population")),
-                _clean_metadata_text(metric.get("h2")),
-                _clean_metadata_text(metric.get("source")),
-                risk,
-                ratio,
-            )
-            if key[1] and key not in metric_by_key:
-                metric_by_key[key] = metric
-
-    parts: list[str] = []
-    for metric in list(metric_by_key.values())[:4]:
-        population = _clean_metadata_text(metric.get("population")) or "Population"
-        h2 = _clean_metadata_text(metric.get("h2")) or "N/A"
-        source = _clean_metadata_text(metric.get("source"))
-        risk = _clean_metadata_text(metric.get("risk"))
-        ratio = _clean_metadata_text(metric.get("ratio"))
-        confidence = _clean_metadata_text(metric.get("confidence"))
-        label = f"{population} h²={h2}" + (f" ({source})" if source else "")
-        risk_bits = [bit for bit in (f"risk {risk}" if risk else "", f"{ratio} vs average" if ratio else "", confidence) if bit]
-        parts.append(label + (f": {', '.join(risk_bits)}" if risk_bits else ""))
-    if len(metric_by_key) > 4:
-        parts.append(f"+{len(metric_by_key) - 4} more")
-    return "; ".join(parts)
+    _, _, metrics = summarize_heritability(
+        user_results,
+        selected_ancestry=selected_ancestry,
+        restrict_to_selected=restrict_to_selected,
+    )
+    risk_metrics = [
+        metric
+        for metric in metrics
+        if _clean_metadata_text(metric.get("risk")) or _clean_metadata_text(metric.get("ratio"))
+    ]
+    return format_heritability_risk_prompt(risk_metrics)
 
 
 def build_prs_ai_prompt(
@@ -1481,6 +1526,8 @@ def build_prs_ai_prompt(
     ancestry: str = "EUR",
     limit: int = 6000,
     sample_name: str | None = None,
+    model_scope: str = "usable",
+    percentile_source: str = "native",
 ) -> str:
     """Build the LLM prompt used by both CLI reports and the web UI."""
     lines: list[str]
@@ -1492,6 +1539,8 @@ def build_prs_ai_prompt(
             ancestry=ancestry,
             limit=limit,
             sample_name=sample_name,
+            model_scope=model_scope,
+            percentile_source=percentile_source,
         )
 
     prompt_row = row or {}
@@ -1576,7 +1625,10 @@ def build_prs_ai_prompt(
             lines.append(f"Evaluation ancestry: {row_ancestry}")
         if heritability and heritability != "N/A":
             lines.append(f"Heritability (h²): {heritability}")
-        h2_risk_summary = _heritability_risk_prompt_summary([prompt_row])
+        h2_risk_summary = _heritability_risk_prompt_summary(
+            [prompt_row],
+            selected_ancestry=str(prompt_row.get("selected_ancestry") or ancestry),
+        )
         if h2_risk_summary:
             lines.append(f"h²-liability risk estimates: {h2_risk_summary}")
         if is_harmonized:
@@ -1622,19 +1674,25 @@ def build_prs_ai_prompt(
             f"for \"{row_trait}\"" + (f" (EFO: {efo})" if efo else "") + ".",
             "",
             f"Models computed: {prompt_row.get('n_models', 0)} total, "
-            f"{prompt_row.get('usable_models', 0)} usable (>=50% model coverage)",
+            f"{prompt_row.get('usable_models', 0)} usable (>=50% model coverage)"
+            + (f" ({scope_phrase})" if (scope_phrase := str(prompt_row.get("scope_label") or "")) else ""),
             f"PGS IDs: {pgs_ids}",
         ]
         if genome_file:
             lines.append(f"Genome/VCF input: {genome_file}")
         lines.extend(_source_link_prompt_lines([], pgs_id_list, str(prompt_row.get("publication_links") or "")))
         lines.append("")
+        scope_label = str(prompt_row.get("scope_label") or "")
+        n_scoped = int(prompt_row.get("n_scoped") or prompt_row.get("usable_models") or 0)
+        model_scope = str(prompt_row.get("model_scope") or "usable")
+        of_scope = best_of_label(n_scoped, model_scope)
         if best_id:
+            scope_note = f" ({scope_label})" if scope_label else ""
             lines.append(
-                f"Best model: {best_id} (pctl: {best_pctl}, quality: {best_quality})"
+                f"{of_scope.capitalize()}{scope_note}: {best_id} (pctl: {best_pctl}, quality: {best_quality})"
                 f"  https://www.pgscatalog.org/score/{best_id}/"
             )
-        lines.append(f"Median percentile (usable): {prompt_row.get('typical_percentile', 'N/A')}")
+        lines.append(f"Median percentile: {prompt_row.get('typical_percentile', 'N/A')}")
         lines.append(
             f"Percentile range: {prompt_row.get('percentile_range', 'N/A')} "
             f"(SD: {prompt_row.get('percentile_std', 'N/A')})"
@@ -1651,7 +1709,7 @@ def build_prs_ai_prompt(
         if outlier_ids := str(prompt_row.get("outlier_ids") or ""):
             lines.append(f"Outlier models: {outlier_ids}")
         if best_risk and best_risk != "N/A":
-            lines.append(f"Absolute risk (best model): {best_risk}")
+            lines.append(f"Absolute risk ({of_scope}): {best_risk}")
         if population_average and population_average != "N/A":
             lines.append(f"Population average risk: {population_average}")
         if risk_vs_avg and risk_vs_avg != "N/A":
@@ -1662,7 +1720,10 @@ def build_prs_ai_prompt(
             lines.append(f"Heritability (h²): {heritability}")
         if heritability_detail and heritability_detail != "N/A":
             lines.append(f"Heritability detail: {heritability_detail}")
-        h2_risk_summary = _heritability_risk_prompt_summary([prompt_row])
+        h2_risk_summary = _heritability_risk_prompt_summary(
+            [prompt_row],
+            selected_ancestry=str(prompt_row.get("selected_ancestry") or ancestry),
+        )
         if h2_risk_summary:
             lines.append(f"h²-liability risk estimates: {h2_risk_summary}")
         lines.append(
@@ -1693,6 +1754,8 @@ def _build_trait_prompt(
     ancestry: str = "EUR",
     limit: int = 6000,
     sample_name: str | None = None,
+    model_scope: str = "usable",
+    percentile_source: str = "native",
 ) -> str:
     """Build a rich AI prompt summarizing a trait's PRS results.
 
@@ -1707,18 +1770,23 @@ def _build_trait_prompt(
     if not scored:
         return ""
 
-    pctls = sorted([r["percentile"] for r in scored])
-    median_pctl = pctls[len(pctls) // 2]
-    mean_pctl = sum(pctls) / len(pctls)
-    best = max(scored, key=lambda r: r["percentile"])
+    stats = summarize_trait_rows(
+        scored,
+        model_scope=model_scope,
+        selected_ancestry=ancestry,
+        percentile_source=percentile_source,
+    )
+    pctls = sorted(stats.pct_by_id.values())
+    median_pctl = stats.median_pct
+    mean_pctl = stats.mean_pct
+    best = stats.best_row
     pgs_ids = [r["pgs_id"] for r in scored]
 
-    high_q = [r for r in scored if _quality_tier(r.get("quality_label")) >= 4]
+    high_q = stats.high_quality_rows
     high_mod = [r for r in scored if _quality_tier(r.get("quality_label")) >= 3]
-    usable = [r for r in scored if (_parse_float(r.get("match_rate")) or 0) >= 0.5]
+    usable = stats.usable_rows
 
-    import statistics
-    pctl_sd = statistics.pstdev(pctls) if len(pctls) > 1 else 0.0
+    pctl_sd = stats.std_pct if stats.std_pct is not None else 0.0
 
     lines = [
         f'Interpret these combined Polygenic Risk Score (PRS) results for "{trait}".',
@@ -1726,48 +1794,67 @@ def _build_trait_prompt(
         "== SUMMARY ==",
         f"Models scored: {len(scored)} total"
         + (f", {len(usable)} usable (>=50% marker coverage)" if len(usable) != len(scored) else ""),
+        f"Scope: {stats.scope_label}",
     ]
     if sample_name:
         lines.append(f"Genome/VCF input: {sample_name}")
     if high_q:
-        hq_pctls = [r["percentile"] for r in high_q]
-        lines.append(f"High-quality models: {len(high_q)} (median percentile: {sorted(hq_pctls)[len(hq_pctls)//2]:.1f})")
+        hq_median = stats.high_quality_median
+        if hq_median is None:
+            hq_pctls = [r["percentile"] for r in high_q]
+            hq_median = sorted(hq_pctls)[len(hq_pctls) // 2]
+        lines.append(f"High-quality models: {len(high_q)} (median percentile: {hq_median:.1f})")
     if high_mod and len(high_mod) != len(high_q):
         hm_pctls = [r["percentile"] for r in high_mod]
         lines.append(f"High+Normal quality: {len(high_mod)} (median percentile: {sorted(hm_pctls)[len(hm_pctls)//2]:.1f})")
-    lines.append(f"All models median percentile: {median_pctl:.1f}, mean: {mean_pctl:.1f}")
-    lines.append(f"Percentile range: {min(pctls):.1f} - {max(pctls):.1f} (SD: {pctl_sd:.1f})")
-    if pctl_sd < 10:
-        lines.append("Model agreement: strong — models are consistent")
-    elif pctl_sd < 20:
-        lines.append("Model agreement: moderate — some variation across models")
+    if median_pctl is not None:
+        lines.append(
+            f"Scoped median percentile: {format_percentile_with_panel(median_pctl, stats.typical_panel)}"
+            + (f", mean: {mean_pctl:.1f}" if mean_pctl is not None else "")
+        )
     else:
-        lines.append("Model agreement: weak — models disagree substantially")
-    lines.append(f"Best model: {best['pgs_id']} (percentile: {best['percentile']:.1f}"
-                 + (f", quality: {best.get('quality_label', 'N/A')}" if best.get("quality_label") else "")
-                 + ")")
+        lines.append(f"Scoped median percentile: N/A ({stats.scope_label})")
+    if stats.min_pct is not None and stats.max_pct is not None:
+        lines.append(f"Percentile range: {stats.min_pct:.1f} - {stats.max_pct:.1f} (SD: {pctl_sd:.1f})")
+    elif pctls:
+        lines.append(f"Percentile range: {min(pctls):.1f} - {max(pctls):.1f} (SD: {pctl_sd:.1f})")
+    else:
+        lines.append("Percentile range: N/A (no models in scope)")
+    lines.append(f"Consistency: {stats.consistency}")
+    lines.append(f"Overall signal: {stats.overall_signal}")
+    of_scope = best_of_label(stats.n_scoped, stats.model_scope)
+    if stats.best_row is not None:
+        best_pctl = stats.best_model_pctl if stats.best_model_pctl is not None else _parse_float(best.get("percentile"))
+        lines.append(
+            f"{of_scope.capitalize()}: {best.get('pgs_id')} "
+            f"(percentile: {format_percentile_with_panel(best_pctl, stats.best_model_panel)}"
+            + (f", quality: {best.get('quality_label', 'N/A')}" if best.get("quality_label") else "")
+            + ")"
+        )
 
-    with_risk = [r for r in scored if "risk_ratio" in r]
-    if with_risk:
-        br = max(with_risk, key=lambda r: r["percentile"])
-        risk_ratio = _parse_float(br.get("risk_ratio"))
-        if risk_ratio is not None:
-            lines.append(f"Risk vs population average: {risk_ratio:.2f}x")
-    with_abs = [r for r in scored if "absolute_risk" in r]
-    if with_abs:
-        ba = max(with_abs, key=lambda r: r["percentile"])
-        ar_str = _format_percent_like(ba.get("absolute_risk"))
-        prev = ba.get("population_prevalence")
-        if prev:
-            ar_str += f" (pop. avg. {_format_percent_like(prev)})"
-        method = ba.get("risk_method", "")
+    if stats.risk_vs_average != "N/A":
+        lines.append(f"Risk vs population average: {stats.risk_vs_average}")
+    if stats.absolute_risk and not stats.absolute_risk.startswith("N/A"):
+        ar_str = stats.absolute_risk
+        method = (stats.best_risk_row or {}).get("risk_method", "")
         if method:
             ar_str += f" [{method}]"
-        lines.append(f"Absolute risk (best model): {ar_str}")
-    h2_summary = _heritability_prompt_summary(scored)
+        lines.append(f"Absolute risk ({risk_basis_label(stats.n_risk_models)}): {ar_str}")
+    elif stats.absolute_risk.startswith("N/A"):
+        lines.append(f"Absolute risk: {stats.absolute_risk}")
+    restrict_h2 = percentile_source == "selected"
+    h2_summary = _heritability_prompt_summary(
+        stats.scoped_rows or scored,
+        selected_ancestry=ancestry,
+        restrict_to_selected=restrict_h2,
+    )
     if h2_summary:
         lines.append(f"Heritability (h²): {h2_summary}")
-    h2_risk_summary = _heritability_risk_prompt_summary(scored)
+    h2_risk_summary = _heritability_risk_prompt_summary(
+        stats.scoped_rows or scored,
+        selected_ancestry=ancestry,
+        restrict_to_selected=restrict_h2,
+    )
     if h2_risk_summary:
         lines.append(f"h²-liability risk estimates: {h2_risk_summary}")
 
@@ -1879,6 +1966,8 @@ def trait_report_html(
     user_results: list[dict],
     ancestry: str = "EUR",
     sample_name: str | None = None,
+    model_scope: str = "usable",
+    percentile_source: str = "native",
 ) -> str:
     """Render an Altair trait chart as a rich HTML report string.
 
@@ -1904,10 +1993,14 @@ def trait_report_html(
             n_var_val = _parse_float(r.get("variants_total"))
             if n_var_val is None:
                 n_var_val = _parse_float(r.get("n_variants"))
+            coverage = _parse_float(r.get("weight_mass_coverage"))
+            if coverage is None:
+                coverage = _parse_float(r.get("match_rate"))
             r["quality"] = resolve_quality_key(
                 label=r.get("quality_label"),
                 n_var=int(n_var_val) if n_var_val is not None else None,
                 auroc=_parse_float(r.get("auroc")),
+                coverage=coverage,
             )
 
     # If the absolute scale bunches every model into the top tiers (e.g. a WGS
@@ -1919,9 +2012,16 @@ def trait_report_html(
         sq = _parse_float(row.get("synthetic_quality"))
         return sq / 100.0 if sq is not None else None
 
+    def _row_coverage(row: dict) -> float | None:
+        coverage = _parse_float(row.get("weight_mass_coverage"))
+        if coverage is None:
+            coverage = _parse_float(row.get("match_rate"))
+        return coverage
+
     rescaled = rescale_quality_if_degenerate(
         [r.get("quality") for r in scored],
         [_sq_norm(r) for r in scored],
+        coverages=[_row_coverage(r) for r in scored],
     )
     for r, key in zip(scored, rescaled):
         if key is not None:
@@ -1931,72 +2031,61 @@ def trait_report_html(
     stats_html = ""
     ai_html = ""
 
-    def _median(values: list[float | None]) -> float | None:
-        """Median of the present values (robust to outliers on either tail)."""
-        present = sorted(v for v in values if v is not None)
-        return present[len(present) // 2] if present else None
-
-    def _risk_fraction(value: object) -> float | None:
-        """Normalize an absolute-risk/prevalence value to a 0–1 fraction.
-
-        Accepts raw fractions (0.12), percentages (12.0) and preformatted
-        strings like ``"10.0% (pop. avg: 8.3%)"`` by reading the leading number.
-        """
-        number = _parse_float(value)
-        if number is None and isinstance(value, str) and value.strip():
-            number = _parse_float(value.strip().split("%", maxsplit=1)[0].split()[-1])
-        if number is None:
-            return None
-        return number / 100.0 if number > 1.0 else number
-
-    def _trusted_cohort(rows: list[dict]) -> tuple[list[dict], str]:
-        """The most trustworthy cohort whose medians drive the headline cards.
-
-        Headline numbers must reflect the centre of the good models — the same
-        High / High+Moderate / All medians the chart draws — not a single model.
-        Ranking the cards by one "best" model let a lone low-coverage outlier on
-        either tail (e.g. an 800-variant model reading the 100th percentile)
-        dictate the whole report.  Prefer high-quality models, then add
-        moderate, then fall back to every scored model.
-        """
-        for keys, name in (
-            ({"high"}, "high-quality"),
-            ({"high", "moderate"}, "high/moderate-quality"),
-        ):
-            cohort = [r for r in rows if r.get("quality") in keys]
-            if cohort:
-                return cohort, name
-        return rows, "all"
-
     if scored:
-        pctls = sorted([r["percentile"] for r in scored])
-        median_pctl = pctls[len(pctls) // 2]
-        cohort, cohort_name = _trusted_cohort(scored)
-        cohort_pctl = _median([r["percentile"] for r in cohort])
+        stats = summarize_trait_rows(
+            scored,
+            model_scope=model_scope,
+            selected_ancestry=ancestry,
+            percentile_source=percentile_source,
+        )
+        pctls = sorted(stats.pct_by_id.values()) or sorted([r["percentile"] for r in scored])
+        median_pctl = stats.median_pct
+        of_scope = best_of_label(stats.n_scoped, stats.model_scope)
 
         cards = []
-        # When a trustworthy sub-cohort exists, headline its median; otherwise the
-        # "Median Percentile (all)" card below already carries the same number.
-        if cohort_pctl is not None and cohort_name != "all":
-            cards.append(
-                f'<div class="stat-card">'
-                f'<div class="stat-label">Your Percentile ({cohort_name})</div>'
-                f'<div class="stat-value">{cohort_pctl:.1f}</div>'
-                f'<div class="stat-sub">median of {len(cohort)} model(s)</div></div>'
-            )
+        median_display = (
+            format_percentile_with_panel(median_pctl, stats.typical_panel)
+            if median_pctl is not None
+            else "N/A"
+        )
+        best_display = (
+            format_percentile_with_panel(stats.best_model_pctl, stats.best_model_panel)
+            if stats.best_model_pctl is not None
+            else "N/A"
+        )
+        # Median first: it is the robust headline number.  The quality-best
+        # model's percentile is secondary context and must never be called
+        # "best" — for direction-dependent traits that reads as "best outcome".
         cards.append(
             f'<div class="stat-card">'
             f'<div class="stat-label">Median Percentile</div>'
-            f'<div class="stat-value">{median_pctl:.1f}</div>'
-            f'<div class="stat-sub">across all {len(scored)} models</div></div>'
+            f'<div class="stat-value">{median_display}</div>'
+            f'<div class="stat-sub">{stats.scope_label}</div></div>'
+        )
+        best_pgs_id = str((stats.best_row or {}).get("pgs_id") or "")
+        best_sub = best_pgs_id or best_of_label(stats.n_scoped, stats.model_scope)
+        if best_pgs_id:
+            best_sub = f"{best_pgs_id} · {best_of_label(stats.n_scoped, stats.model_scope)}"
+        cards.append(
+            f'<div class="stat-card">'
+            f'<div class="stat-label">Most Reliable Model</div>'
+            f'<div class="stat-value">{best_display}</div>'
+            f'<div class="stat-sub">{best_sub}</div></div>'
         )
         cards.append(
             f'<div class="stat-card">'
             f'<div class="stat-label">Models</div>'
-            f'<div class="stat-value">{len(scored)}</div>'
-            f'<div class="stat-sub">scored</div></div>'
+            f'<div class="stat-value">{stats.n_scoped}</div>'
+            f'<div class="stat-sub">{stats.scope_label}</div></div>'
         )
-        h2_summary = _heritability_prompt_summary(scored)
+        restrict_h2 = percentile_source == "selected"
+        h2_summary = stats.heritability_text if stats.heritability_text != NO_MAPPED_H2 else ""
+        if not h2_summary:
+            h2_summary = _heritability_prompt_summary(
+                scored,
+                selected_ancestry=ancestry,
+                restrict_to_selected=restrict_h2,
+            )
         if h2_summary:
             cards.append(
                 f'<div class="stat-card">'
@@ -2005,47 +2094,35 @@ def trait_report_html(
                 f'<div class="stat-sub">population-level heredity context</div></div>'
             )
 
-        with_risk = [r for r in cohort if _parse_float(r.get("risk_ratio")) is not None]
-        rr = _median([_parse_float(r.get("risk_ratio")) for r in with_risk])
-        if rr is not None:
-            color = "#C62828" if rr >= 1.0 else "#2E7D32"
-            direction = "higher" if rr >= 1.0 else "lower"
+        risk_basis = risk_basis_label(stats.n_risk_models)
+        if stats.risk_vs_average != "N/A":
+            rr = _parse_float(str(stats.risk_vs_average).rstrip("x"))
+            if rr is not None and rr >= 1.05:
+                color, direction = "#C62828", "higher than population"
+            elif rr is not None and rr <= 0.95:
+                color, direction = "#2E7D32", "lower than population"
+            else:
+                color, direction = "#455A64", "similar to population"
             cards.append(
                 f'<div class="stat-card">'
                 f'<div class="stat-label">Risk vs Average</div>'
-                f'<div class="stat-value" style="color:{color}">{rr:.2f}x</div>'
-                f'<div class="stat-sub">{direction} than population · median of {len(with_risk)} {cohort_name} model(s)</div></div>'
+                f'<div class="stat-value" style="color:{color}">{stats.risk_vs_average}</div>'
+                f'<div class="stat-sub">{direction} · {risk_basis}</div></div>'
             )
 
-        with_abs = [r for r in cohort if _risk_fraction(r.get("absolute_risk")) is not None]
-        ar = _median([_risk_fraction(r.get("absolute_risk")) for r in with_abs])
-        if ar is not None:
-            prev = _median([_risk_fraction(r.get("population_prevalence")) for r in with_abs])
-            method = next(
-                (str(r.get("risk_method")) for r in with_abs if r.get("risk_method")),
-                "",
-            )
-            sub_parts = []
-            if prev:
-                sub_parts.append(f"pop. avg. {_format_percent_like(prev)}")
-            sub_parts.append(f"median of {len(with_abs)} {cohort_name} model(s)")
-            if method:
-                sub_parts.append(method)
-            cards.append(
-                f'<div class="stat-card">'
-                f'<div class="stat-label">Absolute Risk</div>'
-                f'<div class="stat-value">{_format_absolute_risk(ar)}</div>'
-                f'<div class="stat-sub">{" | ".join(sub_parts)}</div></div>'
-            )
+        cards.append(
+            f'<div class="stat-card">'
+            f'<div class="stat-label">Absolute Risk</div>'
+            f'<div class="stat-value">{stats.absolute_risk}</div>'
+            f'<div class="stat-sub">{risk_basis}</div></div>'
+        )
 
-        if len(pctls) > 1:
-            import statistics
-            spread = statistics.pstdev(pctls)
+        if stats.std_pct is not None:
             cards.append(
                 f'<div class="stat-card">'
                 f'<div class="stat-label">Model Spread</div>'
-                f'<div class="stat-value">{spread:.1f}</div>'
-                f'<div class="stat-sub">percentile SD</div></div>'
+                f'<div class="stat-value">{stats.std_pct:.1f}</div>'
+                f'<div class="stat-sub">percentile SD · {stats.scope_label}</div></div>'
             )
 
         stats_html = '<div class="stats-grid">' + "".join(cards) + "</div>"
@@ -2060,6 +2137,8 @@ def trait_report_html(
                 ancestry=ancestry,
                 limit=char_limit,
                 sample_name=sample_name,
+                model_scope=model_scope,
+                percentile_source=percentile_source,
             )
             if prompt:
                 encoded = urllib.parse.quote(prompt, safe="")
@@ -2075,7 +2154,14 @@ def trait_report_html(
     if scored:
         q_colors = {"high": "#2E7D32", "moderate": "#1565C0", "low": "#E65100", "very_low": "#C62828"}
         has_risk = any(r.get("risk_ratio") is not None for r in scored)
-        has_h2 = any(_heritability_prompt_summary([r]) for r in scored)
+        has_h2 = any(
+            _heritability_prompt_summary(
+                [r],
+                selected_ancestry=ancestry,
+                restrict_to_selected=restrict_h2,
+            )
+            for r in scored
+        )
         distinct_traits = {r.get("trait_reported", "") for r in scored} - {""}
         has_multi = len(distinct_traits) > 1
 
@@ -2085,24 +2171,27 @@ def trait_report_html(
             key=lambda r: (_TIER_ORDER.get(r.get("quality", "low"), 3), -(r.get("percentile") or 0)),
         )
 
-        high_pctls = [r["percentile"] for r in scored if r.get("quality") == "high"]
-        hm_pctls = [r["percentile"] for r in scored if r.get("quality") in ("high", "moderate")]
-        all_pctls = [r["percentile"] for r in scored]
-        median_rows: list[tuple[str, str, float, int]] = []
-        if high_pctls:
-            sp = sorted(high_pctls)
-            median_rows.append(("Median (high quality)", "#2E7D32", sp[len(sp) // 2], len(sp)))
-        if hm_pctls and len(hm_pctls) != len(high_pctls):
-            sp = sorted(hm_pctls)
-            median_rows.append(("Median (high + moderate)", "#1565C0", sp[len(sp) // 2], len(sp)))
-        sp = sorted(all_pctls)
-        median_rows.append(("Median (all models)", "#D32F2F", sp[len(sp) // 2], len(sp)))
+        # One median, the Quality-dropdown selection — not three always-on
+        # comparison rows that ignore the dropdown.
+        _SCOPE_MEDIAN_COLOR = {
+            "high_quality": "#2E7D32",
+            "high_moderate": "#1565C0",
+            "usable": "#1565C0",
+            "all": "#D32F2F",
+        }
+        median_rows: list[tuple[str, str, float | None, int]] = [(
+            "Median (selected)",
+            _SCOPE_MEDIAN_COLOR.get(stats.model_scope, "#1565C0"),
+            stats.median_pct,
+            stats.n_scoped,
+        )]
 
         rows_html = []
         n_data_cols = 5 + (1 if has_multi else 0) + (2 if has_risk else 0) + (1 if has_h2 else 0)
         for label, color, med_pctl, count in median_rows:
             cells = [f'<td colspan="2" style="font-weight:700;color:{color};border-bottom:2px solid {color}20">{label}</td>']
-            cells.append(f'<td style="font-weight:700;color:{color};font-size:1.1em;border-bottom:2px solid {color}20">{med_pctl:.1f}%</td>')
+            med_s = f"{med_pctl:.1f}%" if med_pctl is not None else "N/A"
+            cells.append(f'<td style="font-weight:700;color:{color};font-size:1.1em;border-bottom:2px solid {color}20">{med_s}</td>')
             remaining = n_data_cols - 3
             for _ in range(remaining - 1):
                 cells.append(f'<td style="border-bottom:2px solid {color}20"></td>')
@@ -2150,7 +2239,11 @@ def trait_report_html(
                 else:
                     cells.append("<td>—</td>")
             if has_h2:
-                h2_text = _heritability_prompt_summary([r])
+                h2_text = _heritability_prompt_summary(
+                    [r],
+                    selected_ancestry=ancestry,
+                    restrict_to_selected=restrict_h2,
+                )
                 cells.append(f'<td class="h2-cell">{_shorten_text(h2_text, 80) if h2_text else "—"}</td>')
             cells.append(f"<td>{n_var}</td>")
             cells.append(f"<td>{match_s}</td>")
@@ -2177,7 +2270,13 @@ def trait_report_html(
 
     quality_note_html = _QUALITY_NOTE_HTML if scored else ""
 
+    dashboard_stamp = (
+        f"<!-- prs-dashboard {model_scope}|{percentile_source}|{ancestry}|"
+        f"{stats.median_pct if scored else 'na'}|{stats.risk_vs_average if scored else 'na'}|"
+        f"{stats.n_scoped if scored else 0} -->"
+    )
     html = f"""<!DOCTYPE html>
+{dashboard_stamp}
 <html lang="en">
 <head>
 <meta charset="utf-8">

@@ -179,20 +179,28 @@ def enrich_prs_result(
         n_individuals = perf_dict.get("n_individuals")
 
     # --- Synthetic quality score and tier ---
-    # Metadata-only score (no match penalty) for model quality ranking.
-    # Match rate is genome-specific, not a model quality property — it's
-    # already shown separately in match_rate / match_color.
+    # Compound score from docs/prs-quality-score.md:
+    #   100 × discrimination × cohort × match × penalty
+    # After a genome is scored, match is this sample's weight-mass coverage
+    # (C_wt), falling back to count match_rate.  Metadata-only browse still
+    # omits match (factor 1.0).
     sq_auroc = perf_dict.get("auroc_estimate") if perf_dict else None
     sq_cindex = perf_dict.get("cindex_estimate") if perf_dict else None
     sq_or = perf_dict.get("or_estimate") if perf_dict else None
     sq_hr = perf_dict.get("hr_estimate") if perf_dict else None
     sq_beta = perf_dict.get("beta_estimate") if perf_dict else None
     sq_n = perf_dict.get("n_individuals") if perf_dict else None
+    quality_coverage = (
+        result.weight_mass_coverage
+        if result.weight_mass_coverage is not None
+        else result.match_rate
+    )
 
     sq_score = synthetic_quality_score(
         auroc=sq_auroc, cindex=sq_cindex,
         or_estimate=sq_or, hr_estimate=sq_hr,
         beta_estimate=sq_beta, n_individuals=sq_n,
+        match_rate=quality_coverage,
         is_harmonized=is_harmonized,
     )
     sq_label, sq_color = classify_synthetic_quality(sq_score)
@@ -211,14 +219,8 @@ def enrich_prs_result(
         reliable=pct_reliable,
         caveat=pct_caveat,
     )
-    # Quality is judged on weight-mass coverage (C_wt), not the count match_rate
-    # which WGS reference-restoration inflates to ~100% for every model.  Fall
-    # back to the count match_rate only when C_wt was not computed.
-    quality_coverage = (
-        result.weight_mass_coverage
-        if result.weight_mass_coverage is not None
-        else result.match_rate
-    )
+    # Coarse High still requires well-covered + AUROC ≥ 0.7.  Continuous
+    # traits without AUROC land Moderate even when the compound score is high.
     quality_label, quality_color = classify_model_quality(
         quality_coverage, auroc_val, is_harmonized=is_harmonized
     )
@@ -258,7 +260,9 @@ def enrich_prs_result(
     # inverting the percentile only when no true z is available. The inversion is
     # lossy and collapses to 0 at the 0/100 extremes, so it is the last resort.
     z_score = z_val if z_val is not None else _compute_z_score(pct_value)
-    abs_risk = _enrich_absolute_risk(catalog, result.pgs_id, z_score)
+    abs_risk = _enrich_absolute_risk(
+        catalog, result.pgs_id, z_score, selected_ancestry=selected_ancestry,
+    )
 
     return EnrichedPRSResult(
         pgs_id=result.pgs_id,
@@ -351,12 +355,18 @@ def _all_population_percentiles(
 
 
 def _compute_z_score(pct_value: float | None) -> float | None:
+    """Invert a percentile to a z-score.
+
+    Extremes are clamped to ``(0.1, 99.9)`` so a 0th/100th percentile does not
+    collapse to z=0 (which would fake a 1.00x risk ratio).
+    """
     if pct_value is None:
         return None
     try:
-        return _norm_ppf(pct_value / 100.0) if 0 < pct_value < 100 else 0.0
-    except ValueError:
-        return 0.0
+        clamped = min(99.9, max(0.1, float(pct_value)))
+        return _norm_ppf(clamped / 100.0)
+    except (TypeError, ValueError):
+        return None
 
 
 def _risk_level_from_percentile(pct_value: float | None) -> tuple[str, str]:
@@ -426,7 +436,10 @@ def _build_risk_hint(
 
 
 def _enrich_absolute_risk(
-    catalog: PRSCatalog, pgs_id: str, z_score: float | None
+    catalog: PRSCatalog,
+    pgs_id: str,
+    z_score: float | None,
+    selected_ancestry: str = "EUR",
 ) -> dict[str, Any]:
     out: dict[str, Any] = {
         "absolute_risk_text": "",
@@ -445,9 +458,13 @@ def _enrich_absolute_risk(
     if z_score is None:
         return out
 
-    bundle = catalog.absolute_risk_bundle(pgs_id, z_score)
+    bundle = catalog.absolute_risk_bundle(
+        pgs_id, z_score, selected_ancestry=selected_ancestry,
+    )
 
     # --- Heritability ---
+    from just_prs.trait_summary import sort_by_selected_ancestry
+
     h2_estimates = [est for est in bundle.estimates if est.h2_value is not None]
     heritability_metrics: list[dict[str, str]] = []
     if h2_estimates:
@@ -482,13 +499,23 @@ def _enrich_absolute_risk(
             if est.h2_source_detail:
                 detail += f", source detail={est.h2_source_detail}"
             h_detail_parts.append(detail)
-        out["heritability"] = "; ".join(h_parts)
         out["heritability_detail"] = " | ".join(h_detail_parts)
     else:
         out["heritability"] = "No mapped h²"
         out["heritability_detail"] = (
             bundle.heritability_detail
             or "No mapped h²-liability estimate is available for this trait."
+        )
+    heritability_metrics = sort_by_selected_ancestry(
+        heritability_metrics,
+        selected_ancestry,
+        label_key="population",
+    )
+    if heritability_metrics:
+        out["heritability"] = "; ".join(
+            f"{metric.get('population', 'Population')} h²={metric.get('h2', 'N/A')}"
+            + (f" ({metric.get('source')})" if metric.get("source") else "")
+            for metric in heritability_metrics
         )
     out["heritability_metrics"] = heritability_metrics
 
@@ -558,3 +585,81 @@ def _enrich_absolute_risk(
             out["absolute_risk_text"] = f"{user_pct:.1f}% (pop. avg: {pop_pct:.1f}%)"
 
     return out
+
+
+def apply_absolute_risk_to_row(
+    row: dict[str, Any],
+    risk: dict[str, Any],
+) -> dict[str, Any]:
+    """Overwrite a result row's absolute-risk / h² fields from a fresh estimate.
+
+    Clears stale compute-time ``1.00x`` snapshots when the bundle has no
+    usable estimate for this percentile / ancestry.
+    """
+    out = dict(row)
+    user_pct = risk.get("absolute_risk_percent")
+    pop_pct = risk.get("population_average_percent")
+    ratio = risk.get("risk_ratio_value")
+    text = str(risk.get("absolute_risk_text") or "").strip()
+    out["absolute_risk_text"] = text
+    out["absolute_risk_percent"] = user_pct
+    out["population_average_percent"] = pop_pct
+    out["risk_ratio_value"] = ratio
+    out["risk_ratio"] = ratio
+    out["absolute_risk_method"] = risk.get("absolute_risk_method") or ""
+    out["absolute_risk_detail"] = risk.get("absolute_risk_detail") or ""
+    out["risk_agreement"] = risk.get("risk_agreement") or ""
+    out["risk_estimates_by_method"] = risk.get("risk_estimates_by_method") or {}
+    out["risk_estimate_methods"] = risk.get("risk_estimate_methods") or []
+    out["heritability"] = risk.get("heritability") or "N/A"
+    out["heritability_detail"] = risk.get("heritability_detail") or ""
+    out["heritability_metrics"] = list(risk.get("heritability_metrics") or [])
+    if user_pct is not None and pop_pct is not None:
+        out["absolute_risk"] = text or f"{user_pct:.1f}% (pop. avg: {pop_pct:.1f}%)"
+        out["population_prevalence"] = float(pop_pct) / 100.0
+    else:
+        out["absolute_risk"] = text
+        out["population_prevalence"] = None
+    return out
+
+
+def refresh_absolute_risk_for_percentile(
+    catalog: "PRSCatalog",
+    pgs_id: str,
+    percentile: float | None,
+    selected_ancestry: str = "EUR",
+) -> dict[str, Any]:
+    """Recompute absolute-risk fields for a dashboard percentile and ancestry."""
+    if not pgs_id:
+        return _enrich_absolute_risk(catalog, "", None, selected_ancestry)
+    return _enrich_absolute_risk(
+        catalog,
+        pgs_id,
+        _compute_z_score(percentile),
+        selected_ancestry=selected_ancestry,
+    )
+
+
+def refresh_row_absolute_risk(
+    row: dict[str, Any],
+    catalog: "PRSCatalog",
+    percentile_source: str = "native",
+    selected_ancestry: str = "EUR",
+) -> dict[str, Any]:
+    """Recompute one result row's risk from its dashboard percentile / population.
+
+    Ignores the compute-time ``z_score`` so Quality / Population dropdowns
+    cannot keep a frozen ``1.00x`` snapshot.
+    """
+    from just_prs.trait_summary import resolve_row_percentile
+
+    pgs_id = str(row.get("pgs_id") or "")
+    percentile, _panel = resolve_row_percentile(
+        row,
+        percentile_source=percentile_source,
+        selected_ancestry=selected_ancestry,
+    )
+    risk = refresh_absolute_risk_for_percentile(
+        catalog, pgs_id, percentile, selected_ancestry=selected_ancestry,
+    )
+    return apply_absolute_risk_to_row(row, risk)

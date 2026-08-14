@@ -105,7 +105,9 @@ def synthetic_quality_score(
     else:
         cohort_factor = _clamp(math.log10(float(n_individuals)) / 5.5, 0.0, 1.0)
 
-    match_factor = 1.0 if match_rate is None else _clamp(float(match_rate), 0.0, 1.0)
+    match_factor = (
+        1.0 if match_rate is None else _clamp(_normalize_coverage(match_rate), 0.0, 1.0)
+    )
     harmonized_factor = _harmonized_penalty() if is_harmonized else 1.0
     return round(100.0 * discrimination * cohort_factor * match_factor * penalty * harmonized_factor, 1)
 
@@ -132,6 +134,14 @@ _MIN_RELIABLE_COVERAGE = 0.20
 _WELL_COVERED_COVERAGE = 0.50
 
 
+def _normalize_coverage(coverage: float) -> float:
+    """Accept a fraction (``0.43``) or a percent (``42.8``) and return 0–1."""
+    value = float(coverage)
+    if value > 1.0:
+        return value / 100.0
+    return value
+
+
 def classify_model_quality(
     coverage: float,
     auroc: float | None,
@@ -150,6 +160,7 @@ def classify_model_quality(
     design): AUROC is penalized by ``_HARMONIZED_AUROC_PENALTY`` before banding,
     and a harmonized score with no discrimination metric drops Moderate→Low.
     """
+    coverage = _normalize_coverage(coverage)
     if coverage < _MIN_RELIABLE_COVERAGE:
         return "Very Low", "red"
     if auroc is not None:
@@ -224,6 +235,7 @@ def rescale_quality_if_degenerate(
     tiers: list[str | None],
     scores: list[float | None],
     *,
+    coverages: list[float | None] | None = None,
     margin: float = _RELATIVE_LOW_MARGIN,
 ) -> list[str | None]:
     """Return relative tier keys when the absolute scale is degenerate, else ``tiers``.
@@ -231,12 +243,26 @@ def rescale_quality_if_degenerate(
     "Degenerate" = every (present) model sits in :data:`_TOP_QUALITY_KEYS`, so
     the absolute heatmap can't discriminate.  When some model is already below
     Moderate the absolute scale carries information and is left untouched.
+
+    Poorly covered models (``coverage < 0.50``) keep their absolute tier and
+    are never promoted to High.  A 6-million-variant IQ score at 43% match
+    must not become High just because it ranks first on published metadata.
     """
     present_tiers = [t for t in tiers if t]
     if not present_tiers or any(t not in _TOP_QUALITY_KEYS for t in present_tiers):
         return list(tiers)
     relative = relative_quality_keys(scores, margin=margin)
-    return relative if relative is not None else list(tiers)
+    if relative is None:
+        return list(tiers)
+    if coverages is None:
+        return relative
+    kept: list[str | None] = []
+    for key, original, coverage in zip(relative, tiers, coverages, strict=True):
+        if coverage is not None and _normalize_coverage(coverage) < _WELL_COVERED_COVERAGE:
+            kept.append(original)
+        else:
+            kept.append(key)
+    return kept
 
 
 #: Normalize any quality *label* (from ``classify_model_quality`` /
@@ -258,6 +284,7 @@ def resolve_quality_key(
     label: str | None = None,
     n_var: int | None = None,
     auroc: float | None = None,
+    coverage: float | None = None,
 ) -> str:
     """Resolve a model's quality tier key: ``high`` / ``moderate`` / ``low`` / ``very_low``.
 
@@ -267,15 +294,18 @@ def resolve_quality_key(
     to ``"low"`` while the chart used a separate variant-count heuristic).
 
     Prefers the genotype-aware quality *label* already attached to a scored
-    result (``classify_model_quality``).  Only when no label exists — e.g. a
-    reference-panel model shown for context that was never scored against a
-    genome — does it fall back to a metadata-only estimate from variant count
-    and AUROC.
+    result (``classify_model_quality``).  When a scored coverage is known but
+    no label was attached, classify from coverage + AUROC — never from variant
+    count.  Variant-count / AUROC-only fallback is for reference-context
+    models that were never scored against a genome.
     """
     if label:
         key = _QUALITY_LABEL_TO_KEY.get(label.strip().lower())
         if key:
             return key
+    if coverage is not None:
+        classified, _ = classify_model_quality(coverage, auroc)
+        return _QUALITY_LABEL_TO_KEY[classified.strip().lower()]
     if auroc is not None and auroc >= 0.7:
         return "high"
     if n_var is not None and n_var >= 100_000:

@@ -130,6 +130,36 @@ def test_genome_file_label_strips_normalized_suffix() -> None:
     assert _genome_file_label("/tmp/anton.parquet") == "anton"
 
 
+def test_trait_heritability_summary_orders_selected_ancestry_first() -> None:
+    rows = [
+        {
+            "heritability_metrics": [
+                {"population": "African", "h2": "0.210", "source": "Pan-UKBB"},
+                {"population": "Admixed American", "h2": "0.180", "source": "Pan-UKBB"},
+                {"population": "East Asian", "h2": "0.190", "source": "Pan-UKBB"},
+                {"population": "South Asian", "h2": "0.200", "source": "Pan-UKBB"},
+                {"population": "Combined population", "h2": "0.400", "source": "Pan-UKBB"},
+                {"population": "European", "h2": "0.550", "source": "Pan-UKBB"},
+            ],
+        },
+    ]
+
+    summary, _detail, metrics = _trait_heritability_summary(rows, selected_ancestry="EUR")
+
+    assert [metric["population"] for metric in metrics] == ["European"]
+    assert summary == "European h²=0.550 (Pan-UKBB)"
+    assert "Combined" not in summary
+
+    all_summary, _all_detail, all_metrics = _trait_heritability_summary(
+        rows, selected_ancestry="EUR", restrict_to_selected=False,
+    )
+    assert [metric["population"] for metric in all_metrics[:2]] == [
+        "European",
+        "Combined population",
+    ]
+    assert "Combined population h²=0.400" in all_summary
+
+
 def test_trait_heritability_summary_deduplicates_metrics() -> None:
     rows = [
         {
@@ -168,7 +198,10 @@ def test_trait_ai_prompt_prioritizes_risk_and_h2_over_agreement() -> None:
         "trait": "type 1 diabetes mellitus",
         "trait_efo_id": "MONDO_0005147",
         "n_models": 34,
+        "n_scoped": 9,
         "usable_models": 9,
+        "model_scope": "usable",
+        "scope_label": "based on 9 usable models, match ≥50%",
         "pgs_ids": "PGS001297, PGS004063",
         "genome_file": "livia.vcf.gz",
         "best_pgs_id": "PGS001297",
@@ -192,7 +225,8 @@ def test_trait_ai_prompt_prioritizes_risk_and_h2_over_agreement() -> None:
     prompt = build_prs_ai_prompt("trait_summary", row=row, limit=6000)
 
     assert "Genome/VCF input: livia.vcf.gz" in prompt
-    assert "Absolute risk (best model): 12.0% (pop. avg: 8.0%)" in prompt
+    assert "Absolute risk (most reliable of 9 usable models): 12.0% (pop. avg: 8.0%)" in prompt
+    assert "Most reliable of 9 usable models" in prompt
     assert "Heritability (h²): European h²=0.550 (Pan-UKBB)" in prompt
     assert "Priority: give a quick bottom-line risk interpretation first" in prompt
     assert "2. **Risk in real terms**" in prompt

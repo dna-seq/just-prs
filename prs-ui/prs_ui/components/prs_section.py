@@ -186,6 +186,27 @@ def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
     ]
     return rx.vstack(
         rx.hstack(
+            rx.text("Selected population:", size="2", weight="medium"),
+            rx.select(
+                list(SUPERPOPULATIONS),
+                value=state.selected_ancestry,
+                on_change=state.set_selected_ancestry,
+                size="1",
+            ),
+            rx.tooltip(
+                rx.icon("info", size=14, color="gray"),
+                content=(
+                    "Used for ancestry-ordered heritability/prevalence and, when "
+                    "'Percentiles vs selected population' is on, for trait-summary "
+                    "percentiles. AFR=African, AMR=American, EAS=East Asian, "
+                    "EUR=European, SAS=South Asian."
+                ),
+            ),
+            spacing="2",
+            align="center",
+            wrap="wrap",
+        ),
+        rx.hstack(
             rx.text("Reference populations:", size="2", weight="medium"),
             rx.badge("PRS-native default", color_scheme="blue", variant="soft", size="2"),
             rx.tooltip(
@@ -748,6 +769,69 @@ def prs_results_table(
     )
 
 
+_TRAIT_QUALITY_THRESHOLD_ITEMS: list[tuple[str, str]] = [
+    ("High quality", "high_quality"),
+    ("High + Moderate", "high_moderate"),
+    ("All models", "all"),
+]
+_TRAIT_POPULATION_ITEMS: list[tuple[str, str]] = [
+    ("Model-native", "native"),
+    *((f"{SUPERPOPULATION_LABELS[code]} ({code})", code) for code in SUPERPOPULATIONS),
+]
+
+
+def trait_summary_controls(state: type[rx.State]) -> rx.Component:
+    """Dashboard dropdowns that recompute the trait-card numbers."""
+    return rx.hstack(
+        rx.text("Quality:", size="1", weight="medium", color="gray"),
+        rx.select.root(
+            rx.select.trigger(placeholder="Quality threshold", size="1"),
+            rx.select.content(
+                *[
+                    rx.select.item(label, value=value)
+                    for label, value in _TRAIT_QUALITY_THRESHOLD_ITEMS
+                ],
+            ),
+            value=state.trait_model_scope,
+            on_change=state.set_trait_model_scope,
+            size="1",
+        ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "Which models Typical / Median and the risk cards use. "
+                "Switching this recomputes the selected median. "
+                "High quality = High-label models only. "
+                "High + Moderate includes both. All models uses every scored model. "
+                "Chart checkboxes only hide dots; they do not change these cards."
+            ),
+        ),
+        rx.text("Population:", size="1", weight="medium", color="gray"),
+        rx.select.root(
+            rx.select.trigger(placeholder="Population", size="1"),
+            rx.select.content(
+                *[
+                    rx.select.item(label, value=value)
+                    for label, value in _TRAIT_POPULATION_ITEMS
+                ],
+            ),
+            value=state.trait_dashboard_population,
+            on_change=state.set_trait_dashboard_population,
+            size="1",
+        ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "Population used for Typical / Your Percentile and risk cards. "
+                "Model-native keeps each score's own evaluation panel."
+            ),
+        ),
+        spacing="2",
+        align="center",
+        wrap="wrap",
+    )
+
+
 def trait_summary_table(
     state: type[rx.State],
     bell_curve_height: int = 340,
@@ -994,6 +1078,7 @@ def _trait_info_panel(state: type[rx.State]) -> rx.Component:
     return rx.cond(
         state.selected_result_id != "",
         rx.vstack(
+            trait_summary_controls(state),
             rx.hstack(
                 rx.text(info["trait"], size="2", weight="bold", trim="both"),  # type: ignore[index]
                 rx.cond(
@@ -1003,6 +1088,10 @@ def _trait_info_panel(state: type[rx.State]) -> rx.Component:
                         color_scheme="blue",
                         size="1",
                     ),
+                ),
+                rx.cond(
+                    info["scope_label"].to(str) != "None",  # type: ignore[union-attr]
+                    rx.text(info["scope_label"], size="1", color="gray"),  # type: ignore[index]
                 ),
                 spacing="2",
                 align="center",
@@ -1125,7 +1214,9 @@ def trait_results_chart_panel(
             align="center",
             spacing="2",
             width="100%",
+            wrap="wrap",
         ),
+        _trait_info_panel(state) if show_info_panel else rx.fragment(),
         rx.cond(
             state.selected_result_spec != {},
             rx.cond(
@@ -1169,7 +1260,6 @@ def trait_results_chart_panel(
                 width="100%",
             ),
         ),
-        _trait_info_panel(state) if show_info_panel else rx.fragment(),
         spacing="3",
         width="100%",
         padding="12px",

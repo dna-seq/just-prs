@@ -32,7 +32,6 @@ import polars as pl
 from dagster import (
     AssetDep,
     AssetExecutionContext,
-    AssetIn,
     Output,
     SourceAsset,
     asset,
@@ -40,9 +39,17 @@ from dagster import (
 
 from just_prs.chip_coverage import CHIPS, CHIPS_BY_ID, compute_chip_coverage
 from just_prs.ftp import PGS_FTP_BASE, PGS_SCORES_LIST_URL, bulk_download_scoring_files, list_all_pgs_ids
+from just_prs.canary_audit import (
+    catalog_flags_path,
+    flag_canary_collapses,
+    parse_canary_samples_env,
+    score_canary_catalog,
+    write_catalog_flags,
+)
 from just_prs.hf import (
     DEFAULT_HF_PERCENTILES_REPO,
     pull_reference_distributions,
+    push_catalog_scoring_flags,
     push_ld_proxy_table,
     push_reference_audit_sidecars,
     push_chip_coverage,
@@ -492,17 +499,17 @@ def chip_coverage(
 
 @asset(
     group_name="upload",
-    ins={"coverage": AssetIn("chip_coverage")},
+    deps=[AssetDep("chip_coverage")],
     description=(
         "Uploads chip_coverage.parquet to the HuggingFace dataset "
         "just-dna-seq/prs-percentiles. Published so the just-prs UI can label, per "
         "consumer chip, which PRS models are usable on raw array data without "
-        "imputation. Named after the destination per lineage convention."
+        "imputation. Named after the destination per lineage convention. "
+        "Reads the parquet from cache (never via AssetIn pickle)."
     ),
 )
 def hf_chip_coverage(
     context: AssetExecutionContext,
-    coverage: pl.DataFrame,
     cache_dir_resource: CacheDirResource,
     hf_resource: HuggingFaceResource,
 ) -> Output[str]:
@@ -511,6 +518,12 @@ def hf_chip_coverage(
     token = hf_resource.get_token()
     cache_dir = cache_dir_resource.get_path()
     parquet_path = cache_dir / "percentiles" / "chip_coverage.parquet"
+    if not parquet_path.exists():
+        raise FileNotFoundError(
+            f"chip_coverage.parquet missing at {parquet_path}. "
+            "Materialize chip_coverage first."
+        )
+    coverage = pl.read_parquet(parquet_path)
 
     test_spec = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
     if test_spec:
@@ -832,17 +845,17 @@ def reference_allele_universe(
 
 @asset(
     group_name="upload",
-    ins={"universe": AssetIn("reference_allele_universe")},
+    deps=[AssetDep("reference_allele_universe")],
     description=(
         "Uploads reference_allele_universe.parquet to the HuggingFace dataset "
         "just-dna-seq/pgs-catalog (data/reference/). Published so the just-prs "
         "runtime can fill missing reference alleles from a small parquet instead of "
-        "shipping the 3 GB genome. Named after the destination per lineage convention."
+        "shipping the 3 GB genome. Named after the destination per lineage convention. "
+        "Reads the parquet from cache (never via AssetIn pickle)."
     ),
 )
 def hf_reference_allele_universe(
     context: AssetExecutionContext,
-    universe: pl.DataFrame,
     cache_dir_resource: CacheDirResource,
     hf_resource: HuggingFaceResource,
 ) -> Output[str]:
@@ -854,12 +867,18 @@ def hf_reference_allele_universe(
     build = _pipeline_genome_build()
     filename = reference_allele_universe_filename(build)
     parquet_path = cache_dir_resource.get_path() / "percentiles" / filename
+    if not parquet_path.exists():
+        raise FileNotFoundError(
+            f"{filename} missing at {parquet_path}. "
+            "Materialize reference_allele_universe first."
+        )
+    n_rows = pl.scan_parquet(parquet_path).select(pl.len()).collect().item()
 
     if os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip():
         context.log.info(f"TEST MODE: skipping HuggingFace push of {filename}.")
         context.add_output_metadata({
             "test_mode": True, "hf_push_skipped": True, "genome_build": build,
-            "universe_path": str(parquet_path), "n_rows": universe.height,
+            "universe_path": str(parquet_path), "n_rows": n_rows,
         })
         return Output(str(parquet_path))
 
@@ -872,7 +891,7 @@ def hf_reference_allele_universe(
     context.log.info(f"Pushed {filename} to {url}")
     context.add_output_metadata({
         "repo_id": repo_id, "url": url, "genome_build": build,
-        "universe_path": str(parquet_path), "n_rows": universe.height,
+        "universe_path": str(parquet_path), "n_rows": n_rows,
     })
     return Output(url)
 
@@ -917,8 +936,7 @@ def reference_panel(
 
 @asset(
     group_name="compute",
-    ins={"ref_dir": AssetIn("reference_panel")},
-    deps=[AssetDep("scoring_files_parquet")],
+    deps=[AssetDep("reference_panel"), AssetDep("scoring_files_parquet")],
     description=(
         "Scores all PGS IDs (or a test subset) against the reference panel in a "
         "single process using pgenlib + polars. Depends on the scoring_files_parquet "
@@ -927,12 +945,13 @@ def reference_panel(
         "Failures are logged and tracked but do not abort the batch. "
         "Produces per-sample scores, aggregated per-superpopulation distribution "
         "statistics, and a quality report. "
-        "The distributions parquet is the input for hf_prs_percentiles."
+        "The distributions parquet is the input for hf_prs_percentiles. "
+        "Resolves the panel path from cache (never via AssetIn/Path pickle) — "
+        "the default FS IOManager cannot reliably load Output[Path] across runs."
     ),
 )
 def reference_scores(
     context: AssetExecutionContext,
-    ref_dir: Path,
     cache_dir_resource: CacheDirResource,
 ) -> Output[pl.DataFrame]:
     """Score all PGS IDs against the reference panel and aggregate distributions."""
@@ -941,6 +960,9 @@ def reference_scores(
 
     cache_dir = cache_dir_resource.get_path()
     panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+    # Reconstruct from cache — do NOT AssetIn the upstream Path (IOManager pickle
+    # at data/output/dagster/storage/reference_panel is wiped across sessions).
+    ref_dir = download_reference_panel(cache_dir=cache_dir, panel=panel)
     test_spec = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
 
     context.log.info("Fetching PGS ID list from EBI FTP...")
@@ -1260,6 +1282,15 @@ def _write_distribution_audit_summary(
     return summary
 
 
+def _load_canary_flags_df(cache_dir: Path) -> pl.DataFrame | None:
+    """Read catalog scoring flags if the parquet is present and readable."""
+    path = catalog_flags_path(cache_dir)
+    if not path.exists():
+        return None
+    df = pl.read_parquet(path)
+    return df if df.height > 0 else None
+
+
 @asset(
     group_name="compute",
     description=(
@@ -1310,7 +1341,11 @@ def reference_percentile_audit(
 
         distributions = pl.read_parquet(dist_path)
         quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
-        issue_df = reference_distribution_audit_issues(distributions, quality_df)
+        issue_df = reference_distribution_audit_issues(
+            distributions,
+            quality_df,
+            canary_flags_df=_load_canary_flags_df(cache_dir),
+        )
         issue_df.write_parquet(issue_report_path)
 
         error_issue_df = issue_df.filter(pl.col("severity") == "ERROR")
@@ -1398,14 +1433,181 @@ def reference_percentile_audit(
     return Output(str(audit_summary_path))
 
 
+@asset(
+    group_name="compute",
+    description=(
+        "Score every catalog PGS on caller-supplied canary VCFs (``--vcf``), "
+        "mark scores unreliable when a majority land near percentile 0, and push "
+        "catalog_scoring_flags.parquet plus the percentile audit sidecar. "
+        "Does not recompute 1000G reference scores."
+    ),
+)
+def canary_collapse_audit(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Quarantine canary-collapsed scores from the catalog and percentiles."""
+    panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+    cache_dir = cache_dir_resource.get_path()
+    percentiles_dir = cache_dir / "percentiles"
+    percentiles_dir.mkdir(parents=True, exist_ok=True)
+    dist_path = percentiles_dir / f"{panel}_distributions.parquet"
+    quality_path = percentiles_dir / f"{panel}_quality.parquet"
+    issue_report_path = percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
+    audit_summary_path = percentiles_dir / f"{panel}_distribution_audit_summary.json"
+    vcf_env = os.environ.get("PRS_CANARY_VCFS", "").strip()
+    pgs_ids_raw = os.environ.get("PRS_CANARY_PGS_IDS", "").strip()
+    limit_raw = os.environ.get("PRS_CANARY_LIMIT", "").strip()
+    ancestry = os.environ.get("PRS_CANARY_ANCESTRY", "EUR").strip() or "EUR"
+    genome_build = os.environ.get("PRS_CANARY_BUILD", "").strip() or None
+    skip_existing = os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() not in {
+        "1", "true", "yes",
+    }
+    progress_every_raw = os.environ.get("PRS_PIPELINE_PROGRESS_EVERY", "10").strip()
+    progress_every = int(progress_every_raw) if progress_every_raw else 10
+    n_scored = 0
+    n_cached = 0
+    n_failed = 0
+    sample_labels: list[str] = []
+
+    with resource_tracker("canary_collapse_audit", context=context):
+        samples = parse_canary_samples_env(vcf_env, cache_dir) if vcf_env else []
+        sample_labels = [sample.label for sample in samples]
+        if len(samples) < 2:
+            raise ValueError(
+                "canary_collapse_audit needs at least two --vcf samples "
+                "(pipeline canary-audit --vcf ... --vcf ...)."
+            )
+        requested_ids = [part.strip() for part in pgs_ids_raw.split(",") if part.strip()] or None
+        limit = int(limit_raw) if limit_raw else None
+        context.log.info(
+            f"Scoring catalog on {len(samples)} canary VCF(s): "
+            + ", ".join(f"{sample.label}={sample.vcf_path}" for sample in samples)
+        )
+        rows, progress = score_canary_catalog(
+            samples,
+            cache_dir,
+            pgs_ids=requested_ids,
+            limit=limit,
+            ancestry=ancestry,
+            panel=panel,
+            genome_build=genome_build,
+            skip_existing=skip_existing,
+            progress_every=progress_every,
+            log=context.log.info,
+        )
+        n_scored = progress.n_ok
+        n_cached = progress.n_cached
+        n_failed = progress.n_failed
+        flags_df = flag_canary_collapses(rows, n_samples=len(samples))
+        flags_path = write_catalog_flags(flags_df, cache_dir)
+        excluded_ids = (
+            sorted(flags_df["pgs_id"].unique().to_list()) if flags_df.height > 0 else []
+        )
+        context.log.info(
+            f"Canary collapse flags: {flags_df.height} PGS IDs from "
+            f"{rows.height} cached canary result rows. Excluded: {excluded_ids}"
+        )
+
+        if not dist_path.exists():
+            pull_reference_distributions(
+                percentiles_dir,
+                repo_id=hf_resource.percentiles_repo,
+                token=hf_resource.get_token(),
+                panel=panel,
+            )
+        if not dist_path.exists():
+            raise FileNotFoundError(
+                f"Reference distributions not found: {dist_path}. "
+                "Pull percentiles first; this job does not recompute 1000G scores."
+            )
+
+        distributions = pl.read_parquet(dist_path)
+        quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
+        issue_df = reference_distribution_audit_issues(
+            distributions,
+            quality_df,
+            canary_flags_df=flags_df,
+        )
+        issue_df.write_parquet(issue_report_path)
+        published_pgs_ids = distributions["pgs_id"].n_unique() if distributions.height > 0 else 0
+        error_ids = (
+            sorted(issue_df.filter(pl.col("severity") == "ERROR")["pgs_id"].unique().to_list())
+            if issue_df.height > 0
+            else []
+        )
+        audit_summary = _write_distribution_audit_summary(
+            issue_df=issue_df,
+            path=audit_summary_path,
+            panel=panel,
+            input_rows=distributions.height,
+            published_rows=distributions.height,
+            input_pgs_ids=published_pgs_ids,
+            published_pgs_ids=published_pgs_ids,
+            fully_removed_pgs_ids=error_ids,
+        )
+
+        hf_flags_uploaded = False
+        hf_audit_uploaded = False
+        hf_token = hf_resource.get_token()
+        if hf_token:
+            push_catalog_scoring_flags(
+                flags_path,
+                repo_id=hf_resource.catalog_repo,
+                token=hf_token,
+            )
+            hf_flags_uploaded = True
+            push_reference_audit_sidecars(
+                quality_report_path=quality_path if quality_path.exists() else None,
+                issue_report_path=issue_report_path,
+                audit_summary_path=audit_summary_path,
+                repo_id=hf_resource.percentiles_repo,
+                token=hf_token,
+                panel=panel,
+            )
+            hf_audit_uploaded = True
+            context.log.info(
+                f"Uploaded catalog flags to {hf_resource.catalog_repo} and "
+                f"audit sidecars to {hf_resource.percentiles_repo}."
+            )
+        else:
+            context.log.warning(
+                "HF_TOKEN is not set; canary flags and audit sidecars were written "
+                "locally but not uploaded to HuggingFace."
+            )
+
+    context.add_output_metadata({
+        "panel": panel,
+        "canary_samples": sample_labels,
+        "n_canary_result_rows": rows.height,
+        "n_scored": n_scored,
+        "n_cached": n_cached,
+        "n_failed": n_failed,
+        "n_flagged_pgs_ids": flags_df.height,
+        "flagged_pgs_ids": excluded_ids,
+        "catalog_flags_path": str(flags_path),
+        "distribution_quality_issues_path": str(issue_report_path),
+        "hf_flags_uploaded": hf_flags_uploaded,
+        "hf_audit_uploaded": hf_audit_uploaded,
+        "hf_catalog_repo": hf_resource.catalog_repo,
+        "hf_percentiles_repo": hf_resource.percentiles_repo,
+        "issue_counts_by_type": audit_summary["issue_counts_by_type"],
+    })
+    return Output(str(flags_path))
+
+
 # ---------------------------------------------------------------------------
 # Upload asset — push to HuggingFace (represents the HF dataset as an asset)
 # ---------------------------------------------------------------------------
 
 @asset(
     group_name="upload",
-    ins={"distributions": AssetIn("reference_scores")},
-    deps=[AssetDep("cleaned_pgs_metadata"), AssetDep("trait_prevalence")],
+    deps=[
+        AssetDep("reference_scores"),
+        AssetDep("cleaned_pgs_metadata"),
+        AssetDep("trait_prevalence"),
+    ],
     description=(
         "Enriches the raw distribution statistics with cleaned PGS Catalog metadata "
         "(trait names, EFO terms, best performance metrics like AUROC/OR/C-index, "
@@ -1414,12 +1616,12 @@ def reference_percentile_audit(
         "just-dna-seq/prs-percentiles. This makes the population-level PRS percentiles "
         "self-contained and publicly available. End-users of the just-prs library pull "
         "this dataset via PRSCatalog.percentile() to compare their personal scores "
-        "against the reference panel. This asset represents the final published artefact."
+        "against the reference panel. This asset represents the final published artefact. "
+        "Reads `{panel}_distributions.parquet` from cache (never via AssetIn pickle)."
     ),
 )
 def hf_prs_percentiles(
     context: AssetExecutionContext,
-    distributions: pl.DataFrame,
     cache_dir_resource: CacheDirResource,
     hf_resource: HuggingFaceResource,
 ) -> Output[str]:
@@ -1437,6 +1639,12 @@ def hf_prs_percentiles(
         percentiles_dir = percentiles_dir / "test"
     percentiles_dir.mkdir(parents=True, exist_ok=True)
     parquet_path = percentiles_dir / f"{panel}_distributions.parquet"
+    if not parquet_path.exists():
+        raise FileNotFoundError(
+            f"{parquet_path.name} missing at {parquet_path}. "
+            "Materialize reference_scores first."
+        )
+    distributions = pl.read_parquet(parquet_path)
 
     min_coverage_str = os.environ.get("PRS_PIPELINE_MIN_COVERAGE", "0.90").strip()
     min_coverage = float(min_coverage_str) if min_coverage_str else 0.90
@@ -1448,7 +1656,11 @@ def hf_prs_percentiles(
         input_pgs_ids_set = set(distributions["pgs_id"].unique().to_list()) if distributions.height > 0 else set()
         quality_path = percentiles_dir / f"{panel}_quality.parquet"
         quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
-        issue_df = reference_distribution_audit_issues(distributions, quality_df)
+        issue_df = reference_distribution_audit_issues(
+            distributions,
+            quality_df,
+            canary_flags_df=_load_canary_flags_df(cache_dir),
+        )
         issue_df.write_parquet(issue_report_path)
         n_quarantined_rows = 0
         n_error_rows = issue_df.filter(pl.col("severity") == "ERROR").height
@@ -1604,8 +1816,7 @@ _LD_PROXY_CHIP_BUILD_COMBOS = [
 
 @asset(
     group_name="compute",
-    ins={"ref_dir": AssetIn("reference_panel")},
-    deps=[AssetDep("scoring_files_parquet")],
+    deps=[AssetDep("reference_panel"), AssetDep("scoring_files_parquet")],
     description=(
         "Builds LD-proxy lookup tables for consumer genotyping arrays. For each "
         "PRS variant not directly typed on the chip, finds the best proxy among "
@@ -1614,17 +1825,19 @@ _LD_PROXY_CHIP_BUILD_COMBOS = [
         "(panel, chip, build) combination, so full-catalog coverage is built "
         "as a resumable per-PGS batch rather than one catalog-wide union table. "
         "Currently builds GSA v3 × GRCh38; add GRCh37 only when build-matched "
-        "typed positions are available."
+        "typed positions are available. "
+        "Resolves the panel path from cache (never via AssetIn/Path pickle)."
     ),
 )
 def ld_proxy_table(
     context: AssetExecutionContext,
-    ref_dir: Path,
     cache_dir_resource: CacheDirResource,
 ) -> Output[dict[str, str]]:
     """Build per-PGS LD-proxy tables for each chip × build combination."""
     cache_dir = cache_dir_resource.get_path()
     panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+    # Reconstruct from cache — same Path/AssetIn anti-pattern as reference_scores.
+    ref_dir = download_reference_panel(cache_dir=cache_dir, panel=panel)
     percentiles_dir = cache_dir / "percentiles"
     percentiles_dir.mkdir(parents=True, exist_ok=True)
     no_cache = _no_cache()
@@ -1753,18 +1966,18 @@ def ld_proxy_table(
 
 @asset(
     group_name="upload",
-    ins={"ld_tables": AssetIn("ld_proxy_table")},
+    deps=[AssetDep("ld_proxy_table")],
     description=(
         "Uploads the merged LD-proxy table parquet (one deduplicated table per "
         "panel × chip × build) to the HuggingFace dataset just-dna-seq/prs-percentiles. "
         "Published so compute_array_prs() can pull the single table once and apply "
         "LD-proxy substitution for consumer array users. Named after the destination "
-        "per lineage convention."
+        "per lineage convention. Resolves table paths from cache (never via AssetIn "
+        "pickle of the upstream path dict)."
     ),
 )
 def hf_ld_proxy_table(
     context: AssetExecutionContext,
-    ld_tables: dict[str, str],
     cache_dir_resource: CacheDirResource,
     hf_resource: HuggingFaceResource,
 ) -> Output[str]:
@@ -1772,6 +1985,11 @@ def hf_ld_proxy_table(
     repo_id = hf_resource.percentiles_repo
     token = hf_resource.get_token()
     panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+    cache_dir = cache_dir_resource.get_path()
+    ld_tables = {
+        f"{panel}_{chip}_{build}": str(ld_proxy_table_path(cache_dir, chip, build, panel))
+        for chip, build in _LD_PROXY_CHIP_BUILD_COMBOS
+    }
 
     test_spec = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
     limit_spec = os.environ.get("PRS_LD_LIMIT_TARGETS", "").strip()
@@ -1787,14 +2005,9 @@ def hf_ld_proxy_table(
 
     pushed = 0
     with resource_tracker("hf_ld_proxy_table", context=context):
-        # ld_tables maps "{panel}_{chip}_{build}" → merged single-table path.
         for chip, build in _LD_PROXY_CHIP_BUILD_COMBOS:
             label = f"{panel}_{chip}_{build}"
-            path_str = ld_tables.get(label)
-            if path_str is None:
-                context.log.warning(f"No merged LD proxy table for {label}, skipping upload.")
-                continue
-            parquet_path = Path(path_str)
+            parquet_path = Path(ld_tables[label])
             if not parquet_path.exists():
                 context.log.warning(f"LD proxy table file missing: {parquet_path}, skipping upload.")
                 continue

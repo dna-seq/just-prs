@@ -1170,6 +1170,49 @@ def _download_builtin_vcf(alias: str, dest: Path) -> None:
     console.print(f"[green]Downloaded {dest.name} ({downloaded // (1024*1024)} MB)[/green]")
 
 
+def _parse_vcf_spec(spec: str) -> tuple[str, str]:
+    """Parse ``Label=path_or_alias`` into ``(label, path_or_alias)``.
+
+    Falls back to ``(stem_of_path, path_or_alias)`` when no ``=`` is present.
+    """
+    if "=" in spec:
+        label, _, path_part = spec.partition("=")
+        return label.strip(), path_part.strip()
+    stem = Path(spec).stem
+    for suffix in (".vcf", ".hard-filtered", ".g"):
+        if stem.endswith(suffix):
+            stem = stem[: -len(suffix)]
+    return stem or "Sample", spec
+
+
+def _resolve_sample_build(vcf_path: Path, build_override: str | None) -> str:
+    """Resolve the genome build to score a VCF against.
+
+    Auto-detects from the VCF header (contig lengths / assembly tags). An
+    explicit ``--build`` wins but a contradiction with the header is warned
+    loudly, because a build mismatch silently matches ~0 scoring variants.
+    """
+    from just_prs.vcf import detect_genome_build
+
+    detected = detect_genome_build(vcf_path)
+    if build_override:
+        if detected and detected != build_override:
+            console.print(
+                f"[bold yellow]⚠ --build {build_override} contradicts the VCF header "
+                f"(detected {detected}). Scoring with {build_override} will match almost "
+                f"no variants if the header is right — drop --build to use the detected build.[/bold yellow]"
+            )
+        return build_override
+    if detected:
+        console.print(f"[dim]Genome build auto-detected: {detected}[/dim]")
+        return detected
+    console.print(
+        "[yellow]Could not detect genome build from the VCF header; assuming GRCh38. "
+        "Pass --build GRCh37 if this sample uses GRCh37 coordinates.[/yellow]"
+    )
+    return "GRCh38"
+
+
 def _resolve_vcf(vcf_or_alias: str, cache_dir: Path | None = None) -> Path:
     """Resolve a VCF path or alias name to an existing file Path.
 
@@ -2135,7 +2178,12 @@ def reference_audit(
         source = "sidecar"
     else:
         quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
-        issues = reference_distribution_audit_issues(dist_df, quality_df)
+        from just_prs.canary_audit import catalog_flags_path
+        flags_path = catalog_flags_path(cache)
+        canary_flags = pl.read_parquet(flags_path) if flags_path.exists() else None
+        issues = reference_distribution_audit_issues(
+            dist_df, quality_df, canary_flags_df=canary_flags,
+        )
         source = "recomputed"
 
     err_ids = issues.filter(pl.col("severity") == "ERROR").select("pgs_id").unique()
@@ -2957,7 +3005,7 @@ def plot_bell_curve_cmd(
     pgs_id: Annotated[str, typer.Argument(help="PGS score ID (e.g. PGS000001)")],
     output: Annotated[Path, typer.Option("--output", "-o", help="Output file (.png, .svg, .html, .json)")],
     vcf: Annotated[
-        Optional[str], typer.Option("--vcf", "-v", help="VCF file path or alias (e.g. 'anton'). Auto-computes PRS.")
+        Optional[list[str]], typer.Option("--vcf", "-v", help="VCF file path or alias, optionally with label: Label=/path. Repeat for multi-sample.")
     ] = None,
     ancestry: Annotated[
         str, typer.Option("--ancestry", "-a", help="Superpopulation code (AFR, AMR, EAS, EUR, SAS)")
@@ -2966,8 +3014,8 @@ def plot_bell_curve_cmd(
         Optional[float], typer.Option("--user-score", "-s", help="User's PRS score to mark on the curve")
     ] = None,
     build: Annotated[
-        str, typer.Option("--build", "-b", help="Genome build (used with --vcf)")
-    ] = "GRCh38",
+        Optional[str], typer.Option("--build", "-b", help="Genome build override (auto-detected from the VCF header by default)")
+    ] = None,
     width: Annotated[int, typer.Option("--width", help="Chart width in pixels")] = 800,
     height: Annotated[int, typer.Option("--height", help="Chart height in pixels")] = 350,
     no_cache: Annotated[
@@ -2984,15 +3032,16 @@ def plot_bell_curve_cmd(
 
     Use --vcf (path or alias) to auto-compute PRS and mark it on the curve.
     Use --user-score to mark a pre-computed score directly.
+    Multiple --vcf flags compare samples on the same curve.
 
     \b
     Examples:
       prs plot bell-curve PGS000001 -o bell.html
       prs plot bell-curve PGS000001 -o bell.html -a AFR --user-score 0.274
       prs plot bell-curve PGS000001 -o bell.html --vcf livia
-      prs plot bell-curve PGS000001 -o bell.html --vcf anton -a EUR
+      prs plot bell-curve PGS000001 -o bell.html --vcf Anton=anton --vcf Livia=livia
     """
-    from just_prs.viz import plot_prs_bell_curve, save_chart
+    from just_prs.viz import plot_prs_bell_curve, save_chart, bell_curve_report_html
 
     pgs_id = _validate_pgs_id(pgs_id)
 
@@ -3001,27 +3050,106 @@ def plot_bell_curve_cmd(
         raise typer.Exit(code=1)
 
     score: float | None = user_score
+    multi_scores: dict[str, float] | None = None
+    sample_name: str | None = None
+    prs_result_data: dict | list[dict] | None = None
+
+    cache = cache_dir or resolve_cache_dir()
+    catalog = PRSCatalog(cache_dir=cache)
+
     if vcf:
-        vcf_path = _resolve_vcf(vcf, cache_dir)
-        cache = cache_dir or resolve_cache_dir()
-        hit = None if no_cache else _get_cached_result(vcf_path, pgs_id, build, ancestry, cache)
-        if hit is not None:
-            score = hit["score"]
-            console.print(f"[dim](cached)[/dim] Score: [green]{score:.6f}[/green]")
+        vcf_specs = [_parse_vcf_spec(spec) for spec in vcf]
+
+        if len(vcf_specs) == 1:
+            label, vcf_str = vcf_specs[0]
+            vcf_path = _resolve_vcf(vcf_str, cache_dir)
+            sample_name = label
+            sample_build = _resolve_sample_build(vcf_path, build)
+            hit = None if no_cache else _get_cached_result(vcf_path, pgs_id, sample_build, ancestry, cache)
+            if hit is not None:
+                score = hit["score"]
+                prs_result_data = {**hit, "sample_name": label}
+                console.print(f"[dim](cached)[/dim] Score: [green]{score:.6f}[/green]")
+            else:
+                console.print(f"Computing PRS for [cyan]{pgs_id}[/cyan] on {vcf_path} ({sample_build})...")
+                result = compute_prs(
+                    vcf_path=vcf_path,
+                    scoring_file=pgs_id,
+                    genome_build=sample_build,
+                    cache_dir=cache,
+                    pgs_id=pgs_id,
+                )
+                pctl_result = catalog.percentile_full(
+                    result.score, result.pgs_id, ancestry=ancestry,
+                    weight_mass_coverage=result.weight_mass_coverage,
+                    user_match_rate=result.match_rate,
+                )
+                score = result.score
+                score_info = catalog.score_info_row(pgs_id, genome_build=sample_build)
+                rd: dict = {
+                    "pgs_id": pgs_id,
+                    "score": result.score,
+                    "percentile": pctl_result.percentile,
+                    "z_score": pctl_result.z_score,
+                    "match_rate": result.match_rate,
+                    "variants_matched": result.variants_matched,
+                    "variants_total": result.variants_total,
+                    "reliable": pctl_result.reliable,
+                    "sample_name": label,
+                }
+                if score_info:
+                    rd["trait_reported"] = score_info.get("trait_reported", "")
+                    rd["score_name"] = score_info.get("name", "")
+                    rd["quality_label"] = score_info.get("quality_label", "")
+                prs_result_data = rd
+                _put_cached_result(vcf_path, pgs_id, sample_build, ancestry, rd, cache)
+                if not pctl_result.reliable:
+                    console.print(f"  [yellow]⚠ {pctl_result.caveat}[/yellow]")
+                console.print(
+                    f"Score: [green]{score:.6f}[/green] (matched {result.variants_matched}/{result.variants_total})"
+                    f"  percentile={pctl_result.percentile}"
+                )
         else:
-            console.print(f"Computing PRS for [cyan]{pgs_id}[/cyan] on {vcf_path}...")
-            result = compute_prs(
-                vcf_path=vcf_path,
-                scoring_file=pgs_id,
-                genome_build=build,
-                cache_dir=cache,
-                pgs_id=pgs_id,
-            )
-            score = result.score
-            _put_cached_result(vcf_path, pgs_id, build, ancestry, {
-                "pgs_id": pgs_id, "score": score, "match_rate": result.match_rate,
-            }, cache)
-            console.print(f"Score: [green]{score:.6f}[/green] (matched {result.variants_matched}/{result.variants_total})")
+            multi_scores = {}
+            multi_results: list[dict] = []
+            for label, vcf_str in vcf_specs:
+                vcf_path = _resolve_vcf(vcf_str, cache_dir)
+                sample_build = _resolve_sample_build(vcf_path, build)
+                hit = None if no_cache else _get_cached_result(vcf_path, pgs_id, sample_build, ancestry, cache)
+                if hit is not None:
+                    multi_scores[label] = hit["score"]
+                    multi_results.append({**hit, "sample_name": label})
+                    console.print(f"[dim](cached)[/dim] {label}: [green]{hit['score']:.6f}[/green] ({sample_build})")
+                else:
+                    console.print(f"Computing PRS for [cyan]{pgs_id}[/cyan] on {label} ({sample_build})...")
+                    result = compute_prs(
+                        vcf_path=vcf_path,
+                        scoring_file=pgs_id,
+                        genome_build=sample_build,
+                        cache_dir=cache,
+                        pgs_id=pgs_id,
+                    )
+                    pctl_result = catalog.percentile_full(
+                        result.score, result.pgs_id, ancestry=ancestry,
+                        weight_mass_coverage=result.weight_mass_coverage,
+                        user_match_rate=result.match_rate,
+                    )
+                    multi_scores[label] = result.score
+                    s_rd = {
+                        "pgs_id": pgs_id,
+                        "score": result.score,
+                        "percentile": pctl_result.percentile,
+                        "z_score": pctl_result.z_score,
+                        "match_rate": result.match_rate,
+                        "variants_matched": result.variants_matched,
+                        "variants_total": result.variants_total,
+                        "reliable": pctl_result.reliable,
+                        "sample_name": label,
+                    }
+                    multi_results.append(s_rd)
+                    _put_cached_result(vcf_path, pgs_id, sample_build, ancestry, s_rd, cache)
+                    console.print(f"{label}: [green]{result.score:.6f}[/green] (matched {result.variants_matched}/{result.variants_total})")
+            prs_result_data = multi_results
 
     dists, _ = _load_distributions(cache_dir, panel)
 
@@ -3033,8 +3161,18 @@ def plot_bell_curve_cmd(
         ancestry=ancestry,
         width=width,
         height=height,
+        multi_user_scores=multi_scores,
+        sample_name=sample_name,
     )
-    save_chart(chart, output)
+    if output.suffix.lower() == ".html" and prs_result_data:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        html = bell_curve_report_html(
+            chart, pgs_id, ancestry=ancestry,
+            sample_name=sample_name, prs_results=prs_result_data,
+        )
+        output.write_text(html, encoding="utf-8")
+    else:
+        save_chart(chart, output)
     console.print(f"[green]Saved to {output.resolve()}[/green]")
 
 
@@ -3049,8 +3187,8 @@ def plot_multi_ancestry_cmd(
         Optional[float], typer.Option("--user-score", "-s", help="User's PRS score to mark on the chart")
     ] = None,
     build: Annotated[
-        str, typer.Option("--build", "-b", help="Genome build (used with --vcf)")
-    ] = "GRCh38",
+        Optional[str], typer.Option("--build", "-b", help="Genome build override (auto-detected from the VCF header by default)")
+    ] = None,
     ancestries: Annotated[
         Optional[str], typer.Option("--ancestries", help="Comma-separated superpopulation codes (default: all)")
     ] = None,
@@ -3087,21 +3225,22 @@ def plot_multi_ancestry_cmd(
     if vcf:
         vcf_path = _resolve_vcf(vcf, cache_dir)
         cache = cache_dir or resolve_cache_dir()
-        hit = None if no_cache else _get_cached_result(vcf_path, pgs_id, build, "EUR", cache)
+        sample_build = _resolve_sample_build(vcf_path, build)
+        hit = None if no_cache else _get_cached_result(vcf_path, pgs_id, sample_build, "EUR", cache)
         if hit is not None:
             score = hit["score"]
             console.print(f"[dim](cached)[/dim] Score: [green]{score:.6f}[/green]")
         else:
-            console.print(f"Computing PRS for [cyan]{pgs_id}[/cyan] on {vcf_path}...")
+            console.print(f"Computing PRS for [cyan]{pgs_id}[/cyan] on {vcf_path} ({sample_build})...")
             result = compute_prs(
                 vcf_path=vcf_path,
                 scoring_file=pgs_id,
-                genome_build=build,
+                genome_build=sample_build,
                 cache_dir=cache,
                 pgs_id=pgs_id,
             )
             score = result.score
-            _put_cached_result(vcf_path, pgs_id, build, "EUR", {
+            _put_cached_result(vcf_path, pgs_id, sample_build, "EUR", {
                 "pgs_id": pgs_id, "score": score, "match_rate": result.match_rate,
             }, cache)
             console.print(f"Score: [green]{score:.6f}[/green] (matched {result.variants_matched}/{result.variants_total})")
@@ -3130,7 +3269,7 @@ def plot_trait_cmd(
     trait: Annotated[str, typer.Argument(help="Trait name or substring (e.g. 'BMI', 'type 2 diabetes')")],
     output: Annotated[Path, typer.Option("--output", "-o", help="Output file (.png, .svg, .html, .json)")],
     vcf: Annotated[
-        Optional[str], typer.Option("--vcf", "-v", help="VCF file path or alias (e.g. 'anton', 'livia'). Auto-computes PRS for the trait.")
+        Optional[list[str]], typer.Option("--vcf", "-v", help="VCF file path or alias, optionally with label: Label=/path/to/file.vcf. Repeat for multi-sample comparison.")
     ] = None,
     ancestry: Annotated[
         str, typer.Option("--ancestry", "-a", help="Superpopulation code (AFR, AMR, EAS, EUR, SAS)")
@@ -3139,8 +3278,11 @@ def plot_trait_cmd(
         Optional[Path], typer.Option("--results", "-r", help="JSON file with user PRS results (list of {pgs_id, score, ...})")
     ] = None,
     build: Annotated[
-        str, typer.Option("--build", "-b", help="Genome build (used with --vcf)")
-    ] = "GRCh38",
+        Optional[str], typer.Option("--build", "-b", help="Genome build override (auto-detected from the VCF header by default)")
+    ] = None,
+    models: Annotated[
+        str, typer.Option("--models", help="Which models to include: all, usable (match ≥50%), high-moderate, high")
+    ] = "all",
     max_scores: Annotated[
         int, typer.Option("--max-scores", help="Max number of PGS models to show")
     ] = 25,
@@ -3174,6 +3316,9 @@ def plot_trait_cmd(
     With --vcf, auto-computes PRS for all matching scores and plots the results.
     With --results, loads pre-computed results from a JSON file.
 
+    Multiple --vcf flags compare samples side-by-side with colored median lines:
+      prs plot trait BMI --vcf Anton=/path/a.vcf --vcf Livia=/path/l.vcf -o cmp.html
+
     Trait matching is exact by default (case-insensitive). If no exact match is
     found, the command lists partial matches and exits. Use --fuzzy to compute
     PRS for all partial matches.
@@ -3191,29 +3336,89 @@ def plot_trait_cmd(
       prs plot trait BMI -o bmi.html --show-table --all-ancestries
       prs plot trait "type 2 diabetes" --vcf anton -o t2d.html --ancestries EUR,AFR,EAS
       prs plot trait "type 2 diabetes" -o t2d.html --results my_results.json
+      prs plot trait intelligence --vcf Anton=anton --vcf Livia=livia -o compare.html --fuzzy
     """
+    from just_prs.trait_summary import (
+        is_high_or_moderate_model,
+        is_high_quality_model,
+        is_usable_model,
+    )
     from just_prs.viz import plot_trait_scores, save_chart, save_trait_report
 
     if vcf and results:
         console.print("[red]Provide either --vcf or --results, not both.[/red]")
         raise typer.Exit(code=1)
 
+    _MODEL_FILTERS = {
+        "all": None,
+        "usable": is_usable_model,
+        "high-moderate": is_high_or_moderate_model,
+        "high": is_high_quality_model,
+    }
+    _MODEL_SCOPES = {
+        "all": "usable",
+        "usable": "usable",
+        "high-moderate": "high_moderate",
+        "high": "high_quality",
+    }
+    models = models.lower().strip()
+    if models not in _MODEL_FILTERS:
+        console.print(f"[red]--models must be one of: {', '.join(_MODEL_FILTERS)}[/red]")
+        raise typer.Exit(code=1)
+    model_filter = _MODEL_FILTERS[models]
+    model_scope = _MODEL_SCOPES[models]
+
+    def _filter_models(rows: list[dict], label: str) -> list[dict]:
+        if model_filter is None:
+            return rows
+        kept = [r for r in rows if model_filter(r)]
+        dropped = len(rows) - len(kept)
+        if dropped:
+            console.print(f"  [dim]{label}: {dropped} model(s) below the '{models}' bar excluded[/dim]")
+        return kept
+
     cache = cache_dir or resolve_cache_dir()
     dists, quality = _load_distributions(cache_dir, panel)
 
     user_results: list[dict] | None = None
+    multi_user_results: dict[str, list[dict]] | None = None
+    sample_files: dict[str, dict] = {}
 
     sample_name: str | None = None
     if vcf:
-        vcf_path = _resolve_vcf(vcf, cache_dir)
-        sample_name = vcf_path.name
-        user_results = _compute_trait_results(
-            trait, vcf_path, dists, ancestry, build, max_scores, cache,
-            fuzzy=fuzzy, no_cache=no_cache,
-        )
+        vcf_specs = [(lambda s: _parse_vcf_spec(s))(spec) for spec in vcf]
+        if len(vcf_specs) == 1:
+            label, vcf_str = vcf_specs[0]
+            vcf_path = _resolve_vcf(vcf_str, cache_dir)
+            sample_name = label
+            sample_build = _resolve_sample_build(vcf_path, build)
+            sample_files[label] = {"file": str(vcf_path), "build": sample_build}
+            user_results = _filter_models(
+                _compute_trait_results(
+                    trait, vcf_path, dists, ancestry, sample_build, max_scores, cache,
+                    fuzzy=fuzzy, no_cache=no_cache,
+                ),
+                label,
+            )
+        else:
+            multi_user_results = {}
+            for label, vcf_str in vcf_specs:
+                console.print(f"\n[bold]Computing PRS for sample [cyan]{label}[/cyan]...[/bold]")
+                vcf_path = _resolve_vcf(vcf_str, cache_dir)
+                sample_build = _resolve_sample_build(vcf_path, build)
+                console.print(f"  Build: [cyan]{sample_build}[/cyan]")
+                sample_files[label] = {"file": str(vcf_path), "build": sample_build}
+                sample_results = _compute_trait_results(
+                    trait, vcf_path, dists, ancestry, sample_build, max_scores, cache,
+                    fuzzy=fuzzy, no_cache=no_cache,
+                )
+                multi_user_results[label] = _filter_models(sample_results, label)
+            first_label = next(iter(multi_user_results))
+            user_results = multi_user_results[first_label]
+            sample_name = ", ".join(multi_user_results.keys())
     elif results:
         sample_name = results.name
-        user_results = _load_user_results(results)
+        user_results = _filter_models(_load_user_results(results), results.name)
 
     anc_list: list[str] | None = None
     default_visible: list[str] | None = None
@@ -3242,9 +3447,15 @@ def plot_trait_cmd(
         width=width,
         height=height,
         show_table=show_table and not html_report,
+        multi_user_results=multi_user_results,
+        sample_name=sample_name,
     )
     if html_report:
-        save_trait_report(chart, output, trait, user_results, ancestry, sample_name=sample_name)
+        save_trait_report(
+            chart, output, trait, user_results, ancestry,
+            sample_name=sample_name, multi_user_results=multi_user_results,
+            model_scope=model_scope, sample_files=sample_files or None,
+        )
     else:
         save_chart(chart, output)
     console.print(f"[green]Saved to {output.resolve()}[/green]")

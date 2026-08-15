@@ -91,6 +91,11 @@ from just_prs.liftover import (
     lift_frame,
     liftover_preflight,
 )
+from just_prs.canary_audit import (
+    CANARY_COLLAPSE_ISSUE,
+    flag_canary_collapses,
+    load_canary_result_rows,
+)
 from just_prs.cache_audit import (
     ArtifactClass,
     CacheAuditReport,

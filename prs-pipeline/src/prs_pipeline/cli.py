@@ -187,7 +187,7 @@ def run(
     test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
     test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
-    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, ld_proxy_pipeline, reference_allele_pipeline, reference_percentile_audit_job.")] = "full_pipeline",
+    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, ld_proxy_pipeline, reference_allele_pipeline, reference_percentile_audit_job, canary_collapse_audit_job.")] = "full_pipeline",
     no_cache: Annotated[bool, typer.Option("--no-cache", help="Ignore on-disk caches and re-download/recompute everything.")] = False,
     headless: Annotated[bool, typer.Option("--headless", help="Run in-process without Dagster UI.")] = False,
     host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
@@ -225,7 +225,7 @@ def run(
         result = _execute_job(resolved_job)
 
         if result.success:
-            if job == "reference_percentile_audit_job":
+            if job in {"reference_percentile_audit_job", "canary_collapse_audit_job"}:
                 _print_reference_audit_summary(panel)
             console.print(f"\n[green bold]Job '{job}' completed successfully.[/green bold]")
         else:
@@ -403,6 +403,148 @@ def audit(
     console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
     console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
     console.print("[bold]Job 'reference_percentile_audit_job' will be submitted automatically on startup.[/bold]\n")
+
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])
+
+
+@app.command(name="canary-audit")
+def canary_audit(
+    vcf: Annotated[
+        Optional[list[str]],
+        typer.Option(
+            "--vcf",
+            "-v",
+            help="Canary VCF path or alias, optionally Label=path. Repeat once per sample. "
+            "When set, scores the full catalog on these genomes (not 1000G).",
+        ),
+    ] = None,
+    pgs_ids: Annotated[
+        Optional[str],
+        typer.Option("--pgs-ids", help="Comma-separated PGS IDs. Default: entire catalog for the build."),
+    ] = None,
+    limit: Annotated[
+        Optional[int],
+        typer.Option("--limit", help="Score only the first N catalog IDs (pilot)."),
+    ] = None,
+    build: Annotated[
+        Optional[str],
+        typer.Option("--build", help="Genome build for scoring (default: auto-detect per VCF)."),
+    ] = None,
+    ancestry: Annotated[
+        str,
+        typer.Option("--ancestry", help="Reference superpopulation for percentiles."),
+    ] = "EUR",
+    min_samples: Annotated[
+        Optional[int],
+        typer.Option("--min-samples", help="Mark unreliable if this many samples are near 0 (default: majority of --vcf)."),
+    ] = None,
+    panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
+    no_cache: Annotated[
+        bool,
+        typer.Option("--no-cache", help="Rescore even when canary_scores.parquet already has the ID."),
+    ] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Run canary_collapse_audit_job in-process without Dagster UI.")] = False,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
+) -> None:
+    """Score all catalog PRS on canary VCFs and quarantine near-zero collapses.
+
+    \b
+    Pass ``--vcf`` once per sample (path, alias, or ``Label=path``; at least 2).
+    Scores every catalog PGS on those genomes, marks a score unreliable when a
+    majority land at percentile 0 or close to it, writes
+    ``catalog_scoring_flags.parquet``, and pushes to HuggingFace.
+    Dagster UI by default (same as ``pipeline run`` / ``audit``).
+    Does not recompute 1000G reference scores.
+    """
+    from just_prs.canary_audit import (
+        encode_canary_samples_env,
+        majority_count,
+        parse_canary_vcf_specs,
+    )
+    from just_prs.scoring import resolve_cache_dir
+
+    if not vcf or len(vcf) < 2:
+        console.print("[red]Pass --vcf at least twice (one path or alias per canary sample).[/red]")
+        raise typer.Exit(code=1)
+
+    dagster_home = _setup_dagster_home()
+    _set_pipeline_env(panel, no_cache=no_cache)
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "canary_collapse_audit_job"
+    cache_dir = resolve_cache_dir()
+    samples = parse_canary_vcf_specs(vcf, cache_dir, genome_build=build)
+    if len(samples) < 2:
+        console.print("[red]Need at least two distinct canary samples.[/red]")
+        raise typer.Exit(code=1)
+    os.environ["PRS_CANARY_VCFS"] = encode_canary_samples_env(samples)
+    os.environ["PRS_CANARY_MIN_SAMPLES"] = str(
+        min_samples if min_samples is not None else majority_count(len(samples))
+    )
+    console.print("[bold]Canary samples:[/bold]")
+    for sample in samples:
+        console.print(f"  {sample.label}: {sample.vcf_path}")
+    console.print(
+        f"[dim]Unreliable if ≥{os.environ['PRS_CANARY_MIN_SAMPLES']} of "
+        f"{len(samples)} samples land near percentile 0.[/dim]"
+    )
+    if pgs_ids:
+        os.environ["PRS_CANARY_PGS_IDS"] = pgs_ids
+    else:
+        os.environ.pop("PRS_CANARY_PGS_IDS", None)
+    if limit is not None:
+        os.environ["PRS_CANARY_LIMIT"] = str(limit)
+    else:
+        os.environ.pop("PRS_CANARY_LIMIT", None)
+    if build:
+        os.environ["PRS_CANARY_BUILD"] = build
+    else:
+        os.environ.pop("PRS_CANARY_BUILD", None)
+    os.environ["PRS_CANARY_ANCESTRY"] = ancestry
+
+    if headless:
+        _cancel_orphaned_runs()
+        console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+        console.print("[bold]Job:[/bold] canary_collapse_audit_job (score canary VCFs, flag near-zero PRS)\n")
+
+        from prs_pipeline.definitions import defs
+
+        resolved_job = defs.get_job_def("canary_collapse_audit_job")
+        console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+        result = _execute_job(resolved_job)
+
+        if result.success:
+            _print_reference_audit_summary(panel)
+            from just_prs.scoring import resolve_cache_dir
+            flags_path = resolve_cache_dir() / "metadata" / "catalog_scoring_flags.parquet"
+            if flags_path.exists():
+                import polars as pl
+                flagged = pl.read_parquet(flags_path)
+                console.print(f"\n[bold]Canary catalog flags[/bold] ({flagged.height} PGS IDs)")
+                if flagged.height:
+                    console.print("  " + ", ".join(flagged["pgs_id"].to_list()))
+            console.print("\n[green bold]Job 'canary_collapse_audit_job' completed successfully.[/green bold]")
+        else:
+            console.print("\n[red bold]Job 'canary_collapse_audit_job' failed.[/red bold]")
+            for event in result.all_events:
+                if event.is_failure:
+                    console.print(f"  [red]{event.message}[/red]")
+            raise typer.Exit(code=1)
+        return
+
+    os.environ["PRS_PIPELINE_STARTUP_REQUEST_ID"] = uuid.uuid4().hex
+    _kill_port(port)
+    _cancel_orphaned_runs()
+    console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
+    console.print("[bold]Job 'canary_collapse_audit_job' will be submitted automatically on startup.[/bold]")
+    console.print("[dim]Scoring the catalog on the --vcf samples listed above. Watch progress in the UI.[/dim]\n")
 
     dagster_bin = str(Path(sys.executable).parent / "dagster")
     os.execvp(dagster_bin, [

@@ -57,6 +57,9 @@ _REFERENCE_AUDIT_ISSUE_LABELS: dict[str, str] = {
         "Reference match metadata missing; old reference run cannot prove variant coverage"
     ),
     "quality_low_match_rate": "Low reference-panel match rate",
+    "canary_collapsed_percentile": (
+        "Canary genomes collapsed to 0th/100th percentile — user score is not on the reference scale"
+    ),
     "quality_sample_count_mismatch": "Reference sample count mismatch",
     "quality_score_mean_mismatch": "Reference mean is stale vs raw scores",
     "quality_score_std_mismatch": "Reference standard deviation is stale vs raw scores",

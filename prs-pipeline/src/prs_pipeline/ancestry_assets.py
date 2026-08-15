@@ -14,6 +14,7 @@ then ``--make-pgen`` writes a small pruned panel, which we read back via the exi
 original ``.psam`` by IID (plink2 may drop custom psam columns).
 """
 
+import json
 import os
 import shutil
 import subprocess
@@ -22,10 +23,10 @@ from pathlib import Path
 
 import numpy as np
 import polars as pl
-from dagster import AssetDep, AssetExecutionContext, AssetIn, Output, SourceAsset, asset
+from dagster import AssetDep, AssetExecutionContext, Output, SourceAsset, asset
 from eliot import start_action
 
-from just_prs.ancestry import build_ancestry_model
+from just_prs.ancestry import artifact_paths, build_ancestry_model
 from just_prs.hf import push_ancestry_model
 from just_prs.reference import (
     REFERENCE_PANELS,
@@ -254,19 +255,32 @@ def ancestry_pca_model(
 
 @asset(
     group_name="upload",
-    ins={"models": AssetIn("ancestry_pca_model")},
-    description="Pushes each built ancestry-PCA model to HuggingFace (data/ancestry/).",
+    deps=[AssetDep("ancestry_pca_model")],
+    description=(
+        "Pushes each built ancestry-PCA model to HuggingFace (data/ancestry/). "
+        "Discovers successful models from <cache>/ancestry/ artifacts (never via "
+        "AssetIn pickle of the upstream metadata list)."
+    ),
 )
 def hf_ancestry_model(
     context: AssetExecutionContext,
-    models: list[dict],
     cache_dir_resource: CacheDirResource,
     hf_resource: HuggingFaceResource,
 ) -> Output[str]:
     model_dir = cache_dir_resource.get_path() / "ancestry"
     repo_id = hf_resource.catalog_repo  # alongside the reference-allele universes
     token = hf_resource.get_token()
-    ok = [r for r in models if "error" not in r]
+    panels = _selected("PRS_ANCESTRY_PANELS", _DEFAULT_PANELS)
+    builds = _selected("PRS_ANCESTRY_BUILDS", _DEFAULT_BUILDS)
+    ok: list[dict] = []
+    for panel in panels:
+        for build in builds:
+            paths = artifact_paths(model_dir, panel, build)
+            if not all(p.exists() for p in paths.values()):
+                continue
+            meta = json.loads(paths["meta"].read_text())
+            meta.update({"panel": panel, "build": build})
+            ok.append(meta)
 
     if os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip():
         context.add_output_metadata({"test_mode": True, "hf_push_skipped": True, "n_models": len(ok)})

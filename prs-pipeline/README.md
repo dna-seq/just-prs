@@ -33,6 +33,7 @@ Then open http://localhost:3000 in your browser.
 | `reference_panel` | download | Download + extract reference panel binary files (.pgen/.pvar/.psam) |
 | `reference_scores` | compute | Score all PGS IDs against the reference panel via `compute_reference_prs_batch()` |
 | `reference_percentile_audit` | compute | Audit cached or HuggingFace reference percentile parquets, log pass/warn/fail counts, and write/upload quality sidecars without recomputing scores |
+| `canary_collapse_audit` | compute | Score caller-supplied `--vcf` canaries across the catalog (or flag cached results); push catalog flags + audit sidecar without recomputing 1000G scores |
 | `hf_prs_percentiles` | upload | Enrich distributions with metadata and absolute risk, push to HuggingFace |
 
 ### Metadata & Prevalence Pipeline

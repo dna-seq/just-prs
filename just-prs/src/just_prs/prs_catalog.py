@@ -25,6 +25,7 @@ from just_prs.ftp import download_metadata_sheet, _atomic_write_parquet
 from just_prs.hf import (
     distributions_filename,
     pull_ancestry_model,
+    pull_catalog_scoring_flags,
     pull_chip_coverage,
     needs_pull,
     pull_cleaned_parquets,
@@ -159,6 +160,8 @@ class PRSCatalog:
         self._quality_lf: pl.LazyFrame | None = None
         self._chip_coverage_lf: pl.LazyFrame | None = None
         self._chip_coverage_loaded = False
+        self._catalog_flags_lf: pl.LazyFrame | None = None
+        self._catalog_flags_loaded = False
         self._prevalence_lf: pl.LazyFrame | None = None
         self._heritability_lf: pl.LazyFrame | None = None
         self._ref_dist_cache: dict[str, pl.LazyFrame] = {}
@@ -333,6 +336,38 @@ class PRSCatalog:
                     rename_map[src] = dst
         wide = wide.rename(rename_map)
         return wide.lazy()
+
+    def _load_catalog_flags(self) -> pl.LazyFrame | None:
+        """Load catalog scoring flags (canary-collapse exclusions), pulling from HF on miss."""
+        from just_prs.canary_audit import catalog_flags_path
+
+        flags_path = catalog_flags_path(self._cache_dir)
+        if needs_pull(flags_path):
+            try:
+                pull_catalog_scoring_flags(self.metadata_dir)
+            except Exception as exc:
+                logger.debug("Catalog scoring flags HF pull failed: %s", exc)
+        if not flags_path.exists():
+            return None
+        try:
+            df = pl.read_parquet(flags_path)
+        except (pl.exceptions.ComputeError, OSError) as exc:
+            logger.warning("Corrupt catalog_scoring_flags.parquet (%s); deleting.", exc)
+            flags_path.unlink(missing_ok=True)
+            return None
+        if df.height == 0:
+            return None
+        return df.lazy()
+
+    def excluded_catalog_pgs_ids(self) -> list[str]:
+        """PGS IDs flagged ``exclude_from_catalog`` (canary collapse, etc.)."""
+        if not self._catalog_flags_loaded:
+            self._catalog_flags_lf = self._load_catalog_flags()
+            self._catalog_flags_loaded = True
+        if self._catalog_flags_lf is None:
+            return []
+        from just_prs.canary_audit import excluded_pgs_ids
+        return excluded_pgs_ids(self._catalog_flags_lf.collect())
 
     def _load_publications_from_cache(self) -> pl.LazyFrame | None:
         """Load optional cleaned publications metadata, rebuilding stale caches."""
@@ -547,6 +582,17 @@ class PRSCatalog:
                 bad_ids.height,
                 local,
             )
+        excluded = self.excluded_catalog_pgs_ids()
+        if excluded:
+            before = df["pgs_id"].n_unique()
+            df = df.filter(~pl.col("pgs_id").is_in(excluded))
+            dropped = before - df["pgs_id"].n_unique()
+            if dropped:
+                logger.warning(
+                    "Filtered %s canary-excluded reference PGS IDs from %s.",
+                    dropped,
+                    local,
+                )
         lf = df.lazy()
         self._ref_dist_cache[panel] = lf
         return lf
@@ -582,6 +628,10 @@ class PRSCatalog:
         self._ref_dist_cache.clear()
         self._ref_dist_refresh_attempted.clear()
         self._ref_dist_source.clear()
+        self._catalog_flags_lf = None
+        self._catalog_flags_loaded = False
+        self._chip_coverage_lf = None
+        self._chip_coverage_loaded = False
         for p in self.metadata_dir.glob("*.parquet"):
             p.unlink()
         raw_dir = self.raw_metadata_dir
@@ -593,6 +643,7 @@ class PRSCatalog:
         self,
         genome_build: str | None = None,
         include_harmonized: bool = True,
+        include_excluded: bool = False,
     ) -> pl.LazyFrame:
         """Return cleaned scores LazyFrame, optionally filtered by genome build.
 
@@ -607,6 +658,8 @@ class PRSCatalog:
                           build differs from ``genome_build`` but for which harmonized
                           scoring files exist. An ``is_harmonized`` boolean column is
                           added: True for scores whose original build != requested build.
+            include_excluded: When False (default), drop PGS IDs flagged
+                          ``exclude_from_catalog`` (canary-collapse quarantine).
         """
         lf = self._ensure_scores()
         if genome_build is not None:
@@ -639,6 +692,10 @@ class PRSCatalog:
                 [c for c in _DEV_ANCESTRY_SCORES_COLS if c in self._dev_ancestry_lf.collect_schema().names()]
             )
             lf = lf.join(dev_cols, on="pgs_id", how="left")
+        if not include_excluded:
+            excluded = self.excluded_catalog_pgs_ids()
+            if excluded:
+                lf = lf.filter(~pl.col("pgs_id").is_in(excluded))
         return lf
 
     def performance(self, pgs_id: str | None = None) -> pl.LazyFrame:

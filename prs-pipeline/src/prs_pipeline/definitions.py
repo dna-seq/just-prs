@@ -4,6 +4,7 @@ import dagster as dg
 from dagster import in_process_executor
 
 from prs_pipeline.assets import (
+    canary_collapse_audit,
     chip_coverage,
     ebi_reference_panel_fingerprint,
     ebi_pgs_catalog_reference_panel,
@@ -94,6 +95,18 @@ reference_percentile_audit_job = dg.define_asset_job(
     description=(
         "Audit cached or HuggingFace reference percentile distributions and write "
         "quality sidecars without recomputing reference scores."
+    ),
+    hooks={resource_summary_hook},
+    executor_def=in_process_executor,
+)
+
+canary_collapse_audit_job = dg.define_asset_job(
+    name="canary_collapse_audit_job",
+    selection=dg.AssetSelection.assets("canary_collapse_audit"),
+    description=(
+        "Flag PGS IDs that collapse to 0th/100th percentile on cached canary "
+        "genomes and push catalog + percentile quarantine flags to HuggingFace "
+        "without recomputing 1000G reference scores."
     ),
     hooks={resource_summary_hook},
     executor_def=in_process_executor,
@@ -226,6 +239,7 @@ _assets = [
     pgsc_reference_panel,
     ancestry_pca_model,
     hf_ancestry_model,
+    canary_collapse_audit,
     reference_percentile_audit,
     reference_panel,
     reference_scores,
@@ -253,6 +267,7 @@ _unresolved_jobs = [
     reference_allele_pipeline,
     ancestry_model_pipeline,
     reference_percentile_audit_job,
+    canary_collapse_audit_job,
     metadata_pipeline,
 ]
 
@@ -279,6 +294,7 @@ def _build_definitions() -> dg.Definitions:
             catalog_pipeline_job=jobs_by_name["catalog_pipeline"],
             score_and_push_job=jobs_by_name["score_and_push"],
             reference_percentile_audit_job=jobs_by_name["reference_percentile_audit_job"],
+            canary_collapse_audit_job=jobs_by_name["canary_collapse_audit_job"],
             ld_proxy_pipeline_job=jobs_by_name["ld_proxy_pipeline"],
         ),
         resources=_resources,

@@ -531,6 +531,57 @@ def push_reference_audit_sidecars(
             )
 
 
+def pull_catalog_scoring_flags(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_CATALOG_REPO,
+    token: str | None = None,
+) -> Path | None:
+    """Download catalog_scoring_flags.parquet from the pgs-catalog HF dataset.
+
+    Args:
+        local_dir: Directory to save the downloaded parquet (``<cache>/metadata``).
+        repo_id: HuggingFace dataset repository ID for the catalog.
+        token: HF API token. If None, loaded from .env / HF_TOKEN env var.
+    """
+    import logging
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:pull_catalog_scoring_flags", repo_id=repo_id):
+        local_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            return _pull_flat(
+                repo_id=repo_id,
+                hf_path=f"{HF_DATA_PREFIX}/metadata/catalog_scoring_flags.parquet",
+                local_dir=local_dir,
+                token=resolved_token,
+            )
+        except (EntryNotFoundError, RepositoryNotFoundError):
+            logging.getLogger(__name__).debug(
+                "catalog_scoring_flags.parquet not found on HF (%s)", repo_id,
+            )
+            return None
+
+
+def push_catalog_scoring_flags(
+    parquet_path: Path,
+    repo_id: str = DEFAULT_HF_CATALOG_REPO,
+    token: str | None = None,
+) -> None:
+    """Upload catalog scoring flags to ``data/metadata/catalog_scoring_flags.parquet``."""
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:push_catalog_scoring_flags", repo_id=repo_id):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        api.upload_file(
+            path_or_fileobj=str(parquet_path),
+            path_in_repo=f"{HF_DATA_PREFIX}/metadata/catalog_scoring_flags.parquet",
+            repo_id=repo_id,
+            repo_type="dataset",
+        )
+
+
 def pull_chip_coverage(
     local_dir: Path,
     repo_id: str = DEFAULT_HF_PERCENTILES_REPO,

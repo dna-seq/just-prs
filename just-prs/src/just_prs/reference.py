@@ -2194,6 +2194,7 @@ def reference_distribution_audit_issues(
     distributions_df: pl.DataFrame,
     quality_df: pl.DataFrame | None = None,
     min_match_rate: float = 0.50,
+    canary_flags_df: pl.DataFrame | None = None,
 ) -> pl.DataFrame:
     """Return distribution issues plus quality-report audit findings.
 
@@ -2202,6 +2203,10 @@ def reference_distribution_audit_issues(
     finite-looking distributions are still flagged when we cannot audit how many
     variants the reference panel actually matched, or when the reference scoring
     run itself reported low match / failed / stale metadata.
+
+    ``canary_flags_df`` (from ``just_prs.canary_audit``) adds ERROR
+    ``canary_collapsed_percentile`` rows so a later ``pipeline audit`` does not
+    wipe canary exclusions.
     """
     base_issues = distribution_quality_issues(distributions_df)
     if distributions_df.height == 0:
@@ -2311,9 +2316,18 @@ def reference_distribution_audit_issues(
             for row in row_dicts:
                 issues.append(issue_from_row(row, severity, issue, action))
 
-    if not issues:
-        return pl.DataFrame(schema=DISTRIBUTION_ISSUE_SCHEMA)
-    return pl.DataFrame(issues, schema=DISTRIBUTION_ISSUE_SCHEMA)
+    issue_df = (
+        pl.DataFrame(issues, schema=DISTRIBUTION_ISSUE_SCHEMA)
+        if issues
+        else pl.DataFrame(schema=DISTRIBUTION_ISSUE_SCHEMA)
+    )
+    if canary_flags_df is None or canary_flags_df.height == 0:
+        return issue_df
+    from just_prs.canary_audit import canary_collapse_issues, merge_audit_issues
+    return merge_audit_issues(
+        issue_df,
+        canary_collapse_issues(distributions_df, canary_flags_df),
+    )
 
 
 def compute_reference_prs_batch(

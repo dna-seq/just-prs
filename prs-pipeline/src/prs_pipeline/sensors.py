@@ -54,6 +54,9 @@ _JOB_CHECK_KEYS: dict[str, list[dg.AssetKey]] = {
     "reference_percentile_audit_job": [
         dg.AssetKey("reference_percentile_audit"),
     ],
+    "canary_collapse_audit_job": [
+        dg.AssetKey("canary_collapse_audit"),
+    ],
     "ld_proxy_pipeline": [
         dg.AssetKey("ld_proxy_table"),
         dg.AssetKey("hf_ld_proxy_table"),
@@ -65,6 +68,7 @@ _PIPELINE_JOB_NAMES = (
     "catalog_pipeline",
     "score_and_push",
     "reference_percentile_audit_job",
+    "canary_collapse_audit_job",
     "ld_proxy_pipeline",
 )
 
@@ -122,11 +126,21 @@ def _make_startup_sensor(
     catalog_pipeline_job: object,
     reference_percentile_audit_job: object,
     ld_proxy_pipeline_job: object,
+    canary_collapse_audit_job: object | None = None,
 ) -> dg.SensorDefinition:
     """Startup sensor: initial materialization check."""
 
+    startup_jobs = [
+        full_pipeline_job,
+        catalog_pipeline_job,
+        reference_percentile_audit_job,
+        ld_proxy_pipeline_job,
+    ]
+    if canary_collapse_audit_job is not None:
+        startup_jobs.append(canary_collapse_audit_job)
+
     @dg.sensor(
-        jobs=[full_pipeline_job, catalog_pipeline_job, reference_percentile_audit_job, ld_proxy_pipeline_job],
+        jobs=startup_jobs,
         default_status=dg.DefaultSensorStatus.RUNNING,
         minimum_interval_seconds=30,
         name="startup_sensor",
@@ -147,7 +161,7 @@ def _make_startup_sensor(
         request_id = os.environ.get("PRS_PIPELINE_STARTUP_REQUEST_ID", "").strip()
         no_cache = os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() in {"1", "true", "yes"}
         test_ids = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
-        if target_job == "reference_percentile_audit_job" or request_id or no_cache or test_ids:
+        if target_job in {"reference_percentile_audit_job", "canary_collapse_audit_job"} or request_id or no_cache or test_ids:
             explicit_id = request_id or ("no_cache" if no_cache else "test" if test_ids else "startup")
             run_key = f"{target_job}_{explicit_id}"
             context.log.info(f"Submitting explicit {target_job} run with run_key={run_key}.")
@@ -601,6 +615,7 @@ def make_all_sensors(
     score_and_push_job: object,
     reference_percentile_audit_job: object,
     ld_proxy_pipeline_job: object | None = None,
+    canary_collapse_audit_job: object | None = None,
 ) -> list[dg.SensorDefinition]:
     """Create all 4 smart pipeline sensors.
 
@@ -613,6 +628,7 @@ def make_all_sensors(
             catalog_pipeline_job,
             reference_percentile_audit_job,
             ld_proxy_pipeline_job or full_pipeline_job,
+            canary_collapse_audit_job,
         ),
         _make_completeness_sensor(score_and_push_job),
         _make_failure_retry_sensor(score_and_push_job),

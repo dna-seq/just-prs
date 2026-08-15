@@ -19,6 +19,7 @@ import polars as pl
 from just_prs.quality import rescale_quality_if_degenerate, resolve_quality_key
 from just_prs.trait_summary import (
     NO_MAPPED_H2,
+    TraitSummaryStats,
     best_of_label,
     format_heritability_risk_prompt,
     format_percentile_with_panel,
@@ -56,6 +57,19 @@ QUALITY_COLORS: dict[str, str] = {
     "very_low": "#B71C1C",
 }
 
+SAMPLE_COLORS: list[str] = [
+    "#D32F2F",
+    "#1565C0",
+    "#2E7D32",
+    "#8E24AA",
+    "#E65100",
+    "#00838F",
+    "#4E342E",
+    "#283593",
+    "#AD1457",
+    "#558B2F",
+]
+
 RISK_BANDS: list[dict] = [
     {"from": 0, "to": 10, "label": "very low", "color": "#d4edda"},
     {"from": 10, "to": 25, "label": "below average", "color": "#e8f5e9"},
@@ -79,6 +93,13 @@ def _norm_ppf(p: float) -> float:
     from statistics import NormalDist
 
     return NormalDist().inv_cdf(min(max(float(p), 1e-9), 1.0 - 1e-9))
+
+
+def _ordinal(n: int | float) -> str:
+    n = int(n)
+    if 11 <= abs(n) % 100 <= 13:
+        return f"{n}th"
+    return f"{n}{['th','st','nd','rd'][min(abs(n) % 10, 4) if abs(n) % 10 < 4 else 0]}"
 
 
 def _trait_visibility_params() -> tuple[list[alt.Parameter], str]:
@@ -219,6 +240,8 @@ def plot_prs_bell_curve(
     title: str | None = None,
     width: int = 560,
     height: int = 220,
+    multi_user_scores: dict[str, float] | None = None,
+    sample_name: str | None = None,
 ) -> alt.LayerChart:
     """Single PGS bell curve for one ancestry with optional user score marker."""
     row = distributions_df.filter(
@@ -272,37 +295,39 @@ def plot_prs_bell_curve(
         )
         layers.extend([ticks, tick_labels])
 
-    if user_score is not None:
-        z_user = (user_score - mean) / std if std > 0 else 0.0
-        if abs(z_user) <= 10:
-            pct_user = _norm_cdf(z_user) * 100
-            user_data = alt.Data(values=[{
-                "score": user_score,
-                "density": _norm_pdf(user_score, mean, std),
-                "label": f"You: {pct_user:.1f}th",
-            }])
-            user_rule = (
-                alt.Chart(user_data)
-                .mark_rule(color="#D32F2F", strokeWidth=2.5)
-                .encode(x="score:Q")
-            )
-            user_point = (
-                alt.Chart(user_data)
-                .mark_point(color="#D32F2F", size=60, filled=True)
-                .encode(x="score:Q", y="density:Q")
-            )
-            user_label = (
-                alt.Chart(user_data)
-                .mark_text(dy=-12, fontSize=11, fontWeight="bold", color="#D32F2F")
-                .encode(x="score:Q", y="density:Q", text="label:N")
-            )
-            layers.extend([user_rule, user_point, user_label])
-        else:
+    scores_to_plot: dict[str, float] = {}
+    if multi_user_scores:
+        scores_to_plot = dict(multi_user_scores)
+    elif user_score is not None:
+        scores_to_plot = {sample_name or "You": user_score}
+
+    for idx, (label, s) in enumerate(scores_to_plot.items()):
+        z_s = (s - mean) / std if std > 0 else 0.0
+        if abs(z_s) > 10:
             logger.warning(
-                "User score for %s is %.0f SDs from reference mean "
+                "Score for %s/%s is %.0f SDs from reference mean "
                 "(likely coverage mismatch) — skipping marker",
-                pgs_id, abs(z_user),
+                label, pgs_id, abs(z_s),
             )
+            continue
+        pct_s = _norm_cdf(z_s) * 100
+        color = SAMPLE_COLORS[idx % len(SAMPLE_COLORS)] if multi_user_scores else "#D32F2F"
+        s_data = alt.Data(values=[{
+            "score": s,
+            "density": _norm_pdf(s, mean, std),
+            "label": f"{label}: {_ordinal(round(pct_s, 1))}",
+        }])
+        layers.append(
+            alt.Chart(s_data).mark_rule(color=color, strokeWidth=2.5).encode(x="score:Q")
+        )
+        layers.append(
+            alt.Chart(s_data).mark_point(color=color, size=60, filled=True).encode(x="score:Q", y="density:Q")
+        )
+        layers.append(
+            alt.Chart(s_data)
+            .mark_text(dy=-12 if idx % 2 == 0 else 18, fontSize=11, fontWeight="bold", color=color)
+            .encode(x="score:Q", y="density:Q", text="label:N")
+        )
 
     chart_title = title or f"{pgs_id}: {trait} ({SUPERPOP_LABELS.get(ancestry, ancestry)})"
 
@@ -412,6 +437,8 @@ def plot_trait_scores(
     table_height: int | None = None,
     model_scope: str = "usable",
     percentile_source: str = "native",
+    multi_user_results: dict[str, list[dict]] | None = None,
+    sample_name: str | None = None,
 ) -> alt.LayerChart | alt.VConcatChart:
     """Trait-grouped visualization: reference bell curve + per-model user percentile scatter.
 
@@ -466,8 +493,16 @@ def plot_trait_scores(
     if sub.height == 0:
         raise ValueError(f"No distributions found for trait '{trait}' / {ancestry}")
 
+    is_multi_sample = multi_user_results is not None and len(multi_user_results) > 1
+    if multi_user_results and not user_results:
+        first_label = next(iter(multi_user_results))
+        user_results = multi_user_results[first_label]
+
     user_pgs_ids: set[str] = set()
-    if user_results:
+    if multi_user_results:
+        for _res_list in multi_user_results.values():
+            user_pgs_ids.update(r["pgs_id"] for r in _res_list)
+    elif user_results:
         user_pgs_ids = {r["pgs_id"] for r in user_results}
         user_in_dists = distributions_df.filter(
             pl.col("pgs_id").is_in(list(user_pgs_ids)) & anc_mask
@@ -736,6 +771,47 @@ def plot_trait_scores(
     fg_layers: list = []
 
     user_marks = [m for m in model_meta if m["z_score"] is not None]
+    if is_multi_sample and multi_user_results:
+        # One dot per model per sample — model_meta's z comes from the first
+        # sample only, which silently hid every other sample's dots.  Color
+        # encodes the sample (same palette as the median rules); quality moves
+        # to the tooltip and the High/Moderate/Low checkbox filter.
+        _meta_by_id = {m["pgs_id"]: m for m in model_meta}
+        multi_marks: list[dict] = []
+        for s_label, s_results in multi_user_results.items():
+            for ur in s_results:
+                meta = _meta_by_id.get(ur["pgs_id"])
+                if meta is None:
+                    continue
+                z_user = _parse_float(ur.get("z_score"))
+                pct_user = _parse_float(ur.get("percentile"))
+                score_value = _parse_float(ur.get("score"))
+                if z_user is None and score_value is not None and meta["std"] and meta["std"] > 0:
+                    z_candidate = (score_value - meta["mean"]) / meta["std"]
+                    if abs(z_candidate) <= 10:
+                        z_user = z_candidate
+                        pct_user = _norm_cdf(z_user) * 100
+                if z_user is None and pct_user is not None:
+                    z_user = _norm_ppf(pct_user / 100.0)
+                if z_user is None:
+                    continue
+                coverage = _parse_float(ur.get("weight_mass_coverage"))
+                if coverage is None:
+                    coverage = _parse_float(ur.get("match_rate"))
+                multi_marks.append({
+                    **meta,
+                    "quality": resolve_quality_key(
+                        label=ur.get("quality_label"),
+                        n_var=int(meta["n_variants"]) if meta["n_variants"] else None,
+                        auroc=_parse_float(meta["auroc"]),
+                        coverage=coverage,
+                    ),
+                    "z_score": z_user,
+                    "percentile": pct_user,
+                    "reliable": ur.get("reliable", True),
+                    "sample": s_label,
+                })
+        user_marks = multi_marks
     has_user = len(user_marks) > 0
     quality_params, quality_filter = _trait_visibility_params()
     model_select = alt.selection_point(name="modelSelect", fields=["pgs_id"], toggle="true")
@@ -802,6 +878,17 @@ def plot_trait_scores(
             title="Model quality",
             legend=None,
         )
+        if is_multi_sample and multi_user_results:
+            _sample_domain = list(multi_user_results.keys())
+            _sample_range = [SAMPLE_COLORS[i % len(SAMPLE_COLORS)] for i in range(len(_sample_domain))]
+            dot_color = alt.Color(
+                "sample:N",
+                scale=alt.Scale(domain=_sample_domain, range=_sample_range),
+                title="Sample",
+            )
+            common_tooltip.insert(0, alt.Tooltip("sample:N", title="Sample"))
+        else:
+            dot_color = quality_color
 
         def _scoped_chart(values: list[dict]) -> alt.Chart:
             return (
@@ -810,12 +897,15 @@ def plot_trait_scores(
                 .transform_calculate(z_display=z_display_expr, density=density_expr)
             )
 
+        rule_color = dot_color if is_multi_sample else alt.Color(
+            "quality:N", scale=alt.Scale(domain=q_domain, range=q_range), legend=None
+        )
         if reliable_marks:
             reliable_base = _scoped_chart(reliable_marks)
             fg_layers.append(
                 reliable_base.mark_rule(strokeDash=[3, 3], strokeWidth=1).encode(
                     x="z_display:Q",
-                    color=alt.Color("quality:N", scale=alt.Scale(domain=q_domain, range=q_range), legend=None),
+                    color=rule_color,
                     opacity=alt.condition(model_select, alt.value(0.35), alt.value(0.08)),
                 )
             )
@@ -823,13 +913,16 @@ def plot_trait_scores(
                 reliable_base.mark_point(size=55, filled=True, strokeWidth=1, stroke="white").encode(
                     x="z_display:Q",
                     y="density:Q",
-                    color=quality_color,
+                    color=dot_color,
                     tooltip=common_tooltip,
                     opacity=alt.condition(model_select, alt.value(0.9), alt.value(0.15)),
                     size=alt.condition(model_select, alt.value(70), alt.value(30)),
                 )
             )
-            for um in reliable_marks:
+            # Per-dot ID labels only in single-sample mode: n samples × m models
+            # labels overplot badly; multi mode keeps IDs in the tooltip.
+            label_marks = [] if is_multi_sample else reliable_marks
+            for um in label_marks:
                 fg_layers.append(
                     _scoped_chart([um]).mark_text(fontSize=10, dy=um["label_dy"], fontWeight="bold").encode(
                         x="z_display:Q",
@@ -845,7 +938,7 @@ def plot_trait_scores(
             fg_layers.append(
                 unreliable_base.mark_rule(strokeDash=[2, 4], strokeWidth=0.5).encode(
                     x="z_display:Q",
-                    color=alt.Color("quality:N", scale=alt.Scale(domain=q_domain, range=q_range), legend=None),
+                    color=rule_color,
                     opacity=alt.condition(model_select, alt.value(0.2), alt.value(0.05)),
                 )
             )
@@ -853,13 +946,13 @@ def plot_trait_scores(
                 unreliable_base.mark_point(size=40, filled=False, strokeWidth=1.5).encode(
                     x="z_display:Q",
                     y="density:Q",
-                    color=alt.Color("quality:N", scale=alt.Scale(domain=q_domain, range=q_range), legend=None),
+                    color=dot_color,
                     tooltip=common_tooltip,
                     opacity=alt.condition(model_select, alt.value(0.5), alt.value(0.1)),
                     size=alt.condition(model_select, alt.value(50), alt.value(25)),
                 )
             )
-            for um in unreliable_marks:
+            for um in ([] if is_multi_sample else unreliable_marks):
                 fg_layers.append(
                     _scoped_chart([um]).mark_text(fontSize=9, dy=um["label_dy"], fontStyle="italic").encode(
                         x="z_display:Q",
@@ -870,43 +963,56 @@ def plot_trait_scores(
                     )
                 )
 
-        # The median annotation is a dashboard number: it must equal the scoped
-        # median-percentile card (Quality/Population dropdowns), never a private
-        # recomputation over all dots.  The old ``all_z[len(all_z)//2]`` picked
-        # the upper-middle element (94th for a 6-model group whose true median
-        # was 83rd) and ignored the dropdowns entirely.
-        median_stats = summarize_trait_rows(
-            list(user_results or []),
-            model_scope=model_scope,
-            selected_ancestry=ancestry,
-            percentile_source=percentile_source,
-        )
-        mz: float | None = None
-        median_label = ""
-        if median_stats.median_pct is not None:
-            mz = _norm_ppf(median_stats.median_pct / 100.0)
-            median_label = f"Median: {median_stats.median_pct:.0f}th"
+        # Per-sample medians: one colored vertical rule per sample.
+        _median_samples: dict[str, list[dict]] = {}
+        if is_multi_sample and multi_user_results:
+            _median_samples = multi_user_results
         else:
-            all_z = sorted(m["z_score"] for m in user_marks if m.get("z_score") is not None)
-            if all_z:
-                mid = len(all_z) // 2
-                mz = all_z[mid] if len(all_z) % 2 else (all_z[mid - 1] + all_z[mid]) / 2.0
-                median_label = f"Median: {_norm_cdf(mz) * 100:.0f}th"
-        if mz is not None:
-            fg_layers.append(
-                alt.Chart(alt.Data(values=[{"z_score": mz}]))
-                .mark_rule(color="#D32F2F", strokeWidth=2)
-                .encode(x="z_score:Q")
+            _median_samples = {"": list(user_results or [])}
+
+        for s_idx, (s_label, s_results) in enumerate(_median_samples.items()):
+            median_stats = summarize_trait_rows(
+                s_results,
+                model_scope=model_scope,
+                selected_ancestry=ancestry,
+                percentile_source=percentile_source,
             )
-            fg_layers.append(
-                alt.Chart(alt.Data(values=[{
-                    "z_score": mz,
-                    "density": 0.56,
-                    "label": median_label,
-                }]))
-                .mark_text(fontSize=14, fontWeight="bold", color="#D32F2F", align="left", dx=5)
-                .encode(x="z_score:Q", y="density:Q", text="label:N")
-            )
+            mz: float | None = None
+            median_label = ""
+            display_name = s_label or sample_name or "Median"
+            if median_stats.median_pct is not None:
+                mz = _norm_ppf(median_stats.median_pct / 100.0)
+                median_label = f"{display_name}: {_ordinal(median_stats.median_pct)}"
+            else:
+                s_z = sorted(
+                    _parse_float(r.get("z_score")) for r in s_results
+                    if _parse_float(r.get("z_score")) is not None
+                )
+                if s_z:
+                    mid = len(s_z) // 2
+                    mz = s_z[mid] if len(s_z) % 2 else (s_z[mid - 1] + s_z[mid]) / 2.0
+                    pct_val = _norm_cdf(mz) * 100
+                    median_label = f"{display_name}: {_ordinal(pct_val)}"
+            if mz is not None:
+                m_color = SAMPLE_COLORS[s_idx % len(SAMPLE_COLORS)] if is_multi_sample else "#D32F2F"
+                label_dy = -8 - s_idx * 16 if is_multi_sample else 0
+                # ``median_for`` tags these layers so the report's model
+                # checkboxes can find and re-position them in the spec.
+                fg_layers.append(
+                    alt.Chart(alt.Data(values=[{"z_score": mz, "median_for": display_name}]))
+                    .mark_rule(color=m_color, strokeWidth=2)
+                    .encode(x="z_score:Q")
+                )
+                fg_layers.append(
+                    alt.Chart(alt.Data(values=[{
+                        "z_score": mz,
+                        "density": 0.56 + label_dy * 0.012,
+                        "label": median_label,
+                        "median_for": display_name,
+                    }]))
+                    .mark_text(fontSize=14, fontWeight="bold", color=m_color, align="left", dx=5)
+                    .encode(x="z_score:Q", y="density:Q", text="label:N")
+                )
 
     n_total = len(model_meta)
     n_high = sum(1 for m in model_meta if m["quality"] == "high")
@@ -1252,6 +1358,9 @@ _REFERENCE_AUDIT_ISSUE_LABELS: dict[str, str] = {
         "Reference match metadata missing; old reference run cannot prove variant coverage"
     ),
     "quality_low_match_rate": "Low reference-panel match rate",
+    "canary_collapsed_percentile": (
+        "Canary genomes collapsed to 0th/100th percentile — user score is not on the reference scale"
+    ),
     "quality_sample_count_mismatch": "Reference sample count mismatch",
     "quality_score_mean_mismatch": "Reference mean is stale vs raw scores",
     "quality_score_std_mismatch": "Reference standard deviation is stale vs raw scores",
@@ -1960,6 +2069,138 @@ def _build_trait_prompt(
     return prompt
 
 
+def _median_recompute_script(
+    models_payload: list[dict], sample_names: list[str]
+) -> str:
+    """Inline JS: model checkboxes recompute per-sample medians in place.
+
+    The payload has one entry per table row, ``cells`` indexed by sample order:
+    ``{"p": percentile, "r": risk_ratio, "a": absolute_risk, "u": usable}``.
+    Recompute mirrors the server logic — only usable (match ≥50%) cells count —
+    and runs once on load so toggling is always self-consistent.  It also
+    re-positions the chart's per-sample median rules: the layers are tagged with
+    ``median_for`` (see plot_trait_scores), so a patched copy of the pristine
+    Vega spec is re-embedded on every toggle.
+    """
+    import json
+
+    payload = json.dumps(models_payload)
+    names = json.dumps(sample_names)
+    return (
+        "<script>\n"
+        f"var __PRS_MODELS__ = {payload};\n"
+        f"var __PRS_SAMPLES__ = {names};\n"
+        """(function () {
+  function median(xs) {
+    if (!xs.length) return null;
+    xs = xs.slice().sort(function (a, b) { return a - b; });
+    var m = xs.length >> 1;
+    return xs.length % 2 ? xs[m] : (xs[m - 1] + xs[m]) / 2;
+  }
+  // Acklam's inverse normal CDF approximation (|error| < 1.15e-9).
+  function normPpf(p) {
+    var a = [-39.69683028665376, 220.9460984245205, -275.9285104469687,
+             138.3577518672690, -30.66479806614716, 2.506628277459239];
+    var b = [-54.47609879822406, 161.5858368580409, -155.6989798598866,
+             66.80131188771972, -13.28068155288572];
+    var c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838,
+             -2.549732539343734, 4.374664141464968, 2.938163982698783];
+    var d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996,
+             3.754408661907416];
+    var pl = 0.02425, q, r;
+    if (p < pl) {
+      q = Math.sqrt(-2 * Math.log(p));
+      return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+             ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    if (p <= 1 - pl) {
+      q = p - 0.5; r = q * q;
+      return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+             (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+    }
+    q = Math.sqrt(-2 * Math.log(1 - p));
+    return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+            ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+  }
+  function ordinal(x) {
+    var n = Math.trunc(x);
+    var m100 = Math.abs(n) % 100;
+    if (m100 >= 11 && m100 <= 13) return n + 'th';
+    var m10 = Math.abs(n) % 10;
+    return n + (m10 === 1 ? 'st' : m10 === 2 ? 'nd' : m10 === 3 ? 'rd' : 'th');
+  }
+  function patchChart(medians) {
+    if (!window.__PRS_SPEC__ || !window.__PRS_RENDER__) return;
+    var spec = JSON.parse(JSON.stringify(window.__PRS_SPEC__));
+    (function walk(o) {
+      if (!o || typeof o !== 'object') return;
+      if (o.data && o.data.values && o.data.values.length &&
+          o.data.values[0].median_for !== undefined) {
+        var v = o.data.values[0];
+        var idx = __PRS_SAMPLES__.indexOf(v.median_for);
+        if (idx >= 0) {
+          var mp = medians[idx];
+          if (mp == null) {
+            o.data.values = [];
+          } else {
+            v.z_score = normPpf(Math.min(99.99, Math.max(0.01, mp)) / 100);
+            if (v.label !== undefined) v.label = v.median_for + ': ' + ordinal(mp);
+          }
+        }
+      }
+      if (Array.isArray(o)) o.forEach(walk);
+      else Object.keys(o).forEach(function (k) { walk(o[k]); });
+    })(spec);
+    window.__PRS_RENDER__(spec);
+  }
+  function recompute(redrawChart) {
+    var boxes = document.querySelectorAll('.model-toggle');
+    var checked = {};
+    boxes.forEach(function (cb) {
+      checked[cb.dataset.idx] = cb.checked;
+      var tr = cb.closest('tr');
+      if (tr) tr.style.opacity = cb.checked ? '1' : '0.45';
+    });
+    var medians = [];
+    for (var i = 0; i < __PRS_SAMPLES__.length; i++) {
+      var ps = [], rs = [], as_ = [];
+      __PRS_MODELS__.forEach(function (m, mi) {
+        if (!checked[mi]) return;
+        var c = m.cells[i];
+        if (!c || !c.u) return;
+        if (c.p != null) ps.push(c.p);
+        if (c.r != null) rs.push(c.r);
+        if (c.a != null) as_.push(c.a);
+      });
+      var mp = median(ps), mr = median(rs), ma = median(as_);
+      medians.push(mp);
+      var el;
+      if ((el = document.getElementById('med-p-' + i)))
+        el.textContent = mp == null ? 'N/A' : mp.toFixed(1) + '%';
+      if ((el = document.getElementById('med-r-' + i))) {
+        el.textContent = mr == null ? '' : mr.toFixed(2) + 'x';
+        el.style.color = mr == null ? '' : (mr >= 1.0 ? '#C62828' : '#2E7D32');
+      }
+      if ((el = document.getElementById('med-a-' + i)))
+        el.textContent = ma == null ? '' : (ma * 100).toFixed(1) + '%';
+      if ((el = document.getElementById('card-m-' + i)))
+        el.textContent = mp == null ? 'N/A' : mp.toFixed(1);
+      if ((el = document.getElementById('card-r-' + i)))
+        el.textContent = mr == null ? 'N/A' : mr.toFixed(2) + 'x';
+      if ((el = document.getElementById('card-s-' + i)))
+        el.textContent = el.textContent.replace(/\\d+(?= )/, String(ps.length));
+    }
+    if (redrawChart) patchChart(medians);
+  }
+  document.querySelectorAll('.model-toggle').forEach(function (cb) {
+    cb.addEventListener('change', function () { recompute(true); });
+  });
+  recompute(false);
+})();
+</script>"""
+    )
+
+
 def trait_report_html(
     chart: alt.Chart | alt.LayerChart | alt.VConcatChart,
     trait: str,
@@ -1968,6 +2209,8 @@ def trait_report_html(
     sample_name: str | None = None,
     model_scope: str = "usable",
     percentile_source: str = "native",
+    multi_user_results: dict[str, list[dict]] | None = None,
+    sample_files: dict[str, dict] | None = None,
 ) -> str:
     """Render an Altair trait chart as a rich HTML report string.
 
@@ -1975,61 +2218,81 @@ def trait_report_html(
     - The Vega-Lite chart
     - Key Statistics panel (percentile, risk vs average, absolute risk)
     - "Ask AI" buttons linking to Claude, ChatGPT, Perplexity with a pre-built prompt
+
+    ``multi_user_results`` (``{sample_name: rows}``) switches the report into
+    comparison mode: per-sample median cards and a pivoted model table with one
+    percentile column per sample, colored to match the chart's sample colors.
+    ``sample_files`` (``{sample_name: {"file": ..., "build": ...}}``) renders a
+    legend table mapping each sample to its genome file.
     """
     import urllib.parse
 
-    scored = [
-        {**r, "percentile": percentile}
-        for r in user_results
-        if (percentile := _parse_float(r.get("percentile"))) is not None
-    ]
-    # Stamp each model with the same canonical quality tier the chart uses so the
-    # table, the quality-stratified median rows, and the headline cohort-median
-    # cards all agree with the chart's High/Moderate/Low grouping.  Classification
-    # lives in just_prs.quality.resolve_quality_key — never reinvent it here.
-    # ``scored`` holds copies (``{**r, ...}``), so this never mutates caller dicts.
-    for r in scored:
-        if not r.get("quality"):
-            n_var_val = _parse_float(r.get("variants_total"))
-            if n_var_val is None:
-                n_var_val = _parse_float(r.get("n_variants"))
-            coverage = _parse_float(r.get("weight_mass_coverage"))
+    def _prepare(rows: list[dict]) -> list[dict]:
+        prepared = [
+            {**r, "percentile": percentile}
+            for r in rows
+            if (percentile := _parse_float(r.get("percentile"))) is not None
+        ]
+        # Stamp each model with the same canonical quality tier the chart uses so
+        # the table, the quality-stratified median rows, and the headline
+        # cohort-median cards all agree with the chart's High/Moderate/Low
+        # grouping.  Classification lives in just_prs.quality.resolve_quality_key
+        # — never reinvent it here.  ``prepared`` holds copies (``{**r, ...}``),
+        # so this never mutates caller dicts.
+        for r in prepared:
+            if not r.get("quality"):
+                n_var_val = _parse_float(r.get("variants_total"))
+                if n_var_val is None:
+                    n_var_val = _parse_float(r.get("n_variants"))
+                coverage = _parse_float(r.get("weight_mass_coverage"))
+                if coverage is None:
+                    coverage = _parse_float(r.get("match_rate"))
+                r["quality"] = resolve_quality_key(
+                    label=r.get("quality_label"),
+                    n_var=int(n_var_val) if n_var_val is not None else None,
+                    auroc=_parse_float(r.get("auroc")),
+                    coverage=coverage,
+                )
+
+        # If the absolute scale bunches every model into the top tiers (e.g. a WGS
+        # sample where C_wt ≈ 1.0 for all), re-colour relative to this cohort so the
+        # quality heatmap stays informative instead of uniformly green.  Ranks on the
+        # model-intrinsic synthetic quality (which keeps spread even when coverage is
+        # uniform).  No-op when the absolute scale already discriminates.
+        def _sq_norm(row: dict) -> float | None:
+            sq = _parse_float(row.get("synthetic_quality"))
+            return sq / 100.0 if sq is not None else None
+
+        def _row_coverage(row: dict) -> float | None:
+            coverage = _parse_float(row.get("weight_mass_coverage"))
             if coverage is None:
-                coverage = _parse_float(r.get("match_rate"))
-            r["quality"] = resolve_quality_key(
-                label=r.get("quality_label"),
-                n_var=int(n_var_val) if n_var_val is not None else None,
-                auroc=_parse_float(r.get("auroc")),
-                coverage=coverage,
-            )
+                coverage = _parse_float(row.get("match_rate"))
+            return coverage
 
-    # If the absolute scale bunches every model into the top tiers (e.g. a WGS
-    # sample where C_wt ≈ 1.0 for all), re-colour relative to this cohort so the
-    # quality heatmap stays informative instead of uniformly green.  Ranks on the
-    # model-intrinsic synthetic quality (which keeps spread even when coverage is
-    # uniform).  No-op when the absolute scale already discriminates.
-    def _sq_norm(row: dict) -> float | None:
-        sq = _parse_float(row.get("synthetic_quality"))
-        return sq / 100.0 if sq is not None else None
+        rescaled = rescale_quality_if_degenerate(
+            [r.get("quality") for r in prepared],
+            [_sq_norm(r) for r in prepared],
+            coverages=[_row_coverage(r) for r in prepared],
+        )
+        for r, key in zip(prepared, rescaled):
+            if key is not None:
+                r["quality"] = key
+        return prepared
 
-    def _row_coverage(row: dict) -> float | None:
-        coverage = _parse_float(row.get("weight_mass_coverage"))
-        if coverage is None:
-            coverage = _parse_float(row.get("match_rate"))
-        return coverage
-
-    rescaled = rescale_quality_if_degenerate(
-        [r.get("quality") for r in scored],
-        [_sq_norm(r) for r in scored],
-        coverages=[_row_coverage(r) for r in scored],
-    )
-    for r, key in zip(scored, rescaled):
-        if key is not None:
-            r["quality"] = key
+    scored = _prepare(user_results)
+    multi_scored: dict[str, list[dict]] | None = None
+    if multi_user_results and len(multi_user_results) > 1:
+        multi_scored = {name: _prepare(rows) for name, rows in multi_user_results.items()}
+    sample_colors = {
+        name: SAMPLE_COLORS[i % len(SAMPLE_COLORS)]
+        for i, name in enumerate(multi_scored or {})
+    }
     spec_json = chart.to_json()
 
     stats_html = ""
     ai_html = ""
+    restrict_h2 = percentile_source == "selected"
+    per_stats: dict[str, TraitSummaryStats] = {}
 
     if scored:
         stats = summarize_trait_rows(
@@ -2043,42 +2306,79 @@ def trait_report_html(
         of_scope = best_of_label(stats.n_scoped, stats.model_scope)
 
         cards = []
-        median_display = (
-            format_percentile_with_panel(median_pctl, stats.typical_panel)
-            if median_pctl is not None
-            else "N/A"
-        )
-        best_display = (
-            format_percentile_with_panel(stats.best_model_pctl, stats.best_model_panel)
-            if stats.best_model_pctl is not None
-            else "N/A"
-        )
-        # Median first: it is the robust headline number.  The quality-best
-        # model's percentile is secondary context and must never be called
-        # "best" — for direction-dependent traits that reads as "best outcome".
-        cards.append(
-            f'<div class="stat-card">'
-            f'<div class="stat-label">Median Percentile</div>'
-            f'<div class="stat-value">{median_display}</div>'
-            f'<div class="stat-sub">{stats.scope_label}</div></div>'
-        )
-        best_pgs_id = str((stats.best_row or {}).get("pgs_id") or "")
-        best_sub = best_pgs_id or best_of_label(stats.n_scoped, stats.model_scope)
-        if best_pgs_id:
-            best_sub = f"{best_pgs_id} · {best_of_label(stats.n_scoped, stats.model_scope)}"
-        cards.append(
-            f'<div class="stat-card">'
-            f'<div class="stat-label">Most Reliable Model</div>'
-            f'<div class="stat-value">{best_display}</div>'
-            f'<div class="stat-sub">{best_sub}</div></div>'
-        )
-        cards.append(
-            f'<div class="stat-card">'
-            f'<div class="stat-label">Models</div>'
-            f'<div class="stat-value">{stats.n_scoped}</div>'
-            f'<div class="stat-sub">{stats.scope_label}</div></div>'
-        )
-        restrict_h2 = percentile_source == "selected"
+        if multi_scored:
+            # Comparison mode: one median card per sample, colored to match the
+            # chart's sample colors — the single-sample dashboard would silently
+            # show only the first sample's numbers.
+            per_stats = {
+                name: summarize_trait_rows(
+                    rows,
+                    model_scope=model_scope,
+                    selected_ancestry=ancestry,
+                    percentile_source=percentile_source,
+                )
+                for name, rows in multi_scored.items()
+                if rows
+            }
+            for s_idx, (name, s) in enumerate(per_stats.items()):
+                col = sample_colors.get(name, "#333")
+                # The numeric part gets its own span so the model checkboxes can
+                # live-update it (see the recompute script below the table).
+                if s.median_pct is not None:
+                    num = f"{s.median_pct:.1f}"
+                    full = format_percentile_with_panel(s.median_pct, s.typical_panel)
+                    suffix = full[len(num):] if full.startswith(num) else ""
+                    s_median = f'<span id="card-m-{s_idx}">{num}</span>{suffix}'
+                else:
+                    s_median = f'<span id="card-m-{s_idx}">N/A</span>'
+                sub_bits = [f'<span id="card-s-{s_idx}">{s.scope_label}</span>']
+                if s.risk_vs_average != "N/A":
+                    sub_bits.append(f'risk <span id="card-r-{s_idx}">{s.risk_vs_average}</span>')
+                # Sample identity lives in the border + label only: a red/green
+                # value would read as risk semantics, not as "this is Anton".
+                cards.append(
+                    f'<div class="stat-card" style="border-top:3px solid {col}">'
+                    f'<div class="stat-label">Median Percentile — '
+                    f'<span style="color:{col}">{name}</span></div>'
+                    f'<div class="stat-value">{s_median}</div>'
+                    f'<div class="stat-sub">{" · ".join(sub_bits)}</div></div>'
+                )
+        else:
+            median_display = (
+                format_percentile_with_panel(median_pctl, stats.typical_panel)
+                if median_pctl is not None
+                else "N/A"
+            )
+            best_display = (
+                format_percentile_with_panel(stats.best_model_pctl, stats.best_model_panel)
+                if stats.best_model_pctl is not None
+                else "N/A"
+            )
+            # Median first: it is the robust headline number.  The quality-best
+            # model's percentile is secondary context and must never be called
+            # "best" — for direction-dependent traits that reads as "best outcome".
+            cards.append(
+                f'<div class="stat-card">'
+                f'<div class="stat-label">Median Percentile</div>'
+                f'<div class="stat-value">{median_display}</div>'
+                f'<div class="stat-sub">{stats.scope_label}</div></div>'
+            )
+            best_pgs_id = str((stats.best_row or {}).get("pgs_id") or "")
+            best_sub = best_pgs_id or best_of_label(stats.n_scoped, stats.model_scope)
+            if best_pgs_id:
+                best_sub = f"{best_pgs_id} · {best_of_label(stats.n_scoped, stats.model_scope)}"
+            cards.append(
+                f'<div class="stat-card">'
+                f'<div class="stat-label">Most Reliable Model</div>'
+                f'<div class="stat-value">{best_display}</div>'
+                f'<div class="stat-sub">{best_sub}</div></div>'
+            )
+            cards.append(
+                f'<div class="stat-card">'
+                f'<div class="stat-label">Models</div>'
+                f'<div class="stat-value">{stats.n_scoped}</div>'
+                f'<div class="stat-sub">{stats.scope_label}</div></div>'
+            )
         h2_summary = stats.heritability_text if stats.heritability_text != NO_MAPPED_H2 else ""
         if not h2_summary:
             h2_summary = _heritability_prompt_summary(
@@ -2094,38 +2394,56 @@ def trait_report_html(
                 f'<div class="stat-sub">population-level heredity context</div></div>'
             )
 
-        risk_basis = risk_basis_label(stats.n_risk_models)
-        if stats.risk_vs_average != "N/A":
-            rr = _parse_float(str(stats.risk_vs_average).rstrip("x"))
-            if rr is not None and rr >= 1.05:
-                color, direction = "#C62828", "higher than population"
-            elif rr is not None and rr <= 0.95:
-                color, direction = "#2E7D32", "lower than population"
-            else:
-                color, direction = "#455A64", "similar to population"
+        if not multi_scored:
+            risk_basis = risk_basis_label(stats.n_risk_models)
+            if stats.risk_vs_average != "N/A":
+                rr = _parse_float(str(stats.risk_vs_average).rstrip("x"))
+                if rr is not None and rr >= 1.05:
+                    color, direction = "#C62828", "higher than population"
+                elif rr is not None and rr <= 0.95:
+                    color, direction = "#2E7D32", "lower than population"
+                else:
+                    color, direction = "#455A64", "similar to population"
+                cards.append(
+                    f'<div class="stat-card">'
+                    f'<div class="stat-label">Risk vs Average</div>'
+                    f'<div class="stat-value" style="color:{color}">{stats.risk_vs_average}</div>'
+                    f'<div class="stat-sub">{direction} · {risk_basis}</div></div>'
+                )
+
             cards.append(
                 f'<div class="stat-card">'
-                f'<div class="stat-label">Risk vs Average</div>'
-                f'<div class="stat-value" style="color:{color}">{stats.risk_vs_average}</div>'
-                f'<div class="stat-sub">{direction} · {risk_basis}</div></div>'
+                f'<div class="stat-label">Absolute Risk</div>'
+                f'<div class="stat-value">{stats.absolute_risk}</div>'
+                f'<div class="stat-sub">{risk_basis}</div></div>'
             )
 
-        cards.append(
-            f'<div class="stat-card">'
-            f'<div class="stat-label">Absolute Risk</div>'
-            f'<div class="stat-value">{stats.absolute_risk}</div>'
-            f'<div class="stat-sub">{risk_basis}</div></div>'
-        )
-
-        if stats.std_pct is not None:
-            cards.append(
-                f'<div class="stat-card">'
-                f'<div class="stat-label">Model Spread</div>'
-                f'<div class="stat-value">{stats.std_pct:.1f}</div>'
-                f'<div class="stat-sub">percentile SD · {stats.scope_label}</div></div>'
-            )
+            if stats.std_pct is not None:
+                cards.append(
+                    f'<div class="stat-card">'
+                    f'<div class="stat-label">Model Spread</div>'
+                    f'<div class="stat-value">{stats.std_pct:.1f}</div>'
+                    f'<div class="stat-sub">percentile SD · {stats.scope_label}</div></div>'
+                )
 
         stats_html = '<div class="stats-grid">' + "".join(cards) + "</div>"
+
+        comparison = ""
+        prompt_sample_name = sample_name
+        if multi_scored and per_stats:
+            prompt_sample_name = next(iter(multi_scored))
+            comp_lines = ["", f'Several samples were scored on the same "{trait}" models:']
+            for name, s in per_stats.items():
+                med = f"{s.median_pct:.1f}" if s.median_pct is not None else "N/A"
+                line = f"- {name}: median percentile {med} ({s.scope_label})"
+                if s.risk_vs_average != "N/A":
+                    line += f", risk vs average {s.risk_vs_average}"
+                comp_lines.append(line)
+            comp_lines.append(
+                f"The per-model details above are for {prompt_sample_name}; "
+                "compare all samples' genetic predispositions."
+            )
+            comparison = "\n".join(comp_lines)
 
         btns = []
         for ai in _AI_ASSISTANTS:
@@ -2135,11 +2453,13 @@ def trait_report_html(
                 user_results=user_results,
                 trait=trait,
                 ancestry=ancestry,
-                limit=char_limit,
-                sample_name=sample_name,
+                limit=max(500, char_limit - len(comparison)),
+                sample_name=prompt_sample_name,
                 model_scope=model_scope,
                 percentile_source=percentile_source,
             )
+            if prompt and comparison:
+                prompt += "\n" + comparison
             if prompt:
                 encoded = urllib.parse.quote(prompt, safe="")
                 btns.append(
@@ -2151,7 +2471,238 @@ def trait_report_html(
             ai_html = '<div class="ai-buttons"><span class="ai-label">Interpret with AI:</span>' + "".join(btns) + "</div>"
 
     table_html = ""
-    if scored:
+    if multi_scored and scored:
+        q_colors = {"high": "#2E7D32", "moderate": "#1565C0", "low": "#E65100", "very_low": "#C62828"}
+        # Pivot: one row per PGS model, one percentile column per sample.  The
+        # single-sample table would silently show only the first sample's values.
+        sample_names = list(multi_scored.keys())
+        by_id: dict[str, dict[str, dict]] = {}
+        for name in sample_names:
+            for r in multi_scored[name]:
+                by_id.setdefault(r["pgs_id"], {})[name] = r
+
+        def _any_row(pid: str) -> dict:
+            rows = by_id[pid]
+            return rows.get(sample_names[0]) or next(iter(rows.values()))
+
+        _TIER_ORDER = {"high": 0, "moderate": 1, "low": 2, "very_low": 3}
+        sorted_ids = sorted(
+            by_id,
+            key=lambda pid: (
+                _TIER_ORDER.get(_any_row(pid).get("quality", "low"), 3),
+                -(_any_row(pid).get("percentile") or 0),
+            ),
+        )
+
+        has_multi = len({_any_row(pid).get("trait_reported", "") for pid in sorted_ids} - {""}) > 1
+        # h² is population-level trait metadata (identical for every sample), so
+        # the comparison table shows only the selected population's estimate —
+        # the all-populations string is noise next to n sample columns.
+        has_h2 = any(
+            _heritability_prompt_summary(
+                [_any_row(pid)],
+                selected_ancestry=ancestry,
+                restrict_to_selected=True,
+            )
+            for pid in sorted_ids
+        )
+
+        # Per-sample metrics become column groups (colspan=n, one subcolumn per
+        # sample); model-level columns (Pop. Avg prevalence, h², Variants) are
+        # identical for every sample and stay single.
+        has_risk = any(
+            _parse_float(r.get("risk_ratio")) is not None
+            for rows in multi_scored.values()
+            for r in rows
+        )
+        has_abs = any(
+            r.get("absolute_risk") is not None
+            for rows in multi_scored.values()
+            for r in rows
+        )
+        groups: list[str] = ["Percentile"]
+        if has_risk:
+            groups.append("Risk×")
+        if has_abs:
+            groups.append("Abs Risk")
+        groups.append("Match %")
+        _GROUP_BORDER = "border-left:2px solid #e0e0e0;"
+
+        def _tint(name: str) -> str:
+            # Sample identity is a faint column background, never a text color:
+            # the sample palette (red/blue/green) collides with the quality-tier
+            # palette, so colored values would read as the wrong channel.
+            return f"background:{sample_colors.get(name, '#888')}12;"
+
+        def _sample_cell(r: dict | None, group: str, name: str, border: str) -> str:
+            style = border + _tint(name)
+            if r is None:
+                return f'<td style="{style}">—</td>'
+            if group == "Percentile":
+                pctl = r.get("percentile")
+                pctl_s = f"{pctl:.1f}%" if pctl is not None else "—"
+                return f'<td style="{style}">{pctl_s}</td>'
+            if group == "Risk×":
+                rr_value = _parse_float(r.get("risk_ratio"))
+                if rr_value is None:
+                    return f'<td style="{style}">—</td>'
+                rc = "#C62828" if rr_value >= 1.0 else "#2E7D32"
+                return f'<td style="{style}color:{rc}">{rr_value:.2f}x</td>'
+            if group == "Abs Risk":
+                ar = r.get("absolute_risk")
+                if ar is None:
+                    return f'<td style="{style}">—</td>'
+                return f'<td style="{style}">{_format_absolute_risk(ar)}</td>'
+            mr_s = _format_percent_like(r.get("match_rate"))
+            return f'<td style="{style}">{mr_s}</td>'
+
+        rows_html = []
+        med_cells = ['<td style="font-weight:700">Median (selected)</td>']
+        if has_multi:
+            med_cells.append("<td></td>")
+        _MED_ID_KEY = {"Percentile": "p", "Risk×": "r", "Abs Risk": "a"}
+        for group in groups:
+            for i, name in enumerate(sample_names):
+                border = _GROUP_BORDER if i == 0 else ""
+                s = per_stats.get(name)
+                val = ""
+                color = ""
+                if s is not None:
+                    if group == "Percentile":
+                        val = f"{s.median_pct:.1f}%" if s.median_pct is not None else "N/A"
+                    elif group == "Risk×" and s.risk_vs_average != "N/A":
+                        val = str(s.risk_vs_average)
+                        rr_med = _parse_float(val.rstrip("x"))
+                        if rr_med is not None:
+                            color = f"color:{'#C62828' if rr_med >= 1.0 else '#2E7D32'};"
+                    elif group == "Abs Risk" and str(s.absolute_risk) not in ("None", "N/A"):
+                        val = str(s.absolute_risk).split(" (pop")[0]
+                id_attr = f'id="med-{_MED_ID_KEY[group]}-{i}" ' if group in _MED_ID_KEY else ""
+                med_cells.append(
+                    f'<td {id_attr}style="{border}{_tint(name)}{color}font-weight:700">{val}</td>'
+                )
+        med_cells.append(f'<td style="{_GROUP_BORDER}"></td>')  # Quality
+        if has_abs:
+            med_cells.append("<td></td>")
+        if has_h2:
+            med_cells.append("<td></td>")
+        med_cells.append("<td></td>")
+        rows_html.append(
+            '<tr style="border-bottom:2px solid #ddd">' + "".join(med_cells) + "</tr>"
+        )
+
+        models_payload: list[dict] = []
+        for pid in sorted_ids:
+            base = _any_row(pid)
+            sname = base.get("score_name", "")
+            pid_link = (
+                f'<a href="https://www.pgscatalog.org/score/{pid}" target="_blank" '
+                f'rel="noopener">{pid}</a>'
+            )
+            id_display = f"{pid_link} ({sname})" if sname else pid_link
+            cell_payload: list[dict | None] = []
+            for name in sample_names:
+                r = by_id[pid].get(name)
+                if r is None:
+                    cell_payload.append(None)
+                else:
+                    cell_payload.append({
+                        "p": r.get("percentile"),
+                        "r": _parse_float(r.get("risk_ratio")),
+                        "a": _parse_float(r.get("absolute_risk")),
+                        "u": bool(is_usable_model(r)),
+                    })
+            models_payload.append({"pgs": pid, "cells": cell_payload})
+            cells = [
+                f'<td class="id-cell"><input type="checkbox" class="model-toggle" '
+                f'data-idx="{len(models_payload) - 1}" checked>{id_display}</td>'
+            ]
+            if has_multi:
+                trait_raw = base.get("trait_reported", "")
+                trait_short = (trait_raw[:29] + "…") if len(trait_raw) > 30 else trait_raw
+                cells.append(f'<td class="trait-cell">{trait_short}</td>')
+            for group in groups:
+                for i, name in enumerate(sample_names):
+                    border = _GROUP_BORDER if i == 0 else ""
+                    cells.append(_sample_cell(by_id[pid].get(name), group, name, border))
+            tiers = {
+                name: by_id[pid][name].get("quality", "low")
+                for name in sample_names
+                if name in by_id[pid]
+            }
+            if len(set(tiers.values())) <= 1:
+                tier = next(iter(tiers.values()), "low")
+                q_cell = (
+                    f'<span class="q-dot" style="background:{q_colors.get(tier, "#999")}"></span> {tier}'
+                )
+            else:
+                # Coverage differs enough between samples to change the tier —
+                # one dot per sample, in sample order (hover for details).
+                q_cell = " ".join(
+                    f'<span class="q-dot" style="background:{q_colors.get(t, "#999")}" '
+                    f'title="{name}: {t}"></span>'
+                    for name, t in tiers.items()
+                )
+            cells.append(f'<td style="{_GROUP_BORDER}white-space:nowrap">{q_cell}</td>')
+            if has_abs:
+                prev = base.get("population_prevalence")
+                prev_s = _format_percent_like(prev) if prev is not None else "—"
+                cells.append(f"<td>{prev_s}</td>")
+            if has_h2:
+                h2_text = _heritability_prompt_summary(
+                    [base],
+                    selected_ancestry=ancestry,
+                    restrict_to_selected=True,
+                )
+                cells.append(f'<td class="h2-cell">{_shorten_text(h2_text, 60) if h2_text else "—"}</td>')
+            vt = base.get("variants_total")
+            cells.append(f"<td>{int(vt):,}</td>" if vt else "<td>—</td>")
+            rows_html.append("<tr>" + "".join(cells) + "</tr>")
+
+        n_samples = len(sample_names)
+        hdr1 = ['<th rowspan="2">PGS ID</th>']
+        if has_multi:
+            hdr1.append('<th rowspan="2">Trait</th>')
+        for group in groups:
+            hdr1.append(
+                f'<th colspan="{n_samples}" style="text-align:center;{_GROUP_BORDER}'
+                f'border-bottom:1px solid #eee">{group}</th>'
+            )
+        hdr1.append(f'<th rowspan="2" style="{_GROUP_BORDER}">Quality</th>')
+        if has_abs:
+            hdr1.append('<th rowspan="2">Pop. Avg</th>')
+        if has_h2:
+            hdr1.append(f'<th rowspan="2">h² ({ancestry})</th>')
+        hdr1.append('<th rowspan="2">Variants</th>')
+        hdr2 = []
+        for group in groups:
+            for i, name in enumerate(sample_names):
+                border = _GROUP_BORDER if i == 0 else ""
+                hdr2.append(
+                    f'<th class="sub-th" style="{border}{_tint(name)}'
+                    f'color:{sample_colors.get(name, "#333")}">{name}</th>'
+                )
+
+        table_html = (
+            '<table class="model-table"><thead><tr>'
+            + "".join(hdr1)
+            + "</tr><tr>"
+            + "".join(hdr2)
+            + "</tr></thead><tbody>"
+            + "".join(rows_html)
+            + "</tbody></table>"
+            + '<div class="cell-sub" style="margin-top:6px">Untick a model\'s checkbox to '
+            "exclude it — the Median row and the per-sample cards recompute instantly "
+            "(models below 50% match never count toward medians). The chart's median lines "
+            "are drawn at generation time and do not move. Column background tint = sample "
+            "(matches the chart colors). The Quality column shows the model's tier "
+            "(green high · blue moderate · orange low · red very low; one dot per sample when "
+            "coverage makes tiers differ). Red/green text is used only for risk direction "
+            "(above/below population average). Pop. Avg, h² and Variants are model-level — "
+            "identical for every sample.</div>"
+            + _median_recompute_script(models_payload, sample_names)
+        )
+    elif scored:
         q_colors = {"high": "#2E7D32", "moderate": "#1565C0", "low": "#E65100", "very_low": "#C62828"}
         has_risk = any(r.get("risk_ratio") is not None for r in scored)
         has_h2 = any(
@@ -2214,7 +2765,11 @@ def trait_report_html(
             else:
                 n_var = "—"
             sname = r.get("score_name", "")
-            id_display = f'{r["pgs_id"]} ({sname})' if sname else r["pgs_id"]
+            pid_link = (
+                f'<a href="https://www.pgscatalog.org/score/{r["pgs_id"]}" target="_blank" '
+                f'rel="noopener">{r["pgs_id"]}</a>'
+            )
+            id_display = f"{pid_link} ({sname})" if sname else pid_link
             cells = [f'<td class="id-cell">{id_display}</td>']
             if has_multi:
                 trait_raw = r.get("trait_reported", "")
@@ -2270,6 +2825,31 @@ def trait_report_html(
 
     quality_note_html = _QUALITY_NOTE_HTML if scored else ""
 
+    samples_html = ""
+    if sample_files:
+        legend_rows = []
+        for name, meta in sample_files.items():
+            meta = meta if isinstance(meta, dict) else {"file": str(meta)}
+            col = sample_colors.get(name, "#333")
+            legend_rows.append(
+                f'<tr><td style="color:{col};font-weight:600">{name}</td>'
+                f'<td class="id-cell">{meta.get("file", "—")}</td>'
+                f'<td>{meta.get("build", "—")}</td></tr>'
+            )
+        samples_html = (
+            '<table class="model-table" style="margin-top:14px;max-width:960px">'
+            "<thead><tr><th>Sample</th><th>Genome File</th><th>Build</th></tr></thead>"
+            "<tbody>" + "".join(legend_rows) + "</tbody></table>"
+        )
+
+    subtitle_prefix = ""
+    if multi_scored:
+        name_spans = [
+            f'<span style="color:{sample_colors.get(n, "#333")};font-weight:600">{n}</span>'
+            for n in multi_scored
+        ]
+        subtitle_prefix = "Samples: " + ", ".join(name_spans) + " · "
+
     dashboard_stamp = (
         f"<!-- prs-dashboard {model_scope}|{percentile_source}|{ancestry}|"
         f"{stats.median_pct if scored else 'na'}|{stats.risk_vs_average if scored else 'na'}|"
@@ -2300,12 +2880,17 @@ h1 {{ font-size: 1.4em; margin-bottom: 4px; }}
 .vega-embed canvas, .vega-embed svg {{ max-width: 100%; }}
 .model-table {{ width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 0.9em; }}
 .model-table th {{ text-align: left; padding: 8px 10px; border-bottom: 2px solid #ddd; color: #555; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.03em; }}
+.model-table th.sub-th {{ padding: 4px 10px; font-size: 0.8em; text-transform: none; letter-spacing: 0; }}
 .model-table td {{ padding: 6px 10px; border-bottom: 1px solid #eee; }}
 .model-table tbody tr:hover {{ background: #f5f5f5; }}
 .id-cell {{ font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.92em; }}
+.id-cell a {{ color: #1565C0; text-decoration: none; }}
+.id-cell a:hover {{ text-decoration: underline; }}
+.model-toggle {{ margin-right: 7px; vertical-align: middle; accent-color: #1565C0; cursor: pointer; }}
 .trait-cell {{ max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #555; }}
 .h2-cell {{ max-width: 260px; white-space: normal; color: #444; font-size: 0.88em; }}
 .q-dot {{ display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }}
+.cell-sub {{ font-size: 0.78em; color: #999; }}
 .quality-note {{ margin-top: 16px; padding: 12px 16px; background: #f0f4f8; border: 1px solid #d6e0ea; border-left: 4px solid #1565c0; border-radius: 8px; font-size: 0.85em; color: #44525e; line-height: 1.5; }}
 .quality-note .qn-title {{ font-weight: 700; color: #1565c0; margin-bottom: 6px; }}
 .quality-note ul {{ margin: 6px 0 0; padding-left: 18px; }}
@@ -2318,10 +2903,11 @@ h1 {{ font-size: 1.4em; margin-bottom: 4px; }}
 </head>
 <body>
 <h1>PRS Report: {trait}</h1>
-<div class="subtitle">Ancestry: {SUPERPOP_LABELS.get(ancestry, ancestry)} ({ancestry})</div>
+<div class="subtitle">{subtitle_prefix}Ancestry: {SUPERPOP_LABELS.get(ancestry, ancestry)} ({ancestry})</div>
 {stats_html}
 <div id="vis"></div>
 {table_html}
+{samples_html}
 {quality_note_html}
 {ai_html}
 <script>
@@ -2336,9 +2922,13 @@ function _prsPostHeight() {{
   );
   parent.postMessage({{type: 'prs-report-height', height: h}}, '*');
 }}
-vegaEmbed('#vis', {spec_json}, {{actions: true, width: Math.max(800, window.innerWidth - 80)}})
-  .then(_prsPostHeight)
-  .catch(console.error);
+var __PRS_SPEC__ = {spec_json};
+window.__PRS_RENDER__ = function (spec) {{
+  vegaEmbed('#vis', spec || __PRS_SPEC__, {{actions: true, width: Math.max(800, window.innerWidth - 80)}})
+    .then(_prsPostHeight)
+    .catch(console.error);
+}};
+window.__PRS_RENDER__();
 window.addEventListener('load', _prsPostHeight);
 window.addEventListener('resize', _prsPostHeight);
 if (window.ResizeObserver) {{ new ResizeObserver(_prsPostHeight).observe(document.body); }}
@@ -2349,6 +2939,193 @@ if (window.ResizeObserver) {{ new ResizeObserver(_prsPostHeight).observe(documen
     return html
 
 
+def bell_curve_report_html(
+    chart: alt.Chart | alt.LayerChart,
+    pgs_id: str,
+    ancestry: str = "EUR",
+    sample_name: str | None = None,
+    prs_results: dict | list[dict] | None = None,
+) -> str:
+    """Render a single-PGS bell curve as an HTML report with stat cards.
+
+    ``prs_results`` is a single result dict (single sample) or a list of dicts
+    (multi-sample).  Each dict should contain at least ``score``; optional fields:
+    ``percentile``, ``z_score``, ``match_rate``, ``variants_matched``,
+    ``variants_total``, ``quality_label``, ``auroc``, ``trait_reported``,
+    ``score_name``, ``reliable``.
+    """
+    import urllib.parse
+
+    spec_json = chart.to_json()
+
+    results_list: list[dict] = []
+    if isinstance(prs_results, dict):
+        results_list = [prs_results]
+    elif isinstance(prs_results, list):
+        results_list = prs_results
+
+    cards: list[str] = []
+    for r in results_list:
+        label = r.get("sample_name") or sample_name or ""
+        pctl = r.get("percentile")
+        score_val = r.get("score")
+        mr = r.get("match_rate")
+        vm = r.get("variants_matched")
+        vt = r.get("variants_total")
+        ql = r.get("quality_label", "")
+        trait = r.get("trait_reported") or r.get("score_name") or ""
+        reliable = r.get("reliable", True)
+
+        pgs_link = f'<a href="https://www.pgscatalog.org/score/{pgs_id}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline dotted">{pgs_id}</a>'
+        if label:
+            cards.append(
+                f'<div class="stat-card">'
+                f'<div class="stat-label">Sample</div>'
+                f'<div class="stat-value" style="font-size:1.2em">{label}</div>'
+                f'<div class="stat-sub">{pgs_link}</div></div>'
+            )
+        if pctl is not None:
+            pctl_display = f"{pctl:.1f}" if isinstance(pctl, float) else str(pctl)
+            warn = "" if reliable else ' <span style="color:#E65100;font-size:0.7em">⚠</span>'
+            cards.append(
+                f'<div class="stat-card">'
+                f'<div class="stat-label">Percentile</div>'
+                f'<div class="stat-value">{_ordinal(round(float(pctl_display)))}{warn}</div>'
+                f'<div class="stat-sub">{SUPERPOP_LABELS.get(ancestry, ancestry)}</div></div>'
+            )
+        if score_val is not None:
+            cards.append(
+                f'<div class="stat-card">'
+                f'<div class="stat-label">PRS Score</div>'
+                f'<div class="stat-value" style="font-size:1.2em">{score_val:.6f}</div>'
+                f'<div class="stat-sub">raw weighted sum</div></div>'
+            )
+        if vm is not None and vt is not None:
+            mr_pct = f"{mr:.1%}" if mr is not None else f"{vm}/{vt}"
+            cards.append(
+                f'<div class="stat-card">'
+                f'<div class="stat-label">Variant Match</div>'
+                f'<div class="stat-value" style="font-size:1.2em">{mr_pct}</div>'
+                f'<div class="stat-sub">{vm:,} / {vt:,} variants</div></div>'
+            )
+        if ql:
+            q_key = resolve_quality_key(label=ql)
+            q_color = QUALITY_COLORS.get(q_key, "#888")
+            cards.append(
+                f'<div class="stat-card">'
+                f'<div class="stat-label">Model Quality</div>'
+                f'<div class="stat-value" style="font-size:1.2em;color:{q_color}">{ql}</div>'
+                f'<div class="stat-sub">based on AUROC &amp; metadata</div></div>'
+            )
+        if trait:
+            cards.append(
+                f'<div class="stat-card">'
+                f'<div class="stat-label">Trait</div>'
+                f'<div class="stat-value" style="font-size:1.05em">{trait}</div>'
+                f'<div class="stat-sub">{pgs_link}</div></div>'
+            )
+
+    stats_html = '<div class="stats-grid">' + "".join(cards) + "</div>" if cards else ""
+
+    ai_html = ""
+    if results_list:
+        first = results_list[0]
+        mr_val = first.get("match_rate")
+        mr_prompt = f"{mr_val * 100:.1f}" if isinstance(mr_val, (int, float)) and mr_val <= 1 else mr_val
+        prompt_row = {
+            **first,
+            "pgs_id": first.get("pgs_id") or pgs_id,
+            "trait": first.get("trait") or first.get("trait_reported") or first.get("score_name") or "",
+            "ancestry": first.get("ancestry") or ancestry,
+            "genome_file": first.get("genome_file") or first.get("sample_name") or sample_name or "",
+            "match_rate": mr_prompt,
+        }
+        comparison = ""
+        if len(results_list) > 1:
+            comp_lines = ["", "Several samples were scored on this same PGS model:"]
+            for r in results_list:
+                nm = r.get("sample_name") or "sample"
+                sc = r.get("score")
+                part = f"- {nm}: score={sc:.6f}" if isinstance(sc, (int, float)) else f"- {nm}"
+                if r.get("percentile") is not None:
+                    part += f", percentile={r['percentile']}"
+                comp_lines.append(part)
+            comp_lines.append("Compare the samples' relative positions on the reference distribution.")
+            comparison = "\n".join(comp_lines)
+
+        btns: list[str] = []
+        for ai in _AI_ASSISTANTS:
+            char_limit = ai.get("limit", 6000)
+            prompt = build_prs_ai_prompt(
+                "score",
+                row=prompt_row,
+                limit=max(500, char_limit - len(comparison)),
+                sample_name=sample_name,
+                ancestry=ancestry,
+            )
+            if prompt and comparison:
+                prompt = prompt + "\n" + comparison
+            if prompt:
+                encoded = urllib.parse.quote(prompt, safe="")
+                btns.append(
+                    f'<a class="ai-btn" style="background:{ai["color"]}" '
+                    f'href="{ai["url"]}{encoded}" target="_blank" rel="noopener">'
+                    f'Ask {ai["name"]}</a>'
+                )
+        if btns:
+            ai_html = '<div class="ai-buttons"><span class="ai-label">Interpret with AI:</span>' + "".join(btns) + "</div>"
+
+    pgs_link_title = f'<a href="https://www.pgscatalog.org/score/{pgs_id}" target="_blank" rel="noopener">{pgs_id}</a>'
+    subtitle = f"{pgs_link_title} · {SUPERPOP_LABELS.get(ancestry, ancestry)} ({ancestry})"
+    if sample_name:
+        subtitle = f"{sample_name} · {subtitle}"
+
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PRS: {pgs_id} — {sample_name or ancestry}</title>
+<style>
+body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #fafafa; color: #333; }}
+h1 {{ font-size: 1.4em; margin-bottom: 4px; }}
+h1 a {{ color: inherit; text-decoration: none; border-bottom: 2px dotted #bbb; }}
+h1 a:hover {{ border-bottom-color: #666; }}
+.subtitle {{ color: #666; margin-bottom: 16px; font-size: 0.95em; }}
+.subtitle a {{ color: #555; text-decoration: underline dotted; }}
+.subtitle a:hover {{ color: #333; }}
+.stats-grid {{ display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }}
+.stat-card {{ background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; min-width: 140px; flex: 1; }}
+.stat-label {{ font-size: 0.78em; color: #888; text-transform: uppercase; letter-spacing: 0.03em; }}
+.stat-value {{ font-size: 1.6em; font-weight: 700; margin: 2px 0; }}
+.stat-sub {{ font-size: 0.82em; color: #999; }}
+.stat-sub a {{ color: #888; }}
+#vis {{ margin-top: 12px; }}
+.vega-embed {{ width: 100%; }}
+.vega-embed canvas, .vega-embed svg {{ max-width: 100%; }}
+.ai-buttons {{ margin: 18px 0 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }}
+.ai-label {{ font-size: 0.9em; color: #666; }}
+.ai-btn {{ display: inline-block; padding: 7px 16px; border-radius: 6px; color: #fff; text-decoration: none; font-size: 0.88em; font-weight: 600; }}
+.ai-btn:hover {{ opacity: 0.85; }}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@6"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
+</head>
+<body>
+<h1>PRS Bell Curve: {pgs_link_title}</h1>
+<div class="subtitle">{subtitle}</div>
+{stats_html}
+<div id="vis"></div>
+{ai_html}
+<script>
+vegaEmbed('#vis', {spec_json}, {{actions: true, width: Math.max(700, window.innerWidth - 80)}})
+  .catch(console.error);
+</script>
+</body>
+</html>"""
+    return html
+
+
 def save_trait_report(
     chart: alt.Chart | alt.LayerChart | alt.VConcatChart,
     path: Path,
@@ -2356,18 +3133,27 @@ def save_trait_report(
     user_results: list[dict],
     ancestry: str = "EUR",
     sample_name: str | None = None,
+    multi_user_results: dict[str, list[dict]] | None = None,
+    model_scope: str = "usable",
+    sample_files: dict[str, dict] | None = None,
 ) -> Path:
     """Save an Altair trait chart as a rich HTML report with Key Statistics and AI buttons.
 
     For .html output, generates a self-contained page with the same report
     returned by ``trait_report_html()``. For non-HTML formats, falls back to
-    ``save_chart()``.
+    ``save_chart()``. Pass ``multi_user_results`` for a multi-sample comparison
+    report (per-sample cards and a per-sample percentile table) and
+    ``sample_files`` to render the sample → genome-file legend.
     """
     path = Path(path)
     if path.suffix.lower() != ".html":
         return save_chart(chart, path)
 
     path.parent.mkdir(parents=True, exist_ok=True)
-    html = trait_report_html(chart, trait, user_results, ancestry, sample_name=sample_name)
+    html = trait_report_html(
+        chart, trait, user_results, ancestry,
+        sample_name=sample_name, multi_user_results=multi_user_results,
+        model_scope=model_scope, sample_files=sample_files,
+    )
     path.write_text(html, encoding="utf-8")
     return path

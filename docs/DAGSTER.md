@@ -12,7 +12,8 @@ The `just-prs` workspace includes a Dagster-based data pipeline in the `prs-pipe
    - **Software-Defined Assets (SDAs)** form the core, declarative pipeline (`assets.py`). They are best for lineage tracking, data quality, and automation.
    - **Jobs** (`definitions.py`) are used as entry points to trigger specific sub-graphs of assets, initiated by CLI commands or UI actions.
 3. **Abstracted Storage**: Pipeline outputs don't hardcode their absolute locations in the business logic. Paths are resolved consistently via resources (e.g., `CacheDirResource`).
-4. **Metadata and Observability**: Every asset logs rich metadata (row counts, file paths, variant match rates). This makes the Dagster UI a complete data catalog, not just a task runner.
+4. **Never `AssetIn` filesystem side effects.** There is no Polars/UPath IO manager — the default FS IOManager pickles every `Output[...]` under `data/output/dagster/storage/`. Those pickles are wiped across sessions, so `AssetIn` on `Path`, path-dicts, DataFrames that also live on disk, or metadata lists fails with `DagsterExecutionLoadInputError`. Use `deps=[AssetDep(...)]` for lineage and reconstruct from `CacheDirResource` (the pattern `reference_allele_universe`, `reference_scores`, and all HF upload assets follow).
+5. **Metadata and Observability**: Every asset logs rich metadata (row counts, file paths, variant match rates). This makes the Dagster UI a complete data catalog, not just a task runner.
 
 ## Pipeline Architecture
 
@@ -37,8 +38,8 @@ ebi_pgs_catalog_scoring_files  →   ebi_scoring_files_fingerprint  → scoring_
 - **`ebi_scoring_files_fingerprint`**: Materialized remote fingerprint for `pgs_scores_list.txt` (HTTP metadata + body hash). Used as a freshness dependency for scoring/metadata assets.
 - **`scoring_files`**: Bulk-downloads all harmonized PGS scoring `.txt.gz` files from EBI FTP.
 - **`scoring_files_parquet`**: Converts all downloaded `.txt.gz` scoring files to parquet caches with spec-driven schema overrides (`SCORING_FILE_SCHEMA` from `just_prs.scoring`) and zstd-9 compression. PGS Catalog header metadata is embedded as file-level metadata in each parquet. After verified conversion, the original `.txt.gz` is deleted to save disk space (~5.5 GB savings for the full catalog). Per-file failures are tracked without aborting the loop and written to `conversion_failures.parquet` for post-hoc error analysis. `reference_scores` depends on this asset.
-- **`reference_panel`**: Downloads and extracts the reference panel binary files to local cache.
-- **`reference_scores`**: Scores all PGS IDs against the reference panel in a single batch using `compute_reference_prs_batch()`. Reads from parquet caches produced by `scoring_files_parquet` (5-60x faster than decompressing `.txt.gz`). The batch function iterates in-process, tracks failures, and produces aggregated distributions.
+- **`reference_panel`**: Downloads and extracts the reference panel binary files to local cache (`<cache>/reference_panel/...`). Returns `Output[Path]` for metadata only — downstream assets must **not** `AssetIn` that Path (the default FS IOManager pickle under `data/output/dagster/storage/reference_panel` is wiped across sessions and causes `DagsterExecutionLoadInputError`).
+- **`reference_scores`**: Scores all PGS IDs against the reference panel in a single batch using `compute_reference_prs_batch()`. Declares `deps=[AssetDep("reference_panel")]` for lineage and reconstructs the panel path via `download_reference_panel()` / `reference_panel_dir()` from `CacheDirResource`. Reads from parquet caches produced by `scoring_files_parquet` (5-60x faster than decompressing `.txt.gz`). The batch function iterates in-process, tracks failures, and produces aggregated distributions.
 - **`hf_prs_percentiles`**: Enriches the raw distribution statistics with cleaned PGS Catalog metadata (trait names, EFO terms, performance metrics like AUROC/OR/C-index, ancestry) via `enrich_distributions()`, then uploads the enriched parquet to HuggingFace (`just-dna-seq/prs-percentiles`). This creates a cross-pipeline dependency on `cleaned_pgs_metadata`, ensuring the published distributions parquet is self-contained.
 
 The batch scoring approach was adopted because the polars engine scores each PGS ID in seconds (not minutes), and the expensive parts (pvar parsing, psam loading, allele offset cache) are shared across IDs within a single process. This eliminates the overhead of thousands of Dagster partitions and the complex sensor orchestration that was previously required.
@@ -80,6 +81,7 @@ All jobs include `hooks={resource_summary_hook}` for run-level resource aggregat
 | `download_reference_data` | `reference_panel` | Download the reference panel from EBI FTP |
 | `score_and_push` | `scoring_files`, `scoring_files_parquet`, `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Download scoring files, convert to parquet, batch-score, download/clean metadata, enrich, and push to HuggingFace |
 | `reference_percentile_audit_job` | `reference_percentile_audit` | Audit cached or HuggingFace reference percentile distributions and write sidecars without recomputing reference scores |
+| `canary_collapse_audit_job` | `canary_collapse_audit` | Score caller-supplied canary VCFs (`--vcf`) across the catalog (or flag cached results), quarantine 0th/100th-percentile collapses, and push catalog + percentile flags without recomputing 1000G scores |
 | `ld_proxy_pipeline` | `ld_proxy_table`, `hf_ld_proxy_table` | Build consumer-array LD proxy tables as one parquet per PGS ID. Full-catalog coverage is a resumable per-PGS batch with shared reference-panel setup, not one catalog-wide union table |
 | `metadata_pipeline` | `raw_pgs_metadata`, `cleaned_pgs_metadata` | End-to-end metadata pipeline (download + clean; push via catalog_pipeline) |
 
@@ -119,8 +121,13 @@ The pipeline is operated via the `prs-pipeline` CLI (or `uv run pipeline` from t
   uv run pipeline audit
   uv run pipeline audit --headless
   uv run pipeline audit --test
+  uv run pipeline canary-audit
+  uv run pipeline canary-audit --vcf anton --vcf livia --vcf oksana=/path/to/oksana.vcf.gz
+  uv run pipeline canary-audit --headless
   ```
   Launches the Dagster UI by default and submits `reference_percentile_audit_job`, which audits cached or HuggingFace-pulled `{panel}_distributions.parquet` plus `{panel}_quality.parquet` when available. It logs pass/warn/fail PGS-ID counts, writes `{panel}_distribution_quality_issues.parquet` and `{panel}_distribution_audit_summary.json`, and uploads those sidecars to HuggingFace when `HF_TOKEN` is available, all without recomputing reference scores.
+
+  `uv run pipeline canary-audit --vcf ... --vcf ...` launches the Dagster UI and submits `canary_collapse_audit_job`. Pass `--vcf` at least twice (path, alias, or `Label=path`); that scores the **full catalog** on those samples (resumable via `canary_scores.parquet`) and marks a PGS ID unreliable when a majority land at percentile 0 or close to it (`PGS003724`-style). It writes `catalog_scoring_flags.parquet`, merges `canary_collapsed_percentile` ERROR rows into the audit sidecar, and pushes both to HuggingFace. `PRSCatalog.scores()` and `reference_distributions()` then drop those IDs. It does **not** recompute 1000G reference scores. Use `--pgs-ids` / `--limit` for a pilot; `--no-cache` to rescore.
 
 - **Build LD proxy tables for consumer arrays**:
   ```bash

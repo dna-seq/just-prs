@@ -1,8 +1,10 @@
 """Typer CLI for just-prs: PGS Catalog exploration and PRS computation."""
 
 import json
+import sys
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated, Any, Iterator, Optional
 
 import typer
 from rich.console import Console
@@ -80,6 +82,22 @@ ancestry_app = typer.Typer(
 app.add_typer(ancestry_app, name="ancestry")
 
 console = Console()
+
+
+@contextmanager
+def _console_stderr() -> Iterator[None]:
+    """Send Rich progress/errors to stderr without pinning the shared Console to a closed stream.
+
+    ``Console.file`` falls back to the live ``sys.stdout`` when ``_file`` is None.
+    Saving the live stream and restoring it after ``CliRunner`` closes its capture
+    leaves later commands writing to a closed file.
+    """
+    original = console._file
+    console.file = sys.stderr
+    try:
+        yield
+    finally:
+        console._file = original
 
 
 @scores_app.command("list")
@@ -2803,6 +2821,171 @@ def _load_user_results(results_path: Path) -> list[dict]:
     return data
 
 
+def _load_prompt_results(results_path: Path) -> tuple[list[dict], dict[str, list[dict]] | None]:
+    """Load PRS results for ``prs prompt``.
+
+    Accepts the same list format as ``plot trait --results``, a
+    ``{sample: [rows]}`` mapping for multi-sample comparisons, or a list of
+    rows that already carry a ``sample`` / ``sample_name`` field.
+    """
+    data = json.loads(results_path.read_text())
+    if isinstance(data, dict) and "multi_user_results" in data:
+        data = data["multi_user_results"]
+    elif isinstance(data, dict) and "results" in data:
+        data = data["results"]
+
+    if isinstance(data, dict):
+        multi: dict[str, list[dict]] = {}
+        for key, val in data.items():
+            if isinstance(val, list):
+                multi[str(key)] = val
+        if not multi:
+            console.print("[red]Results JSON object had no sample → rows lists.[/red]")
+            raise typer.Exit(code=1)
+        first_label = next(iter(multi))
+        if len(multi) == 1:
+            return multi[first_label], None
+        return multi[first_label], multi
+
+    if not isinstance(data, list):
+        console.print(
+            "[red]Results JSON must be a list of objects, {\"results\": [...]}, "
+            "or a {sample: [rows]} mapping.[/red]"
+        )
+        raise typer.Exit(code=1)
+
+    grouped: dict[str, list[dict]] = {}
+    for row in data:
+        if not isinstance(row, dict):
+            continue
+        label = row.get("sample") or row.get("sample_name")
+        if label:
+            grouped.setdefault(str(label), []).append(row)
+    if len(grouped) > 1:
+        first_label = next(iter(grouped))
+        return grouped[first_label], grouped
+    return data, None
+
+
+def _resolve_trait_models(models: str) -> tuple[Any, str]:
+    """Return ``(row_filter_or_None, summarize_trait_rows model_scope)``."""
+    from just_prs.trait_summary import (
+        is_high_or_moderate_model,
+        is_high_quality_model,
+        is_usable_model,
+    )
+
+    filters = {
+        "all": None,
+        "usable": is_usable_model,
+        "high-moderate": is_high_or_moderate_model,
+        "high": is_high_quality_model,
+    }
+    scopes = {
+        "all": "usable",
+        "usable": "usable",
+        "high-moderate": "high_moderate",
+        "high": "high_quality",
+    }
+    key = models.lower().strip()
+    if key not in filters:
+        console.print(f"[red]--models must be one of: {', '.join(filters)}[/red]")
+        raise typer.Exit(code=1)
+    return filters[key], scopes[key]
+
+
+def _apply_model_filter(rows: list[dict], model_filter: Any, label: str) -> list[dict]:
+    if model_filter is None:
+        return rows
+    kept = [r for r in rows if model_filter(r)]
+    dropped = len(rows) - len(kept)
+    if dropped:
+        console.print(f"  [dim]{label}: {dropped} model(s) below the filter bar excluded[/dim]")
+    return kept
+
+
+def _trait_search_hits(scores: pl.DataFrame, term: str) -> pl.DataFrame:
+    """Case-insensitive substring match — same columns as ``PRSCatalog.search``."""
+    needles = [
+        pl.col(col).fill_null("").str.to_lowercase().str.contains(term, literal=True)
+        for col in ("pgs_id", "name", "trait_reported", "trait_efo")
+        if col in scores.columns
+    ]
+    if not needles:
+        return scores.head(0)
+    combined = needles[0]
+    for expr in needles[1:]:
+        combined = combined | expr
+    return scores.filter(combined)
+
+
+def _select_trait_scores(
+    scores: pl.DataFrame,
+    trait: str,
+    *,
+    fuzzy: bool = False,
+) -> tuple[pl.DataFrame | None, str, list[str]]:
+    """Resolve a trait query the same way the UI By-Trait tab groups scores.
+
+    Order: exact ``trait_efo`` (the UI grouping key, e.g. ``intelligence``),
+    then exact ``trait_reported``, then a substring search. An unambiguous
+    substring hit (every hit shares one EFO label) is accepted without
+    ``--fuzzy`` so citizen-science names work; mixed EFO hits still need
+    ``--fuzzy``.
+
+    Returns ``(matched_df, match_type, suggestion_labels)``. ``matched_df`` is
+    None when the caller should print suggestions and exit.
+    """
+    term = trait.strip().lower()
+    if not term or scores.height == 0:
+        return None, "", []
+
+    if "trait_efo" in scores.columns:
+        efo_exact = scores.filter(pl.col("trait_efo").fill_null("").str.to_lowercase().eq(term))
+        if efo_exact.height > 0:
+            return efo_exact, "efo", []
+
+    reported_exact = scores.filter(pl.col("trait_reported").str.to_lowercase().eq(term))
+    if reported_exact.height > 0:
+        return reported_exact, "exact", []
+
+    hits = _trait_search_hits(scores, term)
+    if hits.height == 0:
+        return None, "", []
+
+    if "trait_efo" in hits.columns:
+        efo_vals = [
+            str(v).strip()
+            for v in hits["trait_efo"].drop_nulls().unique().to_list()
+            if str(v).strip()
+        ]
+        if len(efo_vals) == 1:
+            canonical = efo_vals[0].lower()
+            grouped = scores.filter(
+                pl.col("trait_efo").fill_null("").str.to_lowercase().eq(canonical)
+            )
+            if grouped.height > 0:
+                return grouped, "efo", []
+
+    if fuzzy:
+        return hits, "fuzzy", []
+
+    if "trait_efo" in hits.columns:
+        labels = [
+            str(v).strip()
+            for v in hits["trait_efo"].drop_nulls().unique().sort().to_list()
+            if str(v).strip()
+        ]
+    else:
+        labels = []
+    if not labels:
+        labels = [
+            str(v)
+            for v in hits["trait_reported"].unique().sort().to_list()
+        ]
+    return None, "", labels
+
+
 def _compute_trait_results(
     trait: str,
     vcf_path: Path,
@@ -2817,14 +3000,16 @@ def _compute_trait_results(
 ) -> list[dict]:
     """Search for PGS models matching a trait, compute PRS, and return result dicts.
 
-    Exact match on trait_reported first. Falls back to substring match only with fuzzy=True.
-    Always lists the matched trait names before computing.
+    Trait lookup matches the UI By-Trait tab: exact ``trait_efo`` (e.g.
+    ``intelligence``), then exact ``trait_reported``, then an unambiguous
+    substring hit that maps to a single EFO label. ``--fuzzy`` is only needed
+    when partial hits span multiple traits. Always lists the matched reported
+    names before computing.
     When ``pgs_ids`` is given, trait search is skipped and exactly those scores
     are computed (single/multi PGS ID is the one-score edge case of the trait flow).
     Uses a file-based result cache keyed by (vcf mtime+size, pgs_id, build, ancestry).
     """
     catalog = PRSCatalog(cache_dir=cache)
-    term = trait.strip().lower()
 
     all_scores = catalog.scores(genome_build=build, include_harmonized=True)
 
@@ -2843,35 +3028,28 @@ def _compute_trait_results(
         order = {p: i for i, p in enumerate(pgs_ids)}
         scores_df = scores_df.sort(pl.col("pgs_id").replace_strict(order, default=len(order)))
         match_type = "pgs-id"
-    elif fuzzy:
-        fuzzy_df = catalog.search(trait, genome_build=build).collect()
-        if fuzzy_df.height == 0:
-            console.print(f"[red]No PGS scores found for trait '{trait}' ({build}).[/red]")
-            raise typer.Exit(code=1)
-        scores_df = fuzzy_df
-        match_type = "fuzzy"
     else:
-        exact_df = all_scores.filter(
-            pl.col("trait_reported").str.to_lowercase().eq(term)
-        ).collect()
-
-        if exact_df.height > 0:
-            scores_df = exact_df
-            match_type = "exact"
-        else:
-            fuzzy_df = catalog.search(trait, genome_build=build).collect()
-            if fuzzy_df.height == 0:
+        scores_table = all_scores.collect()
+        scores_df, match_type, suggestions = _select_trait_scores(
+            scores_table, trait, fuzzy=fuzzy
+        )
+        if scores_df is None:
+            if not suggestions:
                 console.print(f"[red]No PGS scores found for trait '{trait}' ({build}).[/red]")
-                raise typer.Exit(code=1)
-
-            trait_names = fuzzy_df["trait_reported"].unique().sort().to_list()
-            console.print(f"[yellow]No exact match for '{trait}'. Found {fuzzy_df.height} scores with partial matches:[/yellow]")
-            for t in trait_names:
-                n = fuzzy_df.filter(pl.col("trait_reported") == t).height
-                console.print(f"  - {t} ({n} scores)")
-            console.print(f"\n[dim]Add --fuzzy to compute PRS for these partial matches.[/dim]")
+            else:
+                console.print(
+                    f"[yellow]No unique trait match for '{trait}'. "
+                    f"Partial hits span {len(suggestions)} traits:[/yellow]"
+                )
+                for label in suggestions:
+                    console.print(f"  - {label}")
+                console.print(
+                    "\n[dim]Use the EFO label (as in the UI By-Trait tab), "
+                    "quotes around a full reported name, or --fuzzy to include every partial hit.[/dim]"
+                )
             raise typer.Exit(code=1)
 
+    assert scores_df is not None
     trait_names = scores_df["trait_reported"].unique().sort().to_list()
     pgs_ids = scores_df["pgs_id"].head(max_scores).to_list()
 
@@ -3388,6 +3566,98 @@ def plot_multi_ancestry_cmd(
     console.print(f"[green]Saved to {output.resolve()}[/green]")
 
 
+def _collect_vcf_trait_results(
+    vcf: list[str],
+    *,
+    trait: str,
+    ancestry: str | None,
+    build: str | None,
+    max_scores: int,
+    cache: Path,
+    cache_dir: Path | None,
+    fuzzy: bool,
+    no_cache: bool,
+    pgs_ids: list[str] | None,
+    dists: pl.DataFrame,
+    model_filter: Any,
+) -> tuple[
+    list[dict],
+    dict[str, list[dict]] | None,
+    dict[str, dict],
+    dict[str, str],
+    str,
+]:
+    """Score one or more VCFs the same way ``plot trait`` does.
+
+    Returns ``(user_results, multi_user_results, sample_files, sample_ancestries, sample_name)``.
+    """
+    sample_files: dict[str, dict] = {}
+    sample_ancestries: dict[str, str] = {}
+
+    def _sample_ancestry(vcf_path: Path, sample_build: str) -> dict:
+        if ancestry:
+            return {
+                "superpopulation": ancestry, "confidence": None,
+                "fine_population": None, "fine_confidence": None,
+            }
+        call = _infer_vcf_ancestry(vcf_path, sample_build, cache)
+        if call is None:
+            return {
+                "superpopulation": "EUR", "confidence": None,
+                "fine_population": None, "fine_confidence": None,
+            }
+        return call
+
+    vcf_specs = [_parse_vcf_spec(spec) for spec in vcf]
+    if len(vcf_specs) == 1:
+        label, vcf_str = vcf_specs[0]
+        vcf_path = _resolve_vcf(vcf_str, cache_dir)
+        sample_build = _resolve_sample_build(vcf_path, build)
+        anc_call = _sample_ancestry(vcf_path, sample_build)
+        sample_anc = anc_call["superpopulation"]
+        sample_ancestries[label] = sample_anc
+        sample_files[label] = {
+            "file": str(vcf_path), "build": sample_build,
+            "ancestry": sample_anc, "ancestry_confidence": anc_call.get("confidence"),
+            "fine_population": anc_call.get("fine_population"),
+            "fine_confidence": anc_call.get("fine_confidence"),
+        }
+        user_results = _apply_model_filter(
+            _compute_trait_results(
+                trait, vcf_path, dists, sample_anc, sample_build, max_scores, cache,
+                fuzzy=fuzzy, no_cache=no_cache, pgs_ids=pgs_ids,
+            ),
+            model_filter,
+            label,
+        )
+        return user_results, None, sample_files, sample_ancestries, label
+
+    multi_user_results: dict[str, list[dict]] = {}
+    for label, vcf_str in vcf_specs:
+        console.print(f"\n[bold]Computing PRS for sample [cyan]{label}[/cyan]...[/bold]")
+        vcf_path = _resolve_vcf(vcf_str, cache_dir)
+        sample_build = _resolve_sample_build(vcf_path, build)
+        console.print(f"  Build: [cyan]{sample_build}[/cyan]")
+        anc_call = _sample_ancestry(vcf_path, sample_build)
+        sample_anc = anc_call["superpopulation"]
+        sample_ancestries[label] = sample_anc
+        console.print(f"  Reference population: [cyan]{sample_anc}[/cyan]")
+        sample_files[label] = {
+            "file": str(vcf_path), "build": sample_build,
+            "ancestry": sample_anc, "ancestry_confidence": anc_call.get("confidence"),
+            "fine_population": anc_call.get("fine_population"),
+            "fine_confidence": anc_call.get("fine_confidence"),
+        }
+        sample_results = _compute_trait_results(
+            trait, vcf_path, dists, sample_anc, sample_build, max_scores, cache,
+            fuzzy=fuzzy, no_cache=no_cache, pgs_ids=pgs_ids,
+        )
+        multi_user_results[label] = _apply_model_filter(sample_results, model_filter, label)
+    first_label = next(iter(multi_user_results))
+    sample_name = ", ".join(multi_user_results.keys())
+    return multi_user_results[first_label], multi_user_results, sample_files, sample_ancestries, sample_name
+
+
 @plot_app.command("trait")
 def plot_trait_cmd(
     trait: Annotated[str, typer.Argument(help="Trait name or substring (e.g. 'BMI'), or comma-separated PGS IDs (e.g. 'PGS000001,PGS000002') to select scores directly")],
@@ -3416,7 +3686,7 @@ def plot_trait_cmd(
     width: Annotated[int, typer.Option("--width", help="Chart width in pixels")] = 900,
     height: Annotated[int, typer.Option("--height", help="Bell curve height in pixels")] = 400,
     fuzzy: Annotated[
-        bool, typer.Option("--fuzzy/--exact", help="Allow partial trait name matching (default: exact only)")
+        bool, typer.Option("--fuzzy/--exact", help="Include every partial trait hit (default: unique EFO / exact label only)")
     ] = False,
     all_ancestries: Annotated[
         bool, typer.Option("--all-ancestries/--single-ancestry", help="Overlay all 5 population bell curves (default: single ancestry)")
@@ -3454,9 +3724,11 @@ def plot_trait_cmd(
     percentiles are computed against each sample's own population — pass
     --ancestry to pin one population for every sample instead.
 
-    Trait matching is exact by default (case-insensitive). If no exact match is
-    found, the command lists partial matches and exits. Use --fuzzy to compute
-    PRS for all partial matches.
+    Trait matching uses the same key as the UI By-Trait tab: the EFO label
+    (e.g. intelligence, body mass index), then the catalog's reported name.
+    An unambiguous partial match (every hit shares one EFO) is accepted
+    without --fuzzy. If partial hits span multiple traits, the command lists
+    them and exits; pass --fuzzy to include all of them.
 
     Use --all-ancestries to overlay all 5 population reference curves, or
     --ancestries EUR,AFR,EAS to select specific populations.
@@ -3471,49 +3743,17 @@ def plot_trait_cmd(
       prs plot trait BMI -o bmi.html --show-table --all-ancestries
       prs plot trait "type 2 diabetes" --vcf anton -o t2d.html --ancestries EUR,AFR,EAS
       prs plot trait "type 2 diabetes" -o t2d.html --results my_results.json
-      prs plot trait intelligence --vcf Anton=anton --vcf Livia=livia -o compare.html --fuzzy
+      prs plot trait intelligence --vcf Anton=anton --vcf Livia=livia -o compare.html
       prs plot trait PGS000001 --vcf Anton=anton --vcf Livia=livia -o pgs1.html
       prs plot trait PGS000001,PGS000002 --vcf anton -o two_scores.html
     """
-    from just_prs.trait_summary import (
-        is_high_or_moderate_model,
-        is_high_quality_model,
-        is_usable_model,
-    )
     from just_prs.viz import plot_trait_scores, save_chart, save_trait_report
 
     if vcf and results:
         console.print("[red]Provide either --vcf or --results, not both.[/red]")
         raise typer.Exit(code=1)
 
-    _MODEL_FILTERS = {
-        "all": None,
-        "usable": is_usable_model,
-        "high-moderate": is_high_or_moderate_model,
-        "high": is_high_quality_model,
-    }
-    _MODEL_SCOPES = {
-        "all": "usable",
-        "usable": "usable",
-        "high-moderate": "high_moderate",
-        "high": "high_quality",
-    }
-    models = models.lower().strip()
-    if models not in _MODEL_FILTERS:
-        console.print(f"[red]--models must be one of: {', '.join(_MODEL_FILTERS)}[/red]")
-        raise typer.Exit(code=1)
-    model_filter = _MODEL_FILTERS[models]
-    model_scope = _MODEL_SCOPES[models]
-
-    def _filter_models(rows: list[dict], label: str) -> list[dict]:
-        if model_filter is None:
-            return rows
-        kept = [r for r in rows if model_filter(r)]
-        dropped = len(rows) - len(kept)
-        if dropped:
-            console.print(f"  [dim]{label}: {dropped} model(s) below the '{models}' bar excluded[/dim]")
-        return kept
-
+    model_filter, model_scope = _resolve_trait_models(models)
     cache = cache_dir or resolve_cache_dir()
     dists, quality = _load_distributions(cache_dir, panel)
 
@@ -3525,75 +3765,27 @@ def plot_trait_cmd(
     multi_user_results: dict[str, list[dict]] | None = None
     sample_files: dict[str, dict] = {}
     sample_ancestries: dict[str, str] = {}
-
-    def _sample_ancestry(vcf_path: Path, sample_build: str) -> dict:
-        """Explicit --ancestry wins; otherwise auto-detect, falling back to EUR.
-
-        Returns the ancestry-call dict (superpopulation + confidence, fine
-        population + confidence). The fine population (e.g. 1000G's CEU) is
-        informational, shown in the report legend with its confidence.
-        """
-        if ancestry:
-            return {"superpopulation": ancestry, "confidence": None,
-                    "fine_population": None, "fine_confidence": None}
-        call = _infer_vcf_ancestry(vcf_path, sample_build, cache)
-        if call is None:
-            return {"superpopulation": "EUR", "confidence": None,
-                    "fine_population": None, "fine_confidence": None}
-        return call
-
     sample_name: str | None = None
     if vcf:
-        vcf_specs = [(lambda s: _parse_vcf_spec(s))(spec) for spec in vcf]
-        if len(vcf_specs) == 1:
-            label, vcf_str = vcf_specs[0]
-            vcf_path = _resolve_vcf(vcf_str, cache_dir)
-            sample_name = label
-            sample_build = _resolve_sample_build(vcf_path, build)
-            anc_call = _sample_ancestry(vcf_path, sample_build)
-            sample_anc = anc_call["superpopulation"]
-            sample_ancestries[label] = sample_anc
-            sample_files[label] = {
-                "file": str(vcf_path), "build": sample_build,
-                "ancestry": sample_anc, "ancestry_confidence": anc_call.get("confidence"),
-                "fine_population": anc_call.get("fine_population"),
-                "fine_confidence": anc_call.get("fine_confidence"),
-            }
-            user_results = _filter_models(
-                _compute_trait_results(
-                    trait, vcf_path, dists, sample_anc, sample_build, max_scores, cache,
-                    fuzzy=fuzzy, no_cache=no_cache, pgs_ids=pgs_ids,
-                ),
-                label,
+        user_results, multi_user_results, sample_files, sample_ancestries, sample_name = (
+            _collect_vcf_trait_results(
+                vcf,
+                trait=trait,
+                ancestry=ancestry,
+                build=build,
+                max_scores=max_scores,
+                cache=cache,
+                cache_dir=cache_dir,
+                fuzzy=fuzzy,
+                no_cache=no_cache,
+                pgs_ids=pgs_ids,
+                dists=dists,
+                model_filter=model_filter,
             )
-        else:
-            multi_user_results = {}
-            for label, vcf_str in vcf_specs:
-                console.print(f"\n[bold]Computing PRS for sample [cyan]{label}[/cyan]...[/bold]")
-                vcf_path = _resolve_vcf(vcf_str, cache_dir)
-                sample_build = _resolve_sample_build(vcf_path, build)
-                console.print(f"  Build: [cyan]{sample_build}[/cyan]")
-                anc_call = _sample_ancestry(vcf_path, sample_build)
-                sample_anc = anc_call["superpopulation"]
-                sample_ancestries[label] = sample_anc
-                console.print(f"  Reference population: [cyan]{sample_anc}[/cyan]")
-                sample_files[label] = {
-                    "file": str(vcf_path), "build": sample_build,
-                    "ancestry": sample_anc, "ancestry_confidence": anc_call.get("confidence"),
-                    "fine_population": anc_call.get("fine_population"),
-                    "fine_confidence": anc_call.get("fine_confidence"),
-                }
-                sample_results = _compute_trait_results(
-                    trait, vcf_path, dists, sample_anc, sample_build, max_scores, cache,
-                    fuzzy=fuzzy, no_cache=no_cache, pgs_ids=pgs_ids,
-                )
-                multi_user_results[label] = _filter_models(sample_results, label)
-            first_label = next(iter(multi_user_results))
-            user_results = multi_user_results[first_label]
-            sample_name = ", ".join(multi_user_results.keys())
+        )
     elif results:
         sample_name = results.name
-        user_results = _filter_models(_load_user_results(results), results.name)
+        user_results = _apply_model_filter(_load_user_results(results), model_filter, results.name)
 
     # The report-level ancestry (subtitle, reference curve, prompt): explicit
     # --ancestry, else the first sample's auto-detected population, else EUR.
@@ -3699,6 +3891,210 @@ def plot_strip_cmd(
     )
     save_chart(chart, output)
     console.print(f"[green]Saved to {output.resolve()}[/green]")
+
+
+@app.command("prompt")
+def prompt_cmd(
+    trait: Annotated[
+        str,
+        typer.Argument(
+            help="Trait name or substring (e.g. 'BMI'), or comma-separated PGS IDs"
+        ),
+    ],
+    vcf: Annotated[
+        Optional[list[str]],
+        typer.Option(
+            "--vcf",
+            "-v",
+            help="VCF file path or alias, optionally Label=path. Repeat for multi-sample comparison.",
+        ),
+    ] = None,
+    results: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--results",
+            "-r",
+            help="JSON of computed PRS rows, or {sample: [rows]} for a multi-sample comparison",
+        ),
+    ] = None,
+    output: Annotated[
+        Optional[Path],
+        typer.Option("--output", "-o", help="Write the prompt (or URL) to this file instead of stdout"),
+    ] = None,
+    assistant: Annotated[
+        str,
+        typer.Option(
+            "--assistant",
+            "-A",
+            help="Character budget / prefill target: claude, chatgpt, perplexity, grok, other",
+        ),
+    ] = "other",
+    url: Annotated[
+        bool,
+        typer.Option("--url", help="Print a prefilled assistant URL instead of the prompt text"),
+    ] = False,
+    limit: Annotated[
+        Optional[int],
+        typer.Option("--limit", help="Override the assistant character budget"),
+    ] = None,
+    ancestry: Annotated[
+        Optional[str],
+        typer.Option("--ancestry", "-a", help="Pin one superpopulation for every sample (default: auto-detect)"),
+    ] = None,
+    build: Annotated[
+        Optional[str],
+        typer.Option("--build", "-b", help="Genome build override (auto-detected from the VCF header by default)"),
+    ] = None,
+    models: Annotated[
+        str,
+        typer.Option("--models", help="Which models to include: all, usable (match ≥50%), high-moderate, high"),
+    ] = "all",
+    max_scores: Annotated[
+        int,
+        typer.Option("--max-scores", help="Max number of PGS models to include"),
+    ] = 25,
+    fuzzy: Annotated[
+        bool,
+        typer.Option("--fuzzy/--exact", help="Include every partial trait hit (default: unique EFO / exact label only)"),
+    ] = False,
+    no_cache: Annotated[
+        bool,
+        typer.Option("--no-cache", help="Bypass PRS result cache and recompute all scores"),
+    ] = False,
+    panel: Annotated[
+        str,
+        typer.Option("--panel", help="Reference panel (1000g or hgdp_1kg)"),
+    ] = "1000g",
+    cache_dir: Annotated[
+        Optional[Path],
+        typer.Option("--cache-dir", help="Override cache directory"),
+    ] = None,
+) -> None:
+    """Build the same LLM prompt the UI Ask-AI buttons use, for agentic workflows.
+
+    Prints the prompt to stdout (progress goes to stderr) so you can pipe it
+    into Claude, Codex, or another agent. Repeat --vcf for a multi-sample
+    comparison prompt. --assistant other (the default) uses the full 6000-char
+    budget with no URL encoding; --url emits a prefilled Claude/ChatGPT/…
+    link instead.
+
+    \b
+    Examples:
+      prs prompt intelligence --vcf Anton=anton --vcf Livia=livia
+      prs prompt BMI --vcf anton | claude
+      prs prompt intelligence --results family.json -o prompt.txt
+      prs prompt PGS000001 --vcf anton --assistant claude --url
+    """
+    from just_prs.viz import (
+        AI_ASSISTANTS_BY_KEY,
+        ai_prefill_url,
+        assistant_char_limit,
+        build_prs_ai_prompt,
+    )
+
+    assistant_key = assistant.lower().strip()
+    with _console_stderr():
+        if assistant_key not in AI_ASSISTANTS_BY_KEY:
+            console.print(
+                f"[red]--assistant must be one of: {', '.join(AI_ASSISTANTS_BY_KEY)}[/red]"
+            )
+            raise typer.Exit(code=1)
+        if url and not AI_ASSISTANTS_BY_KEY[assistant_key].get("url"):
+            console.print(
+                "[red]--url needs an assistant with a prefill link "
+                "(claude, chatgpt, perplexity, grok). 'other' is paste-only.[/red]"
+            )
+            raise typer.Exit(code=1)
+        if vcf and results:
+            console.print("[red]Provide either --vcf or --results, not both.[/red]")
+            raise typer.Exit(code=1)
+        if not vcf and not results:
+            console.print("[red]Provide --vcf or --results so the prompt has scores to interpret.[/red]")
+            raise typer.Exit(code=1)
+
+        model_filter, model_scope = _resolve_trait_models(models)
+        cache = cache_dir or resolve_cache_dir()
+        pgs_ids = _parse_pgs_id_list(trait)
+        if pgs_ids:
+            console.print(f"Selecting scores by PGS ID: [cyan]{', '.join(pgs_ids)}[/cyan]")
+
+        user_results: list[dict] | None = None
+        multi_user_results: dict[str, list[dict]] | None = None
+        sample_files: dict[str, dict] = {}
+        sample_ancestries: dict[str, str] = {}
+        sample_name: str | None = None
+
+        if vcf:
+            dists, _ = _load_distributions(cache_dir, panel)
+            user_results, multi_user_results, sample_files, sample_ancestries, sample_name = (
+                _collect_vcf_trait_results(
+                    vcf,
+                    trait=trait,
+                    ancestry=ancestry,
+                    build=build,
+                    max_scores=max_scores,
+                    cache=cache,
+                    cache_dir=cache_dir,
+                    fuzzy=fuzzy,
+                    no_cache=no_cache,
+                    pgs_ids=pgs_ids,
+                    dists=dists,
+                    model_filter=model_filter,
+                )
+            )
+        else:
+            assert results is not None
+            user_results, multi_user_results = _load_prompt_results(results)
+            user_results = _apply_model_filter(user_results, model_filter, results.name)
+            if multi_user_results:
+                multi_user_results = {
+                    name: _apply_model_filter(rows, model_filter, name)
+                    for name, rows in multi_user_results.items()
+                }
+                sample_name = ", ".join(multi_user_results.keys())
+            else:
+                sample_name = results.name
+
+        if not user_results:
+            console.print("[red]No PRS results to build a prompt from.[/red]")
+            raise typer.Exit(code=1)
+
+        resolved_ancestry = ancestry or next(iter(sample_ancestries.values()), None) or "EUR"
+        trait_label = trait
+        if pgs_ids:
+            seen_traits: dict[str, None] = {}
+            source_rows = user_results
+            if multi_user_results:
+                source_rows = next(iter(multi_user_results.values()))
+            for row in source_rows:
+                reported = row.get("trait_reported") or row.get("trait")
+                if reported:
+                    seen_traits.setdefault(str(reported))
+            trait_label = ", ".join(seen_traits) if seen_traits else ", ".join(pgs_ids)
+
+        char_limit = assistant_char_limit(assistant_key, limit)
+        prompt = build_prs_ai_prompt(
+            "trait_results",
+            user_results=user_results,
+            trait=trait_label,
+            ancestry=resolved_ancestry,
+            limit=char_limit,
+            sample_name=sample_name,
+            model_scope=model_scope,
+            multi_user_results=multi_user_results,
+            sample_files=sample_files or None,
+        )
+        if not prompt:
+            console.print("[red]Could not build a prompt (no scored models with percentiles).[/red]")
+            raise typer.Exit(code=1)
+        payload = ai_prefill_url(assistant_key, prompt) if url else prompt
+
+        if output is not None:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(payload if payload.endswith("\n") else payload + "\n", encoding="utf-8")
+            console.print(f"[green]Saved to {output.resolve()}[/green]")
+            return
+    sys.stdout.write(payload if payload.endswith("\n") else payload + "\n")
 
 
 def run() -> None:

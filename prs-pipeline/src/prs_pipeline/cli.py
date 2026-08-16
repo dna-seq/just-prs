@@ -457,6 +457,7 @@ def canary_audit(
 
     \b
     Pass ``--vcf`` once per sample (path, alias, or ``Label=path``; at least 2).
+    Example: ``uv run pipeline canary-audit --vcf anton --vcf livia --vcf mom=mom.vcf.gz``
     Scores every catalog PGS on those genomes, marks a score unreliable when a
     majority land at percentile 0 or close to it, writes
     ``catalog_scoring_flags.parquet``, and pushes to HuggingFace.

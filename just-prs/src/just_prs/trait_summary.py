@@ -10,6 +10,7 @@ the same rules.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -116,6 +117,72 @@ def is_combined_population(label: str | None) -> bool:
         "meta",
         "population",
     }
+
+
+def heritability_keep_codes(
+    selected_ancestry: str | None,
+    *,
+    restrict_to_selected: bool = False,
+    sample_ancestries: Iterable[str] | None = None,
+) -> list[str]:
+    """Superpopulation codes the h² card may list.
+
+    A dashboard Population override keeps that one code. Otherwise keep the
+    distinct ancestries detected in *sample_ancestries* (selected first). With
+    no sample calls, keep the selected (majority) ancestry only — never the
+    full Pan-UKBB catalog.
+    """
+    selected = ancestry_code(selected_ancestry)
+    if restrict_to_selected:
+        return [selected] if selected else []
+    codes: list[str] = []
+    seen: set[str] = set()
+    for raw in sample_ancestries or []:
+        code = ancestry_code(raw)
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        codes.append(code)
+    if not codes:
+        return [selected] if selected else []
+    if selected and selected in seen:
+        return [selected, *[code for code in codes if code != selected]]
+    return codes
+
+
+def _filter_heritability_metrics(
+    metrics: list[dict[str, Any]],
+    keep_codes: list[str],
+) -> list[dict[str, Any]]:
+    """Keep metrics for *keep_codes*; Combined is fallback only, never alongside."""
+    if not keep_codes:
+        return [
+            metric
+            for metric in metrics
+            if is_combined_population(
+                str(metric.get("population") or metric.get("ancestry") or ""),
+            )
+        ]
+    matched = [
+        metric
+        for metric in metrics
+        if any(
+            matches_ancestry(
+                str(metric.get("population") or metric.get("ancestry") or ""),
+                code,
+            )
+            for code in keep_codes
+        )
+    ]
+    if matched:
+        return matched
+    return [
+        metric
+        for metric in metrics
+        if is_combined_population(
+            str(metric.get("population") or metric.get("ancestry") or ""),
+        )
+    ]
 
 
 def ancestry_sort_rank(label: str | None, selected_ancestry: str | None) -> int:
@@ -366,19 +433,19 @@ def summarize_heritability(
     rows: list[dict[str, Any]],
     selected_ancestry: str = "EUR",
     restrict_to_selected: bool = False,
+    sample_ancestries: Iterable[str] | None = None,
 ) -> tuple[str, str, list[dict[str, Any]]]:
-    """De-duplicate h² metrics and sort selected ancestry first, Combined second.
+    """De-duplicate h² metrics and keep ancestries that matter for these samples.
 
-    When ``restrict_to_selected`` is true (Population dropdown is a specific
-    superpopulation), keep only that ancestry. Combined is a fallback when the
-    selected population has no mapped h² — it is not listed alongside it.
-
-    Truncation of the compact text (first 4 metrics) happens *after* this sort
-    so the selected population cannot be cut off by Pan-UKBB table order.
+    ``restrict_to_selected`` (dashboard Population is a specific superpop) keeps
+    only that ancestry. Otherwise keep ancestries detected in
+    *sample_ancestries* (selected first). Combined is a fallback when none of
+    those have a mapped estimate — it is not listed alongside them. With no
+    sample calls, keep the selected ancestry only so the card does not dump
+    every Pan-UKBB row.
     """
     metric_by_key: dict[tuple[str, str, str], dict[str, Any]] = {}
     detail_parts: list[str] = []
-    text_parts: list[str] = []
 
     for row in rows:
         metrics = row.get("heritability_metrics", [])
@@ -395,9 +462,6 @@ def summarize_heritability(
                     continue
                 metric_by_key[key] = metric
 
-        h_text = str(row.get("heritability") or "").strip()
-        if h_text and h_text not in {"N/A", NO_MAPPED_H2} and h_text not in text_parts:
-            text_parts.append(h_text)
         h_detail = str(row.get("heritability_detail") or "").strip()
         if h_detail and h_detail not in detail_parts:
             detail_parts.append(h_detail)
@@ -407,26 +471,13 @@ def summarize_heritability(
         selected_ancestry,
         label_key="population",
     )
-    wanted = ancestry_code(selected_ancestry)
-    if restrict_to_selected and wanted:
-        selected_metrics = [
-            metric
-            for metric in metrics
-            if matches_ancestry(
-                str(metric.get("population") or metric.get("ancestry") or ""),
-                wanted,
-            )
-        ]
-        if selected_metrics:
-            metrics = selected_metrics
-        else:
-            metrics = [
-                metric
-                for metric in metrics
-                if is_combined_population(
-                    str(metric.get("population") or metric.get("ancestry") or ""),
-                )
-            ]
+    keep_codes = heritability_keep_codes(
+        selected_ancestry,
+        restrict_to_selected=restrict_to_selected,
+        sample_ancestries=sample_ancestries,
+    )
+    if keep_codes:
+        metrics = _filter_heritability_metrics(metrics, keep_codes)
     if metrics:
         parts = [
             f"{metric.get('population', 'Population')} h²={metric.get('h2', 'N/A')}"
@@ -436,8 +487,6 @@ def summarize_heritability(
         if len(metrics) > 4:
             parts.append(f"+{len(metrics) - 4} more")
         return "; ".join(parts), " | ".join(detail_parts), metrics
-    if text_parts and not restrict_to_selected:
-        return " | ".join(text_parts[:3]), " | ".join(detail_parts), []
     return NO_MAPPED_H2, "No mapped population-level heritability estimate.", []
 
 
@@ -521,6 +570,7 @@ def summarize_trait_rows(
     model_scope: str = "usable",
     selected_ancestry: str = "EUR",
     percentile_source: str = "native",
+    sample_ancestries: Iterable[str] | None = None,
 ) -> TraitSummaryStats:
     """Aggregate one trait group's models under a single explicit scope.
 
@@ -532,6 +582,8 @@ def summarize_trait_rows(
     scoped rows with risk estimates (each already refreshed at its dashboard
     percentile), so it moves together with the median-percentile card.
     ``best_risk_row`` is the representative row closest to that median ratio.
+    Heritability lists ancestries detected in *sample_ancestries* (or the
+    selected population when none were detected). Combined is fallback-only.
     """
     scope = _normalize_scope(model_scope)
     source = _normalize_percentile_source(percentile_source)
@@ -604,6 +656,7 @@ def summarize_trait_rows(
         scoped_rows or rows,
         selected_ancestry=ancestry,
         restrict_to_selected=(source == "selected"),
+        sample_ancestries=sample_ancestries,
     )
 
     high_quality_pcts = [

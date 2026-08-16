@@ -67,7 +67,8 @@ comparison (per-sample colors, medians, and bell-curve markers). Each uploaded s
 gets its genetic ancestry autodetected (1000 Genomes reference panel): the sample row
 shows the population with the classifier's confidence plus the closest 1000G cohort as a
 clickable IGSR link with its own confidence — a reference point, not a nationality — and
-the detected population is preselected as the percentile reference population. After
+the majority detected population becomes the percentile reference (shown on each sample
+row; override via the trait dashboard Population dropdown). After
 computing, the chart panel renders automatically for the first (or currently open)
 result/trait — no row click needed. Sources may also pass optional per-sample
 `ancestry` / `ancestry_confidence` / `fine_population` / `fine_confidence` keys, and optionally

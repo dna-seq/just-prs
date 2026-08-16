@@ -93,8 +93,9 @@ All plot commands except `strip` accept `--vcf` (path or alias) to auto-compute 
 and plot in one step. This is the easiest way to get a chart from a VCF.
 
 PRS results are **cached per (VCF, PGS ID, build, ancestry)** — repeated plotting is
-instant. Use `--no-cache` to force recomputation. Trait matching is **exact by default**
-(case-insensitive); use `--fuzzy` to match all traits containing the query string.
+instant. Use `--no-cache` to force recomputation. Trait matching uses the UI
+EFO label (e.g. `intelligence`) first, then the catalog reported name;
+`--fuzzy` is only needed when a substring hits several traits.
 
 `plot trait` **auto-detects each sample's ancestry** when `--ancestry` is omitted
 (same engine as `prs ancestry infer`, cached per VCF — each genome is read once):
@@ -154,6 +155,31 @@ Output format is auto-detected from file extension: `.html` (interactive with to
 
 All plot commands accept `--width` and `--height` for sizing, `--panel` for reference panel
 selection (1000g or hgdp_1kg), and `--cache-dir` to override the cache location.
+
+### AI prompts for agents (`prs prompt`)
+
+The same interpretation prompt the UI Ask-AI buttons (Claude, ChatGPT, Perplexity, Grok)
+prefill is available on the CLI. Progress goes to stderr; the prompt is stdout, so you
+can pipe it into an agent. Repeat `--vcf` for a multi-sample / family comparison.
+
+```bash
+# Multi-sample comparison prompt
+uvx just-prs prompt intelligence --vcf Anton=anton --vcf Livia=livia
+
+# Pipe into an agent
+uvx just-prs prompt BMI --vcf anton | claude
+
+# From already-computed JSON ({sample: [rows]} or a list with a sample field)
+uvx just-prs prompt intelligence --results family.json -o prompt.txt
+
+# Prefill URL instead of prompt text
+uvx just-prs prompt PGS000001 --vcf anton --assistant claude --url
+```
+
+`--assistant other` (default) uses the full 6000-character budget with no URL encoding.
+`--assistant claude|chatgpt|perplexity|grok` matches that assistant's UI character limit.
+
+Inside the workspace, use `uv run prs prompt ...`.
 
 ### VCF aliases
 

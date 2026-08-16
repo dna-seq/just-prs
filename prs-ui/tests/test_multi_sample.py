@@ -16,6 +16,7 @@ from prs_ui.mixin import (
     _merge_prs_results,
     _ordered_sample_labels,
     _result_sample,
+    majority_detected_superpopulation,
     sample_color,
     sample_label_from_path,
 )
@@ -52,6 +53,25 @@ def test_ancestry_chip_text_formats_and_abstains() -> None:
     # UNKNOWN / missing ancestry never renders a chip.
     assert _ancestry_chip_text({"ancestry": "UNKNOWN", "ancestry_confidence": 0.4}) == ""
     assert _ancestry_chip_text({}) == ""
+
+
+def test_majority_detected_superpopulation_picks_mode_and_ignores_unknown() -> None:
+    assert majority_detected_superpopulation([]) == ""
+    assert majority_detected_superpopulation([{"ancestry": "UNKNOWN"}]) == ""
+    assert majority_detected_superpopulation([{"ancestry": "EUR"}]) == "EUR"
+    # Majority, not first-seen.
+    mixed = [
+        {"ancestry": "AFR"},
+        {"ancestry": "EUR"},
+        {"ancestry": "EUR"},
+        {"ancestry": "UNKNOWN"},
+    ]
+    assert majority_detected_superpopulation(mixed) == "EUR"
+    # Tie keeps the earliest sample's population.
+    tied = [{"ancestry": "SAS"}, {"ancestry": "EAS"}]
+    assert majority_detected_superpopulation(tied) == "SAS"
+    # Lowercase codes still count.
+    assert majority_detected_superpopulation([{"ancestry": "eur"}]) == "EUR"
 
 
 def test_merge_prs_results_is_sample_aware() -> None:

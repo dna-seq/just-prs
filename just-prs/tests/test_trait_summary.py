@@ -197,7 +197,7 @@ def test_high_moderate_scope_keeps_high_and_moderate_only() -> None:
     assert "high + moderate" in stats.scope_label
 
 
-def test_heritability_orders_selected_ancestry_before_combined_and_afr() -> None:
+def test_heritability_keeps_detected_sample_ancestries_only() -> None:
     rows = [
         {
             "pgs_id": "PGS000001",
@@ -215,38 +215,56 @@ def test_heritability_orders_selected_ancestry_before_combined_and_afr() -> None
     ]
 
     text, _detail, metrics = summarize_heritability(rows, selected_ancestry="EUR")
-    populations = [str(metric["population"]) for metric in metrics]
-    assert populations[0] == "European"
-    assert populations[1] == "Combined population"
-    assert populations[2] != "African" or populations[0] == "European"
-    assert "African" not in text.split(";")[0]
-    assert text.startswith("European h²=0.550 (Pan-UKBB)")
-    assert "Combined population h²=0.400" in text
-    # Truncation is after the sort, so EUR survives even with 6 populations.
-    assert "European" in text
-    assert "+2 more" in text
+    assert [str(metric["population"]) for metric in metrics] == ["European"]
+    assert text == "European h²=0.550 (Pan-UKBB)"
+    assert "African" not in text
+    assert "Combined" not in text
+
+    mixed_text, _mixed_detail, mixed_metrics = summarize_heritability(
+        rows, selected_ancestry="EUR", sample_ancestries=["AFR", "EUR"],
+    )
+    assert [str(metric["population"]) for metric in mixed_metrics] == [
+        "European",
+        "African",
+    ]
+    assert mixed_text == "European h²=0.550 (Pan-UKBB); African h²=0.210 (Pan-UKBB)"
+    assert "East Asian" not in mixed_text
+    assert "Combined" not in mixed_text
 
     stats = summarize_trait_rows(rows, model_scope="usable", selected_ancestry="EUR")
-    assert stats.heritability_metrics[0]["population"] == "European"
-    assert stats.heritability_metrics[1]["population"] == "Combined population"
+    assert [str(metric["population"]) for metric in stats.heritability_metrics] == ["European"]
+    assert "Combined" not in stats.heritability_text
+
+    mixed_stats = summarize_trait_rows(
+        rows,
+        model_scope="usable",
+        selected_ancestry="EUR",
+        sample_ancestries=["EUR", "AFR"],
+    )
+    assert [str(metric["population"]) for metric in mixed_stats.heritability_metrics] == [
+        "European",
+        "African",
+    ]
 
     selected_text, _selected_detail, selected_metrics = summarize_heritability(
         rows, selected_ancestry="EUR", restrict_to_selected=True,
+        sample_ancestries=["EUR", "AFR"],
     )
     assert [str(metric["population"]) for metric in selected_metrics] == ["European"]
     assert selected_text == "European h²=0.550 (Pan-UKBB)"
-    assert "Combined" not in selected_text
+    assert "African" not in selected_text
 
     selected_stats = summarize_trait_rows(
         rows,
         model_scope="usable",
         selected_ancestry="EUR",
         percentile_source="selected",
+        sample_ancestries=["EUR", "AFR"],
     )
     assert [str(metric["population"]) for metric in selected_stats.heritability_metrics] == [
         "European",
     ]
-    assert "Combined" not in selected_stats.heritability_text
+    assert "African" not in selected_stats.heritability_text
 
 
 def test_heritability_falls_back_to_combined_when_selected_missing() -> None:

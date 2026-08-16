@@ -556,6 +556,30 @@ def sample_label_from_path(path: str) -> str:
     return name or Path(path).stem
 
 
+def majority_detected_superpopulation(samples: Iterable[dict[str, Any]]) -> str:
+    """Return the most common detected 1000G superpopulation across *samples*.
+
+    Ties keep the earliest sample's population. ``UNKNOWN`` / missing labels
+    are ignored. Empty string when nothing was detected.
+    """
+    counts: dict[str, int] = {}
+    order: list[str] = []
+    for sample in samples:
+        code = str(sample.get("ancestry") or "").upper()
+        if code not in SUPERPOPULATIONS:
+            continue
+        if code not in counts:
+            order.append(code)
+        counts[code] = counts.get(code, 0) + 1
+    if not counts:
+        return ""
+    best = max(counts.values())
+    for code in order:
+        if counts[code] == best:
+            return code
+    return ""
+
+
 def _ancestry_chip_text(sample: dict[str, Any]) -> str:
     """Compact inferred-ancestry text for a sample chip (e.g. ``EUR 97% · CEU 55%``).
 
@@ -1257,16 +1281,19 @@ def _trait_heritability_summary(
     rows: list[dict[str, Any]],
     selected_ancestry: str = "EUR",
     restrict_to_selected: bool = True,
+    sample_ancestries: list[str] | None = None,
 ) -> tuple[str, str, list[dict[str, Any]]]:
     """Summarize distinct h2 estimates across a trait group.
 
-    The individual-result sidebar always restricts to the selected population
-    so European does not still list Combined / African / ….
+    Defaults to the selected (detected) population so European does not still
+    list Combined / African / …. Pass *sample_ancestries* to include every
+    superpopulation actually present in the loaded genomes.
     """
     return summarize_heritability(
         rows,
         selected_ancestry=selected_ancestry,
         restrict_to_selected=restrict_to_selected,
+        sample_ancestries=sample_ancestries,
     )
 
 
@@ -1459,7 +1486,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.prs_engine = PRSEngine.POLARS.value
 
     def set_selected_ancestry(self, value: str) -> None:
-        """Set the ancestry superpopulation for percentile lookup."""
+        """Set the ancestry superpopulation used as a native-panel fallback.
+
+        Called by autodetection (majority vote) and by the trait dashboard
+        Population dropdown. There is no toolbar selector.
+        """
         self.selected_ancestry = value
         if self.prs_results and self.prs_view_mode == "grouped":
             self.build_trait_summary()
@@ -1650,7 +1681,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         (``just_prs.viz.SAMPLE_COLORS``).  The first sample also populates
         ``prs_genotypes_path`` so single-sample gating (selection readiness,
         embedder checks) keeps working unchanged.  An empty list clears the
-        source.  Previously computed results are reset.
+        source.  Previously computed results are reset.  The majority detected
+        superpopulation (if any) becomes ``selected_ancestry``.
         """
         registry: list[dict] = []
         for index, sample in enumerate(samples):
@@ -1674,6 +1706,34 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.trait_summary_rows = []
         self.trait_summary_visible = False
         self.low_match_warning = False
+        detected = majority_detected_superpopulation(registry)
+        if detected:
+            self.selected_ancestry = detected
+
+    def _detected_sample_ancestries(self) -> list[str]:
+        """Distinct 1000G superpopulations inferred for loaded samples."""
+        codes: list[str] = []
+        seen: set[str] = set()
+        for sample in self.prs_samples:
+            code = str(sample.get("ancestry") or "").upper()
+            if code not in SUPERPOPULATIONS or code in seen:
+                continue
+            seen.add(code)
+            codes.append(code)
+        return codes
+
+    def _sample_ancestry_for_row(self, row: dict[str, Any]) -> str:
+        """Detected superpopulation for this result row's sample, else the majority."""
+        label = str(row.get("sample") or "")
+        if label:
+            for sample in self.prs_samples:
+                if str(sample.get("label") or "") != label:
+                    continue
+                code = str(sample.get("ancestry") or "").upper()
+                if code in SUPERPOPULATIONS:
+                    return code
+                break
+        return self.selected_ancestry
 
     @rx.var
     def is_multi_sample(self) -> bool:
@@ -2065,6 +2125,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 str(row.get("pgs_id", "")) for row in rows if row.get("pgs_id")
             ))
             dashboard_ancestry, dashboard_source = self._trait_dashboard_axes()
+            sample_ancestries = self._detected_sample_ancestries()
             refreshed_rows = [
                 refresh_row_absolute_risk(
                     row,
@@ -2079,6 +2140,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 model_scope=self.trait_model_scope,
                 selected_ancestry=dashboard_ancestry,
                 percentile_source=dashboard_source,
+                sample_ancestries=sample_ancestries,
             )
             # Multi-sample: aggregate per sample so medians are never mixed
             # across genomes.  Headline scalars come from the first sample
@@ -2099,6 +2161,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                             model_scope=self.trait_model_scope,
                             selected_ancestry=dashboard_ancestry,
                             percentile_source=dashboard_source,
+                            sample_ancestries=sample_ancestries,
                         )
                         for label, sample_rows in refreshed_by_sample.items()
                     }
@@ -2979,8 +3042,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             row_summary = str(r.get("summary") or "").strip()
             if row_summary and row_summary not in chart_takeaway:
                 chart_takeaway = f"{chart_takeaway} {row_summary}"
-            h2_summary, _, _ = _trait_heritability_summary(
-                [r], selected_ancestry=self.selected_ancestry,
+            h2_summary, _, h2_metrics = _trait_heritability_summary(
+                [r], selected_ancestry=self._sample_ancestry_for_row(r),
             )
             percentile_side_items: list[dict[str, Any]] = [
                 {
@@ -3145,17 +3208,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     ),
                 },
             ]
-            heritability_metrics = r.get("heritability_metrics", [])
-            if isinstance(heritability_metrics, list) and heritability_metrics:
+            if h2_metrics:
                 risk_context_items.append({
                     "label": "What h² means",
                     "value": "Population-level",
                     "tone": "neutral",
                     "subtext": "Fraction of trait variation statistically associated with genetics, not an individual causal percentage.",
                 })
-                for metric in heritability_metrics:
-                    if not isinstance(metric, dict):
-                        continue
+                for metric in h2_metrics:
                     population = str(metric.get("population") or "Population")
                     source = str(metric.get("source") or "heritability table")
                     confidence = str(metric.get("confidence") or "unknown")
@@ -4195,7 +4255,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         return None
 
     def _apply_trait_result_info(self, trait: str, trait_row: dict[str, Any] | None) -> None:
-        """Refresh the compact trait info panel from the latest summary row."""
+        """Keep selected-trait metadata in state for chart rebuilds."""
         self.selected_result_info = {"trait": trait}
         if not trait_row:
             return

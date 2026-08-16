@@ -160,59 +160,30 @@ def prs_engine_selector(state: type[rx.State]) -> rx.Component:
 
 
 def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
-    """Compact reference-population controls for 1000G-based percentile lookup.
+    """Reference/audit cache refresh for a consumer state.
 
-    Deliberately minimal: every population's percentile is always computed and
-    the chart itself carries per-population curve checkboxes, so the only
-    controls left are the percentile reference population (autodetected from
-    the uploaded genome, overridable here), an optional per-population
-    comparison-columns toggle for the results table, and the reference/audit
-    cache refresh.
+    Ancestry is autodetected per sample (majority vote becomes
+    ``selected_ancestry``) and shown on the sample rows; the trait dashboard
+    Population dropdown is the override for card numbers.  All population
+    percentiles are always computed, and the chart has its own per-population
+    curve checkboxes, so this control is only the optional cache refresh.
     """
     return rx.hstack(
-        rx.text("Reference population:", size="2", weight="medium"),
-        rx.select(
-            list(SUPERPOPULATIONS),
-            value=state.selected_ancestry,
-            on_change=state.set_selected_ancestry,
-            size="1",
-        ),
-        rx.tooltip(
-            rx.icon("info", size=14, color="gray"),
-            content=(
-                "Autodetected from your uploaded genome (shown on the sample row "
-                "above) and used for percentiles, heritability ordering, and the "
-                "chart's default reference curve — override it here if needed. "
-                "AFR=African, AMR=American, EAS=East Asian, EUR=European, "
-                "SAS=South Asian."
-            ),
-        ),
-        rx.separator(orientation="vertical", size="2"),
-        rx.checkbox(
-            "Population comparison columns",
-            checked=state.compute_all_populations,
-            on_change=state.set_compute_all_populations,
-            size="2",
-        ),
-        rx.tooltip(
-            rx.icon("info", size=14, color="gray"),
-            content=(
-                "Adds one percentile column per 1000 Genomes population to the "
-                "results table. The population curves themselves are always "
-                "available on the chart via its own checkboxes."
-            ),
-        ),
-        rx.separator(orientation="vertical", size="2"),
         rx.checkbox(
             "Refresh reference/audit cache",
             checked=state.refresh_reference_cache_before_compute,
             on_change=state.set_refresh_reference_cache_before_compute,
             size="2",
         ),
-        spacing="3",
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "Force-pull the latest HuggingFace percentile and audit sidecars "
+                "before the next compute. Leave unchecked to reuse the local cache."
+            ),
+        ),
+        spacing="2",
         align="center",
-        wrap="wrap",
-        width="100%",
     )
 
 
@@ -786,7 +757,10 @@ def trait_summary_controls(state: type[rx.State]) -> rx.Component:
             rx.icon("info", size=14, color="gray"),
             content=(
                 "Population used for Typical / Your Percentile and risk cards. "
-                "Model-native keeps each score's own evaluation panel."
+                "Model-native keeps each score's own evaluation panel. "
+                "Each sample's detected ancestry is already shown on its source "
+                "row; pick a 1000 Genomes population here only to recompute the "
+                "cards against that panel."
             ),
         ),
         spacing="2",
@@ -1035,73 +1009,6 @@ def _result_info_panel(state: type[rx.State]) -> rx.Component:
     )
 
 
-def _trait_info_panel(state: type[rx.State]) -> rx.Component:
-    """Compact info panel for a selected trait."""
-    info = state.selected_result_info
-    return rx.cond(
-        state.selected_result_id != "",
-        rx.vstack(
-            trait_summary_controls(state),
-            rx.hstack(
-                rx.text(info["trait"], size="2", weight="bold", trim="both"),  # type: ignore[index]
-                rx.cond(
-                    info["n_models"].to(str) != "None",  # type: ignore[union-attr]
-                    rx.badge(
-                        rx.text(info["n_models"], " models"),  # type: ignore[index]
-                        color_scheme="blue",
-                        size="1",
-                    ),
-                ),
-                rx.cond(
-                    info["scope_label"].to(str) != "None",  # type: ignore[union-attr]
-                    rx.text(info["scope_label"], size="1", color="gray"),  # type: ignore[index]
-                ),
-                spacing="2",
-                align="center",
-                wrap="wrap",
-            ),
-            rx.hstack(
-                rx.cond(
-                    info["typical_percentile"].to(str) != "None",  # type: ignore[union-attr]
-                    rx.hstack(
-                        rx.text("Typical:", size="1", color="gray"),
-                        rx.text(info["typical_percentile"], size="1", weight="bold"),  # type: ignore[index]
-                        spacing="1",
-                        align="center",
-                    ),
-                ),
-                rx.cond(
-                    info["reliability"].to(str) != "None",  # type: ignore[union-attr]
-                    rx.hstack(
-                        rx.text("Reliability:", size="1", color="gray"),
-                        rx.badge(info["reliability"], size="1", variant="soft"),  # type: ignore[index]
-                        spacing="1",
-                        align="center",
-                    ),
-                ),
-                rx.cond(
-                    info["overall_signal"].to(str) != "None",  # type: ignore[union-attr]
-                    rx.hstack(
-                        rx.text("Signal:", size="1", color="gray"),
-                        rx.text(info["overall_signal"], size="1"),  # type: ignore[index]
-                        spacing="1",
-                        align="center",
-                    ),
-                ),
-                spacing="3",
-                align="center",
-                wrap="wrap",
-            ),
-            spacing="2",
-            width="100%",
-            padding="8px 12px",
-            border="1px solid var(--gray-5)",
-            border_radius="var(--radius-2)",
-            background="var(--gray-2)",
-        ),
-    )
-
-
 def prs_results_chart_panel(
     state: type[rx.State],
     chart_height: int = 400,
@@ -1163,10 +1070,16 @@ def trait_results_chart_panel(
 ) -> rx.Component:
     """Chart panel for trait-grouped results — visible only after row click.
 
+    Quality / Population dropdowns stay here because they recompute the
+    report. Trait name, typical percentiles, reliability, and signal already
+    live in the table row, the chart (title, median lines, outlier marks),
+    and the HTML report cards — they are not repeated above the chart.
+
     Args:
         state: Concrete state class (must mix in ``PRSComputeStateMixin``).
         chart_height: Chart container height in pixels.
-        show_info_panel: Show the compact metrics panel below the chart.
+        show_info_panel: Show the Quality / Population dropdowns that
+            recompute the report numbers.
         chart_actions: Vega-Embed toolbar config.
     """
     return rx.vstack(
@@ -1174,12 +1087,12 @@ def trait_results_chart_panel(
             rx.icon("activity", size=16, color="var(--accent-9)"),
             rx.text("Trait Distribution", size="2", weight="bold"),
             rx.spacer(),
+            trait_summary_controls(state) if show_info_panel else rx.fragment(),
             align="center",
             spacing="2",
             width="100%",
             wrap="wrap",
         ),
-        _trait_info_panel(state) if show_info_panel else rx.fragment(),
         rx.cond(
             state.selected_result_spec != {},
             rx.cond(
@@ -1464,7 +1377,8 @@ def trait_results_with_chart(
         state: Concrete state class (must mix in ``PRSComputeStateMixin``).
         chart_height: Height of the chart panel in pixels.
         table_height: CSS height of the trait table.
-        show_info_panel: Show metrics panel below the chart.
+        show_info_panel: Show the Quality / Population dropdowns that
+            recompute the report numbers.
         chart_actions: Vega-Embed toolbar config.
     """
     return rx.cond(
@@ -1512,25 +1426,21 @@ def prs_shared_build_bar(source_state: type[rx.State]) -> rx.Component:
 
 
 def _workbench_mode_controls(state: type[rx.State]) -> rx.Component:
-    """Per-mode controls (engine, ancestry, harmonized) for a consumer state."""
-    return rx.vstack(
-        rx.hstack(
-            prs_engine_selector(state),
-            rx.separator(orientation="vertical", size="2"),
-            rx.checkbox(
-                "Include harmonized scores",
-                checked=state.include_harmonized,
-                on_change=state.set_include_harmonized,
-                size="2",
-            ),
-            spacing="4",
-            align="center",
-            wrap="wrap",
-            width="100%",
+    """Per-mode controls (engine, harmonized, cache refresh) for a consumer state."""
+    return rx.hstack(
+        prs_engine_selector(state),
+        rx.separator(orientation="vertical", size="2"),
+        rx.checkbox(
+            "Include harmonized scores",
+            checked=state.include_harmonized,
+            on_change=state.set_include_harmonized,
+            size="2",
         ),
+        rx.separator(orientation="vertical", size="2"),
         prs_ancestry_selector(state),
-        spacing="3",
-        align="start",
+        spacing="4",
+        align="center",
+        wrap="wrap",
         width="100%",
     )
 

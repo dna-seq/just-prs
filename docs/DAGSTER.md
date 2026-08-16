@@ -122,7 +122,7 @@ The pipeline is operated via the `prs-pipeline` CLI (or `uv run pipeline` from t
   uv run pipeline audit --headless
   uv run pipeline audit --test
   uv run pipeline canary-audit
-  uv run pipeline canary-audit --vcf anton --vcf livia --vcf oksana=/path/to/oksana.vcf.gz
+  uv run pipeline canary-audit --vcf anton --vcf livia --vcf mom=mom.vcf.gz
   uv run pipeline canary-audit --headless
   ```
   Launches the Dagster UI by default and submits `reference_percentile_audit_job`, which audits cached or HuggingFace-pulled `{panel}_distributions.parquet` plus `{panel}_quality.parquet` when available. It logs pass/warn/fail PGS-ID counts, writes `{panel}_distribution_quality_issues.parquet` and `{panel}_distribution_audit_summary.json`, and uploads those sidecars to HuggingFace when `HF_TOKEN` is available, all without recomputing reference scores.

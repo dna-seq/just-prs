@@ -150,14 +150,28 @@ def test_trait_heritability_summary_orders_selected_ancestry_first() -> None:
     assert summary == "European h²=0.550 (Pan-UKBB)"
     assert "Combined" not in summary
 
-    all_summary, _all_detail, all_metrics = _trait_heritability_summary(
+    default_summary, _default_detail, default_metrics = _trait_heritability_summary(
         rows, selected_ancestry="EUR", restrict_to_selected=False,
     )
-    assert [metric["population"] for metric in all_metrics[:2]] == [
+    assert [metric["population"] for metric in default_metrics] == ["European"]
+    assert default_summary == "European h²=0.550 (Pan-UKBB)"
+    assert "African" not in default_summary
+    assert "Combined" not in default_summary
+
+    mixed_summary, _mixed_detail, mixed_metrics = _trait_heritability_summary(
+        rows,
+        selected_ancestry="EUR",
+        restrict_to_selected=False,
+        sample_ancestries=["EUR", "AFR"],
+    )
+    assert [metric["population"] for metric in mixed_metrics] == [
         "European",
-        "Combined population",
+        "African",
     ]
-    assert "Combined population h²=0.400" in all_summary
+    assert mixed_summary == (
+        "European h²=0.550 (Pan-UKBB); African h²=0.210 (Pan-UKBB)"
+    )
+    assert "Combined" not in mixed_summary
 
 
 def test_trait_heritability_summary_deduplicates_metrics() -> None:

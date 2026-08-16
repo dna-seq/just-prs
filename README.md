@@ -205,8 +205,36 @@ prs plot trait BMI --vcf anton -o bmi.html --no-cache   # force recompute
 ```
 
 Format follows the file extension (`.html`, `.json`, `.png`, `.svg`). Trait
-matching is exact by default; `--fuzzy` matches substrings. The `plot trait`
-positional also accepts comma-separated PGS IDs.
+matching uses the UI EFO label (e.g. `intelligence`) first, then the catalog
+reported name; `--fuzzy` is only needed when a substring hits several traits.
+The `plot trait` positional also accepts comma-separated PGS IDs.
+
+</details>
+
+<details>
+<summary>AI prompts for agents (<code>prs prompt</code>)</summary>
+
+The Compute UI's Ask Claude / ChatGPT / … buttons are also a CLI. Progress
+goes to stderr; the prompt itself is stdout, so you can pipe it into an agent.
+
+```bash
+# Multi-sample comparison prompt (same text the HTML Ask-AI buttons prefill)
+prs prompt intelligence --vcf Anton=anton --vcf Livia=livia
+
+# Pipe into an agent
+prs prompt BMI --vcf anton | claude
+
+# Already-computed JSON ({sample: [rows]} or a list with a sample field)
+prs prompt intelligence --results family.json -o prompt.txt
+
+# Prefill URL instead of prompt text
+prs prompt PGS000001 --vcf anton --assistant claude --url
+```
+
+`--assistant other` (the default) uses the full 6000-character budget with no
+URL encoding. `--assistant claude|chatgpt|perplexity|grok` matches that
+assistant's UI character limit. Repeat `--vcf` with `Label=path` the same way
+as `plot trait`.
 
 </details>
 
@@ -215,15 +243,17 @@ positional also accepts comma-separated PGS IDs.
 
 Repeat `--vcf` with optional `Label=path` (aliases work: `Anton=anton`). Each
 sample gets its own color, dots, and median line. Ancestry is detected per
-genome, so mixed-ancestry families compare correctly.
+genome, so mixed-ancestry families compare correctly. The intelligence
+screenshot under [Research use only](#research-use-only) is the example family
+(Mom, Dad, Son1, Son2, Daughter).
 
 ```bash
-prs plot trait intelligence --vcf Anton=anton --vcf Livia=livia -o compare.html --fuzzy
+prs plot trait intelligence --vcf Anton=anton --vcf Livia=livia -o compare.html
 
 prs plot trait intelligence \
   --vcf Mom=mom.vcf.gz --vcf Dad=dad.vcf.gz \
   --vcf Son1=son1.vcf --vcf Son2=son2.vcf --vcf Daughter=daughter.vcf \
-  -o intelligence_family.html --fuzzy
+  -o intel_o_family.html
 
 prs plot trait PGS000001 --vcf Anton=anton --vcf Livia=livia -o pgs1_compare.html
 prs plot bell-curve PGS000001 --vcf Anton=anton --vcf Livia=livia -o bell_compare.html
@@ -356,10 +386,13 @@ PRS is a statistical predisposition signal in a studied population — not a
 diagnosis, not a probability you “will get” a disease, and not a substitute for
 clinical testing.
 
-![Trait-first PRS interpretation — several models, match rates, quality, consensus](images/intelligence.jpg)
+![Example family comparison for intelligence — Mom, Dad, Son1, Son2, and Daughter](images/intelligence.jpg)
 
-Look at the whole panel: bell-curve markers, variant match rate, quality
-breakdown, and whether models agree. A single large percentile is not a verdict.
+This is the example family from `prs plot trait intelligence` with five VCFs
+labeled Mom, Dad, Son1, Son2, and Daughter. Each person has a median card and
+colored markers on the same bell curve. Relatives can sit far apart, and the
+models for this trait still disagree — read match rate and quality, not one
+percentile. A family PRS plot is not a diagnosis and not a relatedness test.
 
 <details>
 <summary>FAQ — quality, ancestry, coverage, absolute risk</summary>

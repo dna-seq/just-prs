@@ -39,7 +39,6 @@ from prs_ui.mixin import (
     SHEET_LABELS,
     SHEET_NAMES,
     SUPERPOPULATION_LABELS,
-    SUPERPOPULATIONS,
     _catalog,
     loaded_grid_selection_model,
     merge_loaded_grid_selection,
@@ -366,21 +365,12 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
             for s in self.vcf_samples
             if s.get("parquet_path")
         ]
-        # Auto-select the autodetected super-population as the reference
-        # population for percentiles (the user can still override it manually).
-        detected_superpop = next(
-            (
-                str(s.get("ancestry") or "")
-                for s in self.vcf_samples
-                if str(s.get("ancestry") or "") in SUPERPOPULATIONS
-            ),
-            "",
-        )
+        # ``load_samples`` sets ``selected_ancestry`` to the majority detected
+        # superpopulation; sample rows already show each call, and the trait
+        # dashboard Population dropdown is the override for card numbers.
         for consumer_cls in self._consumer_states:
             consumer = await self.get_state(consumer_cls)
             consumer.load_samples(payload)
-            if detected_superpop and consumer.selected_ancestry != detected_superpop:
-                consumer.set_selected_ancestry(detected_superpop)
             if self.detected_build and self.detected_build != consumer.genome_build:
                 for event in consumer.set_genome_build(self.detected_build):
                     yield event

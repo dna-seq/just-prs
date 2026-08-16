@@ -44,10 +44,10 @@ def test_flag_pgs003724_style_collapse() -> None:
     rows = pl.DataFrame([
         _row("PGS003724", "anton", percentile=0.0, z_score=-9.2, match_rate=0.425),
         _row("PGS003724", "livia", percentile=0.0, z_score=-9.5, match_rate=0.428),
-        _row("PGS003724", "oksana", percentile=0.0, z_score=-8.0, match_rate=0.428),
+        _row("PGS003724", "mom", percentile=0.0, z_score=-8.0, match_rate=0.428),
         _row("PGS004427", "anton", percentile=93.8, z_score=1.5, match_rate=0.53),
         _row("PGS004427", "livia", percentile=99.3, z_score=2.4, match_rate=0.53),
-        _row("PGS004427", "oksana", percentile=22.4, z_score=-0.8, match_rate=0.53),
+        _row("PGS004427", "mom", percentile=22.4, z_score=-0.8, match_rate=0.53),
     ])
     flags = flag_canary_collapses(rows)
     assert flags["pgs_id"].to_list() == ["PGS003724"]
@@ -60,7 +60,7 @@ def test_real_low_tail_with_good_coverage_is_not_flagged() -> None:
     rows = pl.DataFrame([
         _row("PGS_REAL", "anton", percentile=2.0, z_score=-2.1, match_rate=0.91),
         _row("PGS_REAL", "livia", percentile=1.5, z_score=-2.2, match_rate=0.90),
-        _row("PGS_REAL", "oksana", percentile=3.0, z_score=-1.9, match_rate=0.92),
+        _row("PGS_REAL", "mom", percentile=3.0, z_score=-1.9, match_rate=0.92),
     ])
     flags = flag_canary_collapses(rows)
     assert flags.height == 0
@@ -78,7 +78,7 @@ def test_majority_of_three_flags_two_zeros() -> None:
     rows = pl.DataFrame([
         _row("PGS003724", "anton", percentile=0.0, z_score=-9.2, match_rate=0.42),
         _row("PGS003724", "livia", percentile=0.2, z_score=-8.1, match_rate=0.43),
-        _row("PGS003724", "oksana", percentile=48.0, z_score=-0.1, match_rate=0.90),
+        _row("PGS003724", "mom", percentile=48.0, z_score=-0.1, match_rate=0.90),
     ])
     flags = flag_canary_collapses(rows, n_samples=3)
     assert flags["pgs_id"].to_list() == ["PGS003724"]
@@ -180,17 +180,17 @@ def test_load_canary_result_rows_from_scores_parquet(tmp_path: Path) -> None:
     upsert_canary_score_rows(tmp_path, pl.DataFrame([
         _row("PGS003724", "anton", percentile=0.0, z_score=-9.2, match_rate=0.425),
         _row("PGS003724", "livia", percentile=0.0, z_score=-8.0, match_rate=0.428),
-        _row("PGS003724", "oksana", percentile=0.0, z_score=-8.5, match_rate=0.427),
+        _row("PGS003724", "mom", percentile=0.0, z_score=-8.5, match_rate=0.427),
     ]))
     rows = load_canary_result_rows(tmp_path)
     assert rows.height == 3
-    assert set(rows["sample_id"].to_list()) == {"anton", "livia", "oksana"}
+    assert set(rows["sample_id"].to_list()) == {"anton", "livia", "mom"}
     flags = flag_canary_collapses(rows, n_samples=3)
     assert flags["pgs_id"].to_list() == ["PGS003724"]
 
 
 def test_parse_canary_vcf_spec_label_and_bare_path() -> None:
-    assert parse_canary_vcf_spec("oksana=/data/mom.vcf.gz") == ("oksana", "/data/mom.vcf.gz")
+    assert parse_canary_vcf_spec("mom=/data/mom.vcf.gz") == ("mom", "/data/mom.vcf.gz")
     assert parse_canary_vcf_spec("anton") == ("anton", "anton")
     assert parse_canary_vcf_spec("SIMHIFQTILQ.hard-filtered.vcf.gz")[0] == "SIMHIFQTILQ"
 
@@ -198,18 +198,18 @@ def test_parse_canary_vcf_spec_label_and_bare_path() -> None:
 def test_parse_canary_vcf_specs_resolves_paths(tmp_path: Path) -> None:
     anton = tmp_path / "antonkulaga.vcf"
     livia = tmp_path / "livia.vcf.gz"
-    oksana = tmp_path / "ksuhaster.vcf.gz"
-    for path in (anton, livia, oksana):
+    mom = tmp_path / "mom.vcf.gz"
+    for path in (anton, livia, mom):
         path.write_bytes(b"##fileformat=VCFv4.2\n")
     samples = parse_canary_vcf_specs(
-        [str(anton), f"livia={livia}", f"oksana={oksana}"],
+        [str(anton), f"livia={livia}", f"mom={mom}"],
         tmp_path,
     )
-    assert [sample.label for sample in samples] == ["antonkulaga", "livia", "oksana"]
-    assert samples[2].vcf_path == oksana.resolve()
+    assert [sample.label for sample in samples] == ["antonkulaga", "livia", "mom"]
+    assert samples[2].vcf_path == mom.resolve()
     encoded = encode_canary_samples_env(samples)
     roundtrip = parse_canary_samples_env(encoded, tmp_path)
-    assert [sample.label for sample in roundtrip] == ["antonkulaga", "livia", "oksana"]
+    assert [sample.label for sample in roundtrip] == ["antonkulaga", "livia", "mom"]
 
 
 def test_upsert_canary_scores_replaces_same_sample(tmp_path: Path) -> None:

@@ -455,6 +455,64 @@ def test_trait_report_displays_heritability_in_visible_html() -> None:
     assert "<th>h²</th>" in html
 
 
+def test_trait_report_lists_detected_sample_heritability_only() -> None:
+    """The h² card must not dump every Pan-UKBB ancestry for a EUR sample."""
+    distributions = pl.DataFrame(
+        {
+            "pgs_id": ["PGS000001"],
+            "superpopulation": ["EUR"],
+            "mean": [0.0],
+            "std": [1.0],
+            "trait_reported": ["intelligence"],
+            "n_variants": [1000],
+        },
+    )
+    user_results = [
+        {
+            "pgs_id": "PGS000001",
+            "score": "0.2",
+            "percentile": "58.0",
+            "match_rate": 0.80,
+            "heritability_metrics": [
+                {"population": "African", "h2": "0.250", "source": "pan_ukbb"},
+                {"population": "East Asian", "h2": "0.190", "source": "pan_ukbb"},
+                {"population": "Combined population", "h2": "0.400", "source": "pan_ukbb"},
+                {"population": "European", "h2": "0.243", "source": "pan_ukbb"},
+            ],
+        }
+    ]
+    chart = plot_trait_scores(
+        "intelligence",
+        distributions,
+        user_results=user_results,
+    )
+    html = trait_report_html(
+        chart,
+        "intelligence",
+        user_results,
+        sample_files={"Anton": {"file": "anton.vcf", "build": "GRCh38", "ancestry": "EUR"}},
+    )
+
+    assert "European h²=0.243 (pan_ukbb)" in html
+    assert "African" not in html
+    assert "East Asian" not in html
+    assert "Combined population" not in html
+
+    mixed_html = trait_report_html(
+        chart,
+        "intelligence",
+        user_results,
+        sample_files={
+            "Anton": {"file": "anton.vcf", "build": "GRCh38", "ancestry": "EUR"},
+            "Livia": {"file": "livia.vcf", "build": "GRCh38", "ancestry": "AFR"},
+        },
+    )
+    assert "European h²=0.243 (pan_ukbb)" in mixed_html
+    assert "African h²=0.250 (pan_ukbb)" in mixed_html
+    assert "East Asian" not in mixed_html
+    assert "Combined population" not in mixed_html
+
+
 def test_trait_report_ai_prompt_contains_sample_name() -> None:
     distributions = pl.DataFrame(
         {
@@ -483,3 +541,92 @@ def test_trait_report_ai_prompt_contains_sample_name() -> None:
     prompt = urllib.parse.unquote(encoded_prompt)
 
     assert "Genome/VCF input: anton.vcf" in prompt
+
+
+def test_multi_sample_prompt_compares_every_sample() -> None:
+    multi = {
+        "Anton": [
+            {
+                "pgs_id": "PGS000001",
+                "score": 0.2,
+                "percentile": 72.0,
+                "match_rate": 0.9,
+                "quality_label": "High",
+            }
+        ],
+        "Livia": [
+            {
+                "pgs_id": "PGS000001",
+                "score": -0.1,
+                "percentile": 41.0,
+                "match_rate": 0.88,
+                "quality_label": "High",
+            }
+        ],
+    }
+    prompt = build_prs_ai_prompt(
+        "trait_results",
+        user_results=multi["Anton"],
+        trait="intelligence",
+        ancestry="EUR",
+        limit=6000,
+        multi_user_results=multi,
+        sample_files={
+            "Anton": {
+                "file": "/g/anton.vcf", "build": "GRCh38",
+                "ancestry": "EUR", "fine_population": "CEU",
+            },
+            "Livia": {"file": "/g/livia.vcf.gz", "build": "GRCh38", "ancestry": "AFR"},
+        },
+    )
+
+    assert 'across 2 samples' in prompt
+    assert "Anton: genome anton.vcf, GRCh38, European (EUR) · Northern/Western European (CEU)" in prompt
+    assert "Livia: genome livia.vcf.gz, GRCh38, African (AFR)" in prompt
+    assert "== PER-SAMPLE SUMMARY ==" in prompt
+    assert "Anton, median percentile 72.0" in prompt
+    assert "Livia, median percentile 41.0" in prompt
+    assert "== PER-MODEL COMPARISON ==" in prompt
+    assert "Anton=72.0 (90%)" in prompt
+    assert "Livia=41.0 (88%)" in prompt
+    assert "Do not assume the samples are relatives" in prompt
+    assert "The per-model details above are for" not in prompt
+
+
+def test_trait_report_html_multi_sample_prompt_matches_builder() -> None:
+    distributions = pl.DataFrame(
+        {
+            "pgs_id": ["PGS000001"],
+            "superpopulation": ["EUR"],
+            "mean": [0.0],
+            "std": [1.0],
+            "trait_reported": ["intelligence"],
+            "n_variants": [1000],
+        },
+    )
+    multi = {
+        "Anton": [{"pgs_id": "PGS000001", "score": 0.2, "percentile": 72.0, "match_rate": 0.9}],
+        "Livia": [{"pgs_id": "PGS000001", "score": -0.1, "percentile": 41.0, "match_rate": 0.88}],
+    }
+    chart = plot_trait_scores(
+        "intelligence",
+        distributions,
+        user_results=multi["Anton"],
+        multi_user_results=multi,
+        sample_name="Anton, Livia",
+    )
+    html = trait_report_html(
+        chart,
+        "intelligence",
+        multi["Anton"],
+        multi_user_results=multi,
+        sample_files={
+            "Anton": {"file": "/g/anton.vcf", "build": "GRCh38", "ancestry": "EUR"},
+            "Livia": {"file": "/g/livia.vcf.gz", "build": "GRCh38", "ancestry": "AFR"},
+        },
+    )
+    encoded_prompt = html.split("https://claude.ai/new?q=", maxsplit=1)[1].split('"', maxsplit=1)[0]
+    prompt = urllib.parse.unquote(encoded_prompt)
+    assert "Anton=72.0" in prompt
+    assert "Livia=41.0" in prompt
+    assert "https://grok.com/?q=" in html

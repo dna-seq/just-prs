@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import math
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any, Literal
@@ -1404,11 +1405,61 @@ def _has_vl_convert() -> bool:
         return False
 
 
-_AI_ASSISTANTS = [
-    {"name": "Claude", "url": "https://claude.ai/new?q=", "color": "#DA7756", "limit": 6000},
-    {"name": "ChatGPT", "url": "https://chatgpt.com/?q=", "color": "#10A37F", "limit": 4000},
-    {"name": "Perplexity", "url": "https://www.perplexity.ai/search?q=", "color": "#21808D", "limit": 4000},
+# Prefill targets shared by the HTML report, the web UI, and `prs prompt`.
+# `url` is None for paste-only assistants (Gemini and similar).
+AI_ASSISTANTS: list[dict[str, Any]] = [
+    {
+        "key": "claude", "name": "Claude",
+        "url": "https://claude.ai/new?q=", "color": "#DA7756",
+        "limit_env": "PRS_AI_CLAUDE_MAX_CHARS", "default_limit": 6000,
+    },
+    {
+        "key": "chatgpt", "name": "ChatGPT",
+        "url": "https://chatgpt.com/?q=", "color": "#10A37F",
+        "limit_env": "PRS_AI_CHATGPT_MAX_CHARS", "default_limit": 3000,
+    },
+    {
+        "key": "perplexity", "name": "Perplexity",
+        "url": "https://www.perplexity.ai/search?q=", "color": "#21808D",
+        "limit_env": "PRS_AI_PERPLEXITY_MAX_CHARS", "default_limit": 3000,
+    },
+    {
+        "key": "grok", "name": "Grok",
+        "url": "https://grok.com/?q=", "color": "#1D1D1F",
+        "limit_env": "PRS_AI_GROK_MAX_CHARS", "default_limit": 3000,
+    },
+    {
+        "key": "other", "name": "Other",
+        "url": None, "color": "#5f6368",
+        "limit_env": "PRS_AI_OTHER_MAX_CHARS", "default_limit": 6000,
+    },
 ]
+AI_ASSISTANTS_BY_KEY: dict[str, dict[str, Any]] = {a["key"]: a for a in AI_ASSISTANTS}
+_AI_ASSISTANTS = [a for a in AI_ASSISTANTS if a.get("url")]
+
+
+def assistant_char_limit(assistant: str | dict[str, Any], override: int | None = None) -> int:
+    """Return the prompt character budget for an assistant key or spec dict."""
+    if override is not None:
+        return override
+    spec = AI_ASSISTANTS_BY_KEY[assistant] if isinstance(assistant, str) else assistant
+    return int(os.environ.get(str(spec["limit_env"]), spec["default_limit"]))
+
+
+def ai_prefill_url(assistant: str, prompt: str) -> str:
+    """Return a prefilled assistant URL, or raise if that assistant is paste-only."""
+    import urllib.parse
+
+    spec = AI_ASSISTANTS_BY_KEY.get(assistant)
+    if spec is None:
+        known = ", ".join(AI_ASSISTANTS_BY_KEY)
+        raise ValueError(f"Unknown AI assistant '{assistant}'. Known: {known}")
+    base = spec.get("url")
+    if not base:
+        raise ValueError(
+            f"Assistant '{assistant}' has no prefill URL; print the prompt and paste it."
+        )
+    return str(base) + urllib.parse.quote(prompt, safe="")
 
 _REFERENCE_AUDIT_ISSUE_LABELS: dict[str, str] = {
     "quality_report_missing": "Reference quality report missing",
@@ -1495,6 +1546,28 @@ _FORMAT_TRAIT_FULL = (
     "4. **Context & actions** — 1-2 sentences: what this trait IS (health, "
     "behavioral, physical, cognitive — do NOT assume health), and whether any "
     "action makes sense. For non-health traits, say no action is needed.\n"
+    "Citizen scientist audience — clarity and honesty over length.\n\n"
+    + _FORMAT_ADDENDUM
+)
+
+_FORMAT_TRAIT_MULTI_COMPACT = (
+    "Reply in under 180 words. Start with ONE bold sentence comparing the samples, "
+    "then one bullet per sample (percentile + risk/h² if provided), then one bullet "
+    "on confidence. Do not assume the samples are relatives. Do not assume this is "
+    "a health trait. PRS is genetic predisposition, not a measurement."
+)
+
+_FORMAT_TRAIT_MULTI_FULL = (
+    "Structure your response EXACTLY as follows (keep this part under 280 words):\n"
+    "1. **Verdict** — one bold sentence comparing the samples' genetic "
+    "predisposition for this trait.\n"
+    "2. **Per sample** — 1-2 bullets each with percentile, absolute risk vs "
+    "population average when provided, and h²/heredity context when provided.\n"
+    "3. **What differs** — what is similar vs different, and whether that is "
+    "meaningful given coverage/quality. Do not assume the samples are relatives; "
+    "labels are identifiers unless the user said they are a family.\n"
+    "4. **Context & actions** — what this trait IS (health/behavioral/physical/"
+    "cognitive). For non-health traits, say no medical action is needed.\n"
     "Citizen scientist audience — clarity and honesty over length.\n\n"
     + _FORMAT_ADDENDUM
 )
@@ -1649,16 +1722,31 @@ def _source_link_prompt_lines(
     return lines
 
 
+def _sample_ancestries(
+    sample_files: dict[str, dict[str, Any]] | None,
+) -> list[str]:
+    """Detected superpopulations from the CLI/UI sample legend, if any."""
+    if not sample_files:
+        return []
+    return [
+        str(meta.get("ancestry") or "")
+        for meta in sample_files.values()
+        if isinstance(meta, dict)
+    ]
+
+
 def _heritability_prompt_summary(
     user_results: list[dict],
     selected_ancestry: str = "EUR",
     restrict_to_selected: bool = False,
+    sample_ancestries: list[str] | None = None,
 ) -> str:
     """Return a compact, de-duplicated h2 summary for AI prompts."""
     text, _, _ = summarize_heritability(
         user_results,
         selected_ancestry=selected_ancestry,
         restrict_to_selected=restrict_to_selected,
+        sample_ancestries=sample_ancestries,
     )
     if text in {NO_MAPPED_H2, ""}:
         return ""
@@ -1669,12 +1757,14 @@ def _heritability_risk_prompt_summary(
     user_results: list[dict[str, Any]],
     selected_ancestry: str = "EUR",
     restrict_to_selected: bool = False,
+    sample_ancestries: list[str] | None = None,
 ) -> str:
     """Return h2-liability risk estimates for prompts when available."""
     _, _, metrics = summarize_heritability(
         user_results,
         selected_ancestry=selected_ancestry,
         restrict_to_selected=restrict_to_selected,
+        sample_ancestries=sample_ancestries,
     )
     risk_metrics = [
         metric
@@ -1695,8 +1785,15 @@ def build_prs_ai_prompt(
     sample_name: str | None = None,
     model_scope: str = "usable",
     percentile_source: str = "native",
+    multi_user_results: dict[str, list[dict[str, Any]]] | None = None,
+    sample_files: dict[str, dict[str, Any]] | None = None,
 ) -> str:
-    """Build the LLM prompt used by both CLI reports and the web UI."""
+    """Build the LLM prompt used by CLI reports, `prs prompt`, and the web UI.
+
+    Pass ``multi_user_results`` (``{sample_name: rows}``) for a comparison prompt
+    that agents can consume directly — the same text the HTML "Ask AI" buttons
+    prefill.
+    """
     lines: list[str]
 
     if kind == "trait_results":
@@ -1708,6 +1805,8 @@ def build_prs_ai_prompt(
             sample_name=sample_name,
             model_scope=model_scope,
             percentile_source=percentile_source,
+            multi_user_results=multi_user_results,
+            sample_files=sample_files,
         )
 
     prompt_row = row or {}
@@ -1915,6 +2014,185 @@ def build_prs_ai_prompt(
     return prompt
 
 
+def _match_rate_percent(row: dict[str, Any]) -> float | None:
+    """Normalize match_rate stored as 0.7 or 70 to a 0–100 percentage."""
+    mr = _parse_float(row.get("match_rate"))
+    if mr is None:
+        return None
+    return mr * 100 if mr <= 1.0 else mr
+
+
+def _sample_prompt_header(name: str, meta: dict[str, Any] | None) -> str:
+    """One identity line for a sample in a multi-sample prompt."""
+    if not meta:
+        return f"- {name}"
+    bits: list[str] = []
+    genome = Path(str(meta.get("file") or "")).name
+    if genome:
+        bits.append(f"genome {genome}")
+    build = _clean_metadata_text(meta.get("build"))
+    if build:
+        bits.append(build)
+    anc = _clean_metadata_text(meta.get("ancestry"))
+    if anc:
+        label = SUPERPOP_LABELS.get(anc, anc)
+        anc_bit = f"{label} ({anc})"
+        fine = _clean_metadata_text(meta.get("fine_population"))
+        if fine:
+            anc_bit += f" · {fine_population_label(fine)}"
+        bits.append(anc_bit)
+    return f"- {name}: {', '.join(bits)}" if bits else f"- {name}"
+
+
+def _build_multi_sample_trait_prompt(
+    trait: str,
+    multi: dict[str, list[dict[str, Any]]],
+    *,
+    ancestry: str,
+    limit: int,
+    model_scope: str,
+    percentile_source: str,
+    sample_files: dict[str, dict[str, Any]] | None,
+) -> str:
+    """Comparison-first prompt covering every sample — for agents and Ask-AI buttons."""
+    restrict_h2 = percentile_source == "selected"
+    files = sample_files or {}
+    per_stats: dict[str, TraitSummaryStats] = {}
+    for name, rows in multi.items():
+        sample_anc = str(files.get(name, {}).get("ancestry") or ancestry)
+        per_stats[name] = summarize_trait_rows(
+            rows,
+            model_scope=model_scope,
+            selected_ancestry=sample_anc,
+            percentile_source=percentile_source,
+            sample_ancestries=[sample_anc],
+        )
+
+    lines = [
+        f'Interpret these combined Polygenic Risk Score (PRS) results for "{trait}" '
+        f"across {len(multi)} samples.",
+        "",
+        "== SAMPLES ==",
+    ]
+    for name in multi:
+        lines.append(_sample_prompt_header(name, files.get(name)))
+
+    lines.extend(["", "== PER-SAMPLE SUMMARY =="])
+    for name, stats in per_stats.items():
+        bits = [name]
+        if stats.median_pct is not None:
+            bits.append(
+                f"median percentile {format_percentile_with_panel(stats.median_pct, stats.typical_panel)}"
+            )
+        else:
+            bits.append("median percentile N/A")
+        bits.append(stats.scope_label)
+        if stats.min_pct is not None and stats.max_pct is not None:
+            bits.append(f"range {stats.min_pct:.1f}-{stats.max_pct:.1f}")
+        if stats.risk_vs_average != "N/A":
+            bits.append(f"risk vs average {stats.risk_vs_average}")
+        if stats.absolute_risk and not stats.absolute_risk.startswith("N/A"):
+            bits.append(f"absolute risk {stats.absolute_risk}")
+        lines.append("- " + ", ".join(bits))
+        h2_summary = _heritability_prompt_summary(
+            stats.scoped_rows or multi[name],
+            selected_ancestry=str(files.get(name, {}).get("ancestry") or ancestry),
+            restrict_to_selected=restrict_h2,
+            sample_ancestries=[str(files.get(name, {}).get("ancestry") or ancestry)],
+        )
+        if h2_summary:
+            lines.append(f"  Heritability (h²): {h2_summary}")
+        h2_risk = _heritability_risk_prompt_summary(
+            stats.scoped_rows or multi[name],
+            selected_ancestry=str(files.get(name, {}).get("ancestry") or ancestry),
+            restrict_to_selected=restrict_h2,
+            sample_ancestries=[str(files.get(name, {}).get("ancestry") or ancestry)],
+        )
+        if h2_risk:
+            lines.append(f"  h²-liability risk estimates: {h2_risk}")
+
+    by_id: dict[str, dict[str, dict[str, Any]]] = {}
+    for name, rows in multi.items():
+        for row in rows:
+            by_id.setdefault(str(row["pgs_id"]), {})[name] = row
+    names = list(multi.keys())
+
+    def _any_row(pid: str) -> dict[str, Any]:
+        rows = by_id[pid]
+        return rows.get(names[0]) or next(iter(rows.values()))
+
+    sorted_ids = sorted(
+        by_id,
+        key=lambda pid: (
+            -_quality_tier(_any_row(pid).get("quality_label")),
+            -(_parse_float(_any_row(pid).get("percentile")) or 0.0),
+        ),
+    )
+    model_limit = 30 if limit >= 5000 else (15 if limit >= 3000 else 8)
+    lines.extend(["", "== PER-MODEL COMPARISON =="])
+    for pid in sorted_ids[:model_limit]:
+        sample_bits: list[str] = []
+        for name in names:
+            row = by_id[pid].get(name)
+            if row is None:
+                sample_bits.append(f"{name}=N/A")
+                continue
+            pct = _parse_float(row.get("percentile"))
+            bit = f"{name}={pct:.1f}" if pct is not None else f"{name}=N/A"
+            mr = _match_rate_percent(row)
+            if mr is not None:
+                bit += f" ({mr:.0f}%)"
+            sample_bits.append(bit)
+        extras: list[str] = []
+        any_row = _any_row(pid)
+        if any_row.get("quality_label"):
+            extras.append(f"quality={any_row['quality_label']}")
+        if any_row.get("is_harmonized"):
+            extras.append("harmonized")
+        extra = f" [{', '.join(extras)}]" if extras else ""
+        lines.append(f"  {pid}: {', '.join(sample_bits)}{extra}")
+    remaining = len(sorted_ids) - model_limit
+    if remaining > 0:
+        lines.append(f"  ... ({remaining} more models)")
+
+    lines.extend(["", "== SOURCE LINKS =="])
+    lines.append("Look up PGS Catalog pages for detail on each model:")
+    link_limit = 10 if limit >= 5000 else (5 if limit >= 3000 else 3)
+    for pid in sorted_ids[:link_limit]:
+        lines.append(f"  https://www.pgscatalog.org/score/{pid}/")
+    if len(sorted_ids) > link_limit:
+        lines.append(f"  (+ {len(sorted_ids) - link_limit} more at https://www.pgscatalog.org/)")
+
+    lines.append("")
+    if limit >= 3000:
+        lines.append("== METHODOLOGY ==")
+        lines.append(
+            "Percentiles computed by scoring the 1000 Genomes Project "
+            "phase 3 reference panel (2,504 individuals, 5 superpopulations: "
+            "AFR, AMR, EAS, EUR, SAS) on GRCh38 harmonized scoring files. "
+            "Each sample's percentile uses its own detected reference population "
+            "unless a single ancestry was pinned."
+        )
+        lines.append(
+            "Quality scoring: each model gets a synthetic quality score (0-100) based on "
+            "AUROC/C-index (no penalty), Beta-only (0.95), OR/HR-only (0.90), "
+            "no-metric (0.6). Labels: High (>=70), Normal (>=50), Moderate (>=30), Low (<30)."
+        )
+        lines.append("")
+        lines.append(_TRAIT_TYPE_GUIDANCE)
+        lines.append("")
+    lines.append("== RESPONSE FORMAT ==")
+    if limit >= 3000:
+        lines.append(_FORMAT_TRAIT_MULTI_FULL)
+    else:
+        lines.append(_FORMAT_TRAIT_MULTI_COMPACT)
+
+    prompt = "\n".join(lines)
+    if len(prompt) > limit:
+        prompt = prompt[: limit - 3] + "..."
+    return prompt
+
+
 def _build_trait_prompt(
     trait: str,
     user_results: list[dict],
@@ -1923,12 +2201,35 @@ def _build_trait_prompt(
     sample_name: str | None = None,
     model_scope: str = "usable",
     percentile_source: str = "native",
+    multi_user_results: dict[str, list[dict[str, Any]]] | None = None,
+    sample_files: dict[str, dict[str, Any]] | None = None,
 ) -> str:
     """Build a rich AI prompt summarizing a trait's PRS results.
 
     Includes per-model details, quality-stratified medians, source links,
-    and instructions for looking up PGS Catalog pages.
+    and instructions for looking up PGS Catalog pages. When more than one
+    sample is supplied via ``multi_user_results``, builds a comparison prompt.
     """
+    if multi_user_results and len(multi_user_results) > 1:
+        prepared: dict[str, list[dict[str, Any]]] = {}
+        for name, rows in multi_user_results.items():
+            scored_rows = [
+                {**r, "percentile": percentile}
+                for r in rows
+                if (percentile := _parse_float(r.get("percentile"))) is not None
+            ]
+            if scored_rows:
+                prepared[name] = scored_rows
+        if len(prepared) > 1:
+            return _build_multi_sample_trait_prompt(
+                trait,
+                prepared,
+                ancestry=ancestry,
+                limit=limit,
+                model_scope=model_scope,
+                percentile_source=percentile_source,
+                sample_files=sample_files,
+            )
     scored = [
         {**r, "percentile": percentile}
         for r in user_results
@@ -1942,6 +2243,7 @@ def _build_trait_prompt(
         model_scope=model_scope,
         selected_ancestry=ancestry,
         percentile_source=percentile_source,
+        sample_ancestries=_sample_ancestries(sample_files),
     )
     pctls = sorted(stats.pct_by_id.values())
     median_pctl = stats.median_pct
@@ -2010,10 +2312,12 @@ def _build_trait_prompt(
     elif stats.absolute_risk.startswith("N/A"):
         lines.append(f"Absolute risk: {stats.absolute_risk}")
     restrict_h2 = percentile_source == "selected"
+    sample_ancs = _sample_ancestries(sample_files)
     h2_summary = _heritability_prompt_summary(
         stats.scoped_rows or scored,
         selected_ancestry=ancestry,
         restrict_to_selected=restrict_h2,
+        sample_ancestries=sample_ancs,
     )
     if h2_summary:
         lines.append(f"Heritability (h²): {h2_summary}")
@@ -2021,6 +2325,7 @@ def _build_trait_prompt(
         stats.scoped_rows or scored,
         selected_ancestry=ancestry,
         restrict_to_selected=restrict_h2,
+        sample_ancestries=sample_ancs,
     )
     if h2_risk_summary:
         lines.append(f"h²-liability risk estimates: {h2_risk_summary}")
@@ -2392,6 +2697,7 @@ def trait_report_html(
     ai_html = ""
     restrict_h2 = percentile_source == "selected"
     per_stats: dict[str, TraitSummaryStats] = {}
+    sample_ancs = _sample_ancestries(sample_files)
 
     if scored:
         stats = summarize_trait_rows(
@@ -2399,6 +2705,7 @@ def trait_report_html(
             model_scope=model_scope,
             selected_ancestry=ancestry,
             percentile_source=percentile_source,
+            sample_ancestries=sample_ancs,
         )
         pctls = sorted(stats.pct_by_id.values()) or sorted([r["percentile"] for r in scored])
         median_pctl = stats.median_pct
@@ -2409,16 +2716,20 @@ def trait_report_html(
             # Comparison mode: one median card per sample, colored to match the
             # chart's sample colors — the single-sample dashboard would silently
             # show only the first sample's numbers.
-            per_stats = {
-                name: summarize_trait_rows(
+            per_stats = {}
+            for name, rows in multi_scored.items():
+                if not rows:
+                    continue
+                sample_anc = str(
+                    (sample_files or {}).get(name, {}).get("ancestry") or ancestry
+                )
+                per_stats[name] = summarize_trait_rows(
                     rows,
                     model_scope=model_scope,
-                    selected_ancestry=ancestry,
+                    selected_ancestry=sample_anc,
                     percentile_source=percentile_source,
+                    sample_ancestries=[sample_anc],
                 )
-                for name, rows in multi_scored.items()
-                if rows
-            }
             for s_idx, (name, s) in enumerate(per_stats.items()):
                 col = sample_colors.get(name, "#333")
                 # The numeric part gets its own span so the model checkboxes can
@@ -2484,12 +2795,13 @@ def trait_report_html(
                 scored,
                 selected_ancestry=ancestry,
                 restrict_to_selected=restrict_h2,
+                sample_ancestries=sample_ancs,
             )
         if h2_summary:
             cards.append(
                 f'<div class="stat-card">'
                 f'<div class="stat-label">Heritability (h²)</div>'
-                f'<div class="stat-value h2-value">{_shorten_text(h2_summary, 48)}</div>'
+                f'<div class="stat-value h2-value">{h2_summary}</div>'
                 f'<div class="stat-sub">population-level heredity context</div></div>'
             )
 
@@ -2527,38 +2839,25 @@ def trait_report_html(
 
         stats_html = '<div class="stats-grid">' + "".join(cards) + "</div>"
 
-        comparison = ""
         prompt_sample_name = sample_name
         if multi_scored and per_stats:
             prompt_sample_name = next(iter(multi_scored))
-            comp_lines = ["", f'Several samples were scored on the same "{trait}" models:']
-            for name, s in per_stats.items():
-                med = f"{s.median_pct:.1f}" if s.median_pct is not None else "N/A"
-                line = f"- {name}: median percentile {med} ({s.scope_label})"
-                if s.risk_vs_average != "N/A":
-                    line += f", risk vs average {s.risk_vs_average}"
-                comp_lines.append(line)
-            comp_lines.append(
-                f"The per-model details above are for {prompt_sample_name}; "
-                "compare all samples' genetic predispositions."
-            )
-            comparison = "\n".join(comp_lines)
 
         btns = []
         for ai in _AI_ASSISTANTS:
-            char_limit = ai.get("limit", 6000)
+            char_limit = assistant_char_limit(ai)
             prompt = build_prs_ai_prompt(
                 "trait_results",
                 user_results=user_results,
                 trait=trait,
                 ancestry=ancestry,
-                limit=max(500, char_limit - len(comparison)),
+                limit=char_limit,
                 sample_name=prompt_sample_name,
                 model_scope=model_scope,
                 percentile_source=percentile_source,
+                multi_user_results=multi_user_results if multi_scored else None,
+                sample_files=sample_files,
             )
-            if prompt and comparison:
-                prompt += "\n" + comparison
             if prompt:
                 encoded = urllib.parse.quote(prompt, safe="")
                 btns.append(
@@ -3220,7 +3519,7 @@ def bell_curve_report_html(
 
         btns: list[str] = []
         for ai in _AI_ASSISTANTS:
-            char_limit = ai.get("limit", 6000)
+            char_limit = assistant_char_limit(ai)
             prompt = build_prs_ai_prompt(
                 "score",
                 row=prompt_row,

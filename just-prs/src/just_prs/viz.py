@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import math
 import json
+import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -49,6 +50,63 @@ SUPERPOP_LABELS: dict[str, str] = {
     "EUR": "European",
     "SAS": "South Asian",
 }
+
+# 1000 Genomes phase 3 fine-population cohorts (IGSR codes): short display name
+# + the official cohort description (shown as a tooltip). Codes not listed here
+# (e.g. HGDP's already-descriptive names like "Russian") are shown as-is.
+FINE_POPULATION_LABELS: dict[str, tuple[str, str]] = {
+    "ACB": ("African Caribbean", "African Caribbean in Barbados"),
+    "ASW": ("African American (SW US)", "People with African ancestry in the Southwest USA"),
+    "BEB": ("Bengali", "Bengali in Bangladesh"),
+    "CDX": ("Chinese Dai", "Chinese Dai in Xishuangbanna, China"),
+    "CEU": ("Northern/Western European", "Utah residents (CEPH) with Northern and Western European ancestry"),
+    "CHB": ("Han Chinese (Beijing)", "Han Chinese in Beijing, China"),
+    "CHS": ("Han Chinese (South)", "Han Chinese South, China"),
+    "CLM": ("Colombian", "Colombian in Medellín, Colombia"),
+    "ESN": ("Esan", "Esan in Nigeria"),
+    "FIN": ("Finnish", "Finnish in Finland"),
+    "GBR": ("British", "British in England and Scotland"),
+    "GIH": ("Gujarati", "Gujarati Indians in Houston, Texas"),
+    "GWD": ("Gambian", "Gambian in Western Division – Mandinka, The Gambia"),
+    "IBS": ("Iberian/Spanish", "Iberian populations in Spain"),
+    "ITU": ("Telugu", "Indian Telugu in the UK"),
+    "JPT": ("Japanese", "Japanese in Tokyo, Japan"),
+    "KHV": ("Kinh Vietnamese", "Kinh in Ho Chi Minh City, Vietnam"),
+    "LWK": ("Luhya", "Luhya in Webuye, Kenya"),
+    "MSL": ("Mende", "Mende in Sierra Leone"),
+    "MXL": ("Mexican American", "People with Mexican ancestry in Los Angeles, California"),
+    "PEL": ("Peruvian", "Peruvian in Lima, Peru"),
+    "PJL": ("Punjabi", "Punjabi in Lahore, Pakistan"),
+    "PUR": ("Puerto Rican", "Puerto Rican in Puerto Rico"),
+    "STU": ("Sri Lankan Tamil", "Sri Lankan Tamil in the UK"),
+    "TSI": ("Tuscan Italian", "Toscani in Italia"),
+    "YRI": ("Yoruba", "Yoruba in Ibadan, Nigeria"),
+}
+
+IGSR_POPULATION_URL = "https://www.internationalgenome.org/data-portal/population/{code}"
+
+
+def fine_population_label(code: str) -> str:
+    """Human-readable fine-population label, e.g. ``Northern/Western European (CEU)``.
+
+    Unknown codes (e.g. HGDP's descriptive names) are returned unchanged.
+    """
+    entry = FINE_POPULATION_LABELS.get(code)
+    return f"{entry[0]} ({code})" if entry else code
+
+
+def fine_population_html(code: str) -> str:
+    """Linked HTML for a fine population: known 1000G codes get the readable
+    name, the full cohort description as a tooltip, and an IGSR population-page
+    link; unknown codes are returned as plain text."""
+    entry = FINE_POPULATION_LABELS.get(code)
+    if entry is None:
+        return code
+    short, full = entry
+    url = IGSR_POPULATION_URL.format(code=code)
+    return (
+        f'<a href="{url}" target="_blank" rel="noopener" title="{full}">{short} ({code})</a>'
+    )
 
 QUALITY_COLORS: dict[str, str] = {
     "high": "#2E7D32",
@@ -100,25 +158,6 @@ def _ordinal(n: int | float) -> str:
     if 11 <= abs(n) % 100 <= 13:
         return f"{n}th"
     return f"{n}{['th','st','nd','rd'][min(abs(n) % 10, 4) if abs(n) % 10 < 4 else 0]}"
-
-
-def _trait_visibility_params() -> tuple[list[alt.Parameter], str]:
-    """Checkbox bindings that only show or hide chart marks."""
-    show_high = alt.param(name="showHigh", value=True, bind=alt.binding_checkbox(name="High"))
-    show_moderate = alt.param(
-        name="showModerate", value=True, bind=alt.binding_checkbox(name="Moderate"),
-    )
-    show_low = alt.param(name="showLow", value=True, bind=alt.binding_checkbox(name="Low"))
-    show_very_low = alt.param(
-        name="showVeryLow", value=True, bind=alt.binding_checkbox(name="Very low"),
-    )
-    quality_filter = (
-        "(datum.quality == 'high' && showHigh) || "
-        "(datum.quality == 'moderate' && showModerate) || "
-        "(datum.quality == 'low' && showLow) || "
-        "(datum.quality == 'very_low' && showVeryLow)"
-    )
-    return [show_high, show_moderate, show_low, show_very_low], quality_filter
 
 
 def _finite_float(value: object) -> float | None:
@@ -439,6 +478,7 @@ def plot_trait_scores(
     percentile_source: str = "native",
     multi_user_results: dict[str, list[dict]] | None = None,
     sample_name: str | None = None,
+    pgs_ids: list[str] | None = None,
 ) -> alt.LayerChart | alt.VConcatChart:
     """Trait-grouped visualization: reference bell curve + per-model user percentile scatter.
 
@@ -449,9 +489,9 @@ def plot_trait_scores(
     When ``ancestries`` is provided (e.g. ``["EUR", "AFR", "EAS", "AMR", "SAS"]``),
     overlays one color-coded bell curve per population instead of the single gray
     N(0,1) reference.  User dots are z-normalized against ``ancestry`` (the primary).
-    Quality-tier checkboxes only change which dots are visible. Dashboard
-    card numbers are computed separately from the quality-threshold and
-    population dropdowns.
+    Model quality is carried in each dot's color/tooltip; per-model visibility
+    is controlled by the report table's checkboxes, not by in-chart bindings
+    (the old High/Moderate/Low/Very-low checkbox row was dropped as clutter).
 
     Trait matching is case-insensitive and substring-based: ``"BMI"`` matches
     ``"Body mass index (BMI)"`` as well as ``"Body mass index"``.
@@ -476,22 +516,42 @@ def plot_trait_scores(
         model_scope: Quality-dropdown scope for the in-chart median line, so the
             "Median: Nth" annotation matches the dashboard cards exactly.
         percentile_source: Percentile resolution ("native"/"selected") for the median line.
+        pgs_ids: Explicit PGS ID selection. When set, models are selected by ID
+            instead of trait matching (``trait`` becomes a display label only;
+            when it is empty, the label is derived from the selected scores'
+            reported traits). This makes a single/multi PGS ID chart the
+            one-score edge case of the trait comparison — same renderer, same
+            report. IDs spanning multiple traits are fine: the table already
+            shows a per-row Trait column.
 
     Returns:
         An Altair LayerChart (bell curve only) or VConcatChart (bell curve + table).
     """
     anc_mask = pl.col("superpopulation") == ancestry
 
-    sub = distributions_df.filter(
-        (pl.col("trait_reported") == trait) & anc_mask
-    )
-    if sub.height == 0:
+    if pgs_ids:
+        sub = distributions_df.filter(pl.col("pgs_id").is_in(pgs_ids) & anc_mask)
+        if sub.height == 0:
+            raise ValueError(
+                f"No distributions found for PGS ID(s) {', '.join(pgs_ids)} / {ancestry}"
+            )
+        if not trait:
+            seen: dict[str, None] = {}
+            for t in sub["trait_reported"].to_list():
+                if t:
+                    seen.setdefault(t)
+            trait = ", ".join(seen) if seen else ", ".join(pgs_ids)
+    else:
         sub = distributions_df.filter(
-            pl.col("trait_reported").str.to_lowercase().str.contains(trait.lower())
-            & anc_mask
+            (pl.col("trait_reported") == trait) & anc_mask
         )
-    if sub.height == 0:
-        raise ValueError(f"No distributions found for trait '{trait}' / {ancestry}")
+        if sub.height == 0:
+            sub = distributions_df.filter(
+                pl.col("trait_reported").str.to_lowercase().str.contains(trait.lower())
+                & anc_mask
+            )
+        if sub.height == 0:
+            raise ValueError(f"No distributions found for trait '{trait}' / {ancestry}")
 
     is_multi_sample = multi_user_results is not None and len(multi_user_results) > 1
     if multi_user_results and not user_results:
@@ -813,14 +873,13 @@ def plot_trait_scores(
                 })
         user_marks = multi_marks
     has_user = len(user_marks) > 0
-    quality_params, quality_filter = _trait_visibility_params()
     model_select = alt.selection_point(name="modelSelect", fields=["pgs_id"], toggle="true")
     z_display_expr = "datum.z_native_display"
     density_expr = (
         f"exp(-0.5 * datum.z_display * datum.z_display) / {math.sqrt(2 * math.pi)} "
         "+ datum.jitter"
     )
-    visibility_params = [*quality_params, model_select]
+    visibility_params = [model_select]
 
     # When every scored model lands in the top tiers the dot heatmap is uniformly
     # green; re-colour the user's models relative to their own cohort (ranked on
@@ -893,7 +952,6 @@ def plot_trait_scores(
         def _scoped_chart(values: list[dict]) -> alt.Chart:
             return (
                 alt.Chart(alt.Data(values=values))
-                .transform_filter(quality_filter)
                 .transform_calculate(z_display=z_display_expr, density=density_expr)
             )
 
@@ -2069,6 +2127,28 @@ def _build_trait_prompt(
     return prompt
 
 
+_EFO_TOKEN_RE = re.compile(r"[A-Za-z]+_\d+")
+
+
+def _trait_url(efo_raw: str | None) -> str:
+    """PGS Catalog trait-page URL from a raw ``trait_efo_id`` value.
+
+    The field can hold several IDs (``EFO_0004337|MONDO_0005180``); the page is
+    keyed by one, so link the first well-formed token.  Empty when none parse.
+    """
+    if not efo_raw:
+        return ""
+    m = _EFO_TOKEN_RE.search(str(efo_raw))
+    return f"https://www.pgscatalog.org/trait/{m.group(0)}" if m else ""
+
+
+def _trait_link_html(trait_text: str, efo_raw: str | None) -> str:
+    url = _trait_url(efo_raw)
+    if not url:
+        return trait_text
+    return f'<a href="{url}" target="_blank" rel="noopener">{trait_text}</a>'
+
+
 def _median_recompute_script(
     models_payload: list[dict], sample_names: list[str]
 ) -> str:
@@ -2077,10 +2157,12 @@ def _median_recompute_script(
     The payload has one entry per table row, ``cells`` indexed by sample order:
     ``{"p": percentile, "r": risk_ratio, "a": absolute_risk, "u": usable}``.
     Recompute mirrors the server logic — only usable (match ≥50%) cells count —
-    and runs once on load so toggling is always self-consistent.  It also
-    re-positions the chart's per-sample median rules: the layers are tagged with
-    ``median_for`` (see plot_trait_scores), so a patched copy of the pristine
-    Vega spec is re-embedded on every toggle.
+    and runs once on load so toggling is always self-consistent.  On every
+    toggle a patched copy of the pristine Vega spec is re-embedded: the
+    per-sample median rules (layers tagged ``median_for``, see
+    plot_trait_scores) are re-positioned, and every data row carrying the
+    unchecked model's ``pgs_id`` (dots, rules, labels) is dropped so the chart
+    mirrors the table selection.
     """
     import json
 
@@ -2129,23 +2211,30 @@ def _median_recompute_script(
     var m10 = Math.abs(n) % 10;
     return n + (m10 === 1 ? 'st' : m10 === 2 ? 'nd' : m10 === 3 ? 'rd' : 'th');
   }
-  function patchChart(medians) {
+  function patchChart(medians, hiddenPgs) {
     if (!window.__PRS_SPEC__ || !window.__PRS_RENDER__) return;
     var spec = JSON.parse(JSON.stringify(window.__PRS_SPEC__));
     (function walk(o) {
       if (!o || typeof o !== 'object') return;
-      if (o.data && o.data.values && o.data.values.length &&
-          o.data.values[0].median_for !== undefined) {
-        var v = o.data.values[0];
-        var idx = __PRS_SAMPLES__.indexOf(v.median_for);
-        if (idx >= 0) {
-          var mp = medians[idx];
-          if (mp == null) {
-            o.data.values = [];
-          } else {
-            v.z_score = normPpf(Math.min(99.99, Math.max(0.01, mp)) / 100);
-            if (v.label !== undefined) v.label = v.median_for + ': ' + ordinal(mp);
+      if (o.data && o.data.values && o.data.values.length) {
+        if (o.data.values[0].median_for !== undefined) {
+          var v = o.data.values[0];
+          var idx = __PRS_SAMPLES__.indexOf(v.median_for);
+          if (idx >= 0) {
+            var mp = medians[idx];
+            if (mp == null) {
+              o.data.values = [];
+            } else {
+              v.z_score = normPpf(Math.min(99.99, Math.max(0.01, mp)) / 100);
+              if (v.label !== undefined) v.label = v.median_for + ': ' + ordinal(mp);
+            }
           }
+        } else if (o.data.values[0].pgs_id !== undefined) {
+          // Model dot/rule/label layers carry pgs_id — drop rows belonging to
+          // unchecked models so the chart mirrors the table selection.
+          o.data.values = o.data.values.filter(function (v2) {
+            return hiddenPgs.indexOf(v2.pgs_id) < 0;
+          });
         }
       }
       if (Array.isArray(o)) o.forEach(walk);
@@ -2160,6 +2249,10 @@ def _median_recompute_script(
       checked[cb.dataset.idx] = cb.checked;
       var tr = cb.closest('tr');
       if (tr) tr.style.opacity = cb.checked ? '1' : '0.45';
+    });
+    var hiddenPgs = [];
+    __PRS_MODELS__.forEach(function (m, mi) {
+      if (!checked[mi]) hiddenPgs.push(m.pgs);
     });
     var medians = [];
     for (var i = 0; i < __PRS_SAMPLES__.length; i++) {
@@ -2190,7 +2283,7 @@ def _median_recompute_script(
       if ((el = document.getElementById('card-s-' + i)))
         el.textContent = el.textContent.replace(/\\d+(?= )/, String(ps.length));
     }
-    if (redrawChart) patchChart(medians);
+    if (redrawChart) patchChart(medians, hiddenPgs);
   }
   document.querySelectorAll('.model-toggle').forEach(function (cb) {
     cb.addEventListener('change', function () { recompute(true); });
@@ -2222,8 +2315,14 @@ def trait_report_html(
     ``multi_user_results`` (``{sample_name: rows}``) switches the report into
     comparison mode: per-sample median cards and a pivoted model table with one
     percentile column per sample, colored to match the chart's sample colors.
-    ``sample_files`` (``{sample_name: {"file": ..., "build": ...}}``) renders a
-    legend table mapping each sample to its genome file.
+    ``sample_files`` (``{sample_name: {"file": ..., "build": ..., "ancestry": ...,
+    "fine_population": ...}}``) renders a legend table right under the title
+    mapping each sample to its genome file; the optional ``ancestry`` /
+    ``fine_population`` keys add a per-sample reference-population column
+    (filled by the CLI's per-sample ancestry auto-detection, fine 1000G cohort
+    codes resolved to IGSR-linked readable names). When the legend table is
+    present the redundant "Samples: … · Ancestry: …" subtitle is omitted — the
+    table is the header.
     """
     import urllib.parse
 
@@ -2620,7 +2719,8 @@ def trait_report_html(
             if has_multi:
                 trait_raw = base.get("trait_reported", "")
                 trait_short = (trait_raw[:29] + "…") if len(trait_raw) > 30 else trait_raw
-                cells.append(f'<td class="trait-cell">{trait_short}</td>')
+                trait_cell = _trait_link_html(trait_short, base.get("trait_efo_id"))
+                cells.append(f'<td class="trait-cell" title="{trait_raw}">{trait_cell}</td>')
             for group in groups:
                 for i, name in enumerate(sample_names):
                     border = _GROUP_BORDER if i == 0 else ""
@@ -2692,9 +2792,9 @@ def trait_report_html(
             + "".join(rows_html)
             + "</tbody></table>"
             + '<div class="cell-sub" style="margin-top:6px">Untick a model\'s checkbox to '
-            "exclude it — the Median row and the per-sample cards recompute instantly "
-            "(models below 50% match never count toward medians). The chart's median lines "
-            "are drawn at generation time and do not move. Column background tint = sample "
+            "exclude it — the Median row, the per-sample cards, and the chart (its dots "
+            "and median lines) update instantly "
+            "(models below 50% match never count toward medians). Column background tint = sample "
             "(matches the chart colors). The Quality column shows the model's tier "
             "(green high · blue moderate · orange low · red very low; one dot per sample when "
             "coverage makes tiers differ). Red/green text is used only for risk direction "
@@ -2774,7 +2874,8 @@ def trait_report_html(
             if has_multi:
                 trait_raw = r.get("trait_reported", "")
                 trait_short = (trait_raw[:29] + "…") if len(trait_raw) > 30 else trait_raw
-                cells.append(f'<td class="trait-cell">{trait_short}</td>')
+                trait_cell = _trait_link_html(trait_short, r.get("trait_efo_id"))
+                cells.append(f'<td class="trait-cell" title="{trait_raw}">{trait_cell}</td>')
             cells.append(f'<td style="color:{q_col};font-weight:600">{pctl_s}</td>')
             if has_risk:
                 rr = r.get("risk_ratio")
@@ -2826,29 +2927,89 @@ def trait_report_html(
     quality_note_html = _QUALITY_NOTE_HTML if scored else ""
 
     samples_html = ""
+    sample_ancestries: dict[str, str] = {}
     if sample_files:
+        sample_ancestries = {
+            name: str(meta["ancestry"])
+            for name, meta in sample_files.items()
+            if isinstance(meta, dict) and meta.get("ancestry")
+        }
+        has_fine = any(
+            isinstance(meta, dict) and meta.get("fine_population") for meta in sample_files.values()
+        )
+        def _conf_html(value: object) -> str:
+            if value is None:
+                return ""
+            return f' <span style="color:#999;font-size:0.85em">{float(value):.0%}</span>'
+
         legend_rows = []
         for name, meta in sample_files.items():
             meta = meta if isinstance(meta, dict) else {"file": str(meta)}
             col = sample_colors.get(name, "#333")
+            anc_cells = ""
+            if sample_ancestries:
+                anc = meta.get("ancestry")
+                anc_text = f"{SUPERPOP_LABELS.get(anc, anc)} ({anc}){_conf_html(meta.get('ancestry_confidence'))}" if anc else "—"
+                anc_cells = f"<td>{anc_text}</td>"
+                if has_fine:
+                    fine = meta.get("fine_population")
+                    fine_text = f"{fine_population_html(fine)}{_conf_html(meta.get('fine_confidence'))}" if fine else "—"
+                    anc_cells += f"<td>{fine_text}</td>"
             legend_rows.append(
                 f'<tr><td style="color:{col};font-weight:600">{name}</td>'
                 f'<td class="id-cell">{meta.get("file", "—")}</td>'
-                f'<td>{meta.get("build", "—")}</td></tr>'
+                f'<td>{meta.get("build", "—")}</td>{anc_cells}</tr>'
             )
+        anc_head = ""
+        if sample_ancestries:
+            anc_head = "<th>Population</th>"
+            if has_fine:
+                anc_head += "<th>Closest 1000G Cohort</th>"
+        # The sub-population is the nearest of the panel's 26 reference cohorts,
+        # not a nationality — e.g. Eastern European genomes map to CEU because
+        # 1000G has no Slavic cohort. Say so, or the label reads as a claim.
+        fine_note = (
+            '<div style="font-size:0.85em;color:#777;margin:6px 0 0">'
+            "Closest 1000G Cohort is the nearest of the 1000 Genomes reference cohorts "
+            "(26 worldwide) — a reference point, not a nationality. Many populations "
+            "have no dedicated cohort in the panel (e.g. Slavic / Eastern European "
+            "genomes usually land on the Northern/Western European cohort as their "
+            "nearest neighbor), so for such samples the cohort label is approximate "
+            "and its confidence is expected to be lower. "
+            "Percentiles use the Population column."
+            "</div>"
+        ) if has_fine else ""
         samples_html = (
             '<table class="model-table" style="margin-top:14px;max-width:960px">'
-            "<thead><tr><th>Sample</th><th>Genome File</th><th>Build</th></tr></thead>"
-            "<tbody>" + "".join(legend_rows) + "</tbody></table>"
+            f"<thead><tr><th>Sample</th><th>Genome File</th><th>Build</th>{anc_head}</tr></thead>"
+            "<tbody>" + "".join(legend_rows) + "</tbody></table>" + fine_note
         )
 
-    subtitle_prefix = ""
-    if multi_scored:
-        name_spans = [
-            f'<span style="color:{sample_colors.get(n, "#333")};font-weight:600">{n}</span>'
-            for n in multi_scored
-        ]
-        subtitle_prefix = "Samples: " + ", ".join(name_spans) + " · "
+    # The sample legend table (below the results table) already lists every
+    # sample with its color, file, build, and per-sample ancestry — repeating
+    # them in a subtitle line would be redundant, so the subtitle only renders
+    # when there is no legend table (e.g. --results JSON input).
+    if samples_html:
+        subtitle_html = ""
+    else:
+        subtitle_prefix = ""
+        if multi_scored:
+            name_spans = [
+                f'<span style="color:{sample_colors.get(n, "#333")};font-weight:600">{n}</span>'
+                for n in multi_scored
+            ]
+            subtitle_prefix = "Samples: " + ", ".join(name_spans) + " · "
+        ancestry_line = f"Ancestry: {SUPERPOP_LABELS.get(ancestry, ancestry)} ({ancestry})"
+        subtitle_html = f'<div class="subtitle">{subtitle_prefix}{ancestry_line}</div>'
+
+    # Link the title to the PGS Catalog trait page when every scored model
+    # resolves to the same trait; with mixed traits the per-row links disambiguate.
+    trait_urls = {u for r in scored if (u := _trait_url(r.get("trait_efo_id")))}
+    trait_title = (
+        f'<a href="{next(iter(trait_urls))}" target="_blank" rel="noopener">{trait}</a>'
+        if len(trait_urls) == 1
+        else trait
+    )
 
     dashboard_stamp = (
         f"<!-- prs-dashboard {model_scope}|{percentile_source}|{ancestry}|"
@@ -2864,6 +3025,10 @@ def trait_report_html(
 <style>
 body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #fafafa; color: #333; }}
 h1 {{ font-size: 1.4em; margin-bottom: 4px; }}
+h1 a {{ color: inherit; text-decoration: none; border-bottom: 2px dotted #bbb; }}
+h1 a:hover {{ border-bottom-color: #666; }}
+.trait-cell a {{ color: #555; text-decoration: underline dotted; }}
+.trait-cell a:hover {{ color: #1565C0; }}
 .subtitle {{ color: #666; margin-bottom: 16px; font-size: 0.95em; }}
 .stats-grid {{ display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }}
 .stat-card {{ background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; min-width: 140px; flex: 1; }}
@@ -2902,14 +3067,14 @@ h1 {{ font-size: 1.4em; margin-bottom: 4px; }}
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
 </head>
 <body>
-<h1>PRS Report: {trait}</h1>
-<div class="subtitle">{subtitle_prefix}Ancestry: {SUPERPOP_LABELS.get(ancestry, ancestry)} ({ancestry})</div>
+<h1>PRS Report: {trait_title}</h1>
+{subtitle_html}
 {stats_html}
 <div id="vis"></div>
 {table_html}
+{ai_html}
 {samples_html}
 {quality_note_html}
-{ai_html}
 <script>
 // Report its true content height to the embedding parent so the host iframe can
 // size itself to the content instead of guessing a fixed height (the root cause

@@ -160,95 +160,58 @@ def prs_engine_selector(state: type[rx.State]) -> rx.Component:
 
 
 def prs_ancestry_selector(state: type[rx.State]) -> rx.Component:
-    """Reference-population controls for 1000G-based percentile lookup."""
-    checkbox_handlers = {
-        "AFR": state.set_reference_population_AFR,
-        "AMR": state.set_reference_population_AMR,
-        "EAS": state.set_reference_population_EAS,
-        "EUR": state.set_reference_population_EUR,
-        "SAS": state.set_reference_population_SAS,
-    }
-    checked_vars = {
-        "AFR": state.show_reference_AFR,
-        "AMR": state.show_reference_AMR,
-        "EAS": state.show_reference_EAS,
-        "EUR": state.show_reference_EUR,
-        "SAS": state.show_reference_SAS,
-    }
-    population_boxes = [
+    """Compact reference-population controls for 1000G-based percentile lookup.
+
+    Deliberately minimal: every population's percentile is always computed and
+    the chart itself carries per-population curve checkboxes, so the only
+    controls left are the percentile reference population (autodetected from
+    the uploaded genome, overridable here), an optional per-population
+    comparison-columns toggle for the results table, and the reference/audit
+    cache refresh.
+    """
+    return rx.hstack(
+        rx.text("Reference population:", size="2", weight="medium"),
+        rx.select(
+            list(SUPERPOPULATIONS),
+            value=state.selected_ancestry,
+            on_change=state.set_selected_ancestry,
+            size="1",
+        ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "Autodetected from your uploaded genome (shown on the sample row "
+                "above) and used for percentiles, heritability ordering, and the "
+                "chart's default reference curve — override it here if needed. "
+                "AFR=African, AMR=American, EAS=East Asian, EUR=European, "
+                "SAS=South Asian."
+            ),
+        ),
+        rx.separator(orientation="vertical", size="2"),
         rx.checkbox(
-            f"{code} {SUPERPOPULATION_LABELS[code]}",
-            checked=checked_vars[code],
-            on_change=checkbox_handlers[code],
+            "Population comparison columns",
+            checked=state.compute_all_populations,
+            on_change=state.set_compute_all_populations,
             size="2",
-        )
-        for code in SUPERPOPULATIONS
-    ]
-    return rx.vstack(
-        rx.hstack(
-            rx.text("Selected population:", size="2", weight="medium"),
-            rx.select(
-                list(SUPERPOPULATIONS),
-                value=state.selected_ancestry,
-                on_change=state.set_selected_ancestry,
-                size="1",
-            ),
-            rx.tooltip(
-                rx.icon("info", size=14, color="gray"),
-                content=(
-                    "Used for ancestry-ordered heritability/prevalence and, when "
-                    "'Percentiles vs selected population' is on, for trait-summary "
-                    "percentiles. AFR=African, AMR=American, EAS=East Asian, "
-                    "EUR=European, SAS=South Asian."
-                ),
-            ),
-            spacing="2",
-            align="center",
-            wrap="wrap",
         ),
-        rx.hstack(
-            rx.text("Reference populations:", size="2", weight="medium"),
-            rx.badge("PRS-native default", color_scheme="blue", variant="soft", size="2"),
-            rx.tooltip(
-                rx.icon("info", size=14, color="gray"),
-                content=(
-                    "Each result uses the PGS model's closest available evaluation ancestry "
-                    "as its default reference population. Tick extra 1000 Genomes populations "
-                    "to add comparison curves and columns. AFR=African, AMR=American, "
-                    "EAS=East Asian, EUR=European, SAS=South Asian."
-                ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "Adds one percentile column per 1000 Genomes population to the "
+                "results table. The population curves themselves are always "
+                "available on the chart via its own checkboxes."
             ),
-            rx.button(
-                "All",
-                on_click=state.select_all_reference_populations,
-                size="1",
-                variant="soft",
-            ),
-            rx.button(
-                "Native only",
-                on_click=state.clear_reference_populations,
-                size="1",
-                variant="soft",
-                color_scheme="gray",
-            ),
-            spacing="2",
-            align="center",
-            wrap="wrap",
         ),
-        rx.hstack(
-            *population_boxes,
-            rx.checkbox(
-                "Refresh reference/audit cache",
-                checked=state.refresh_reference_cache_before_compute,
-                on_change=state.set_refresh_reference_cache_before_compute,
-                size="2",
-            ),
-            spacing="3",
-            align="center",
-            wrap="wrap",
+        rx.separator(orientation="vertical", size="2"),
+        rx.checkbox(
+            "Refresh reference/audit cache",
+            checked=state.refresh_reference_cache_before_compute,
+            on_change=state.set_refresh_reference_cache_before_compute,
+            size="2",
         ),
-        spacing="2",
-        align="start",
+        spacing="3",
+        align="center",
+        wrap="wrap",
         width="100%",
     )
 

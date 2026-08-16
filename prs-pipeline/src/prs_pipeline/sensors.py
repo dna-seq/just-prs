@@ -276,10 +276,20 @@ def _make_completeness_sensor(
                 f"All {catalog_total} PGS IDs scored on disk (coverage=100%)."
             )
 
-        run_key = f"completeness_gap_{n_missing}"
-        context.log.info(
-            f"Gap of {n_missing} PGS IDs detected — submitting score_and_push."
-        )
+        # A failed/canceled score_and_push still "completes" its run_key, so a
+        # stable completeness_gap_{n} key never retries the same catalog gap.
+        last_bad_run_id = _last_unsuccessful_run_id(context.instance, "score_and_push")
+        if last_bad_run_id:
+            run_key = f"completeness_gap_{n_missing}_retry_{last_bad_run_id[:12]}"
+            context.log.info(
+                f"Last score_and_push run {last_bad_run_id[:8]} did not succeed "
+                f"— retrying catalog gap of {n_missing} with run_key={run_key}."
+            )
+        else:
+            run_key = f"completeness_gap_{n_missing}"
+            context.log.info(
+                f"Gap of {n_missing} PGS IDs detected — submitting score_and_push."
+            )
         return dg.SensorResult(
             run_requests=[dg.RunRequest(run_key=run_key, job_name="score_and_push")],
         )

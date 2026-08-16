@@ -47,24 +47,20 @@ def vcf_source_section(
                 width="100%",
             ),
         ),
+        _sample_rows(source_state),
+        # Build info lives on each sample row; only warnings need a callout.
         rx.cond(
-            source_state.build_detection_message != "",
-            rx.cond(
-                source_state.detected_build != "",
-                rx.callout(
-                    source_state.build_detection_message,
-                    icon="check",
-                    color_scheme="green",
-                    size="1",
-                    width="100%",
-                ),
-                rx.callout(
-                    source_state.build_detection_message,
-                    icon="triangle_alert",
-                    color_scheme="orange",
-                    size="1",
-                    width="100%",
-                ),
+            (source_state.build_detection_message != "")
+            & (
+                (source_state.detected_build == "")
+                | source_state.build_detection_message.contains("⚠")  # type: ignore[union-attr]
+            ),
+            rx.callout(
+                source_state.build_detection_message,
+                icon="triangle_alert",
+                color_scheme="orange",
+                size="1",
+                width="100%",
             ),
         ),
         _normalization_progress(source_state),
@@ -77,12 +73,164 @@ def vcf_source_section(
     )
 
 
+def _sample_row(source_state: type[rx.State], chip: dict) -> rx.Component:
+    """One horizontal row for one loaded sample: color · label · build · ancestry · variants · remove."""
+    return rx.hstack(
+        rx.box(
+            width="12px",
+            height="12px",
+            border_radius="50%",
+            background=chip["color"],
+            flex_shrink="0",
+        ),
+        rx.text(chip["label"], size="2", weight="bold"),
+        rx.text(chip["filename"], size="1", color="gray"),
+        rx.spacer(),
+        rx.cond(
+            chip["build"] != "",
+            rx.badge(chip["build"], color_scheme="blue", variant="soft", size="1"),
+        ),
+        rx.cond(
+            chip["ancestry_label"] != "",
+            rx.badge(
+                rx.hstack(
+                    rx.icon("shield-check", size=12),
+                    rx.text(chip["ancestry_label"], size="1", weight="medium"),
+                    rx.cond(
+                        chip["ancestry_conf"] != "",
+                        rx.text(chip["ancestry_conf"], size="1", color="gray"),
+                    ),
+                    align="center",
+                    spacing="1",
+                ),
+                color_scheme="green",
+                variant="soft",
+                size="1",
+                title=(
+                    "Genetic ancestry autodetected from this genome against the "
+                    "1000 Genomes reference panel, with the classifier's "
+                    "confidence. The detected population is preselected as the "
+                    "reference population for percentiles — you can override "
+                    "it below."
+                ),
+            ),
+        ),
+        rx.cond(
+            chip["fine_label"] != "",
+            rx.cond(
+                chip["fine_url"] != "",
+                rx.link(
+                    rx.hstack(
+                        rx.text(chip["fine_label"], size="1"),
+                        rx.cond(
+                            chip["fine_conf"] != "",
+                            rx.text(chip["fine_conf"], size="1", color="gray"),
+                        ),
+                        rx.icon("external-link", size=10),
+                        align="center",
+                        spacing="1",
+                    ),
+                    href=chip["fine_url"],
+                    is_external=True,
+                    title=chip["fine_title"],
+                    size="1",
+                    color_scheme="green",
+                    underline="hover",
+                ),
+                rx.hstack(
+                    rx.text(chip["fine_label"], size="1", color="gray"),
+                    rx.cond(
+                        chip["fine_conf"] != "",
+                        rx.text(chip["fine_conf"], size="1", color="gray"),
+                    ),
+                    align="center",
+                    spacing="1",
+                ),
+            ),
+        ),
+        rx.cond(
+            chip["variants"] != "",
+            rx.text(chip["variants"], size="1", color="gray"),
+        ),
+        rx.icon_button(
+            rx.icon("x", size=14),
+            size="1",
+            variant="ghost",
+            color_scheme="gray",
+            title="Remove this sample",
+            on_click=source_state.remove_sample(chip["label"]),  # type: ignore[operator]
+        ),
+        align="center",
+        spacing="2",
+        width="100%",
+        padding="6px 10px",
+        border="1px solid var(--gray-4)",
+        border_radius="8px",
+        background="var(--gray-1)",
+        title=chip["filename"],
+    )
+
+
+def _sample_rows(source_state: type[rx.State]) -> rx.Component:
+    """One row per loaded sample, stacked vertically (CLI comparison legend)."""
+    return rx.cond(
+        source_state.vcf_sample_count > 0,  # type: ignore[operator]
+        rx.vstack(
+            rx.hstack(
+                rx.cond(
+                    source_state.vcf_multi_sample,
+                    rx.text(
+                        "Comparing ",
+                        source_state.vcf_sample_count,
+                        " samples",
+                        size="1",
+                        weight="bold",
+                        color="gray",
+                    ),
+                    rx.text("Sample", size="1", weight="bold", color="gray"),
+                ),
+                rx.spacer(),
+                rx.cond(
+                    source_state.vcf_multi_sample,
+                    rx.button(
+                        "Clear all",
+                        size="1",
+                        variant="ghost",
+                        color_scheme="gray",
+                        on_click=source_state.clear_samples,
+                    ),
+                ),
+                align="center",
+                width="100%",
+            ),
+            rx.foreach(
+                source_state.vcf_sample_chips,
+                lambda chip: _sample_row(source_state, chip),
+            ),
+            rx.cond(
+                source_state.vcf_has_fine_population,
+                rx.text(
+                    "Closest 1000G cohort is the nearest of the 1000 Genomes "
+                    "reference cohorts (26 worldwide) — a reference point, not a "
+                    "nationality. Many populations have no dedicated cohort in the "
+                    "panel (e.g. Slavic / Eastern European genomes usually land on "
+                    "the Northern/Western European cohort as their closest match).",
+                    size="1",
+                    color="gray",
+                ),
+            ),
+            spacing="1",
+            width="100%",
+        ),
+    )
+
+
 def _compact_dropzone(source_state: type[rx.State], upload_id: str) -> rx.Component:
     """Single-line VCF dropzone that stays small whether or not a file is loaded."""
     return rx.upload(
         rx.hstack(
             rx.cond(
-                source_state.vcf_normalizing,
+                source_state.vcf_normalizing | source_state.ancestry_inferring,  # type: ignore[operator]
                 rx.hstack(
                     rx.spinner(size="2"),
                     rx.text(source_state.normalize_status, size="2", weight="bold"),
@@ -91,22 +239,31 @@ def _compact_dropzone(source_state: type[rx.State], upload_id: str) -> rx.Compon
                     spacing="2",
                 ),
                 rx.cond(
-                    source_state.vcf_filename != "",
+                    source_state.vcf_sample_count > 0,  # type: ignore[operator]
                     rx.hstack(
-                        rx.icon("file-check", size=16, color="green"),
-                        rx.text(source_state.vcf_filename, size="2", weight="medium"),
-                        rx.text("(click to replace)", size="1", color="gray"),
+                        rx.icon("plus", size=16, color="var(--accent-9)"),
+                        rx.text(
+                            "Add another sample to compare",
+                            size="2",
+                            weight="medium",
+                            color="var(--accent-11)",
+                        ),
+                        rx.text(
+                            "drop a VCF here or click to browse — each sample gets its own row and color",
+                            size="1",
+                            color="gray",
+                        ),
                         align="center",
                         spacing="2",
                     ),
                     rx.hstack(
                         rx.icon("upload", size=16, color="gray"),
                         rx.text(
-                            "Drop a VCF file here or click to browse",
+                            "Drop one or more VCF files here or click to browse",
                             size="2",
                             color="gray",
                         ),
-                        rx.text(".vcf / .vcf.gz", size="1", color="gray"),
+                        rx.text(".vcf / .vcf.gz — multiple files = comparison", size="1", color="gray"),
                         align="center",
                         spacing="2",
                     ),
@@ -123,7 +280,7 @@ def _compact_dropzone(source_state: type[rx.State], upload_id: str) -> rx.Compon
             "application/gzip": [".vcf.gz", ".gz"],
             "application/octet-stream": [".vcf.gz", ".gz"],
         },
-        max_files=1,
+        max_files=8,
         on_drop=source_state.handle_vcf_upload(
             rx.upload_files(upload_id=upload_id)
         ),  # type: ignore[arg-type]
@@ -143,9 +300,9 @@ def _compact_dropzone(source_state: type[rx.State], upload_id: str) -> rx.Compon
 
 
 def _normalization_progress(source_state: type[rx.State]) -> rx.Component:
-    """Visible feedback for the blocking VCF normalization step."""
+    """Visible feedback for the blocking VCF normalization + ancestry steps."""
     return rx.cond(
-        source_state.vcf_normalizing,
+        source_state.vcf_normalizing | source_state.ancestry_inferring,  # type: ignore[operator]
         rx.vstack(
             rx.callout(
                 rx.hstack(

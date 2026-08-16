@@ -976,6 +976,23 @@ def _validate_pgs_id(pgs_id: str) -> str:
     return pgs_id
 
 
+def _parse_pgs_id_list(value: str) -> list[str] | None:
+    """Return normalized PGS IDs when ``value`` is a comma/space-separated PGS ID list.
+
+    Returns None when the value is a regular trait name, so the same positional
+    argument can accept either (``plot trait BMI`` vs ``plot trait PGS000001,PGS000002``).
+    """
+    import re
+
+    tokens = [t for t in re.split(r"[,\s]+", value.strip()) if t]
+    if not tokens or not all(re.fullmatch(r"PGS\d{6,}", t, flags=re.IGNORECASE) for t in tokens):
+        return None
+    seen: dict[str, None] = {}
+    for t in tokens:
+        seen.setdefault(t.upper())
+    return list(seen)
+
+
 def _fmt_dist(d: dict) -> str:
     return ", ".join(f"{k} {v:.0%}" for k, v in sorted(d.items(), key=lambda kv: -kv[1]) if v > 0.005)
 
@@ -1312,6 +1329,87 @@ def _put_cached_result(
     key = _result_cache_key(vcf_path, pgs_id, build, ancestry)
     cache[key] = result
     _save_result_cache(cache, cache_dir)
+
+
+def _format_ancestry_call(call: dict) -> str:
+    from just_prs.viz import fine_population_label
+
+    text = f"{call['superpopulation']} ({float(call.get('confidence', 0.0)):.0%} confidence"
+    if call.get("fine_population"):
+        text += f") · fine: {fine_population_label(call['fine_population'])}"
+        fine_conf = call.get("fine_confidence")
+        if fine_conf is not None:
+            text += f" ({float(fine_conf):.0%})"
+        return text
+    return text + ")"
+
+
+def _infer_vcf_ancestry(
+    vcf_path: Path, sample_build: str, cache_dir: Path | None = None,
+) -> dict | None:
+    """Auto-detect a sample's ancestry for reference-percentile lookup.
+
+    Reads the genome once, then runs the pure-Python ancestry engine
+    (``PRSCatalog.infer_ancestry``) twice on the same frame: at super-population
+    resolution (the label + confidence that drive percentiles) and at fine
+    population resolution (sub-ancestry, e.g. 1000G's CEU/GBR — informational).
+    The call is cached in the PRS result cache keyed by the VCF fingerprint, so
+    repeated plotting never re-reads the genome.
+
+    Returns ``{"superpopulation", "confidence", "fine_population",
+    "fine_confidence"}`` or None when the call is UNKNOWN or the model is
+    unavailable — callers fall back to EUR.
+    """
+    fp = _vcf_fingerprint(vcf_path)
+    key = f"__ancestry__{sample_build}_{fp}"
+    cache_data = _load_result_cache(cache_dir)
+    hit = cache_data.get(key)
+    # "fine_confidence" marks the current cache format; entries written before
+    # sub-ancestry detection lack it and are recomputed once.
+    if isinstance(hit, dict) and hit.get("superpopulation") and "fine_confidence" in hit:
+        if hit["superpopulation"] == "UNKNOWN":
+            return None
+        console.print(f"[dim]Ancestry auto-detected: {_format_ancestry_call(hit)} (cached)[/dim]")
+        return hit
+
+    try:
+        from just_prs.vcf import read_genotypes
+
+        catalog = PRSCatalog(cache_dir=cache_dir)
+        # One eager read shared by both resolution passes (the VCF scan dominates
+        # the cost; projection + KNN per pass is seconds).
+        genotypes_lf = read_genotypes(vcf_path).collect().lazy()
+        inference = catalog.infer_ancestry(
+            genotypes_lf=genotypes_lf, sample_build=sample_build,
+        )
+        fine = catalog.infer_ancestry(
+            genotypes_lf=genotypes_lf, sample_build=sample_build, resolution="population",
+        )
+    except Exception as exc:
+        console.print(
+            f"[yellow]Ancestry auto-detection unavailable ({exc}); "
+            f"using the EUR reference. Pass --ancestry to set it explicitly.[/yellow]"
+        )
+        return None
+
+    call = {
+        "superpopulation": inference.superpopulation,
+        "confidence": inference.confidence,
+        "fine_population": fine.fine_population,
+        "fine_confidence": fine.confidence if fine.fine_population else None,
+    }
+    cache_data = _load_result_cache(cache_dir)
+    cache_data[key] = call
+    _save_result_cache(cache_data, cache_dir)
+
+    if inference.superpopulation == "UNKNOWN":
+        console.print(
+            "[yellow]Ancestry could not be determined (coverage below the floor); "
+            "using the EUR reference. Pass --ancestry to set it explicitly.[/yellow]"
+        )
+        return None
+    console.print(f"[dim]Ancestry auto-detected: {_format_ancestry_call(call)}[/dim]")
+    return call
 
 
 alias_app = typer.Typer(
@@ -2715,11 +2813,14 @@ def _compute_trait_results(
     cache: Path,
     fuzzy: bool = False,
     no_cache: bool = False,
+    pgs_ids: list[str] | None = None,
 ) -> list[dict]:
     """Search for PGS models matching a trait, compute PRS, and return result dicts.
 
     Exact match on trait_reported first. Falls back to substring match only with fuzzy=True.
     Always lists the matched trait names before computing.
+    When ``pgs_ids`` is given, trait search is skipped and exactly those scores
+    are computed (single/multi PGS ID is the one-score edge case of the trait flow).
     Uses a file-based result cache keyed by (vcf mtime+size, pgs_id, build, ancestry).
     """
     catalog = PRSCatalog(cache_dir=cache)
@@ -2727,7 +2828,22 @@ def _compute_trait_results(
 
     all_scores = catalog.scores(genome_build=build, include_harmonized=True)
 
-    if fuzzy:
+    if pgs_ids:
+        scores_df = all_scores.filter(pl.col("pgs_id").is_in(pgs_ids)).collect()
+        found = set(scores_df["pgs_id"].to_list())
+        missing = [p for p in pgs_ids if p not in found]
+        if missing:
+            console.print(
+                f"[yellow]Not found in the catalog ({build}): {', '.join(missing)}[/yellow]"
+            )
+        if scores_df.height == 0:
+            console.print(f"[red]No PGS scores found for ID(s) {', '.join(pgs_ids)} ({build}).[/red]")
+            raise typer.Exit(code=1)
+        # Preserve the user's ID order.
+        order = {p: i for i, p in enumerate(pgs_ids)}
+        scores_df = scores_df.sort(pl.col("pgs_id").replace_strict(order, default=len(order)))
+        match_type = "pgs-id"
+    elif fuzzy:
         fuzzy_df = catalog.search(trait, genome_build=build).collect()
         if fuzzy_df.height == 0:
             console.print(f"[red]No PGS scores found for trait '{trait}' ({build}).[/red]")
@@ -2763,6 +2879,12 @@ def _compute_trait_results(
         row["pgs_id"]: row["trait_reported"]
         for row in scores_df.select("pgs_id", "trait_reported").iter_rows(named=True)
     }
+    pgs_to_efo: dict[str, str] = {}
+    if "trait_efo_id" in scores_df.columns:
+        pgs_to_efo = {
+            row["pgs_id"]: row["trait_efo_id"] or ""
+            for row in scores_df.select("pgs_id", "trait_efo_id").iter_rows(named=True)
+        }
     name_cols = ["pgs_id", "name"] if "name" in scores_df.columns else ["pgs_id"]
     pgs_to_name = {
         row["pgs_id"]: row.get("name", "")
@@ -2858,6 +2980,7 @@ def _compute_trait_results(
                 cached_count += 1
                 hit.setdefault("trait_reported", trait_name)
                 hit.setdefault("score_name", pgs_to_name.get(pgs_id, ""))
+                hit.setdefault("trait_efo_id", pgs_to_efo.get(pgs_id, ""))
                 attach_risk_context(hit)
                 result_dicts.append(hit)
                 console.print(
@@ -2897,6 +3020,7 @@ def _compute_trait_results(
                 "variants_total": r.variants_total,
                 "variants_matched": r.variants_matched,
                 "trait_reported": trait_name,
+                "trait_efo_id": pgs_to_efo.get(r.pgs_id, ""),
                 "reliable": pctl_result.reliable,
             }
 
@@ -3266,14 +3390,14 @@ def plot_multi_ancestry_cmd(
 
 @plot_app.command("trait")
 def plot_trait_cmd(
-    trait: Annotated[str, typer.Argument(help="Trait name or substring (e.g. 'BMI', 'type 2 diabetes')")],
+    trait: Annotated[str, typer.Argument(help="Trait name or substring (e.g. 'BMI'), or comma-separated PGS IDs (e.g. 'PGS000001,PGS000002') to select scores directly")],
     output: Annotated[Path, typer.Option("--output", "-o", help="Output file (.png, .svg, .html, .json)")],
     vcf: Annotated[
         Optional[list[str]], typer.Option("--vcf", "-v", help="VCF file path or alias, optionally with label: Label=/path/to/file.vcf. Repeat for multi-sample comparison.")
     ] = None,
     ancestry: Annotated[
-        str, typer.Option("--ancestry", "-a", help="Superpopulation code (AFR, AMR, EAS, EUR, SAS)")
-    ] = "EUR",
+        Optional[str], typer.Option("--ancestry", "-a", help="Superpopulation code (AFR, AMR, EAS, EUR, SAS). Default: auto-detected from each sample's genotypes (EUR when detection is unavailable)")
+    ] = None,
     results: Annotated[
         Optional[Path], typer.Option("--results", "-r", help="JSON file with user PRS results (list of {pgs_id, score, ...})")
     ] = None,
@@ -3316,8 +3440,19 @@ def plot_trait_cmd(
     With --vcf, auto-computes PRS for all matching scores and plots the results.
     With --results, loads pre-computed results from a JSON file.
 
+    The positional argument also accepts comma-separated PGS IDs
+    (e.g. PGS000001 or PGS000001,PGS000002): trait search is skipped and exactly
+    those scores are plotted with the same visualization and report — a single
+    PGS ID is just the one-score edge case. IDs may span multiple traits; the
+    table shows a per-row Trait column.
+
     Multiple --vcf flags compare samples side-by-side with colored median lines:
       prs plot trait BMI --vcf Anton=/path/a.vcf --vcf Livia=/path/l.vcf -o cmp.html
+
+    Without --ancestry, each sample's reference population is auto-detected from
+    its genotypes (same engine as `prs ancestry infer`, cached per VCF), so
+    percentiles are computed against each sample's own population — pass
+    --ancestry to pin one population for every sample instead.
 
     Trait matching is exact by default (case-insensitive). If no exact match is
     found, the command lists partial matches and exits. Use --fuzzy to compute
@@ -3337,6 +3472,8 @@ def plot_trait_cmd(
       prs plot trait "type 2 diabetes" --vcf anton -o t2d.html --ancestries EUR,AFR,EAS
       prs plot trait "type 2 diabetes" -o t2d.html --results my_results.json
       prs plot trait intelligence --vcf Anton=anton --vcf Livia=livia -o compare.html --fuzzy
+      prs plot trait PGS000001 --vcf Anton=anton --vcf Livia=livia -o pgs1.html
+      prs plot trait PGS000001,PGS000002 --vcf anton -o two_scores.html
     """
     from just_prs.trait_summary import (
         is_high_or_moderate_model,
@@ -3380,9 +3517,30 @@ def plot_trait_cmd(
     cache = cache_dir or resolve_cache_dir()
     dists, quality = _load_distributions(cache_dir, panel)
 
+    pgs_ids = _parse_pgs_id_list(trait)
+    if pgs_ids:
+        console.print(f"Selecting scores by PGS ID: [cyan]{', '.join(pgs_ids)}[/cyan]")
+
     user_results: list[dict] | None = None
     multi_user_results: dict[str, list[dict]] | None = None
     sample_files: dict[str, dict] = {}
+    sample_ancestries: dict[str, str] = {}
+
+    def _sample_ancestry(vcf_path: Path, sample_build: str) -> dict:
+        """Explicit --ancestry wins; otherwise auto-detect, falling back to EUR.
+
+        Returns the ancestry-call dict (superpopulation + confidence, fine
+        population + confidence). The fine population (e.g. 1000G's CEU) is
+        informational, shown in the report legend with its confidence.
+        """
+        if ancestry:
+            return {"superpopulation": ancestry, "confidence": None,
+                    "fine_population": None, "fine_confidence": None}
+        call = _infer_vcf_ancestry(vcf_path, sample_build, cache)
+        if call is None:
+            return {"superpopulation": "EUR", "confidence": None,
+                    "fine_population": None, "fine_confidence": None}
+        return call
 
     sample_name: str | None = None
     if vcf:
@@ -3392,11 +3550,19 @@ def plot_trait_cmd(
             vcf_path = _resolve_vcf(vcf_str, cache_dir)
             sample_name = label
             sample_build = _resolve_sample_build(vcf_path, build)
-            sample_files[label] = {"file": str(vcf_path), "build": sample_build}
+            anc_call = _sample_ancestry(vcf_path, sample_build)
+            sample_anc = anc_call["superpopulation"]
+            sample_ancestries[label] = sample_anc
+            sample_files[label] = {
+                "file": str(vcf_path), "build": sample_build,
+                "ancestry": sample_anc, "ancestry_confidence": anc_call.get("confidence"),
+                "fine_population": anc_call.get("fine_population"),
+                "fine_confidence": anc_call.get("fine_confidence"),
+            }
             user_results = _filter_models(
                 _compute_trait_results(
-                    trait, vcf_path, dists, ancestry, sample_build, max_scores, cache,
-                    fuzzy=fuzzy, no_cache=no_cache,
+                    trait, vcf_path, dists, sample_anc, sample_build, max_scores, cache,
+                    fuzzy=fuzzy, no_cache=no_cache, pgs_ids=pgs_ids,
                 ),
                 label,
             )
@@ -3407,10 +3573,19 @@ def plot_trait_cmd(
                 vcf_path = _resolve_vcf(vcf_str, cache_dir)
                 sample_build = _resolve_sample_build(vcf_path, build)
                 console.print(f"  Build: [cyan]{sample_build}[/cyan]")
-                sample_files[label] = {"file": str(vcf_path), "build": sample_build}
+                anc_call = _sample_ancestry(vcf_path, sample_build)
+                sample_anc = anc_call["superpopulation"]
+                sample_ancestries[label] = sample_anc
+                console.print(f"  Reference population: [cyan]{sample_anc}[/cyan]")
+                sample_files[label] = {
+                    "file": str(vcf_path), "build": sample_build,
+                    "ancestry": sample_anc, "ancestry_confidence": anc_call.get("confidence"),
+                    "fine_population": anc_call.get("fine_population"),
+                    "fine_confidence": anc_call.get("fine_confidence"),
+                }
                 sample_results = _compute_trait_results(
-                    trait, vcf_path, dists, ancestry, sample_build, max_scores, cache,
-                    fuzzy=fuzzy, no_cache=no_cache,
+                    trait, vcf_path, dists, sample_anc, sample_build, max_scores, cache,
+                    fuzzy=fuzzy, no_cache=no_cache, pgs_ids=pgs_ids,
                 )
                 multi_user_results[label] = _filter_models(sample_results, label)
             first_label = next(iter(multi_user_results))
@@ -3419,6 +3594,10 @@ def plot_trait_cmd(
     elif results:
         sample_name = results.name
         user_results = _filter_models(_load_user_results(results), results.name)
+
+    # The report-level ancestry (subtitle, reference curve, prompt): explicit
+    # --ancestry, else the first sample's auto-detected population, else EUR.
+    ancestry = ancestry or next(iter(sample_ancestries.values()), None) or "EUR"
 
     anc_list: list[str] | None = None
     default_visible: list[str] | None = None
@@ -3431,12 +3610,23 @@ def plot_trait_cmd(
 
     if html_report and anc_list is None:
         anc_list = ["AFR", "AMR", "EAS", "EUR", "SAS"]
-        default_visible = [ancestry]
+        # Every auto-detected population gets a visible reference curve, so a
+        # mixed-ancestry comparison shows each sample against its own reference.
+        default_visible = list(dict.fromkeys(sample_ancestries.values())) or [ancestry]
+
+    trait_label = trait
+    if pgs_ids:
+        seen_traits: dict[str, None] = {}
+        for r in (user_results or []):
+            t = r.get("trait_reported")
+            if t:
+                seen_traits.setdefault(t)
+        trait_label = ", ".join(seen_traits) if seen_traits else ", ".join(pgs_ids)
 
     pop_label = ", ".join(anc_list) if anc_list else ancestry
-    console.print(f"Plotting trait chart for [cyan]{trait}[/cyan] ({pop_label})...")
+    console.print(f"Plotting trait chart for [cyan]{trait_label}[/cyan] ({pop_label})...")
     chart = plot_trait_scores(
-        trait=trait,
+        trait=trait_label,
         distributions_df=dists,
         quality_df=quality,
         user_results=user_results,
@@ -3449,10 +3639,11 @@ def plot_trait_cmd(
         show_table=show_table and not html_report,
         multi_user_results=multi_user_results,
         sample_name=sample_name,
+        pgs_ids=pgs_ids,
     )
     if html_report:
         save_trait_report(
-            chart, output, trait, user_results, ancestry,
+            chart, output, trait_label, user_results, ancestry,
             sample_name=sample_name, multi_user_results=multi_user_results,
             model_scope=model_scope, sample_files=sample_files or None,
         )

@@ -41,6 +41,7 @@ from just_prs.trait_summary import (
     trait_overall_signal,
 )
 from just_prs.viz import (
+    SAMPLE_COLORS,
     build_prs_ai_prompt,
     plot_prs_bell_curve,
     plot_prs_multi_ancestry,
@@ -537,13 +538,76 @@ def _unique_nonempty_values(rows: list[dict[str, Any]], field: str) -> list[str]
     return values
 
 
+def sample_color(index: int) -> str:
+    """Stable per-sample color, identical to the CLI multi-sample palette."""
+    return SAMPLE_COLORS[index % len(SAMPLE_COLORS)]
+
+
+def sample_label_from_path(path: str) -> str:
+    """Derive a sample label from a genotype file path (CLI stem convention).
+
+    Mirrors the CLI's ``_parse_vcf_spec`` fallback: the file stem with
+    ``.parquet`` / ``.vcf`` / ``.hard-filtered`` / ``.g`` suffixes stripped.
+    """
+    name = Path(path).name
+    for suffix in (".normalized.parquet", ".parquet", ".gz", ".vcf", ".hard-filtered", ".g"):
+        if name.endswith(suffix):
+            name = name[: -len(suffix)]
+    return name or Path(path).stem
+
+
+def _ancestry_chip_text(sample: dict[str, Any]) -> str:
+    """Compact inferred-ancestry text for a sample chip (e.g. ``EUR 97% · CEU 55%``).
+
+    Empty when the source did not run (or could not run) ancestry autodetection.
+    """
+    superpop = str(sample.get("ancestry") or "")
+    if not superpop or superpop == "UNKNOWN":
+        return ""
+    confidence = float(sample.get("ancestry_confidence") or 0.0)
+    fine = str(sample.get("fine_population") or "")
+    fine_confidence = float(sample.get("fine_confidence") or 0.0)
+    text = f"{superpop} {confidence:.0%}" if confidence > 0 else superpop
+    if not fine:
+        return text
+    fine_text = f"{fine} {fine_confidence:.0%}" if fine_confidence > 0 else fine
+    return f"{text} · {fine_text}"
+
+
+def _result_sample(row: dict[str, Any]) -> str:
+    """Sample label carried on a PRS result row (empty for single-sample runs)."""
+    return str(row.get("sample") or "")
+
+
+def _ordered_sample_labels(rows: list[dict[str, Any]]) -> list[str]:
+    """Distinct sample labels across result rows, preserving first-seen order."""
+    return list(dict.fromkeys(_result_sample(row) for row in rows))
+
+
+def _group_rows_by_sample(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """Group result rows into ``{sample_label: rows}`` preserving sample order."""
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(_result_sample(row), []).append(row)
+    return grouped
+
+
+def _sample_field_suffix(index: int) -> str:
+    """Stable grid-field suffix for a sample column (positional, not the label)."""
+    return f"s{index}"
+
+
 def _merge_prs_results(existing: list[dict], new_rows: list[dict]) -> list[dict]:
-    """Prepend new PRS rows while replacing older rows for the same PGS ID."""
-    new_ids = {str(row.get("pgs_id") or "") for row in new_rows if row.get("pgs_id")}
+    """Prepend new PRS rows while replacing older rows for the same (PGS ID, sample)."""
+    new_keys = {
+        (str(row.get("pgs_id") or ""), _result_sample(row))
+        for row in new_rows
+        if row.get("pgs_id")
+    }
     preserved = [
         row
         for row in existing
-        if str(row.get("pgs_id") or "") not in new_ids
+        if (str(row.get("pgs_id") or ""), _result_sample(row)) not in new_keys
     ]
     return [*new_rows, *preserved]
 
@@ -1334,6 +1398,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     compute_scores_loaded: bool = False
     prs_engine: str = PRSEngine.DUCKDB.value
     prs_genotypes_path: str = ""
+    # Multi-sample registry: [{"label": str, "path": str, "color": str}, ...].
+    # A single-sample run has exactly one entry (kept in sync by
+    # ``load_genotypes``); ``load_samples`` is the multi-sample entry point.
+    prs_samples: list[dict] = []
     selected_ancestry: str = "EUR"
     trait_model_scope: str = "high_moderate"
     trait_percentile_source: str = "native"
@@ -1556,12 +1624,101 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.prs_genotypes_path = path
         if path and Path(path).exists():
             self._prs_genotypes_lf = pl.scan_parquet(path)
+            self.prs_samples = [
+                {
+                    "label": sample_label_from_path(path),
+                    "path": path,
+                    "color": sample_color(0),
+                }
+            ]
         else:
             self._prs_genotypes_lf = None
+            self.prs_samples = []
         self.prs_results = []
         self.trait_summary_rows = []
         self.trait_summary_visible = False
         self.low_match_warning = False
+
+    def load_samples(self, samples: list[dict]) -> None:
+        """Loose-coupling hook: feed **multiple** normalized genotype samples.
+
+        ``samples`` is a list of ``{"label": str, "path": str}`` dicts, one per
+        genome, in display order.  Optional per-sample keys ``ancestry``,
+        ``ancestry_confidence``, ``fine_population``, and ``fine_confidence``
+        (from the source's ancestry autodetection) are carried into the
+        registry for legend rendering.  Each entry gets a stable CLI-matching color
+        (``just_prs.viz.SAMPLE_COLORS``).  The first sample also populates
+        ``prs_genotypes_path`` so single-sample gating (selection readiness,
+        embedder checks) keeps working unchanged.  An empty list clears the
+        source.  Previously computed results are reset.
+        """
+        registry: list[dict] = []
+        for index, sample in enumerate(samples):
+            path = str(sample.get("path") or "")
+            if not path or not Path(path).exists():
+                continue
+            label = str(sample.get("label") or "") or sample_label_from_path(path)
+            registry.append({
+                "label": label,
+                "path": path,
+                "color": sample_color(index),
+                "ancestry": str(sample.get("ancestry") or ""),
+                "ancestry_confidence": float(sample.get("ancestry_confidence") or 0.0),
+                "fine_population": str(sample.get("fine_population") or ""),
+                "fine_confidence": float(sample.get("fine_confidence") or 0.0),
+            })
+        self.prs_samples = registry
+        self.prs_genotypes_path = registry[0]["path"] if registry else ""
+        self._prs_genotypes_lf = None
+        self.prs_results = []
+        self.trait_summary_rows = []
+        self.trait_summary_visible = False
+        self.low_match_warning = False
+
+    @rx.var
+    def is_multi_sample(self) -> bool:
+        """True when more than one genotype sample is loaded."""
+        return len(self.prs_samples) > 1
+
+    @rx.var
+    def sample_legend(self) -> list[dict]:
+        """Sample chips (label + color + inferred ancestry) for legend rendering."""
+        return [
+            {
+                "label": str(s.get("label") or ""),
+                "color": str(s.get("color") or ""),
+                "ancestry": _ancestry_chip_text(s),
+            }
+            for s in self.prs_samples
+        ]
+
+    def _sample_color_map(self) -> dict[str, str]:
+        """``{label: color}`` from the sample registry (CLI palette order)."""
+        return {
+            str(s.get("label") or ""): str(s.get("color") or sample_color(i))
+            for i, s in enumerate(self.prs_samples)
+        }
+
+    def _iter_sample_genotypes(self) -> list[tuple[str, str, pl.LazyFrame]]:
+        """Resolve every loaded sample to ``(label, path, genotypes_lf)``.
+
+        Single-sample runs (including host apps that injected a LazyFrame via
+        ``set_prs_genotypes_lf``) yield one entry with an empty label so
+        downstream rows carry no sample tag and rendering stays unchanged.
+        """
+        if len(self.prs_samples) > 1:
+            resolved: list[tuple[str, str, pl.LazyFrame]] = []
+            for sample in self.prs_samples:
+                path = str(sample.get("path") or "")
+                if not path or not Path(path).exists():
+                    continue
+                lf = _normalize_genotypes_lf(pl.scan_parquet(path))
+                resolved.append((str(sample.get("label") or ""), path, lf))
+            return resolved
+        lf = self._get_genotypes_lf()
+        if lf is None:
+            return []
+        return [("", self.prs_genotypes_path, lf)]
 
     def _get_genotypes_lf(self) -> pl.LazyFrame | None:
         """Resolve genotypes: explicit LazyFrame first, then parquet path.
@@ -1904,7 +2061,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
             trait, reported_traits = _trait_group_display_label(rows)
             efo_id = str(rows[0].get("trait_efo_id") or "")
-            pgs_ids = [str(row.get("pgs_id", "")) for row in rows if row.get("pgs_id")]
+            pgs_ids = list(dict.fromkeys(
+                str(row.get("pgs_id", "")) for row in rows if row.get("pgs_id")
+            ))
             dashboard_ancestry, dashboard_source = self._trait_dashboard_axes()
             refreshed_rows = [
                 refresh_row_absolute_risk(
@@ -1921,6 +2080,29 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 selected_ancestry=dashboard_ancestry,
                 percentile_source=dashboard_source,
             )
+            # Multi-sample: aggregate per sample so medians are never mixed
+            # across genomes.  Headline scalars come from the first sample
+            # (CLI convention); per-sample cards and chart markers carry the
+            # comparison.
+            sample_stats: dict[str, Any] = {}
+            sample_colors = self._sample_color_map()
+            if self.is_multi_sample:
+                refreshed_by_sample = {
+                    label: sample_rows
+                    for label, sample_rows in _group_rows_by_sample(refreshed_rows).items()
+                    if label
+                }
+                if len(refreshed_by_sample) > 1:
+                    sample_stats = {
+                        label: summarize_trait_rows(
+                            sample_rows,
+                            model_scope=self.trait_model_scope,
+                            selected_ancestry=dashboard_ancestry,
+                            percentile_source=dashboard_source,
+                        )
+                        for label, sample_rows in refreshed_by_sample.items()
+                    }
+                    stats = sample_stats[next(iter(sample_stats))]
             confidence_segments = [
                 _trait_segment_card(
                     f"Median (selected) — {stats.scope_label}",
@@ -1954,7 +2136,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             heritability = stats.heritability_text
             heritability_detail = stats.heritability_detail
             heritability_metrics = stats.heritability_metrics
-            genome_file = _genome_file_label(self.prs_genotypes_path)
+            genome_file = (
+                ", ".join(str(s.get("label") or "") for s in self.prs_samples)
+                if self.is_multi_sample
+                else _genome_file_label(self.prs_genotypes_path)
+            )
             best_quality = str(best_row.get("synthetic_quality_label", "")) or "N/A"
             best_user_pct = stats.user_risk_pct
             pop_avg_pct = stats.pop_avg_pct
@@ -1976,21 +2162,53 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             }
             model_items: list[dict[str, Any]] = []
             model_outlier_labels: list[str] = []
-            for pgs_id, pct in sorted(pct_by_id.items(), key=lambda item: item[1], reverse=True):
-                is_outlier = pgs_id in outliers
-                quality_label = sq_label_by_id.get(pgs_id, "")
-                base_shape = _quality_marker_shape(quality_label)
-                match_rate_val = float(row_by_id.get(pgs_id, {}).get("match_rate") or 100.0)
-                symbol, marker_color = _bell_curve_marker(base_shape, pct, is_outlier, match_rate_val)
-                panel = stats.panel_by_id.get(pgs_id, "")
-                model_items.append({
-                    "label": f"{pgs_id} ({panel})" if panel else pgs_id,
-                    "value": pct,
-                    "symbol": symbol,
-                    "markerColor": marker_color,
-                })
-                if is_outlier:
-                    model_outlier_labels.append(pgs_id)
+            if sample_stats:
+                # Comparison mode: per-sample median diamonds + per-model dots,
+                # all colored by sample (CLI look).  Quality still drives the
+                # marker shape.
+                for s_index, (s_label, s_stats) in enumerate(sample_stats.items()):
+                    s_color = sample_colors.get(s_label, sample_color(s_index))
+                    if s_stats.median_pct is not None:
+                        model_items.append({
+                            "label": f"{s_label} median",
+                            "value": round(s_stats.median_pct, 1),
+                            "symbol": "diamond",
+                            "markerSize": 13,
+                            "markerColor": s_color,
+                        })
+                    for s_pgs_id, s_pct in sorted(
+                        s_stats.pct_by_id.items(), key=lambda item: item[1], reverse=True
+                    ):
+                        base_shape = _quality_marker_shape(sq_label_by_id.get(s_pgs_id, ""))
+                        item_label = f"{s_pgs_id} · {s_label}"
+                        model_items.append({
+                            "label": item_label,
+                            "value": s_pct,
+                            "symbol": (
+                                f"{base_shape}-open"
+                                if s_pgs_id in s_stats.outliers
+                                else base_shape
+                            ),
+                            "markerColor": s_color,
+                        })
+                        if s_pgs_id in s_stats.outliers:
+                            model_outlier_labels.append(item_label)
+            else:
+                for pgs_id, pct in sorted(pct_by_id.items(), key=lambda item: item[1], reverse=True):
+                    is_outlier = pgs_id in outliers
+                    quality_label = sq_label_by_id.get(pgs_id, "")
+                    base_shape = _quality_marker_shape(quality_label)
+                    match_rate_val = float(row_by_id.get(pgs_id, {}).get("match_rate") or 100.0)
+                    symbol, marker_color = _bell_curve_marker(base_shape, pct, is_outlier, match_rate_val)
+                    panel = stats.panel_by_id.get(pgs_id, "")
+                    model_items.append({
+                        "label": f"{pgs_id} ({panel})" if panel else pgs_id,
+                        "value": pct,
+                        "symbol": symbol,
+                        "markerColor": marker_color,
+                    })
+                    if is_outlier:
+                        model_outlier_labels.append(pgs_id)
 
             match_rate_items: list[dict[str, Any]] = []
             for row in sorted(scoped_rows or rows, key=lambda item: float(item.get("match_rate") or 0.0), reverse=True):
@@ -2000,29 +2218,51 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 match_rate_pct = float(row.get("match_rate") or 0.0)  # already 0-100 scale
                 sq_label = str(row.get("synthetic_quality_label") or "N/A")
                 tier_metric = str(row.get("quality_tier_metric") or "No metric")
+                row_sample = _result_sample(row)
+                item_label = (
+                    f"{pgs_id} · {row_sample} ({sq_label})"
+                    if sample_stats and row_sample
+                    else f"{pgs_id} ({sq_label})"
+                )
                 match_rate_items.append({
-                    "label": f"{pgs_id} ({sq_label})",
+                    "label": item_label,
                     "value": f"{match_rate_pct:.1f}%",
                     "tone": _match_rate_tone(match_rate_pct),
                     "subtext": tier_metric,
                 })
 
+            sample_median_texts = [
+                f"{s_label} {s_stats.median_pct:.0f}"
+                for s_label, s_stats in sample_stats.items()
+                if s_stats.median_pct is not None
+            ]
             percentile_chart: dict[str, Any] = {
-                "score": median_pct,
+                "score": None if sample_stats else median_pct,
                 "scoreLabel": (
-                    f"Median: {format_percentile_with_panel(median_pct, stats.typical_panel)}"
+                    f"Medians — {' · '.join(sample_median_texts)}"
+                    if sample_stats and sample_median_texts
+                    else f"Median: {format_percentile_with_panel(median_pct, stats.typical_panel)}"
                     if median_pct is not None else "No data"
                 ),
                 "items": model_items,
                 "outliers": model_outlier_labels,
                 "match_rate_items": match_rate_items,
                 "summary": (
-                    f"{len(pct_by_id)} models plotted. "
-                    + (f"Range: {min_pct:.1f}–{max_pct:.1f}. " if min_pct is not None and max_pct is not None else "")
-                    + (f"Outliers marked: {', '.join(model_outlier_labels)}. " if model_outlier_labels else "No outliers detected. ")
-                    + "Shape = model quality (\u2605 High, \u2B1F Normal, \u25A0 Moderate, \u25BC Low). "
-                    + "Filled green = in typical range (25\u201375th pctl) with good match, "
-                    + "dot grey = extreme or low match, open red = outlier."
+                    (
+                        f"Comparing {len(sample_stats)} samples × {len(pgs_ids)} models. "
+                        + "Color = sample (diamond = sample median). "
+                        + "Shape = model quality (\u2605 High, \u2B1F Normal, \u25A0 Moderate, \u25BC Low); "
+                        + "open shape = outlier within that sample."
+                    )
+                    if sample_stats
+                    else (
+                        f"{len(pct_by_id)} models plotted. "
+                        + (f"Range: {min_pct:.1f}–{max_pct:.1f}. " if min_pct is not None and max_pct is not None else "")
+                        + (f"Outliers marked: {', '.join(model_outlier_labels)}. " if model_outlier_labels else "No outliers detected. ")
+                        + "Shape = model quality (\u2605 High, \u2B1F Normal, \u25A0 Moderate, \u25BC Low). "
+                        + "Filled green = in typical range (25\u201375th pctl) with good match, "
+                        + "dot grey = extreme or low match, open red = outlier."
+                    )
                 ),
             }
             if len(rows) > large_chart_threshold:
@@ -2070,16 +2310,33 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             # model's percentile is context — labeled "most reliable", never
             # "best", because for direction-dependent traits (intelligence,
             # longevity) "best" reads as "best outcome".
-            headline_metrics.append({
-                "label": "Typical / Median (selected)",
-                "value": (
-                    format_percentile_with_panel(median_pct, stats.typical_panel)
-                    if median_pct is not None
-                    else "N/A"
-                ),
-                "tone": _percentile_tone(median_pct) if median_pct is not None else "neutral",
-                "subtext": stats.scope_label,
-            })
+            if sample_stats:
+                for s_label, s_stats in sample_stats.items():
+                    headline_metrics.append({
+                        "label": f"Median — {s_label}",
+                        "value": (
+                            format_percentile_with_panel(s_stats.median_pct, s_stats.typical_panel)
+                            if s_stats.median_pct is not None
+                            else "N/A"
+                        ),
+                        "tone": (
+                            _percentile_tone(s_stats.median_pct)
+                            if s_stats.median_pct is not None
+                            else "neutral"
+                        ),
+                        "subtext": f"{s_stats.scope_label} · {s_label}",
+                    })
+            else:
+                headline_metrics.append({
+                    "label": "Typical / Median (selected)",
+                    "value": (
+                        format_percentile_with_panel(median_pct, stats.typical_panel)
+                        if median_pct is not None
+                        else "N/A"
+                    ),
+                    "tone": _percentile_tone(median_pct) if median_pct is not None else "neutral",
+                    "subtext": stats.scope_label,
+                })
             if best_model_pctl is not None:
                 best_usable_id = str(best_usable_row.get("pgs_id", "")) if best_usable_row else ""
                 headline_metrics.append({
@@ -2302,7 +2559,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 ),
                 "highest_percentile": round(max_pct, 1) if max_pct is not None else "N/A",
                 "typical_percentile": (
-                    format_percentile_with_panel(median_pct, stats.typical_panel)
+                    " · ".join(sample_median_texts)
+                    if sample_stats and sample_median_texts
+                    else format_percentile_with_panel(median_pct, stats.typical_panel)
                     if median_pct is not None else "N/A"
                 ),
                 "high_confidence_models": len(high_confidence_rows),
@@ -2346,7 +2605,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.trait_summary_columns = self._build_trait_summary_columns()
         self.trait_summary_visible = True
         self.status_message = f"Built trait summary for {len(summary_rows)} trait(s)."  # type: ignore[attr-defined]
-        self._refresh_selected_trait_chart()
+        self._auto_select_trait_chart()
 
     def _build_prs_results_grid(self) -> None:
         """Convert prs_results into DataGrid rows + column defs."""
@@ -2369,6 +2628,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             "⚠ Low match": "#fff3e0",
             "⚠ UNRELIABLE": "#c62828",
         }
+        is_multi = self.is_multi_sample
+        sample_colors = self._sample_color_map()
+
         cols: list[ColumnDef] = [
             ColumnDef(
                 field="pgs_id", header_name="PGS ID", min_width=120,
@@ -2379,6 +2641,17 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "color": "#1565c0",
                 },
             ),
+        ]
+        if is_multi:
+            cols.append(ColumnDef(
+                field="sample", header_name="Sample", min_width=110,
+                cell_renderer_type="badge",
+                cell_renderer_config={
+                    "colorMap": {label: "#ffffff" for label in sample_colors},
+                    "bgColorMap": dict(sample_colors),
+                },
+            ))
+        cols.extend([
             ColumnDef(field="trait", header_name="Trait", min_width=150, flex=1),
             ColumnDef(
                 field="heritability",
@@ -2420,7 +2693,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "color": "#5b5bd6", "trackColor": "#e0e0e0", "showValue": True,
                 },
             ),
-        ]
+        ])
 
         comparison_populations = [
             sp
@@ -2548,6 +2821,17 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 })
                 self.prs_results_column_groups = existing_groups
 
+        # Multi-sample: cross-sample percentile lookup so each row's bell curve
+        # can overlay every sample's marker for the same PGS ID (CLI-style).
+        sample_pcts_by_pgs: dict[str, list[tuple[str, float]]] = {}
+        if is_multi:
+            for rr in self.prs_results:
+                rr_pgs = str(rr.get("pgs_id") or "")
+                rr_label = _result_sample(rr)
+                rr_pct = _parse_percent_text(rr.get("percentile"))
+                if rr_pgs and rr_label and rr_pct is not None:
+                    sample_pcts_by_pgs.setdefault(rr_pgs, []).append((rr_label, rr_pct))
+
         rows: list[dict[str, Any]] = []
         for i, r in enumerate(self.prs_results):
             pct_str = r.get("percentile", "")
@@ -2627,6 +2911,20 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 })
                 if pct_num >= 90 or pct_num < 10:
                     percentile_outliers.append(SUPERPOPULATION_LABELS.get(selected_pop, selected_pop))
+            # Multi-sample: overlay every other sample's percentile for this
+            # PGS ID as a sample-colored diamond, mirroring the CLI comparison.
+            row_sample_label = _result_sample(r)
+            if is_multi:
+                for peer_label, peer_pct in sample_pcts_by_pgs.get(str(r.get("pgs_id") or ""), []):
+                    if peer_label == row_sample_label:
+                        continue
+                    percentile_items.append({
+                        "label": f"{peer_label} (sample)",
+                        "value": peer_pct,
+                        "symbol": "diamond",
+                        "markerSize": 12,
+                        "markerColor": sample_colors.get(peer_label, ""),
+                    })
             absolute_risk_percent = r.get("absolute_risk_percent")
             absolute_risk_value = (
                 float(absolute_risk_percent)
@@ -2783,7 +3081,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             percentile_chart = {
                 "score": percentile_value,
                 "scoreLabel": (
-                    f"You: {pct_num:.1f} of 100 ({primary_pop})"
+                    (
+                        f"{row_sample_label or 'You'}: {pct_num:.1f} of 100 ({primary_pop})"
+                        if is_multi
+                        else f"You: {pct_num:.1f} of 100 ({primary_pop})"
+                    )
                     if percentile_value is not None
                     else "No percentile"
                 ),
@@ -3040,6 +3342,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             row: dict[str, Any] = {
                 "id": i,
                 "pgs_id": r.get("pgs_id", ""),
+                "sample": row_sample_label,
                 "build_source": build_source,
                 "match_reliability": match_reliability,
                 "trait": r.get("trait", ""),
@@ -3327,9 +3630,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.status_message = "No PGS scores selected. Load and select scores above."  # type: ignore[attr-defined]
             return
 
-        pre_genotypes = self._get_genotypes_lf()
+        sample_sources: list[tuple[str, str, pl.LazyFrame | None]] = list(
+            self._iter_sample_genotypes()
+        )
+        if not sample_sources:
+            sample_sources = [("", self.prs_genotypes_path or "", self._get_genotypes_lf())]
+        color_map = self._sample_color_map()
 
-        total = len(self.selected_pgs_ids)
+        total = len(self.selected_pgs_ids) * len(sample_sources)
         self.prs_computing = True
         self.prs_progress = 0
         self.low_match_warning = False
@@ -3381,62 +3689,68 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             except Exception:
                 pass
 
-        for i, pgs_id in enumerate(self.selected_pgs_ids, start=1):
-            self.prs_progress = round(i / total * 100)
-            self.status_message = f"Computing {i}/{total}: {pgs_id}..."  # type: ignore[attr-defined]
-            yield
+        step = 0
+        for sample_label, sample_path, sample_genotypes in sample_sources:
+            for pgs_id in self.selected_pgs_ids:
+                step += 1
+                self.prs_progress = round(step / total * 100)
+                sample_note = f" [{sample_label}]" if sample_label else ""
+                self.status_message = f"Computing {step}/{total}: {pgs_id}{sample_note}..."  # type: ignore[attr-defined]
+                yield
 
-            info = _catalog.score_info_row(pgs_id)
-            trait = info["trait_reported"] if info else None
+                info = _catalog.score_info_row(pgs_id)
+                trait = info["trait_reported"] if info else None
 
-            vcf_path = self.prs_genotypes_path or ""
-            if self.prs_engine == PRSEngine.DUCKDB.value:
-                result = compute_prs_duckdb(
-                    vcf_path=vcf_path,
-                    scoring_file=pgs_id,
-                    genome_build=self.genome_build,  # type: ignore[attr-defined]
-                    cache_dir=cache,
-                    pgs_id=pgs_id,
-                    trait_reported=trait,
-                    genotypes_parquet=vcf_path if vcf_path else None,
-                    genotypes_lf=pre_genotypes,
+                vcf_path = sample_path or ""
+                if self.prs_engine == PRSEngine.DUCKDB.value:
+                    result = compute_prs_duckdb(
+                        vcf_path=vcf_path,
+                        scoring_file=pgs_id,
+                        genome_build=self.genome_build,  # type: ignore[attr-defined]
+                        cache_dir=cache,
+                        pgs_id=pgs_id,
+                        trait_reported=trait,
+                        genotypes_parquet=vcf_path if vcf_path else None,
+                        genotypes_lf=sample_genotypes,
+                    )
+                else:
+                    result = compute_prs(
+                        vcf_path=vcf_path,
+                        scoring_file=pgs_id,
+                        genome_build=self.genome_build,  # type: ignore[attr-defined]
+                        cache_dir=cache,
+                        pgs_id=pgs_id,
+                        trait_reported=trait,
+                        genotypes_lf=sample_genotypes,
+                    )
+
+                native_ancestry = pgs_native_superpopulation(
+                    best_perf_df,
+                    pgs_id,
+                    fallback=self.selected_ancestry,
                 )
-            else:
-                result = compute_prs(
-                    vcf_path=vcf_path,
-                    scoring_file=pgs_id,
+                enriched = enrich_prs_result(
+                    result,
+                    _catalog,
+                    best_perf_df,
                     genome_build=self.genome_build,  # type: ignore[attr-defined]
-                    cache_dir=cache,
-                    pgs_id=pgs_id,
-                    trait_reported=trait,
-                    genotypes_lf=pre_genotypes,
+                    selected_ancestry=native_ancestry,
+                    compute_all_populations=True,
+                    is_harmonized=harmonized_lookup.get(pgs_id, False),
                 )
 
-            native_ancestry = pgs_native_superpopulation(
-                best_perf_df,
-                pgs_id,
-                fallback=self.selected_ancestry,
-            )
-            enriched = enrich_prs_result(
-                result,
-                _catalog,
-                best_perf_df,
-                genome_build=self.genome_build,  # type: ignore[attr-defined]
-                selected_ancestry=native_ancestry,
-                compute_all_populations=True,
-                is_harmonized=harmonized_lookup.get(pgs_id, False),
-            )
+                row = _enriched_to_row_dict(enriched)
+                row["trait_efo"] = str(info.get("trait_efo") or "") if info else ""
+                row["original_genome_build"] = original_build_lookup.get(pgs_id, "")
+                row["genome_file"] = _genome_file_label(sample_path or self.prs_genotypes_path)
+                row["sample"] = sample_label
+                row["sample_color"] = color_map.get(sample_label, "")
+                row.update(publication_lookup.get(pgs_id, {}))
 
-            row = _enriched_to_row_dict(enriched)
-            row["trait_efo"] = str(info.get("trait_efo") or "") if info else ""
-            row["original_genome_build"] = original_build_lookup.get(pgs_id, "")
-            row["genome_file"] = _genome_file_label(self.prs_genotypes_path)
-            row.update(publication_lookup.get(pgs_id, {}))
+                if result.match_rate < 0.1:
+                    any_low_match = True
 
-            if result.match_rate < 0.1:
-                any_low_match = True
-
-            results.append(row)
+                results.append(row)
 
         self.prs_results = _merge_prs_results(self.prs_results, results)
         self._build_prs_results_grid()
@@ -3452,6 +3766,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         )  # type: ignore[attr-defined]
         if self.prs_view_mode == "grouped" and self.prs_results:
             self.build_trait_summary()
+        else:
+            self._auto_select_prs_chart()
 
     def _reset_selected_result(self) -> None:
         """Clear the selected chart/report state."""
@@ -3575,6 +3891,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 return r
         return None
 
+    def _results_for_pgs_id(self, pgs_id: str) -> list[dict]:
+        """All result rows for a PGS ID (one per sample in multi-sample mode)."""
+        return [r for r in self.prs_results if r.get("pgs_id") == pgs_id]
+
     def _build_result_info(self, result: dict) -> dict:
         """Build the info panel dict for a selected result."""
         pgs_id = result.get("pgs_id", "")
@@ -3630,6 +3950,23 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             except (ValueError, TypeError):
                 pass
 
+        # Multi-sample: one colored score marker per sample, CLI-style.
+        multi_user_scores: dict[str, float] | None = None
+        if self.is_multi_sample:
+            scores_by_sample: dict[str, float] = {}
+            for row in self._results_for_pgs_id(pgs_id):
+                label = _result_sample(row)
+                score_raw = row.get("score")
+                if not label or score_raw is None:
+                    continue
+                try:
+                    scores_by_sample[label] = float(score_raw)
+                except (ValueError, TypeError):
+                    continue
+            if len(scores_by_sample) > 1:
+                multi_user_scores = scores_by_sample
+                user_score = None
+
         ancestry = self.selected_ancestry  # type: ignore[attr-defined]
 
         try:
@@ -3649,6 +3986,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     ancestry=ancestry,
                     width=560,
                     height=300,
+                    multi_user_scores=multi_user_scores,
                 )
             return self._set_container_width(chart.to_dict())
         except Exception:
@@ -3715,10 +4053,31 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             )
             chart_user_results.append(chart_row)
 
+        # Multi-sample: group per-sample rows CLI-style ({label: rows}), keep
+        # the first sample's rows as the primary ``user_results`` list.  The
+        # report deliberately gets no ``sample_files`` legend table — the UI
+        # already shows every sample (with build + ancestry) in the source
+        # rows above, so the embedded report would only duplicate them.
+        multi_results: dict[str, list[dict]] | None = None
+        report_sample_name = _genome_file_label(self.prs_genotypes_path)
+        if self.is_multi_sample:
+            grouped = {
+                label: rows
+                for label, rows in _group_rows_by_sample(chart_user_results).items()
+                if label
+            }
+            if len(grouped) > 1:
+                multi_results = grouped
+                chart_user_results = grouped[next(iter(grouped))]
+                report_sample_name = ", ".join(grouped)
+
         display_trait = _concise_trait_label(str(trait_row.get("trait") or trait_display)) if trait_row else _concise_trait_label(trait_display)
         search_trait = user_results[0].get("trait", "") if user_results else display_trait
+        n_chart_models = len(
+            {str(r.get("pgs_id") or "") for r in chart_user_results}
+        )
         chart_title = (
-            f"{display_trait} — {len(chart_user_results)} models"
+            f"{display_trait} — {n_chart_models} models"
             if chart_user_results else display_trait
         )
 
@@ -3734,26 +4093,31 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 width=560,
                 height=300,
                 show_table=False,
-                max_scores=max(25, len(chart_user_results)),
+                max_scores=max(25, n_chart_models),
                 model_scope=self.trait_model_scope,
                 percentile_source=dashboard_source,
+                multi_user_results=multi_results,
             )
             self.selected_result_html = trait_report_html(
                 chart,
                 display_trait,
                 chart_user_results,
                 ancestry,
-                sample_name=_genome_file_label(self.prs_genotypes_path),
+                sample_name=report_sample_name,
                 model_scope=self.trait_model_scope,
                 percentile_source=dashboard_source,
+                multi_user_results=multi_results,
             )
             # Bandaid for the residual "jumping height": estimate the report
             # height from the model count (stat cards + chart + AI buttons ≈
             # 900px base, then ~3 median rows + one row per model at ~40px) so
             # the iframe mounts near its final size.  Capped so a huge trait
             # group doesn't produce an absurd frame; postMessage trims the rest.
-            n_models = len(chart_user_results)
-            self.selected_result_html_height = f"{min(900 + (n_models + 3) * 40, 4200)}px"
+            n_models = n_chart_models
+            n_samples = len(multi_results) if multi_results else 1
+            self.selected_result_html_height = (
+                f"{min(900 + (n_models + 3 + n_samples * 2) * 40, 4200)}px"
+            )
             return self._set_container_width(chart.to_dict())
         except Exception:
             import traceback
@@ -3870,6 +4234,43 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self._apply_trait_result_info(trait, self._trait_row_for_display(raw_trait))
         self.selected_result_html = ""
         self.selected_result_spec = self._generate_trait_chart_spec(trait)
+
+    def _auto_select_trait_chart(self) -> None:
+        """Render a trait chart right after compute, without waiting for a click.
+
+        Keeps (and refreshes) the currently open trait when it still exists in
+        the rebuilt summary; otherwise opens the first trait group.
+        """
+        if self.prs_view_mode != "grouped" or not self.trait_summary_rows:
+            return
+        current = self.selected_result_id
+        if (
+            current
+            and self._result_by_pgs_id(current) is None
+            and self._trait_row_for_display(current) is not None
+        ):
+            self._refresh_selected_trait_chart()
+            return
+        first_trait = str(self.trait_summary_rows[0].get("trait") or "")
+        if first_trait:
+            self.select_trait_result({"row": {"trait": first_trait}})
+
+    def _auto_select_prs_chart(self) -> None:
+        """Render a result chart right after compute (individual mode).
+
+        Keeps the currently selected PGS ID when it still has a result row;
+        otherwise opens the first computed result.
+        """
+        if self.prs_view_mode == "grouped" or not self.prs_results:
+            return
+        current = self.selected_result_id
+        pgs_id = (
+            current
+            if current and self._result_by_pgs_id(current) is not None
+            else str(self.prs_results[0].get("pgs_id") or "")
+        )
+        if pgs_id:
+            self.select_prs_result({"row": {"pgs_id": pgs_id}})
 
     def set_chart_mode(self, mode: str | list[str]) -> None:
         """Toggle between single-ancestry and multi-ancestry chart view."""

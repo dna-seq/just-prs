@@ -28,15 +28,24 @@ from just_prs.ftp import (
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.scoring import ensure_scoring_file
 from just_prs.vcf import detect_genome_build
+from just_prs.viz import (
+    FINE_POPULATION_LABELS,
+    IGSR_POPULATION_URL,
+    SUPERPOP_LABELS,
+)
 
 from prs_ui.mixin import (
     PRSComputeStateMixin,
     SHEET_LABELS,
     SHEET_NAMES,
     SUPERPOPULATION_LABELS,
+    SUPERPOPULATIONS,
     _catalog,
     loaded_grid_selection_model,
     merge_loaded_grid_selection,
+    sample_color,
+    sample_label_from_path,
+    _ancestry_chip_text,
     _compute_score_column_overrides,
     _enrich_scores_for_grid,
     _resolve_cache_dir,
@@ -230,8 +239,78 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
     detected_build: str = ""
     build_detection_message: str = ""
 
+    #: Multi-sample registry (CLI ``--vcf Label=path`` equivalent):
+    #: [{"label", "filename", "vcf_path", "parquet_path", "build", "color",
+    #:   "ancestry", "ancestry_confidence", "fine_population", "fine_confidence"}].
+    vcf_samples: list[dict] = []
+
+    ancestry_inferring: bool = False
+
     _vcf_path: str = ""
     _preloaded_vcf_initialized: bool = False
+
+    @rx.var
+    def vcf_sample_chips(self) -> list[dict]:
+        """One display row per sample (label, color, build, ancestry, variants).
+
+        Ancestry mirrors the CLI report's sample table: the super-population
+        with its confidence, plus the closest 1000G cohort (a clickable IGSR
+        population-page link with its own posterior when the code is a known
+        1000G cohort).
+        """
+        rows: list[dict] = []
+        for s in self.vcf_samples:
+            superpop = str(s.get("ancestry") or "")
+            confidence = float(s.get("ancestry_confidence") or 0.0)
+            fine = str(s.get("fine_population") or "")
+            fine_confidence = float(s.get("fine_confidence") or 0.0)
+            fine_entry = FINE_POPULATION_LABELS.get(fine)
+            rows.append({
+                "label": str(s.get("label") or ""),
+                "color": str(s.get("color") or ""),
+                "filename": str(s.get("filename") or ""),
+                "build": str(s.get("build") or ""),
+                "ancestry": _ancestry_chip_text(s),
+                "ancestry_label": (
+                    f"{SUPERPOP_LABELS.get(superpop, superpop)} ({superpop})"
+                    if superpop and superpop != "UNKNOWN"
+                    else ""
+                ),
+                "ancestry_conf": (
+                    f"{confidence:.0%}" if superpop and confidence > 0 else ""
+                ),
+                "fine_label": (
+                    f"{fine_entry[0]} ({fine})" if fine_entry else fine
+                ),
+                "fine_conf": (
+                    f"{fine_confidence:.0%}" if fine and fine_confidence > 0 else ""
+                ),
+                "fine_url": (
+                    IGSR_POPULATION_URL.format(code=fine) if fine_entry else ""
+                ),
+                "fine_title": fine_entry[1] if fine_entry else "",
+                "variants": (
+                    f"{int(s.get('variants') or 0):,} variants"
+                    if int(s.get("variants") or 0) > 0
+                    else ""
+                ),
+            })
+        return rows
+
+    @rx.var
+    def vcf_has_fine_population(self) -> bool:
+        """True when any sample carries a closest-cohort call (footnote gate)."""
+        return any(str(s.get("fine_population") or "") for s in self.vcf_samples)
+
+    @rx.var
+    def vcf_sample_count(self) -> int:
+        """Number of loaded genome samples."""
+        return len(self.vcf_samples)
+
+    @rx.var
+    def vcf_multi_sample(self) -> bool:
+        """True when more than one genome sample is loaded (comparison mode)."""
+        return len(self.vcf_samples) > 1
 
     def _normalized_parquet_path(self, src: Path) -> Path:
         """Deterministic output path for a normalized VCF parquet."""
@@ -262,7 +341,7 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
         return self.detected_build
 
     async def _push_to_consumers(self) -> Any:
-        """Push normalized genotypes (and changed build) into every consumer.
+        """Push normalized genotype samples (and changed build) into every consumer.
 
         Consumers are mutated directly via ``get_state`` rather than by yielding
         cross-state ``EventSpec``s.  Yielding chained events *after* the long,
@@ -270,10 +349,38 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
         to an EventFuture that is already done" error and stalls the event
         queue (which also makes grid checkbox selection sluggish/unresponsive).
         Direct mutation enqueues no child events and is reliable and ordered.
+
+        All loaded samples are fanned out via ``load_samples`` — a single-VCF
+        upload is simply a registry of one, so consumers behave exactly as the
+        old single-sample ``load_genotypes`` path.
         """
+        payload = [
+            {
+                "label": str(s.get("label") or ""),
+                "path": str(s.get("parquet_path") or ""),
+                "ancestry": str(s.get("ancestry") or ""),
+                "ancestry_confidence": float(s.get("ancestry_confidence") or 0.0),
+                "fine_population": str(s.get("fine_population") or ""),
+                "fine_confidence": float(s.get("fine_confidence") or 0.0),
+            }
+            for s in self.vcf_samples
+            if s.get("parquet_path")
+        ]
+        # Auto-select the autodetected super-population as the reference
+        # population for percentiles (the user can still override it manually).
+        detected_superpop = next(
+            (
+                str(s.get("ancestry") or "")
+                for s in self.vcf_samples
+                if str(s.get("ancestry") or "") in SUPERPOPULATIONS
+            ),
+            "",
+        )
         for consumer_cls in self._consumer_states:
             consumer = await self.get_state(consumer_cls)
-            consumer.load_genotypes(self.normalized_parquet_path)
+            consumer.load_samples(payload)
+            if detected_superpop and consumer.selected_ancestry != detected_superpop:
+                consumer.set_selected_ancestry(detected_superpop)
             if self.detected_build and self.detected_build != consumer.genome_build:
                 for event in consumer.set_genome_build(self.detected_build):
                     yield event
@@ -287,39 +394,176 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
             for event in consumer.set_genome_build(value):
                 yield event
 
+    def _infer_sample_ancestry(self, parquet_path: Path, build: str) -> dict:
+        """Autodetect population + subpopulation for one normalized sample.
+
+        Mirrors the CLI's ``_infer_vcf_ancestry``: the 1000G model is projected
+        twice on the same normalized frame — once at super-population resolution
+        (the label + confidence that drive percentiles) and once at fine
+        population resolution (the closest 1000G cohort, e.g. CEU/GBR —
+        informational, with its own posterior).  Degrades to an empty dict when
+        the ancestry model cannot be pulled (offline) or the call is UNKNOWN
+        (coverage below the floor) so the upload flow never breaks on it.
+        """
+        try:
+            genotypes_lf = pl.scan_parquet(parquet_path)
+            inference = _catalog.infer_ancestry(
+                genotypes_lf=genotypes_lf,
+                sample_build=build or "GRCh38",
+            )
+            fine = _catalog.infer_ancestry(
+                genotypes_lf=genotypes_lf,
+                sample_build=build or "GRCh38",
+                resolution="population",
+            )
+        except Exception as exc:  # HF model pull / liftover are external boundaries
+            self.status_message = f"Ancestry autodetection unavailable: {exc}"
+            return {}
+        if inference.superpopulation == "UNKNOWN":
+            return {}
+        return {
+            "ancestry": inference.superpopulation,
+            "ancestry_confidence": float(inference.confidence),
+            "fine_population": str(fine.fine_population or ""),
+            "fine_confidence": (
+                float(fine.confidence) if fine.fine_population else 0.0
+            ),
+        }
+
+    def _register_sample(
+        self,
+        vcf_path: Path,
+        parquet_path: Path,
+        build: str,
+        ancestry: dict | None = None,
+    ) -> None:
+        """Add (or refresh) a sample registry entry, re-coloring by position."""
+        label = sample_label_from_path(str(vcf_path))
+        registry = [
+            s for s in self.vcf_samples
+            if str(s.get("parquet_path") or "") != str(parquet_path)
+            and str(s.get("label") or "") != label
+        ]
+        registry.append({
+            "label": label,
+            "filename": vcf_path.name,
+            "vcf_path": str(vcf_path),
+            "parquet_path": str(parquet_path),
+            "build": build,
+            # Set by normalize_uploaded_vcf just before registration.
+            "variants": int(self.genomic_row_count or 0),
+            **(ancestry or {}),
+        })
+        self.vcf_samples = [
+            {**s, "color": sample_color(i)} for i, s in enumerate(registry)
+        ]
+
+    async def remove_sample(self, label: str) -> Any:
+        """Remove one sample from the comparison and re-feed all consumers."""
+        self.vcf_samples = [
+            {**s, "color": sample_color(i)}
+            for i, s in enumerate(
+                s for s in self.vcf_samples if str(s.get("label") or "") != label
+            )
+        ]
+        first = self.vcf_samples[0] if self.vcf_samples else None
+        self.normalized_parquet_path = str(first.get("parquet_path") or "") if first else ""
+        self.vcf_filename = str(first.get("filename") or "") if first else ""
+        self._vcf_path = str(first.get("vcf_path") or "") if first else ""
+        if not self.vcf_samples:
+            self.genomic_loaded = False
+            self.normalize_status = ""
+            self.status_message = "All samples removed."
+        else:
+            self.status_message = (
+                f"Removed {label}. {len(self.vcf_samples)} sample(s) loaded."
+            )
+        async for event in self._push_to_consumers():
+            yield event
+
+    async def clear_samples(self) -> Any:
+        """Remove every loaded sample and reset the source."""
+        self.vcf_samples = []
+        self.normalized_parquet_path = ""
+        self.vcf_filename = ""
+        self._vcf_path = ""
+        self.genomic_loaded = False
+        self.normalize_status = ""
+        self.detected_build = ""
+        self.build_detection_message = ""
+        self.status_message = "All samples removed."
+        async for event in self._push_to_consumers():
+            yield event
+
     async def handle_vcf_upload(self, files: list[rx.UploadFile]) -> Any:
-        """Save an uploaded VCF, normalize it, and feed all consumer states."""
+        """Save uploaded VCF(s), normalize each, and feed all consumer states.
+
+        Multiple files can be dropped at once (or added across several uploads)
+        — each becomes a named, colored sample in the comparison, mirroring the
+        CLI's repeated ``--vcf Label=path`` flags.
+        """
         if not files:
             return
-        upload_file = files[0]
-        filename = Path(upload_file.filename or "uploaded.vcf").name
         upload_dir = _input_vcf_dir()
         upload_dir.mkdir(parents=True, exist_ok=True)
 
-        self.vcf_filename = filename
-        self.vcf_normalizing = True
-        self.genomic_loaded = False
-        self.normalize_status = f"Saving {filename}..."
-        self.status_message = self.normalize_status
-        yield
+        for upload_file in files:
+            filename = Path(upload_file.filename or "uploaded.vcf").name
 
-        contents = await upload_file.read()
-        if _has_gzip_magic(contents) and not filename.casefold().endswith((".gz", ".bgz")):
-            filename = f"{filename}.gz"
             self.vcf_filename = filename
-        dest = upload_dir / filename
+            self.vcf_normalizing = True
+            self.genomic_loaded = False
+            self.normalize_status = f"Saving {filename}..."
+            self.status_message = self.normalize_status
+            yield
 
-        # Skip writing identical content so the VCF mtime stays unchanged and
-        # the downstream mtime-based normalization cache remains valid.
-        new_hash = hashlib.md5(contents).digest()
-        if dest.exists() and hashlib.md5(dest.read_bytes()).digest() == new_hash:
-            pass  # identical file already on disk — keep its mtime
-        else:
-            dest.write_bytes(contents)
+            contents = await upload_file.read()
+            if _has_gzip_magic(contents) and not filename.casefold().endswith((".gz", ".bgz")):
+                filename = f"{filename}.gz"
+                self.vcf_filename = filename
+            dest = upload_dir / filename
 
-        self._set_vcf_source(dest, label_prefix="Uploaded")
-        for event in self.normalize_uploaded_vcf(str(dest)):
-            yield event
+            # Skip writing identical content so the VCF mtime stays unchanged and
+            # the downstream mtime-based normalization cache remains valid.
+            new_hash = hashlib.md5(contents).digest()
+            if dest.exists() and hashlib.md5(dest.read_bytes()).digest() == new_hash:
+                pass  # identical file already on disk — keep its mtime
+            else:
+                dest.write_bytes(contents)
+
+            build = self._set_vcf_source(dest, label_prefix="Uploaded")
+            for event in self.normalize_uploaded_vcf(str(dest)):
+                yield event
+
+            self.ancestry_inferring = True
+            self.normalize_status = f"Autodetecting ancestry for {filename}..."
+            self.status_message = self.normalize_status
+            yield
+            ancestry = self._infer_sample_ancestry(
+                Path(self.normalized_parquet_path), build
+            )
+            self.ancestry_inferring = False
+            self._register_sample(
+                dest, Path(self.normalized_parquet_path), build, ancestry
+            )
+            detected = _ancestry_chip_text(self.vcf_samples[-1])
+            self.normalize_status = (
+                f"Normalized {filename} — ancestry {detected}"
+                if detected
+                else f"Normalized {filename} — ancestry not detected"
+            )
+            self.status_message = self.normalize_status
+
+        if self.vcf_multi_sample:
+            labels = ", ".join(str(s.get("label") or "") for s in self.vcf_samples)
+            self.status_message = f"Comparing {len(self.vcf_samples)} samples: {labels}"
+        builds = {str(s.get("build") or "") for s in self.vcf_samples if s.get("build")}
+        if len(builds) > 1:
+            self.build_detection_message = (
+                f"⚠ Mixed genome builds detected across samples ({', '.join(sorted(builds))}). "
+                "All samples are scored against the selected build — percentiles for "
+                "mismatched samples may be unreliable."
+            )
         async for event in self._push_to_consumers():
             yield event
 
@@ -337,9 +581,19 @@ class GenomicGridState(LazyFrameGridMixin, AppState):
             self.build_detection_message = "Configured preloaded VCF was not found."
             return
 
-        self._set_vcf_source(preloaded_vcf, label_prefix="Preloaded")
+        build = self._set_vcf_source(preloaded_vcf, label_prefix="Preloaded")
         for event in self.normalize_uploaded_vcf(str(preloaded_vcf)):
             yield event
+        self.ancestry_inferring = True
+        self.normalize_status = f"Autodetecting ancestry for {preloaded_vcf.name}..."
+        yield
+        ancestry = self._infer_sample_ancestry(
+            Path(self.normalized_parquet_path), build
+        )
+        self.ancestry_inferring = False
+        self._register_sample(
+            preloaded_vcf, Path(self.normalized_parquet_path), build, ancestry
+        )
         async for event in self._push_to_consumers():
             yield event
 

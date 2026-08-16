@@ -96,6 +96,17 @@ PRS results are **cached per (VCF, PGS ID, build, ancestry)** — repeated plott
 instant. Use `--no-cache` to force recomputation. Trait matching is **exact by default**
 (case-insensitive); use `--fuzzy` to match all traits containing the query string.
 
+`plot trait` **auto-detects each sample's ancestry** when `--ancestry` is omitted
+(same engine as `prs ancestry infer`, cached per VCF — each genome is read once):
+percentiles are computed against each sample's own detected population, the HTML
+report legend shows the detected population per sample **including the fine
+sub-population** resolved to a readable name linked to its IGSR cohort page
+(e.g. `European (EUR) · Northern/Western European (CEU)` — informational;
+percentiles stay at super-population level), and multi-sample comparisons handle mixed ancestries
+correctly. Pass `--ancestry EUR` only to pin one population for every sample.
+Finer sub-ancestry (HGDP's 73 populations, AADR's 194 incl. Slavic/Balkan) is
+available via `prs ancestry infer --resolution population --panel hgdp_1kg`.
+
 ```bash
 # One-liner: compute + plot for a trait using an alias
 uvx just-prs plot trait "type 1 diabetes" --vcf livia -o t1d.html --show-table
@@ -110,7 +121,12 @@ uvx just-prs plot trait BMI --vcf anton -o bmi.html --show-table --all-ancestrie
 # Select specific populations to overlay
 uvx just-prs plot trait BMI --vcf anton -o bmi.html --ancestries EUR,AFR,EAS
 
-# Single PGS bell curve with auto-computed score
+# One or more specific PGS IDs with the full trait-style report (recommended)
+# (the trait positional also accepts comma-separated PGS IDs; multi-sample --vcf works too)
+uvx just-prs plot trait PGS000001 --vcf anton -o pgs1.html
+uvx just-prs plot trait PGS000001,PGS000002 --vcf Anton=anton --vcf Livia=livia -o compare.html
+
+# Single PGS bell curve with auto-computed score (minimal chart, no report)
 uvx just-prs plot bell-curve PGS000001 --vcf anton -o bell.html
 uvx just-prs plot bell-curve PGS000001 -o bell.html -a AFR --user-score 0.274
 

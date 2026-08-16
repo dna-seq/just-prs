@@ -2,7 +2,13 @@ import urllib.parse
 
 import polars as pl
 
-from just_prs.viz import build_prs_ai_prompt, plot_trait_scores, trait_report_html
+from just_prs.viz import (
+    build_prs_ai_prompt,
+    fine_population_html,
+    fine_population_label,
+    plot_trait_scores,
+    trait_report_html,
+)
 
 
 def test_plot_trait_scores_accepts_preformatted_absolute_risk() -> None:
@@ -49,7 +55,10 @@ def test_plot_trait_scores_accepts_preformatted_absolute_risk() -> None:
     assert "<!-- prs-dashboard" in html
 
 
-def test_plot_trait_scores_exposes_in_chart_visibility_bindings() -> None:
+def test_plot_trait_scores_has_no_quality_checkbox_bindings() -> None:
+    """The High/Moderate/Low/Very-low checkbox row was dropped as visual
+    clutter — quality lives in dot colors/tooltips and the report table's
+    per-model checkboxes handle visibility. Only modelSelect remains."""
     distributions = pl.DataFrame(
         {
             "pgs_id": ["PGS000001", "PGS000002"],
@@ -92,12 +101,10 @@ def test_plot_trait_scores_exposes_in_chart_visibility_bindings() -> None:
     params = spec.get("params") or []
     param_names = {param.get("name") for param in params}
 
-    assert {"showHigh", "showModerate", "showLow", "showVeryLow", "modelSelect"} <= param_names
+    assert "modelSelect" in param_names
+    assert not {"showHigh", "showModerate", "showLow", "showVeryLow"} & param_names
     assert "modelScope" not in param_names
     assert "percentileSource" not in param_names
-    show_high = next(param for param in params if param["name"] == "showHigh")
-    assert show_high["value"] is True
-    assert show_high["bind"]["input"] == "checkbox"
 
 
 def test_plot_trait_scores_median_line_matches_scoped_card_median() -> None:
@@ -142,6 +149,196 @@ def test_plot_trait_scores_median_line_matches_scoped_card_median() -> None:
     spec_json = json.dumps(spec)
     assert "Median: 60th" in spec_json
     assert "Median: 90th" not in spec_json
+
+
+def test_plot_trait_scores_selects_by_pgs_ids_across_traits() -> None:
+    """PGS-ID selection: only the named scores are plotted, even across traits,
+    and the derived title lists the traits of the selected scores."""
+    distributions = pl.DataFrame(
+        {
+            "pgs_id": ["PGS000001", "PGS000002", "PGS000003"],
+            "superpopulation": ["EUR"] * 3,
+            "mean": [0.0] * 3,
+            "std": [1.0] * 3,
+            "trait_reported": ["Breast cancer", "intelligence", "Breast cancer"],
+            "n_variants": [1000, 800, 600],
+        },
+    )
+    user_results = [
+        {"pgs_id": "PGS000001", "score": 0.2, "percentile": 58.0, "quality_label": "High"},
+        {"pgs_id": "PGS000002", "score": -0.1, "percentile": 40.0, "quality_label": "High"},
+    ]
+
+    spec = plot_trait_scores(
+        "",
+        distributions,
+        user_results=user_results,
+        pgs_ids=["PGS000001", "PGS000002"],
+        show_table=False,
+    ).to_dict()
+
+    import json
+
+    spec_json = json.dumps(spec)
+    plotted = {p for p in ("PGS000001", "PGS000002", "PGS000003") if p in spec_json}
+    assert plotted == {"PGS000001", "PGS000002"}
+    assert "Breast cancer, intelligence" in spec_json
+
+
+def test_plot_trait_scores_pgs_ids_unknown_id_raises() -> None:
+    import pytest
+
+    distributions = pl.DataFrame(
+        {
+            "pgs_id": ["PGS000001"],
+            "superpopulation": ["EUR"],
+            "mean": [0.0],
+            "std": [1.0],
+            "trait_reported": ["Breast cancer"],
+            "n_variants": [1000],
+        },
+    )
+    with pytest.raises(ValueError, match="PGS999999"):
+        plot_trait_scores("", distributions, pgs_ids=["PGS999999"])
+
+
+def test_trait_report_per_sample_ancestry_legend_and_subtitle() -> None:
+    """Auto-detected per-sample ancestries surface in the sample legend table,
+    which replaces the redundant "Samples: … · Ancestry: …" subtitle line."""
+    distributions = pl.DataFrame(
+        {
+            "pgs_id": ["PGS000001"],
+            "superpopulation": ["EUR"],
+            "mean": [0.0],
+            "std": [1.0],
+            "trait_reported": ["type 1 diabetes mellitus"],
+            "n_variants": [1000],
+        },
+    )
+    multi = {
+        "Anton": [{"pgs_id": "PGS000001", "score": 0.2, "percentile": 58.0, "reliable": True}],
+        "Livia": [{"pgs_id": "PGS000001", "score": -0.1, "percentile": 40.0, "reliable": True}],
+    }
+    chart = plot_trait_scores(
+        "type 1 diabetes mellitus",
+        distributions,
+        user_results=multi["Anton"],
+        multi_user_results=multi,
+        sample_name="Anton, Livia",
+    )
+
+    html = trait_report_html(
+        chart,
+        "type 1 diabetes mellitus",
+        multi["Anton"],
+        multi_user_results=multi,
+        sample_files={
+            "Anton": {
+                "file": "/g/anton.vcf", "build": "GRCh38",
+                "ancestry": "EUR", "ancestry_confidence": 1.0,
+                "fine_population": "CEU", "fine_confidence": 0.62,
+            },
+            "Livia": {"file": "/g/livia.vcf.gz", "build": "GRCh38", "ancestry": "AFR"},
+        },
+    )
+
+    # Population and sub-population are separate columns; the cohort column
+    # only appears when at least one sample has a fine call, with a footnote
+    # explaining it is the nearest reference cohort, not a nationality.
+    assert "<th>Population</th>" in html
+    assert "<th>Closest 1000G Cohort</th>" in html
+    assert "a reference point, not a nationality" in html
+    # Sub-ancestry resolves the 1000G code to a readable name linked to IGSR,
+    # with the official cohort description as a tooltip.
+    assert "Northern/Western European (CEU)" in html
+    assert "https://www.internationalgenome.org/data-portal/population/CEU" in html
+    assert 'title="Utah residents (CEPH) with Northern and Western European ancestry"' in html
+    assert "African (AFR)" in html
+    # Confidence percentages render next to both the population and the cohort;
+    # samples without a confidence value show none (no fake 0%).
+    assert ">100%</span>" in html
+    assert ">62%</span>" in html
+    # The footnote warns that unrepresented populations (e.g. Slavic) map to the
+    # nearest cohort with reduced confidence.
+    assert "Slavic" in html
+    # Unchecking a model in the table also removes its dots from the chart:
+    # the recompute script collects the hidden pgs_ids and filters every
+    # pgs_id-carrying data row when re-embedding the spec.
+    assert "hiddenPgs" in html
+    assert "v2.pgs_id" in html
+    # The AI buttons sit above the footnote blocks (samples legend + quality note).
+    assert html.index('class="ai-buttons"') < html.index("Closest 1000G Cohort is the nearest")
+    # The legend table IS the header — no duplicated subtitle line.
+    assert "Samples:" not in html
+    assert '<div class="subtitle">' not in html
+
+    # Without ancestry metadata (old callers) the legend keeps its 3-column shape.
+    html_plain = trait_report_html(
+        chart,
+        "type 1 diabetes mellitus",
+        multi["Anton"],
+        multi_user_results=multi,
+        sample_files={
+            "Anton": {"file": "/g/anton.vcf", "build": "GRCh38"},
+            "Livia": {"file": "/g/livia.vcf.gz", "build": "GRCh38"},
+        },
+    )
+    assert "<th>Population</th>" not in html_plain
+    assert "<th>Closest 1000G Cohort</th>" not in html_plain
+
+    # No sample_files (e.g. --results JSON input) → the classic subtitle returns.
+    html_no_files = trait_report_html(
+        chart,
+        "type 1 diabetes mellitus",
+        multi["Anton"],
+        multi_user_results=multi,
+    )
+    assert "Ancestry: European (EUR)" in html_no_files
+    assert "Samples:" in html_no_files
+
+
+def test_fine_population_labels_resolve_1000g_codes() -> None:
+    """1000G cohort codes resolve to readable names + IGSR links; codes the
+    registry does not know (e.g. HGDP's descriptive names) pass through."""
+    assert fine_population_label("IBS") == "Iberian/Spanish (IBS)"
+    assert fine_population_label("Russian") == "Russian"  # HGDP-style, as-is
+
+    html = fine_population_html("IBS")
+    assert "https://www.internationalgenome.org/data-portal/population/IBS" in html
+    assert 'title="Iberian populations in Spain"' in html
+    assert "Iberian/Spanish (IBS)" in html
+    assert fine_population_html("Russian") == "Russian"  # no fake IGSR link
+
+
+def test_infer_vcf_ancestry_reads_fingerprint_cache(tmp_path) -> None:
+    """A cached inference is returned without re-reading the genome or the
+    ancestry model; an UNKNOWN cache entry falls through to None (EUR fallback)."""
+    from just_prs.cli import _infer_vcf_ancestry, _load_result_cache, _save_result_cache, _vcf_fingerprint
+
+    vcf = tmp_path / "sample.vcf"
+    vcf.write_text("##fileformat=VCFv4.2\n")
+    cache_dir = tmp_path / "cache"
+    cache_dir.mkdir()
+
+    fp = _vcf_fingerprint(vcf)
+    cache = _load_result_cache(cache_dir)
+    cache[f"__ancestry__GRCh38_{fp}"] = {
+        "superpopulation": "EAS",
+        "confidence": 0.93,
+        "fine_population": "CHB",
+        "fine_confidence": 0.71,
+    }
+    cache[f"__ancestry__GRCh37_{fp}"] = {
+        "superpopulation": "UNKNOWN", "confidence": 0.0,
+        "fine_population": None, "fine_confidence": None,
+    }
+    _save_result_cache(cache, cache_dir)
+
+    call = _infer_vcf_ancestry(vcf, "GRCh38", cache_dir)
+    assert call is not None
+    assert call["superpopulation"] == "EAS"
+    assert call["fine_population"] == "CHB"
+    assert _infer_vcf_ancestry(vcf, "GRCh37", cache_dir) is None
 
 
 def test_trait_prompt_prioritizes_sample_risk_and_heritability() -> None:

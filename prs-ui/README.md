@@ -61,8 +61,17 @@ def prs_page() -> rx.Component:
 | `prs_results_table(state)` | Results table with quality badges, interpretation cards, and CSV download |
 
 The genotype source is **loosely coupled** to the PRS logic: a source pushes a normalized
-genotypes parquet into each consumer via the additive `load_genotypes(path)` hook (and
-optionally `set_genome_build(build)`), so a host app can replace `vcf_source_section` /
+genotypes parquet into each consumer via the additive `load_genotypes(path)` hook, or
+several at once via `load_samples([{"label", "path"}, ...])` for CLI-style multi-sample
+comparison (per-sample colors, medians, and bell-curve markers). Each uploaded sample
+gets its genetic ancestry autodetected (1000 Genomes reference panel): the sample row
+shows the population with the classifier's confidence plus the closest 1000G cohort as a
+clickable IGSR link with its own confidence — a reference point, not a nationality — and
+the detected population is preselected as the percentile reference population. After
+computing, the chart panel renders automatically for the first (or currently open)
+result/trait — no row click needed. Sources may also pass optional per-sample
+`ancestry` / `ancestry_confidence` / `fine_population` / `fine_confidence` keys, and optionally
+`set_genome_build(build)`, so a host app can replace `vcf_source_section` /
 `GenomicGridState` with its own source (public genome, consumer-array file, pre-normalized
 parquet) without touching `PRSComputeStateMixin`. VCF **normalization** (not upload) is the
 slow step; it is content-aware cached (a fresh normalized parquet is reused) and shown via an

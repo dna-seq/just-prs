@@ -89,6 +89,50 @@ SUPERPOPULATION_LABELS: dict[str, str] = {
 _RESULT_GRID_ROW_HEIGHT_PX = 52
 _RESULT_GRID_CHROME_HEIGHT_PX = 66
 _RESULT_GRID_GROUP_HEADER_HEIGHT_PX = 40
+VISIBLE_RESULT_ROWS = 10
+_OVERFLOW_RESULT_VISIBLE_ROWS = 10
+
+
+def preview_result_rows(rows: list[dict[str, Any]], limit: int = VISIBLE_RESULT_ROWS) -> list[dict[str, Any]]:
+    """First *limit* result rows shown in the open table."""
+    return list(rows[:limit])
+
+
+def overflow_result_rows(rows: list[dict[str, Any]], limit: int = VISIBLE_RESULT_ROWS) -> list[dict[str, Any]]:
+    """Result rows hidden behind the 'show more' dropdown."""
+    return list(rows[limit:])
+
+
+# Rendered trait reports are rebuilt from already-computed rows. Cache them so
+# switching Heart disease ↔ Intelligence does not re-run Altair + HTML each click.
+_DISTRIBUTIONS_DF: pl.DataFrame | None = None
+_TRAIT_CHART_CACHE: dict[str, dict[str, Any]] = {}
+
+
+def trait_chart_cache_key(trait: str, model_scope: str, dashboard_population: str) -> str:
+    """Stable key for a rendered trait chart / HTML report."""
+    return f"{trait}|{model_scope}|{dashboard_population}"
+
+
+def get_cached_trait_chart(key: str) -> dict[str, Any] | None:
+    cached = _TRAIT_CHART_CACHE.get(key)
+    return dict(cached) if cached is not None else None
+
+
+def store_cached_trait_chart(key: str, payload: dict[str, Any]) -> dict[str, Any]:
+    _TRAIT_CHART_CACHE[key] = payload
+    return payload
+
+
+def clear_cached_trait_charts() -> None:
+    _TRAIT_CHART_CACHE.clear()
+
+
+def clear_chart_caches() -> None:
+    """Drop cached distributions and rendered trait reports."""
+    global _DISTRIBUTIONS_DF
+    _DISTRIBUTIONS_DF = None
+    clear_cached_trait_charts()
 
 
 def result_grid_height(row_count: int, max_visible_rows: int, grouped_headers: bool = False) -> str:
@@ -1311,7 +1355,9 @@ def _build_ai_links(prompt_kind: Literal["score", "trait_summary"], row: dict[st
         link: dict[str, Any] = {
             "label": f"Ask {assistant['name']}",
             "url": url,
+            "copyText": "",
             "color": assistant["color"],
+            "title": f"Open {assistant['name']} with a ready-made prompt",
         }
         if assistant.get("iconUrl"):
             link["iconUrl"] = assistant["iconUrl"]
@@ -1320,6 +1366,7 @@ def _build_ai_links(prompt_kind: Literal["score", "trait_summary"], row: dict[st
     other_prompt = build_prs_ai_prompt(prompt_kind, row=row, limit=other_limit)
     links.append({
         "label": "Other LLMs ⓘ",
+        "url": "",
         "copyText": other_prompt,
         "color": "#5f6368",
         "title": (
@@ -1327,6 +1374,53 @@ def _build_ai_links(prompt_kind: Literal["score", "trait_summary"], row: dict[st
             "Some assistants do not support reliable prompt-prefill URLs."
         ),
     })
+    return links
+
+
+def _parse_ai_ask(raw: Any) -> list[dict[str, Any]]:
+    """Decode the JSON ``ai_ask`` payload stored on a result row."""
+    if isinstance(raw, list):
+        return [item for item in raw if isinstance(item, dict)]
+    if isinstance(raw, str) and raw.startswith("["):
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return [item for item in parsed if isinstance(item, dict)]
+    return []
+
+
+def ai_links_for_selection(
+    view_mode: str,
+    selected_id: str,
+    prs_rows: list[dict[str, Any]],
+    trait_rows: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    """Ask-AI buttons for the current (or first) result row.
+
+    Used above the results table so people can ask before scrolling a
+    number-heavy grid. ``view_mode`` is ``grouped`` (trait) or individual.
+    """
+    grouped = view_mode == "grouped"
+    rows = trait_rows if grouped else prs_rows
+    key = "trait" if grouped else "pgs_id"
+    chosen: dict[str, Any] | None = None
+    if selected_id:
+        for row in rows:
+            if str(row.get(key) or "") == selected_id:
+                chosen = row
+                break
+    if chosen is None and rows:
+        chosen = rows[0]
+    if chosen is None:
+        return []
+    links: list[dict[str, str]] = []
+    for item in _parse_ai_ask(chosen.get("ai_ask")):
+        links.append({
+            "label": str(item.get("label") or "Ask AI"),
+            "url": str(item.get("url") or ""),
+            "copyText": str(item.get("copyText") or ""),
+            "color": str(item.get("color") or "#5f6368"),
+            "title": str(item.get("title") or ""),
+        })
     return links
 
 
@@ -1462,14 +1556,78 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     _prs_genotypes_lf: pl.LazyFrame | None = None
 
     @rx.var
+    def prs_results_preview_rows(self) -> list[dict]:
+        """First 10 PRS result rows shown above the overflow dropdown."""
+        return preview_result_rows(self.prs_results_rows)
+
+    @rx.var
+    def prs_results_overflow_rows(self) -> list[dict]:
+        """PRS result rows after the first 10, shown in the dropdown table."""
+        return overflow_result_rows(self.prs_results_rows)
+
+    @rx.var
+    def prs_results_overflow_label(self) -> str:
+        n = len(self.prs_results_rows) - VISIBLE_RESULT_ROWS
+        return f"Show {n} more scores" if n > 0 else ""
+
+    @rx.var
     def prs_results_table_height(self) -> str:
-        """CSS height for the clickable PRS result table."""
-        return result_grid_height(len(self.prs_results_rows), 6, grouped_headers=True)
+        """CSS height for the open PRS result table (at most 10 rows)."""
+        return result_grid_height(
+            min(len(self.prs_results_rows), VISIBLE_RESULT_ROWS),
+            VISIBLE_RESULT_ROWS,
+            grouped_headers=True,
+        )
+
+    @rx.var
+    def prs_results_overflow_table_height(self) -> str:
+        """CSS height for the collapsed extra PRS rows."""
+        return result_grid_height(
+            max(len(self.prs_results_rows) - VISIBLE_RESULT_ROWS, 0),
+            _OVERFLOW_RESULT_VISIBLE_ROWS,
+            grouped_headers=True,
+        )
+
+    @rx.var
+    def trait_summary_preview_rows(self) -> list[dict]:
+        """First 10 trait rows shown above the overflow dropdown."""
+        return preview_result_rows(self.trait_summary_rows)
+
+    @rx.var
+    def trait_summary_overflow_rows(self) -> list[dict]:
+        """Trait rows after the first 10, shown in the dropdown table."""
+        return overflow_result_rows(self.trait_summary_rows)
+
+    @rx.var
+    def trait_summary_overflow_label(self) -> str:
+        n = len(self.trait_summary_rows) - VISIBLE_RESULT_ROWS
+        return f"Show {n} more traits" if n > 0 else ""
 
     @rx.var
     def trait_results_table_height(self) -> str:
-        """CSS height for the clickable trait result table."""
-        return result_grid_height(len(self.trait_summary_rows), 4)
+        """CSS height for the open trait table (at most 10 rows)."""
+        return result_grid_height(
+            min(len(self.trait_summary_rows), VISIBLE_RESULT_ROWS),
+            VISIBLE_RESULT_ROWS,
+        )
+
+    @rx.var
+    def trait_results_overflow_table_height(self) -> str:
+        """CSS height for the collapsed extra trait rows."""
+        return result_grid_height(
+            max(len(self.trait_summary_rows) - VISIBLE_RESULT_ROWS, 0),
+            _OVERFLOW_RESULT_VISIBLE_ROWS,
+        )
+
+    @rx.var
+    def selected_ai_links(self) -> list[dict[str, str]]:
+        """Ask-AI buttons for the selected (or first) result, shown above the table."""
+        return ai_links_for_selection(
+            self.prs_view_mode,
+            self.selected_result_id,
+            self.prs_results_rows,
+            self.trait_summary_rows,
+        )
 
     def set_prs_view_mode(self, mode: str | list[str]) -> None:
         """Switch between 'individual' and 'grouped' result views."""
@@ -2114,6 +2272,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.trait_summary_visible = False
             self.status_message = "Compute PRS results before building a trait summary."  # type: ignore[attr-defined]
             return
+        clear_cached_trait_charts()
 
         summary_rows: list[dict[str, Any]] = []
         for index, rows in enumerate(_group_prs_rows_by_trait(self.prs_results)):
@@ -2669,6 +2828,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.trait_summary_visible = True
         self.status_message = f"Built trait summary for {len(summary_rows)} trait(s)."  # type: ignore[attr-defined]
         self._auto_select_trait_chart()
+        self._warm_remaining_trait_charts()
 
     def _build_prs_results_grid(self) -> None:
         """Convert prs_results into DataGrid rows + column defs."""
@@ -3708,6 +3868,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.status_message = "Refreshing 1000G reference percentiles and audit sidecars..."  # type: ignore[attr-defined]
             yield
             _catalog.refresh_reference_cache(panel="1000g")
+            clear_chart_caches()
 
         cache = Path(self.cache_dir) / "scores"  # type: ignore[attr-defined]
         results: list[dict] = []
@@ -3845,6 +4006,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.trait_summary_rows = []
         self.trait_summary_visible = False
         self.low_match_warning = False
+        clear_cached_trait_charts()
         self._reset_selected_result()
         self.status_message = "Cleared all PRS results."  # type: ignore[attr-defined]
 
@@ -3937,13 +4099,22 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     # Chart selection (Altair / Vega-Lite)
     # ------------------------------------------------------------------
 
+    def _trait_chart_cache_key(self, trait: str) -> str:
+        return trait_chart_cache_key(
+            trait, self.trait_model_scope, self.trait_dashboard_population,
+        )
+
     def _get_distributions_df(self) -> pl.DataFrame | None:
-        """Load reference distributions for chart rendering."""
+        """Load reference distributions for chart rendering (process-cached)."""
+        global _DISTRIBUTIONS_DF
+        if _DISTRIBUTIONS_DF is not None:
+            return _DISTRIBUTIONS_DF
         try:
             lf = _catalog.reference_distributions(panel="1000g")
-            return lf.collect()
+            _DISTRIBUTIONS_DF = lf.collect()
         except Exception:
             return None
+        return _DISTRIBUTIONS_DF
 
     def _result_by_pgs_id(self, pgs_id: str) -> dict | None:
         for r in self.prs_results:
@@ -4054,11 +4225,18 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             traceback.print_exc()
             return self._generate_default_spec()
 
-    def _generate_trait_chart_spec(self, trait_display: str) -> dict:
-        """Generate a Vega-Lite spec dict for a trait group."""
+    def _empty_trait_chart_payload(self) -> dict[str, Any]:
+        return {
+            "spec": self._generate_default_spec(),
+            "html": "",
+            "height": "900px",
+        }
+
+    def _build_trait_chart_payload(self, trait_display: str) -> dict[str, Any]:
+        """Build a trait Vega spec + HTML report without touching the open chart."""
         dist_df = self._get_distributions_df()
         if dist_df is None or dist_df.height == 0:
-            return self._generate_default_spec()
+            return self._empty_trait_chart_payload()
 
         dashboard_ancestry, dashboard_source = self._trait_dashboard_axes()
         ancestry = dashboard_ancestry
@@ -4140,6 +4318,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             f"{display_trait} — {n_chart_models} models"
             if chart_user_results else display_trait
         )
+        if pgs_ids:
+            dist_df = dist_df.filter(pl.col("pgs_id").is_in(list(pgs_ids)))
 
         try:
             chart = plot_trait_scores(
@@ -4157,8 +4337,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 model_scope=self.trait_model_scope,
                 percentile_source=dashboard_source,
                 multi_user_results=multi_results,
+                pgs_ids=sorted(pgs_ids) if pgs_ids else None,
             )
-            self.selected_result_html = trait_report_html(
+            html = trait_report_html(
                 chart,
                 display_trait,
                 chart_user_results,
@@ -4173,17 +4354,45 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             # 900px base, then ~3 median rows + one row per model at ~40px) so
             # the iframe mounts near its final size.  Capped so a huge trait
             # group doesn't produce an absurd frame; postMessage trims the rest.
-            n_models = n_chart_models
             n_samples = len(multi_results) if multi_results else 1
-            self.selected_result_html_height = (
-                f"{min(900 + (n_models + 3 + n_samples * 2) * 40, 4200)}px"
-            )
-            return self._set_container_width(chart.to_dict())
+            height = f"{min(900 + (n_chart_models + 3 + n_samples * 2) * 40, 4200)}px"
+            return {
+                "spec": self._set_container_width(chart.to_dict()),
+                "html": html,
+                "height": height,
+            }
         except Exception:
             import traceback
             traceback.print_exc()
-            self.selected_result_html = ""
-            return self._generate_default_spec()
+            return self._empty_trait_chart_payload()
+
+    def _cached_trait_chart_payload(self, trait_display: str) -> dict[str, Any]:
+        """Return a rendered trait report, building it only on the first view."""
+        key = self._trait_chart_cache_key(_concise_trait_label(trait_display))
+        cached = get_cached_trait_chart(key)
+        if cached is not None:
+            return cached
+        return store_cached_trait_chart(key, self._build_trait_chart_payload(trait_display))
+
+    def _apply_trait_chart_payload(self, payload: dict[str, Any]) -> None:
+        self.selected_result_spec = payload["spec"]
+        self.selected_result_html = str(payload.get("html") or "")
+        self.selected_result_html_height = str(payload.get("height") or "900px")
+
+    def _generate_trait_chart_spec(self, trait_display: str) -> dict:
+        """Apply the cached (or freshly built) Vega-Lite spec for a trait group."""
+        payload = self._cached_trait_chart_payload(trait_display)
+        self._apply_trait_chart_payload(payload)
+        return payload["spec"]
+
+    def _warm_remaining_trait_charts(self) -> None:
+        """Pre-render every computed trait so the next row click is a cache hit."""
+        current = _concise_trait_label(self.selected_result_id)
+        for row in self.trait_summary_rows:
+            trait = str(row.get("trait") or "")
+            if not trait or _concise_trait_label(trait) == current:
+                continue
+            self._cached_trait_chart_payload(trait)
 
     @staticmethod
     def _generate_default_spec() -> dict:
@@ -4280,11 +4489,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         trait = _concise_trait_label(self.selected_result_id)
         trait_row = self._trait_row_for_display(trait)
         self._apply_trait_result_info(trait, trait_row)
-        self.selected_result_html = ""
-        self.selected_result_spec = self._generate_trait_chart_spec(trait)
+        self._generate_trait_chart_spec(trait)
 
     def select_trait_result(self, event: dict) -> None:
-        """Handle row click on the trait summary table — generate trait chart."""
+        """Handle row click on the trait summary table — show the cached trait chart."""
         raw_trait = self._extract_row_field(event, "trait")
         if not raw_trait:
             return
@@ -4292,8 +4500,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         trait = _concise_trait_label(raw_trait)
         self.selected_result_id = trait
         self._apply_trait_result_info(trait, self._trait_row_for_display(raw_trait))
-        self.selected_result_html = ""
-        self.selected_result_spec = self._generate_trait_chart_spec(trait)
+        self._generate_trait_chart_spec(trait)
 
     def _auto_select_trait_chart(self) -> None:
         """Render a trait chart right after compute, without waiting for a click.

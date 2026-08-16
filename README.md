@@ -40,8 +40,12 @@ Built-in aliases `anton` and `livia` auto-download public test genomes from
 Zenodo on first use. From this workspace: `uv sync --all-packages` then
 `uv run ui` or `uv run prs …`.
 
+Never used this repo? Start with the
+[beginner's guide](docs/beginners-guide.md) (install, web UI, MCP, troubleshooting).
+
 ## Contents
 
+- [Beginner's guide](docs/beginners-guide.md)
 - [Web UI](#web-ui)
 - [Agents and slash skill](#agents-and-slash-skill)
 - [Visualization](#visualization)
@@ -105,6 +109,8 @@ The MCP server is
 [`just-prs-mcp`](https://github.com/dna-seq/just-prs-mcp). Ask in plain language:
 *"Download Anton's sample genome, normalize it, and compute PRS for type 2
 diabetes."*
+Step-by-step Cursor / Claude / Codex setup and MCP troubleshooting:
+[beginner's guide — MCP](docs/beginners-guide.md#6-deploy-mcp-talk-to-just-prs-from-an-ai-assistant).
 
 <details>
 <summary>Claude Code, Cursor, Codex, Antigravity</summary>
@@ -441,6 +447,7 @@ weak evidence should show as N/A, not a precise-looking number. See
 ## Installation
 
 Requires Python >= 3.13. Uses [uv](https://github.com/astral-sh/uv).
+First time on a new machine: [beginner's guide](docs/beginners-guide.md).
 
 ```bash
 pip install just-prs
@@ -568,6 +575,7 @@ live catalog metadata, and Zenodo test VCFs are documented in
 
 ## Documentation
 
+- [Beginner's guide](docs/beginners-guide.md) — install, web UI, MCP, troubleshooting
 - [CLI Reference](docs/cli.md)
 - [Python API](docs/python-api.md)
 - [Absolute Risk Methodology](docs/absolute-risk-methodology.md)

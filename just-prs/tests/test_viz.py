@@ -8,6 +8,7 @@ from just_prs.viz import (
     fine_population_label,
     plot_trait_scores,
     trait_report_html,
+    wrap_overflow_model_table,
 )
 
 
@@ -202,6 +203,19 @@ def test_plot_trait_scores_pgs_ids_unknown_id_raises() -> None:
         plot_trait_scores("", distributions, pgs_ids=["PGS999999"])
 
 
+def test_wrap_overflow_model_table_hides_rows_after_ten() -> None:
+    header = "<tr><th>PGS ID</th></tr>"
+    rows = [f"<tr><td>fixed</td></tr>"] + [f"<tr><td>PGS{i:06d}</td></tr>" for i in range(15)]
+    html = wrap_overflow_model_table(header, rows)
+    assert html.count("class=\"model-table\"") == 2
+    assert "Show 5 more models" in html
+    assert html.index("PGS000000") < html.index("class=\"more-models\"")
+    assert html.index("class=\"more-models\"") < html.index("PGS000010")
+    short = wrap_overflow_model_table(header, rows[:8])
+    assert "more-models" not in short
+    assert short.count("class=\"model-table\"") == 1
+
+
 def test_trait_report_per_sample_ancestry_legend_and_subtitle() -> None:
     """Auto-detected per-sample ancestries surface in the sample legend table,
     which replaces the redundant "Samples: … · Ancestry: …" subtitle line."""
@@ -266,7 +280,9 @@ def test_trait_report_per_sample_ancestry_legend_and_subtitle() -> None:
     # pgs_id-carrying data row when re-embedding the spec.
     assert "hiddenPgs" in html
     assert "v2.pgs_id" in html
-    # The AI buttons sit above the footnote blocks (samples legend + quality note).
+    # Ask AI sits above the number table (and the later footnote blocks) so
+    # people can ask before scrolling a model grid.
+    assert html.index('class="ai-buttons"') < html.index('class="model-table"')
     assert html.index('class="ai-buttons"') < html.index("Closest 1000G Cohort is the nearest")
     # The legend table IS the header — no duplicated subtitle line.
     assert "Samples:" not in html

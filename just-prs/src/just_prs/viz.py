@@ -2599,6 +2599,46 @@ def _median_recompute_script(
     )
 
 
+MODEL_TABLE_VISIBLE_ROWS = 10
+
+
+def wrap_overflow_model_table(
+    header_html: str,
+    body_rows: list[str],
+    *,
+    leading_fixed: int = 1,
+    visible_models: int = MODEL_TABLE_VISIBLE_ROWS,
+) -> str:
+    """Keep the first *visible_models* data rows on screen; hide the rest.
+
+    ``leading_fixed`` rows (the median summary) always stay in the open table.
+    Extra models go in a collapsed ``<details>`` so a 50-model trait does not
+    force a long scroll before the rest of the report.
+    """
+    fixed = body_rows[: max(leading_fixed, 0)]
+    models = body_rows[len(fixed) :]
+    shown = models[:visible_models]
+    hidden = models[visible_models:]
+    main = (
+        '<table class="model-table"><thead>'
+        + header_html
+        + "</thead><tbody>"
+        + "".join(fixed + shown)
+        + "</tbody></table>"
+    )
+    if not hidden:
+        return main
+    return (
+        main
+        + f'<details class="more-models"><summary>Show {len(hidden)} more models</summary>'
+        + '<table class="model-table"><thead>'
+        + header_html
+        + "</thead><tbody>"
+        + "".join(hidden)
+        + "</tbody></table></details>"
+    )
+
+
 def trait_report_html(
     chart: alt.Chart | alt.LayerChart | alt.VConcatChart,
     trait: str,
@@ -3083,13 +3123,10 @@ def trait_report_html(
                 )
 
         table_html = (
-            '<table class="model-table"><thead><tr>'
-            + "".join(hdr1)
-            + "</tr><tr>"
-            + "".join(hdr2)
-            + "</tr></thead><tbody>"
-            + "".join(rows_html)
-            + "</tbody></table>"
+            wrap_overflow_model_table(
+                "<tr>" + "".join(hdr1) + "</tr><tr>" + "".join(hdr2) + "</tr>",
+                rows_html,
+            )
             + '<div class="cell-sub" style="margin-top:6px">Untick a model\'s checkbox to '
             "exclude it — the Median row, the per-sample cards, and the chart (its dots "
             "and median lines) update instantly "
@@ -3215,12 +3252,9 @@ def trait_report_html(
             hdr_cells.append("<th>h²</th>")
         hdr_cells.extend(["<th>Variants</th>", "<th>Match%</th>", "<th>Quality</th>"])
 
-        table_html = (
-            '<table class="model-table"><thead><tr>'
-            + "".join(hdr_cells)
-            + "</tr></thead><tbody>"
-            + "".join(rows_html)
-            + "</tbody></table>"
+        table_html = wrap_overflow_model_table(
+            "<tr>" + "".join(hdr_cells) + "</tr>",
+            rows_html,
         )
 
     quality_note_html = _QUALITY_NOTE_HTML if scored else ""
@@ -3335,7 +3369,7 @@ h1 a:hover {{ border-bottom-color: #666; }}
 .stat-value {{ font-size: 1.6em; font-weight: 700; margin: 2px 0; }}
 .h2-value {{ font-size: 1.05em; line-height: 1.25; }}
 .stat-sub {{ font-size: 0.82em; color: #999; }}
-.ai-buttons {{ margin: 18px 0 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }}
+.ai-buttons {{ margin: 0 0 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }}
 .ai-label {{ font-size: 0.9em; color: #666; }}
 .ai-btn {{ display: inline-block; padding: 7px 16px; border-radius: 6px; color: #fff; text-decoration: none; font-size: 0.88em; font-weight: 600; }}
 .ai-btn:hover {{ opacity: 0.85; }}
@@ -3343,6 +3377,9 @@ h1 a:hover {{ border-bottom-color: #666; }}
 .vega-embed {{ width: 100%; }}
 .vega-embed canvas, .vega-embed svg {{ max-width: 100%; }}
 .model-table {{ width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 0.9em; }}
+.more-models {{ margin-top: 10px; }}
+.more-models summary {{ cursor: pointer; color: #1565C0; font-weight: 600; padding: 8px 0; }}
+.more-models .model-table {{ margin-top: 8px; }}
 .model-table th {{ text-align: left; padding: 8px 10px; border-bottom: 2px solid #ddd; color: #555; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.03em; }}
 .model-table th.sub-th {{ padding: 4px 10px; font-size: 0.8em; text-transform: none; letter-spacing: 0; }}
 .model-table td {{ padding: 6px 10px; border-bottom: 1px solid #eee; }}
@@ -3368,10 +3405,10 @@ h1 a:hover {{ border-bottom-color: #666; }}
 <body>
 <h1>PRS Report: {trait_title}</h1>
 {subtitle_html}
+{ai_html}
 {stats_html}
 <div id="vis"></div>
 {table_html}
-{ai_html}
 {samples_html}
 {quality_note_html}
 <script>
@@ -3566,7 +3603,7 @@ h1 a:hover {{ border-bottom-color: #666; }}
 #vis {{ margin-top: 12px; }}
 .vega-embed {{ width: 100%; }}
 .vega-embed canvas, .vega-embed svg {{ max-width: 100%; }}
-.ai-buttons {{ margin: 18px 0 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }}
+.ai-buttons {{ margin: 0 0 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }}
 .ai-label {{ font-size: 0.9em; color: #666; }}
 .ai-btn {{ display: inline-block; padding: 7px 16px; border-radius: 6px; color: #fff; text-decoration: none; font-size: 0.88em; font-weight: 600; }}
 .ai-btn:hover {{ opacity: 0.85; }}
@@ -3578,9 +3615,9 @@ h1 a:hover {{ border-bottom-color: #666; }}
 <body>
 <h1>PRS Bell Curve: {pgs_link_title}</h1>
 <div class="subtitle">{subtitle}</div>
+{ai_html}
 {stats_html}
 <div id="vis"></div>
-{ai_html}
 <script>
 vegaEmbed('#vis', {spec_json}, {{actions: true, width: Math.max(700, window.innerWidth - 80)}})
   .catch(console.error);

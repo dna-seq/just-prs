@@ -634,6 +634,7 @@ def prs_results_table(
         (state.prs_results.length() > 0) & (state.prs_view_mode == "individual"),  # type: ignore[operator]
         rx.box(
             _prs_disclaimers(state),
+            _ask_ai_bar(state),
             _prs_interpretation_guide(),
             PlotlyDetailSupport.create(),
             rx.box(
@@ -649,8 +650,9 @@ def prs_results_table(
                         height="100%",
                         disable_row_selection_on_click=True,
                         detail_columns=[
+                            "ai_ask",
                             "population_percentiles_chart", "population_percentiles_summary", "risk_context",
-                            "result_suggestions", "model_context", "publication_links", "ai_ask",
+                            "result_suggestions", "model_context", "publication_links",
                         ],
                         detail_labels={
                             "population_percentiles_chart": "Where You Fall on the Reference Curve",
@@ -680,12 +682,9 @@ def prs_results_table(
             rx.hstack(
                 rx.icon("chevron-right", size=14, color="var(--accent-9)"),
                 rx.text(
-                    "Expand any row (chevron on the left) for a bell curve showing your "
-                    "position, absolute-risk context, percentile spread, quality flags, and "
-                    "source-study links, plus "
-                    "one-click ",
-                    rx.text.strong("Ask AI buttons (ChatGPT, Claude, and more)"),
-                    " that open a ready-made prompt with PGS Catalog and source-paper links.",
+                    "Ask AI buttons sit above this table. Expand any row (chevron on the left) "
+                    "for a bell curve, absolute-risk context, percentile spread, quality flags, "
+                    "and source-study links.",
                     size="1",
                     color="gray",
                 ),
@@ -853,6 +852,7 @@ def trait_summary_table(
     return rx.cond(
         (state.prs_results.length() > 0) & (state.prs_view_mode == "grouped"),  # type: ignore[operator]
         rx.box(
+            _ask_ai_bar(state),
             PlotlyDetailSupport.create(),
             rx.box(
                 data_grid_scroll_container(
@@ -866,6 +866,7 @@ def trait_summary_table(
                         height="100%",
                         disable_row_selection_on_click=True,
                         detail_columns=[
+                            "ai_ask",
                             "trait_header",
                             "pgs_links",
                             "publication_links",
@@ -873,7 +874,6 @@ def trait_summary_table(
                             "key_metrics",
                             "trait_quick_flags",
                             "confidence_segments",
-                            "ai_ask",
                         ],
                         detail_labels={
                             "trait_header": "Trait",
@@ -906,11 +906,9 @@ def trait_summary_table(
             rx.hstack(
                 rx.icon("chevron-right", size=14, color="var(--accent-9)"),
                 rx.text(
-                    "Expand any trait row (chevron on the left) to see a bell curve showing where "
-                    "each model places you, model coverage, key statistics, source studies, "
-                    "a plain-language explanation of why models may disagree, and one-click ",
-                    rx.text.strong("Ask AI buttons (ChatGPT, Claude, and more)"),
-                    " that open a ready-made prompt with PGS Catalog and source-paper links.",
+                    "Ask AI buttons sit above this table. Expand any trait row (chevron on the "
+                    "left) for a bell curve, model coverage, key statistics, source studies, "
+                    "and why models may disagree.",
                     size="1",
                     color="gray",
                 ),
@@ -1189,6 +1187,62 @@ _CLICKABLE_GRID_WRAPPER_STYLE = {
 }
 
 
+def _ask_ai_button(link: Any) -> rx.Component:
+    """One Ask-AI control: open a prefilled URL, or copy the prompt."""
+    return rx.cond(
+        link["url"] != "",
+        rx.link(
+            rx.button(
+                link["label"],
+                size="2",
+                style={"background": link["color"], "color": "white"},
+            ),
+            href=link["url"],
+            is_external=True,
+        ),
+        rx.tooltip(
+            rx.button(
+                link["label"],
+                size="2",
+                variant="soft",
+                color_scheme="gray",
+                on_click=rx.set_clipboard(link["copyText"]),
+            ),
+            content=link["title"],
+        ),
+    )
+
+
+def _ask_ai_bar(state: type[rx.State]) -> rx.Component:
+    """Ask Claude / ChatGPT / … before the numbers table."""
+    return rx.cond(
+        state.selected_ai_links.length() > 0,  # type: ignore[operator]
+        rx.box(
+            rx.vstack(
+                rx.text(
+                    "Ask an AI to interpret these results — you do not have to read the table first.",
+                    size="2",
+                    weight="medium",
+                ),
+                rx.hstack(
+                    rx.foreach(state.selected_ai_links, _ask_ai_button),
+                    spacing="2",
+                    wrap="wrap",
+                    align="center",
+                ),
+                spacing="2",
+                width="100%",
+            ),
+            padding="12px 14px",
+            border="1px solid var(--accent-6)",
+            border_radius="var(--radius-3)",
+            background="var(--accent-2)",
+            width="100%",
+            flex_shrink="0",
+        ),
+    )
+
+
 def _results_action_bar(state: type[rx.State], prompt: str) -> rx.Component:
     """Instruction and explicit result deletion controls."""
     return rx.hstack(
@@ -1224,16 +1278,83 @@ def _results_action_bar(state: type[rx.State], prompt: str) -> rx.Component:
     )
 
 
+def _overflow_results_details(label: Any, table: rx.Component) -> rx.Component:
+    """Native dropdown that hides extra result rows until opened."""
+    return rx.el.details(
+        rx.el.summary(
+            label,
+            style={
+                "cursor": "pointer",
+                "padding": "8px 2px",
+                "color": "var(--accent-11)",
+                "fontWeight": "600",
+                "fontSize": "var(--font-size-2)",
+            },
+        ),
+        table,
+        style={"width": "100%"},
+    )
+
+
 def prs_results_clickable_table(
     state: type[rx.State],
     table_height: str | None = None,
 ) -> rx.Component:
     """Compact PRS results DataGrid — click a row to chart it.
 
+    The first 10 rows stay open. Anything past that is behind a dropdown so a
+    large compute does not force a long scroll.
+
     Args:
         state: Concrete state class (must mix in ``PRSComputeStateMixin``).
         table_height: CSS height for the results table container.
     """
+    preview = rx.box(
+        data_grid_scroll_container(
+            data_grid(
+                rows=state.prs_results_preview_rows,
+                columns=state.prs_results_columns,
+                column_grouping_model=state.prs_results_column_groups,
+                row_id_field="id",
+                pagination=False,
+                hide_footer=True,
+                density="standard",
+                height="100%",
+                row_height=52,
+                column_header_height=40,
+                disable_row_selection_on_click=True,
+                on_row_click=state.select_prs_result,
+                sx=_CLICKABLE_ROW_SX,
+            ),
+        ),
+        height=table_height or state.prs_results_table_height,
+        width="100%",
+        overflow="hidden",
+        style=_CLICKABLE_GRID_WRAPPER_STYLE,
+    )
+    overflow = rx.box(
+        data_grid_scroll_container(
+            data_grid(
+                rows=state.prs_results_overflow_rows,
+                columns=state.prs_results_columns,
+                column_grouping_model=state.prs_results_column_groups,
+                row_id_field="id",
+                pagination=False,
+                hide_footer=True,
+                density="standard",
+                height="100%",
+                row_height=52,
+                column_header_height=40,
+                disable_row_selection_on_click=True,
+                on_row_click=state.select_prs_result,
+                sx=_CLICKABLE_ROW_SX,
+            ),
+        ),
+        height=state.prs_results_overflow_table_height,
+        width="100%",
+        overflow="hidden",
+        style=_CLICKABLE_GRID_WRAPPER_STYLE,
+    )
     return rx.cond(
         state.prs_results.length() > 0,  # type: ignore[operator]
         rx.vstack(
@@ -1241,28 +1362,10 @@ def prs_results_clickable_table(
                 state,
                 "Select PRS result above to view its distribution.",
             ),
-            rx.box(
-                data_grid_scroll_container(
-                    data_grid(
-                        rows=state.prs_results_rows,
-                        columns=state.prs_results_columns,
-                        column_grouping_model=state.prs_results_column_groups,
-                        row_id_field="id",
-                        pagination=False,
-                        hide_footer=True,
-                        density="standard",
-                        height="100%",
-                        row_height=52,
-                        column_header_height=40,
-                        disable_row_selection_on_click=True,
-                        on_row_click=state.select_prs_result,
-                        sx=_CLICKABLE_ROW_SX,
-                    ),
-                ),
-                height=table_height or state.prs_results_table_height,
-                width="100%",
-                overflow="hidden",
-                style=_CLICKABLE_GRID_WRAPPER_STYLE,
+            preview,
+            rx.cond(
+                state.prs_results_overflow_label != "",
+                _overflow_results_details(state.prs_results_overflow_label, overflow),
             ),
             spacing="1",
             width="100%",
@@ -1276,10 +1379,56 @@ def trait_results_clickable_table(
 ) -> rx.Component:
     """Compact trait summary DataGrid — click a row to chart it.
 
+    The first 10 traits stay open; the rest sit in a dropdown.
+
     Args:
         state: Concrete state class (must mix in ``PRSComputeStateMixin``).
         table_height: CSS height for the trait table container.
     """
+    preview = rx.box(
+        data_grid_scroll_container(
+            data_grid(
+                rows=state.trait_summary_preview_rows,
+                columns=state.trait_summary_columns,
+                row_id_field="id",
+                pagination=False,
+                hide_footer=True,
+                density="standard",
+                height="100%",
+                row_height=52,
+                column_header_height=40,
+                disable_row_selection_on_click=True,
+                on_row_click=state.select_trait_result,
+                sx=_CLICKABLE_ROW_SX,
+            ),
+        ),
+        height=table_height or state.trait_results_table_height,
+        width="100%",
+        overflow="hidden",
+        style=_CLICKABLE_GRID_WRAPPER_STYLE,
+    )
+    overflow = rx.box(
+        data_grid_scroll_container(
+            data_grid(
+                rows=state.trait_summary_overflow_rows,
+                columns=state.trait_summary_columns,
+                row_id_field="id",
+                pagination=False,
+                hide_footer=True,
+                density="standard",
+                height="100%",
+                row_height=52,
+                column_header_height=40,
+                disable_row_selection_on_click=True,
+                on_row_click=state.select_trait_result,
+                sx=_CLICKABLE_ROW_SX,
+            ),
+        ),
+        height=state.trait_results_overflow_table_height,
+        width="100%",
+        overflow="hidden",
+        style=_CLICKABLE_GRID_WRAPPER_STYLE,
+    )
     return rx.cond(
         (state.prs_results.length() > 0) & (state.prs_view_mode == "grouped"),  # type: ignore[operator]
         rx.vstack(
@@ -1287,27 +1436,10 @@ def trait_results_clickable_table(
                 state,
                 "Select PRS result above to view the trait distribution.",
             ),
-            rx.box(
-                data_grid_scroll_container(
-                    data_grid(
-                        rows=state.trait_summary_rows,
-                        columns=state.trait_summary_columns,
-                        row_id_field="id",
-                        pagination=False,
-                        hide_footer=True,
-                        density="standard",
-                        height="100%",
-                        row_height=52,
-                        column_header_height=40,
-                        disable_row_selection_on_click=True,
-                        on_row_click=state.select_trait_result,
-                        sx=_CLICKABLE_ROW_SX,
-                    ),
-                ),
-                height=table_height or state.trait_results_table_height,
-                width="100%",
-                overflow="hidden",
-                style=_CLICKABLE_GRID_WRAPPER_STYLE,
+            preview,
+            rx.cond(
+                state.trait_summary_overflow_label != "",
+                _overflow_results_details(state.trait_summary_overflow_label, overflow),
             ),
             spacing="1",
             width="100%",
@@ -1344,6 +1476,7 @@ def prs_results_with_chart(
         (state.prs_results.length() > 0) & (state.prs_view_mode == "individual"),  # type: ignore[operator]
         rx.vstack(
             _prs_disclaimers(state),
+            _ask_ai_bar(state),
             _prs_interpretation_guide(),
             _prs_results_header(state, show_view_toggle=False) if show_header else rx.fragment(),
             prs_results_clickable_table(state, table_height=table_height),
@@ -1384,6 +1517,7 @@ def trait_results_with_chart(
     return rx.cond(
         (state.prs_results.length() > 0) & (state.prs_view_mode == "grouped"),  # type: ignore[operator]
         rx.vstack(
+            _ask_ai_bar(state),
             trait_results_clickable_table(state, table_height=table_height),
             trait_results_chart_panel(
                 state,

@@ -161,6 +161,10 @@ CACHE_MANIFEST: dict[str, ManifestEntry] = {
         artifact_class=ArtifactClass.DEV,
         note="PRS result cache",
     ),
+    "sample_scores": ManifestEntry(
+        artifact_class=ArtifactClass.RUNTIME,
+        note="Published public-genome PRS lookup plus catalog evidence tables (runtime_results may be pending)",
+    ),
     "plink2": ManifestEntry(
         artifact_class=ArtifactClass.REBUILD,
         note="Auto-downloaded PLINK2 binary (LD-pruning at build time)",

@@ -102,6 +102,13 @@ from just_prs.cache_audit import (
     CacheProfile,
     scan_cache,
 )
+from just_prs.sample_scores import (
+    ComputationSource,
+    PrecomputedPolicy,
+    lookup_precomputed_prs,
+    match_score_profile,
+    resolve_official_prs,
+)
 from just_prs.scoring import ensure_scoring_file, resolve_cache_dir
 from just_prs.trait_summary import (
     TraitSummaryStats,

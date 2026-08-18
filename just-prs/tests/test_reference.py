@@ -19,6 +19,7 @@ from just_prs.reference import (
     SUPERPOPULATIONS,
     _find_reference_panel_file,
     _aggregate_single_pgs,
+    _first_score_match_fields,
     _reference_panel_complete,
     aggregate_distributions,
     ancestry_percentile,
@@ -260,6 +261,22 @@ class TestAggregateDistributions:
         assert result.outcome.variants_total is None
         assert result.outcome.variants_matched is None
         assert result.outcome.match_rate is None
+
+    def test_fresh_score_match_fields_survive_frame_discard(self) -> None:
+        """Batch scoring must read match columns before `del df` (UnboundLocalError)."""
+        df = pl.DataFrame({
+            "pgs_id": ["PGS000001"] * 2,
+            "score": [1.0, 2.0],
+            "variants_total": [100, 100],
+            "variants_matched": [80, 80],
+            "match_rate": [0.8, 0.8],
+        })
+        variants_total, variants_matched, match_rate = _first_score_match_fields(df)
+        del df
+        assert variants_total == 100
+        assert variants_matched == 80
+        assert match_rate == pytest.approx(0.8)
+        assert _first_score_match_fields(pl.DataFrame({"score": [1.0]})) == (None, None, None)
 
 
 class TestDistributionQualityIssues:

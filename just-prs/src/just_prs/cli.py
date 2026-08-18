@@ -638,6 +638,17 @@ def compute(
     ancestry_aadr: Annotated[
         bool, typer.Option("--ancestry-aadr/--no-ancestry-aadr", help="Fold the local AADR Human Origins panel (Slavic/Balkan) into the ancestry consensus")
     ] = False,
+    precomputed: Annotated[
+        str,
+        typer.Option(
+            "--precomputed",
+            help=(
+                "Use published public-genome scores when identity and profile match: "
+                "auto (default; lookup then compute), off (always compute), "
+                "require (fail if no published hit)"
+            ),
+        ),
+    ] = "auto",
 ) -> None:
     """Compute polygenic risk score(s) for a VCF file.
 
@@ -727,44 +738,102 @@ def compute(
             reference_universe_path=universe_path,
             sample_build=sample_build,
         )
+        result.computation_source = result.computation_source or "computed"
         results: list[PRSResult] = [result]
     else:
-        pgs_ids = [pid.strip() for pid in pgs_id.split(",")]
+        from just_prs.sample_scores import (
+            PrecomputedMiss,
+            PrecomputedPolicy,
+            lookup_precomputed_prs,
+            resolve_official_prs,
+        )
+
+        pgs_ids = [pid.strip() for pid in pgs_id.split(",") if pid.strip()]
         console.print(f"Computing PRS for {len(pgs_ids)} score(s) on {vcf_path}...")
+        policy = PrecomputedPolicy(precomputed.strip().lower())
+        alias_names = {name.casefold() for name in _load_aliases(cache_dir.parent if cache_dir == DEFAULT_CACHE_DIR else cache_dir)}
+        lookup_alias = vcf.strip() if vcf.strip().casefold() in alias_names else None
+        root_cache = cache_dir.parent if cache_dir == DEFAULT_CACHE_DIR else cache_dir
+
+        def _lookup(pid: str) -> PRSResult | None:
+            if policy is PrecomputedPolicy.OFF:
+                return None
+            return lookup_precomputed_prs(
+                pgs_id=pid,
+                genome_build=build,
+                vcf_path=vcf_path,
+                alias=lookup_alias,
+                reference_restoration=scope,
+                genotype_input_mode=genotype_input_mode,
+                cache_dir=root_cache,
+                scores_cache=cache_dir,
+            )
 
         if len(pgs_ids) == 1:
             with PGSCatalogClient() as client:
                 score_info = client.get_score(pgs_ids[0])
-            result = compute_prs(
-                vcf_path=vcf_path,
-                scoring_file=pgs_ids[0],
-                genome_build=build,
-                cache_dir=cache_dir,
-                pgs_id=pgs_ids[0],
-                trait_reported=score_info.trait_reported,
-                genotype_input_mode=genotype_input_mode,
-                reference_restoration=scope,
-                reference_universe_path=universe_path,
-                sample_build=sample_build,
-            )
+            try:
+                result = resolve_official_prs(
+                    policy=policy,
+                    pgs_id=pgs_ids[0],
+                    genome_build=build,
+                    vcf_path=vcf_path,
+                    alias=lookup_alias,
+                    reference_restoration=scope,
+                    genotype_input_mode=genotype_input_mode,
+                    cache_dir=root_cache,
+                    scores_cache=cache_dir,
+                    compute=lambda: compute_prs(
+                        vcf_path=vcf_path,
+                        scoring_file=pgs_ids[0],
+                        genome_build=build,
+                        cache_dir=cache_dir,
+                        pgs_id=pgs_ids[0],
+                        trait_reported=score_info.trait_reported,
+                        genotype_input_mode=genotype_input_mode,
+                        reference_restoration=scope,
+                        reference_universe_path=universe_path,
+                        sample_build=sample_build,
+                    ),
+                )
+            except PrecomputedMiss as exc:
+                console.print(f"[red]{exc}[/red]")
+                raise typer.Exit(code=1) from exc
             results = [result]
         else:
-            batch = compute_prs_batch(
-                vcf_path=vcf_path,
-                pgs_ids=pgs_ids,
-                genome_build=build,
-                cache_dir=cache_dir,
-                genotype_input_mode=genotype_input_mode,
-                reference_restoration=scope,
-                reference_universe_path=universe_path,
-                sample_build=sample_build,
-            )
-            results = batch.results
-            if batch.failed_ids:
-                console.print(
-                    f"[yellow]Warning: {batch.n_failed}/{batch.n_total} scores failed: "
-                    f"{', '.join(batch.failed_ids)}[/yellow]"
+            hits: list[PRSResult] = []
+            misses: list[str] = []
+            for pid in pgs_ids:
+                hit = _lookup(pid)
+                if hit is not None:
+                    hits.append(hit)
+                elif policy is PrecomputedPolicy.REQUIRE:
+                    console.print(
+                        f"[red]No published PRS for {pid} under the requested sample/profile[/red]"
+                    )
+                    raise typer.Exit(code=1)
+                else:
+                    misses.append(pid)
+            results = list(hits)
+            if misses:
+                batch = compute_prs_batch(
+                    vcf_path=vcf_path,
+                    pgs_ids=misses,
+                    genome_build=build,
+                    cache_dir=cache_dir,
+                    genotype_input_mode=genotype_input_mode,
+                    reference_restoration=scope,
+                    reference_universe_path=universe_path,
+                    sample_build=sample_build,
                 )
+                for item in batch.results:
+                    item.computation_source = item.computation_source or "computed"
+                results.extend(batch.results)
+                if batch.failed_ids:
+                    console.print(
+                        f"[yellow]Warning: {batch.n_failed}/{batch.n_total} scores failed: "
+                        f"{', '.join(batch.failed_ids)}[/yellow]"
+                    )
 
     table = Table(title="PRS Results")
     table.add_column("PGS ID", style="cyan")
@@ -776,6 +845,7 @@ def compute(
     table.add_column("Assumed Ref", justify="right")
     table.add_column("Unavailable", justify="right")
     table.add_column("Mode", justify="right")
+    table.add_column("Source", justify="right")
 
     for r in results:
         table.add_row(
@@ -788,6 +858,7 @@ def compute(
             str(r.variants_assumed_hom_ref),
             str(r.variants_unscorable_absent),
             r.genotype_input_mode,
+            r.computation_source or "computed",
         )
 
     console.print(table)

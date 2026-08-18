@@ -747,6 +747,138 @@ def check_ancestry_model_valid(
     )
 
 
+@asset_check(
+    asset="sample_score_evidence",
+    blocking=True,
+    description=(
+        "Blocking evidence invariants: unique keys, no actionability without a "
+        "cited guideline, no pharmacology without a drug-response PGS, longevity "
+        "traits carry aging, no abstract without a compatible license."
+    ),
+)
+def check_sample_score_evidence_valid(
+    cache_dir_resource: CacheDirResource,
+) -> AssetCheckResult:
+    from just_prs.sample_scores.evidence.checks import EvidenceCheckError, validate_evidence_tables
+    from just_prs.sample_scores.evidence.contexts import drug_response_pgs_ids
+    from just_prs.sample_scores.evidence.models import (
+        ActionabilityRecord,
+        GuidelineRecord,
+        GuidelineTraitLink,
+        PaperRecord,
+        RecordSearchTerm,
+        ScorePaperLink,
+        ScoreTraitLink,
+        TraitContextRecord,
+        TraitRecord,
+    )
+    from just_prs.sample_scores.store import sample_scores_dir
+    from just_prs.scoring import parquet_cache_is_readable
+
+    output_dir = sample_scores_dir(cache_dir_resource.get_path())
+
+    def _load[T](name: str, model: type[T]) -> list[T]:
+        path = output_dir / f"{name}.parquet"
+        if not parquet_cache_is_readable(path):
+            return []
+        frame = pl.read_parquet(path)
+        return [model.model_validate(row) for row in frame.iter_rows(named=True)]
+
+    traits = _load("traits", TraitRecord)
+    if not traits:
+        return AssetCheckResult(
+            passed=False,
+            severity=AssetCheckSeverity.ERROR,
+            metadata={"error": "traits.parquet missing or empty"},
+        )
+    score_links = _load("score_trait_links", ScoreTraitLink)
+    papers = _load("papers", PaperRecord)
+    paper_links = _load("score_paper_links", ScorePaperLink)
+    guidelines = _load("guidelines", GuidelineRecord)
+    guideline_links = _load("guideline_trait_links", GuidelineTraitLink)
+    actionability = _load("actionability", ActionabilityRecord)
+    contexts = _load("trait_contexts", TraitContextRecord)
+    terms = _load("record_search_terms", RecordSearchTerm)
+    pgs_by_trait: dict[str, set[str]] = {}
+    for link in score_links:
+        pgs_by_trait.setdefault(link.trait_id, set()).add(link.pgs_id)
+    scores_path = cache_dir_resource.get_path() / "metadata" / "scores.parquet"
+    drug_pgs: set[str] = set()
+    if parquet_cache_is_readable(scores_path):
+        drug_pgs = drug_response_pgs_ids(pl.read_parquet(scores_path).iter_rows(named=True))
+    try:
+        validate_evidence_tables(
+            traits=traits,
+            score_trait_links=score_links,
+            papers=papers,
+            score_paper_links=paper_links,
+            guidelines=guidelines,
+            guideline_trait_links=guideline_links,
+            actionability=actionability,
+            trait_contexts=contexts,
+            record_search_terms=terms,
+            drug_response_pgs_ids=drug_pgs,
+            score_trait_pgs_by_trait=pgs_by_trait,
+        )
+    except EvidenceCheckError as exc:
+        return AssetCheckResult(
+            passed=False,
+            severity=AssetCheckSeverity.ERROR,
+            metadata={"error": str(exc)},
+        )
+    return AssetCheckResult(
+        passed=True,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "n_traits": len(traits),
+            "n_papers": len(papers),
+            "n_guidelines": len(guidelines),
+            "n_actionability": len(actionability),
+        },
+    )
+
+
+@asset_check(
+    asset="public_sample_runtime_results",
+    blocking=True,
+    description=(
+        "Blocking runtime matrix: one ok/failed row per sample×PGS×profile, "
+        "no private samples or local paths, compaction parity with checkpoint keys."
+    ),
+)
+def check_public_sample_runtime_complete(
+    cache_dir_resource: CacheDirResource,
+) -> AssetCheckResult:
+    from just_prs.canary_audit import parse_canary_samples_env
+    from just_prs.sample_scores.completeness import validate_runtime_results
+    from just_prs.sample_scores.engine import expected_checkpoint_keys
+
+    cache_dir = cache_dir_resource.get_path()
+    vcf_env = os.environ.get("PRS_CANARY_VCFS", "").strip()
+    samples = parse_canary_samples_env(vcf_env, cache_dir) if vcf_env else []
+    pgs_ids_raw = os.environ.get("PRS_CANARY_PGS_IDS", "").strip()
+    requested = [part.strip() for part in pgs_ids_raw.split(",") if part.strip()] or None
+    limit_raw = os.environ.get("PRS_CANARY_LIMIT", "").strip()
+    limit = int(limit_raw) if limit_raw else None
+    expected_keys = None
+    if samples:
+        expected_keys = expected_checkpoint_keys(
+            samples, cache_dir, pgs_ids=requested, limit=limit
+        )
+    report = validate_runtime_results(cache_dir, expected_checkpoint_keys=expected_keys)
+    return AssetCheckResult(
+        passed=report.passed,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "n_rows": report.n_rows,
+            "n_ok": report.n_ok,
+            "n_failed": report.n_failed,
+            "n_expected": report.n_expected,
+            "issues": report.issues,
+        },
+    )
+
+
 ALL_ASSET_CHECKS = [
     check_distributions_superpop_completeness,
     check_distributions_no_inf_nan,
@@ -760,4 +892,6 @@ ALL_ASSET_CHECKS = [
     check_chip_coverage_valid,
     check_ld_proxy_table_valid,
     check_reference_allele_universe_valid,
+    check_sample_score_evidence_valid,
+    check_public_sample_runtime_complete,
 ]

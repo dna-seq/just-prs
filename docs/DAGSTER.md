@@ -81,7 +81,8 @@ All jobs include `hooks={resource_summary_hook}` for run-level resource aggregat
 | `download_reference_data` | `reference_panel` | Download the reference panel from EBI FTP |
 | `score_and_push` | `scoring_files`, `scoring_files_parquet`, `reference_scores`, `raw_pgs_metadata`, `cleaned_pgs_metadata`, `hf_prs_percentiles` | Download scoring files, convert to parquet, batch-score, download/clean metadata, enrich, and push to HuggingFace |
 | `reference_percentile_audit_job` | `reference_percentile_audit` | Audit cached or HuggingFace reference percentile distributions and write sidecars without recomputing reference scores |
-| `canary_collapse_audit_job` | `canary_collapse_audit` | Score caller-supplied canary VCFs (`--vcf`) across the catalog (or flag cached results), quarantine 0th/100th-percentile collapses, and push catalog + percentile flags without recomputing 1000G scores |
+| `public_sample_scores_job` | `public_sample_score_parts`, `public_sample_runtime_results`, `public_sample_canary_audit`, `hf_public_sample_runtime` | Memory-safe PGS-major scoring of caller-supplied `--vcf` genomes (unrestored then restored), one compaction + blocking completeness check, canary quarantine from unrestored public-wgs-pass-v1 rows, and runtime-only HF upload (`samples.parquet` / `runtime_results.parquet` / `runtime_manifest.json`). Scores ≥1M variants are singleton checkpoints; DuckDB joins them in `PRS_SCORING_JOIN_CHUNK_SIZE` slices (same idea as 1000G genotype chunks) and the worker recycles after each. Does not recompute 1000G scores or write evidence/final docs. A native worker death isolates the crashing PGS, records a failed row, and continues |
+| `sample_score_evidence_job` | `sample_score_evidence`, `hf_sample_score_evidence` | Build catalog-level evidence tables (traits, papers, guidelines, actionability, trait_contexts, record_search_terms) from cleaned catalog cache + public guideline adapters and upload them. Does not score genomes and does not wait for `runtime_results` |
 | `ld_proxy_pipeline` | `ld_proxy_table`, `hf_ld_proxy_table` | Build consumer-array LD proxy tables as one parquet per PGS ID. Full-catalog coverage is a resumable per-PGS batch with shared reference-panel setup, not one catalog-wide union table |
 | `metadata_pipeline` | `raw_pgs_metadata`, `cleaned_pgs_metadata` | End-to-end metadata pipeline (download + clean; push via catalog_pipeline) |
 
@@ -121,13 +122,23 @@ The pipeline is operated via the `prs-pipeline` CLI (or `uv run pipeline` from t
   uv run pipeline audit
   uv run pipeline audit --headless
   uv run pipeline audit --test
-  uv run pipeline canary-audit
-  uv run pipeline canary-audit --vcf anton --vcf livia --vcf mom=mom.vcf.gz
-  uv run pipeline canary-audit --headless
+  uv run pipeline sample-scores
+  uv run pipeline sample-scores --vcf anton --vcf livia --vcf o-mom=/path/to/mom.vcf.gz
+  uv run pipeline sample-scores --vcf anton --vcf livia --retry-failed
+  uv run pipeline sample-scores --headless
+  uv run pipeline canary-audit --vcf anton --vcf livia  # alias
   ```
   Launches the Dagster UI by default and submits `reference_percentile_audit_job`, which audits cached or HuggingFace-pulled `{panel}_distributions.parquet` plus `{panel}_quality.parquet` when available. It logs pass/warn/fail PGS-ID counts, writes `{panel}_distribution_quality_issues.parquet` and `{panel}_distribution_audit_summary.json`, and uploads those sidecars to HuggingFace when `HF_TOKEN` is available, all without recomputing reference scores.
 
-  `uv run pipeline canary-audit --vcf ... --vcf ...` launches the Dagster UI and submits `canary_collapse_audit_job`. Pass `--vcf` at least twice (path, alias, or `Label=path`); that scores the **full catalog** on those samples (resumable via `canary_scores.parquet`) and marks a PGS ID unreliable when a majority land at percentile 0 or close to it (`PGS003724`-style). It writes `catalog_scoring_flags.parquet`, merges `canary_collapsed_percentile` ERROR rows into the audit sidecar, and pushes both to HuggingFace. `PRSCatalog.scores()` and `reference_distributions()` then drop those IDs. It does **not** recompute 1000G reference scores. Use `--pgs-ids` / `--limit` for a pilot; `--no-cache` to rescore.
+  `uv run pipeline sample-scores --vcf ... --vcf ...` launches the Dagster UI and submits `public_sample_scores_job` (`canary-audit` is an alias). The 1000G `completeness_sensor` / `failure_retry_sensor` stay quiet while this CLI job is requested so they cannot submit `score_and_push` and steal the slot. Pass `--vcf` at least twice (path, alias, or `Label=path`). The job is four assets: PGS-major checkpoint parts (unrestored then restored, resumable atomic parquet parts), one compaction to `runtime_results.parquet` with a blocking completeness check, canary flags derived from unrestored `public-wgs-pass-v1` rows, and a runtime-only Hugging Face upload (`samples.parquet` / `runtime_results.parquet` / `runtime_manifest.json` plus catalog flags and percentile audit sidecars). Scores with ≥ `PRS_SAMPLE_SCORE_LARGE_VARIANT_THRESHOLD` variants (default 1M; the PGS005172–PGS005197 cluster is ~9.5M each) are planned as singleton checkpoints; `compute_prs_duckdb` joins them in `PRS_SCORING_JOIN_CHUNK_SIZE` slices and the worker recycles after each so a 10-wide batch of genome-wide scores cannot native-crash. Scoring workers emit a Dagster log line after each checkpoint (`Sample scores {profile}: N/M PGS …`), forwarded from the subprocess so the compute log is not empty. Unpublished `--vcf` labels are logged only when present. It does **not** recompute 1000G reference scores, upload evidence tables, or write the combined root `manifest.json`. Use `--pgs-ids` / `--limit` for a pilot; `--retry-failed` to re-score failed checkpoint rows while keeping successful cache and continuing into missing IDs; `--no-cache` to wipe parts and rescore everything.
+
+- **Publish catalog evidence (no scoring)**:
+  ```bash
+  uv run pipeline evidence
+  uv run pipeline evidence --headless
+  uv run pipeline evidence --offline
+  ```
+  Launches the Dagster UI by default and submits `sample_score_evidence_job`. Reads cleaned catalog cache plus public guideline adapters (USPSTF, ClinGen, WHO/CDC, NICE public pages) and writes traits / papers / guidelines / three-status actionability / extra-clinical contexts. Uploads those tables plus schema-generated root `README.md` and `AGENTS.md` to `just-dna-seq/prs-sample-scores`. Skips missing `runtime_results.parquet`. Does **not** invent sample scores. `--offline` sets `PRS_EVIDENCE_ALLOW_NETWORK=0`.
 
 - **Build LD proxy tables for consumer arrays**:
   ```bash
@@ -155,6 +166,8 @@ Every compute-heavy asset is wrapped with `resource_tracker` from `prs_pipeline.
 | `memory_delta_mb` | Change in RSS from start to end (positive = growth) |
 
 These metrics are written to Dagster output metadata (visible in the asset materialization panel) and logged to the Dagster logger.
+
+End-of-asset resource metrics are not a substitute for in-loop progress. Hours-long jobs (`public_sample_scores_job`, `reference_scores`) must emit `context.log.info` every `PRS_PIPELINE_PROGRESS_EVERY` items (default 10) with done/total, percent, current ID span, and timing. If scoring runs in a subprocess, the parent must forward flushed stdout into that logger; otherwise the Dagster compute log stays empty.
 
 Every job has `hooks={resource_summary_hook}` which aggregates per-asset metrics at the end of each successful run, logging:
 - Total duration across all assets

@@ -71,6 +71,39 @@ def test_compute_prs_duckdb_pgs000001(vcf_path: Path, scoring_cache_dir: Path) -
     assert result.score != 0.0
 
 
+def test_compute_prs_duckdb_chunked_matches_unchunked(
+    vcf_path: Path,
+    scoring_cache_dir: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Bounded scoring-file joins must match the single-collect DuckDB path."""
+    unchunked = compute_prs_duckdb(
+        vcf_path=vcf_path,
+        scoring_file="PGS000001",
+        genome_build="GRCh38",
+        cache_dir=scoring_cache_dir,
+        pgs_id="PGS000001",
+        genotype_input_mode="plink_present_only",
+    )
+    monkeypatch.setenv("PRS_SCORING_JOIN_CHUNK_SIZE", "10")
+    chunked = compute_prs_duckdb(
+        vcf_path=vcf_path,
+        scoring_file="PGS000001",
+        genome_build="GRCh38",
+        cache_dir=scoring_cache_dir,
+        pgs_id="PGS000001",
+        genotype_input_mode="plink_present_only",
+    )
+    assert unchunked.variants_total == 77
+    assert chunked.variants_total == unchunked.variants_total
+    assert chunked.variants_matched == unchunked.variants_matched
+    assert chunked.variants_observed == unchunked.variants_observed
+    assert chunked.variants_assumed_hom_ref == unchunked.variants_assumed_hom_ref
+    assert chunked.variants_unscorable_absent == unchunked.variants_unscorable_absent
+    assert chunked.match_rate == pytest.approx(unchunked.match_rate)
+    assert chunked.score == pytest.approx(unchunked.score, abs=1e-10)
+
+
 @pytest.mark.parametrize("pgs_id", ["PGS000001", "PGS000002", "PGS000003"])
 def test_engine_parity(vcf_path: Path, scoring_cache_dir: Path, pgs_id: str) -> None:
     """Verify that polars and DuckDB engines produce identical results."""

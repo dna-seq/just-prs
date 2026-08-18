@@ -43,7 +43,6 @@ from just_prs.canary_audit import (
     catalog_flags_path,
     flag_canary_collapses,
     parse_canary_samples_env,
-    score_canary_catalog,
     write_catalog_flags,
 )
 from just_prs.hf import (
@@ -57,6 +56,12 @@ from just_prs.hf import (
     push_reference_distributions,
     reference_allele_universe_filename,
 )
+from just_prs.sample_scores.publish import (
+    compact_public_sample_runtime,
+    is_publication_allowed,
+    score_public_sample_catalog,
+)
+from just_prs.sample_scores.store import sample_scores_dir
 from just_prs.ld_proxy import (
     _ld_hard_memory_limit,
     _ld_memory_limit_bytes,
@@ -155,6 +160,48 @@ ensembl_grch38_fasta = SourceAsset(
         "Unprefixed contigs (1..22, X, Y, MT) match this package's normalized coords."
     ),
     metadata={"url": REFERENCE_FASTA["GRCh38"]["url"]},
+)
+
+ols4_ontology = SourceAsset(
+    key="ols4_ontology",
+    group_name="external",
+    description="OLS4 public term API used to enrich catalog trait IDs with labels, definitions, synonyms, aliases, and ICD-10 xrefs.",
+    metadata={"url": "https://www.ebi.ac.uk/ols4/api/terms"},
+)
+
+europe_pmc = SourceAsset(
+    key="europe_pmc",
+    group_name="external",
+    description="Europe PMC public search API for citation metadata and license-gated abstracts.",
+    metadata={"url": "https://www.ebi.ac.uk/europepmc/webservices/rest/search"},
+)
+
+uspstf_public_recommendations = SourceAsset(
+    key="uspstf_public_recommendations",
+    group_name="external",
+    description="USPSTF public recommendation pages (grade, title, URL). Login/API-approval feeds are not used.",
+    metadata={"url": "https://www.uspreventiveservicestaskforce.org/uspstf/recommendation-topics"},
+)
+
+clingen_actionability = SourceAsset(
+    key="clingen_actionability",
+    group_name="external",
+    description="ClinGen Clinical Actionability public summaries (CC-BY-4.0). Condition/genetic context, not automatic PRS actionability.",
+    metadata={"url": "https://actionability.clinicalgenome.org/"},
+)
+
+who_cdc_public_guidance = SourceAsset(
+    key="who_cdc_public_guidance",
+    group_name="external",
+    description="WHO fact sheets and CDC public-domain pages used as obtainable public artifacts.",
+    metadata={"url": "https://www.who.int/news-room/fact-sheets"},
+)
+
+nice_public_guidance = SourceAsset(
+    key="nice_public_guidance",
+    group_name="external",
+    description="NICE public guidance pages (ID, title, URL). No syndication licence and no AI-use carve-out.",
+    metadata={"url": "https://www.nice.org.uk/guidance"},
 )
 
 
@@ -1433,21 +1480,161 @@ def reference_percentile_audit(
     return Output(str(audit_summary_path))
 
 
+def _public_sample_run_args(
+    cache_dir: Path,
+) -> tuple[list, list[str] | None, int | None, bool, bool, int]:
+    """Shared CLI/env parsing for the split public-sample assets."""
+    from just_prs.sample_scores.engine import retry_failed_enabled
+
+    vcf_env = os.environ.get("PRS_CANARY_VCFS", "").strip()
+    samples = parse_canary_samples_env(vcf_env, cache_dir) if vcf_env else []
+    if len(samples) < 2:
+        raise ValueError(
+            "public sample-score assets need at least two --vcf samples "
+            "(pipeline sample-scores --vcf ... --vcf ...)."
+        )
+    pgs_ids_raw = os.environ.get("PRS_CANARY_PGS_IDS", "").strip()
+    requested_ids = [part.strip() for part in pgs_ids_raw.split(",") if part.strip()] or None
+    limit_raw = os.environ.get("PRS_CANARY_LIMIT", "").strip()
+    limit = int(limit_raw) if limit_raw else None
+    skip_existing = os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() not in {
+        "1", "true", "yes",
+    }
+    progress_every_raw = os.environ.get("PRS_PIPELINE_PROGRESS_EVERY", "10").strip()
+    progress_every = int(progress_every_raw) if progress_every_raw else 10
+    return samples, requested_ids, limit, skip_existing, retry_failed_enabled(), progress_every
+
+
 @asset(
     group_name="compute",
     description=(
-        "Score every catalog PGS on caller-supplied canary VCFs (``--vcf``), "
-        "mark scores unreliable when a majority land near percentile 0, and push "
-        "catalog_scoring_flags.parquet plus the percentile audit sidecar. "
-        "Does not recompute 1000G reference scores."
+        "PGS-major unrestored then restored scoring of publication-allowed "
+        "public genomes into immutable checkpoint parts. Bounded workers; "
+        "does not compact, does not load 1000G distributions, does not upload."
     ),
 )
-def canary_collapse_audit(
+def public_sample_score_parts(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[str]:
+    """Write atomic runtime parts for anton/livia/o-family under both WGS profiles."""
+    cache_dir = cache_dir_resource.get_path()
+    samples, requested_ids, limit, skip_existing, retry_failed, progress_every = (
+        _public_sample_run_args(cache_dir)
+    )
+    with resource_tracker("public_sample_score_parts", context=context) as tracked:
+        published = [sample.label for sample in samples if is_publication_allowed(sample.label)]
+        skipped = [sample.label for sample in samples if not is_publication_allowed(sample.label)]
+        context.log.info(
+            "Scoring publication-allowed public genomes (PGS-major, two serial "
+            f"profiles): {', '.join(published) or 'none'}."
+        )
+        if retry_failed and skip_existing:
+            context.log.info(
+                "Retrying failed checkpoint rows; successful cache is kept "
+                "and missing PGS IDs still run."
+            )
+        if skipped:
+            context.log.info(
+                "Skipped unpublished --vcf labels (canary-only, never uploaded): "
+                + ", ".join(skipped)
+            )
+        progress = score_public_sample_catalog(
+            samples,
+            cache_dir,
+            pgs_ids=requested_ids,
+            limit=limit,
+            skip_existing=skip_existing,
+            retry_failed=retry_failed,
+            progress_every=progress_every,
+            log=context.log.info,
+        )
+        tracked["checkpoints"] = progress.failed_ids
+    parts_root = sample_scores_dir(cache_dir) / "parts" / "runtime"
+    context.add_output_metadata({
+        "n_total": progress.n_total,
+        "n_ok": progress.n_ok,
+        "n_failed": progress.n_failed,
+        "n_cached": progress.n_cached,
+        "coverage_ratio": (
+            (progress.n_ok + progress.n_cached) / progress.n_total if progress.n_total else 1.0
+        ),
+        "published_sample_ids": progress.published_sample_ids,
+        "skipped_unpublished_labels": progress.skipped_labels,
+        "parts_dir": str(parts_root),
+    })
+    return Output(str(parts_root))
+
+
+@asset(
+    group_name="compute",
+    deps=[AssetDep("public_sample_score_parts")],
+    description=(
+        "Compact runtime checkpoint parts once into runtime_results.parquet, "
+        "write runtime_manifest.json, and enforce the complete outcome matrix."
+    ),
+)
+def public_sample_runtime_results(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[str]:
+    """One atomic compaction plus blocking completeness checks."""
+    from just_prs.sample_scores.completeness import validate_runtime_results
+    from just_prs.sample_scores.engine import expected_checkpoint_keys
+
+    cache_dir = cache_dir_resource.get_path()
+    samples, requested_ids, limit, _skip, _retry, _every = _public_sample_run_args(cache_dir)
+    with resource_tracker("public_sample_runtime_results", context=context):
+        expected_keys = expected_checkpoint_keys(
+            samples, cache_dir, pgs_ids=requested_ids, limit=limit
+        )
+        dest = compact_public_sample_runtime(cache_dir, expected_keys=expected_keys)
+        report = validate_runtime_results(
+            cache_dir,
+            expected_checkpoint_keys=expected_keys,
+        )
+        report.raise_if_failed()
+    context.add_output_metadata({
+        "n_total": report.n_expected,
+        "n_ok": report.n_ok,
+        "n_failed": report.n_failed,
+        "n_cached": 0,
+        "coverage_ratio": (
+            (report.n_ok + report.n_failed) / report.n_expected if report.n_expected else 1.0
+        ),
+        "n_runtime_rows": report.n_rows,
+        "n_samples": report.n_samples,
+        "n_pgs_ids": report.n_pgs_ids,
+        "runtime_results_path": str(dest),
+    })
+    return Output(str(dest))
+
+
+@asset(
+    group_name="compute",
+    deps=[AssetDep("public_sample_runtime_results")],
+    description=(
+        "Derive public canary rows from unrestored public-wgs-pass-v1 runtime "
+        "scores, score only unknown/private --vcf inputs separately, attach "
+        "percentiles, write catalog flags and audit sidecars. Does not recompute "
+        "1000G reference scores."
+    ),
+)
+def public_sample_canary_audit(
     context: AssetExecutionContext,
     cache_dir_resource: CacheDirResource,
     hf_resource: HuggingFaceResource,
 ) -> Output[str]:
-    """Quarantine canary-collapsed scores from the catalog and percentiles."""
+    """Canary collapse flags from unrestored runtime + optional private scorer."""
+    from just_prs.sample_scores.canary import (
+        canary_rows_from_unrestored_runtime,
+        compact_canary_scores,
+        private_canary_samples,
+        public_canary_labels,
+        score_private_canary_catalog,
+    )
+    from just_prs.sample_scores.publish import canonical_sample_id
+
     panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
     cache_dir = cache_dir_resource.get_path()
     percentiles_dir = cache_dir / "percentiles"
@@ -1456,60 +1643,12 @@ def canary_collapse_audit(
     quality_path = percentiles_dir / f"{panel}_quality.parquet"
     issue_report_path = percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
     audit_summary_path = percentiles_dir / f"{panel}_distribution_audit_summary.json"
-    vcf_env = os.environ.get("PRS_CANARY_VCFS", "").strip()
-    pgs_ids_raw = os.environ.get("PRS_CANARY_PGS_IDS", "").strip()
-    limit_raw = os.environ.get("PRS_CANARY_LIMIT", "").strip()
     ancestry = os.environ.get("PRS_CANARY_ANCESTRY", "EUR").strip() or "EUR"
-    genome_build = os.environ.get("PRS_CANARY_BUILD", "").strip() or None
-    skip_existing = os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() not in {
-        "1", "true", "yes",
-    }
-    progress_every_raw = os.environ.get("PRS_PIPELINE_PROGRESS_EVERY", "10").strip()
-    progress_every = int(progress_every_raw) if progress_every_raw else 10
-    n_scored = 0
-    n_cached = 0
-    n_failed = 0
-    sample_labels: list[str] = []
+    samples, requested_ids, limit, skip_existing, _retry, progress_every = (
+        _public_sample_run_args(cache_dir)
+    )
 
-    with resource_tracker("canary_collapse_audit", context=context):
-        samples = parse_canary_samples_env(vcf_env, cache_dir) if vcf_env else []
-        sample_labels = [sample.label for sample in samples]
-        if len(samples) < 2:
-            raise ValueError(
-                "canary_collapse_audit needs at least two --vcf samples "
-                "(pipeline canary-audit --vcf ... --vcf ...)."
-            )
-        requested_ids = [part.strip() for part in pgs_ids_raw.split(",") if part.strip()] or None
-        limit = int(limit_raw) if limit_raw else None
-        context.log.info(
-            f"Scoring catalog on {len(samples)} canary VCF(s): "
-            + ", ".join(f"{sample.label}={sample.vcf_path}" for sample in samples)
-        )
-        rows, progress = score_canary_catalog(
-            samples,
-            cache_dir,
-            pgs_ids=requested_ids,
-            limit=limit,
-            ancestry=ancestry,
-            panel=panel,
-            genome_build=genome_build,
-            skip_existing=skip_existing,
-            progress_every=progress_every,
-            log=context.log.info,
-        )
-        n_scored = progress.n_ok
-        n_cached = progress.n_cached
-        n_failed = progress.n_failed
-        flags_df = flag_canary_collapses(rows, n_samples=len(samples))
-        flags_path = write_catalog_flags(flags_df, cache_dir)
-        excluded_ids = (
-            sorted(flags_df["pgs_id"].unique().to_list()) if flags_df.height > 0 else []
-        )
-        context.log.info(
-            f"Canary collapse flags: {flags_df.height} PGS IDs from "
-            f"{rows.height} cached canary result rows. Excluded: {excluded_ids}"
-        )
-
+    with resource_tracker("public_sample_canary_audit", context=context):
         if not dist_path.exists():
             pull_reference_distributions(
                 percentiles_dir,
@@ -1522,8 +1661,44 @@ def canary_collapse_audit(
                 f"Reference distributions not found: {dist_path}. "
                 "Pull percentiles first; this job does not recompute 1000G scores."
             )
-
         distributions = pl.read_parquet(dist_path)
+        public_ids = public_canary_labels(samples)
+        public_rows = canary_rows_from_unrestored_runtime(cache_dir, sample_ids=public_ids)
+        context.log.info(
+            f"Derived {public_rows.height} public canary rows from unrestored "
+            f"runtime ({', '.join(public_ids) or 'none'})."
+        )
+        private_rows, private_progress = score_private_canary_catalog(
+            samples,
+            cache_dir,
+            pgs_ids=requested_ids,
+            limit=limit,
+            skip_existing=skip_existing,
+            progress_every=progress_every,
+            log=context.log.info,
+        )
+        if private_canary_samples(samples):
+            context.log.info(
+                "Private/unknown canary inputs scored on the separate low-level path: "
+                + ", ".join(sample.label for sample in private_canary_samples(samples))
+            )
+        rows = compact_canary_scores(
+            public_rows,
+            private_rows,
+            distributions,
+            cache_dir,
+            ancestry=ancestry,
+        )
+        n_samples = len({canonical_sample_id(sample.label) for sample in samples})
+        flags_df = flag_canary_collapses(rows, n_samples=n_samples)
+        flags_path = write_catalog_flags(flags_df, cache_dir)
+        excluded_ids = (
+            sorted(flags_df["pgs_id"].unique().to_list()) if flags_df.height > 0 else []
+        )
+        context.log.info(
+            f"Canary collapse flags: {flags_df.height} PGS IDs from "
+            f"{rows.height} canary result rows. Excluded: {excluded_ids}"
+        )
         quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
         issue_df = reference_distribution_audit_issues(
             distributions,
@@ -1548,53 +1723,190 @@ def canary_collapse_audit(
             fully_removed_pgs_ids=error_ids,
         )
 
-        hf_flags_uploaded = False
-        hf_audit_uploaded = False
-        hf_token = hf_resource.get_token()
-        if hf_token:
-            push_catalog_scoring_flags(
-                flags_path,
-                repo_id=hf_resource.catalog_repo,
-                token=hf_token,
-            )
-            hf_flags_uploaded = True
-            push_reference_audit_sidecars(
-                quality_report_path=quality_path if quality_path.exists() else None,
-                issue_report_path=issue_report_path,
-                audit_summary_path=audit_summary_path,
-                repo_id=hf_resource.percentiles_repo,
-                token=hf_token,
-                panel=panel,
-            )
-            hf_audit_uploaded = True
-            context.log.info(
-                f"Uploaded catalog flags to {hf_resource.catalog_repo} and "
-                f"audit sidecars to {hf_resource.percentiles_repo}."
-            )
-        else:
-            context.log.warning(
-                "HF_TOKEN is not set; canary flags and audit sidecars were written "
-                "locally but not uploaded to HuggingFace."
-            )
-
     context.add_output_metadata({
         "panel": panel,
-        "canary_samples": sample_labels,
+        "n_total": rows.height,
+        "n_ok": int(rows.filter(pl.col("percentile").is_not_null()).height) if rows.height else 0,
+        "n_failed": private_progress.n_failed,
+        "n_cached": private_progress.n_cached,
+        "coverage_ratio": 1.0,
         "n_canary_result_rows": rows.height,
-        "n_scored": n_scored,
-        "n_cached": n_cached,
-        "n_failed": n_failed,
+        "n_public_canary_rows": public_rows.height,
+        "n_private_canary_rows": private_rows.height,
         "n_flagged_pgs_ids": flags_df.height,
         "flagged_pgs_ids": excluded_ids,
         "catalog_flags_path": str(flags_path),
         "distribution_quality_issues_path": str(issue_report_path),
-        "hf_flags_uploaded": hf_flags_uploaded,
-        "hf_audit_uploaded": hf_audit_uploaded,
-        "hf_catalog_repo": hf_resource.catalog_repo,
-        "hf_percentiles_repo": hf_resource.percentiles_repo,
         "issue_counts_by_type": audit_summary["issue_counts_by_type"],
     })
     return Output(str(flags_path))
+
+
+@asset(
+    group_name="upload",
+    deps=[AssetDep("public_sample_canary_audit")],
+    description=(
+        "Upload runtime-owned sample-score artifacts (samples, runtime_results, "
+        "runtime_manifest) plus catalog flags and percentile audit sidecars. "
+        "Does not upload evidence tables, final manifest.json, or root docs."
+    ),
+)
+def hf_public_sample_runtime(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Push explicit runtime paths only."""
+    from just_prs.hf import push_sample_score_runtime
+    from just_prs.sample_scores.completeness import validate_runtime_results
+
+    panel = os.environ.get("PRS_PIPELINE_PANEL", DEFAULT_PANEL)
+    cache_dir = cache_dir_resource.get_path()
+    percentiles_dir = cache_dir / "percentiles"
+    quality_path = percentiles_dir / f"{panel}_quality.parquet"
+    issue_report_path = percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
+    audit_summary_path = percentiles_dir / f"{panel}_distribution_audit_summary.json"
+    flags_path = catalog_flags_path(cache_dir)
+    local_dir = sample_scores_dir(cache_dir)
+    repo_id = hf_resource.get_sample_scores_repo()
+    token = hf_resource.get_token()
+    uploaded: list[str] = []
+    hf_flags_uploaded = False
+    hf_audit_uploaded = False
+
+    with resource_tracker("hf_public_sample_runtime", context=context):
+        report = validate_runtime_results(cache_dir)
+        report.raise_if_failed()
+        if token:
+            uploaded = push_sample_score_runtime(local_dir, repo_id=repo_id, token=token)
+            if flags_path.exists():
+                push_catalog_scoring_flags(
+                    flags_path,
+                    repo_id=hf_resource.catalog_repo,
+                    token=token,
+                )
+                hf_flags_uploaded = True
+            push_reference_audit_sidecars(
+                quality_report_path=quality_path if quality_path.exists() else None,
+                issue_report_path=issue_report_path if issue_report_path.exists() else None,
+                audit_summary_path=audit_summary_path if audit_summary_path.exists() else None,
+                repo_id=hf_resource.percentiles_repo,
+                token=token,
+                panel=panel,
+            )
+            hf_audit_uploaded = True
+            context.log.info(
+                f"Uploaded runtime files {uploaded} to {repo_id}; flags to "
+                f"{hf_resource.catalog_repo}; audit sidecars to "
+                f"{hf_resource.percentiles_repo}."
+            )
+        else:
+            context.log.warning(
+                "HF_TOKEN is not set; runtime artifacts, canary flags, and audit "
+                "sidecars were written locally but not uploaded."
+            )
+
+    context.add_output_metadata({
+        "n_total": report.n_rows,
+        "n_ok": report.n_ok,
+        "n_failed": report.n_failed,
+        "n_cached": 0,
+        "coverage_ratio": (
+            (report.n_ok + report.n_failed) / report.n_expected if report.n_expected else 1.0
+        ),
+        "hf_sample_scores_repo": repo_id,
+        "uploaded_files": uploaded,
+        "hf_flags_uploaded": hf_flags_uploaded,
+        "hf_audit_uploaded": hf_audit_uploaded,
+        "sample_scores_dir": str(local_dir),
+    })
+    return Output(str(local_dir))
+
+
+@asset(
+    group_name="compute",
+    description=(
+        "Build catalog-level evidence tables (traits, papers, guidelines, "
+        "actionability, trait_contexts, record_search_terms) from cleaned PGS "
+        "Catalog metadata and public guideline adapters. Does not score genomes "
+        "and does not wait for runtime_results."
+    ),
+)
+def sample_score_evidence(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[str]:
+    """Write evidence parquets + schema-generated docs. No sample scoring."""
+    from just_prs.sample_scores.evidence import build_sample_score_evidence
+
+    cache_dir = cache_dir_resource.get_path()
+    allow_network = os.environ.get("PRS_EVIDENCE_ALLOW_NETWORK", "1").strip().lower() not in {
+        "0", "false", "no",
+    }
+    with resource_tracker("sample_score_evidence", context=context):
+        result = build_sample_score_evidence(
+            cache_dir,
+            allow_network=allow_network,
+            push=False,
+        )
+    context.add_output_metadata({
+        "n_total": result.n_traits,
+        "n_ok": result.n_traits,
+        "n_failed": 0,
+        "n_cached": 0,
+        "coverage_ratio": 1.0,
+        "n_traits": result.n_traits,
+        "n_score_trait_links": result.n_score_trait_links,
+        "n_papers": result.n_papers,
+        "n_score_paper_links": result.n_score_paper_links,
+        "n_guidelines": result.n_guidelines,
+        "n_actionability": result.n_actionability,
+        "n_trait_contexts": result.n_trait_contexts,
+        "n_record_search_terms": result.n_record_search_terms,
+        "sample_scores_dir": str(result.output_dir),
+        "runtime_results_pending": True,
+    })
+    return Output(str(result.output_dir))
+
+
+@asset(
+    group_name="upload",
+    deps=[AssetDep("sample_score_evidence")],
+    description=(
+        "Upload evidence tables, manifest, README.md, and AGENTS.md to "
+        "just-dna-seq/prs-sample-scores. Skips missing runtime_results."
+    ),
+)
+def hf_sample_score_evidence(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Push evidence files only. Does not invent or wait for sample scores."""
+    from just_prs.sample_scores.evidence import publish_sample_score_evidence
+    from just_prs.sample_scores.store import sample_scores_dir
+
+    cache_dir = cache_dir_resource.get_path()
+    local_dir = sample_scores_dir(cache_dir)
+    repo_id = hf_resource.get_sample_scores_repo()
+    token = hf_resource.get_token()
+    uploaded = False
+    with resource_tracker("hf_sample_score_evidence", context=context):
+        if token:
+            publish_sample_score_evidence(local_dir, repo_id=repo_id, token=token)
+            uploaded = True
+        else:
+            context.log.warning(
+                "HF_TOKEN is not set; evidence tables were written locally "
+                "but not uploaded to HuggingFace."
+            )
+    context.add_output_metadata({
+        "hf_sample_scores_repo": repo_id,
+        "hf_uploaded": uploaded,
+        "sample_scores_dir": str(local_dir),
+        "runtime_results_pending": True,
+    })
+    return Output(str(local_dir))
 
 
 # ---------------------------------------------------------------------------

@@ -79,24 +79,72 @@ def _setup_dagster_home() -> Path:
     return dagster_home
 
 
-def _kill_port(port: int) -> None:
-    """Kill any process listening on the given TCP port."""
+def _pids_listening_on(port: int) -> list[int]:
     result = subprocess.run(
         ["lsof", "-t", f"-iTCP:{port}"],
         capture_output=True, text=True,
     )
-    pids = [int(p) for p in result.stdout.strip().splitlines() if p.strip()]
-    if pids:
-        console.print(f"[yellow]Port {port} in use by PIDs {pids}, terminating...[/yellow]")
-        for pid in pids:
+    return [int(p) for p in result.stdout.strip().splitlines() if p.strip()]
+
+
+def _pids_matching(patterns: list[str]) -> list[int]:
+    """Return PIDs whose command line contains every token in any pattern list."""
+    result = subprocess.run(["ps", "-eo", "pid=,args="], capture_output=True, text=True)
+    pids: list[int] = []
+    for line in result.stdout.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        pid_s, _, args = stripped.partition(" ")
+        try:
+            pid = int(pid_s)
+        except ValueError:
+            continue
+        if pid == os.getpid():
+            continue
+        if any(all(token in args for token in pattern) for pattern in patterns):
+            pids.append(pid)
+    return pids
+
+
+def _terminate_pids(pids: list[int], *, label: str) -> None:
+    unique = sorted(set(pids))
+    if not unique:
+        return
+    console.print(f"[yellow]{label}: terminating PIDs {unique}[/yellow]")
+    for pid in unique:
+        try:
             os.kill(pid, signal.SIGTERM)
-        time.sleep(1)
-        result2 = subprocess.run(
-            ["lsof", "-t", f"-iTCP:{port}"],
-            capture_output=True, text=True,
-        )
-        for pid in [int(p) for p in result2.stdout.strip().splitlines() if p.strip()]:
+        except ProcessLookupError:
+            continue
+    time.sleep(1)
+    for pid in unique:
+        try:
             os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            continue
+
+
+def _kill_port(port: int) -> None:
+    """Kill listeners on ``port`` and leftover ``dagster dev`` trees for this home.
+
+    Killing only the webserver leaves the previous daemon heartbeat alive, and
+    the next ``dagster dev`` then refuses to run sensors.
+    """
+    home = os.environ.get("DAGSTER_HOME", "")
+    listener_pids = _pids_listening_on(port)
+    leftover_patterns = [
+        ["dagster dev", "-m", "prs_pipeline.definitions", f"--port {port}"],
+        ["dagster_webserver", f"--port {port}"],
+    ]
+    if home:
+        leftover_patterns.extend([
+            ["dagster._daemon run", home],
+            ["dagster code-server start", home],
+            ["dagster api grpc", home],
+        ])
+    leftover = _pids_matching(leftover_patterns)
+    _terminate_pids(listener_pids + leftover, label=f"Port {port} / leftover Dagster UI")
 
 
 def _cancel_orphaned_runs() -> None:
@@ -187,7 +235,7 @@ def run(
     test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
     test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
-    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, ld_proxy_pipeline, reference_allele_pipeline, reference_percentile_audit_job, canary_collapse_audit_job.")] = "full_pipeline",
+    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, ld_proxy_pipeline, reference_allele_pipeline, reference_percentile_audit_job, public_sample_scores_job.")] = "full_pipeline",
     no_cache: Annotated[bool, typer.Option("--no-cache", help="Ignore on-disk caches and re-download/recompute everything.")] = False,
     headless: Annotated[bool, typer.Option("--headless", help="Run in-process without Dagster UI.")] = False,
     host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
@@ -209,6 +257,8 @@ def run(
     dagster_home = _setup_dagster_home()
     is_test_run = _set_pipeline_env(panel, test, test_ids, no_cache=no_cache)
 
+    if job == "canary_collapse_audit_job":
+        job = "public_sample_scores_job"
     os.environ["PRS_PIPELINE_STARTUP_JOB"] = job
 
     if headless:
@@ -225,7 +275,7 @@ def run(
         result = _execute_job(resolved_job)
 
         if result.success:
-            if job in {"reference_percentile_audit_job", "canary_collapse_audit_job"}:
+            if job in {"reference_percentile_audit_job", "public_sample_scores_job"}:
                 _print_reference_audit_summary(panel)
             console.print(f"\n[green bold]Job '{job}' completed successfully.[/green bold]")
         else:
@@ -413,8 +463,76 @@ def audit(
     ])
 
 
+@app.command()
+def evidence(
+    no_cache: Annotated[
+        bool,
+        typer.Option("--no-cache", help="Rebuild evidence tables even when local parquets exist."),
+    ] = False,
+    offline: Annotated[
+        bool,
+        typer.Option("--offline", help="Skip OLS / Europe PMC / URL confirmation network calls."),
+    ] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Run sample_score_evidence_job in-process without Dagster UI.")] = False,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
+) -> None:
+    """Build catalog-level evidence tables for just-dna-seq/prs-sample-scores.
+
+    \b
+    Reads cleaned catalog cache and public guideline adapters. Does **not**
+    score genomes and does **not** wait for ``runtime_results.parquet``.
+    Dagster UI by default; use ``--headless`` for in-process execution.
+    """
+    dagster_home = _setup_dagster_home()
+    _set_pipeline_env("1000g", no_cache=no_cache)
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "sample_score_evidence_job"
+    if offline:
+        os.environ["PRS_EVIDENCE_ALLOW_NETWORK"] = "0"
+    else:
+        os.environ.pop("PRS_EVIDENCE_ALLOW_NETWORK", None)
+
+    if headless:
+        _cancel_orphaned_runs()
+        console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+        console.print("[bold]Job:[/bold] sample_score_evidence_job (catalog evidence, no scoring)\n")
+
+        from prs_pipeline.definitions import defs
+
+        resolved_job = defs.get_job_def("sample_score_evidence_job")
+        console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+        result = _execute_job(resolved_job)
+
+        if result.success:
+            console.print("\n[green bold]Job 'sample_score_evidence_job' completed successfully.[/green bold]")
+        else:
+            console.print("\n[red bold]Job 'sample_score_evidence_job' failed.[/red bold]")
+            for event in result.all_events:
+                if event.is_failure:
+                    console.print(f"  [red]{event.message}[/red]")
+            raise typer.Exit(code=1)
+        return
+
+    os.environ["PRS_PIPELINE_STARTUP_REQUEST_ID"] = uuid.uuid4().hex
+    _kill_port(port)
+    _cancel_orphaned_runs()
+    console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
+    console.print("[bold]Job 'sample_score_evidence_job' will be submitted automatically on startup.[/bold]\n")
+
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])
+
+
+@app.command(name="sample-scores")
 @app.command(name="canary-audit")
-def canary_audit(
+def sample_scores(
     vcf: Annotated[
         Optional[list[str]],
         typer.Option(
@@ -447,21 +565,38 @@ def canary_audit(
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
     no_cache: Annotated[
         bool,
-        typer.Option("--no-cache", help="Rescore even when canary_scores.parquet already has the ID."),
+        typer.Option("--no-cache", help="Wipe public-sample checkpoint parts and rescore everything."),
     ] = False,
-    headless: Annotated[bool, typer.Option("--headless", help="Run canary_collapse_audit_job in-process without Dagster UI.")] = False,
+    retry_failed: Annotated[
+        bool,
+        typer.Option(
+            "--retry-failed",
+            help=(
+                "Re-score PGS IDs that already have failed checkpoint rows, "
+                "and continue into IDs that are still missing. Successful "
+                "cached scores are kept. Unlike --no-cache."
+            ),
+        ),
+    ] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Run public_sample_scores_job in-process without Dagster UI.")] = False,
     host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
     port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
 ) -> None:
-    """Score all catalog PRS on canary VCFs and quarantine near-zero collapses.
+    """Score catalog PRS on canary VCFs, quarantine collapses, publish public samples.
 
     \b
     Pass ``--vcf`` once per sample (path, alias, or ``Label=path``; at least 2).
-    Example: ``uv run pipeline canary-audit --vcf anton --vcf livia --vcf mom=mom.vcf.gz``
+    Example: ``uv run pipeline sample-scores --vcf anton --vcf livia --vcf o-mom=/path/to/mom.vcf.gz``
     Scores every catalog PGS on those genomes, marks a score unreliable when a
     majority land at percentile 0 or close to it, writes
-    ``catalog_scoring_flags.parquet``, and pushes to HuggingFace.
-    Dagster UI by default (same as ``pipeline run`` / ``audit``).
+    ``catalog_scoring_flags.parquet``, and pushes flags to HuggingFace.
+    The same job then scores publication-allowed public genomes (anton, livia,
+    o-family) under both WGS profiles and pushes ``samples.parquet`` /
+    ``runtime_results.parquet`` / ``runtime_manifest.json`` to
+    ``just-dna-seq/prs-sample-scores``. It does not write evidence tables or
+    the combined root ``manifest.json``.
+    o-family derived scores are published before the VCFs are on Zenodo.
+    Unknown genomes stay in the canary audit and are never uploaded. Dagster UI by default.
     Does not recompute 1000G reference scores.
     """
     from just_prs.canary_audit import (
@@ -477,7 +612,11 @@ def canary_audit(
 
     dagster_home = _setup_dagster_home()
     _set_pipeline_env(panel, no_cache=no_cache)
-    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "canary_collapse_audit_job"
+    if retry_failed:
+        os.environ["PRS_SAMPLE_SCORE_RETRY_FAILED"] = "1"
+    else:
+        os.environ.pop("PRS_SAMPLE_SCORE_RETRY_FAILED", None)
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "public_sample_scores_job"
     cache_dir = resolve_cache_dir()
     samples = parse_canary_vcf_specs(vcf, cache_dir, genome_build=build)
     if len(samples) < 2:
@@ -494,6 +633,11 @@ def canary_audit(
         f"[dim]Unreliable if ≥{os.environ['PRS_CANARY_MIN_SAMPLES']} of "
         f"{len(samples)} samples land near percentile 0.[/dim]"
     )
+    if retry_failed and not no_cache:
+        console.print(
+            "[bold]Retry failed:[/bold] re-score failed checkpoint rows, "
+            "keep successful cache, continue into missing PGS IDs."
+        )
     if pgs_ids:
         os.environ["PRS_CANARY_PGS_IDS"] = pgs_ids
     else:
@@ -511,11 +655,14 @@ def canary_audit(
     if headless:
         _cancel_orphaned_runs()
         console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
-        console.print("[bold]Job:[/bold] canary_collapse_audit_job (score canary VCFs, flag near-zero PRS)\n")
+        console.print(
+            "[bold]Job:[/bold] public_sample_scores_job "
+            "(flag near-zero PRS + publish public sample scores)\n"
+        )
 
         from prs_pipeline.definitions import defs
 
-        resolved_job = defs.get_job_def("canary_collapse_audit_job")
+        resolved_job = defs.get_job_def("public_sample_scores_job")
         console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
 
         result = _execute_job(resolved_job)
@@ -530,9 +677,9 @@ def canary_audit(
                 console.print(f"\n[bold]Canary catalog flags[/bold] ({flagged.height} PGS IDs)")
                 if flagged.height:
                     console.print("  " + ", ".join(flagged["pgs_id"].to_list()))
-            console.print("\n[green bold]Job 'canary_collapse_audit_job' completed successfully.[/green bold]")
+            console.print("\n[green bold]Job 'public_sample_scores_job' completed successfully.[/green bold]")
         else:
-            console.print("\n[red bold]Job 'canary_collapse_audit_job' failed.[/red bold]")
+            console.print("\n[red bold]Job 'public_sample_scores_job' failed.[/red bold]")
             for event in result.all_events:
                 if event.is_failure:
                     console.print(f"  [red]{event.message}[/red]")
@@ -544,7 +691,7 @@ def canary_audit(
     _cancel_orphaned_runs()
     console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
     console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
-    console.print("[bold]Job 'canary_collapse_audit_job' will be submitted automatically on startup.[/bold]")
+    console.print("[bold]Job 'public_sample_scores_job' will be submitted automatically on startup.[/bold]")
     console.print("[dim]Scoring the catalog on the --vcf samples listed above. Watch progress in the UI.[/dim]\n")
 
     dagster_bin = str(Path(sys.executable).parent / "dagster")

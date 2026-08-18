@@ -4,7 +4,6 @@ import dagster as dg
 from dagster import in_process_executor
 
 from prs_pipeline.assets import (
-    canary_collapse_audit,
     chip_coverage,
     ebi_reference_panel_fingerprint,
     ebi_pgs_catalog_reference_panel,
@@ -17,6 +16,18 @@ from prs_pipeline.assets import (
     hf_reference_allele_universe,
     illumina_gsa_manifest,
     ld_proxy_table,
+    public_sample_score_parts,
+    public_sample_runtime_results,
+    public_sample_canary_audit,
+    hf_public_sample_runtime,
+    sample_score_evidence,
+    hf_sample_score_evidence,
+    ols4_ontology,
+    europe_pmc,
+    uspstf_public_recommendations,
+    clingen_actionability,
+    who_cdc_public_guidance,
+    nice_public_guidance,
     reference_allele_universe,
     reference_fasta,
     reference_percentile_audit,
@@ -100,13 +111,36 @@ reference_percentile_audit_job = dg.define_asset_job(
     executor_def=in_process_executor,
 )
 
-canary_collapse_audit_job = dg.define_asset_job(
-    name="canary_collapse_audit_job",
-    selection=dg.AssetSelection.assets("canary_collapse_audit"),
+public_sample_scores_job = dg.define_asset_job(
+    name="public_sample_scores_job",
+    selection=(
+        dg.AssetSelection.assets(
+            "public_sample_score_parts",
+            "public_sample_runtime_results",
+            "public_sample_canary_audit",
+            "hf_public_sample_runtime",
+        )
+        | dg.AssetSelection.checks_for_assets("public_sample_runtime_results")
+    ),
     description=(
-        "Flag PGS IDs that collapse to 0th/100th percentile on cached canary "
-        "genomes and push catalog + percentile quarantine flags to HuggingFace "
-        "without recomputing 1000G reference scores."
+        "Memory-safe public-genome scoring: checkpoint parts, compact runtime "
+        "results, canary quarantine from unrestored rows, and runtime-only HF "
+        "upload. Does not recompute 1000G reference scores or write evidence."
+    ),
+    hooks={resource_summary_hook},
+    executor_def=in_process_executor,
+)
+
+sample_score_evidence_job = dg.define_asset_job(
+    name="sample_score_evidence_job",
+    selection=(
+        dg.AssetSelection.assets("sample_score_evidence", "hf_sample_score_evidence")
+        | dg.AssetSelection.checks_for_assets("sample_score_evidence")
+    ),
+    description=(
+        "Build and upload catalog-level evidence tables for "
+        "just-dna-seq/prs-sample-scores. Does not score genomes and does not "
+        "wait for runtime_results."
     ),
     hooks={resource_summary_hook},
     executor_def=in_process_executor,
@@ -239,7 +273,18 @@ _assets = [
     pgsc_reference_panel,
     ancestry_pca_model,
     hf_ancestry_model,
-    canary_collapse_audit,
+    ols4_ontology,
+    europe_pmc,
+    uspstf_public_recommendations,
+    clingen_actionability,
+    who_cdc_public_guidance,
+    nice_public_guidance,
+    public_sample_score_parts,
+    public_sample_runtime_results,
+    public_sample_canary_audit,
+    hf_public_sample_runtime,
+    sample_score_evidence,
+    hf_sample_score_evidence,
     reference_percentile_audit,
     reference_panel,
     reference_scores,
@@ -267,7 +312,8 @@ _unresolved_jobs = [
     reference_allele_pipeline,
     ancestry_model_pipeline,
     reference_percentile_audit_job,
-    canary_collapse_audit_job,
+    public_sample_scores_job,
+    sample_score_evidence_job,
     metadata_pipeline,
 ]
 
@@ -294,7 +340,8 @@ def _build_definitions() -> dg.Definitions:
             catalog_pipeline_job=jobs_by_name["catalog_pipeline"],
             score_and_push_job=jobs_by_name["score_and_push"],
             reference_percentile_audit_job=jobs_by_name["reference_percentile_audit_job"],
-            canary_collapse_audit_job=jobs_by_name["canary_collapse_audit_job"],
+            public_sample_scores_job=jobs_by_name["public_sample_scores_job"],
+            sample_score_evidence_job=jobs_by_name["sample_score_evidence_job"],
             ld_proxy_pipeline_job=jobs_by_name["ld_proxy_pipeline"],
         ),
         resources=_resources,

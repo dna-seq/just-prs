@@ -54,8 +54,15 @@ _JOB_CHECK_KEYS: dict[str, list[dg.AssetKey]] = {
     "reference_percentile_audit_job": [
         dg.AssetKey("reference_percentile_audit"),
     ],
-    "canary_collapse_audit_job": [
-        dg.AssetKey("canary_collapse_audit"),
+    "public_sample_scores_job": [
+        dg.AssetKey("public_sample_score_parts"),
+        dg.AssetKey("public_sample_runtime_results"),
+        dg.AssetKey("public_sample_canary_audit"),
+        dg.AssetKey("hf_public_sample_runtime"),
+    ],
+    "sample_score_evidence_job": [
+        dg.AssetKey("sample_score_evidence"),
+        dg.AssetKey("hf_sample_score_evidence"),
     ],
     "ld_proxy_pipeline": [
         dg.AssetKey("ld_proxy_table"),
@@ -68,9 +75,31 @@ _PIPELINE_JOB_NAMES = (
     "catalog_pipeline",
     "score_and_push",
     "reference_percentile_audit_job",
-    "canary_collapse_audit_job",
+    "public_sample_scores_job",
+    "sample_score_evidence_job",
     "ld_proxy_pipeline",
+    "reference_allele_pipeline",
+    "ancestry_model_pipeline",
 )
+
+# Completeness / failure-retry / freshness submit 1000G jobs. They must not
+# steal the slot when the user launched a different CLI job (sample-scores).
+_BACKGROUND_SCORE_JOBS = frozenset({"full_pipeline", "score_and_push"})
+
+
+def _requested_startup_job() -> str:
+    target = os.environ.get("PRS_PIPELINE_STARTUP_JOB", "full_pipeline").strip()
+    if target == "canary_collapse_audit_job":
+        return "public_sample_scores_job"
+    return target or "full_pipeline"
+
+
+def _background_score_and_push_blocked() -> str | None:
+    """Return the explicit CLI job when 1000G sensors must stay quiet."""
+    target = _requested_startup_job()
+    if target in _BACKGROUND_SCORE_JOBS:
+        return None
+    return target
 
 
 def _has_any_active_pipeline_run(instance: dg.DagsterInstance) -> dg.DagsterRun | None:
@@ -126,7 +155,8 @@ def _make_startup_sensor(
     catalog_pipeline_job: object,
     reference_percentile_audit_job: object,
     ld_proxy_pipeline_job: object,
-    canary_collapse_audit_job: object | None = None,
+    public_sample_scores_job: object | None = None,
+    sample_score_evidence_job: object | None = None,
 ) -> dg.SensorDefinition:
     """Startup sensor: initial materialization check."""
 
@@ -136,8 +166,10 @@ def _make_startup_sensor(
         reference_percentile_audit_job,
         ld_proxy_pipeline_job,
     ]
-    if canary_collapse_audit_job is not None:
-        startup_jobs.append(canary_collapse_audit_job)
+    if public_sample_scores_job is not None:
+        startup_jobs.append(public_sample_scores_job)
+    if sample_score_evidence_job is not None:
+        startup_jobs.append(sample_score_evidence_job)
 
     @dg.sensor(
         jobs=startup_jobs,
@@ -150,7 +182,7 @@ def _make_startup_sensor(
         ),
     )
     def startup_sensor(context: dg.SensorEvaluationContext) -> dg.SensorResult | dg.SkipReason:
-        target_job = os.environ.get("PRS_PIPELINE_STARTUP_JOB", "full_pipeline")
+        target_job = _requested_startup_job()
 
         active = _has_any_active_pipeline_run(context.instance)
         if active:
@@ -161,7 +193,11 @@ def _make_startup_sensor(
         request_id = os.environ.get("PRS_PIPELINE_STARTUP_REQUEST_ID", "").strip()
         no_cache = os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() in {"1", "true", "yes"}
         test_ids = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
-        if target_job in {"reference_percentile_audit_job", "canary_collapse_audit_job"} or request_id or no_cache or test_ids:
+        if target_job in {
+            "reference_percentile_audit_job",
+            "public_sample_scores_job",
+            "sample_score_evidence_job",
+        } or request_id or no_cache or test_ids:
             explicit_id = request_id or ("no_cache" if no_cache else "test" if test_ids else "startup")
             run_key = f"{target_job}_{explicit_id}"
             context.log.info(f"Submitting explicit {target_job} run with run_key={run_key}.")
@@ -217,6 +253,11 @@ def _make_completeness_sensor(
         ),
     )
     def completeness_sensor(context: dg.SensorEvaluationContext) -> dg.SensorResult | dg.SkipReason:
+        blocked = _background_score_and_push_blocked()
+        if blocked:
+            return dg.SkipReason(
+                f"Not submitting score_and_push; CLI requested {blocked}."
+            )
         active = _has_any_active_pipeline_run(context.instance)
         if active:
             return dg.SkipReason(
@@ -323,6 +364,11 @@ def _make_failure_retry_sensor(
         ),
     )
     def failure_retry_sensor(context: dg.SensorEvaluationContext) -> dg.SensorResult | dg.SkipReason:
+        blocked = _background_score_and_push_blocked()
+        if blocked:
+            return dg.SkipReason(
+                f"Not submitting score_and_push; CLI requested {blocked}."
+            )
         active = _has_any_active_pipeline_run(context.instance)
         if active:
             return dg.SkipReason(
@@ -552,6 +598,11 @@ def _make_upstream_freshness_sensor(
         ),
     )
     def upstream_freshness_sensor(context: dg.SensorEvaluationContext) -> dg.SensorResult | dg.SkipReason:
+        blocked = _background_score_and_push_blocked()
+        if blocked:
+            return dg.SkipReason(
+                f"Not submitting full_pipeline; CLI requested {blocked}."
+            )
         active = _has_any_active_pipeline_run(context.instance)
         if active:
             return dg.SkipReason(
@@ -625,7 +676,8 @@ def make_all_sensors(
     score_and_push_job: object,
     reference_percentile_audit_job: object,
     ld_proxy_pipeline_job: object | None = None,
-    canary_collapse_audit_job: object | None = None,
+    public_sample_scores_job: object | None = None,
+    sample_score_evidence_job: object | None = None,
 ) -> list[dg.SensorDefinition]:
     """Create all 4 smart pipeline sensors.
 
@@ -638,7 +690,8 @@ def make_all_sensors(
             catalog_pipeline_job,
             reference_percentile_audit_job,
             ld_proxy_pipeline_job or full_pipeline_job,
-            canary_collapse_audit_job,
+            public_sample_scores_job,
+            sample_score_evidence_job,
         ),
         _make_completeness_sensor(score_and_push_job),
         _make_failure_retry_sensor(score_and_push_job),

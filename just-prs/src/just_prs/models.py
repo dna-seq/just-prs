@@ -330,6 +330,22 @@ class PRSResult(BaseModel):
         default=None,
         description="Inferred genetic ancestry of the sample (super-pop + confidence, fine population, informational mixture); populated when ancestry inference is requested",
     )
+    computation_source: str | None = Field(
+        default=None,
+        description="How this result was obtained: 'precomputed' (HF/local public sample) or 'computed'. Not the UI Native/Harmonized score_source.",
+    )
+    precomputed_repo: str | None = Field(
+        default=None,
+        description="Hugging Face dataset repo a precomputed hit came from",
+    )
+    precomputed_revision: str | None = Field(
+        default=None,
+        description="Dataset revision for a precomputed hit, when known",
+    )
+    score_profile_id: str | None = Field(
+        default=None,
+        description="Published scoring-profile id when the result is a precomputed hit",
+    )
 
 
 class EnrichedPRSResult(BaseModel):

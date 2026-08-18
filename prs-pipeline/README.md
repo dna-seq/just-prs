@@ -33,7 +33,12 @@ Then open http://localhost:3000 in your browser.
 | `reference_panel` | download | Download + extract reference panel binary files (.pgen/.pvar/.psam) |
 | `reference_scores` | compute | Score all PGS IDs against the reference panel via `compute_reference_prs_batch()` |
 | `reference_percentile_audit` | compute | Audit cached or HuggingFace reference percentile parquets, log pass/warn/fail counts, and write/upload quality sidecars without recomputing scores |
-| `canary_collapse_audit` | compute | Score caller-supplied `--vcf` canaries across the catalog (or flag cached results); push catalog flags + audit sidecar without recomputing 1000G scores |
+| `public_sample_score_parts` | compute | PGS-major unrestored then restored scoring of `--vcf` genomes into atomic checkpoint parts. Scores ≥1M variants are singleton checkpoints; DuckDB joins them in bounded slices; workers recycle at the env memory budget or after a large score. Does not recompute 1000G scores |
+| `public_sample_runtime_results` | compute | Compact checkpoint parts once into `runtime_results.parquet` and enforce the complete sample×PGS×profile outcome matrix |
+| `public_sample_canary_audit` | compute | Derive public canary rows from unrestored `public-wgs-pass-v1` runtime; score unknown/private `--vcf` separately; write catalog flags and percentile audit sidecars |
+| `hf_public_sample_runtime` | upload | Push runtime-owned files only (`samples.parquet`, `runtime_results.parquet`, `runtime_manifest.json`) plus flags/sidecars. Never uploads evidence or root docs |
+| `sample_score_evidence` | compute | Catalog-level evidence tables (traits, papers, guidelines, actionability, trait_contexts, record_search_terms) from cleaned catalog + public adapters. Does not score genomes |
+| `hf_sample_score_evidence` | upload | Push evidence tables + schema-generated root README/AGENTS to `just-dna-seq/prs-sample-scores`. Skips missing runtime scores |
 | `hf_prs_percentiles` | upload | Enrich distributions with metadata and absolute risk, push to HuggingFace |
 
 ### Metadata & Prevalence Pipeline

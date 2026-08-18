@@ -33,6 +33,7 @@ class HuggingFaceResource(ConfigurableResource):
     token: str = ""
     percentiles_repo: str = "just-dna-seq/prs-percentiles"
     catalog_repo: str = "just-dna-seq/pgs-catalog"
+    sample_scores_repo: str = "just-dna-seq/prs-sample-scores"
 
     def get_token(self) -> str | None:
         """Return the resolved HF token."""
@@ -40,3 +41,7 @@ class HuggingFaceResource(ConfigurableResource):
             return self.token
         load_dotenv()
         return os.environ.get("HF_TOKEN")
+
+    def get_sample_scores_repo(self) -> str:
+        """Return the public sample-score dataset repo (env override first)."""
+        return os.environ.get("PRS_SAMPLE_SCORES_REPO") or self.sample_scores_repo

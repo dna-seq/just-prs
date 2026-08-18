@@ -17,7 +17,45 @@ from just_prs.scoring import parquet_cache_is_readable
 
 DEFAULT_HF_PERCENTILES_REPO = "just-dna-seq/prs-percentiles"
 DEFAULT_HF_CATALOG_REPO = "just-dna-seq/pgs-catalog"
+DEFAULT_HF_SAMPLE_SCORES_REPO = "just-dna-seq/prs-sample-scores"
 HF_DATA_PREFIX = "data"
+
+SAMPLE_SCORES_FILES = (
+    "samples.parquet",
+    "runtime_results.parquet",
+    "runtime_manifest.json",
+    "manifest.json",
+    "traits.parquet",
+    "score_trait_links.parquet",
+    "papers.parquet",
+    "score_paper_links.parquet",
+    "guidelines.parquet",
+    "guideline_trait_links.parquet",
+    "actionability.parquet",
+    "trait_contexts.parquet",
+    "record_search_terms.parquet",
+)
+SAMPLE_SCORES_DOC_FILES = (
+    "README.md",
+    "AGENTS.md",
+)
+EVIDENCE_SAMPLE_SCORES_FILES = (
+    "manifest.json",
+    "traits.parquet",
+    "score_trait_links.parquet",
+    "papers.parquet",
+    "score_paper_links.parquet",
+    "guidelines.parquet",
+    "guideline_trait_links.parquet",
+    "actionability.parquet",
+    "trait_contexts.parquet",
+    "record_search_terms.parquet",
+)
+RUNTIME_SAMPLE_SCORES_FILES = (
+    "samples.parquet",
+    "runtime_results.parquet",
+    "runtime_manifest.json",
+)
 
 CLEANED_PARQUET_FILES = [
     "scores.parquet",
@@ -526,6 +564,153 @@ def push_reference_audit_sidecars(
             api.upload_file(
                 path_or_fileobj=str(path),
                 path_in_repo=path_in_repo,
+                repo_id=repo_id,
+                repo_type="dataset",
+            )
+
+
+def pull_sample_scores(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_SAMPLE_SCORES_REPO,
+    token: str | None = None,
+) -> Path:
+    """Download the public sample-score dataset flat into ``local_dir``.
+
+    Missing files are skipped so a partial first publish (samples only) still
+    lands. Network or repo errors propagate to the caller.
+    """
+    import logging
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    resolved_token = _resolve_token(token)
+    local_dir.mkdir(parents=True, exist_ok=True)
+    with start_action(action_type="hf:pull_sample_scores", repo_id=repo_id):
+        for name in SAMPLE_SCORES_FILES:
+            target = local_dir / name
+            if not needs_pull(target):
+                continue
+            try:
+                _pull_flat(
+                    repo_id=repo_id,
+                    hf_path=f"{HF_DATA_PREFIX}/{name}",
+                    local_dir=local_dir,
+                    token=resolved_token,
+                    target_name=name,
+                )
+            except (EntryNotFoundError, RepositoryNotFoundError):
+                logging.getLogger(__name__).debug(
+                    "sample-scores file %s not on HF (%s)", name, repo_id,
+                )
+        for name in SAMPLE_SCORES_DOC_FILES:
+            target = local_dir / name
+            if not needs_pull(target):
+                continue
+            try:
+                _pull_flat(
+                    repo_id=repo_id,
+                    hf_path=name,
+                    local_dir=local_dir,
+                    token=resolved_token,
+                    target_name=name,
+                )
+            except (EntryNotFoundError, RepositoryNotFoundError):
+                logging.getLogger(__name__).debug(
+                    "sample-scores doc %s not on HF (%s)", name, repo_id,
+                )
+    return local_dir
+
+
+def push_sample_score_runtime(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_SAMPLE_SCORES_REPO,
+    token: str | None = None,
+) -> list[str]:
+    """Upload only runtime-owned artifacts. Never uploads evidence or docs."""
+    resolved_token = _resolve_token(token)
+    uploaded: list[str] = []
+    with start_action(action_type="hf:push_sample_score_runtime", repo_id=repo_id):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        for name in RUNTIME_SAMPLE_SCORES_FILES:
+            path = local_dir / name
+            if not path.exists():
+                continue
+            api.upload_file(
+                path_or_fileobj=str(path),
+                path_in_repo=f"{HF_DATA_PREFIX}/{name}",
+                repo_id=repo_id,
+                repo_type="dataset",
+            )
+            uploaded.append(name)
+    return uploaded
+
+
+def push_sample_score_evidence(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_SAMPLE_SCORES_REPO,
+    token: str | None = None,
+) -> list[str]:
+    """Upload evidence tables, manifest, and root docs. Never uploads runtime scores."""
+    resolved_token = _resolve_token(token)
+    uploaded: list[str] = []
+    with start_action(action_type="hf:push_sample_score_evidence", repo_id=repo_id):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        for name in EVIDENCE_SAMPLE_SCORES_FILES:
+            path = local_dir / name
+            if not path.exists():
+                continue
+            api.upload_file(
+                path_or_fileobj=str(path),
+                path_in_repo=f"{HF_DATA_PREFIX}/{name}",
+                repo_id=repo_id,
+                repo_type="dataset",
+            )
+            uploaded.append(name)
+        for name in SAMPLE_SCORES_DOC_FILES:
+            path = local_dir / name
+            if not path.exists():
+                continue
+            api.upload_file(
+                path_or_fileobj=str(path),
+                path_in_repo=name,
+                repo_id=repo_id,
+                repo_type="dataset",
+            )
+            uploaded.append(name)
+    return uploaded
+
+
+def push_sample_scores(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_SAMPLE_SCORES_REPO,
+    token: str | None = None,
+) -> None:
+    """Upload any present sample-score files. Prefer the typed push helpers."""
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:push_sample_scores", repo_id=repo_id):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        for name in SAMPLE_SCORES_FILES:
+            path = local_dir / name
+            if not path.exists():
+                continue
+            api.upload_file(
+                path_or_fileobj=str(path),
+                path_in_repo=f"{HF_DATA_PREFIX}/{name}",
+                repo_id=repo_id,
+                repo_type="dataset",
+            )
+        for name in SAMPLE_SCORES_DOC_FILES:
+            path = local_dir / name
+            if not path.exists():
+                continue
+            api.upload_file(
+                path_or_fileobj=str(path),
+                path_in_repo=name,
                 repo_id=repo_id,
                 repo_type="dataset",
             )

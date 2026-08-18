@@ -1486,23 +1486,10 @@ def _resolve_geno_chunk_size(n_samples: int, variants_remaining: int) -> int:
 
 
 def _check_memory_pressure(pgs_id: str) -> None:
-    """Raise ``MemoryError`` if available RAM drops below the safety floor.
+    """Raise ``MemoryError`` if available RAM drops below the safety floor."""
+    from just_prs.memory import check_memory_pressure
 
-    The safety floor is ``PRS_MEMORY_SAFETY_PERCENT`` % of total RAM
-    (minimum ``PRS_MEMORY_SAFETY_MIN_MB``).  Called before each chunk so
-    the process exits cleanly instead of letting the OOM killer strike.
-    """
-    import psutil
-
-    floor_bytes = _memory_safety_floor_bytes()
-    floor_mb = floor_bytes / (1024 * 1024)
-    available_mb = psutil.virtual_memory().available / (1024 * 1024)
-    if available_mb < floor_mb:
-        raise MemoryError(
-            f"Available RAM ({available_mb:.0f} MB) dropped below safety floor "
-            f"({floor_mb:.0f} MB) while scoring {pgs_id}. "
-            f"Aborting to avoid OOM-killing other processes."
-        )
+    check_memory_pressure(pgs_id)
 
 
 def compute_reference_prs_polars(
@@ -1753,6 +1740,28 @@ class _SinglePgsAgg(BaseModel):
 
 class _CorruptParquet(Exception):
     """Raised when a cached parquet file is found to be corrupted."""
+
+
+def _first_score_match_fields(
+    df: pl.DataFrame,
+) -> tuple[int | None, int | None, float | None]:
+    """Read match metadata from a scored reference frame before it is discarded."""
+    if df.height == 0:
+        return None, None, None
+
+    def _scalar(column: str, cast: type) -> int | float | None:
+        if column not in df.columns:
+            return None
+        value = df[column][0]
+        if value is None:
+            return None
+        return cast(value)
+
+    return (
+        _scalar("variants_total", int),
+        _scalar("variants_matched", int),
+        _scalar("match_rate", float),
+    )
 
 
 def _aggregate_single_pgs(parquet_path: Path, pgs_id: str) -> _SinglePgsAgg | None:
@@ -2547,6 +2556,7 @@ def compute_reference_prs_batch(
             n_samples = df.height
             mean_val = df["score"].mean()
             std_val = df["score"].std()
+            variants_total, variants_matched, match_rate = _first_score_match_fields(df)
 
             status = "ok"
             if std_val is not None and std_val < 1e-10:
@@ -2559,9 +2569,9 @@ def compute_reference_prs_batch(
             outcomes.append(ScoringOutcome(
                 pgs_id=pgs_id,
                 status=status,
-                variants_total=int(df["variants_total"][0]) if "variants_total" in df.columns and df.height > 0 else None,
-                variants_matched=int(df["variants_matched"][0]) if "variants_matched" in df.columns and df.height > 0 else None,
-                match_rate=float(df["match_rate"][0]) if "match_rate" in df.columns and df.height > 0 else None,
+                variants_total=variants_total,
+                variants_matched=variants_matched,
+                match_rate=match_rate,
                 n_samples=n_samples,
                 score_mean=mean_val,
                 score_std=std_val,

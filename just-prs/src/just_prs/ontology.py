@@ -111,9 +111,14 @@ def query_ols_trait_xrefs(trait_id: str) -> dict[str, Any]:
     result: dict[str, Any] = {
         "trait_id": normalized,
         "label": None,
+        "definition": None,
         "synonyms": [],
         "aliases": [],
         "icd10_codes": [],
+        "ontology_prefix": (
+            normalized.split("_", 1)[0] if normalized and "_" in normalized else None
+        ),
+        "canonical_url": iri,
     }
     if iri is None:
         return result
@@ -133,8 +138,22 @@ def query_ols_trait_xrefs(trait_id: str) -> dict[str, Any]:
 
     term = terms[0]
     result["label"] = term.get("label")
+    descriptions = term.get("description") or []
+    if isinstance(descriptions, list) and descriptions:
+        result["definition"] = str(descriptions[0])
+    elif isinstance(descriptions, str) and descriptions.strip():
+        result["definition"] = descriptions.strip()
     result["synonyms"] = term.get("synonyms") or []
     annotation = term.get("annotation", {})
+    if result["definition"] is None:
+        for key in ("definition", "obo_definition", "hasExactSynonym"):
+            raw_def = annotation.get(key)
+            if isinstance(raw_def, list) and raw_def:
+                result["definition"] = str(raw_def[0])
+                break
+            if isinstance(raw_def, str) and raw_def.strip():
+                result["definition"] = raw_def.strip()
+                break
     aliases: list[str] = []
     icd10_codes: list[str] = []
 

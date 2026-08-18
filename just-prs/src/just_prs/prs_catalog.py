@@ -51,6 +51,11 @@ from just_prs.prs import (
     compute_prs,
     prepare_reference_universe,
 )
+from just_prs.sample_scores import (
+    PrecomputedPolicy,
+    lookup_precomputed_prs,
+    resolve_official_prs,
+)
 from just_prs.reference import reference_distribution_audit_issues
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
@@ -1339,6 +1344,7 @@ class PRSCatalog:
         ancestry_panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
         ancestry_include_prive: bool = False,
         ancestry_include_aadr: bool = False,
+        precomputed_policy: str = PrecomputedPolicy.AUTO.value,
     ) -> PRSResult:
         """Compute PRS for a VCF file against a single PGS score.
 
@@ -1360,23 +1366,34 @@ class PRSCatalog:
             info = self.score_info_row(pgs_id)
             trait = info["trait_reported"] if info else None
 
-            result = compute_prs(
-                vcf_path=vcf_path,
-                scoring_file=pgs_id,
-                genome_build=genome_build,
-                cache_dir=self._cache_dir / "scores",
+            result = resolve_official_prs(
+                policy=precomputed_policy,
                 pgs_id=pgs_id,
-                trait_reported=trait,
+                genome_build=genome_build,
+                vcf_path=vcf_path,
                 genotypes_lf=genotypes_lf,
-                genotype_input_mode=genotype_input_mode,
                 reference_restoration=reference_restoration,
-                reference_universe_path=(
-                    self._reference_universe_path(genome_build)
-                    if reference_restoration is not False and reference_universe is None
-                    else None
+                genotype_input_mode=genotype_input_mode,
+                cache_dir=self._cache_dir,
+                scores_cache=self._cache_dir / "scores",
+                compute=lambda: compute_prs(
+                    vcf_path=vcf_path,
+                    scoring_file=pgs_id,
+                    genome_build=genome_build,
+                    cache_dir=self._cache_dir / "scores",
+                    pgs_id=pgs_id,
+                    trait_reported=trait,
+                    genotypes_lf=genotypes_lf,
+                    genotype_input_mode=genotype_input_mode,
+                    reference_restoration=reference_restoration,
+                    reference_universe_path=(
+                        self._reference_universe_path(genome_build)
+                        if reference_restoration is not False and reference_universe is None
+                        else None
+                    ),
+                    reference_universe=reference_universe,
+                    sample_build=sample_build,
                 ),
-                reference_universe=reference_universe,
-                sample_build=sample_build,
             )
             if attach_performance:
                 self._attach_performance(result)
@@ -1405,6 +1422,7 @@ class PRSCatalog:
         ancestry_panels: tuple[str, ...] = ("1000g", "hgdp_1kg"),
         ancestry_include_prive: bool = False,
         ancestry_include_aadr: bool = False,
+        precomputed_policy: str = PrecomputedPolicy.AUTO.value,
     ) -> "PRSBatchResult":
         """Compute PRS for a VCF file against multiple PGS scores.
 
@@ -1450,9 +1468,32 @@ class PRSCatalog:
             outcomes: list[PRSBatchOutcome] = []
             failed_ids: list[str] = []
 
+            policy = PrecomputedPolicy(precomputed_policy)
             for pgs_id in pgs_ids:
                 attempts = 1
                 try:
+                    if policy is not PrecomputedPolicy.OFF:
+                        hit = lookup_precomputed_prs(
+                            pgs_id=pgs_id,
+                            genome_build=genome_build,
+                            vcf_path=vcf_path,
+                            genotypes_lf=genotypes_lf,
+                            reference_restoration=reference_restoration,
+                            genotype_input_mode=genotype_input_mode,
+                            cache_dir=self._cache_dir,
+                            scores_cache=cache,
+                        )
+                        if hit is not None:
+                            results.append(hit)
+                            outcomes.append(PRSBatchOutcome(
+                                pgs_id=pgs_id, status="ok", attempts=attempts,
+                            ))
+                            continue
+                        if policy is PrecomputedPolicy.REQUIRE:
+                            raise FileNotFoundError(
+                                f"No published PRS for {pgs_id} under the requested sample/profile"
+                            )
+
                     info = self.score_info_row(pgs_id)
                     trait = info["trait_reported"] if info else None
 

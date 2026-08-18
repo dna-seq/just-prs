@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import enum
+import gc
 import math
+import tempfile
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -44,33 +47,55 @@ _UNIVERSE_COLUMNS = ("chrom", "pos", "ref", "ref_source")
 
 @dataclass(frozen=True)
 class ReferenceUniverse:
-    """A parsed, in-memory reference-allele universe, prepared once and reused.
+    """A lazily-scanned reference-allele universe, resolved once and reused.
 
     The reference-allele universe is **catalog-wide and identical for every PGS
-    ID** (~34M rows). Parsing it and joining it against the scoring file on every
-    ``compute_prs`` call is the dominant cost when reference restoration is on.
-    Build this handle once via :func:`prepare_reference_universe` and pass it into
-    ``compute_prs`` / ``compute_prs_duckdb`` / ``compute_prs_batch`` via
-    ``reference_universe=`` so the per-score path skips both the re-parse and the
-    34M-row hash. This is the dependency-injection entry point: an embedder (e.g.
-    just-dna-lite) can prepare/subset the universe itself and inject it.
+    ID** (~34M rows), so it is resolved once via :func:`prepare_reference_universe`
+    and passed into ``compute_prs`` / ``compute_prs_duckdb`` / ``compute_prs_batch``
+    via ``reference_universe=``. This is also the dependency-injection entry point:
+    an embedder (e.g. just-dna-lite) can supply its own universe or subset.
 
-    ``table`` is the eligible REF set reduced to ``(chrom, pos, ref, ref_source)``,
-    filtered to non-null ``ref`` and de-duplicated on ``(chrom, pos)``. When
-    ``scoped`` is True the table was already restricted to a restoration scope
-    (e.g. a chip's typed positions ∩ universe); when False it is the whole
-    universe (WGS — every universe position is eligible).
+    **The universe is never materialized in Python.** ``frame`` stays a
+    ``LazyFrame`` and ``source_path`` is the parquet that the DuckDB engine joins
+    with ``read_parquet``, so DuckDB streams (and spills) the REF set under its own
+    memory limit instead of polars hashing 34M rows on the heap. Holding it as a
+    ``DataFrame`` cost ~2.7 GB resident per worker and bought nothing: the DuckDB
+    join of a 6.9M-variant score against the full universe runs in ~0.3 s.
+
+    ``scope_frame`` is the optional small ``(chrom, pos)`` restriction (a chip's
+    typed positions, or a custom set) applied as a SQL semi-join; ``scoped`` records
+    that a restriction is in force. When ``scoped`` is False the whole universe is
+    eligible (WGS).
     """
 
-    table: pl.DataFrame
+    frame: pl.LazyFrame
     genome_build: str
     scoped: bool = False
     source_path: Path | None = None
+    scope_frame: pl.LazyFrame | None = None
 
     @property
     def n_positions(self) -> int:
-        """Number of eligible ``(chrom, pos)`` REF positions in this universe."""
-        return self.table.height
+        """Eligible ``(chrom, pos)`` REF positions — a streaming count, not a collect."""
+        return int(self.frame.select(pl.len()).collect().item())
+
+
+_INJECTED_UNIVERSE_DIR: Path | None = None
+
+
+def _sink_injected_universe(universe_lf: pl.LazyFrame) -> Path:
+    """Stream an injected universe frame to a temp parquet for DuckDB to scan.
+
+    An embedder may inject a ``DataFrame``/``LazyFrame`` rather than a path. The
+    DuckDB engine needs a file to ``read_parquet``, and sinking keeps the promise
+    that the catalog-wide REF set is never held in Python memory.
+    """
+    global _INJECTED_UNIVERSE_DIR
+    if _INJECTED_UNIVERSE_DIR is None:
+        _INJECTED_UNIVERSE_DIR = Path(tempfile.mkdtemp(prefix="just-prs-universe-"))
+    path = _INJECTED_UNIVERSE_DIR / f"universe_{uuid.uuid4().hex}.parquet"
+    universe_lf.sink_parquet(path)
+    return path
 
 
 def prepare_reference_universe(
@@ -79,25 +104,27 @@ def prepare_reference_universe(
     genome_build: str = "GRCh38",
     scope: pl.DataFrame | pl.LazyFrame | None = None,
 ) -> ReferenceUniverse:
-    """Parse the reference-allele universe once into an in-memory :class:`ReferenceUniverse`.
+    """Resolve the reference-allele universe once into a lazy :class:`ReferenceUniverse`.
 
     Call this once before scoring many PGS IDs against the same sample, then pass
     the returned handle into ``compute_prs``/``compute_prs_duckdb``/
-    ``compute_prs_batch`` (``reference_universe=``). It eliminates the per-score
-    re-parse of the ~34M-row universe parquet.
+    ``compute_prs_batch`` (``reference_universe=``). Nothing is read here: the
+    universe stays a ``LazyFrame`` over its parquet, and the DuckDB engine joins
+    that parquet directly.
 
     Args:
         source: A path to the universe parquet, or an already-loaded
             ``pl.DataFrame``/``pl.LazyFrame`` (dependency-injection: an embedder may
-            supply its own pre-loaded/subset universe). Must expose
-            ``chrom, pos, ref, ref_source`` columns.
+            supply its own universe or subset). Must expose
+            ``chrom, pos, ref, ref_source`` columns. A frame source is streamed to a
+            temp parquet so DuckDB can scan it.
         genome_build: Build the universe is in — recorded on the handle for tracing.
-        scope: Optional ``(chrom, pos)`` position set to restrict the eligible REF
-            set to (chip ∩ universe). Accepts ``chrom`` or ``chr_norm``. When given,
-            the handle is marked ``scoped=True`` and the subsetting is paid here once.
+        scope: Optional ``(chrom, pos)`` position set restricting the eligible REF
+            set (chip ∩ universe). Accepts ``chrom`` or ``chr_norm``. Kept as a
+            separate small frame and applied as a semi-join by the engine.
 
     Returns:
-        A :class:`ReferenceUniverse` whose ``table`` is the eligible REF set.
+        A :class:`ReferenceUniverse` over the eligible REF set.
     """
     source_path: Path | None = None
     if isinstance(source, (str, Path)):
@@ -110,29 +137,33 @@ def prepare_reference_universe(
     else:
         raise TypeError(f"Unsupported reference-universe source: {type(source)!r}")
 
-    universe_lf = (
-        universe_lf.filter(pl.col("ref").is_not_null())
-        .select(
-            pl.col("chrom").cast(pl.Utf8),
-            pl.col("pos").cast(pl.Int64),
-            pl.col("ref").cast(pl.Utf8),
-            pl.col("ref_source").cast(pl.Utf8),
-        )
+    universe_lf = universe_lf.filter(pl.col("ref").is_not_null()).select(
+        pl.col("chrom").cast(pl.Utf8),
+        pl.col("pos").cast(pl.Int64),
+        pl.col("ref").cast(pl.Utf8),
+        pl.col("ref_source").cast(pl.Utf8),
     )
 
-    scoped = False
+    scope_lf: pl.LazyFrame | None = None
     if scope is not None:
         scope_lf = (scope.lazy() if isinstance(scope, pl.DataFrame) else scope).pipe(
             _select_chrom_pos
         )
-        universe_lf = universe_lf.join(scope_lf, on=["chrom", "pos"], how="semi")
-        scoped = True
+
+    if source_path is None:
+        source_path = _sink_injected_universe(universe_lf)
+        universe_lf = pl.scan_parquet(source_path)
+
+    frame = universe_lf
+    if scope_lf is not None:
+        frame = frame.join(scope_lf, on=["chrom", "pos"], how="semi")
 
     return ReferenceUniverse(
-        table=universe_lf.collect(),
+        frame=frame,
         genome_build=genome_build,
-        scoped=scoped,
+        scoped=scope_lf is not None,
         source_path=source_path,
+        scope_frame=scope_lf,
     )
 
 
@@ -487,12 +518,14 @@ def _apply_reference_resolution(
     the column is always present so downstream aggregation can reference it. Only
     positions whose ``reference_allele`` was null/empty are filled; existing values win.
 
+    This is the **polars-engine** path only. ``compute_prs_duckdb`` does the same
+    fill in SQL (:func:`_duckdb_scoring_relation`) so neither side of the join is
+    hashed on the Python heap; prefer that engine when restoration is on.
+
     The join is **flipped** so the small scoring side is hashed, not the 34M-row
     universe: the universe is first reduced (via a semi-join) to just the scoring
-    positions — streaming the 34M in-memory rows and hashing the small scoring key
-    set — yielding a lookup of at most one row per scoring position, which is then
-    left-joined back. This is ~6× faster than hashing the full universe and produces
-    results identical to the previous ``scoring.join(universe, how="left")``.
+    positions, yielding a lookup of at most one row per scoring position, which is
+    then left-joined back.
     """
     schema = scoring_norm.collect_schema().names()
     if universe is None:
@@ -502,7 +535,7 @@ def _apply_reference_resolution(
             )
         return scoring_norm
 
-    universe_lf = universe.table.lazy().select(
+    universe_lf = universe.frame.select(
         pl.col("chrom").alias("_u_chrom"),
         pl.col("pos").alias("_u_pos"),
         pl.col("ref").alias("_u_ref"),
@@ -937,6 +970,192 @@ def _resolve_duckdb_memory_limit() -> str:
     return f"{limit_gb:.1f}GB"
 
 
+@dataclass
+class _DuckDbScoreAgg:
+    """Additive per-chunk totals from the DuckDB scoring join."""
+
+    prs_score: float = 0.0
+    observed_called: int = 0
+    variants_observed: int = 0
+    variants_assumed_hom_ref: int = 0
+    variants_unscorable_absent: int = 0
+    variants_no_call: int = 0
+    variants_maf_filled: int = 0
+    variants_ref_resolved_panel: int = 0
+    variants_ref_resolved_fasta: int = 0
+    weight_mass_matched: float = 0.0
+
+    def add(self, other: _DuckDbScoreAgg) -> None:
+        self.prs_score += other.prs_score
+        self.observed_called += other.observed_called
+        self.variants_observed += other.variants_observed
+        self.variants_assumed_hom_ref += other.variants_assumed_hom_ref
+        self.variants_unscorable_absent += other.variants_unscorable_absent
+        self.variants_no_call += other.variants_no_call
+        self.variants_maf_filled += other.variants_maf_filled
+        self.variants_ref_resolved_panel += other.variants_ref_resolved_panel
+        self.variants_ref_resolved_fasta += other.variants_ref_resolved_fasta
+        self.weight_mass_matched += other.weight_mass_matched
+
+
+def _scoring_weight_mass_total(scoring_norm: pl.LazyFrame, *, dosage_weight: bool) -> float:
+    if dosage_weight:
+        expr = pl.max_horizontal(
+            pl.col("dosage_0_weight").abs(),
+            pl.col("dosage_1_weight").abs(),
+            pl.col("dosage_2_weight").abs(),
+        ).sum()
+    else:
+        expr = pl.col("effect_weight").abs().sum()
+    value = scoring_norm.select(expr.alias("mass")).collect().item()
+    return float(value or 0.0)
+
+
+def _scoring_theoretical_stats(
+    scoring_norm: pl.LazyFrame,
+    schema_names: list[str],
+) -> tuple[bool, float | None, float | None]:
+    if "allelefrequency_effect" not in schema_names or "effect_weight" not in schema_names:
+        return False, None, None
+    row = (
+        scoring_norm.filter(
+            pl.col("allelefrequency_effect").is_not_null()
+            & pl.col("effect_weight").is_not_null()
+            & (pl.col("allelefrequency_effect") > 0.0)
+            & (pl.col("allelefrequency_effect") < 1.0)
+        )
+        .select(
+            (pl.col("effect_weight") * 2.0 * pl.col("allelefrequency_effect"))
+            .sum()
+            .alias("mean"),
+            (
+                pl.col("effect_weight").pow(2)
+                * 2.0
+                * pl.col("allelefrequency_effect")
+                * (1.0 - pl.col("allelefrequency_effect"))
+            )
+            .sum()
+            .alias("variance"),
+            pl.len().alias("n_valid"),
+        )
+        .collect()
+    )
+    n_valid = int(row["n_valid"][0])
+    if n_valid <= 0:
+        return False, None, None
+    mean = float(row["mean"][0])
+    variance = float(row["variance"][0])
+    std = math.sqrt(variance) if variance > 0 else 0.0
+    return True, mean, std
+
+
+_DUCKDB_SCORING_RELATION = "scoring_resolved"
+
+
+def _duckdb_universe_sql(
+    conn: duckdb.DuckDBPyConnection, universe: ReferenceUniverse
+) -> str:
+    """SQL for the eligible REF set, read straight from the universe parquet.
+
+    ``read_parquet`` keeps the ~34M-row REF set inside DuckDB, which streams it
+    under the connection's ``memory_limit`` and spills to disk if needed — the same
+    reason the reference-panel path scans the 75M-row ``.pvar`` instead of loading
+    it into polars. A restoration scope is a semi-join against the registered
+    position set; scopes are small and bounded (a chip is ~648K positions), unlike
+    the universe itself.
+    """
+    scope_sql = ""
+    if universe.scope_frame is not None:
+        conn.register("restoration_scope", universe.scope_frame.collect().to_arrow())
+        scope_sql = (
+            " AND EXISTS (SELECT 1 FROM restoration_scope rs"
+            " WHERE rs.chrom = u.chrom AND rs.pos = u.pos)"
+        )
+    return (
+        "SELECT u.chrom AS _u_chrom, u.pos AS _u_pos,"
+        " u.ref AS _u_ref, u.ref_source AS _u_src"
+        f" FROM read_parquet('{universe.source_path}') u"
+        f" WHERE u.ref IS NOT NULL{scope_sql}"
+    )
+
+
+def _duckdb_scoring_relation(
+    conn: duckdb.DuckDBPyConnection, *, universe_sql: str | None
+) -> None:
+    """Expose the registered ``scoring`` rows as ``scoring_resolved``.
+
+    With restoration on, a null/empty ``reference_allele`` is filled by a SQL LEFT
+    JOIN against the universe relation, and ``ref_resolved_source`` records which
+    tier supplied it. With restoration off the column is a typed null so the
+    scoring SQL can reference it unconditionally.
+    """
+    if universe_sql is None:
+        conn.execute(
+            f"CREATE OR REPLACE TEMP VIEW {_DUCKDB_SCORING_RELATION} AS "
+            "SELECT *, CAST(NULL AS VARCHAR) AS ref_resolved_source FROM scoring"
+        )
+        return
+    conn.execute(f"""
+        CREATE OR REPLACE TEMP VIEW {_DUCKDB_SCORING_RELATION} AS
+        SELECT
+            sc.* EXCLUDE (reference_allele),
+            COALESCE(NULLIF(sc.reference_allele, ''), u._u_ref) AS reference_allele,
+            CASE WHEN NULLIF(sc.reference_allele, '') IS NULL THEN u._u_src END
+                AS ref_resolved_source
+        FROM scoring sc
+        LEFT JOIN ({universe_sql}) u
+          ON u._u_chrom = sc.chr_name_norm AND u._u_pos = sc.chr_pos_norm
+    """)
+
+
+def _duckdb_score_registered(
+    conn: duckdb.DuckDBPyConnection,
+    *,
+    join_sql: str,
+    resolved_dosage_sql: str,
+    counter_sql: str,
+    weighted_sql: str,
+    variant_mass_sql: str,
+) -> _DuckDbScoreAgg:
+    row = conn.execute(f"""
+        WITH resolved AS (
+            SELECT
+                s.*,
+                g.GT,
+                {resolved_dosage_sql} AS resolved_dosage,
+                {variant_mass_sql} AS variant_mass,
+                {counter_sql}
+            {join_sql}
+            GROUP BY ALL
+        )
+        SELECT
+            COALESCE(SUM({weighted_sql}), 0.0) AS prs_score,
+            COALESCE(SUM(observed_called), 0) AS observed_called,
+            COALESCE(SUM(variants_observed), 0) AS variants_observed,
+            COALESCE(SUM(variants_assumed_hom_ref), 0) AS variants_assumed_hom_ref,
+            COALESCE(SUM(variants_unscorable_absent), 0) AS variants_unscorable_absent,
+            COALESCE(SUM(variants_no_call), 0) AS variants_no_call,
+            COALESCE(SUM(variants_maf_filled), 0) AS variants_maf_filled,
+            COALESCE(SUM(variants_ref_resolved_panel), 0) AS variants_ref_resolved_panel,
+            COALESCE(SUM(variants_ref_resolved_fasta), 0) AS variants_ref_resolved_fasta,
+            COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL THEN variant_mass ELSE 0.0 END), 0.0) AS weight_mass_matched
+        FROM resolved s
+    """).fetchone()
+    assert row is not None
+    return _DuckDbScoreAgg(
+        prs_score=float(row[0]),
+        observed_called=int(row[1]),
+        variants_observed=int(row[2]),
+        variants_assumed_hom_ref=int(row[3]),
+        variants_unscorable_absent=int(row[4]),
+        variants_no_call=int(row[5]),
+        variants_maf_filled=int(row[6]),
+        variants_ref_resolved_panel=int(row[7]),
+        variants_ref_resolved_fasta=int(row[8]),
+        weight_mass_matched=float(row[9] or 0.0),
+    )
+
+
 def compute_prs_duckdb(
     vcf_path: Path | str,
     scoring_file: Path | pl.LazyFrame | str,
@@ -957,9 +1176,11 @@ def compute_prs_duckdb(
     """Compute a polygenic risk score using DuckDB for the join and aggregation.
 
     Functionally equivalent to ``compute_prs()`` but uses DuckDB SQL instead of
-    polars for the variant-matching join and weighted-sum aggregation. DuckDB can
-    spill to disk under memory pressure, making this more robust for large scoring
-    files on low-memory machines.
+    polars for the variant-matching join and weighted-sum aggregation. Scoring
+    files larger than ``PRS_SCORING_JOIN_CHUNK_SIZE`` (default 250_000 rows)
+    are joined in bounded chunks — the same idea as reference-panel genotype
+    chunking — so a 9.5M-variant score cannot native-crash one giant join.
+    ``check_memory_pressure`` runs before each chunk.
 
     Either *genotypes_parquet* (preferred — DuckDB reads the file directly) or
     *genotypes_lf* (materialized to an Arrow table and registered with DuckDB)
@@ -1011,11 +1232,10 @@ def compute_prs_duckdb(
             geno_mode_lf = read_genotypes(vcf_path)
         resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, geno_mode_lf)
 
-        # Fill any missing reference_allele from the precomputed REF universe (only
-        # engages in variant_only mode). A prepared handle is reused as-is
-        # (dependency injection); otherwise it is parsed once from the path.
-        # ``_apply_reference_resolution`` always adds a ``ref_resolved_source``
-        # column (null when off) so the SQL can reference ``s.ref_resolved_source``.
+        # Resolve the REF universe handle (restoration only engages in variant_only
+        # mode). The fill itself happens in SQL against the universe parquet — see
+        # ``_duckdb_scoring_relation``, which also supplies the ``ref_resolved_source``
+        # column (typed null when restoration is off) that the scoring SQL reads.
         ref_universe = _resolve_reference_universe(
             reference_universe=reference_universe,
             reference_universe_path=reference_universe_path,
@@ -1024,50 +1244,44 @@ def compute_prs_duckdb(
             genome_build=genome_build,
             cache_dir=cache_dir,
         )
-        scoring_norm = _apply_reference_resolution(scoring_norm, ref_universe)
+
+        from just_prs.memory import check_memory_pressure, scoring_join_chunk_size
 
         schema_names = scoring_norm.collect_schema().names()
-        scoring_df = scoring_norm.collect()
-        variants_total = scoring_df.height
+        variants_total = int(scoring_norm.select(pl.len()).collect().item())
+        check_memory_pressure(pgs_id)
 
         dosage_weight = DOSAGE_WEIGHT_COLUMNS[0] in schema_names
         weighted_sql = _DUCKDB_WEIGHTED_DOSAGE_GENOBOOST if dosage_weight else _DUCKDB_WEIGHTED_DOSAGE_ADDITIVE
-        # Per-variant weight mass for C_wt: |effect_weight| (additive) or the largest
-        # absolute per-dosage weight (GenoBoost). ``variant_mass_sql`` is aliased ``s.``
-        # for the join CTE; ``mass_total_sql`` runs against the bare ``scoring`` table.
         if dosage_weight:
             variant_mass_sql = "greatest(abs(s.dosage_0_weight), abs(s.dosage_1_weight), abs(s.dosage_2_weight))"
-            mass_total_sql = "greatest(abs(dosage_0_weight), abs(dosage_1_weight), abs(dosage_2_weight))"
         else:
             variant_mass_sql = "abs(s.effect_weight)"
-            mass_total_sql = "abs(effect_weight)"
+
+        weight_mass_total = _scoring_weight_mass_total(scoring_norm, dosage_weight=dosage_weight)
+        chunk_size = scoring_join_chunk_size(variants_total)
+        chunked = variants_total > chunk_size > 0
 
         mem_limit = memory_limit or _resolve_duckdb_memory_limit()
         conn = duckdb.connect(config={"memory_limit": mem_limit})
         try:
             conn.execute("SET arrow_large_buffer_size = true")
-            conn.register("scoring", scoring_df.to_arrow())
-
-            weight_mass_total = float(
-                conn.execute(
-                    f"SELECT COALESCE(SUM({mass_total_sql}), 0.0) FROM scoring"
-                ).fetchone()[0]
-            )
-
             if genotypes_parquet is not None:
                 geno_from = f"read_parquet('{genotypes_parquet}')"
             else:
-                # genotypes_lf / VCF path: materialize the already-resolved
-                # geno_mode_lf to Arrow and register it (read once).
                 conn.register("genotypes_tbl", geno_mode_lf.collect().to_arrow())
                 geno_from = "genotypes_tbl"
 
             has_maf_col_ddb = "allelefrequency_effect" in schema_names
             do_maf_fill_ddb = maf_fill and has_maf_col_ddb and not dosage_weight
 
+            universe_sql = (
+                _duckdb_universe_sql(conn, ref_universe) if ref_universe is not None else None
+            )
+
             if resolved_mode == GenotypeInputMode.VARIANT_ONLY:
                 join_sql = f"""
-                    FROM scoring s
+                    FROM {_DUCKDB_SCORING_RELATION} s
                     LEFT JOIN {geno_from} g
                       ON g.chrom = s.chr_name_norm AND g.pos = s.chr_pos_norm
                 """
@@ -1098,7 +1312,7 @@ def compute_prs_duckdb(
             else:
                 join_sql = f"""
                     FROM {geno_from} g
-                    JOIN scoring s
+                    JOIN {_DUCKDB_SCORING_RELATION} s
                       ON g.chrom = s.chr_name_norm AND g.pos = s.chr_pos_norm
                 """
                 resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_PRESENT_ONLY
@@ -1113,92 +1327,83 @@ def compute_prs_duckdb(
                     0 AS variants_ref_resolved_fasta
                 """
 
-            row = conn.execute(f"""
-                WITH resolved AS (
-                    SELECT
-                        s.*,
-                        g.GT,
-                        {resolved_dosage_sql} AS resolved_dosage,
-                        {variant_mass_sql} AS variant_mass,
-                        {counter_sql}
-                    {join_sql}
-                    GROUP BY ALL
+            score_kwargs = {
+                "join_sql": join_sql,
+                "resolved_dosage_sql": resolved_dosage_sql,
+                "counter_sql": counter_sql,
+                "weighted_sql": weighted_sql,
+                "variant_mass_sql": variant_mass_sql,
+            }
+            agg = _DuckDbScoreAgg()
+            if variants_total == 0:
+                pass
+            elif not chunked:
+                scoring_df = scoring_norm.collect()
+                conn.register("scoring", scoring_df.to_arrow())
+                _duckdb_scoring_relation(conn, universe_sql=universe_sql)
+                agg = _duckdb_score_registered(conn, **score_kwargs)
+                del scoring_df
+            else:
+                log_message(
+                    message_type="prs:duckdb_scoring_chunked",
+                    pgs_id=pgs_id,
+                    variants_total=variants_total,
+                    chunk_size=chunk_size,
                 )
-                SELECT
-                    COALESCE(SUM({weighted_sql}), 0.0) AS prs_score,
-                    COALESCE(SUM(observed_called), 0) AS observed_called,
-                    COALESCE(SUM(variants_observed), 0) AS variants_observed,
-                    COALESCE(SUM(variants_assumed_hom_ref), 0) AS variants_assumed_hom_ref,
-                    COALESCE(SUM(variants_unscorable_absent), 0) AS variants_unscorable_absent,
-                    COALESCE(SUM(variants_no_call), 0) AS variants_no_call,
-                    COALESCE(SUM(variants_maf_filled), 0) AS variants_maf_filled,
-                    COALESCE(SUM(variants_ref_resolved_panel), 0) AS variants_ref_resolved_panel,
-                    COALESCE(SUM(variants_ref_resolved_fasta), 0) AS variants_ref_resolved_fasta,
-                    COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL THEN variant_mass ELSE 0.0 END), 0.0) AS weight_mass_matched
-                FROM resolved s
-            """).fetchone()
-
-            prs_score = float(row[0])
-            observed_called = int(row[1])
-            variants_observed = int(row[2])
-            variants_assumed_hom_ref = int(row[3])
-            variants_unscorable_absent = int(row[4])
-            variants_no_call = int(row[5])
-            variants_maf_filled = int(row[6])
-            variants_ref_resolved_panel = int(row[7])
-            variants_ref_resolved_fasta = int(row[8])
-            weight_mass_matched = float(row[9] or 0.0)
-            variants_matched = observed_called + variants_assumed_hom_ref + variants_maf_filled
-
-            has_freqs = False
-            theoretical_mean: float | None = None
-            theoretical_std: float | None = None
-            percentile: float | None = None
-            percentile_method: str | None = None
-            z_score: float | None = None
-            reference_mean: float | None = None
-            reference_std: float | None = None
-
-            if "allelefrequency_effect" in schema_names and "effect_weight" in schema_names:
-                stats_row = conn.execute("""
-                    SELECT
-                        SUM(effect_weight * 2.0 * allelefrequency_effect) AS mean,
-                        SUM(POWER(effect_weight, 2) * 2.0
-                            * allelefrequency_effect * (1.0 - allelefrequency_effect)) AS variance,
-                        COUNT(*) AS n_valid
-                    FROM scoring
-                    WHERE allelefrequency_effect IS NOT NULL
-                      AND effect_weight IS NOT NULL
-                      AND allelefrequency_effect > 0.0
-                      AND allelefrequency_effect < 1.0
-                """).fetchone()
-
-                n_valid = int(stats_row[2])
-                if n_valid > 0:
-                    mean = float(stats_row[0])
-                    variance = float(stats_row[1])
-                    std = math.sqrt(variance) if variance > 0 else 0.0
-                    has_freqs = True
-                    theoretical_mean = mean
-                    theoretical_std = std
-                    if std > 0:
-                        z = (prs_score - mean) / std
-                        percentile = round(_norm_cdf(z) * 100.0, 2)
-                        percentile_method = "theoretical"
-                        z_score = z
-                        reference_mean = mean
-                        reference_std = std
-                    log_message(
-                        message_type="prs:theoretical_stats",
-                        pgs_id=pgs_id,
-                        variants_with_frequency=n_valid,
-                        variants_total=variants_total,
-                        theoretical_mean=mean,
-                        theoretical_std=std,
-                        percentile=percentile,
-                    )
+                offset = 0
+                while offset < variants_total:
+                    check_memory_pressure(pgs_id)
+                    take = min(chunk_size, variants_total - offset)
+                    chunk_df = scoring_norm.slice(offset, take).collect()
+                    conn.register("scoring", chunk_df.to_arrow())
+                    _duckdb_scoring_relation(conn, universe_sql=universe_sql)
+                    agg.add(_duckdb_score_registered(conn, **score_kwargs))
+                    conn.unregister("scoring")
+                    del chunk_df
+                    gc.collect()
+                    offset += take
         finally:
             conn.close()
+
+        prs_score = agg.prs_score
+        observed_called = agg.observed_called
+        variants_observed = agg.variants_observed
+        variants_assumed_hom_ref = agg.variants_assumed_hom_ref
+        variants_unscorable_absent = agg.variants_unscorable_absent
+        variants_no_call = agg.variants_no_call
+        variants_maf_filled = agg.variants_maf_filled
+        variants_ref_resolved_panel = agg.variants_ref_resolved_panel
+        variants_ref_resolved_fasta = agg.variants_ref_resolved_fasta
+        weight_mass_matched = agg.weight_mass_matched
+        variants_matched = observed_called + variants_assumed_hom_ref + variants_maf_filled
+
+        has_freqs = False
+        theoretical_mean: float | None = None
+        theoretical_std: float | None = None
+        percentile: float | None = None
+        percentile_method: str | None = None
+        z_score: float | None = None
+        reference_mean: float | None = None
+        reference_std: float | None = None
+        has_freqs, theoretical_mean, theoretical_std = _scoring_theoretical_stats(
+            scoring_norm, schema_names
+        )
+        if has_freqs and theoretical_mean is not None and theoretical_std is not None:
+            if theoretical_std > 0:
+                z = (prs_score - theoretical_mean) / theoretical_std
+                percentile = round(_norm_cdf(z) * 100.0, 2)
+                percentile_method = "theoretical"
+                z_score = z
+                reference_mean = theoretical_mean
+                reference_std = theoretical_std
+            log_message(
+                message_type="prs:theoretical_stats",
+                pgs_id=pgs_id,
+                variants_total=variants_total,
+                theoretical_mean=theoretical_mean,
+                theoretical_std=theoretical_std,
+                percentile=percentile,
+            )
 
         match_rate = variants_matched / variants_total if variants_total > 0 else 0.0
         weight_mass_coverage = (

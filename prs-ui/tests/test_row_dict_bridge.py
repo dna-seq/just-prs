@@ -9,7 +9,16 @@ tests pin them so they cannot silently regress again.
 from __future__ import annotations
 
 from just_prs.models import EnrichedPRSResult
-from prs_ui.mixin import _enriched_to_row_dict
+from prs_ui.mixin import (
+    _enriched_to_row_dict,
+    ai_links_for_selection,
+    clear_cached_trait_charts,
+    get_cached_trait_chart,
+    overflow_result_rows,
+    preview_result_rows,
+    store_cached_trait_chart,
+    trait_chart_cache_key,
+)
 
 
 def _enriched(**overrides: object) -> EnrichedPRSResult:
@@ -66,3 +75,46 @@ def test_reliable_defaults_round_trip() -> None:
     assert row["percentile_caveat"] == ""
     assert row["build_mismatch"] is False
     assert row["detected_genome_build"] is None
+
+
+def test_ai_links_for_selection_uses_selected_then_first() -> None:
+    prs_rows = [
+        {"pgs_id": "PGS000001", "ai_ask": '[{"label": "Ask Claude", "url": "https://claude.ai/new?q=one", "copyText": "", "color": "#DA7756", "title": ""}]'},
+        {"pgs_id": "PGS000002", "ai_ask": '[{"label": "Ask Claude", "url": "https://claude.ai/new?q=two", "copyText": "", "color": "#DA7756", "title": ""}]'},
+    ]
+    trait_rows = [
+        {"trait": "BMI", "ai_ask": '[{"label": "Ask ChatGPT", "url": "https://chatgpt.com/?q=bmi", "copyText": "", "color": "#10A37F", "title": ""}]'},
+    ]
+
+    first = ai_links_for_selection("individual", "", prs_rows, trait_rows)
+    assert first[0]["url"].endswith("one")
+
+    selected = ai_links_for_selection("individual", "PGS000002", prs_rows, trait_rows)
+    assert selected[0]["url"].endswith("two")
+
+    trait = ai_links_for_selection("grouped", "BMI", prs_rows, trait_rows)
+    assert trait[0]["label"] == "Ask ChatGPT"
+
+    assert ai_links_for_selection("individual", "", [], []) == []
+
+
+def test_trait_chart_cache_round_trips_and_clears() -> None:
+    clear_cached_trait_charts()
+    key = trait_chart_cache_key("intelligence", "high_moderate", "native")
+    assert key == "intelligence|high_moderate|native"
+    assert get_cached_trait_chart(key) is None
+    store_cached_trait_chart(key, {"spec": {"mark": "area"}, "html": "<p>ok</p>", "height": "900px"})
+    cached = get_cached_trait_chart(key)
+    assert cached is not None
+    assert cached["html"] == "<p>ok</p>"
+    cached["html"] = "mutated"
+    assert get_cached_trait_chart(key)["html"] == "<p>ok</p>"
+    clear_cached_trait_charts()
+    assert get_cached_trait_chart(key) is None
+
+
+def test_preview_keeps_first_ten_and_hides_the_rest() -> None:
+    rows = [{"id": i} for i in range(15)]
+    assert [row["id"] for row in preview_result_rows(rows)] == list(range(10))
+    assert [row["id"] for row in overflow_result_rows(rows)] == list(range(10, 15))
+    assert overflow_result_rows(rows[:8]) == []

@@ -195,6 +195,7 @@ def test_trait_heritability_summary_deduplicates_metrics() -> None:
 def test_individual_result_grid_height_accounts_for_grouped_headers() -> None:
     assert result_grid_height(3, 6, grouped_headers=True) == "262px"
     assert result_grid_height(3, 4) == "222px"
+    assert result_grid_height(10, 10, grouped_headers=True) == "626px"
 
 
 def test_native_superpopulation_mapping_prefers_model_ancestry() -> None:

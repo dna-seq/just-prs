@@ -174,8 +174,10 @@ Use the skill for interactive sessions; use MCP when you need typed tool schemas
 
 Altair charts are built in. HTML (interactive) and JSON (Vega-Lite) work out of
 the box; `just-prs[viz]` adds PNG/SVG. `plot trait` auto-detects each sample's
-ancestry unless you pass `--ancestry`. Results are cached per VCF × PGS ID ×
-build × ancestry.
+ancestry unless you pass `--ancestry`. `--reference-restoration` is the same
+`off` / `wgs` / chip-id flag as `prs compute` (default `off` — see
+[reference restoration](docs/reference-restoration.md)). Results are
+cached per VCF × PGS ID × build × ancestry × restoration.
 
 <details>
 <summary><code>prs plot</code> commands</summary>
@@ -202,6 +204,7 @@ prs plot trait "type 2 diabetes" -o t2d.html --results my_results.json
 prs plot strip results.json -o strip.html --title "My PRS Report"
 
 prs plot trait BMI --vcf anton -o bmi.html --no-cache   # force recompute
+prs plot trait intelligence --vcf anton --reference-restoration wgs -o compare.html
 ```
 
 Format follows the file extension (`.html`, `.json`, `.png`, `.svg`). Trait
@@ -576,6 +579,7 @@ live catalog metadata, and Zenodo test VCFs are documented in
 - [Cleanup Pipeline](docs/cleanup-pipeline.md)
 - [PRS quality score](docs/prs-quality-score.md)
 - [Sample ancestry methodology](docs/sample-ancestry-methodology.md)
+- [Reference restoration](docs/reference-restoration.md) (why default is off; gVCF is never filled)
 
 **Data sources:** [PGS Catalog REST](https://www.pgscatalog.org/rest/) ·
 [EBI FTP](https://ftp.ebi.ac.uk/pub/databases/spot/pgs/) ·

@@ -88,7 +88,10 @@ Type: `RestorationScope = bool | Chip | Path | pl.DataFrame` (`Chip` is a `StrEn
 | `Chip` (e.g. `Chip.GSA_V3`) | **array/chip** | chip-typed positions ∩ universe |
 | `Path` / `DataFrame` | custom | that `(chrom,pos)` set ∩ universe |
 
-Policy: **WGS → `True`; unknown → `False`; chip → `Chip`.** Only positions whose
+Policy: **WGS → `True`; unknown → `False`; chip → `Chip`.** Default is still
+`False` until the caller opts in — a `.vcf` is not proof of genome-wide WGS,
+and gVCF / `RefCall` never restores. Why, with the intelligence report
+gotcha: [reference-restoration.md](reference-restoration.md). Only positions whose
 `reference_allele` was null/empty are filled; existing values always win. Counters
 `variants_ref_resolved_panel` / `variants_ref_resolved_fasta` (subsets of
 `variants_assumed_hom_ref`) record the source from the universe's `ref_source`

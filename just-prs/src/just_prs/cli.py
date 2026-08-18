@@ -17,7 +17,7 @@ from just_prs.ftp import METADATA_FILES, bulk_download_scoring_parquets, downloa
 from just_prs.hf import pull_cleaned_parquets
 from just_prs.models import PRSResult
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
-from just_prs.prs import compute_prs, compute_prs_batch
+from just_prs.prs import RestorationScope, compute_prs, compute_prs_batch
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.scoring import (
     DEFAULT_CACHE_DIR,
@@ -82,6 +82,61 @@ ancestry_app = typer.Typer(
 app.add_typer(ancestry_app, name="ancestry")
 
 console = Console()
+
+_RESTORATION_HELP = (
+    "Restore a scoring variant's missing reference allele from the "
+    "precomputed reference-allele universe so absent loci score as "
+    "homozygous-reference within a scope: 'off' (default; old behavior), "
+    "'wgs' (whole universe — genome-wide variant-only WGS), or a chip "
+    "id (e.g. 'gsa_v3' — only chip-typed positions, for arrays)."
+)
+
+
+def _parse_restoration_scope(value: str) -> RestorationScope:
+    """Parse ``--reference-restoration``: off → False, wgs → True, else a Chip."""
+    from just_prs.chip_coverage import Chip
+
+    choice = value.strip().lower()
+    if choice in ("off", "false", "none"):
+        return False
+    if choice in ("wgs", "true", "universe"):
+        return True
+    try:
+        return Chip(choice)
+    except ValueError as exc:
+        raise typer.BadParameter(
+            f"--reference-restoration must be 'off', 'wgs', or a chip id "
+            f"({', '.join(c.value for c in Chip)}); got {value!r}"
+        ) from exc
+
+
+def _restoration_cache_token(scope: RestorationScope) -> str:
+    """Stable cache-key suffix. ``off`` keeps historical keys so old hits still match."""
+    if scope is False:
+        return "off"
+    if scope is True:
+        return "wgs"
+    return str(scope)
+
+
+def _cli_prepare_universe(
+    catalog: PRSCatalog,
+    genome_build: str,
+    scope: RestorationScope,
+) -> tuple[RestorationScope, Any]:
+    """Pull/parse the universe once. Missing file → restoration off + a warning."""
+    if scope is False:
+        return False, None
+    handle = catalog.prepare_reference_universe(
+        genome_build, reference_restoration=scope
+    )
+    if handle is None:
+        console.print(
+            "[yellow]Reference-allele universe unavailable; "
+            "--reference-restoration is a no-op this run.[/yellow]"
+        )
+        return False, None
+    return scope, handle
 
 
 @contextmanager
@@ -615,13 +670,7 @@ def compute(
         str,
         typer.Option(
             "--reference-restoration",
-            help=(
-                "Restore a scoring variant's missing reference allele from the "
-                "precomputed reference-allele universe so absent loci score as "
-                "homozygous-reference within a scope: 'off' (default; old behavior), "
-                "'wgs' (whole universe — for genome-wide variant-only WGS), or a chip "
-                "id (e.g. 'gsa_v3' — only chip-typed positions, for arrays)."
-            ),
+            help=_RESTORATION_HELP,
         ),
     ] = "off",
     ancestry: Annotated[
@@ -656,9 +705,6 @@ def compute(
     custom local scoring file (.txt.gz or .parquet with effect_allele,
     effect_weight, and position columns).
     """
-    from just_prs.chip_coverage import Chip
-    from just_prs.prs import RestorationScope
-
     vcf_path = _resolve_vcf(vcf, cache_dir)
 
     if scoring_file and pgs_id:
@@ -668,21 +714,7 @@ def compute(
         console.print("[red]Provide --pgs-id or --scoring-file.[/red]")
         raise typer.Exit(code=1)
 
-    # Parse the restoration scope: off -> False, wgs -> True, else a Chip.
-    choice = reference_restoration.strip().lower()
-    scope: RestorationScope
-    if choice in ("off", "false", "none"):
-        scope = False
-    elif choice in ("wgs", "true", "universe"):
-        scope = True
-    else:
-        try:
-            scope = Chip(choice)
-        except ValueError as exc:
-            raise typer.BadParameter(
-                f"--reference-restoration must be 'off', 'wgs', or a chip id "
-                f"({', '.join(c.value for c in Chip)}); got {reference_restoration!r}"
-            ) from exc
+    scope = _parse_restoration_scope(reference_restoration)
 
     # Resolve (and lazily pull) the reference-allele universe once when on.
     # Build-aware: GRCh37 restoration must use the GRCh37 universe, not GRCh38.
@@ -1367,9 +1399,19 @@ def _vcf_fingerprint(vcf_path: Path) -> str:
     return f"{stat.st_size}_{int(stat.st_mtime)}"
 
 
-def _result_cache_key(vcf_path: Path, pgs_id: str, build: str, ancestry: str) -> str:
+def _result_cache_key(
+    vcf_path: Path,
+    pgs_id: str,
+    build: str,
+    ancestry: str,
+    restoration: str = "off",
+) -> str:
     fp = _vcf_fingerprint(vcf_path)
-    return f"{pgs_id}_{build}_{ancestry}_{fp}"
+    base = f"{pgs_id}_{build}_{ancestry}_{fp}"
+    token = restoration.strip().lower() or "off"
+    if token in ("off", "false", "none"):
+        return base
+    return f"{base}_restore={token}"
 
 
 def _load_result_cache(cache_dir: Path | None = None) -> dict:
@@ -1392,9 +1434,10 @@ def _save_result_cache(cache: dict, cache_dir: Path | None = None) -> None:
 def _get_cached_result(
     vcf_path: Path, pgs_id: str, build: str, ancestry: str,
     cache_dir: Path | None = None,
+    restoration: str = "off",
 ) -> dict | None:
     cache = _load_result_cache(cache_dir)
-    key = _result_cache_key(vcf_path, pgs_id, build, ancestry)
+    key = _result_cache_key(vcf_path, pgs_id, build, ancestry, restoration)
     hit = cache.get(key)
     if hit is not None:
         z = hit.get("z_score")
@@ -1413,9 +1456,10 @@ def _get_cached_result(
 def _put_cached_result(
     vcf_path: Path, pgs_id: str, build: str, ancestry: str,
     result: dict, cache_dir: Path | None = None,
+    restoration: str = "off",
 ) -> None:
     cache = _load_result_cache(cache_dir)
-    key = _result_cache_key(vcf_path, pgs_id, build, ancestry)
+    key = _result_cache_key(vcf_path, pgs_id, build, ancestry, restoration)
     cache[key] = result
     _save_result_cache(cache, cache_dir)
 
@@ -3068,6 +3112,7 @@ def _compute_trait_results(
     fuzzy: bool = False,
     no_cache: bool = False,
     pgs_ids: list[str] | None = None,
+    reference_restoration: RestorationScope = False,
 ) -> list[dict]:
     """Search for PGS models matching a trait, compute PRS, and return result dicts.
 
@@ -3078,9 +3123,13 @@ def _compute_trait_results(
     names before computing.
     When ``pgs_ids`` is given, trait search is skipped and exactly those scores
     are computed (single/multi PGS ID is the one-score edge case of the trait flow).
-    Uses a file-based result cache keyed by (vcf mtime+size, pgs_id, build, ancestry).
+    Uses a file-based result cache keyed by (vcf mtime+size, pgs_id, build,
+    ancestry, restoration). ``off`` keeps the historical key so existing
+    unrestored hits still match.
     """
     catalog = PRSCatalog(cache_dir=cache)
+    scope, universe = _cli_prepare_universe(catalog, build, reference_restoration)
+    restore_token = _restoration_cache_token(scope)
 
     all_scores = catalog.scores(genome_build=build, include_harmonized=True)
 
@@ -3154,6 +3203,10 @@ def _compute_trait_results(
         for row in best_perf_df.select(perf_cols).iter_rows(named=True):
             pgs_to_perf[row["pgs_id"]] = row
 
+    if scope is not False:
+        console.print(
+            f"[dim]Reference restoration: {_restoration_cache_token(scope)}[/dim]"
+        )
     console.print(f"Found [cyan]{scores_df.height}[/cyan] scores ({match_type} match) for {len(trait_names)} trait(s):")
     for t in trait_names:
         n = scores_df.filter(pl.col("trait_reported") == t).height
@@ -3224,7 +3277,9 @@ def _compute_trait_results(
         trait_name = pgs_to_trait.get(pgs_id, "?")
 
         if not no_cache:
-            hit = _get_cached_result(vcf_path, pgs_id, build, ancestry, cache)
+            hit = _get_cached_result(
+                vcf_path, pgs_id, build, ancestry, cache, restoration=restore_token
+            )
             if hit is not None:
                 cached_count += 1
                 hit.setdefault("trait_reported", trait_name)
@@ -3247,6 +3302,8 @@ def _compute_trait_results(
                 cache_dir=cache,
                 pgs_id=pgs_id,
                 trait_reported=trait_name,
+                reference_restoration=scope,
+                reference_universe=universe,
             )
             pctl_result = catalog.percentile_full(
                 r.score, r.pgs_id, ancestry=ancestry,
@@ -3292,7 +3349,9 @@ def _compute_trait_results(
             attach_risk_context(rd)
 
             result_dicts.append(rd)
-            _put_cached_result(vcf_path, pgs_id, build, ancestry, rd, cache)
+            _put_cached_result(
+                vcf_path, pgs_id, build, ancestry, rd, cache, restoration=restore_token
+            )
 
             line = f"  score={r.score:.6f}  matched={r.variants_matched}/{r.variants_total}  percentile={pctl}"
             if "risk_ratio" in rd:
@@ -3400,12 +3459,16 @@ def plot_bell_curve_cmd(
     cache_dir: Annotated[
         Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
     ] = None,
+    reference_restoration: Annotated[
+        str, typer.Option("--reference-restoration", help=_RESTORATION_HELP)
+    ] = "off",
 ) -> None:
     """Plot a single PGS bell curve for one ancestry with optional user score marker.
 
     Use --vcf (path or alias) to auto-compute PRS and mark it on the curve.
     Use --user-score to mark a pre-computed score directly.
     Multiple --vcf flags compare samples on the same curve.
+    ``--reference-restoration wgs`` uses the WGS fill (default ``off``).
 
     \b
     Examples:
@@ -3413,6 +3476,7 @@ def plot_bell_curve_cmd(
       prs plot bell-curve PGS000001 -o bell.html -a AFR --user-score 0.274
       prs plot bell-curve PGS000001 -o bell.html --vcf livia
       prs plot bell-curve PGS000001 -o bell.html --vcf Anton=anton --vcf Livia=livia
+      prs plot bell-curve PGS000001 -o bell.html --vcf Anton=anton --vcf Livia=livia --reference-restoration wgs
     """
     from just_prs.viz import plot_prs_bell_curve, save_chart, bell_curve_report_html
 
@@ -3429,6 +3493,7 @@ def plot_bell_curve_cmd(
 
     cache = cache_dir or resolve_cache_dir()
     catalog = PRSCatalog(cache_dir=cache)
+    requested_scope = _parse_restoration_scope(reference_restoration)
 
     if vcf:
         vcf_specs = [_parse_vcf_spec(spec) for spec in vcf]
@@ -3438,7 +3503,11 @@ def plot_bell_curve_cmd(
             vcf_path = _resolve_vcf(vcf_str, cache_dir)
             sample_name = label
             sample_build = _resolve_sample_build(vcf_path, build)
-            hit = None if no_cache else _get_cached_result(vcf_path, pgs_id, sample_build, ancestry, cache)
+            scope, universe = _cli_prepare_universe(catalog, sample_build, requested_scope)
+            restore_token = _restoration_cache_token(scope)
+            hit = None if no_cache else _get_cached_result(
+                vcf_path, pgs_id, sample_build, ancestry, cache, restoration=restore_token
+            )
             if hit is not None:
                 score = hit["score"]
                 prs_result_data = {**hit, "sample_name": label}
@@ -3451,6 +3520,8 @@ def plot_bell_curve_cmd(
                     genome_build=sample_build,
                     cache_dir=cache,
                     pgs_id=pgs_id,
+                    reference_restoration=scope,
+                    reference_universe=universe,
                 )
                 pctl_result = catalog.percentile_full(
                     result.score, result.pgs_id, ancestry=ancestry,
@@ -3475,7 +3546,10 @@ def plot_bell_curve_cmd(
                     rd["score_name"] = score_info.get("name", "")
                     rd["quality_label"] = score_info.get("quality_label", "")
                 prs_result_data = rd
-                _put_cached_result(vcf_path, pgs_id, sample_build, ancestry, rd, cache)
+                _put_cached_result(
+                    vcf_path, pgs_id, sample_build, ancestry, rd, cache,
+                    restoration=restore_token,
+                )
                 if not pctl_result.reliable:
                     console.print(f"  [yellow]⚠ {pctl_result.caveat}[/yellow]")
                 console.print(
@@ -3488,7 +3562,11 @@ def plot_bell_curve_cmd(
             for label, vcf_str in vcf_specs:
                 vcf_path = _resolve_vcf(vcf_str, cache_dir)
                 sample_build = _resolve_sample_build(vcf_path, build)
-                hit = None if no_cache else _get_cached_result(vcf_path, pgs_id, sample_build, ancestry, cache)
+                scope, universe = _cli_prepare_universe(catalog, sample_build, requested_scope)
+                restore_token = _restoration_cache_token(scope)
+                hit = None if no_cache else _get_cached_result(
+                    vcf_path, pgs_id, sample_build, ancestry, cache, restoration=restore_token
+                )
                 if hit is not None:
                     multi_scores[label] = hit["score"]
                     multi_results.append({**hit, "sample_name": label})
@@ -3501,6 +3579,8 @@ def plot_bell_curve_cmd(
                         genome_build=sample_build,
                         cache_dir=cache,
                         pgs_id=pgs_id,
+                        reference_restoration=scope,
+                        reference_universe=universe,
                     )
                     pctl_result = catalog.percentile_full(
                         result.score, result.pgs_id, ancestry=ancestry,
@@ -3520,7 +3600,10 @@ def plot_bell_curve_cmd(
                         "sample_name": label,
                     }
                     multi_results.append(s_rd)
-                    _put_cached_result(vcf_path, pgs_id, sample_build, ancestry, s_rd, cache)
+                    _put_cached_result(
+                        vcf_path, pgs_id, sample_build, ancestry, s_rd, cache,
+                        restoration=restore_token,
+                    )
                     console.print(f"{label}: [green]{result.score:.6f}[/green] (matched {result.variants_matched}/{result.variants_total})")
             prs_result_data = multi_results
 
@@ -3576,8 +3659,13 @@ def plot_multi_ancestry_cmd(
     cache_dir: Annotated[
         Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
     ] = None,
+    reference_restoration: Annotated[
+        str, typer.Option("--reference-restoration", help=_RESTORATION_HELP)
+    ] = "off",
 ) -> None:
     """Plot overlaid bell curves for multiple ancestries on a single chart.
+
+    ``--reference-restoration wgs`` uses the WGS fill when computing from ``--vcf``.
 
     \b
     Examples:
@@ -3598,8 +3686,15 @@ def plot_multi_ancestry_cmd(
     if vcf:
         vcf_path = _resolve_vcf(vcf, cache_dir)
         cache = cache_dir or resolve_cache_dir()
+        catalog = PRSCatalog(cache_dir=cache)
         sample_build = _resolve_sample_build(vcf_path, build)
-        hit = None if no_cache else _get_cached_result(vcf_path, pgs_id, sample_build, "EUR", cache)
+        scope, universe = _cli_prepare_universe(
+            catalog, sample_build, _parse_restoration_scope(reference_restoration)
+        )
+        restore_token = _restoration_cache_token(scope)
+        hit = None if no_cache else _get_cached_result(
+            vcf_path, pgs_id, sample_build, "EUR", cache, restoration=restore_token
+        )
         if hit is not None:
             score = hit["score"]
             console.print(f"[dim](cached)[/dim] Score: [green]{score:.6f}[/green]")
@@ -3611,11 +3706,13 @@ def plot_multi_ancestry_cmd(
                 genome_build=sample_build,
                 cache_dir=cache,
                 pgs_id=pgs_id,
+                reference_restoration=scope,
+                reference_universe=universe,
             )
             score = result.score
             _put_cached_result(vcf_path, pgs_id, sample_build, "EUR", {
                 "pgs_id": pgs_id, "score": score, "match_rate": result.match_rate,
-            }, cache)
+            }, cache, restoration=restore_token)
             console.print(f"Score: [green]{score:.6f}[/green] (matched {result.variants_matched}/{result.variants_total})")
 
     dists, _ = _load_distributions(cache_dir, panel)
@@ -3651,6 +3748,7 @@ def _collect_vcf_trait_results(
     pgs_ids: list[str] | None,
     dists: pl.DataFrame,
     model_filter: Any,
+    reference_restoration: RestorationScope = False,
 ) -> tuple[
     list[dict],
     dict[str, list[dict]] | None,
@@ -3697,6 +3795,7 @@ def _collect_vcf_trait_results(
             _compute_trait_results(
                 trait, vcf_path, dists, sample_anc, sample_build, max_scores, cache,
                 fuzzy=fuzzy, no_cache=no_cache, pgs_ids=pgs_ids,
+                reference_restoration=reference_restoration,
             ),
             model_filter,
             label,
@@ -3722,6 +3821,7 @@ def _collect_vcf_trait_results(
         sample_results = _compute_trait_results(
             trait, vcf_path, dists, sample_anc, sample_build, max_scores, cache,
             fuzzy=fuzzy, no_cache=no_cache, pgs_ids=pgs_ids,
+            reference_restoration=reference_restoration,
         )
         multi_user_results[label] = _apply_model_filter(sample_results, model_filter, label)
     first_label = next(iter(multi_user_results))
@@ -3774,6 +3874,9 @@ def plot_trait_cmd(
     cache_dir: Annotated[
         Optional[Path], typer.Option("--cache-dir", help="Override cache directory")
     ] = None,
+    reference_restoration: Annotated[
+        str, typer.Option("--reference-restoration", help=_RESTORATION_HELP)
+    ] = "off",
 ) -> None:
     """Plot trait-grouped visualization: reference bell curve with per-model quality dots.
 
@@ -3804,8 +3907,10 @@ def plot_trait_cmd(
     Use --all-ancestries to overlay all 5 population reference curves, or
     --ancestries EUR,AFR,EAS to select specific populations.
 
-    PRS results are cached per (VCF, PGS ID, build, ancestry) so repeated
-    plotting is instant. Use --no-cache to force recomputation.
+    PRS results are cached per (VCF, PGS ID, build, ancestry, restoration)
+    so repeated plotting is instant. Default restoration is off (same as
+    ``prs compute``). Use ``--reference-restoration wgs`` for the WGS fill
+    and ``--no-cache`` to force recomputation.
 
     \b
     Examples:
@@ -3817,6 +3922,7 @@ def plot_trait_cmd(
       prs plot trait intelligence --vcf Anton=anton --vcf Livia=livia -o compare.html
       prs plot trait PGS000001 --vcf Anton=anton --vcf Livia=livia -o pgs1.html
       prs plot trait PGS000001,PGS000002 --vcf anton -o two_scores.html
+      prs plot trait intelligence --vcf Anton=anton --vcf Livia=livia --reference-restoration wgs -o compare.html
     """
     from just_prs.viz import plot_trait_scores, save_chart, save_trait_report
 
@@ -3852,6 +3958,7 @@ def plot_trait_cmd(
                 pgs_ids=pgs_ids,
                 dists=dists,
                 model_filter=model_filter,
+                reference_restoration=_parse_restoration_scope(reference_restoration),
             )
         )
     elif results:
@@ -4040,6 +4147,9 @@ def prompt_cmd(
         Optional[Path],
         typer.Option("--cache-dir", help="Override cache directory"),
     ] = None,
+    reference_restoration: Annotated[
+        str, typer.Option("--reference-restoration", help=_RESTORATION_HELP)
+    ] = "off",
 ) -> None:
     """Build the same LLM prompt the UI Ask-AI buttons use, for agentic workflows.
 
@@ -4047,7 +4157,8 @@ def prompt_cmd(
     into Claude, Codex, or another agent. Repeat --vcf for a multi-sample
     comparison prompt. --assistant other (the default) uses the full 6000-char
     budget with no URL encoding; --url emits a prefilled Claude/ChatGPT/…
-    link instead.
+    link instead. ``--reference-restoration wgs`` uses the WGS fill when
+    computing from ``--vcf`` (default ``off``, same as ``prs compute``).
 
     \b
     Examples:
@@ -4055,6 +4166,7 @@ def prompt_cmd(
       prs prompt BMI --vcf anton | claude
       prs prompt intelligence --results family.json -o prompt.txt
       prs prompt PGS000001 --vcf anton --assistant claude --url
+      prs prompt intelligence --vcf Anton=anton --vcf Livia=livia --reference-restoration wgs
     """
     from just_prs.viz import (
         AI_ASSISTANTS_BY_KEY,
@@ -4111,6 +4223,7 @@ def prompt_cmd(
                     pgs_ids=pgs_ids,
                     dists=dists,
                     model_filter=model_filter,
+                    reference_restoration=_parse_restoration_scope(reference_restoration),
                 )
             )
         else:

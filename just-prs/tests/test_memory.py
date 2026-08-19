@@ -13,6 +13,7 @@ from just_prs.memory import (
     MIN_SCORING_JOIN_CHUNK,
     ProcessTreeSampler,
     check_memory_pressure,
+    large_score_recycle_rss_bytes,
     process_tree_rss_bytes,
     process_tree_snapshot,
     recycle_reason,
@@ -59,6 +60,15 @@ def test_check_memory_pressure_raises_below_floor(monkeypatch) -> None:
     monkeypatch.setattr("just_prs.memory.memory_safety_floor_bytes", lambda: 10**18)
     with pytest.raises(MemoryError, match="safety floor"):
         check_memory_pressure("PGS005178")
+
+
+def test_large_score_recycle_rss_default_and_env(monkeypatch) -> None:
+    monkeypatch.delenv("PRS_SAMPLE_SCORE_LARGE_RECYCLE_RSS_GB", raising=False)
+    assert large_score_recycle_rss_bytes() == 8 * 1024 * 1024 * 1024
+    monkeypatch.setenv("PRS_SAMPLE_SCORE_LARGE_RECYCLE_RSS_GB", "0")
+    assert large_score_recycle_rss_bytes() == 0
+    monkeypatch.setenv("PRS_SAMPLE_SCORE_LARGE_RECYCLE_RSS_GB", "12")
+    assert large_score_recycle_rss_bytes() == 12 * 1024 * 1024 * 1024
 
 
 def test_scoring_join_chunk_size_honors_env(monkeypatch) -> None:

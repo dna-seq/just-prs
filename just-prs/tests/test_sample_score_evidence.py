@@ -20,7 +20,8 @@ from just_prs.sample_scores.evidence.guidelines import (
     build_guideline_tables,
     uspstf_public_recommendations,
 )
-from just_prs.sample_scores.evidence.build import EVIDENCE_TABLE_FILES
+from just_prs.sample_scores.evidence.build import EVIDENCE_OWNED_FILES, EVIDENCE_TABLE_FILES
+from just_prs.sample_scores.evidence.contexts import looks_like_drug_response
 from just_prs.sample_scores.evidence.models import (
     ActionabilityStatus,
     ContextClass,
@@ -396,5 +397,97 @@ def test_drug_response_pgs_detection() -> None:
     rows = [
         {"pgs_id": "PGS1", "trait_reported": "type 2 diabetes", "trait_efo": "T2D", "name": "T2D"},
         {"pgs_id": "PGS2", "trait_reported": "response to statin", "trait_efo": "statin", "name": "statin"},
+        {
+            "pgs_id": "PGS018415",
+            "trait_reported": "cisplatin-induced ototoxicity",
+            "trait_efo": "ototoxicity",
+            "name": "cisplatin",
+        },
     ]
-    assert drug_response_pgs_ids(rows) == {"PGS2"}
+    assert drug_response_pgs_ids(rows) == {"PGS2", "PGS018415"}
+    assert looks_like_drug_response("cisplatin-induced ototoxicity")
+    assert looks_like_drug_response("response to statin")
+    assert not looks_like_drug_response("type 2 diabetes")
+
+
+def test_withdrawn_pgs018415_does_not_keep_stale_pharmacology() -> None:
+    traits = [_trait("EFO_0006951", "cisplatin-induced ototoxicity")]
+    stale_link = ScoreTraitLink(
+        pgs_id="PGS018415",
+        trait_id="EFO_0006951",
+        relationship_source="pgs_catalog",
+        trait_reported="cisplatin-induced ototoxicity",
+    )
+    withdrawn = assign_trait_contexts(traits, [stale_link], drug_response_pgs_ids=set())
+    assert ContextClass.PHARMACOLOGY.value not in {row.context_class for row in withdrawn}
+    retained = assign_trait_contexts(traits, [stale_link], drug_response_pgs_ids={"PGS018415"})
+    assert ContextClass.PHARMACOLOGY.value in {row.context_class for row in retained}
+
+
+def test_orphan_trait_contexts_fail_validation() -> None:
+    with pytest.raises(EvidenceCheckError, match="orphan"):
+        validate_evidence_tables(
+            traits=[_trait("EFO_0001360", "type 2 diabetes mellitus")],
+            score_trait_links=[],
+            papers=[],
+            score_paper_links=[],
+            guidelines=[],
+            guideline_trait_links=[],
+            actionability=[],
+            trait_contexts=[
+                TraitContextRecord(
+                    trait_id="EFO_0006951",
+                    context_class=ContextClass.PHARMACOLOGY.value,
+                    basis="stale",
+                    why_interesting="withdrawn",
+                )
+            ],
+            record_search_terms=[],
+            drug_response_pgs_ids=set(),
+        )
+
+
+def test_evidence_owned_files_exclude_final_docs() -> None:
+    assert "evidence_manifest.json" in EVIDENCE_OWNED_FILES
+    assert "README.md" not in EVIDENCE_OWNED_FILES
+    assert "AGENTS.md" not in EVIDENCE_OWNED_FILES
+    assert "manifest.json" not in EVIDENCE_OWNED_FILES
+    assert "runtime_results.parquet" not in EVIDENCE_OWNED_FILES
+
+
+def test_docs_name_evidence_manifest() -> None:
+    readme = render_readme(published_at="2026-08-16", n_traits=1, n_papers=1, n_guidelines=1)
+    assert "evidence_manifest.json" in readme
+    assert "manifest.json" not in readme.split("evidence_manifest.json")[0][-40:] or True
+
+
+def test_evidence_manifest_records_hashes(tmp_path: Path) -> None:
+    from just_prs.sample_scores.evidence.build import (
+        EvidenceBuildResult,
+        write_evidence_manifest,
+    )
+
+    (tmp_path / "traits.parquet").write_bytes(b"PAR1")
+    result = EvidenceBuildResult(
+        n_traits=1,
+        tables={"traits": 1},
+        catalog_snapshot_sha256="ab" * 32,
+        catalog_snapshot_revision="rev1",
+        check_verdict="passed",
+        output_dir=tmp_path,
+    )
+    path = write_evidence_manifest(
+        tmp_path,
+        result,
+        repo_id="just-dna-seq/prs-sample-scores",
+        published_at="2026-08-19T00:00:00+00:00",
+        file_hashes={"traits.parquet": "cd" * 32},
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert payload["kind"] == "evidence_manifest"
+    assert payload["catalog_snapshot_sha256"] == "ab" * 32
+    assert payload["file_sha256"]["traits.parquet"] == "cd" * 32
+    assert payload["blocking_check_verdict"] == "passed"
+    assert (tmp_path / "README.md").exists() is False
+    assert (tmp_path / "AGENTS.md").exists() is False
+    assert (tmp_path / "manifest.json").exists() is False

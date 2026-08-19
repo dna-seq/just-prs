@@ -235,7 +235,7 @@ def run(
     test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
     test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
-    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, ld_proxy_pipeline, reference_allele_pipeline, reference_percentile_audit_job, public_sample_scores_job.")] = "full_pipeline",
+    job: Annotated[str, typer.Option(help="Job to run: full_pipeline, download_reference_data, score_and_push, catalog_pipeline, metadata_pipeline, ld_proxy_pipeline, reference_allele_pipeline, reference_percentile_audit_job, public_sample_scores_job, sample_score_evidence_job, sample_score_integration_job.")] = "full_pipeline",
     no_cache: Annotated[bool, typer.Option("--no-cache", help="Ignore on-disk caches and re-download/recompute everything.")] = False,
     headless: Annotated[bool, typer.Option("--headless", help="Run in-process without Dagster UI.")] = False,
     host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
@@ -530,6 +530,73 @@ def evidence(
     ])
 
 
+@app.command(name="sample-score-integration")
+def sample_score_integration(
+    no_cache: Annotated[
+        bool,
+        typer.Option("--no-cache", help="Rebuild analysis tables even when local outputs exist."),
+    ] = False,
+    offline: Annotated[
+        bool,
+        typer.Option("--offline", help="Fail closed if a pinned source is not already staged locally."),
+    ] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Run sample_score_integration_job in-process without Dagster UI.")] = False,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
+) -> None:
+    """Build model_analysis, trait_summaries, and final docs from pinned sources.
+
+    \b
+    Stages exact parent revisions of runtime, evidence, catalog, and percentile
+    snapshots. Does **not** rescore genomes. Dagster UI by default; use
+    ``--headless`` for in-process execution.
+    """
+    dagster_home = _setup_dagster_home()
+    _set_pipeline_env("1000g", no_cache=no_cache)
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "sample_score_integration_job"
+    if offline:
+        os.environ["PRS_INTEGRATION_ALLOW_NETWORK"] = "0"
+    else:
+        os.environ.pop("PRS_INTEGRATION_ALLOW_NETWORK", None)
+
+    if headless:
+        _cancel_orphaned_runs()
+        console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+        console.print("[bold]Job:[/bold] sample_score_integration_job (pinned analysis, no scoring)\n")
+
+        from prs_pipeline.definitions import defs
+
+        resolved_job = defs.get_job_def("sample_score_integration_job")
+        console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+        result = _execute_job(resolved_job)
+
+        if result.success:
+            console.print("\n[green bold]Job 'sample_score_integration_job' completed successfully.[/green bold]")
+        else:
+            console.print("\n[red bold]Job 'sample_score_integration_job' failed.[/red bold]")
+            for event in result.all_events:
+                if event.is_failure:
+                    console.print(f"  [red]{event.message}[/red]")
+            raise typer.Exit(code=1)
+        return
+
+    os.environ["PRS_PIPELINE_STARTUP_REQUEST_ID"] = uuid.uuid4().hex
+    _kill_port(port)
+    _cancel_orphaned_runs()
+    console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
+    console.print("[bold]Job 'sample_score_integration_job' will be submitted automatically on startup.[/bold]\n")
+
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])
+
+
 @app.command(name="sample-scores")
 @app.command(name="canary-audit")
 def sample_scores(
@@ -578,6 +645,18 @@ def sample_scores(
             ),
         ),
     ] = False,
+    repair_invalid: Annotated[
+        bool,
+        typer.Option(
+            "--repair-invalid",
+            help=(
+                "Quarantine checkpoint parts whose ok rows fail numeric "
+                "invariants or whose scoring fingerprints drifted, then "
+                "re-score only those parts. Successful valid cache is kept. "
+                "Unlike --retry-failed, this repairs invalid rows marked ok."
+            ),
+        ),
+    ] = False,
     headless: Annotated[bool, typer.Option("--headless", help="Run public_sample_scores_job in-process without Dagster UI.")] = False,
     host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
     port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
@@ -593,8 +672,8 @@ def sample_scores(
     The same job then scores publication-allowed public genomes (anton, livia,
     o-family) under both WGS profiles and pushes ``samples.parquet`` /
     ``runtime_results.parquet`` / ``runtime_manifest.json`` to
-    ``just-dna-seq/prs-sample-scores``. It does not write evidence tables or
-    the combined root ``manifest.json``.
+    ``just-dna-seq/prs-sample-scores`` plus ``sample_ancestry.parquet``.
+    It does not write evidence tables or the combined root ``manifest.json``.
     o-family derived scores are published before the VCFs are on Zenodo.
     Unknown genomes stay in the canary audit and are never uploaded. Dagster UI by default.
     Does not recompute 1000G reference scores.
@@ -616,6 +695,10 @@ def sample_scores(
         os.environ["PRS_SAMPLE_SCORE_RETRY_FAILED"] = "1"
     else:
         os.environ.pop("PRS_SAMPLE_SCORE_RETRY_FAILED", None)
+    if repair_invalid:
+        os.environ["PRS_SAMPLE_SCORE_REPAIR_INVALID"] = "1"
+    else:
+        os.environ.pop("PRS_SAMPLE_SCORE_REPAIR_INVALID", None)
     os.environ["PRS_PIPELINE_STARTUP_JOB"] = "public_sample_scores_job"
     cache_dir = resolve_cache_dir()
     samples = parse_canary_vcf_specs(vcf, cache_dir, genome_build=build)
@@ -637,6 +720,11 @@ def sample_scores(
         console.print(
             "[bold]Retry failed:[/bold] re-score failed checkpoint rows, "
             "keep successful cache, continue into missing PGS IDs."
+        )
+    if repair_invalid and not no_cache:
+        console.print(
+            "[bold]Repair invalid:[/bold] quarantine invalid/stale ok parts, "
+            "re-score only those checkpoints, keep valid cache."
         )
     if pgs_ids:
         os.environ["PRS_CANARY_PGS_IDS"] = pgs_ids

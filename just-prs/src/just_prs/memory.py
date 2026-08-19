@@ -238,6 +238,27 @@ def large_score_variant_threshold() -> int:
     return max(int(raw) if raw else DEFAULT_LARGE_SCORE_VARIANTS, 1)
 
 
+DEFAULT_LARGE_SCORE_RECYCLE_RSS_GB = 8.0
+
+
+def large_score_recycle_rss_bytes() -> int:
+    """RSS a large-score worker must reach before it is recycled.
+
+    Singleton planning still isolates a ≥1M-variant file to its own checkpoint.
+    Forcing a *process* exit after every such checkpoint spawned a new
+    interpreter every few seconds through the late catalog and froze the host
+    while worker RSS was 1.5–3 GB and MemAvailable was still tens of GB.
+    Recycle for size only when the process is actually fat.
+    ``PRS_SAMPLE_SCORE_LARGE_RECYCLE_RSS_GB`` (default 8). Set ``0`` to restore
+    the old always-recycle-after-large-score behavior.
+    """
+    raw = os.environ.get("PRS_SAMPLE_SCORE_LARGE_RECYCLE_RSS_GB", "").strip()
+    gb = float(raw) if raw else DEFAULT_LARGE_SCORE_RECYCLE_RSS_GB
+    if gb <= 0:
+        return 0
+    return int(gb * 1024 * 1024 * 1024)
+
+
 def sample_score_memory_budget_bytes() -> int:
     """Worker RSS budget. ``PRS_SAMPLE_SCORE_MEMORY_LIMIT_GB`` or percent of RAM."""
     explicit = os.environ.get("PRS_SAMPLE_SCORE_MEMORY_LIMIT_GB", "").strip()

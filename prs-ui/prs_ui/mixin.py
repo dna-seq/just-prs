@@ -29,6 +29,7 @@ from just_prs.ftp import METADATA_FILES
 from just_prs.prs import PRSEngine, compute_prs, compute_prs_duckdb
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.reference import SUPERPOPULATIONS
+from just_prs.sample_scores import lookup_precomputed_prs
 from just_prs.scoring import resolve_cache_dir
 from just_prs.trait_summary import (
     NO_MAPPED_H2,
@@ -645,6 +646,37 @@ def _ancestry_chip_text(sample: dict[str, Any]) -> str:
 def _result_sample(row: dict[str, Any]) -> str:
     """Sample label carried on a PRS result row (empty for single-sample runs)."""
     return str(row.get("sample") or "")
+
+
+def _result_row_key(row: dict[str, Any]) -> tuple[str, str]:
+    """Stable cache key for one displayed PRS row: ``(pgs_id, sample)``."""
+    return (str(row.get("pgs_id") or ""), _result_sample(row))
+
+
+def restoration_cache_keys(rows: list[dict[str, Any]]) -> set[tuple[str, str]]:
+    """``(pgs_id, sample)`` keys present in a recovered or unrestored result cache."""
+    return {_result_row_key(row) for row in rows if row.get("pgs_id")}
+
+
+def missing_restoration_keys(
+    cached: list[dict[str, Any]],
+    pgs_ids: list[str],
+    sample_labels: list[str],
+) -> list[tuple[str, str]]:
+    """Return selected ``(pgs_id, sample)`` pairs not already stored in *cached*.
+
+    An empty ``sample_labels`` list means a single-sample run (empty sample tag),
+    matching ``_iter_sample_genotypes``.
+    """
+    have = restoration_cache_keys(cached)
+    labels = sample_labels if sample_labels else [""]
+    missing: list[tuple[str, str]] = []
+    for label in labels:
+        for pgs_id in pgs_ids:
+            key = (pgs_id, label)
+            if key not in have:
+                missing.append(key)
+    return missing
 
 
 def _ordered_sample_labels(rows: list[dict[str, Any]]) -> list[str]:
@@ -1310,6 +1342,18 @@ _AI_ASSISTANTS: list[dict[str, str]] = [
     },
 ]
 
+
+def _safe_download_stem(label: str) -> str:
+    """Filesystem-safe lowercase stem for a chart download filename."""
+    cleaned = "".join(
+        ch.lower() if ch.isalnum() else "_"
+        for ch in (label or "").strip()
+    )
+    while "__" in cleaned:
+        cleaned = cleaned.replace("__", "_")
+    return cleaned.strip("_")[:80] or "prs"
+
+
 def _genome_file_label(path: str | None) -> str:
     """Return a concise label for the genotype source used in AI prompts."""
     if not path:
@@ -1537,6 +1581,13 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     show_all_risk_estimates: bool = True
     include_harmonized: bool = True
     refresh_reference_cache_before_compute: bool = False
+    # WGS reference-allele fill (default off). Recovered and unrestored
+    # result rows are stored in separate lists so the checkbox can switch
+    # without recomputing when both caches already cover the selection.
+    reference_restoration: bool = False
+    prs_results_unrestored: list[dict] = []
+    prs_results_restored: list[dict] = []
+    _reuse_restoration_cache: bool = False
     prs_catalog_query: str = ""
 
     # --- Chart selection state (Altair / Vega-Lite) ---
@@ -1776,6 +1827,81 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         """Enable/disable pulling latest reference/audit sidecars before compute."""
         self.refresh_reference_cache_before_compute = bool(value)
 
+    def _restoration_sample_labels(self) -> list[str]:
+        """Sample tags used as restoration-cache keys (empty string if one genome)."""
+        if len(self.prs_samples) > 1:
+            return [str(sample.get("label") or "") for sample in self.prs_samples]
+        return [""]
+
+    def _restoration_cache(self) -> list[dict]:
+        """Result rows for the currently selected recovered / unrestored mode."""
+        if self.reference_restoration:
+            return self.prs_results_restored
+        return self.prs_results_unrestored
+
+    def _store_restoration_cache(self, rows: list[dict]) -> None:
+        """Persist the displayed rows into the active recovered / unrestored cache."""
+        stored = list(rows)
+        if self.reference_restoration:
+            self.prs_results_restored = stored
+        else:
+            self.prs_results_unrestored = stored
+
+    def _clear_restoration_caches(self) -> None:
+        """Drop both recovered and unrestored session caches."""
+        self.prs_results_unrestored = []
+        self.prs_results_restored = []
+        self._reuse_restoration_cache = False
+
+    def _refresh_displayed_prs_results(self) -> None:
+        """Rebuild the visible grid / trait summary from ``prs_results``."""
+        self._build_prs_results_grid()
+        self.low_match_warning = any(
+            float(row.get("match_rate") or 0.0) < 10.0
+            for row in self.prs_results
+        )
+        if self.prs_view_mode == "grouped" and self.prs_results:
+            self.build_trait_summary()
+        elif self.prs_results:
+            self._auto_select_prs_chart()
+        else:
+            self.trait_summary_rows = []
+            self.trait_summary_visible = False
+            self._reset_selected_result()
+
+    def set_reference_restoration(self, value: bool) -> Any:
+        """Toggle WGS hom-ref recovery and switch caches, computing only on a miss."""
+        wanted = bool(value)
+        if wanted == self.reference_restoration:
+            return
+        self.reference_restoration = wanted
+        cached = self._restoration_cache()
+        self.prs_results = list(cached)
+        self._refresh_displayed_prs_results()
+        missing = missing_restoration_keys(
+            cached,
+            list(self.selected_pgs_ids),
+            self._restoration_sample_labels(),
+        )
+        mode = "recovered" if wanted else "unrecovered"
+        if not missing:
+            self.status_message = f"Showing {mode} cached PRS results."  # type: ignore[attr-defined]
+            return
+        if not self.selected_pgs_ids or not (
+            self.prs_genotypes_path or self._get_genotypes_lf() is not None
+        ):
+            self.status_message = (
+                f"WGS recovery {'on' if wanted else 'off'}. "
+                "Compute to score with this setting."
+            )  # type: ignore[attr-defined]
+            return
+        self._reuse_restoration_cache = True
+        self.status_message = (
+            f"Computing {len(missing)} missing {mode} PRS result(s)..."
+        )  # type: ignore[attr-defined]
+        yield
+        yield from self.compute_selected_prs()
+
     def set_include_harmonized(self, value: bool) -> Any:
         """Enable/disable including harmonized (cross-build) scores."""
         self.include_harmonized = bool(value)
@@ -1827,6 +1953,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.trait_summary_rows = []
         self.trait_summary_visible = False
         self.low_match_warning = False
+        self._clear_restoration_caches()
 
     def load_samples(self, samples: list[dict]) -> None:
         """Loose-coupling hook: feed **multiple** normalized genotype samples.
@@ -1864,6 +1991,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.trait_summary_rows = []
         self.trait_summary_visible = False
         self.low_match_warning = False
+        self._clear_restoration_caches()
         detected = majority_detected_superpopulation(registry)
         if detected:
             self.selected_ancestry = detected
@@ -3850,6 +3978,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.status_message = "No PGS scores selected. Load and select scores above."  # type: ignore[attr-defined]
             return
 
+        reuse_cached = bool(self._reuse_restoration_cache)
+        self._reuse_restoration_cache = False
+        cached_keys = (
+            restoration_cache_keys(self._restoration_cache()) if reuse_cached else set()
+        )
+
         sample_sources: list[tuple[str, str, pl.LazyFrame | None]] = list(
             self._iter_sample_genotypes()
         )
@@ -3857,11 +3991,25 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             sample_sources = [("", self.prs_genotypes_path or "", self._get_genotypes_lf())]
         color_map = self._sample_color_map()
 
-        total = len(self.selected_pgs_ids) * len(sample_sources)
+        work_items = [
+            (sample_label, sample_path, sample_genotypes, pgs_id)
+            for sample_label, sample_path, sample_genotypes in sample_sources
+            for pgs_id in self.selected_pgs_ids
+            if (pgs_id, sample_label) not in cached_keys
+        ]
+        total = len(work_items)
+        if total == 0:
+            self.prs_results = list(self._restoration_cache())
+            self._refresh_displayed_prs_results()
+            mode = "recovered" if self.reference_restoration else "unrecovered"
+            self.status_message = f"Showing {mode} cached PRS results."  # type: ignore[attr-defined]
+            return
+
         self.prs_computing = True
         self.prs_progress = 0
         self.low_match_warning = False
-        self.status_message = f"Computing PRS for {total} score(s)..."  # type: ignore[attr-defined]
+        mode = "recovered" if self.reference_restoration else "unrecovered"
+        self.status_message = f"Computing {total} {mode} PRS score(s)..."  # type: ignore[attr-defined]
         yield
 
         if self.refresh_reference_cache_before_compute:
@@ -3910,19 +4058,38 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             except Exception:
                 pass
 
+        reference_universe = None
+        if self.reference_restoration:
+            self.status_message = "Loading reference-allele universe for WGS recovery..."  # type: ignore[attr-defined]
+            yield
+            reference_universe = _catalog.prepare_reference_universe(
+                self.genome_build,  # type: ignore[attr-defined]
+                reference_restoration=True,
+            )
+
         step = 0
-        for sample_label, sample_path, sample_genotypes in sample_sources:
-            for pgs_id in self.selected_pgs_ids:
-                step += 1
-                self.prs_progress = round(step / total * 100)
-                sample_note = f" [{sample_label}]" if sample_label else ""
-                self.status_message = f"Computing {step}/{total}: {pgs_id}{sample_note}..."  # type: ignore[attr-defined]
-                yield
+        for sample_label, sample_path, sample_genotypes, pgs_id in work_items:
+            step += 1
+            self.prs_progress = round(step / total * 100)
+            sample_note = f" [{sample_label}]" if sample_label else ""
+            self.status_message = f"Computing {step}/{total}: {pgs_id}{sample_note}..."  # type: ignore[attr-defined]
+            yield
 
-                info = _catalog.score_info_row(pgs_id)
-                trait = info["trait_reported"] if info else None
+            info = _catalog.score_info_row(pgs_id)
+            trait = info["trait_reported"] if info else None
 
-                vcf_path = sample_path or ""
+            vcf_path = sample_path or ""
+            result = lookup_precomputed_prs(
+                pgs_id=pgs_id,
+                genome_build=self.genome_build,  # type: ignore[attr-defined]
+                vcf_path=vcf_path or None,
+                genotypes_lf=sample_genotypes,
+                genotypes_parquet=vcf_path if vcf_path.endswith(".parquet") else None,
+                reference_restoration=bool(self.reference_restoration),
+                cache_dir=Path(self.cache_dir),  # type: ignore[attr-defined]
+                scores_cache=cache,
+            )
+            if result is None:
                 if self.prs_engine == PRSEngine.DUCKDB.value:
                     result = compute_prs_duckdb(
                         vcf_path=vcf_path,
@@ -3933,6 +4100,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                         trait_reported=trait,
                         genotypes_parquet=vcf_path if vcf_path else None,
                         genotypes_lf=sample_genotypes,
+                        reference_restoration=bool(self.reference_restoration),
+                        reference_universe=reference_universe,
                     )
                 else:
                     result = compute_prs(
@@ -3943,52 +4112,48 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                         pgs_id=pgs_id,
                         trait_reported=trait,
                         genotypes_lf=sample_genotypes,
+                        reference_restoration=bool(self.reference_restoration),
+                        reference_universe=reference_universe,
                     )
 
-                native_ancestry = pgs_native_superpopulation(
-                    best_perf_df,
-                    pgs_id,
-                    fallback=self.selected_ancestry,
-                )
-                enriched = enrich_prs_result(
-                    result,
-                    _catalog,
-                    best_perf_df,
-                    genome_build=self.genome_build,  # type: ignore[attr-defined]
-                    selected_ancestry=native_ancestry,
-                    compute_all_populations=True,
-                    is_harmonized=harmonized_lookup.get(pgs_id, False),
-                )
+            native_ancestry = pgs_native_superpopulation(
+                best_perf_df,
+                pgs_id,
+                fallback=self.selected_ancestry,
+            )
+            enriched = enrich_prs_result(
+                result,
+                _catalog,
+                best_perf_df,
+                genome_build=self.genome_build,  # type: ignore[attr-defined]
+                selected_ancestry=native_ancestry,
+                compute_all_populations=True,
+                is_harmonized=harmonized_lookup.get(pgs_id, False),
+            )
 
-                row = _enriched_to_row_dict(enriched)
-                row["trait_efo"] = str(info.get("trait_efo") or "") if info else ""
-                row["original_genome_build"] = original_build_lookup.get(pgs_id, "")
-                row["genome_file"] = _genome_file_label(sample_path or self.prs_genotypes_path)
-                row["sample"] = sample_label
-                row["sample_color"] = color_map.get(sample_label, "")
-                row.update(publication_lookup.get(pgs_id, {}))
+            row = _enriched_to_row_dict(enriched)
+            row["trait_efo"] = str(info.get("trait_efo") or "") if info else ""
+            row["original_genome_build"] = original_build_lookup.get(pgs_id, "")
+            row["genome_file"] = _genome_file_label(sample_path or self.prs_genotypes_path)
+            row["sample"] = sample_label
+            row["sample_color"] = color_map.get(sample_label, "")
+            row["reference_restoration"] = bool(self.reference_restoration)
+            row.update(publication_lookup.get(pgs_id, {}))
 
-                if result.match_rate < 0.1:
-                    any_low_match = True
+            if result.match_rate < 0.1:
+                any_low_match = True
 
-                results.append(row)
+            results.append(row)
 
         self.prs_results = _merge_prs_results(self.prs_results, results)
-        self._build_prs_results_grid()
-        self.low_match_warning = any_low_match or any(
-            float(row.get("match_rate") or 0.0) < 10.0
-            for row in self.prs_results
-        )
+        self._store_restoration_cache(self.prs_results)
         self.prs_computing = False
         self.prs_progress = 100
         self.status_message = (
             f"Added/updated {len(results)} PRS result(s); "
             f"{len(self.prs_results)} total result(s)."
         )  # type: ignore[attr-defined]
-        if self.prs_view_mode == "grouped" and self.prs_results:
-            self.build_trait_summary()
-        else:
-            self._auto_select_prs_chart()
+        self._refresh_displayed_prs_results()
 
     def _reset_selected_result(self) -> None:
         """Clear the selected chart/report state."""
@@ -4008,6 +4173,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         self.low_match_warning = False
         clear_cached_trait_charts()
         self._reset_selected_result()
+        self._clear_restoration_caches()
         self.status_message = "Cleared all PRS results."  # type: ignore[attr-defined]
 
     def remove_selected_result(self) -> None:
@@ -4043,17 +4209,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             if str(row.get("pgs_id") or "") not in removed_ids
         ]
         removed_count = before - len(self.prs_results)
+        self._store_restoration_cache(self.prs_results)
         self._reset_selected_result()
-        self._build_prs_results_grid()
-        if self.prs_view_mode == "grouped" and self.prs_results:
-            self.build_trait_summary()
-        else:
-            self.trait_summary_rows = []
-            self.trait_summary_visible = False
-        self.low_match_warning = any(
-            float(row.get("match_rate") or 0.0) < 10.0
-            for row in self.prs_results
-        )
+        self._refresh_displayed_prs_results()
         self.status_message = (
             f"Removed {removed_count} PRS result(s); "
             f"{len(self.prs_results)} result(s) remain."
@@ -4075,6 +4233,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             "variants_observed", "variants_assumed_hom_ref",
             "variants_unscorable_absent", "variants_no_call",
             "genotype_input_mode", "detected_genome_build", "build_mismatch",
+            "reference_restoration",
             "effect_size", "classification", "ancestry",
             "pgp_id", "citation", "publication_title", "publication_journal",
             "publication_date", "publication_pmid", "publication_doi",
@@ -4094,6 +4253,13 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         for row in self.prs_results:
             writer.writerow(row)
         return rx.download(data=buf.getvalue(), filename="prs_results.csv")
+
+    def download_selected_distribution_png(self) -> Any:
+        """Trigger a browser PNG download of the open distribution chart or report."""
+        if not self.selected_result_id:
+            return
+        filename = f"{_safe_download_stem(self.selected_result_id)}_distribution.png"
+        return rx.call_script(f"window.__prsDownloadDistributionPng({filename!r})")
 
     # ------------------------------------------------------------------
     # Chart selection (Altair / Vega-Lite)

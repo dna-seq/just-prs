@@ -9,6 +9,7 @@ import pytest
 
 from just_prs.models import PRSResult
 from just_prs.sample_scores import (
+    RESTORED_PROFILE_ID,
     UNRESTORED_PROFILE_ID,
     ComputationSource,
     PrecomputedMiss,
@@ -30,6 +31,7 @@ from just_prs.sample_scores import (
     write_samples,
 )
 from just_prs.sample_scores.models import SCORE_PROFILES
+from just_prs.sample_scores.models import PRIVATE_INGEST_ALIASES, published_aliases
 from just_prs.sample_scores.publish import PUBLIC_SAMPLE_SPECS
 
 
@@ -97,6 +99,23 @@ def test_source_hash_hits_copied_file(tmp_path: Path) -> None:
     src.write_bytes(b"##fileformat=VCFv4.2\n")
     copy.write_bytes(src.read_bytes())
     assert source_sha256(src) == source_sha256(copy)
+
+
+def test_private_ingest_alias_resolves_locally_without_published_alias() -> None:
+    geno = _genotypes()
+    digest = genotype_sha256_v1(geno)
+    sample = SampleRecord(
+        sample_id="o-mom",
+        aliases=published_aliases(["oksana", "mom", "o-mother"]),
+        display_name="o-mom",
+        license="CC-BY-4.0",
+        publication_allowed=True,
+        consent_basis="owner-authorized-derived-prs",
+        source_sha256="e" * 64,
+        genotype_sha256_v1=digest,
+    )
+    assert "oksana" not in sample.aliases
+    assert resolve_sample([sample], genotypes=geno, alias="oksana") is not None
 
 
 def test_alias_does_not_prove_identity(tmp_path: Path) -> None:
@@ -309,6 +328,9 @@ def test_private_and_unknown_labels_are_not_published() -> None:
     assert is_publication_allowed("o-daughter") is True
     assert is_publication_allowed("stranger") is False
     assert PUBLIC_SAMPLE_SPECS["o-mom"].publication_allowed is True
+    assert "oksana" in PUBLIC_SAMPLE_SPECS["o-mom"].aliases
+    assert "oksana" not in published_aliases(PUBLIC_SAMPLE_SPECS["o-mom"].aliases)
+    assert "oksana" in PRIVATE_INGEST_ALIASES
 
 
 def test_runtime_row_from_result_keeps_coverage_counters() -> None:
@@ -390,3 +412,32 @@ def test_lookup_skips_quarantined_pgs(tmp_path: Path) -> None:
         cache_dir=tmp_path,
         pull=False,
     ) is None
+
+
+def test_lookup_hits_both_profiles_when_fingerprints_match(tmp_path: Path) -> None:
+    vcf = tmp_path / "anton.vcf"
+    vcf.write_bytes(b"anton-source")
+    geno = _genotypes()
+    sample = _sample(source_sha256(vcf), genotype_sha256_v1(geno))
+    write_samples([sample], tmp_path)
+    unrestored = _runtime_row(sample, "fp-current")
+    restored = unrestored.model_copy(
+        update={"score_profile_id": RESTORED_PROFILE_ID, "score": 0.5}
+    )
+    write_runtime_results([unrestored, restored], tmp_path)
+    hit_off = lookup_precomputed_prs(
+        pgs_id="PGS000001",
+        vcf_path=vcf,
+        reference_restoration=False,
+        cache_dir=tmp_path,
+        pull=False,
+    )
+    hit_on = lookup_precomputed_prs(
+        pgs_id="PGS000001",
+        vcf_path=vcf,
+        reference_restoration=True,
+        cache_dir=tmp_path,
+        pull=False,
+    )
+    assert hit_off is not None and hit_off.score == 0.25
+    assert hit_on is not None and hit_on.score == 0.5

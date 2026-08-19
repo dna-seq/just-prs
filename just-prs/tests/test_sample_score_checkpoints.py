@@ -17,7 +17,7 @@ from just_prs.sample_scores.checkpoints import (
     write_runtime_part,
 )
 from just_prs.sample_scores.completeness import CompletenessError, validate_runtime_results
-from just_prs.sample_scores.models import UNRESTORED_PROFILE_ID
+from just_prs.sample_scores.models import RESTORED_PROFILE_ID, UNRESTORED_PROFILE_ID
 from just_prs.sample_scores.store import write_samples
 from just_prs.sample_scores.models import SampleRecord
 from just_prs.sample_scores.publish import RuntimeResultRow
@@ -106,6 +106,47 @@ def test_compaction_is_deterministic(tmp_path: Path) -> None:
     assert rows_a.height == 2
     assert rows_a["pgs_id"].to_list() == rows_b["pgs_id"].to_list()
     assert rows_a["score"].to_list() == rows_b["score"].to_list()
+
+
+def test_compaction_drops_withdrawn_catalog_ids(tmp_path: Path) -> None:
+    """Old unrestored parts for retired PGS IDs must not fail the live matrix."""
+    sample = _sample()
+    write_samples([sample], tmp_path)
+    write_runtime_part(
+        [_runtime_row(sample, "PGS000001")],
+        tmp_path,
+        _meta(["PGS000001"], 1, key="live_unrestored"),
+    )
+    write_runtime_part(
+        [_runtime_row(sample, "PGS005388")],
+        tmp_path,
+        _meta(["PGS005388"], 1, key="withdrawn_unrestored"),
+    )
+    restored = _runtime_row(sample, "PGS000001").model_copy(
+        update={"score_profile_id": RESTORED_PROFILE_ID}
+    )
+    write_runtime_part(
+        [restored],
+        tmp_path,
+        CheckpointMeta(
+            checkpoint_key="live_restored",
+            score_profile_id=RESTORED_PROFILE_ID,
+            pgs_ids=["PGS000001"],
+            scoring_set_fingerprint="s" * 64,
+            sample_set_genotype_fingerprint="g" * 64,
+            n_rows=1,
+            n_ok=1,
+        ),
+    )
+    dest = compact_runtime_parts(tmp_path, expected_pgs_ids=["PGS000001"])
+    assert set(pl.read_parquet(dest)["pgs_id"].to_list()) == {"PGS000001"}
+    report = validate_runtime_results(
+        tmp_path,
+        expected_sample_ids=["anton"],
+        expected_pgs_ids=["PGS000001"],
+    )
+    assert report.passed is True
+    assert report.n_rows == 2
 
 
 def test_completeness_blocks_partial_matrix(tmp_path: Path) -> None:

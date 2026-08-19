@@ -7,8 +7,8 @@ planned as singleton checkpoints so a 9.5M-variant file is never batched
 with nine neighbors. DuckDB joins those files in
 ``PRS_SCORING_JOIN_CHUNK_SIZE`` chunks (same idea as reference-panel
 genotype chunking). Workers persist an atomic part after every checkpoint
-and exit on memory budget, safety floor, or after a large score so RSS
-cannot accumulate. The parent starts a fresh worker at the first missing
+and exit on memory budget, safety floor, or after a large score whose
+process-tree RSS is actually high. The parent starts a fresh worker at the first missing
 checkpoint. A native worker death (SIGSEGV) isolates that checkpoint to
 one PGS, records failed rows, and continues.
 """
@@ -35,6 +35,7 @@ from just_prs.memory import (
     ProcessTreeSampler,
     check_memory_pressure,
     duckdb_limit_for_resident,
+    large_score_recycle_rss_bytes,
     large_score_variant_threshold,
     process_tree_snapshot,
     recycle_reason,
@@ -48,6 +49,7 @@ from just_prs.sample_scores.checkpoints import (
     discover_valid_parts,
     make_checkpoint_key,
     reopen_failed_parts,
+    reopen_invalid_parts,
     sample_set_fingerprint,
     scoring_set_fingerprint,
     write_runtime_part,
@@ -71,6 +73,7 @@ from just_prs.sample_scores.publish import (
     public_sample_spec,
     runtime_row_from_result,
 )
+from just_prs.prs import PreparedGenotypeTables
 from just_prs.scoring import ensure_scoring_file, resolve_cache_dir, scoring_parquet_path
 
 DEFAULT_CHECKPOINT_SIZE = 10
@@ -223,6 +226,15 @@ def worker_concurrency() -> int:
 def retry_failed_enabled() -> bool:
     """Re-score failed checkpoint rows. ``PRS_SAMPLE_SCORE_RETRY_FAILED``."""
     return os.environ.get("PRS_SAMPLE_SCORE_RETRY_FAILED", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
+def repair_invalid_enabled() -> bool:
+    """Quarantine invalid/stale ok parts. ``PRS_SAMPLE_SCORE_REPAIR_INVALID``."""
+    return os.environ.get("PRS_SAMPLE_SCORE_REPAIR_INVALID", "").strip().lower() in {
         "1",
         "true",
         "yes",
@@ -532,6 +544,26 @@ def _scoring_fingerprint_for(
     return digest
 
 
+def current_scoring_fingerprints(
+    cache_dir: Path,
+    pgs_ids: list[str] | None = None,
+    scores_cache: Path | None = None,
+) -> dict[str, str]:
+    """Hash the current scoring parquets for a PGS-ID set (or already-scored IDs)."""
+    scores = scores_cache if scores_cache is not None else cache_dir / "scores"
+    ids = pgs_ids
+    if ids is None:
+        ids = sorted(
+            completed_pgs_for_profile(cache_dir, UNRESTORED_PROFILE_ID)
+            | completed_pgs_for_profile(cache_dir, RESTORED_PROFILE_ID)
+        )
+    cache: dict[str, str] = {}
+    return {
+        pgs_id: _scoring_fingerprint_for(pgs_id, "GRCh38", scores, cache)
+        for pgs_id in ids
+    }
+
+
 def prepare_public_samples(
     samples: list[CanarySample],
     cache_dir: Path,
@@ -692,6 +724,7 @@ def score_checkpoint(
     just_prs_version: str,
     computed_at: str,
     duckdb_limit: str,
+    genotype_tables: PreparedGenotypeTables | None = None,
 ) -> list[RuntimeResultRow]:
     """Prepare each PGS once, then score every public sample."""
     import polars as pl
@@ -741,6 +774,8 @@ def score_checkpoint(
                     pgs_id=pgs_id,
                     trait_reported=trait,
                     genotypes_parquet=sample.parquet_path,
+                    genotype_tables=genotype_tables,
+                    genotype_table_key=sample.record.sample_id,
                     memory_limit=duckdb_limit,
                     genotype_input_mode=profile.genotype_input_mode,
                     maf_fill=profile.maf_fill,
@@ -783,7 +818,7 @@ def run_worker(
     log: Callable[[str], None] | None = None,
 ) -> WorkerReport:
     """Score checkpoints until the memory budget says to recycle."""
-    from just_prs.prs import prepare_reference_universe
+    from just_prs.prs import prepare_genotype_tables, prepare_reference_universe
 
     emit = log or (lambda _msg: None)
     cache_dir = Path(order.cache_dir)
@@ -812,6 +847,20 @@ def run_worker(
     )
     sampler = ProcessTreeSampler(interval_sec=sample_interval_sec())
     sampler.start()
+    genotype_tables = None
+    existing = [
+        sample for sample in order.samples if Path(sample.parquet_path).is_file()
+    ]
+    if existing and len(existing) == len(order.samples):
+        genotype_tables = prepare_genotype_tables(
+            {sample.record.sample_id: sample.parquet_path for sample in existing},
+            memory_limit=duckdb_limit,
+            genotype_input_mode=profile.genotype_input_mode,
+        )
+        emit(
+            f"Sample scores {order.profile_id}: materialized "
+            f"{len(existing)} genotype tables ({duckdb_limit})"
+        )
     try:
         for work in order.checkpoints:
             work = materialize_checkpoint_fingerprints(
@@ -833,6 +882,7 @@ def run_worker(
                 just_prs_version=order.just_prs_version,
                 computed_at=order.computed_at,
                 duckdb_limit=duckdb_limit,
+                genotype_tables=genotype_tables,
             )
             n_ok = sum(1 for row in rows if row.status == "ok")
             n_failed = len(rows) - n_ok
@@ -846,7 +896,13 @@ def run_worker(
                 is_large_scoring_file(pgs_id, scores_cache, profile.genome_build)
                 for pgs_id in work.meta.pgs_ids
             ):
-                reason = "large_score"
+                # Singleton checkpoints already isolate a huge file. Only
+                # kill the process when it has actually grown fat — recycling
+                # after every ≥1M-variant score spawned ~1200 interpreters
+                # overnight and froze the host at ~1.7 GB worker RSS.
+                fat_after_large = large_score_recycle_rss_bytes()
+                if snap.rss_bytes >= fat_after_large:
+                    reason = "large_score"
             ckpt = CheckpointReport(
                 checkpoint_key=meta.checkpoint_key,
                 n_rows=len(rows),
@@ -890,6 +946,8 @@ def run_worker(
         report.error = str(exc)
         raise
     finally:
+        if genotype_tables is not None:
+            genotype_tables.close()
         final = sampler.stop()
         report.peak_rss_mb = max(report.peak_rss_mb, final.peak_rss_mb)
     return report
@@ -980,6 +1038,8 @@ def run_phase(
     log: Callable[[str], None] | None = None,
     progress_every: int = DEFAULT_CHECKPOINT_SIZE,
     retry_failed: bool = False,
+    repair_invalid: bool = False,
+    current_scoring_fingerprints: dict[str, str] | None = None,
 ) -> PhaseProgress:
     """Resume missing checkpoints with recycled workers.
 
@@ -997,6 +1057,23 @@ def run_phase(
                 f"rewrote {reopened.n_parts_rewritten}); "
                 f"successful cache and missing IDs continue"
             )
+    if repair_invalid:
+        from just_prs.sample_scores.completeness import ok_row_invariant_issues
+
+        audited = reopen_invalid_parts(
+            cache_dir,
+            profile.score_profile_id,
+            current_scoring_fingerprints=current_scoring_fingerprints,
+            row_issues=ok_row_invariant_issues,
+        )
+        emit(
+            f"Sample scores {profile.score_profile_id}: repair-invalid "
+            f"audited {len(audited.pgs_ids)} PGS, "
+            f"quarantined {audited.n_parts_quarantined} part(s) "
+            f"({audited.n_invalid_ok_rows} invalid ok rows, "
+            f"{audited.n_stale_fingerprint_rows} stale fingerprints); "
+            f"re-scoring {audited.pgs_ids[0] + '..' + audited.pgs_ids[-1] if audited.pgs_ids else 'none'}"
+        )
     n_isolated = apply_isolation_hints(planned, cache_dir, profile.score_profile_id)
     sample_ids = ", ".join(item.record.sample_id for item in prepared)
     pgs_total = sum(len(item.meta.pgs_ids) for item in planned)
@@ -1129,6 +1206,7 @@ def score_public_samples_pgs_major(
     limit: int | None = None,
     skip_existing: bool = True,
     retry_failed: bool = False,
+    repair_invalid: bool = False,
     progress_every: int = DEFAULT_CHECKPOINT_SIZE,
     log: Callable[[str], None] | None = None,
 ) -> SampleScoreProgress:
@@ -1139,6 +1217,7 @@ def score_public_samples_pgs_major(
     root = cache_dir if cache_dir is not None else resolve_cache_dir()
     emit = log or (lambda _msg: None)
     retry_failed = retry_failed or retry_failed_enabled()
+    repair_invalid = repair_invalid or repair_invalid_enabled()
     catalog = PRSCatalog(cache_dir=root)
     scores_cache = root / "scores"
     fingerprint_cache: dict[str, str] = {}
@@ -1189,6 +1268,21 @@ def score_public_samples_pgs_major(
             )
             universe_path = catalog._reference_universe_path("GRCh38")
 
+    current_fps: dict[str, str] | None = None
+    if repair_invalid and skip_existing:
+        existing_ids = sorted(
+            completed_pgs_for_profile(root, UNRESTORED_PROFILE_ID)
+            | completed_pgs_for_profile(root, RESTORED_PROFILE_ID)
+        )
+        current_fps = {
+            pgs_id: _scoring_fingerprint_for(pgs_id, "GRCh38", scores_cache, fingerprint_cache)
+            for pgs_id in existing_ids
+        }
+        emit(
+            f"Sample scores: repair-invalid hashing {len(current_fps)} current "
+            "scoring-file fingerprints"
+        )
+
     # Unrestored first so canary can reuse those rows without the universe resident.
     for profile_id in (UNRESTORED_PROFILE_ID, RESTORED_PROFILE_ID):
         profile = SCORE_PROFILES[profile_id]
@@ -1223,6 +1317,8 @@ def score_public_samples_pgs_major(
             computed_at=computed_at,
             progress_every=progress_every,
             retry_failed=retry_failed and skip_existing,
+            repair_invalid=repair_invalid and skip_existing,
+            current_scoring_fingerprints=current_fps,
             log=emit,
         )
         progress.n_total += len(ids) * len(prepared)

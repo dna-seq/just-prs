@@ -45,6 +45,8 @@ from just_prs.prs import (
     compute_prs,
     compute_prs_batch,
     compute_prs_duckdb,
+    PreparedGenotypeTables,
+    prepare_genotype_tables,
     prepare_reference_universe,
 )
 from just_prs.prs_catalog import PRSCatalog

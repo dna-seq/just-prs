@@ -22,7 +22,8 @@ _LONGEVITY_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _DRUG_RESPONSE_RE = re.compile(
-    r"\b(response to|drug response|treatment response|statin response|clopidogrel)\b",
+    r"\b(response to|drug response|treatment response|statin response|"
+    r"clopidogrel|ototoxicity|cisplatin)\b",
     flags=re.IGNORECASE,
 )
 _SPORTS_RE = re.compile(
@@ -88,11 +89,17 @@ def _text(trait: TraitRecord) -> str:
     return f"{trait.trait_id} {trait.label} {trait.definition or ''} {trait.category or ''}"
 
 
-def _is_drug_response(trait: TraitRecord, linked_reported: list[str]) -> bool:
+def looks_like_drug_response(*texts: str) -> bool:
+    """Single text predicate used for both assignment and validation."""
+    blob = " ".join(part for part in texts if part)
+    return bool(_DRUG_RESPONSE_RE.search(blob))
+
+
+def is_drug_response_trait(trait: TraitRecord, linked_reported: list[str] | None = None) -> bool:
+    """True when the trait itself is a published drug-response concept."""
     if trait.category == "drug_response":
         return True
-    blob = " ".join([_text(trait), *linked_reported])
-    return bool(_DRUG_RESPONSE_RE.search(blob))
+    return looks_like_drug_response(_text(trait), *(linked_reported or []))
 
 
 def _is_longevity(trait: TraitRecord) -> bool:
@@ -153,9 +160,7 @@ def assign_trait_contexts(
                 )
             )
         linked_pgs = pgs_by_trait.get(trait.trait_id, set())
-        has_drug_pgs = bool(linked_pgs & drug_response_pgs_ids) or _is_drug_response(
-            trait, reported_by_trait.get(trait.trait_id, [])
-        )
+        has_drug_pgs = bool(linked_pgs & drug_response_pgs_ids)
         if has_drug_pgs:
             assigned.append(
                 TraitContextRecord(
@@ -260,11 +265,9 @@ def drug_response_pgs_ids(scores_df_rows: Iterable[dict[str, object]]) -> set[st
     ids: set[str] = set()
     for row in scores_df_rows:
         pgs_id = str(row.get("pgs_id") or "")
-        blob = " ".join(
-            str(row.get(col) or "")
-            for col in ("trait_reported", "trait_efo", "name")
-        )
-        if _DRUG_RESPONSE_RE.search(blob):
+        if looks_like_drug_response(
+            *(str(row.get(col) or "") for col in ("trait_reported", "trait_efo", "name"))
+        ):
             ids.add(pgs_id)
     return ids
 

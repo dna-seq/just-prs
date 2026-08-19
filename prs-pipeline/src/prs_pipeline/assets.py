@@ -204,6 +204,36 @@ nice_public_guidance = SourceAsset(
     metadata={"url": "https://www.nice.org.uk/guidance"},
 )
 
+hf_prs_sample_scores_repo = SourceAsset(
+    key="hf_prs_sample_scores_repo",
+    group_name="external",
+    description=(
+        "Hugging Face dataset just-dna-seq/prs-sample-scores. Visualization only; "
+        "the integration job stages a pinned revision and must not list this in deps."
+    ),
+    metadata={"url": "https://huggingface.co/datasets/just-dna-seq/prs-sample-scores"},
+)
+
+hf_pgs_catalog_repo = SourceAsset(
+    key="hf_pgs_catalog_repo",
+    group_name="external",
+    description=(
+        "Hugging Face dataset just-dna-seq/pgs-catalog. Visualization only; "
+        "integration stages a pinned revision and must not list this in deps."
+    ),
+    metadata={"url": "https://huggingface.co/datasets/just-dna-seq/pgs-catalog"},
+)
+
+hf_prs_percentiles_repo = SourceAsset(
+    key="hf_prs_percentiles_repo",
+    group_name="external",
+    description=(
+        "Hugging Face dataset just-dna-seq/prs-percentiles. Visualization only; "
+        "integration stages a pinned revision and must not list this in deps."
+    ),
+    metadata={"url": "https://huggingface.co/datasets/just-dna-seq/prs-percentiles"},
+)
+
 
 @asset(
     group_name="download",
@@ -1482,9 +1512,9 @@ def reference_percentile_audit(
 
 def _public_sample_run_args(
     cache_dir: Path,
-) -> tuple[list, list[str] | None, int | None, bool, bool, int]:
+) -> tuple[list, list[str] | None, int | None, bool, bool, bool, int]:
     """Shared CLI/env parsing for the split public-sample assets."""
-    from just_prs.sample_scores.engine import retry_failed_enabled
+    from just_prs.sample_scores.engine import repair_invalid_enabled, retry_failed_enabled
 
     vcf_env = os.environ.get("PRS_CANARY_VCFS", "").strip()
     samples = parse_canary_samples_env(vcf_env, cache_dir) if vcf_env else []
@@ -1502,7 +1532,15 @@ def _public_sample_run_args(
     }
     progress_every_raw = os.environ.get("PRS_PIPELINE_PROGRESS_EVERY", "10").strip()
     progress_every = int(progress_every_raw) if progress_every_raw else 10
-    return samples, requested_ids, limit, skip_existing, retry_failed_enabled(), progress_every
+    return (
+        samples,
+        requested_ids,
+        limit,
+        skip_existing,
+        retry_failed_enabled(),
+        repair_invalid_enabled(),
+        progress_every,
+    )
 
 
 @asset(
@@ -1519,7 +1557,7 @@ def public_sample_score_parts(
 ) -> Output[str]:
     """Write atomic runtime parts for anton/livia/o-family under both WGS profiles."""
     cache_dir = cache_dir_resource.get_path()
-    samples, requested_ids, limit, skip_existing, retry_failed, progress_every = (
+    samples, requested_ids, limit, skip_existing, retry_failed, repair_invalid, progress_every = (
         _public_sample_run_args(cache_dir)
     )
     with resource_tracker("public_sample_score_parts", context=context) as tracked:
@@ -1534,6 +1572,11 @@ def public_sample_score_parts(
                 "Retrying failed checkpoint rows; successful cache is kept "
                 "and missing PGS IDs still run."
             )
+        if repair_invalid and skip_existing:
+            context.log.info(
+                "Repair-invalid: quarantine invalid/stale ok parts and re-score "
+                "only those checkpoints; valid cache is kept."
+            )
         if skipped:
             context.log.info(
                 "Skipped unpublished --vcf labels (canary-only, never uploaded): "
@@ -1546,6 +1589,7 @@ def public_sample_score_parts(
             limit=limit,
             skip_existing=skip_existing,
             retry_failed=retry_failed,
+            repair_invalid=repair_invalid,
             progress_every=progress_every,
             log=context.log.info,
         )
@@ -1580,18 +1624,32 @@ def public_sample_runtime_results(
 ) -> Output[str]:
     """One atomic compaction plus blocking completeness checks."""
     from just_prs.sample_scores.completeness import validate_runtime_results
-    from just_prs.sample_scores.engine import expected_checkpoint_keys
+    from just_prs.sample_scores.engine import _catalog_pgs_ids, expected_checkpoint_keys
+    from just_prs.prs_catalog import PRSCatalog
 
     cache_dir = cache_dir_resource.get_path()
-    samples, requested_ids, limit, _skip, _retry, _every = _public_sample_run_args(cache_dir)
+    samples, requested_ids, limit, _skip, _retry, _repair, _every = _public_sample_run_args(cache_dir)
     with resource_tracker("public_sample_runtime_results", context=context):
         expected_keys = expected_checkpoint_keys(
             samples, cache_dir, pgs_ids=requested_ids, limit=limit
         )
-        dest = compact_public_sample_runtime(cache_dir, expected_keys=expected_keys)
+        catalog = PRSCatalog(cache_dir=cache_dir)
+        expected_pgs_ids = _catalog_pgs_ids(catalog, "GRCh38", requested_ids, limit)
+        dest = compact_public_sample_runtime(
+            cache_dir,
+            expected_keys=expected_keys,
+            expected_pgs_ids=expected_pgs_ids,
+        )
+        from just_prs.sample_scores.engine import current_scoring_fingerprints
+
         report = validate_runtime_results(
             cache_dir,
+            expected_pgs_ids=expected_pgs_ids,
             expected_checkpoint_keys=expected_keys,
+            current_scoring_fingerprints=current_scoring_fingerprints(
+                cache_dir, expected_pgs_ids
+            ),
+            require_ancestry=True,
         )
         report.raise_if_failed()
     context.add_output_metadata({
@@ -1644,7 +1702,7 @@ def public_sample_canary_audit(
     issue_report_path = percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
     audit_summary_path = percentiles_dir / f"{panel}_distribution_audit_summary.json"
     ancestry = os.environ.get("PRS_CANARY_ANCESTRY", "EUR").strip() or "EUR"
-    samples, requested_ids, limit, skip_existing, _retry, progress_every = (
+    samples, requested_ids, limit, skip_existing, _retry, _repair, progress_every = (
         _public_sample_run_args(cache_dir)
     )
 
@@ -1747,8 +1805,9 @@ def public_sample_canary_audit(
     deps=[AssetDep("public_sample_canary_audit")],
     description=(
         "Upload runtime-owned sample-score artifacts (samples, runtime_results, "
-        "runtime_manifest) plus catalog flags and percentile audit sidecars. "
-        "Does not upload evidence tables, final manifest.json, or root docs."
+        "runtime_manifest, sample_ancestry) plus catalog flags and percentile "
+        "audit sidecars. Does not upload evidence tables, final manifest.json, "
+        "or root docs."
     ),
 )
 def hf_public_sample_runtime(
@@ -1775,7 +1834,13 @@ def hf_public_sample_runtime(
     hf_audit_uploaded = False
 
     with resource_tracker("hf_public_sample_runtime", context=context):
-        report = validate_runtime_results(cache_dir)
+        from just_prs.sample_scores.engine import current_scoring_fingerprints
+
+        report = validate_runtime_results(
+            cache_dir,
+            current_scoring_fingerprints=current_scoring_fingerprints(cache_dir),
+            require_ancestry=True,
+        )
         report.raise_if_failed()
         if token:
             uploaded = push_sample_score_runtime(local_dir, repo_id=repo_id, token=token)
@@ -1803,10 +1868,11 @@ def hf_public_sample_runtime(
         else:
             context.log.warning(
                 "HF_TOKEN is not set; runtime artifacts, canary flags, and audit "
-                "sidecars were written locally but not uploaded."
+                "sidecars were written locally but not published."
             )
 
     context.add_output_metadata({
+        "published": bool(uploaded),
         "n_total": report.n_rows,
         "n_ok": report.n_ok,
         "n_failed": report.n_failed,
@@ -1836,7 +1902,7 @@ def sample_score_evidence(
     context: AssetExecutionContext,
     cache_dir_resource: CacheDirResource,
 ) -> Output[str]:
-    """Write evidence parquets + schema-generated docs. No sample scoring."""
+    """Write evidence parquets + evidence_manifest.json. No sample scoring or root docs."""
     from just_prs.sample_scores.evidence import build_sample_score_evidence
 
     cache_dir = cache_dir_resource.get_path()
@@ -1873,8 +1939,8 @@ def sample_score_evidence(
     group_name="upload",
     deps=[AssetDep("sample_score_evidence")],
     description=(
-        "Upload evidence tables, manifest, README.md, and AGENTS.md to "
-        "just-dna-seq/prs-sample-scores. Skips missing runtime_results."
+        "Upload the nine evidence parquets plus evidence_manifest.json to "
+        "just-dna-seq/prs-sample-scores. Never uploads runtime files or root docs."
     ),
 )
 def hf_sample_score_evidence(
@@ -1893,20 +1959,116 @@ def hf_sample_score_evidence(
     uploaded = False
     with resource_tracker("hf_sample_score_evidence", context=context):
         if token:
-            publish_sample_score_evidence(local_dir, repo_id=repo_id, token=token)
-            uploaded = True
+            uploaded = bool(publish_sample_score_evidence(local_dir, repo_id=repo_id, token=token))
+            if not uploaded:
+                context.log.warning("Evidence publish returned not published.")
         else:
             context.log.warning(
                 "HF_TOKEN is not set; evidence tables were written locally "
-                "but not uploaded to HuggingFace."
+                "but not published."
             )
     context.add_output_metadata({
         "hf_sample_scores_repo": repo_id,
+        "published": uploaded,
         "hf_uploaded": uploaded,
         "sample_scores_dir": str(local_dir),
         "runtime_results_pending": True,
     })
     return Output(str(local_dir))
+
+
+@asset(
+    group_name="compute",
+    description=(
+        "Stage pinned runtime/evidence/catalog/percentile snapshots and build "
+        "model_analysis.parquet, trait_summaries.parquet, and final docs. "
+        "Does not rescore genomes."
+    ),
+)
+def sample_score_integration(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+) -> Output[str]:
+    """Offline integration of repaired public-sample sources."""
+    from just_prs.sample_scores.integration import build_sample_score_integration
+
+    cache_dir = cache_dir_resource.get_path()
+    progress_every = int(os.environ.get("PRS_PIPELINE_PROGRESS_EVERY", "10") or "10")
+    allow_network = os.environ.get("PRS_INTEGRATION_ALLOW_NETWORK", "1").strip().lower() not in {
+        "0", "false", "no",
+    }
+    with resource_tracker("sample_score_integration", context=context):
+        result = build_sample_score_integration(
+            cache_dir,
+            allow_network=allow_network,
+            push=False,
+            log=context.log.info,
+            progress_every=progress_every,
+        )
+    context.add_output_metadata({
+        "n_total": result.n_analysis_rows,
+        "n_ok": result.n_eligible,
+        "n_failed": result.n_analysis_rows - result.n_eligible,
+        "n_cached": 0,
+        "coverage_ratio": (
+            result.n_eligible / result.n_analysis_rows if result.n_analysis_rows else 0.0
+        ),
+        "n_summaries": result.n_summaries,
+        "sample_scores_dir": str(result.output_dir),
+        "blocking_check_verdict": "passed" if result.check.passed else "failed",
+    })
+    return Output(str(result.output_dir))
+
+
+@asset(
+    group_name="upload",
+    deps=[AssetDep("sample_score_integration")],
+    description=(
+        "Atomic six-path commit of model_analysis, trait_summaries, final "
+        "manifest.json, README.md, AGENTS.md, and ANALYSIS.md. Never uploads runtime, "
+        "evidence, identity cache, or checkpoint parts."
+    ),
+)
+def hf_sample_score_dataset(
+    context: AssetExecutionContext,
+    cache_dir_resource: CacheDirResource,
+    hf_resource: HuggingFaceResource,
+) -> Output[str]:
+    """Publish integration-owned paths only."""
+    from just_prs.sample_scores.integration.pins import SAMPLE_SCORES_REVISION
+    from just_prs.sample_scores.integration.publish import publish_sample_score_integration
+    from just_prs.sample_scores.store import sample_scores_dir
+
+    cache_dir = cache_dir_resource.get_path()
+    local_dir = sample_scores_dir(cache_dir)
+    repo_id = hf_resource.get_sample_scores_repo()
+    token = hf_resource.get_token()
+    parent = os.environ.get("PRS_INTEGRATION_PARENT_COMMIT", SAMPLE_SCORES_REVISION).strip()
+    revision = None
+    with resource_tracker("hf_sample_score_dataset", context=context):
+        if token:
+            revision = publish_sample_score_integration(
+                local_dir,
+                repo_id=repo_id,
+                token=token,
+                parent_commit=parent,
+            )
+            if not revision:
+                context.log.warning("Integration publish returned not published.")
+        else:
+            context.log.warning(
+                "HF_TOKEN is not set; integration tables were written locally "
+                "but not published."
+            )
+    context.add_output_metadata({
+        "hf_sample_scores_repo": repo_id,
+        "published": bool(revision),
+        "hf_uploaded": bool(revision),
+        "published_revision": revision or "",
+        "parent_commit": parent,
+        "sample_scores_dir": str(local_dir),
+    })
+    return Output(revision or str(local_dir))
 
 
 # ---------------------------------------------------------------------------

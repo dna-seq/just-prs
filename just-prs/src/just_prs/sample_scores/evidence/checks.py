@@ -81,20 +81,22 @@ def validate_evidence_tables(
         if paper.abstract_text and not abstract_is_redistributable(paper.content_license):
             issues.append(f"paper {paper.paper_id}: abstract without compatible license")
 
+    known_trait_ids = {trait.trait_id for trait in traits}
     pgs_by_trait = score_trait_pgs_by_trait or {}
-    drug_traits = {
-        trait.trait_id
-        for trait in traits
-        if trait.category == "drug_response"
-        or "response to" in trait.label.lower()
-        or "drug response" in trait.label.lower()
-    }
     for context in trait_contexts:
+        if context.trait_id not in known_trait_ids:
+            issues.append(f"orphan trait_context for {context.trait_id}")
+            continue
         if context.context_class != ContextClass.PHARMACOLOGY.value:
             continue
         linked = pgs_by_trait.get(context.trait_id, set())
-        if context.trait_id not in drug_traits and not (linked & drug_response_pgs_ids):
+        if not (linked & drug_response_pgs_ids):
             issues.append(f"pharmacology on {context.trait_id} without a drug-response PGS")
+    for term in record_search_terms:
+        payload = term.model_dump() if hasattr(term, "model_dump") else dict(term)
+        trait_id = str(payload.get("trait_id") or "")
+        if trait_id and trait_id not in known_trait_ids:
+            issues.append(f"orphan search term for {trait_id}")
 
     longevity_ids = {
         trait.trait_id

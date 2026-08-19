@@ -342,6 +342,17 @@ class FailedPartReopen(BaseModel):
     n_parts_rewritten: int = 0
 
 
+class RepairAudit(BaseModel):
+    """Invalid/stale ok rows mapped back to quarantined atomic parts."""
+
+    pgs_ids: list[str] = Field(default_factory=list)
+    quarantined_parts: list[str] = Field(default_factory=list)
+    reasons: list[str] = Field(default_factory=list)
+    n_parts_quarantined: int = 0
+    n_invalid_ok_rows: int = 0
+    n_stale_fingerprint_rows: int = 0
+
+
 def reopen_failed_parts(
     cache_dir: Path,
     profile_id: str,
@@ -399,14 +410,77 @@ def reopen_failed_parts(
     return report
 
 
+def reopen_invalid_parts(
+    cache_dir: Path,
+    profile_id: str,
+    *,
+    current_scoring_fingerprints: dict[str, str] | None = None,
+    row_issues: Any = None,
+    kind: str = "runtime",
+) -> RepairAudit:
+    """Quarantine whole parts that contain invalid ok rows or stale fingerprints.
+
+    Unaffected parts stay reusable. ``row_issues`` is a callable
+    ``dict -> list[str]`` (typically ``ok_row_invariant_issues``).
+    """
+    report = RepairAudit()
+    affected: set[str] = set()
+    for parquet, meta in iter_part_metas(cache_dir, profile_id, kind=kind):
+        if meta is None:
+            continue
+        if not parquet_cache_is_readable(parquet):
+            _quarantine(parquet, cache_dir, kind=kind, reason="repair_invalid_unreadable")
+            report.n_parts_quarantined += 1
+            report.quarantined_parts.append(parquet.name)
+            report.reasons.append(f"{parquet.name}:unreadable")
+            affected.update(meta.pgs_ids)
+            continue
+        frame = pl.read_parquet(parquet)
+        n_invalid = 0
+        n_stale = 0
+        if row_issues is not None and "status" in frame.columns:
+            for row in frame.filter(pl.col("status") == "ok").iter_rows(named=True):
+                found = row_issues(row)
+                if found:
+                    n_invalid += 1
+                    affected.add(str(row["pgs_id"]))
+        if current_scoring_fingerprints and "scoring_fingerprint" in frame.columns:
+            for row in frame.iter_rows(named=True):
+                pgs_id = str(row.get("pgs_id") or "")
+                digest = str(row.get("scoring_fingerprint") or "")
+                want = current_scoring_fingerprints.get(pgs_id)
+                if want and digest and digest != want:
+                    n_stale += 1
+                    affected.add(pgs_id)
+        if n_invalid == 0 and n_stale == 0:
+            continue
+        reason = (
+            f"repair_invalid:invalid_ok={n_invalid},stale_fingerprint={n_stale}"
+        )
+        _quarantine(parquet, cache_dir, kind=kind, reason=reason)
+        report.n_parts_quarantined += 1
+        report.n_invalid_ok_rows += n_invalid
+        report.n_stale_fingerprint_rows += n_stale
+        report.quarantined_parts.append(parquet.name)
+        report.reasons.append(f"{parquet.name}:{reason}")
+    report.pgs_ids = sorted(affected)
+    return report
+
+
 def compact_runtime_parts(
     cache_dir: Path,
     *,
     dest: Path | None = None,
     expected_keys: set[str] | None = None,
+    expected_pgs_ids: list[str] | None = None,
     kind: str = "runtime",
 ) -> Path:
-    """Lazy-concat valid parts into one parquet, validate, atomically replace."""
+    """Lazy-concat valid parts into one parquet, validate, atomically replace.
+
+    ``expected_pgs_ids`` drops leftover rows for catalog IDs that are no longer
+    planned (withdrawn scores still sitting in old unrestored parts) so the
+    published matrix is the current catalog, not a historical union.
+    """
     discovery = discover_valid_parts(
         cache_dir,
         kind=kind,
@@ -429,6 +503,8 @@ def compact_runtime_parts(
     # Lazy concat with relaxed schema so all-ok parts (error=null) unify
     # with failed parts (error=utf8). sink once.
     combined = pl.concat([pl.scan_parquet(path) for path in paths], how="diagonal_relaxed")
+    if expected_pgs_ids is not None:
+        combined = combined.filter(pl.col("pgs_id").is_in(list(expected_pgs_ids)))
     tmp = target.with_name(target.name + ".tmp")
     target.parent.mkdir(parents=True, exist_ok=True)
     if tmp.exists():
@@ -439,12 +515,13 @@ def compact_runtime_parts(
         raise ValueError(f"Compacted parquet is unreadable: {tmp}")
     compacted = pl.scan_parquet(tmp)
     n_rows = int(compacted.select(pl.len()).collect().item())
-    expected_rows = sum(meta.n_rows for meta in discovery.valid)
-    if n_rows != expected_rows:
-        tmp.unlink(missing_ok=True)
-        raise ValueError(
-            f"Compaction row count {n_rows} != sum of parts {expected_rows}"
-        )
+    if expected_pgs_ids is None:
+        expected_rows = sum(meta.n_rows for meta in discovery.valid)
+        if n_rows != expected_rows:
+            tmp.unlink(missing_ok=True)
+            raise ValueError(
+                f"Compaction row count {n_rows} != sum of parts {expected_rows}"
+            )
     keys = compacted.group_by(list(RUNTIME_KEY)).len().filter(pl.col("len") > 1).collect()
     if keys.height:
         tmp.unlink(missing_ok=True)

@@ -13,6 +13,17 @@ HASH_SCHEMA_VERSION = 1
 SCORE_ALGORITHM_VERSION = "1"
 NORMALIZATION_PROFILE_ID = "public-wgs-pass-v1"
 DEFAULT_SAMPLE_SCORES_REPO = "just-dna-seq/prs-sample-scores"
+ANCESTRY_INFERENCE_VERSION = "1000g-knn-v1"
+PRIVATE_INGEST_ALIASES: dict[str, str] = {"oksana": "o-mom"}
+EXPECTED_PUBLIC_SAMPLE_ANCESTRY: dict[str, tuple[str, str]] = {
+    "anton": ("EUR", "CEU"),
+    "livia": ("EUR", "IBS"),
+    "o-mom": ("EUR", "CEU"),
+    "o-dad": ("EUR", "CEU"),
+    "o-son1": ("EUR", "CEU"),
+    "o-son2": ("EUR", "CEU"),
+    "o-daughter": ("EUR", "CEU"),
+}
 
 UNRESTORED_PROFILE_ID = "grch38-wgs-pass-unrestored-v1"
 RESTORED_PROFILE_ID = "grch38-wgs-pass-restored-v1"
@@ -85,6 +96,35 @@ SCORE_PROFILES: dict[str, ScoreProfile] = {
         reference_restoration=True,
     ),
 }
+
+
+def published_aliases(aliases: list[str]) -> list[str]:
+    """Drop private ingest aliases that must never appear on HuggingFace."""
+    private = {key.casefold() for key in PRIVATE_INGEST_ALIASES}
+    return [alias for alias in aliases if alias.casefold() not in private]
+
+
+class SampleAncestryRecord(BaseModel):
+    """Runtime-owned 1000G ancestry call for one published public genome.
+
+    Fine codes (CEU/IBS) are nearest 1000G cohorts, not nationality or ethnicity.
+    """
+
+    sample_id: str
+    genotype_sha256_v1: str
+    superpopulation: str
+    confidence: float
+    fine_population: str | None = None
+    fine_confidence: float | None = None
+    panel: str = "1000g"
+    genome_build: str = "GRCh38"
+    ancestry_model_revision: str | None = None
+    ancestry_model_sha256: str | None = None
+    inference_version: str = ANCESTRY_INFERENCE_VERSION
+    n_variants_used: int = 0
+    n_variants_model: int = 0
+    coverage: float = 0.0
+    inferred_at: str | None = None
 
 
 class SampleRecord(BaseModel):

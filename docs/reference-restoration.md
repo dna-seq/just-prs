@@ -25,7 +25,9 @@ prs plot trait intelligence --vcf /abs/path/sample.vcf --reference-restoration w
 Values: `off` (default) · `wgs` (whole universe) · a chip id (`gsa_v3`, typed
 positions only). Same flag on `prs plot` and `prs prompt`. The plot result
 cache keys on this choice, so an unrestored hit is never reused for a restored
-run.
+run. The UI **Recover absent loci (WGS)** checkbox is the same `wgs` / `off`
+choice; recovered and unrestored session results are stored separately and
+the checkbox switches caches when both already exist.
 
 Implementation and join semantics: [vcf_flow.md](vcf_flow.md).
 

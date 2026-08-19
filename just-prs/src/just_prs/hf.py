@@ -24,7 +24,11 @@ SAMPLE_SCORES_FILES = (
     "samples.parquet",
     "runtime_results.parquet",
     "runtime_manifest.json",
+    "sample_ancestry.parquet",
+    "evidence_manifest.json",
     "manifest.json",
+    "model_analysis.parquet",
+    "trait_summaries.parquet",
     "traits.parquet",
     "score_trait_links.parquet",
     "papers.parquet",
@@ -38,9 +42,20 @@ SAMPLE_SCORES_FILES = (
 SAMPLE_SCORES_DOC_FILES = (
     "README.md",
     "AGENTS.md",
+    "ANALYSIS.md",
+)
+INTEGRATION_SAMPLE_SCORES_FILES = (
+    "model_analysis.parquet",
+    "trait_summaries.parquet",
+    "manifest.json",
+)
+INTEGRATION_SAMPLE_SCORES_DOC_FILES = (
+    "README.md",
+    "AGENTS.md",
+    "ANALYSIS.md",
 )
 EVIDENCE_SAMPLE_SCORES_FILES = (
-    "manifest.json",
+    "evidence_manifest.json",
     "traits.parquet",
     "score_trait_links.parquet",
     "papers.parquet",
@@ -55,7 +70,20 @@ RUNTIME_SAMPLE_SCORES_FILES = (
     "samples.parquet",
     "runtime_results.parquet",
     "runtime_manifest.json",
+    "sample_ancestry.parquet",
 )
+FORBIDDEN_SAMPLE_SCORE_UPLOAD_NAMES = frozenset({
+    "identity_cache.json",
+    "README.md",
+    "AGENTS.md",
+    "ANALYSIS.md",
+})
+FORBIDDEN_SAMPLE_SCORE_UPLOAD_PARTS = frozenset({
+    "parts",
+    "worker",
+    "normalized",
+    "evidence_cache",
+})
 
 CLEANED_PARQUET_FILES = [
     "scores.parquet",
@@ -101,6 +129,7 @@ def _hf_download_with_retry(
     repo_type: str = "dataset",
     local_dir: Path | None = None,
     token: str | None = None,
+    revision: str | None = None,
 ) -> str:
     """``hf_hub_download`` with retry on 429 / transient errors."""
     import logging
@@ -117,6 +146,7 @@ def _hf_download_with_retry(
                 repo_type=repo_type,
                 local_dir=local_dir,
                 token=token,
+                revision=revision,
             )
         except HfHubHTTPError as exc:
             last_exc = exc
@@ -184,6 +214,7 @@ def _pull_flat(
     local_dir: Path,
     token: str | None,
     target_name: str | None = None,
+    revision: str | None = None,
 ) -> Path:
     """Download an HF file and land it **flat** in ``local_dir``. Zero copies.
 
@@ -218,6 +249,7 @@ def _pull_flat(
             repo_type="dataset",
             local_dir=local_dir,
             token=token,
+            revision=revision,
         )
     )
     target = local_dir / (target_name or Path(hf_path).name)
@@ -573,6 +605,7 @@ def pull_sample_scores(
     local_dir: Path,
     repo_id: str = DEFAULT_HF_SAMPLE_SCORES_REPO,
     token: str | None = None,
+    revision: str | None = None,
 ) -> Path:
     """Download the public sample-score dataset flat into ``local_dir``.
 
@@ -584,10 +617,10 @@ def pull_sample_scores(
 
     resolved_token = _resolve_token(token)
     local_dir.mkdir(parents=True, exist_ok=True)
-    with start_action(action_type="hf:pull_sample_scores", repo_id=repo_id):
+    with start_action(action_type="hf:pull_sample_scores", repo_id=repo_id, revision=revision):
         for name in SAMPLE_SCORES_FILES:
             target = local_dir / name
-            if not needs_pull(target):
+            if revision is None and not needs_pull(target):
                 continue
             try:
                 _pull_flat(
@@ -596,6 +629,7 @@ def pull_sample_scores(
                     local_dir=local_dir,
                     token=resolved_token,
                     target_name=name,
+                    revision=revision,
                 )
             except (EntryNotFoundError, RepositoryNotFoundError):
                 logging.getLogger(__name__).debug(
@@ -603,7 +637,7 @@ def pull_sample_scores(
                 )
         for name in SAMPLE_SCORES_DOC_FILES:
             target = local_dir / name
-            if not needs_pull(target):
+            if revision is None and not needs_pull(target):
                 continue
             try:
                 _pull_flat(
@@ -612,6 +646,7 @@ def pull_sample_scores(
                     local_dir=local_dir,
                     token=resolved_token,
                     target_name=name,
+                    revision=revision,
                 )
             except (EntryNotFoundError, RepositoryNotFoundError):
                 logging.getLogger(__name__).debug(
@@ -620,67 +655,203 @@ def pull_sample_scores(
     return local_dir
 
 
+class SampleScorePublishError(ValueError):
+    """Allowlist or parent-revision guard rejected a sample-score publish."""
+
+
+def assert_sample_score_parent_revision(
+    current_sha: str | None,
+    parent_commit: str | None,
+) -> None:
+    """Reject a publish when the remote HEAD moved past the expected parent."""
+    if parent_commit is not None and current_sha and parent_commit != current_sha:
+        raise SampleScorePublishError(
+            f"parent revision changed: expected {parent_commit}, repo is {current_sha}"
+        )
+
+
+def sample_score_commit_operations(
+    local_dir: Path,
+    names: tuple[str, ...],
+    *,
+    path_in_repo_prefix: str = HF_DATA_PREFIX,
+) -> list[object]:
+    """Build ``CommitOperationAdd`` entries for an explicit allowlist.
+
+    Rejects identity cache, checkpoint parts, worker reports, normalized genomes,
+    cache directories, and root docs. Missing allowlisted files are skipped.
+    """
+    from huggingface_hub import CommitOperationAdd
+
+    operations: list[object] = []
+    for name in names:
+        if name in FORBIDDEN_SAMPLE_SCORE_UPLOAD_NAMES:
+            raise SampleScorePublishError(f"refusing to upload forbidden name {name}")
+        if Path(name).name != name or "/" in name or "\\" in name:
+            raise SampleScorePublishError(f"refusing non-flat upload path {name}")
+        path = (local_dir / name).resolve()
+        try:
+            path.relative_to(local_dir.resolve())
+        except ValueError as exc:
+            raise SampleScorePublishError(f"upload path escapes local_dir: {path}") from exc
+        if any(part in FORBIDDEN_SAMPLE_SCORE_UPLOAD_PARTS for part in path.parts):
+            raise SampleScorePublishError(f"refusing cache/local artifact {path}")
+        if not path.exists():
+            continue
+        operations.append(
+            CommitOperationAdd(
+                path_in_repo=f"{path_in_repo_prefix}/{name}",
+                path_or_fileobj=str(path),
+            )
+        )
+    return operations
+
+
+def _atomic_sample_score_commit(
+    local_dir: Path,
+    names: tuple[str, ...],
+    *,
+    repo_id: str,
+    token: str | None,
+    commit_message: str,
+    parent_commit: str | None = None,
+) -> list[str]:
+    """One ``create_commit`` for the allowlist. No token ⇒ not published."""
+    resolved_token = _resolve_token(token)
+    if not resolved_token:
+        return []
+    operations = sample_score_commit_operations(local_dir, names)
+    if not operations:
+        return []
+    _configure_hf_timeouts()
+    api = HfApi(token=resolved_token)
+    api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+    info = api.repo_info(repo_id=repo_id, repo_type="dataset")
+    current_sha = getattr(info, "sha", None)
+    assert_sample_score_parent_revision(current_sha, parent_commit)
+    api.create_commit(
+        repo_id=repo_id,
+        repo_type="dataset",
+        operations=operations,
+        commit_message=commit_message,
+        parent_commit=parent_commit or current_sha,
+    )
+    return [Path(str(op.path_in_repo)).name for op in operations]
+
+
 def push_sample_score_runtime(
     local_dir: Path,
     repo_id: str = DEFAULT_HF_SAMPLE_SCORES_REPO,
     token: str | None = None,
+    parent_commit: str | None = None,
 ) -> list[str]:
     """Upload only runtime-owned artifacts. Never uploads evidence or docs."""
-    resolved_token = _resolve_token(token)
-    uploaded: list[str] = []
     with start_action(action_type="hf:push_sample_score_runtime", repo_id=repo_id):
-        _configure_hf_timeouts()
-        api = HfApi(token=resolved_token)
-        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
-        for name in RUNTIME_SAMPLE_SCORES_FILES:
-            path = local_dir / name
-            if not path.exists():
-                continue
-            api.upload_file(
-                path_or_fileobj=str(path),
-                path_in_repo=f"{HF_DATA_PREFIX}/{name}",
-                repo_id=repo_id,
-                repo_type="dataset",
-            )
-            uploaded.append(name)
-    return uploaded
+        return _atomic_sample_score_commit(
+            local_dir,
+            RUNTIME_SAMPLE_SCORES_FILES,
+            repo_id=repo_id,
+            token=token,
+            commit_message="Publish public-sample runtime scores",
+            parent_commit=parent_commit,
+        )
 
 
 def push_sample_score_evidence(
     local_dir: Path,
     repo_id: str = DEFAULT_HF_SAMPLE_SCORES_REPO,
     token: str | None = None,
+    parent_commit: str | None = None,
 ) -> list[str]:
-    """Upload evidence tables, manifest, and root docs. Never uploads runtime scores."""
-    resolved_token = _resolve_token(token)
-    uploaded: list[str] = []
+    """Upload evidence tables + evidence_manifest.json. Never uploads runtime or root docs."""
     with start_action(action_type="hf:push_sample_score_evidence", repo_id=repo_id):
+        return _atomic_sample_score_commit(
+            local_dir,
+            EVIDENCE_SAMPLE_SCORES_FILES,
+            repo_id=repo_id,
+            token=token,
+            commit_message="Publish catalog evidence tables",
+            parent_commit=parent_commit,
+        )
+
+
+def sample_score_integration_commit_operations(local_dir: Path) -> list[object]:
+    """Integration-owned paths: three under ``data/`` plus root docs."""
+    from huggingface_hub import CommitOperationAdd
+
+    expected = len(INTEGRATION_SAMPLE_SCORES_FILES) + len(INTEGRATION_SAMPLE_SCORES_DOC_FILES)
+    operations: list[object] = []
+    for name in INTEGRATION_SAMPLE_SCORES_FILES:
+        if Path(name).name != name or "/" in name or "\\" in name:
+            raise SampleScorePublishError(f"refusing non-flat upload path {name}")
+        path = (local_dir / name).resolve()
+        try:
+            path.relative_to(local_dir.resolve())
+        except ValueError as exc:
+            raise SampleScorePublishError(f"upload path escapes local_dir: {path}") from exc
+        if any(part in FORBIDDEN_SAMPLE_SCORE_UPLOAD_PARTS for part in path.parts):
+            raise SampleScorePublishError(f"refusing cache/local artifact {path}")
+        if name == "identity_cache.json":
+            raise SampleScorePublishError(f"refusing to upload forbidden name {name}")
+        if not path.exists():
+            raise SampleScorePublishError(f"missing integration file {name}")
+        operations.append(
+            CommitOperationAdd(
+                path_in_repo=f"{HF_DATA_PREFIX}/{name}",
+                path_or_fileobj=str(path),
+            )
+        )
+    for name in INTEGRATION_SAMPLE_SCORES_DOC_FILES:
+        path = (local_dir / name).resolve()
+        try:
+            path.relative_to(local_dir.resolve())
+        except ValueError as exc:
+            raise SampleScorePublishError(f"upload path escapes local_dir: {path}") from exc
+        if not path.exists():
+            raise SampleScorePublishError(f"missing integration doc {name}")
+        operations.append(
+            CommitOperationAdd(
+                path_in_repo=name,
+                path_or_fileobj=str(path),
+            )
+        )
+    if len(operations) != expected:
+        raise SampleScorePublishError(
+            f"integration commit must have exactly {expected} paths, got {len(operations)}"
+        )
+    return operations
+
+
+def push_sample_score_integration(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_SAMPLE_SCORES_REPO,
+    token: str | None = None,
+    parent_commit: str | None = None,
+) -> str | None:
+    """Upload analysis tables, final manifest, and root docs in one commit.
+
+    Returns the new commit SHA, or ``None`` when ``HF_TOKEN`` is unset.
+    """
+    with start_action(action_type="hf:push_sample_score_integration", repo_id=repo_id):
+        resolved_token = _resolve_token(token)
+        if not resolved_token:
+            return None
+        operations = sample_score_integration_commit_operations(local_dir)
         _configure_hf_timeouts()
         api = HfApi(token=resolved_token)
         api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
-        for name in EVIDENCE_SAMPLE_SCORES_FILES:
-            path = local_dir / name
-            if not path.exists():
-                continue
-            api.upload_file(
-                path_or_fileobj=str(path),
-                path_in_repo=f"{HF_DATA_PREFIX}/{name}",
-                repo_id=repo_id,
-                repo_type="dataset",
-            )
-            uploaded.append(name)
-        for name in SAMPLE_SCORES_DOC_FILES:
-            path = local_dir / name
-            if not path.exists():
-                continue
-            api.upload_file(
-                path_or_fileobj=str(path),
-                path_in_repo=name,
-                repo_id=repo_id,
-                repo_type="dataset",
-            )
-            uploaded.append(name)
-    return uploaded
+        info = api.repo_info(repo_id=repo_id, repo_type="dataset")
+        current_sha = getattr(info, "sha", None)
+        assert_sample_score_parent_revision(current_sha, parent_commit)
+        commit = api.create_commit(
+            repo_id=repo_id,
+            repo_type="dataset",
+            operations=operations,
+            commit_message="Publish public-sample score integration",
+            parent_commit=parent_commit or current_sha,
+        )
+        return str(getattr(commit, "oid", None) or getattr(info, "sha", "") or "")
+
 
 
 def push_sample_scores(

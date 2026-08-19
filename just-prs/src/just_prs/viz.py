@@ -1405,6 +1405,62 @@ def _has_vl_convert() -> bool:
         return False
 
 
+# Injected into ``trait_report_html`` as a literal (not an f-string) so JS
+# braces stay intact.  The UI Download PNG button calls the same helper.
+_TRAIT_REPORT_PNG_DOWNLOAD_JS = """
+function _prsDefaultPngName() {
+  var t = (document.title || 'trait').replace(/^PRS Report:\\s*/i, '');
+  var stem = t.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 80);
+  return (stem || 'trait') + '_distribution.png';
+}
+function _prsSaveDataUrl(dataUrl, filename) {
+  var a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+function _prsLoadHtml2Canvas() {
+  return new Promise(function (resolve, reject) {
+    if (window.html2canvas) { resolve(window.html2canvas); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    s.onload = function () { resolve(window.html2canvas); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+function _prsHideForPng(el) {
+  return !!(el.classList && (
+    el.classList.contains('ai-buttons') ||
+    el.classList.contains('vega-actions') ||
+    el.classList.contains('dl-png-btn')
+  ));
+}
+window.__PRS_DOWNLOAD_PNG__ = function (filename) {
+  filename = filename || _prsDefaultPngName();
+  return _prsLoadHtml2Canvas().then(function (html2canvas) {
+    return html2canvas(document.body, {
+      scale: 2,
+      backgroundColor: '#fafafa',
+      useCORS: true,
+      logging: false,
+      ignoreElements: _prsHideForPng
+    });
+  }).then(function (canvas) {
+    _prsSaveDataUrl(canvas.toDataURL('image/png'), filename);
+  }).catch(function () {
+    if (!window.__PRS_VIEW__ || !window.__PRS_VIEW__.toImageURL) return;
+    return window.__PRS_VIEW__.toImageURL('png', 2).then(function (url) {
+      _prsSaveDataUrl(url, filename);
+    });
+  });
+};
+"""
+
+
 # Prefill targets shared by the HTML report, the web UI, and `prs prompt`.
 # `url` is None for paste-only assistants (Gemini and similar).
 AI_ASSISTANTS: list[dict[str, Any]] = [
@@ -3357,9 +3413,12 @@ def trait_report_html(
 <title>PRS Report: {trait}</title>
 <style>
 body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #fafafa; color: #333; }}
-h1 {{ font-size: 1.4em; margin-bottom: 4px; }}
+h1 {{ font-size: 1.4em; margin: 0; }}
 h1 a {{ color: inherit; text-decoration: none; border-bottom: 2px dotted #bbb; }}
 h1 a:hover {{ border-bottom-color: #666; }}
+.report-toolbar {{ display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }}
+.dl-png-btn {{ appearance: none; border: 1px solid #c5d0da; background: #fff; color: #1a4d73; border-radius: 6px; padding: 7px 12px; font-size: 0.85em; font-weight: 600; cursor: pointer; flex-shrink: 0; }}
+.dl-png-btn:hover {{ background: #eef5fb; border-color: #1565c0; }}
 .trait-cell a {{ color: #555; text-decoration: underline dotted; }}
 .trait-cell a:hover {{ color: #1565C0; }}
 .subtitle {{ color: #666; margin-bottom: 16px; font-size: 0.95em; }}
@@ -3403,7 +3462,10 @@ h1 a:hover {{ border-bottom-color: #666; }}
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@7"></script>
 </head>
 <body>
+<div class="report-toolbar">
 <h1>PRS Report: {trait_title}</h1>
+<button type="button" class="dl-png-btn" onclick="window.__PRS_DOWNLOAD_PNG__()">Download PNG</button>
+</div>
 {subtitle_html}
 {ai_html}
 {stats_html}
@@ -3424,9 +3486,13 @@ function _prsPostHeight() {{
   parent.postMessage({{type: 'prs-report-height', height: h}}, '*');
 }}
 var __PRS_SPEC__ = {spec_json};
+{_TRAIT_REPORT_PNG_DOWNLOAD_JS}
 window.__PRS_RENDER__ = function (spec) {{
   vegaEmbed('#vis', spec || __PRS_SPEC__, {{actions: true, width: Math.max(800, window.innerWidth - 80)}})
-    .then(_prsPostHeight)
+    .then(function (res) {{
+      window.__PRS_VIEW__ = res.view;
+      _prsPostHeight();
+    }})
     .catch(console.error);
 }};
 window.__PRS_RENDER__();

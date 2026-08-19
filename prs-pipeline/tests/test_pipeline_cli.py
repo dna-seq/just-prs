@@ -11,6 +11,31 @@ from prs_pipeline import cli
 runner = CliRunner()
 
 
+def test_integration_job_includes_blocking_check() -> None:
+    from prs_pipeline.definitions import defs
+
+    job = defs.get_job_def("sample_score_integration_job")
+    names = set(job.graph.node_dict)
+    assert "sample_score_integration" in names
+    assert "hf_sample_score_dataset" in names
+    assert any("check_sample_score_integration_valid" in name for name in names)
+
+
+def test_sample_score_integration_help_is_ui_first() -> None:
+    result = runner.invoke(cli.app, ["sample-score-integration", "--help"])
+    assert result.exit_code == 0
+    assert "model_analysis" in result.output
+    assert "--headless" in result.output
+    assert "--offline" in result.output
+
+
+def test_sample_scores_help_documents_repair_invalid() -> None:
+    result = runner.invoke(cli.app, ["sample-scores", "--help"])
+    assert result.exit_code == 0
+    assert "--repair-invalid" in result.output
+    assert "invalid rows marked ok" in result.output.lower() or "invalid" in result.output
+
+
 def test_ld_proxy_refuses_without_scope() -> None:
     result = runner.invoke(cli.app, ["ld-proxy"])
 

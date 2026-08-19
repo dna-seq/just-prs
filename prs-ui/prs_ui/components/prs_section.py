@@ -52,6 +52,24 @@ _PRS_REPORT_AUTOHEIGHT_JS = (
     "});"
     "})();"
 )
+_PRS_DISTRIBUTION_DOWNLOAD_JS = (
+    "window.__prsDownloadDistributionPng=function(filename){"
+    "filename=filename||'trait_distribution.png';"
+    "var f=document.getElementById('" + _PRS_REPORT_IFRAME_ID + "');"
+    "if(f&&f.contentWindow&&typeof f.contentWindow.__PRS_DOWNLOAD_PNG__==='function'){"
+    "f.contentWindow.__PRS_DOWNLOAD_PNG__(filename);return;}"
+    "var canvas=document.querySelector('.vega-embed canvas');"
+    "if(!canvas||!canvas.toBlob)return;"
+    "canvas.toBlob(function(blob){"
+    "if(!blob)return;"
+    "var a=document.createElement('a');"
+    "a.href=URL.createObjectURL(blob);"
+    "a.download=filename;"
+    "a.click();"
+    "URL.revokeObjectURL(a.href);"
+    "},'image/png');"
+    "};"
+)
 
 
 def _resolve_normalizing(normalizing: Any | None = None) -> Any:
@@ -152,6 +170,36 @@ def prs_engine_selector(state: type[rx.State]) -> rx.Component:
                 "Polars: fast in-memory engine using Rust (default). "
                 "DuckDB: SQL engine that can spill to disk under memory pressure, "
                 "better for large scoring files on low-memory machines."
+            ),
+        ),
+        spacing="2",
+        align="center",
+    )
+
+
+def prs_restoration_selector(state: type[rx.State]) -> rx.Component:
+    """WGS reference-allele recovery toggle for a consumer state.
+
+    Off by default. Recovered and unrestored results are cached separately, so
+    ticking the box switches caches when both already exist and computes only
+    the missing side.
+    """
+    return rx.hstack(
+        rx.checkbox(
+            "Recover absent loci (WGS)",
+            checked=state.reference_restoration,
+            on_change=state.set_reference_restoration,
+            disabled=state.prs_computing,
+            size="2",
+        ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "Fill missing reference alleles so absent scoring sites can "
+                "count as homozygous-reference. Correct only for genome-wide "
+                "variant-only WGS — not arrays, WES, or gVCF. Default is off. "
+                "If you already computed both settings, this switches caches "
+                "instead of recomputing."
             ),
         ),
         spacing="2",
@@ -542,6 +590,11 @@ def _prs_results_header(
             rx.hstack(
                 rx.icon("bar-chart-3", size=16),
                 rx.text("PRS Results", size="3", weight="bold"),
+                rx.cond(
+                    state.reference_restoration,
+                    rx.badge("WGS recovered", color_scheme="blue", variant="soft"),
+                    rx.badge("Observed only", color_scheme="gray", variant="soft"),
+                ),
                 rx.spacer(),
                 view_toggle,
                 rx.button(
@@ -711,6 +764,21 @@ _TRAIT_POPULATION_ITEMS: list[tuple[str, str]] = [
     ("Model-native", "native"),
     *((f"{SUPERPOPULATION_LABELS[code]} ({code})", code) for code in SUPERPOPULATIONS),
 ]
+
+
+def _chart_png_download_button(state: type[rx.State]) -> rx.Component:
+    """Header control that saves the open distribution as a PNG."""
+    return rx.tooltip(
+        rx.button(
+            rx.icon("download", size=14),
+            "Download PNG",
+            on_click=state.download_selected_distribution_png,
+            disabled=state.selected_result_id == "",
+            size="1",
+            variant="soft",
+        ),
+        content="Download the visible distribution as a PNG image",
+    )
 
 
 def trait_summary_controls(state: type[rx.State]) -> rx.Component:
@@ -1032,11 +1100,13 @@ def prs_results_chart_panel(
     return rx.cond(
         state.selected_result_spec != {},
         rx.vstack(
+            rx.script(_PRS_DISTRIBUTION_DOWNLOAD_JS),
             rx.hstack(
                 rx.icon("activity", size=16, color="var(--accent-9)"),
                 rx.text("Distribution", size="2", weight="bold"),
                 rx.spacer(),
                 _chart_mode_toggle(state) if show_chart_mode_toggle else rx.fragment(),
+                _chart_png_download_button(state),
                 align="center",
                 spacing="2",
                 width="100%",
@@ -1081,11 +1151,13 @@ def trait_results_chart_panel(
         chart_actions: Vega-Embed toolbar config.
     """
     return rx.vstack(
+        rx.script(_PRS_DISTRIBUTION_DOWNLOAD_JS),
         rx.hstack(
             rx.icon("activity", size=16, color="var(--accent-9)"),
             rx.text("Trait Distribution", size="2", weight="bold"),
             rx.spacer(),
             trait_summary_controls(state) if show_info_panel else rx.fragment(),
+            _chart_png_download_button(state),
             align="center",
             spacing="2",
             width="100%",
@@ -1560,7 +1632,7 @@ def prs_shared_build_bar(source_state: type[rx.State]) -> rx.Component:
 
 
 def _workbench_mode_controls(state: type[rx.State]) -> rx.Component:
-    """Per-mode controls (engine, harmonized, cache refresh) for a consumer state."""
+    """Per-mode controls (engine, harmonized, WGS recovery, cache refresh)."""
     return rx.hstack(
         prs_engine_selector(state),
         rx.separator(orientation="vertical", size="2"),
@@ -1570,6 +1642,8 @@ def _workbench_mode_controls(state: type[rx.State]) -> rx.Component:
             on_change=state.set_include_harmonized,
             size="2",
         ),
+        rx.separator(orientation="vertical", size="2"),
+        prs_restoration_selector(state),
         rx.separator(orientation="vertical", size="2"),
         prs_ancestry_selector(state),
         spacing="4",
@@ -1812,6 +1886,8 @@ def prs_section(
                 prs_build_selector(state),
                 rx.separator(orientation="vertical", size="2"),
                 prs_engine_selector(state),
+                rx.separator(orientation="vertical", size="2"),
+                prs_restoration_selector(state),
                 rx.separator(orientation="vertical", size="2"),
                 prs_ancestry_selector(state),
                 spacing="4",

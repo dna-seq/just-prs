@@ -36,9 +36,11 @@ Then open http://localhost:3000 in your browser.
 | `public_sample_score_parts` | compute | PGS-major unrestored then restored scoring of `--vcf` genomes into atomic checkpoint parts. Scores ≥1M variants are singleton checkpoints; DuckDB joins them in bounded slices; workers recycle at the env memory budget or after a large score. Does not recompute 1000G scores |
 | `public_sample_runtime_results` | compute | Compact checkpoint parts once into `runtime_results.parquet` and enforce the complete sample×PGS×profile outcome matrix |
 | `public_sample_canary_audit` | compute | Derive public canary rows from unrestored `public-wgs-pass-v1` runtime; score unknown/private `--vcf` separately; write catalog flags and percentile audit sidecars |
-| `hf_public_sample_runtime` | upload | Push runtime-owned files only (`samples.parquet`, `runtime_results.parquet`, `runtime_manifest.json`) plus flags/sidecars. Never uploads evidence or root docs |
-| `sample_score_evidence` | compute | Catalog-level evidence tables (traits, papers, guidelines, actionability, trait_contexts, record_search_terms) from cleaned catalog + public adapters. Does not score genomes |
-| `hf_sample_score_evidence` | upload | Push evidence tables + schema-generated root README/AGENTS to `just-dna-seq/prs-sample-scores`. Skips missing runtime scores |
+| `hf_public_sample_runtime` | upload | Atomic allowlisted commit of runtime-owned files (`samples.parquet`, `runtime_results.parquet`, `runtime_manifest.json`, `sample_ancestry.parquet`) plus flags/sidecars. Never uploads evidence, root docs, identity cache, or checkpoint parts |
+| `sample_score_evidence` | compute | Catalog-level evidence tables from one pinned catalog snapshot. Writes `evidence_manifest.json`. Does not score genomes or write final docs |
+| `hf_sample_score_evidence` | upload | Atomic allowlisted commit of the nine evidence parquets plus `evidence_manifest.json`. Never uploads runtime scores or root README/AGENTS |
+| `sample_score_integration` | compute | Stage pinned runtime/evidence/catalog/percentile snapshots and build `model_analysis.parquet` plus ancestry-selected `trait_summaries.parquet` and final docs. Does not rescore genomes |
+| `hf_sample_score_dataset` | upload | Atomic six-path commit of model_analysis, trait_summaries, final manifest.json, README.md, AGENTS.md, and ANALYSIS.md |
 | `hf_prs_percentiles` | upload | Enrich distributions with metadata and absolute risk, push to HuggingFace |
 
 ### Metadata & Prevalence Pipeline

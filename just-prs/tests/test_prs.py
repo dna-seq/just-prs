@@ -11,6 +11,7 @@ from just_prs.prs import (
     compute_prs,
     compute_prs_batch,
     compute_prs_duckdb,
+    prepare_genotype_tables,
     prepare_reference_universe,
 )
 from just_prs.vcf import read_genotypes
@@ -180,6 +181,140 @@ def test_variant_only_absent_hom_ref_inference(tmp_path: Path) -> None:
         assert result.variants_unscorable_absent == 1
         assert result.variants_matched == 2
         assert result.match_rate == pytest.approx(2 / 3)
+
+
+def test_prepared_genotype_tables_match_fresh_connection(tmp_path: Path) -> None:
+    """Genomes stay as DuckDB tables; only the scoring file is swapped."""
+    anton = tmp_path / "anton.parquet"
+    livia = tmp_path / "livia.parquet"
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["0/1"],
+    }).write_parquet(anton)
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["1/1"],
+    }).write_parquet(livia)
+    scoring_a = pl.DataFrame({
+        "hm_chr": ["1"],
+        "hm_pos": [100],
+        "effect_allele": ["G"],
+        "reference_allele": ["A"],
+        "effect_weight": [1.0],
+    }).lazy()
+    scoring_b = pl.DataFrame({
+        "hm_chr": ["1"],
+        "hm_pos": [100],
+        "effect_allele": ["G"],
+        "reference_allele": ["A"],
+        "effect_weight": [2.0],
+    }).lazy()
+
+    fresh_anton_a = compute_prs_duckdb(
+        vcf_path="",
+        scoring_file=scoring_a,
+        cache_dir=tmp_path,
+        pgs_id="PGSA",
+        genotypes_parquet=anton,
+        genotype_input_mode="variant_only",
+    )
+    with prepare_genotype_tables(
+        {"anton": anton, "livia": livia},
+        genotype_input_mode="variant_only",
+    ) as tables:
+        assert set(tables.tables) == {"anton", "livia"}
+        anton_a = compute_prs_duckdb(
+            vcf_path="",
+            scoring_file=scoring_a,
+            cache_dir=tmp_path,
+            pgs_id="PGSA",
+            genotype_tables=tables,
+            genotype_table_key="anton",
+            genotype_input_mode="variant_only",
+        )
+        livia_a = compute_prs_duckdb(
+            vcf_path="",
+            scoring_file=scoring_a,
+            cache_dir=tmp_path,
+            pgs_id="PGSA",
+            genotype_tables=tables,
+            genotype_table_key="livia",
+            genotype_input_mode="variant_only",
+        )
+        anton_b = compute_prs_duckdb(
+            vcf_path="",
+            scoring_file=scoring_b,
+            cache_dir=tmp_path,
+            pgs_id="PGSB",
+            genotype_tables=tables,
+            genotype_table_key="anton",
+            genotype_input_mode="variant_only",
+        )
+        n_connect = tables.conn.execute("SELECT COUNT(*) FROM geno_0").fetchone()
+        assert n_connect is not None
+        assert int(n_connect[0]) == 1
+
+    assert anton_a.score == pytest.approx(fresh_anton_a.score)
+    assert anton_a.score == pytest.approx(1.0)
+    assert livia_a.score == pytest.approx(2.0)
+    assert anton_b.score == pytest.approx(2.0)
+
+
+def test_prepared_genotype_tables_reuse_one_connection(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import duckdb
+
+    geno = tmp_path / "g.parquet"
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["0/1"],
+    }).write_parquet(geno)
+    scoring = pl.DataFrame({
+        "hm_chr": ["1"],
+        "hm_pos": [100],
+        "effect_allele": ["G"],
+        "reference_allele": ["A"],
+        "effect_weight": [1.0],
+    }).lazy()
+    connects = {"n": 0}
+    real_connect = duckdb.connect
+
+    def _connect(*args: object, **kwargs: object):
+        connects["n"] += 1
+        return real_connect(*args, **kwargs)
+
+    monkeypatch.setattr("just_prs.prs.duckdb.connect", _connect)
+    with prepare_genotype_tables({"a": geno}, genotype_input_mode="variant_only") as tables:
+        compute_prs_duckdb(
+            vcf_path="",
+            scoring_file=scoring,
+            cache_dir=tmp_path,
+            pgs_id="PGSA",
+            genotype_tables=tables,
+            genotype_table_key="a",
+            genotype_input_mode="variant_only",
+        )
+        compute_prs_duckdb(
+            vcf_path="",
+            scoring_file=scoring,
+            cache_dir=tmp_path,
+            pgs_id="PGSB",
+            genotype_tables=tables,
+            genotype_table_key="a",
+            genotype_input_mode="variant_only",
+        )
+    assert connects["n"] == 1
 
 
 def test_resolve_reference_fills_missing_ref_both_engines(tmp_path: Path) -> None:

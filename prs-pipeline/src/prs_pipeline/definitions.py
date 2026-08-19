@@ -22,6 +22,11 @@ from prs_pipeline.assets import (
     hf_public_sample_runtime,
     sample_score_evidence,
     hf_sample_score_evidence,
+    sample_score_integration,
+    hf_sample_score_dataset,
+    hf_prs_sample_scores_repo,
+    hf_pgs_catalog_repo,
+    hf_prs_percentiles_repo,
     ols4_ontology,
     europe_pmc,
     uspstf_public_recommendations,
@@ -141,6 +146,20 @@ sample_score_evidence_job = dg.define_asset_job(
         "Build and upload catalog-level evidence tables for "
         "just-dna-seq/prs-sample-scores. Does not score genomes and does not "
         "wait for runtime_results."
+    ),
+    hooks={resource_summary_hook},
+    executor_def=in_process_executor,
+)
+
+sample_score_integration_job = dg.define_asset_job(
+    name="sample_score_integration_job",
+    selection=(
+        dg.AssetSelection.assets("sample_score_integration", "hf_sample_score_dataset")
+        | dg.AssetSelection.checks_for_assets("sample_score_integration")
+    ),
+    description=(
+        "Stage pinned public-sample sources and publish model_analysis, "
+        "trait_summaries, final manifest, and root docs. Does not rescore genomes."
     ),
     hooks={resource_summary_hook},
     executor_def=in_process_executor,
@@ -285,6 +304,11 @@ _assets = [
     hf_public_sample_runtime,
     sample_score_evidence,
     hf_sample_score_evidence,
+    sample_score_integration,
+    hf_sample_score_dataset,
+    hf_prs_sample_scores_repo,
+    hf_pgs_catalog_repo,
+    hf_prs_percentiles_repo,
     reference_percentile_audit,
     reference_panel,
     reference_scores,
@@ -314,6 +338,7 @@ _unresolved_jobs = [
     reference_percentile_audit_job,
     public_sample_scores_job,
     sample_score_evidence_job,
+    sample_score_integration_job,
     metadata_pipeline,
 ]
 
@@ -324,7 +349,11 @@ def _build_definitions() -> dg.Definitions:
     The temporary Definitions used for resolution is a local variable so
     Dagster's module scanner only finds one Definitions object (the returned one).
     """
-    tmp = dg.Definitions(assets=_assets, resources=_resources)
+    tmp = dg.Definitions(
+        assets=_assets,
+        asset_checks=_asset_checks,
+        resources=_resources,
+    )
     asset_graph = tmp.resolve_asset_graph()
     resolved_jobs = [
         uj.resolve(asset_graph=asset_graph, resource_defs=_resources)
@@ -342,6 +371,7 @@ def _build_definitions() -> dg.Definitions:
             reference_percentile_audit_job=jobs_by_name["reference_percentile_audit_job"],
             public_sample_scores_job=jobs_by_name["public_sample_scores_job"],
             sample_score_evidence_job=jobs_by_name["sample_score_evidence_job"],
+            sample_score_integration_job=jobs_by_name["sample_score_integration_job"],
             ld_proxy_pipeline_job=jobs_by_name["ld_proxy_pipeline"],
         ),
         resources=_resources,

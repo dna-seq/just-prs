@@ -3,6 +3,7 @@ from prs_ui.mixin import (
     _genome_file_label,
     _group_prs_rows_by_trait,
     _merge_prs_results,
+    _safe_download_stem,
     _trait_group_display_label,
     _trait_group_key,
     _trait_heritability_summary,
@@ -196,6 +197,25 @@ def test_individual_result_grid_height_accounts_for_grouped_headers() -> None:
     assert result_grid_height(3, 6, grouped_headers=True) == "262px"
     assert result_grid_height(3, 4) == "222px"
     assert result_grid_height(10, 10, grouped_headers=True) == "626px"
+
+
+def test_distribution_png_download_js_targets_report_iframe() -> None:
+    from prs_ui.components.prs_section import (
+        _PRS_DISTRIBUTION_DOWNLOAD_JS,
+        _PRS_REPORT_IFRAME_ID,
+    )
+
+    assert _PRS_REPORT_IFRAME_ID in _PRS_DISTRIBUTION_DOWNLOAD_JS
+    assert "__prsDownloadDistributionPng" in _PRS_DISTRIBUTION_DOWNLOAD_JS
+    assert "__PRS_DOWNLOAD_PNG__" in _PRS_DISTRIBUTION_DOWNLOAD_JS
+
+
+def test_safe_download_stem_slugifies_trait_labels() -> None:
+    assert _safe_download_stem("intelligence") == "intelligence"
+    assert _safe_download_stem("Type 2 diabetes") == "type_2_diabetes"
+    assert _safe_download_stem("  Fluid intelligence score  ") == "fluid_intelligence_score"
+    assert _safe_download_stem("") == "prs"
+    assert _safe_download_stem("PGS000001") == "pgs000001"
 
 
 def test_native_superpopulation_mapping_prefers_model_ancestry() -> None:

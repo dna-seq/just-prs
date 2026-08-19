@@ -64,6 +64,10 @@ _JOB_CHECK_KEYS: dict[str, list[dg.AssetKey]] = {
         dg.AssetKey("sample_score_evidence"),
         dg.AssetKey("hf_sample_score_evidence"),
     ],
+    "sample_score_integration_job": [
+        dg.AssetKey("sample_score_integration"),
+        dg.AssetKey("hf_sample_score_dataset"),
+    ],
     "ld_proxy_pipeline": [
         dg.AssetKey("ld_proxy_table"),
         dg.AssetKey("hf_ld_proxy_table"),
@@ -77,6 +81,7 @@ _PIPELINE_JOB_NAMES = (
     "reference_percentile_audit_job",
     "public_sample_scores_job",
     "sample_score_evidence_job",
+    "sample_score_integration_job",
     "ld_proxy_pipeline",
     "reference_allele_pipeline",
     "ancestry_model_pipeline",
@@ -157,6 +162,7 @@ def _make_startup_sensor(
     ld_proxy_pipeline_job: object,
     public_sample_scores_job: object | None = None,
     sample_score_evidence_job: object | None = None,
+    sample_score_integration_job: object | None = None,
 ) -> dg.SensorDefinition:
     """Startup sensor: initial materialization check."""
 
@@ -170,6 +176,8 @@ def _make_startup_sensor(
         startup_jobs.append(public_sample_scores_job)
     if sample_score_evidence_job is not None:
         startup_jobs.append(sample_score_evidence_job)
+    if sample_score_integration_job is not None:
+        startup_jobs.append(sample_score_integration_job)
 
     @dg.sensor(
         jobs=startup_jobs,
@@ -197,6 +205,7 @@ def _make_startup_sensor(
             "reference_percentile_audit_job",
             "public_sample_scores_job",
             "sample_score_evidence_job",
+            "sample_score_integration_job",
         } or request_id or no_cache or test_ids:
             explicit_id = request_id or ("no_cache" if no_cache else "test" if test_ids else "startup")
             run_key = f"{target_job}_{explicit_id}"
@@ -678,6 +687,7 @@ def make_all_sensors(
     ld_proxy_pipeline_job: object | None = None,
     public_sample_scores_job: object | None = None,
     sample_score_evidence_job: object | None = None,
+    sample_score_integration_job: object | None = None,
 ) -> list[dg.SensorDefinition]:
     """Create all 4 smart pipeline sensors.
 
@@ -692,6 +702,7 @@ def make_all_sensors(
             ld_proxy_pipeline_job or full_pipeline_job,
             public_sample_scores_job,
             sample_score_evidence_job,
+            sample_score_integration_job,
         ),
         _make_completeness_sensor(score_and_push_job),
         _make_failure_retry_sensor(score_and_push_job),

@@ -254,10 +254,7 @@ def test_worker_recycles_and_parent_resumes(tmp_path: Path, monkeypatch: pytest.
     }
 
 
-def test_worker_recycles_after_large_score(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def _large_score_order(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> WorkerWorkOrder:
     from just_prs.sample_scores.models import RuntimeResultRow
 
     monkeypatch.setenv("PRS_SAMPLE_SCORE_LARGE_VARIANT_THRESHOLD", "5")
@@ -305,7 +302,7 @@ def test_worker_recycles_after_large_score(
             n_rows=1,
         )
         works.append(CheckpointWork(meta=meta, scoring_fingerprints={pgs_id: "fp"}))
-    order = WorkerWorkOrder(
+    return WorkerWorkOrder(
         cache_dir=str(tmp_path),
         scores_cache=str(scores),
         profile_id=UNRESTORED_PROFILE_ID,
@@ -315,6 +312,121 @@ def test_worker_recycles_after_large_score(
         checkpoints=works,
         just_prs_version="0.0.0",
         computed_at="2026-08-16T00:00:00+00:00",
+    )
+
+
+def test_worker_scores_from_prepared_genotype_tables(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Worker loads genomes once as DuckDB tables, then swaps scoring files."""
+    monkeypatch.setattr(
+        "just_prs.sample_scores.engine.recycle_reason",
+        lambda snap, budget_bytes=None: None,
+    )
+    anton = tmp_path / "anton.parquet"
+    livia = tmp_path / "livia.parquet"
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["0/1"],
+    }).write_parquet(anton)
+    pl.DataFrame({
+        "chrom": ["1"],
+        "pos": [100],
+        "ref": ["A"],
+        "alt": ["G"],
+        "GT": ["1/1"],
+    }).write_parquet(livia)
+    scores = tmp_path / "scores"
+    scores.mkdir()
+    for pgs_id, weight in (("PGS000001", 1.0), ("PGS000002", 2.0)):
+        pl.DataFrame({
+            "hm_chr": ["1"],
+            "hm_pos": [100],
+            "effect_allele": ["G"],
+            "reference_allele": ["A"],
+            "effect_weight": [weight],
+        }).write_parquet(scores / f"{pgs_id}_hmPOS_GRCh38.parquet")
+    prepared = [
+        PreparedSample(record=_record("anton"), parquet_path=str(anton), vcf_path="anton.vcf"),
+        PreparedSample(record=_record("livia"), parquet_path=str(livia), vcf_path="livia.vcf"),
+    ]
+    meta = CheckpointMeta(
+        checkpoint_key="tables",
+        score_profile_id=UNRESTORED_PROFILE_ID,
+        pgs_ids=["PGS000001", "PGS000002"],
+        scoring_set_fingerprint="s" * 64,
+        sample_set_genotype_fingerprint="g" * 64,
+        n_rows=4,
+    )
+    order = WorkerWorkOrder(
+        cache_dir=str(tmp_path),
+        scores_cache=str(scores),
+        profile_id=UNRESTORED_PROFILE_ID,
+        genome_build="GRCh38",
+        reference_restoration=False,
+        samples=prepared,
+        checkpoints=[
+            CheckpointWork(
+                meta=meta,
+                scoring_fingerprints={"PGS000001": "a", "PGS000002": "b"},
+            )
+        ],
+        just_prs_version="0.0.0",
+        computed_at="2026-08-16T00:00:00+00:00",
+    )
+    logs: list[str] = []
+    report = run_worker(order, log=logs.append)
+    assert report.n_ok == 4
+    assert report.n_failed == 0
+    assert any("materialized 2 genotype tables" in line for line in logs)
+    part = pl.read_parquet(meta.expected_path(tmp_path))
+    by_key = {
+        (row["sample_id"], row["pgs_id"]): row["score"]
+        for row in part.iter_rows(named=True)
+    }
+    assert by_key[("anton", "PGS000001")] == pytest.approx(1.0)
+    assert by_key[("livia", "PGS000001")] == pytest.approx(2.0)
+    assert by_key[("anton", "PGS000002")] == pytest.approx(2.0)
+    assert by_key[("livia", "PGS000002")] == pytest.approx(4.0)
+
+
+def test_worker_keeps_large_scores_when_rss_is_fine(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    order = _large_score_order(tmp_path, monkeypatch)
+    report = run_worker(order)
+    assert report.recycle_reason is None
+    assert report.n_checkpoints == 2
+    assert completed_pgs_for_profile(tmp_path, UNRESTORED_PROFILE_ID) == {
+        "PGS000001",
+        "PGS000002",
+    }
+
+
+def test_worker_recycles_after_large_score_when_rss_is_high(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from just_prs.memory import ProcessTreeSnapshot
+
+    order = _large_score_order(tmp_path, monkeypatch)
+    fat = ProcessTreeSnapshot(
+        pid=1,
+        rss_bytes=9 * 1024 * 1024 * 1024,
+        peak_rss_bytes=9 * 1024 * 1024 * 1024,
+        available_bytes=50 * 1024 * 1024 * 1024,
+        total_bytes=94 * 1024 * 1024 * 1024,
+        n_processes=1,
+        sampled_at=0.0,
+    )
+    monkeypatch.setattr(
+        "just_prs.sample_scores.engine.ProcessTreeSampler.snapshot",
+        lambda self: fat,
     )
     report = run_worker(order)
     assert report.recycle_reason == "large_score"

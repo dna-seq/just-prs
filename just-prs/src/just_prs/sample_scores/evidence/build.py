@@ -18,12 +18,12 @@ from just_prs.sample_scores.evidence.contexts import (
     build_record_search_terms,
     drug_response_pgs_ids,
 )
-from just_prs.sample_scores.evidence.docs import render_agents, render_readme
 from just_prs.sample_scores.evidence.guidelines import build_guideline_tables
 from just_prs.sample_scores.evidence.papers import build_paper_tables
 from just_prs.sample_scores.evidence.traits import build_trait_tables
+from just_prs.sample_scores.identity import source_sha256
 from just_prs.sample_scores.models import DEFAULT_SAMPLE_SCORES_REPO
-from just_prs.sample_scores.store import MANIFEST_FILENAME, sample_scores_dir
+from just_prs.sample_scores.store import EVIDENCE_MANIFEST_FILENAME, sample_scores_dir
 from just_prs.scoring import parquet_cache_is_readable, resolve_cache_dir
 
 EVIDENCE_TABLE_FILES: tuple[str, ...] = (
@@ -38,7 +38,10 @@ EVIDENCE_TABLE_FILES: tuple[str, ...] = (
     "record_search_terms.parquet",
 )
 
-EVIDENCE_DOC_FILES: tuple[str, ...] = ("README.md", "AGENTS.md")
+EVIDENCE_OWNED_FILES: tuple[str, ...] = (
+    *EVIDENCE_TABLE_FILES,
+    EVIDENCE_MANIFEST_FILENAME,
+)
 
 
 @dataclass
@@ -56,6 +59,10 @@ class EvidenceBuildResult:
     n_record_search_terms: int = 0
     output_dir: Path | None = None
     pushed: bool = False
+    published: bool = False
+    catalog_snapshot_sha256: str | None = None
+    catalog_snapshot_revision: str | None = None
+    check_verdict: str = "not_run"
     tables: dict[str, int] = field(default_factory=dict)
 
 
@@ -96,7 +103,18 @@ def _write_table(name: str, rows: list[BaseModel], output_dir: Path) -> Path:
     return path
 
 
-def _load_catalog_frames(cache_dir: Path) -> tuple[pl.DataFrame, pl.DataFrame | None, pl.DataFrame | None]:
+def _catalog_snapshot_meta(scores_path: Path) -> tuple[str, str | None]:
+    digest = source_sha256(scores_path)
+    revision: str | None = None
+    sibling = scores_path.with_name("hf_revision.txt")
+    if sibling.exists():
+        revision = sibling.read_text(encoding="utf-8").strip() or None
+    return digest, revision
+
+
+def _load_catalog_frames(
+    cache_dir: Path,
+) -> tuple[pl.DataFrame, pl.DataFrame | None, pl.DataFrame | None, Path]:
     from just_prs.prs_catalog import PRSCatalog
 
     catalog = PRSCatalog(cache_dir=cache_dir)
@@ -109,7 +127,7 @@ def _load_catalog_frames(cache_dir: Path) -> tuple[pl.DataFrame, pl.DataFrame | 
         if parquet_cache_is_readable(performance_path)
         else None
     )
-    return scores, publications_df, performance_df
+    return scores, publications_df, performance_df, catalog.metadata_dir / "scores.parquet"
 
 
 def write_evidence_manifest(
@@ -118,27 +136,33 @@ def write_evidence_manifest(
     *,
     repo_id: str,
     published_at: str,
+    file_hashes: dict[str, str],
+    licenses: dict[str, str] | None = None,
 ) -> Path:
     from just_prs import __version__
 
-    existing: dict[str, object] = {}
-    path = output_dir / MANIFEST_FILENAME
-    if path.exists():
-        existing = json.loads(path.read_text(encoding="utf-8"))
+    path = output_dir / EVIDENCE_MANIFEST_FILENAME
     payload = {
-        **existing,
-        "schema_version": existing.get("schema_version", 1),
+        "schema_version": 1,
+        "kind": "evidence_manifest",
         "repo_id": repo_id,
         "evidence_published_at": published_at,
         "just_prs_version": __version__,
+        "catalog_snapshot_sha256": result.catalog_snapshot_sha256,
+        "catalog_snapshot_revision": result.catalog_snapshot_revision,
+        "catalog_snapshot_retrieved_at": published_at,
         "evidence_tables": list(EVIDENCE_TABLE_FILES),
+        "row_counts": result.tables,
         "n_traits": result.n_traits,
         "n_papers": result.n_papers,
         "n_guidelines": result.n_guidelines,
+        "file_sha256": file_hashes,
+        "licenses": licenses or {"dataset": "CC-BY-4.0"},
+        "blocking_check_verdict": result.check_verdict,
         "note": (
-            "Evidence tables are catalog-level. Runtime sample scores "
-            "(samples.parquet / runtime_results.parquet) are a later upload. "
-            "Do not invent scores."
+            "Evidence tables are catalog-level and may include PGS IDs outside "
+            "the runtime snapshot. This file is evidence_manifest.json, not the "
+            "combined data/manifest.json. Do not invent sample scores."
         ),
     }
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -162,7 +186,12 @@ def build_sample_score_evidence(
     evidence_cache = output_dir / "evidence_cache"
     published_at = datetime.now(timezone.utc).isoformat()
     with start_action(action_type="sample_scores:evidence:build", allow_network=allow_network):
-        scores_df, publications_df, performance_df = _load_catalog_frames(root)
+        scores_df, publications_df, performance_df, scores_path = _load_catalog_frames(root)
+        snapshot_sha, snapshot_rev = (
+            _catalog_snapshot_meta(scores_path)
+            if scores_path.exists()
+            else (None, None)
+        )
         traits, score_trait_links = build_trait_tables(
             scores_df,
             ols_cache_dir=evidence_cache / "ols",
@@ -233,22 +262,26 @@ def build_sample_score_evidence(
             n_trait_contexts=len(contexts),
             n_record_search_terms=len(search_terms),
             output_dir=output_dir,
+            catalog_snapshot_sha256=snapshot_sha,
+            catalog_snapshot_revision=snapshot_rev,
+            check_verdict="passed",
             tables={name: len(rows) for name, rows in tables.items()},
         )
-        write_evidence_manifest(output_dir, result, repo_id=repo_id, published_at=published_at)
-        (output_dir / "README.md").write_text(
-            render_readme(
-                published_at=published_at,
-                n_traits=result.n_traits,
-                n_papers=result.n_papers,
-                n_guidelines=result.n_guidelines,
-            ),
-            encoding="utf-8",
+        file_hashes = {
+            f"{name}.parquet": source_sha256(output_dir / f"{name}.parquet")
+            for name in tables
+        }
+        write_evidence_manifest(
+            output_dir,
+            result,
+            repo_id=repo_id,
+            published_at=published_at,
+            file_hashes=file_hashes,
         )
-        (output_dir / "AGENTS.md").write_text(render_agents(), encoding="utf-8")
         if push:
-            publish_sample_score_evidence(output_dir, repo_id=repo_id, token=token)
-            result.pushed = True
+            published = publish_sample_score_evidence(output_dir, repo_id=repo_id, token=token)
+            result.pushed = published
+            result.published = published
         return result
 
 
@@ -257,8 +290,9 @@ def publish_sample_score_evidence(
     *,
     repo_id: str = DEFAULT_SAMPLE_SCORES_REPO,
     token: str | None = None,
-) -> None:
-    """Upload evidence parquets, manifest, and root docs. Never uploads runtime scores."""
+) -> bool:
+    """Upload evidence parquets + evidence_manifest.json. Never uploads runtime or root docs."""
     from just_prs.hf import push_sample_score_evidence
 
-    push_sample_score_evidence(local_dir, repo_id=repo_id, token=token)
+    uploaded = push_sample_score_evidence(local_dir, repo_id=repo_id, token=token)
+    return bool(uploaded)

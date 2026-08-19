@@ -64,7 +64,7 @@ Evidence tables live under `data/`:
 - `data/actionability.parquet`
 - `data/trait_contexts.parquet`
 - `data/record_search_terms.parquet`
-- `data/manifest.json`
+- `data/evidence_manifest.json`
 
 Pending later upload (do not invent):
 
@@ -160,7 +160,7 @@ This file is the machine/LLM contract for a downloaded copy of
 
 ## Required reading order
 
-1. Read `data/manifest.json`.
+1. Read `data/evidence_manifest.json` (and later `data/manifest.json` when plan 3 publishes it).
 2. If `runtime_results.parquet` / `trait_summaries.parquet` are absent, stay on
    evidence tables. Do not invent sample scores.
 3. When runtime files exist: read `trait_summaries.parquet`, then join

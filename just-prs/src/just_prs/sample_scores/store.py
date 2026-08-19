@@ -10,6 +10,7 @@ from eliot import start_action
 from just_prs.sample_scores.models import (
     DEFAULT_SAMPLE_SCORES_REPO,
     RuntimeResultRow,
+    SampleAncestryRecord,
     SampleRecord,
 )
 from just_prs.scoring import parquet_cache_is_readable, resolve_cache_dir
@@ -17,7 +18,9 @@ from just_prs.scoring import parquet_cache_is_readable, resolve_cache_dir
 SAMPLES_FILENAME = "samples.parquet"
 RUNTIME_RESULTS_FILENAME = "runtime_results.parquet"
 MANIFEST_FILENAME = "manifest.json"
+EVIDENCE_MANIFEST_FILENAME = "evidence_manifest.json"
 RUNTIME_MANIFEST_FILENAME = "runtime_manifest.json"
+SAMPLE_ANCESTRY_FILENAME = "sample_ancestry.parquet"
 
 
 def sample_scores_dir(cache_dir: Path | None = None) -> Path:
@@ -31,6 +34,10 @@ def samples_path(cache_dir: Path | None = None) -> Path:
 
 def runtime_results_path(cache_dir: Path | None = None) -> Path:
     return sample_scores_dir(cache_dir) / RUNTIME_RESULTS_FILENAME
+
+
+def sample_ancestry_path(cache_dir: Path | None = None) -> Path:
+    return sample_scores_dir(cache_dir) / SAMPLE_ANCESTRY_FILENAME
 
 
 def load_samples(cache_dir: Path | None = None) -> list[SampleRecord]:
@@ -53,6 +60,24 @@ def load_runtime_results(cache_dir: Path | None = None) -> pl.DataFrame:
     if not parquet_cache_is_readable(path):
         return pl.DataFrame()
     return pl.read_parquet(path)
+
+
+def load_sample_ancestry(cache_dir: Path | None = None) -> list[SampleAncestryRecord]:
+    path = sample_ancestry_path(cache_dir)
+    if not parquet_cache_is_readable(path):
+        return []
+    frame = pl.read_parquet(path)
+    return [SampleAncestryRecord.model_validate(row) for row in frame.iter_rows(named=True)]
+
+
+def write_sample_ancestry(
+    rows: list[SampleAncestryRecord],
+    cache_dir: Path | None = None,
+) -> Path:
+    path = sample_ancestry_path(cache_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pl.DataFrame([row.model_dump() for row in rows]).write_parquet(path)
+    return path
 
 
 def write_runtime_results(

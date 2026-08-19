@@ -30,22 +30,29 @@ from just_prs.sample_scores.identity import (
     cached_source_sha256,
 )
 from just_prs.sample_scores.models import (
+    ANCESTRY_INFERENCE_VERSION,
     DEFAULT_SAMPLE_SCORES_REPO,
+    EXPECTED_PUBLIC_SAMPLE_ANCESTRY,
     HASH_SCHEMA_VERSION,
     NORMALIZATION_PROFILE_ID,
+    PRIVATE_INGEST_ALIASES,
     PUBLIC_WGS_PASS_V1,
     SCORE_ALGORITHM_VERSION,
     SCORE_PROFILES,
     RuntimeResultRow,
+    SampleAncestryRecord,
     SampleRecord,
     ScoreProfile,
+    published_aliases,
 )
 from just_prs.sample_scores.store import (
     RUNTIME_MANIFEST_FILENAME,
     load_runtime_results,
+    load_sample_ancestry,
     load_samples,
     sample_scores_dir,
     write_runtime_results,
+    write_sample_ancestry,
     write_samples,
 )
 from just_prs.scoring import resolve_cache_dir
@@ -58,9 +65,7 @@ RUNTIME_KEY = (
     "scoring_fingerprint",
 )
 
-LEGACY_SAMPLE_IDS: dict[str, str] = {
-    "oksana": "o-mom",
-}
+LEGACY_SAMPLE_IDS: dict[str, str] = dict(PRIVATE_INGEST_ALIASES)
 
 
 class PublicSampleSpec(BaseModel):
@@ -265,7 +270,7 @@ def build_sample_record(
     n_variants = int(genotypes.select(pl.len()).collect().item())
     return SampleRecord(
         sample_id=resolved.sample_id,
-        aliases=list(resolved.aliases),
+        aliases=published_aliases(list(resolved.aliases)),
         display_name=resolved.display_name,
         family_id=resolved.family_id,
         relationship_role=resolved.relationship_role,
@@ -397,11 +402,38 @@ def write_sample_scores_manifest(
     extra: dict[str, object] | None = None,
 ) -> Path:
     from just_prs import __version__
+    from just_prs.sample_scores.checkpoints import sample_set_fingerprint, scoring_set_fingerprint
+    from just_prs.sample_scores.identity import source_sha256
 
     samples = load_samples(cache_dir)
     results = load_runtime_results(cache_dir)
+    ancestry = load_sample_ancestry(cache_dir)
     n_ok = int(results.filter(pl.col("status") == "ok").height) if results.height else 0
     n_failed = int(results.filter(pl.col("status") != "ok").height) if results.height else 0
+    file_hashes: dict[str, str] = {}
+    file_counts: dict[str, int] = {}
+    owned = (
+        "samples.parquet",
+        "runtime_results.parquet",
+        "runtime_manifest.json",
+        "sample_ancestry.parquet",
+    )
+    root = sample_scores_dir(cache_dir)
+    for name in owned:
+        path = root / name
+        if path.exists():
+            file_hashes[name] = source_sha256(path)
+            if path.suffix == ".parquet":
+                file_counts[name] = int(pl.scan_parquet(path).select(pl.len()).collect().item())
+    scoring_fps: dict[str, str] = {}
+    if results.height and "pgs_id" in results.columns and "scoring_fingerprint" in results.columns:
+        scoring_fps = {
+            str(row["pgs_id"]): str(row["scoring_fingerprint"])
+            for row in results.filter(pl.col("status") == "ok")
+            .select("pgs_id", "scoring_fingerprint")
+            .unique(subset=["pgs_id"])
+            .iter_rows(named=True)
+        }
     payload: dict[str, object] = {
         "schema_version": 1,
         "repo_id": repo_id,
@@ -416,20 +448,122 @@ def write_sample_scores_manifest(
         "n_runtime_rows": results.height,
         "n_ok": n_ok,
         "n_failed": n_failed,
+        "n_ancestry_rows": len(ancestry),
         "reference_universe_fingerprint": reference_universe_fp,
+        "scoring_set_fingerprint": scoring_set_fingerprint(scoring_fps) if scoring_fps else None,
+        "sample_set_fingerprint": sample_set_fingerprint(
+            {sample.sample_id: sample.genotype_sha256_v1 for sample in samples}
+        ),
+        "sample_hashes": {
+            sample.sample_id: {
+                "source_sha256": sample.source_sha256,
+                "genotype_sha256_v1": sample.genotype_sha256_v1,
+            }
+            for sample in samples
+        },
+        "file_hashes": file_hashes,
+        "file_counts": file_counts,
+        "validation_verdicts": {
+            "runtime_completeness": extra.get("runtime_completeness") if extra else None,
+            "ancestry": extra.get("ancestry_verdict") if extra else None,
+        },
         "evidence_tables": [],
         "note": (
             "Runtime scores only. Evidence, trait summaries, guidelines, and "
-            "root README/AGENTS.md are a later publish onto this same repo. "
-            "This file is runtime_manifest.json, not the combined manifest.json."
+            "root README/AGENTS.md/ANALYSIS.md are a later publish onto this same repo. "
+            "This file is runtime_manifest.json, not the combined manifest.json. "
+            "Fine-population codes are nearest 1000G cohorts, not nationality."
         ),
     }
     if extra:
         payload.update(extra)
-    path = sample_scores_dir(cache_dir) / RUNTIME_MANIFEST_FILENAME
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
-    return path
+    dest = root / RUNTIME_MANIFEST_FILENAME
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return dest
+
+
+def _ancestry_model_pin(model_dir: Path, panel: str, build: str) -> tuple[str | None, str | None]:
+    from just_prs.ancestry import artifact_paths
+    from just_prs.sample_scores.identity import source_sha256
+
+    paths = artifact_paths(model_dir, panel, build)
+    meta = paths["meta"]
+    sites = paths["sites"]
+    if not meta.exists() or not sites.exists():
+        return None, None
+    revision = None
+    payload = json.loads(meta.read_text(encoding="utf-8"))
+    if isinstance(payload, dict):
+        revision = str(payload.get("revision") or payload.get("created_at") or "") or None
+    return revision, source_sha256(sites)
+
+
+def infer_public_sample_ancestry(cache_dir: Path) -> list[SampleAncestryRecord]:
+    """Infer 1000G ancestry once per published public genome (not per PGS)."""
+    from just_prs.prs_catalog import PRSCatalog
+
+    catalog = PRSCatalog(cache_dir=cache_dir)
+    inferred_at = datetime.now(timezone.utc).isoformat()
+    records: list[SampleAncestryRecord] = []
+    for sample in load_samples(cache_dir):
+        if not sample.publication_allowed:
+            continue
+        parquet = cache_dir / "normalized" / "sample_scores" / f"{sample.sample_id}.parquet"
+        if not parquet.exists():
+            raise ValueError(f"normalized public genome missing for {sample.sample_id}: {parquet}")
+        lf = pl.scan_parquet(parquet)
+        broad = catalog.infer_ancestry(
+            genotypes_lf=lf,
+            panel="1000g",
+            sample_build=sample.genome_build,
+            resolution="superpop",
+        )
+        fine = catalog.infer_ancestry(
+            genotypes_lf=lf,
+            panel="1000g",
+            sample_build=sample.genome_build,
+            resolution="population",
+        )
+        model_dir = catalog._ensure_ancestry_model("1000g", "GRCh38")
+        revision, model_hash = (
+            _ancestry_model_pin(model_dir, "1000g", "GRCh38") if model_dir else (None, None)
+        )
+        record = SampleAncestryRecord(
+            sample_id=sample.sample_id,
+            genotype_sha256_v1=sample.genotype_sha256_v1,
+            superpopulation=broad.superpopulation,
+            confidence=float(broad.confidence),
+            fine_population=fine.fine_population,
+            fine_confidence=float(fine.confidence) if fine.fine_population else None,
+            panel="1000g",
+            genome_build="GRCh38",
+            ancestry_model_revision=revision,
+            ancestry_model_sha256=model_hash,
+            inference_version=ANCESTRY_INFERENCE_VERSION,
+            n_variants_used=int(fine.n_variants_used or broad.n_variants_used),
+            n_variants_model=int(fine.n_variants_model or broad.n_variants_model),
+            coverage=float(fine.coverage or broad.coverage),
+            inferred_at=inferred_at,
+        )
+        expected = EXPECTED_PUBLIC_SAMPLE_ANCESTRY.get(sample.sample_id)
+        if expected is not None:
+            want_super, want_fine = expected
+            if record.superpopulation != want_super or record.confidence < 1.0:
+                raise ValueError(
+                    f"{sample.sample_id} ancestry gate failed: "
+                    f"{record.superpopulation}@{record.confidence} (expected {want_super}@1.0)"
+                )
+            if record.fine_population != want_fine:
+                raise ValueError(
+                    f"{sample.sample_id} fine-population gate failed: "
+                    f"{record.fine_population} (expected {want_fine}, nearest 1000G cohort)"
+                )
+        if record.superpopulation == "UNKNOWN":
+            raise ValueError(f"{sample.sample_id} ancestry call is UNKNOWN")
+        records.append(record)
+    write_sample_ancestry(records, cache_dir)
+    return records
 
 
 def score_public_sample_catalog(
@@ -440,6 +574,7 @@ def score_public_sample_catalog(
     limit: int | None = None,
     skip_existing: bool = True,
     retry_failed: bool = False,
+    repair_invalid: bool = False,
     progress_every: int = 10,
     log: Callable[[str], None] | None = None,
 ) -> SampleScoreProgress:
@@ -450,6 +585,8 @@ def score_public_sample_catalog(
     labels are counted as skipped and never uploaded. ``progress_every``
     is the PGS-count interval for worker progress lines (default 10).
     ``retry_failed`` reopens failed parts and still continues into uncached IDs.
+    ``repair_invalid`` quarantines parts with invalid ok rows or stale
+    fingerprints and re-scores only those checkpoints.
     """
     from just_prs.sample_scores.engine import score_public_samples_pgs_major
 
@@ -461,6 +598,7 @@ def score_public_sample_catalog(
         limit=limit,
         skip_existing=skip_existing,
         retry_failed=retry_failed,
+        repair_invalid=repair_invalid,
         progress_every=progress_every,
         log=log,
     )
@@ -470,6 +608,7 @@ def compact_public_sample_runtime(
     cache_dir: Path | None = None,
     *,
     expected_keys: set[str] | None = None,
+    expected_pgs_ids: list[str] | None = None,
     repo_id: str = DEFAULT_SAMPLE_SCORES_REPO,
 ) -> Path:
     """Compact checkpoint parts once and write ``runtime_manifest.json``."""
@@ -478,13 +617,24 @@ def compact_public_sample_runtime(
     from just_prs.prs_catalog import PRSCatalog
 
     root = cache_dir if cache_dir is not None else resolve_cache_dir()
-    dest = compact_runtime_parts(root, expected_keys=expected_keys)
+    dest = compact_runtime_parts(
+        root, expected_keys=expected_keys, expected_pgs_ids=expected_pgs_ids
+    )
+    ancestry = infer_public_sample_ancestry(root)
     universe_fp: str | None = None
     catalog = PRSCatalog(cache_dir=root)
     universe_path = catalog._reference_universe_path("GRCh38")
     if universe_path is not None and universe_path.exists():
         universe_fp = reference_universe_fingerprint(universe_path)
-    write_sample_scores_manifest(root, repo_id=repo_id, reference_universe_fp=universe_fp)
+    write_sample_scores_manifest(
+        root,
+        repo_id=repo_id,
+        reference_universe_fp=universe_fp,
+        extra={
+            "ancestry_verdict": "passed",
+            "n_ancestry_rows": len(ancestry),
+        },
+    )
     return dest
 
 
@@ -496,6 +646,7 @@ def publish_public_sample_scores(
     limit: int | None = None,
     skip_existing: bool = True,
     retry_failed: bool = False,
+    repair_invalid: bool = False,
     progress_every: int = 10,
     log: Callable[[str], None] | None = None,
     push: bool = False,
@@ -512,6 +663,7 @@ def publish_public_sample_scores(
             limit=limit,
             skip_existing=skip_existing,
             retry_failed=retry_failed,
+            repair_invalid=repair_invalid,
             progress_every=progress_every,
             log=log,
         )

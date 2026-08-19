@@ -7,7 +7,8 @@ import gc
 import math
 import tempfile
 import uuid
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import duckdb
@@ -164,6 +165,126 @@ def prepare_reference_universe(
         scoped=scope_lf is not None,
         source_path=source_path,
         scope_frame=scope_lf,
+    )
+
+
+def _sql_literal_path(path: Path) -> str:
+    """Single-quote a filesystem path for DuckDB ``read_parquet``."""
+    return str(path.resolve()).replace("'", "''")
+
+
+def _geno_table_name(index: int) -> str:
+    return f"geno_{index}"
+
+
+@dataclass
+class PreparedGenotypeTables:
+    """One DuckDB connection with genomes materialized as tables.
+
+    The genomes do not change between PGS files. Load them once with
+    :func:`prepare_genotype_tables`, then pass this handle into
+    ``compute_prs_duckdb`` so only the scoring table is replaced. Close the
+    handle (or use it as a context manager) when the worker exits.
+    """
+
+    conn: duckdb.DuckDBPyConnection
+    tables: dict[str, str]
+    modes: dict[str, GenotypeInputMode]
+    memory_limit: str
+    _closed: bool = field(default=False, repr=False)
+
+    def table_name(self, key: str) -> str:
+        try:
+            return self.tables[key]
+        except KeyError as exc:
+            raise ValueError(
+                f"Unknown genotype table key {key!r}; have {sorted(self.tables)}"
+            ) from exc
+
+    def mode_for(self, key: str) -> GenotypeInputMode:
+        return self.modes[key]
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        self.conn.close()
+        self._closed = True
+
+    def __enter__(self) -> PreparedGenotypeTables:
+        return self
+
+    def __exit__(self, *exc: object) -> None:
+        self.close()
+
+
+def prepare_genotype_tables(
+    samples: Mapping[str, Path | str],
+    *,
+    memory_limit: str | None = None,
+    genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
+) -> PreparedGenotypeTables:
+    """Materialize each genome parquet as a DuckDB table on one connection.
+
+    Keeps the columns the scoring SQL reads: ``chrom``, ``pos``, ``GT``, ``ref``,
+    ``alt``, and ``filter`` when present (AUTO mode still sees gVCF ``RefCall`` /
+    ``NON_REF``). Later scores only replace the ``scoring`` relation.
+    """
+    if not samples:
+        raise ValueError("prepare_genotype_tables requires at least one sample")
+    mem_limit = memory_limit or _resolve_duckdb_memory_limit()
+    conn = duckdb.connect(config={"memory_limit": mem_limit})
+    try:
+        conn.execute("SET arrow_large_buffer_size = true")
+        tables: dict[str, str] = {}
+        modes: dict[str, GenotypeInputMode] = {}
+        requested = _normalize_genotype_input_mode(genotype_input_mode)
+        for index, (key, raw_path) in enumerate(samples.items()):
+            path = Path(raw_path)
+            if not path.is_file():
+                raise FileNotFoundError(f"Genotype parquet for {key!r} not found: {path}")
+            geno_lf = _normalize_genotype_columns(pl.scan_parquet(path))
+            modes[key] = (
+                _infer_genotype_input_mode(geno_lf)
+                if requested == GenotypeInputMode.AUTO
+                else requested
+            )
+            raw_names = set(pl.scan_parquet(path).collect_schema().names())
+            if "chrom" not in raw_names:
+                raise ValueError(f"Genotype parquet for {key!r} has no chrom column: {path}")
+            if "GT" not in raw_names:
+                raise ValueError(f"Genotype parquet for {key!r} has no GT column: {path}")
+            cols = ["chrom"]
+            if "pos" in raw_names:
+                cols.append("pos")
+            elif "start" in raw_names:
+                cols.append("start AS pos")
+            else:
+                raise ValueError(f"Genotype parquet for {key!r} has no pos/start column: {path}")
+            cols.append("GT")
+            for extra in ("ref", "alt", "filter"):
+                if extra in raw_names:
+                    cols.append(extra)
+            select_sql = ", ".join(cols)
+            table = _geno_table_name(index)
+            conn.execute(
+                f"CREATE TABLE {table} AS SELECT {select_sql} "
+                f"FROM read_parquet('{_sql_literal_path(path)}')"
+            )
+            tables[key] = table
+    except Exception:
+        conn.close()
+        raise
+    log_message(
+        message_type="prs:genotype_tables_prepared",
+        n_samples=len(tables),
+        memory_limit=mem_limit,
+        keys=list(tables),
+    )
+    return PreparedGenotypeTables(
+        conn=conn,
+        tables=tables,
+        modes=modes,
+        memory_limit=mem_limit,
     )
 
 
@@ -1165,6 +1286,8 @@ def compute_prs_duckdb(
     trait_reported: str | None = None,
     genotypes_parquet: Path | str | None = None,
     genotypes_lf: pl.LazyFrame | None = None,
+    genotype_tables: PreparedGenotypeTables | None = None,
+    genotype_table_key: str | None = None,
     memory_limit: str | None = None,
     genotype_input_mode: str | GenotypeInputMode = GenotypeInputMode.AUTO,
     maf_fill: bool = False,
@@ -1182,10 +1305,11 @@ def compute_prs_duckdb(
     chunking — so a 9.5M-variant score cannot native-crash one giant join.
     ``check_memory_pressure`` runs before each chunk.
 
-    Either *genotypes_parquet* (preferred — DuckDB reads the file directly) or
-    *genotypes_lf* (materialized to an Arrow table and registered with DuckDB)
-    must be provided. If neither is given, the VCF is read via polars-bio and
-    materialized to a temporary Arrow table.
+    Either *genotype_tables* (preferred when scoring many PGS IDs against the
+    same genomes — tables stay loaded, only ``scoring`` is replaced),
+    *genotypes_parquet* (DuckDB reads the file directly), or *genotypes_lf*
+    (materialized to Arrow) must be provided. If none of those is given, the
+    VCF is read via polars-bio and materialized to a temporary Arrow table.
 
     Args:
         vcf_path: Path to VCF file (used only when neither genotypes arg is provided)
@@ -1196,6 +1320,10 @@ def compute_prs_duckdb(
         trait_reported: Trait name for result labeling
         genotypes_parquet: Path to normalized genotypes parquet (best for DuckDB)
         genotypes_lf: Pre-built genotypes LazyFrame (collected to Arrow for DuckDB)
+        genotype_tables: Prepared DuckDB tables (genomes loaded once). When set,
+            ``genotype_table_key`` selects which table to join and the connection
+            is not closed.
+        genotype_table_key: Sample key in ``genotype_tables.tables``.
         memory_limit: DuckDB memory limit (e.g. ``"2GB"``). Falls back to
             ``PRS_DUCKDB_MEMORY_LIMIT`` / ``PRS_DUCKDB_MEMORY_PERCENT`` env vars,
             then 75% of total RAM.
@@ -1223,14 +1351,26 @@ def compute_prs_duckdb(
         # Resolve the genotype input mode up front (cheap — schema + 1-row probe)
         # so reference restoration can be gated on variant_only before the scoring
         # frame is collected. ``geno_mode_lf`` is reused for DuckDB registration
-        # below so the VCF/parquet is not read twice.
-        if genotypes_parquet is not None:
+        # below so the VCF/parquet is not read twice. A prepared table session
+        # already resolved the mode when the genomes were loaded.
+        shared_tables = genotype_tables
+        geno_mode_lf: pl.LazyFrame | None = None
+        if shared_tables is not None:
+            if not genotype_table_key:
+                raise ValueError("genotype_table_key is required when genotype_tables is set")
+            resolved_mode = shared_tables.mode_for(genotype_table_key)
+            requested_mode = _normalize_genotype_input_mode(genotype_input_mode)
+            if requested_mode != GenotypeInputMode.AUTO:
+                resolved_mode = requested_mode
+        elif genotypes_parquet is not None:
             geno_mode_lf = _normalize_genotype_columns(pl.scan_parquet(genotypes_parquet))
+            resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, geno_mode_lf)
         elif genotypes_lf is not None:
             geno_mode_lf = _normalize_genotype_columns(genotypes_lf)
+            resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, geno_mode_lf)
         else:
             geno_mode_lf = read_genotypes(vcf_path)
-        resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, geno_mode_lf)
+            resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, geno_mode_lf)
 
         # Resolve the REF universe handle (restoration only engages in variant_only
         # mode). The fill itself happens in SQL against the universe parquet — see
@@ -1262,15 +1402,23 @@ def compute_prs_duckdb(
         chunk_size = scoring_join_chunk_size(variants_total)
         chunked = variants_total > chunk_size > 0
 
-        mem_limit = memory_limit or _resolve_duckdb_memory_limit()
-        conn = duckdb.connect(config={"memory_limit": mem_limit})
-        try:
+        mem_limit = memory_limit or (
+            shared_tables.memory_limit if shared_tables is not None else _resolve_duckdb_memory_limit()
+        )
+        own_conn = shared_tables is None
+        if shared_tables is not None:
+            conn = shared_tables.conn
+            geno_from = shared_tables.table_name(str(genotype_table_key))
+        else:
+            conn = duckdb.connect(config={"memory_limit": mem_limit})
             conn.execute("SET arrow_large_buffer_size = true")
             if genotypes_parquet is not None:
-                geno_from = f"read_parquet('{genotypes_parquet}')"
+                geno_from = f"read_parquet('{_sql_literal_path(Path(genotypes_parquet))}')"
             else:
+                assert geno_mode_lf is not None
                 conn.register("genotypes_tbl", geno_mode_lf.collect().to_arrow())
                 geno_from = "genotypes_tbl"
+        try:
 
             has_maf_col_ddb = "allelefrequency_effect" in schema_names
             do_maf_fill_ddb = maf_fill and has_maf_col_ddb and not dosage_weight
@@ -1363,7 +1511,8 @@ def compute_prs_duckdb(
                     gc.collect()
                     offset += take
         finally:
-            conn.close()
+            if own_conn:
+                conn.close()
 
         prs_score = agg.prs_score
         observed_called = agg.observed_called
@@ -1549,133 +1698,156 @@ def compute_prs_batch(
         results: list[PRSResult] = []
         outcomes: list[PRSBatchOutcome] = []
         failed_ids: list[str] = []
+        genotype_tables: PreparedGenotypeTables | None = None
+        table_key: str | None = None
+        parquet_path = Path(str(vcf_path))
+        try:
+            if (
+                engine == PRSEngine.DUCKDB
+                and genotypes_lf is None
+                and parquet_path.suffix == ".parquet"
+                and parquet_path.is_file()
+            ):
+                genotype_tables = prepare_genotype_tables(
+                    {"sample": parquet_path},
+                    memory_limit=memory_limit,
+                    genotype_input_mode=genotype_input_mode,
+                )
+                table_key = "sample"
 
-        with PGSCatalogClient() as client:
-            for pgs_id in pgs_ids:
-                attempts = 1
-                try:
-                    score_info = client.get_score(pgs_id)
-                    trait = score_info.trait_reported
+            with PGSCatalogClient() as client:
+                for pgs_id in pgs_ids:
+                    attempts = 1
+                    try:
+                        score_info = client.get_score(pgs_id)
+                        trait = score_info.trait_reported
 
-                    if engine == PRSEngine.DUCKDB:
-                        result = compute_prs_duckdb(
-                            vcf_path=vcf_path,
-                            scoring_file=pgs_id,
-                            genome_build=genome_build,
-                            cache_dir=cache_dir,
-                            pgs_id=pgs_id,
-                            trait_reported=trait,
-                            genotypes_parquet=str(vcf_path) if (genotypes_lf is None and str(vcf_path).endswith(".parquet")) else None,
-                            genotypes_lf=genotypes_lf,
-                            memory_limit=memory_limit,
-                            genotype_input_mode=genotype_input_mode,
-                            reference_restoration=reference_restoration,
-                            reference_universe_path=reference_universe_path,
-                            reference_universe=reference_universe,
-                        )
-                    else:
-                        result = compute_prs(
-                            vcf_path=vcf_path,
-                            scoring_file=pgs_id,
-                            genome_build=genome_build,
-                            cache_dir=cache_dir,
-                            pgs_id=pgs_id,
-                            trait_reported=trait,
-                            genotypes_lf=genotypes_lf,
-                            genotype_input_mode=genotype_input_mode,
-                            reference_restoration=reference_restoration,
-                            reference_universe_path=reference_universe_path,
-                            reference_universe=reference_universe,
-                        )
+                        if engine == PRSEngine.DUCKDB:
+                            result = compute_prs_duckdb(
+                                vcf_path=vcf_path,
+                                scoring_file=pgs_id,
+                                genome_build=genome_build,
+                                cache_dir=cache_dir,
+                                pgs_id=pgs_id,
+                                trait_reported=trait,
+                                genotypes_parquet=str(vcf_path) if (genotypes_lf is None and str(vcf_path).endswith(".parquet")) else None,
+                                genotypes_lf=genotypes_lf,
+                                genotype_tables=genotype_tables,
+                                genotype_table_key=table_key,
+                                memory_limit=memory_limit,
+                                genotype_input_mode=genotype_input_mode,
+                                reference_restoration=reference_restoration,
+                                reference_universe_path=reference_universe_path,
+                                reference_universe=reference_universe,
+                            )
+                        else:
+                            result = compute_prs(
+                                vcf_path=vcf_path,
+                                scoring_file=pgs_id,
+                                genome_build=genome_build,
+                                cache_dir=cache_dir,
+                                pgs_id=pgs_id,
+                                trait_reported=trait,
+                                genotypes_lf=genotypes_lf,
+                                genotype_input_mode=genotype_input_mode,
+                                reference_restoration=reference_restoration,
+                                reference_universe_path=reference_universe_path,
+                                reference_universe=reference_universe,
+                            )
 
-                    results.append(result)
-                    outcomes.append(PRSBatchOutcome(
-                        pgs_id=pgs_id, status="ok", attempts=attempts,
-                    ))
+                        results.append(result)
+                        outcomes.append(PRSBatchOutcome(
+                            pgs_id=pgs_id, status="ok", attempts=attempts,
+                        ))
 
-                except Exception as exc:
-                    if _is_corrupt_parquet_error(exc):
-                        removed = _remove_scoring_parquet_cache(
-                            pgs_id, cache_dir, genome_build,
-                        )
-                        if removed:
-                            attempts = 2
-                            try:
-                                log_message(
-                                    message_type="prs:batch_cache_repair",
-                                    pgs_id=pgs_id,
-                                )
-                                score_info = client.get_score(pgs_id)
-                                trait = score_info.trait_reported
-                                if engine == PRSEngine.DUCKDB:
-                                    result = compute_prs_duckdb(
-                                        vcf_path=vcf_path,
-                                        scoring_file=pgs_id,
-                                        genome_build=genome_build,
-                                        cache_dir=cache_dir,
+                    except Exception as exc:
+                        if _is_corrupt_parquet_error(exc):
+                            removed = _remove_scoring_parquet_cache(
+                                pgs_id, cache_dir, genome_build,
+                            )
+                            if removed:
+                                attempts = 2
+                                try:
+                                    log_message(
+                                        message_type="prs:batch_cache_repair",
                                         pgs_id=pgs_id,
-                                        trait_reported=trait,
-                                        genotypes_parquet=str(vcf_path) if (genotypes_lf is None and str(vcf_path).endswith(".parquet")) else None,
-                                        genotypes_lf=genotypes_lf,
-                                        memory_limit=memory_limit,
-                                        genotype_input_mode=genotype_input_mode,
-                                        reference_restoration=reference_restoration,
-                                        reference_universe_path=reference_universe_path,
-                                        reference_universe=reference_universe,
                                     )
-                                else:
-                                    result = compute_prs(
-                                        vcf_path=vcf_path,
-                                        scoring_file=pgs_id,
-                                        genome_build=genome_build,
-                                        cache_dir=cache_dir,
+                                    score_info = client.get_score(pgs_id)
+                                    trait = score_info.trait_reported
+                                    if engine == PRSEngine.DUCKDB:
+                                        result = compute_prs_duckdb(
+                                            vcf_path=vcf_path,
+                                            scoring_file=pgs_id,
+                                            genome_build=genome_build,
+                                            cache_dir=cache_dir,
+                                            pgs_id=pgs_id,
+                                            trait_reported=trait,
+                                            genotypes_parquet=str(vcf_path) if (genotypes_lf is None and str(vcf_path).endswith(".parquet")) else None,
+                                            genotypes_lf=genotypes_lf,
+                                            genotype_tables=genotype_tables,
+                                            genotype_table_key=table_key,
+                                            memory_limit=memory_limit,
+                                            genotype_input_mode=genotype_input_mode,
+                                            reference_restoration=reference_restoration,
+                                            reference_universe_path=reference_universe_path,
+                                            reference_universe=reference_universe,
+                                        )
+                                    else:
+                                        result = compute_prs(
+                                            vcf_path=vcf_path,
+                                            scoring_file=pgs_id,
+                                            genome_build=genome_build,
+                                            cache_dir=cache_dir,
+                                            pgs_id=pgs_id,
+                                            trait_reported=trait,
+                                            genotypes_lf=genotypes_lf,
+                                            genotype_input_mode=genotype_input_mode,
+                                            reference_restoration=reference_restoration,
+                                            reference_universe_path=reference_universe_path,
+                                            reference_universe=reference_universe,
+                                        )
+                                    results.append(result)
+                                    outcomes.append(PRSBatchOutcome(
+                                        pgs_id=pgs_id, status="cache_repaired",
+                                        attempts=attempts,
+                                    ))
+                                    gc.collect()
+                                    continue
+                                except Exception as retry_exc:
+                                    log_message(
+                                        message_type="prs:batch_retry_failed",
                                         pgs_id=pgs_id,
-                                        trait_reported=trait,
-                                        genotypes_lf=genotypes_lf,
-                                        genotype_input_mode=genotype_input_mode,
-                                        reference_restoration=reference_restoration,
-                                        reference_universe_path=reference_universe_path,
-                                        reference_universe=reference_universe,
+                                        error=str(retry_exc),
                                     )
-                                results.append(result)
-                                outcomes.append(PRSBatchOutcome(
-                                    pgs_id=pgs_id, status="cache_repaired",
-                                    attempts=attempts,
-                                ))
-                                gc.collect()
-                                continue
-                            except Exception as retry_exc:
-                                log_message(
-                                    message_type="prs:batch_retry_failed",
-                                    pgs_id=pgs_id,
-                                    error=str(retry_exc),
-                                )
-                                failed_ids.append(pgs_id)
-                                outcomes.append(PRSBatchOutcome(
-                                    pgs_id=pgs_id, status="failed",
-                                    error=str(retry_exc), attempts=attempts,
-                                ))
-                                gc.collect()
-                                continue
+                                    failed_ids.append(pgs_id)
+                                    outcomes.append(PRSBatchOutcome(
+                                        pgs_id=pgs_id, status="failed",
+                                        error=str(retry_exc), attempts=attempts,
+                                    ))
+                                    gc.collect()
+                                    continue
 
-                    log_message(
-                        message_type="prs:batch_score_failed",
-                        pgs_id=pgs_id,
-                        error=str(exc),
-                    )
-                    failed_ids.append(pgs_id)
-                    outcomes.append(PRSBatchOutcome(
-                        pgs_id=pgs_id, status="failed",
-                        error=str(exc), attempts=attempts,
-                    ))
+                        log_message(
+                            message_type="prs:batch_score_failed",
+                            pgs_id=pgs_id,
+                            error=str(exc),
+                        )
+                        failed_ids.append(pgs_id)
+                        outcomes.append(PRSBatchOutcome(
+                            pgs_id=pgs_id, status="failed",
+                            error=str(exc), attempts=attempts,
+                        ))
 
-                gc.collect()
+                    gc.collect()
 
-        return PRSBatchResult(
-            results=results,
-            outcomes=outcomes,
-            n_total=len(pgs_ids),
-            n_ok=len(results),
-            n_failed=len(failed_ids),
-            failed_ids=failed_ids,
-        )
+            return PRSBatchResult(
+                results=results,
+                outcomes=outcomes,
+                n_total=len(pgs_ids),
+                n_ok=len(results),
+                n_failed=len(failed_ids),
+                failed_ids=failed_ids,
+            )
+        finally:
+            if genotype_tables is not None:
+                genotype_tables.close()

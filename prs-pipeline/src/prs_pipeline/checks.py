@@ -839,6 +839,53 @@ def check_sample_score_evidence_valid(
 
 
 @asset_check(
+    asset="sample_score_integration",
+    blocking=True,
+    description=(
+        "Blocking integration invariants: unique keys, eligibility matches "
+        "status/quarantine/reference validity, five-pop metrics, ancestry-selected "
+        "summaries match summarize_trait_rows, no private aliases."
+    ),
+)
+def check_sample_score_integration_valid(
+    cache_dir_resource: CacheDirResource,
+) -> AssetCheckResult:
+    from just_prs.sample_scores.integration.checks import validate_integration_outputs
+    from just_prs.sample_scores.integration.staging import staged_path
+    from just_prs.sample_scores.store import sample_scores_dir
+    from just_prs.scoring import parquet_cache_is_readable
+
+    cache_dir = cache_dir_resource.get_path()
+    output_dir = sample_scores_dir(cache_dir)
+    analysis_path = output_dir / "model_analysis.parquet"
+    summaries_path = output_dir / "trait_summaries.parquet"
+    runtime_path = staged_path("runtime_results.parquet", cache_dir)
+    if not parquet_cache_is_readable(analysis_path) or not parquet_cache_is_readable(summaries_path):
+        return AssetCheckResult(
+            passed=False,
+            severity=AssetCheckSeverity.ERROR,
+            metadata={"error": "integration outputs missing or unreadable"},
+        )
+    report = validate_integration_outputs(
+        cache_dir=cache_dir,
+        analysis=pl.read_parquet(analysis_path),
+        summaries=pl.read_parquet(summaries_path),
+        runtime=pl.read_parquet(runtime_path),
+        recompute_summaries=True,
+    )
+    return AssetCheckResult(
+        passed=report.passed,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "n_analysis_rows": report.n_analysis_rows,
+            "n_eligible": report.n_eligible,
+            "n_summaries": report.n_summaries,
+            "issues": report.issues,
+        },
+    )
+
+
+@asset_check(
     asset="public_sample_runtime_results",
     blocking=True,
     description=(
@@ -865,7 +912,14 @@ def check_public_sample_runtime_complete(
         expected_keys = expected_checkpoint_keys(
             samples, cache_dir, pgs_ids=requested, limit=limit
         )
-    report = validate_runtime_results(cache_dir, expected_checkpoint_keys=expected_keys)
+    from just_prs.sample_scores.engine import current_scoring_fingerprints
+
+    report = validate_runtime_results(
+        cache_dir,
+        expected_checkpoint_keys=expected_keys,
+        current_scoring_fingerprints=current_scoring_fingerprints(cache_dir),
+        require_ancestry=True,
+    )
     return AssetCheckResult(
         passed=report.passed,
         severity=AssetCheckSeverity.ERROR,
@@ -894,4 +948,5 @@ ALL_ASSET_CHECKS = [
     check_reference_allele_universe_valid,
     check_sample_score_evidence_valid,
     check_public_sample_runtime_complete,
+    check_sample_score_integration_valid,
 ]

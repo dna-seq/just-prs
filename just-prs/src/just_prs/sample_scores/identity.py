@@ -211,11 +211,15 @@ def resolve_sample(
     with start_action(action_type="sample_scores:resolve_sample", alias=alias):
         candidates = samples
         if alias:
+            from just_prs.sample_scores.models import PRIVATE_INGEST_ALIASES
+
             key = alias.strip().casefold()
+            mapped = PRIVATE_INGEST_ALIASES.get(key)
             aliased = [
                 sample
                 for sample in samples
                 if sample.sample_id.casefold() == key
+                or (mapped is not None and sample.sample_id == mapped)
                 or key in {item.casefold() for item in sample.aliases}
             ]
             if aliased:

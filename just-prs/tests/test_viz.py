@@ -54,6 +54,9 @@ def test_plot_trait_scores_accepts_preformatted_absolute_risk() -> None:
     assert "Median (high quality)" not in html
     assert "Median (all models)" not in html
     assert "<!-- prs-dashboard" in html
+    assert "Download PNG" in html
+    assert "__PRS_DOWNLOAD_PNG__" in html
+    assert "__PRS_VIEW__" in html
 
 
 def test_plot_trait_scores_has_no_quality_checkbox_bindings() -> None:

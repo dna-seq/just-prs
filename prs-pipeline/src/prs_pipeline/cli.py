@@ -405,6 +405,73 @@ def catalog(
     ])
 
 
+@app.command(name="score")
+@app.command(name="score-and-push")
+def score(
+    test: Annotated[int, typer.Option(help="Pick N random PGS IDs instead of all.")] = 0,
+    test_ids: Annotated[Optional[str], typer.Option(help="Comma-separated PGS IDs to score.")] = None,
+    panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
+    no_cache: Annotated[bool, typer.Option("--no-cache", help="Ignore on-disk caches and re-download/recompute everything.")] = False,
+    headless: Annotated[bool, typer.Option("--headless", help="Run score_and_push in-process without Dagster UI.")] = False,
+    host: Annotated[str, typer.Option(help="Bind address for the Dagster webserver (UI mode only).")] = _DEFAULT_HOST,
+    port: Annotated[int, typer.Option(help="Port for the Dagster webserver (UI mode only).")] = _DEFAULT_PORT,
+) -> None:
+    """Score new PGS IDs against the reference panel and push percentiles.
+
+    \b
+    Dedicated command for ``score_and_push``: download any new EBI scoring
+    files, score missing IDs (existing per-PGS cache is kept), refresh
+    cleaned metadata, and push ``hf_prs_percentiles``.
+
+    Dagster UI is the default so you can monitor the run. Use ``--headless``
+    to run in-process without UI.
+    """
+    if test and test_ids:
+        console.print("[red]Cannot use --test and --test-ids together.[/red]")
+        raise typer.Exit(code=1)
+
+    dagster_home = _setup_dagster_home()
+    _set_pipeline_env(panel, test, test_ids, no_cache=no_cache)
+    os.environ["PRS_PIPELINE_STARTUP_JOB"] = "score_and_push"
+
+    if headless:
+        _cancel_orphaned_runs()
+        console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+        console.print("[bold]Job:[/bold] score_and_push (new PGS IDs → 1000G percentiles → HF)\n")
+
+        from prs_pipeline.definitions import defs
+
+        resolved_job = defs.get_job_def("score_and_push")
+        console.print(f"[dim]{resolved_job.description or ''}[/dim]\n")
+
+        result = _execute_job(resolved_job)
+
+        if result.success:
+            console.print("\n[green bold]Job 'score_and_push' completed successfully.[/green bold]")
+        else:
+            console.print("\n[red bold]Job 'score_and_push' failed.[/red bold]")
+            for event in result.all_events:
+                if event.is_failure:
+                    console.print(f"  [red]{event.message}[/red]")
+            raise typer.Exit(code=1)
+        return
+
+    os.environ["PRS_PIPELINE_STARTUP_REQUEST_ID"] = uuid.uuid4().hex
+    _kill_port(port)
+    _cancel_orphaned_runs()
+    console.print(f"[dim]DAGSTER_HOME={dagster_home}[/dim]")
+    console.print(f"[bold green]Dagster UI:[/bold green] http://{host}:{port}")
+    console.print("[bold]Job 'score_and_push' will be submitted automatically on startup.[/bold]\n")
+
+    dagster_bin = str(Path(sys.executable).parent / "dagster")
+    os.execvp(dagster_bin, [
+        "dagster", "dev",
+        "-m", "prs_pipeline.definitions",
+        "--host", host,
+        "--port", str(port),
+    ])
+
+
 @app.command()
 def audit(
     panel: Annotated[str, typer.Option(help="Reference panel (1000g or hgdp_1kg).")] = "1000g",
@@ -1049,9 +1116,9 @@ def status(
     if not quality_path.exists():
         console.print(f"[yellow]No quality report found at {quality_path}.[/yellow]")
         if test:
-            console.print("Run 'pipeline run --test N' first.")
+            console.print("Run 'pipeline score --test N' first.")
         else:
-            console.print("Run 'pipeline run' or 'prs reference score-batch' first.")
+            console.print("Run 'pipeline score' or 'prs reference score-batch' first.")
         raise typer.Exit(code=1)
 
     df = pl.read_parquet(quality_path)

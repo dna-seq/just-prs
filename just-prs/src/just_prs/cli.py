@@ -13,6 +13,7 @@ from rich.table import Table
 import polars as pl
 
 from just_prs.catalog import PGSCatalogClient
+from just_prs.contributions import extract_prs_contributions
 from just_prs.ftp import METADATA_FILES, bulk_download_scoring_parquets, download_all_metadata, download_metadata_sheet, list_all_pgs_ids
 from just_prs.hf import pull_cleaned_parquets
 from just_prs.models import PRSResult
@@ -926,6 +927,173 @@ def compute(
         data = [r.model_dump() for r in results]
         output.write_text(json.dumps(data, indent=2))
         console.print(f"[green]Results saved to {output}[/green]")
+
+
+@app.command("contributions")
+def contributions_cmd(
+    vcf: Annotated[str, typer.Option("--vcf", "-v", help="Path to VCF file or alias name (e.g. 'anton', 'livia')")],
+    pgs_id: Annotated[
+        Optional[str], typer.Option("--pgs-id", "-p", help="PGS Catalog ID")
+    ] = None,
+    scoring_file: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--scoring-file", "-s",
+            help="Local scoring file (.txt.gz or .parquet) instead of a PGS Catalog ID",
+        ),
+    ] = None,
+    output: Annotated[
+        Path, typer.Option("--output", "-o", help="Output parquet of per-variant contributions")
+    ] = Path("data/output/results/contributions.parquet"),
+    build: Annotated[
+        str, typer.Option("--build", "-b", help="Genome build")
+    ] = "GRCh38",
+    cache_dir: Annotated[
+        Path, typer.Option("--cache-dir", help="Cache directory for scoring files")
+    ] = DEFAULT_CACHE_DIR,
+    genotype_input_mode: Annotated[
+        str,
+        typer.Option(
+            "--genotype-input-mode",
+            help=(
+                "How absent scoring loci are interpreted: auto, variant_only, "
+                "all_sites, or plink_present_only"
+            ),
+        ),
+    ] = "auto",
+    reference_restoration: Annotated[
+        str,
+        typer.Option(
+            "--reference-restoration",
+            help=_RESTORATION_HELP,
+        ),
+    ] = "off",
+    min_contribution_pct: Annotated[
+        Optional[float],
+        typer.Option(
+            "--min-contribution-pct",
+            help=(
+                "Extract only: drop scoring variants before the genotype join "
+                "when their max possible |contribution| is below this percent "
+                "of the mean max possible contribution. Omit or 0 to keep "
+                "every variant. Does not change ``prs compute``."
+            ),
+        ),
+    ] = None,
+    top_n: Annotated[
+        Optional[int],
+        typer.Option(
+            "--top-n",
+            help=(
+                "Extract only: after scoring this sample, keep the N variants "
+                "with the largest |contribution|. Omit or 0 to keep every "
+                "joined variant. Does not change ``prs compute``."
+            ),
+        ),
+    ] = None,
+) -> None:
+    """Write one parquet row per scoring variant with this sample's contribution.
+
+    Does not touch the 1000G reference-panel publish path. Filters here
+    (``--top-n``, ``--min-contribution-pct``) apply only to this extract.
+    ``prs compute`` still scores the full file. With no extract filter the
+    written sum matches ``compute_prs_duckdb``.
+    """
+    vcf_path = _resolve_vcf(vcf, cache_dir)
+    if scoring_file and pgs_id:
+        console.print("[red]Provide either --pgs-id or --scoring-file, not both.[/red]")
+        raise typer.Exit(code=1)
+    if not scoring_file and not pgs_id:
+        console.print("[red]Provide --pgs-id or --scoring-file.[/red]")
+        raise typer.Exit(code=1)
+
+    scope = _parse_restoration_scope(reference_restoration)
+    universe_path: Optional[Path] = None
+    if scope is not False:
+        from just_prs.hf import (
+            needs_pull,
+            pull_reference_allele_universe,
+            reference_allele_universe_filename,
+        )
+
+        ref_dir = resolve_cache_dir() / "reference"
+        candidate = ref_dir / reference_allele_universe_filename(build)
+        if needs_pull(candidate):
+            try:
+                pull_reference_allele_universe(ref_dir, genome_build=build)
+            except Exception as exc:
+                console.print(
+                    f"[yellow]Could not fetch reference-allele universe ({exc}); "
+                    f"proceeding without restoration.[/yellow]"
+                )
+        universe_path = candidate if candidate.exists() else None
+        if universe_path is None:
+            console.print(
+                "[yellow]Reference-allele universe unavailable; "
+                "--reference-restoration is a no-op this run.[/yellow]"
+            )
+            scope = False
+
+    sample_build: Optional[str] = None
+    try:
+        from just_prs.vcf import detect_genome_build
+
+        sample_build = detect_genome_build(vcf_path)
+    except Exception:
+        sample_build = None
+
+    label = scoring_file.stem if scoring_file is not None else str(pgs_id)
+    scoring_src: Path | str = scoring_file if scoring_file is not None else str(pgs_id)
+    console.print(
+        f"Extracting per-variant contributions for [cyan]{label}[/cyan] on {vcf_path}..."
+    )
+    result = extract_prs_contributions(
+        vcf_path=vcf_path,
+        scoring_file=scoring_src,
+        genome_build=build,
+        cache_dir=cache_dir,
+        pgs_id=label,
+        genotype_input_mode=genotype_input_mode,
+        reference_restoration=scope,
+        reference_universe_path=universe_path,
+        min_contribution_pct=min_contribution_pct,
+        top_n=top_n,
+        output=output,
+        sample_build=sample_build,
+    )
+    cutoff = result.cutoff
+    console.print(f"[bold]Score[/bold] (sum of kept contributions): {result.score}")
+    console.print(
+        f"Extract filter: kept {cutoff.variants_kept}/{cutoff.variants_total} "
+        f"(dropped {cutoff.variants_dropped}), "
+        f"mass retained {cutoff.mass_retained:.4f}"
+    )
+    if cutoff.top_n is not None:
+        console.print(f"  top_n={cutoff.top_n} (this sample's |contribution|)")
+    if cutoff.threshold is not None:
+        console.print(
+            f"  threshold {cutoff.threshold:.6g} "
+            f"({cutoff.cutoff_pct}% of mean max {cutoff.mean_max_contribution:.6g})"
+        )
+    top = (
+        result.contributions.sort(pl.col("contribution").abs(), descending=True)
+        .head(10)
+        .collect()
+    )
+    table = Table(title="Largest |contribution| (top 10)")
+    for col in ("rsid", "chrom", "pos", "effect_allele", "dosage", "contribution", "status"):
+        if col in top.columns:
+            table.add_column(col)
+    for row in top.iter_rows(named=True):
+        table.add_row(
+            *[
+                "" if row.get(col) is None else str(row[col])
+                for col in ("rsid", "chrom", "pos", "effect_allele", "dosage", "contribution", "status")
+                if col in top.columns
+            ]
+        )
+    console.print(table)
+    console.print(f"[green]Wrote {result.output_path}[/green]")
 
 
 @app.command("normalize")

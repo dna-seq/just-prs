@@ -51,6 +51,15 @@ _JOB_CHECK_KEYS: dict[str, list[dg.AssetKey]] = {
         dg.AssetKey("hf_pgs_catalog"),
         dg.AssetKey("hf_pgs_catalog_risk_metadata"),
     ],
+    "score_and_push": [
+        dg.AssetKey("ebi_scoring_files_fingerprint"),
+        dg.AssetKey("scoring_files"),
+        dg.AssetKey("scoring_files_parquet"),
+        dg.AssetKey("reference_scores"),
+        dg.AssetKey("cleaned_pgs_metadata"),
+        dg.AssetKey("hf_pgs_catalog_risk_metadata"),
+        dg.AssetKey("hf_prs_percentiles"),
+    ],
     "reference_percentile_audit_job": [
         dg.AssetKey("reference_percentile_audit"),
     ],
@@ -163,6 +172,7 @@ def _make_startup_sensor(
     public_sample_scores_job: object | None = None,
     sample_score_evidence_job: object | None = None,
     sample_score_integration_job: object | None = None,
+    score_and_push_job: object | None = None,
 ) -> dg.SensorDefinition:
     """Startup sensor: initial materialization check."""
 
@@ -172,6 +182,8 @@ def _make_startup_sensor(
         reference_percentile_audit_job,
         ld_proxy_pipeline_job,
     ]
+    if score_and_push_job is not None:
+        startup_jobs.append(score_and_push_job)
     if public_sample_scores_job is not None:
         startup_jobs.append(public_sample_scores_job)
     if sample_score_evidence_job is not None:
@@ -202,6 +214,7 @@ def _make_startup_sensor(
         no_cache = os.environ.get("PRS_PIPELINE_NO_CACHE", "").strip().lower() in {"1", "true", "yes"}
         test_ids = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
         if target_job in {
+            "score_and_push",
             "reference_percentile_audit_job",
             "public_sample_scores_job",
             "sample_score_evidence_job",
@@ -703,6 +716,7 @@ def make_all_sensors(
             public_sample_scores_job,
             sample_score_evidence_job,
             sample_score_integration_job,
+            score_and_push_job,
         ),
         _make_completeness_sensor(score_and_push_job),
         _make_failure_retry_sensor(score_and_push_job),

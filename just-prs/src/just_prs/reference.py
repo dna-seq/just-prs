@@ -1285,41 +1285,59 @@ class _ResolvedRefPanel:
             pvar_parquet=str(self.pvar_parquet_path),
         )
 
-    def match_scoring(self, scoring_df: pl.DataFrame, match_mode: MatchMode = "position") -> pl.DataFrame:
+    def match_scoring(
+        self,
+        scoring: pl.DataFrame | pl.LazyFrame,
+        match_mode: MatchMode = "position",
+        pgs_id: str = "",
+    ) -> pl.DataFrame:
         """Join scoring file variants with pvar using DuckDB (memory-efficient).
 
         Scans the 434 MB pvar parquet with DuckDB instead of loading 75M rows
         into polars (which spikes to 6+ GB). Returns a small DataFrame with
         only the matched variants, including ``variant_idx`` and ``effect_is_alt``.
+
+        The scoring side is registered in bounded chunks sized by
+        ``scoring_join_chunk_size``, the same guard ``compute_prs_duckdb`` uses.
+        Without it a multi-million-variant score arrives as one unbounded Arrow
+        buffer plus the DuckDB hash table built over it, on top of the polars
+        frame it was copied from — three simultaneous copies of the scoring file,
+        which is the shape that took the reference scorer down partway through
+        the catalog. Pass a ``LazyFrame`` (the batch path does) and no full copy
+        is ever resident; a ``DataFrame`` is still accepted and sliced in place.
         """
         _require_duckdb()
         import duckdb
 
+        from just_prs.memory import check_memory_pressure, scoring_join_chunk_size
+        from just_prs.prs import DOSAGE_WEIGHT_COLUMNS, is_dosage_weight_format
+
         _MAX_ALLELE_LEN = 1000
-        con = duckdb.connect(config={"memory_limit": _resolve_duckdb_memory_limit()})
-        con.execute("SET arrow_large_buffer_size = true")
+        label = pgs_id or "match_scoring"
         pvar = str(self.pvar_parquet_path)
 
+        scoring_lf = scoring.lazy()
+        columns = scoring_lf.collect_schema().names()
+
         allele_filter = pl.col("effect_allele").str.len_bytes() <= _MAX_ALLELE_LEN
-        if "other_allele" in scoring_df.columns:
+        if "other_allele" in columns:
             allele_filter = allele_filter & (
                 pl.col("other_allele").is_null()
                 | (pl.col("other_allele").str.len_bytes() <= _MAX_ALLELE_LEN)
             )
-        n_before = scoring_df.height
-        scoring_df = scoring_df.filter(allele_filter)
-        n_dropped = n_before - scoring_df.height
+        n_before = int(scoring_lf.select(pl.len()).collect().item())
+        scoring_lf = scoring_lf.filter(allele_filter)
+        variants_total = int(scoring_lf.select(pl.len()).collect().item())
+        n_dropped = n_before - variants_total
         if n_dropped > 0:
             log_message(
                 message_type="reference:match_scoring_allele_filter",
                 dropped=n_dropped,
                 max_allele_len=_MAX_ALLELE_LEN,
-                remaining=scoring_df.height,
+                remaining=variants_total,
             )
 
-        from just_prs.prs import DOSAGE_WEIGHT_COLUMNS, is_dosage_weight_format
-
-        dosage_weight = is_dosage_weight_format(scoring_df.columns)
+        dosage_weight = is_dosage_weight_format(columns)
         weight_cols_sql = (
             ", ".join(f's."{c}"' for c in DOSAGE_WEIGHT_COLUMNS)
             if dosage_weight
@@ -1327,8 +1345,6 @@ class _ResolvedRefPanel:
         )
 
         if match_mode == "id":
-            scoring_ids = _prepare_id_match_scoring_df(scoring_df)
-            con.register("scoring_ids", scoring_ids.to_arrow())
             query = f"""
                 SELECT
                     p.variant_idx,
@@ -1344,8 +1360,7 @@ class _ResolvedRefPanel:
                     ON p."ID" = s.variant_id
             """
         else:
-            has_other = "other_allele" in scoring_df.columns
-            con.register("scoring", scoring_df.to_arrow())
+            has_other = "other_allele" in columns
             if has_other:
                 query = f"""
                     SELECT
@@ -1390,11 +1405,56 @@ class _ResolvedRefPanel:
                     WHERE s.effect_allele = p."ALT" OR s.effect_allele = p."REF"
                 """
 
+        chunk_size = scoring_join_chunk_size(variants_total)
+        chunked = variants_total > chunk_size > 0
+
+        con = duckdb.connect(config={"memory_limit": _resolve_duckdb_memory_limit()})
+        con.execute("SET arrow_large_buffer_size = true")
         try:
-            result = con.sql(query).pl()
+            if not chunked:
+                return self._join_scoring_chunk(con, scoring_lf.collect(), match_mode, query)
+
+            log_message(
+                message_type="reference:match_scoring_chunked",
+                pgs_id=pgs_id,
+                variants_total=variants_total,
+                chunk_size=chunk_size,
+                n_chunks=-(-variants_total // chunk_size),
+            )
+            parts: list[pl.DataFrame] = []
+            offset = 0
+            while offset < variants_total:
+                check_memory_pressure(label)
+                take = min(chunk_size, variants_total - offset)
+                chunk = scoring_lf.slice(offset, take).collect()
+                parts.append(self._join_scoring_chunk(con, chunk, match_mode, query))
+                del chunk
+                gc.collect()
+                offset += take
+            return pl.concat(parts, how="vertical_relaxed")
         finally:
             con.close()
-        return result
+
+    def _join_scoring_chunk(
+        self,
+        con: Any,
+        chunk: pl.DataFrame,
+        match_mode: MatchMode,
+        query: str,
+    ) -> pl.DataFrame:
+        """Register one scoring chunk, run the pvar join, and unregister it.
+
+        Unregistering is what lets the chunk's Arrow buffer be released before the
+        next slice is collected; leaving it bound would accumulate every chunk on
+        the connection and defeat the chunking.
+        """
+        relation = "scoring_ids" if match_mode == "id" else "scoring"
+        payload = _prepare_id_match_scoring_df(chunk) if match_mode == "id" else chunk
+        con.register(relation, payload.to_arrow())
+        try:
+            return con.sql(query).pl()
+        finally:
+            con.unregister(relation)
 
 
 _DEFAULT_MEMORY_SAFETY_PERCENT = 10
@@ -1406,15 +1466,25 @@ _DEFAULT_DUCKDB_MEMORY_PERCENT = 75
 def _resolve_duckdb_memory_limit() -> str:
     """Compute DuckDB per-connection memory limit.
 
-    This is a safety guardrail, not a tight budget.  DuckDB's actual usage
-    for scoring-vs-pvar INNER JOINs is well under 1 GB (hash table on the
-    small scoring side, streaming scan of the pvar parquet).  The limit
-    exists only to prevent a runaway query from consuming all system RAM.
+    The premise this function used to carry — "actual usage is well under 1 GB,
+    the limit only exists to stop a runaway query" — is true for a *small*
+    scoring side and stops being true well before the catalog's largest scores.
+    The limit is applied **per connection**, and ``match_scoring`` opens a fresh
+    connection for every PGS ID, so a default of 75 % of *total* RAM permitted
+    ~70 GB on a 94 GB host that has 7 GB of swap to absorb it. Sizing against
+    total RAM also ignores everything already resident: the pgen reader, the
+    scoring frame, and whatever else shares the box.
+
+    Sizing against what is *available right now* is what the sample-score path
+    already does (``duckdb_limit_for_resident`` subtracts resident RSS and the
+    safety floor, then halves the remainder so non-DuckDB frames keep headroom).
+    The reference scorer never picked that up. Both env overrides still win, so
+    an operator who wants the old behaviour can ask for it explicitly.
 
     Resolution order:
       1. ``PRS_DUCKDB_MEMORY_LIMIT`` env var (e.g. ``"8GB"``) — used as-is.
       2. ``PRS_DUCKDB_MEMORY_PERCENT`` env var — percentage of total RAM.
-      3. Default: 75 % of total RAM (on a 90 GB machine → ~67 GB).
+      3. Default: bounded by currently-available RAM minus the safety floor.
 
     Returns a string suitable for DuckDB's ``memory_limit`` config key.
     """
@@ -1422,16 +1492,18 @@ def _resolve_duckdb_memory_limit() -> str:
 
     import psutil
 
+    from just_prs.memory import duckdb_limit_for_resident
+
     explicit = os.environ.get("PRS_DUCKDB_MEMORY_LIMIT", "").strip()
     if explicit:
         return explicit
 
-    total_bytes = psutil.virtual_memory().total
     pct_str = os.environ.get("PRS_DUCKDB_MEMORY_PERCENT", "").strip()
-    pct = int(pct_str) if pct_str else _DEFAULT_DUCKDB_MEMORY_PERCENT
-    limit_bytes = int(total_bytes * pct / 100)
-    limit_gb = max(limit_bytes / (1024 ** 3), 1.0)
-    return f"{limit_gb:.1f}GB"
+    if pct_str:
+        limit_bytes = int(psutil.virtual_memory().total * int(pct_str) / 100)
+        return f"{max(limit_bytes / (1024 ** 3), 1.0):.1f}GB"
+
+    return duckdb_limit_for_resident(psutil.Process().memory_info().rss)
 
 
 def _memory_safety_floor_bytes() -> int:
@@ -1548,8 +1620,10 @@ def compute_reference_prs_polars(
         t0 = time.monotonic()
         scoring_lf = parse_scoring_file(scoring_file)
         scoring_norm = _normalize_scoring_columns(scoring_lf)
-        scoring_df = scoring_norm.collect()
-        variants_total = scoring_df.height
+        # Stay lazy: match_scoring slices this in bounded chunks, so the full
+        # scoring frame is never resident. Collecting here is what made a
+        # 9.5M-variant score hold three simultaneous copies of itself.
+        variants_total = int(scoring_norm.select(pl.len()).collect().item())
         t_scoring = time.monotonic() - t0
         log_message(
             message_type="reference:phase_parse_scoring",
@@ -1559,8 +1633,7 @@ def compute_reference_prs_polars(
         )
 
         t0 = time.monotonic()
-        matched = panel.match_scoring(scoring_df, match_mode=match_mode)
-        del scoring_df
+        matched = panel.match_scoring(scoring_norm, match_mode=match_mode, pgs_id=pgs_id)
         variants_matched = matched.height
         t_pvar = time.monotonic() - t0
         log_message(
@@ -1874,9 +1947,9 @@ def _compute_reference_match_metadata(
     from just_prs.scoring import ensure_scoring_file, parse_scoring_file
 
     scoring_file = ensure_scoring_file(pgs_id, scores_cache, genome_build)
-    scoring_df = _normalize_scoring_columns(parse_scoring_file(scoring_file)).collect()
-    variants_total = scoring_df.height
-    variants_matched = resolved.match_scoring(scoring_df).height
+    scoring_norm = _normalize_scoring_columns(parse_scoring_file(scoring_file))
+    variants_total = int(scoring_norm.select(pl.len()).collect().item())
+    variants_matched = resolved.match_scoring(scoring_norm, pgs_id=pgs_id).height
     match_rate = variants_matched / variants_total if variants_total > 0 else 0.0
     return variants_total, variants_matched, match_rate
 
@@ -2382,8 +2455,10 @@ def compute_reference_prs_batch(
         and a quality DataFrame.  Raw per-sample scores are NOT held in
         memory — they are written to disk per PGS ID and discarded.
     """
+    from just_prs.memory import check_memory_pressure, large_score_variant_threshold
     from just_prs.scoring import ensure_scoring_file, scoring_parquet_path
 
+    large_variant_threshold = large_score_variant_threshold()
     scores_cache = cache_dir / "scores"
     scores_cache.mkdir(parents=True, exist_ok=True)
 
@@ -2515,6 +2590,11 @@ def compute_reference_prs_batch(
 
             t0 = time.monotonic()
             try:
+                # Fail this ID rather than the host. Without this the catalog's
+                # handful of multi-million-variant scores drive the machine into
+                # swap thrash, which takes the whole batch (and the desktop) with
+                # it instead of surfacing as one recorded failure.
+                check_memory_pressure(pgs_id)
                 scoring_file = ensure_scoring_file(pgs_id, scores_cache, genome_build)
                 df = compute_reference_prs_polars(
                     pgs_id=pgs_id,
@@ -2565,6 +2645,18 @@ def compute_reference_prs_batch(
             per_pgs_dist = aggregate_distributions(df)
             dist_parts.append(per_pgs_dist)
             del df
+
+            # Reclaim eagerly after a large score instead of waiting for the
+            # periodic flush: the next ID's pre-score pressure check is only
+            # meaningful once this one's arrow/duckdb buffers are actually gone.
+            if variants_total is not None and variants_total >= large_variant_threshold:
+                gc.collect()
+                log_message(
+                    message_type="reference:batch_large_score_reclaimed",
+                    pgs_id=pgs_id,
+                    variants_total=variants_total,
+                    threshold=large_variant_threshold,
+                )
 
             outcomes.append(ScoringOutcome(
                 pgs_id=pgs_id,

@@ -1,6 +1,6 @@
 [project]
 name = "prs-pipeline"
-version = "0.2.11"
+version = "0.2.12"
 description = "Dagster pipeline for computing PRS reference distributions from the 1000G panel"
 readme = "README.md"
 authors = [
@@ -8,16 +8,18 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "just-prs[reference]>=0.5.1",
+    "just-prs[reference]>=0.10.0",
     # Cap below 2.0: the 2.0 transition removes SourceAsset (already deprecated
     # here) among other breaking changes, so stay on the 1.x line until migrated.
     # dagster-polars tracks core on the 0.x library scheme (jumps to 1.0 at core
-    # 2.0), so its mirror cap is <1.0.
-    "dagster>=1.13.11,<2.0",
-    "dagster-webserver>=1.13.11,<2.0",
+    # 2.0), so its mirror cap is <1.0. Floors are the current PyPI 1.13.20 /
+    # 0.27.12 cut (2026-08-27); 1.13.13 is the first core that ships the
+    # grpcio-health-checking<1.82 cap (protobuf 6 vs 7 gencode clash).
+    "dagster>=1.13.20,<2.0",
+    "dagster-webserver>=1.13.20,<2.0",
     "dagster-polars>=0.27.12,<1.0",
-    "python-dotenv>=1.2.2",
-    "typer>=0.25.0",
+    "python-dotenv>=1.2.3",
+    "typer>=0.27.2",
     "psutil>=7.2.2",
 ]
 

@@ -1,6 +1,6 @@
 [project]
 name = "just-prs"
-version = "0.9.0"
+version = "0.10.0"
 description = "Polars-bio based tool to compute polygenic risk scores from PGS Catalog"
 readme = "README.md"
 authors = [
@@ -8,21 +8,21 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "polars-bio>=0.33.0",
-    "typer>=0.25.0",
-    "rich>=13.9.1",
+    "polars-bio>=0.35.1",
+    "typer>=0.27.2",
+    "rich>=15.0.0",
     "httpx>=0.28.1",
-    "pydantic>=2.0",
+    "pydantic>=2.13.5,<3.0",
     "eliot>=1.18.0",
-    "fsspec[http]>=2026.6.0",
-    "huggingface-hub>=1.20.0",
-    "python-dotenv>=1.2.0",
-    "platformdirs>=4.10.0",
+    "fsspec[http]>=2026.7.0",
+    "huggingface-hub>=1.29.0,<2.0",
+    "python-dotenv>=1.2.3",
+    "platformdirs>=4.11.7",
     "zstandard>=0.25.0",
-    "duckdb>=1.5.0",
-    "psutil>=7.0.0",
+    "duckdb>=1.5.5,<2.0",
+    "psutil>=7.2.2",
     "altair>=6.2.2",
-    "numpy>=2.5.1",
+    "numpy>=2.5.2,<3.0",
 ]
 
 [project.optional-dependencies]
@@ -34,20 +34,20 @@ dependencies = [
 # runtime reference-allele resolution reads a small precomputed parquet, not pysam.
 # Windows users who need reference-panel / .pgen / FASTA features should use WSL/Linux.
 reference = [
-    "pgenlib>=0.93.0; sys_platform != 'win32'",
-    "pysam>=0.23.0; sys_platform != 'win32'",
+    "pgenlib>=0.94.1; sys_platform != 'win32'",
+    "pysam>=0.24.0; sys_platform != 'win32'",
 ]
 # vl-convert-python is needed only for PNG/SVG raster export; HTML/JSON work
 # with altair alone (which is a core dependency).
 viz = [
-    "vl-convert-python>=1.9.0",
+    "vl-convert-python>=1.9.0.post1",
 ]
 # pyliftover is pure-Python (no C extension), so it installs on every platform
 # including Windows — no sys_platform marker. It is imported lazily in
 # just_prs.liftover and raises a clear ImportError if missing, so the core
 # install does not require it.
 liftover = [
-    "pyliftover>=0.4",
+    "pyliftover>=0.4.1",
 ]
 
 [project.scripts]
@@ -60,5 +60,5 @@ markers = [
 ]
 
 [build-system]
-requires = ["uv_build>=0.10.0,<0.11.0"]
+requires = ["uv_build>=0.12.9"]
 build-backend = "uv_build"

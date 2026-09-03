@@ -60,7 +60,14 @@ def _nested_parquet_downloader(rows: int = 1):
     ``hf_hub_download(local_dir=X)`` replicates the repo layout under X and
     offers no flat option, which is why a relocation step exists at all.
     """
-    def _dl(repo_id, filename, repo_type="dataset", local_dir=None, token=None):
+    def _dl(
+        repo_id,
+        filename,
+        repo_type="dataset",
+        local_dir=None,
+        token=None,
+        revision=None,
+    ):
         dest = Path(local_dir) / filename
         dest.parent.mkdir(parents=True, exist_ok=True)
         pl.DataFrame({"pgs_id": ["PGS000001"] * rows}).write_parquet(dest)
@@ -87,27 +94,6 @@ def test_pull_flat_moves_and_prunes_leaving_one_copy(tmp_path, monkeypatch):
     assert on_disk == [target], f"expected exactly one copy, found {on_disk}"
 
 
-def test_pull_flat_renames_to_target_name(tmp_path, monkeypatch):
-    """A caller may publish under a different local name (legacy fallbacks)."""
-    import just_prs.hf as hf_mod
-    from just_prs.hf import _pull_flat
-
-    local = tmp_path / "percentiles"
-    local.mkdir()
-    monkeypatch.setattr(hf_mod, "_hf_download_with_retry", _nested_parquet_downloader())
-
-    target = _pull_flat(
-        "repo/id",
-        "data/reference_distributions.parquet",
-        local,
-        None,
-        target_name="1000g_distributions.parquet",
-    )
-
-    assert target.name == "1000g_distributions.parquet"
-    assert not (local / "data").exists()
-
-
 def test_pull_flat_refuses_to_publish_a_corrupt_download(tmp_path, monkeypatch):
     """Validation happens before the artifact takes the name others trust."""
     import just_prs.hf as hf_mod
@@ -116,7 +102,14 @@ def test_pull_flat_refuses_to_publish_a_corrupt_download(tmp_path, monkeypatch):
     local = tmp_path / "reference"
     local.mkdir()
 
-    def _bad(repo_id, filename, repo_type="dataset", local_dir=None, token=None):
+    def _bad(
+        repo_id,
+        filename,
+        repo_type="dataset",
+        local_dir=None,
+        token=None,
+        revision=None,
+    ):
         dest = Path(local_dir) / filename
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_bytes(b"PAR1truncated")

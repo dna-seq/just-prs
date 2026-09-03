@@ -395,6 +395,7 @@ def prs_compute_button(
                 color_scheme="green",
                 size="3",
             ),
+            _contribution_extract_controls(state),
             rx.cond(
                 not_ready,
                 rx.text(
@@ -1315,7 +1316,55 @@ def _ask_ai_bar(state: type[rx.State]) -> rx.Component:
     )
 
 
-def _results_action_bar(state: type[rx.State], prompt: str) -> rx.Component:
+def _contribution_extract_controls(state: type[rx.State]) -> rx.Component:
+    """Extract-only top-N downloads. Lives next to Compute PRS, By PRS only.
+
+    Does not change the displayed PRS score. Uses the catalog selection
+    (or a clicked result) so extract works before Compute.
+    """
+    return rx.tooltip(
+        rx.hstack(
+            rx.text("Extract variants", size="2", weight="medium"),
+            rx.select(
+                ["100", "500", "2000", "All"],
+                value=state.contribution_top_n_label,
+                on_change=state.set_contribution_top_n,
+                size="2",
+            ),
+            rx.button(
+                rx.icon("download", size=14),
+                "Parquet",
+                on_click=state.download_selected_contributions_parquet,
+                size="3",
+                variant="soft",
+                color_scheme="blue",
+                disabled=~state.can_extract_contributions,
+            ),
+            rx.button(
+                rx.icon("download", size=14),
+                "CSV",
+                on_click=state.download_selected_contributions_csv,
+                size="3",
+                variant="soft",
+                color_scheme="blue",
+                disabled=~state.can_extract_contributions,
+            ),
+            spacing="2",
+            align="center",
+            flex_shrink="0",
+        ),
+        content=(
+            "After joining this genome, keep the N variants with the "
+            "largest |contribution| for this sample. Compute PRS still "
+            "uses the complete scoring file and only stores the score."
+        ),
+    )
+
+
+def _results_action_bar(
+    state: type[rx.State],
+    prompt: str,
+) -> rx.Component:
     """Instruction and explicit result deletion controls."""
     return rx.hstack(
         rx.box(
@@ -1347,6 +1396,7 @@ def _results_action_bar(state: type[rx.State], prompt: str) -> rx.Component:
         spacing="2",
         align="center",
         width="100%",
+        wrap="wrap",
     )
 
 
@@ -1657,12 +1707,15 @@ def _workbench_compute_button(
     state: type[rx.State],
     label: str,
     normalizing: Any | None = None,
+    include_contributions: bool = False,
 ) -> rx.Component:
-    """Compute button + disclaimer that reads genotype readiness from the consumer.
+    """Compute button + optional extract-only variant download.
 
     Decoupled from any VCF source: readiness is inferred from the consumer's own
     ``prs_genotypes_path`` (set by the source via ``load_genotypes``), so the
     same button works regardless of where the genotypes came from.
+    ``include_contributions`` is By PRS only: extract sits next to Compute and
+    does not change the displayed score.
     """
     is_normalizing = _resolve_normalizing(normalizing)
     not_ready = (state.selected_pgs_ids.length() == 0) | (state.prs_genotypes_path == "") | is_normalizing  # type: ignore[operator]
@@ -1686,6 +1739,9 @@ def _workbench_compute_button(
                 color_scheme="green",
                 size="3",
             ),
+            _contribution_extract_controls(state)
+            if include_contributions
+            else rx.fragment(),
             rx.cond(
                 not_ready,
                 rx.text(
@@ -1756,7 +1812,12 @@ def prs_workbench_mode_panel(
     return rx.vstack(
         _workbench_mode_controls(state),
         selector(),
-        _workbench_compute_button(state, compute_label, normalizing=normalizing),
+        _workbench_compute_button(
+            state,
+            compute_label,
+            normalizing=normalizing,
+            include_contributions=view_mode == "individual",
+        ),
         _workbench_results(state, view_mode, results_table_kwargs, trait_summary_kwargs),
         width="100%",
         spacing="4",

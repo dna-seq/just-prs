@@ -27,8 +27,12 @@ packages = ["just_prs_workspace"]
 [tool.uv]
 managed = true
 override-dependencies = [
-    "grpcio==1.78.0",
-    "grpcio-health-checking==1.78.0",
+    # Latest dagster (1.13.20) still requires protobuf<7 and
+    # grpcio-health-checking<1.82. 1.81.1 is the newest grpcio pair whose
+    # health_pb2 is generated against protobuf 6.x (requires protobuf>=6.33.5,<7).
+    # 1.82+ widens that to protobuf<8 / >=7.35 and dagster then fails to import.
+    "grpcio==1.81.1",
+    "grpcio-health-checking==1.81.1",
 ]
 
 [tool.uv.workspace]
@@ -41,7 +45,7 @@ prs-pipeline = { workspace = true }
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.2",
+    "pytest>=9.1.1",
 ]
 
 [tool.pytest.ini_options]

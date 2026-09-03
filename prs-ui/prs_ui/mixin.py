@@ -11,6 +11,7 @@ import io
 import json
 import math
 import os
+import tempfile
 import urllib.parse
 from collections.abc import Iterable
 from pathlib import Path
@@ -24,6 +25,7 @@ from reflex_mui_datagrid.lazyframe_grid import (
     apply_filter_model,
 )
 
+from just_prs.contributions import extract_prs_contributions
 from just_prs.enrich import enrich_prs_result, refresh_row_absolute_risk
 from just_prs.ftp import METADATA_FILES
 from just_prs.prs import PRSEngine, compute_prs, compute_prs_duckdb
@@ -1354,6 +1356,47 @@ def _safe_download_stem(label: str) -> str:
     return cleaned.strip("_")[:80] or "prs"
 
 
+CONTRIBUTION_TOP_N_CHOICES: list[str] = ["100", "500", "2000", "All"]
+
+
+def contribution_top_n_choice(n: int) -> str:
+    """Select-box label for the extract-only top-N control."""
+    return "All" if int(n) <= 0 else str(int(n))
+
+
+def parse_contribution_top_n(value: str | int | list[str]) -> int:
+    """Parse the extract-only top-N control. ``0`` / ``All`` means no cap."""
+    if isinstance(value, list):
+        value = value[0] if value else 500
+    if value in ("All", "all", "", None):
+        return 0
+    return int(value)
+
+
+def extract_top_n_or_none(n: int) -> int | None:
+    """UI ``0`` (All) becomes ``None`` for ``extract_prs_contributions``."""
+    return None if n is None or int(n) <= 0 else int(n)
+
+
+def contributions_download_stem(pgs_id: str, sample: str, top_n: int) -> str:
+    """Filename stem for a per-variant extract (not the PRS score CSV)."""
+    parts = [_safe_download_stem(pgs_id)]
+    if sample:
+        parts.append(_safe_download_stem(sample))
+    parts.append("all" if int(top_n) <= 0 else f"top{int(top_n)}")
+    parts.append("contributions")
+    return "_".join(parts)
+
+
+def resolve_extract_pgs_id(selected_result_id: str, selected_pgs_ids: list[str]) -> str:
+    """PGS ID for extract: clicked result first, else the catalog selection."""
+    if selected_result_id:
+        return selected_result_id
+    if selected_pgs_ids:
+        return selected_pgs_ids[0]
+    return ""
+
+
 def _genome_file_label(path: str | None) -> str:
     """Return a concise label for the genotype source used in AI prompts."""
     if not path:
@@ -1592,6 +1635,11 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
     # --- Chart selection state (Altair / Vega-Lite) ---
     selected_result_id: str = ""
+    selected_result_sample: str = ""
+    # Extract-only: keep this sample's N largest |contribution| after the
+    # genotype join. ``0`` = all joined variants. Never applied to
+    # ``compute_selected_prs`` / ``compute_prs``.
+    contribution_top_n: int = 500
     selected_result_spec: dict = {}
     selected_result_html: str = ""
     # Pre-estimated pixel height for the report iframe, sized from the model
@@ -1679,6 +1727,22 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             self.prs_results_rows,
             self.trait_summary_rows,
         )
+
+    @rx.var
+    def contribution_top_n_label(self) -> str:
+        """Select value for the extract-only top-N control."""
+        return contribution_top_n_choice(self.contribution_top_n)
+
+    def set_contribution_top_n(self, value: str | int | list[str]) -> None:
+        """Set extract-only top-N. Does not recompute the displayed PRS."""
+        self.contribution_top_n = parse_contribution_top_n(value)
+
+    @rx.var
+    def can_extract_contributions(self) -> bool:
+        """Extract is ready when genotypes and a catalog or result PGS ID exist."""
+        if self.prs_view_mode != "individual" or not self.prs_genotypes_path:
+            return False
+        return bool(self.selected_result_id or self.selected_pgs_ids)
 
     def set_prs_view_mode(self, mode: str | list[str]) -> None:
         """Switch between 'individual' and 'grouped' result views."""
@@ -4158,6 +4222,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     def _reset_selected_result(self) -> None:
         """Clear the selected chart/report state."""
         self.selected_result_id = ""
+        self.selected_result_sample = ""
         self.selected_result_spec = {}
         self.selected_result_html = ""
         self.selected_result_info = {}
@@ -4253,6 +4318,96 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         for row in self.prs_results:
             writer.writerow(row)
         return rx.download(data=buf.getvalue(), filename="prs_results.csv")
+
+    def _result_by_pgs_id_and_sample(self, pgs_id: str, sample: str) -> dict | None:
+        """Resolve a result row, preferring the clicked sample in multi-genome mode."""
+        if sample:
+            for row in self.prs_results:
+                if row.get("pgs_id") == pgs_id and str(row.get("sample") or "") == sample:
+                    return row
+        return self._result_by_pgs_id(pgs_id)
+
+    def _genotype_path_for_selected(self) -> str:
+        """Normalized parquet for the selected result's sample."""
+        sample = self.selected_result_sample
+        if sample:
+            for entry in self.prs_samples:
+                if str(entry.get("label") or "") != sample:
+                    continue
+                path = str(entry.get("path") or "")
+                if path:
+                    return path
+        return self.prs_genotypes_path
+
+    def _run_extract_prs_contributions(
+        self,
+        vcf_path: str,
+        pgs_id: str,
+        genotypes_parquet: str | None,
+        top_n: int | None,
+        output: Path,
+    ) -> Any:
+        """Hook for host apps: extract only. Never used by score computation."""
+        return extract_prs_contributions(
+            vcf_path=vcf_path,
+            scoring_file=pgs_id,
+            genome_build=self.genome_build,  # type: ignore[attr-defined]
+            cache_dir=Path(self.cache_dir) / "scores",  # type: ignore[attr-defined]
+            pgs_id=pgs_id,
+            genotypes_parquet=genotypes_parquet,
+            reference_restoration=bool(self.reference_restoration),
+            top_n=top_n,
+            output=output,
+        )
+
+    def _extract_selected_contributions(self) -> Path | None:
+        """Extract variants for the selected catalog score or result. Does not score."""
+        pgs_id = resolve_extract_pgs_id(self.selected_result_id, self.selected_pgs_ids)
+        if self.prs_view_mode != "individual" or not pgs_id:
+            self.status_message = (  # type: ignore[attr-defined]
+                "Select a score in the catalog to extract its variants."
+            )
+            return None
+        geno_path = self._genotype_path_for_selected()
+        if not geno_path or not Path(geno_path).exists():
+            self.status_message = (  # type: ignore[attr-defined]
+                "No normalized genome is available for this extract."
+            )
+            return None
+        top_n = extract_top_n_or_none(self.contribution_top_n)
+        stem = contributions_download_stem(
+            pgs_id,
+            self.selected_result_sample,
+            self.contribution_top_n,
+        )
+        output = Path(tempfile.mkdtemp(prefix="prs-contributions-")) / f"{stem}.parquet"
+        self.status_message = (  # type: ignore[attr-defined]
+            f"Extracting this sample's top-{self.contribution_top_n or 'all'} "
+            f"contributors for {pgs_id} (score is unchanged)..."
+        )
+        self._run_extract_prs_contributions(
+            vcf_path=geno_path,
+            pgs_id=pgs_id,
+            genotypes_parquet=geno_path,
+            top_n=top_n,
+            output=output,
+        )
+        return output
+
+    def download_selected_contributions_parquet(self) -> Any:
+        """Download extract-only top-N variants as parquet. Does not change the PRS."""
+        path = self._extract_selected_contributions()
+        if path is None:
+            return
+        return rx.download(data=path.read_bytes(), filename=path.name)
+
+    def download_selected_contributions_csv(self) -> Any:
+        """Download the same extract-only top-N table as CSV."""
+        path = self._extract_selected_contributions()
+        if path is None:
+            return
+        csv_name = path.with_suffix(".csv").name
+        return rx.download(data=pl.read_parquet(path).write_csv(), filename=csv_name)
 
     def download_selected_distribution_png(self) -> Any:
         """Trigger a browser PNG download of the open distribution chart or report."""
@@ -4606,14 +4761,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     def select_prs_result(self, event: dict) -> None:
         """Handle row click on the PRS results table — generate chart for the selected result."""
         pgs_id = self._extract_row_field(event, "pgs_id")
+        sample = self._extract_row_field(event, "sample")
         if not pgs_id:
             return
 
-        result = self._result_by_pgs_id(pgs_id)
+        result = self._result_by_pgs_id_and_sample(pgs_id, sample)
         if result is None:
             return
 
         self.selected_result_id = pgs_id
+        self.selected_result_sample = str(result.get("sample") or sample or "")
         self.selected_result_info = self._build_result_info(result)
         self.selected_result_html = ""
         self.selected_result_spec = self._generate_chart_spec(
@@ -4697,20 +4854,25 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         if self.prs_view_mode == "grouped" or not self.prs_results:
             return
         current = self.selected_result_id
-        pgs_id = (
-            current
-            if current and self._result_by_pgs_id(current) is not None
-            else str(self.prs_results[0].get("pgs_id") or "")
-        )
+        current_sample = self.selected_result_sample
+        if current and self._result_by_pgs_id_and_sample(current, current_sample) is not None:
+            self.select_prs_result({"row": {"pgs_id": current, "sample": current_sample}})
+            return
+        first = self.prs_results[0]
+        pgs_id = str(first.get("pgs_id") or "")
         if pgs_id:
-            self.select_prs_result({"row": {"pgs_id": pgs_id}})
+            self.select_prs_result({
+                "row": {"pgs_id": pgs_id, "sample": str(first.get("sample") or "")},
+            })
 
     def set_chart_mode(self, mode: str | list[str]) -> None:
         """Toggle between single-ancestry and multi-ancestry chart view."""
         self.chart_mode = mode if isinstance(mode, str) else (mode[0] if mode else "single")
         if not self.selected_result_id or not self.prs_results:
             return
-        result = self._result_by_pgs_id(self.selected_result_id)
+        result = self._result_by_pgs_id_and_sample(
+            self.selected_result_id, self.selected_result_sample,
+        )
         if result is not None:
             self.selected_result_html = ""
             self.selected_result_spec = self._generate_chart_spec(

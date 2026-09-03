@@ -111,6 +111,15 @@ The pipeline is operated via the `prs-pipeline` CLI (or `uv run pipeline` from t
   uv run pipeline launch --panel hgdp_1kg
   ```
 
+- **Score new PGS IDs and push percentiles**:
+  ```bash
+  uv run pipeline score
+  uv run pipeline score-and-push   # alias
+  uv run pipeline score --headless
+  uv run pipeline score --test 5
+  ```
+  Dedicated command for `score_and_push`. Downloads any new EBI scoring files, scores missing PGS IDs against the reference panel (existing per-PGS cache is kept), refreshes cleaned metadata, and pushes `hf_prs_percentiles`. Always submits on startup (a request id is set) so a previous materialization does not skip the gap fill.
+
 - **Check scoring status**:
   ```bash
   uv run pipeline status

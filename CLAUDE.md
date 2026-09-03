@@ -6,11 +6,11 @@ This project is a **uv workspace** with a non-published root wrapper and three s
 
 - **`just-prs/src/just_prs/`** — Core library: PRS computation, PGS Catalog REST API client, FTP downloads, VCF reading, scoring file parsing. CLI entrypoint via Typer. Published to PyPI as `just-prs`.
 - **`prs-ui/`** — Reflex web app for interactive PRS computation. Has its own `pyproject.toml` and depends on `just_prs`. Run with `uv run ui` or `uv run start` from workspace root or `uv run reflex run` from inside `prs-ui/`. Published to PyPI as `prs-ui`.
-- **`prs-pipeline/`** — Dagster pipeline for computing PRS reference distributions from the 1000G panel. Has its own `pyproject.toml` and depends on `just_prs`. All pipeline commands (`run`, `catalog`, `launch`) default to launching the Dagster UI for monitoring. Use `--headless` on `run`/`catalog` for in-process execution without UI.
+- **`prs-pipeline/`** — Dagster pipeline for computing PRS reference distributions from the 1000G panel. Has its own `pyproject.toml` and depends on `just_prs`. All pipeline commands (`run`, `score`, `catalog`, `launch`) default to launching the Dagster UI for monitoring. Use `--headless` on `run`/`score`/`catalog` for in-process execution without UI.
 
-The workspace root (`pyproject.toml` at repo root) is a non-published wrapper named `just-prs-workspace`. It depends on all three subprojects and **must re-export all CLI entry points** from subprojects so that every command is available via `uv run <name>` from the workspace root. The pipeline CLI has three main commands: `pipeline run` (full pipeline with Dagster UI), `pipeline catalog` (catalog pipeline with Dagster UI), and `pipeline launch` (Dagster UI only, no specific job pre-selected). All three launch the Dagster UI by default. Use `--headless` on `run`/`catalog` for in-process execution without UI. Tests live in `just-prs/tests/`.
+The workspace root (`pyproject.toml` at repo root) is a non-published wrapper named `just-prs-workspace`. It depends on all three subprojects and **must re-export all CLI entry points** from subprojects so that every command is available via `uv run <name>` from the workspace root. The pipeline CLI has four main commands: `pipeline run` (full pipeline with Dagster UI), `pipeline score` (score new PGS IDs and push percentiles; alias `score-and-push`), `pipeline catalog` (catalog pipeline with Dagster UI), and `pipeline launch` (Dagster UI only, no specific job pre-selected). All four launch the Dagster UI by default. Use `--headless` on `run`/`score`/`catalog` for in-process execution without UI. Tests live in `just-prs/tests/`.
 
-**ALL PIPELINE COMMANDS LAUNCH DAGSTER UI BY DEFAULT (CRITICAL).** `pipeline run`, `pipeline catalog`, and `pipeline launch` all start the Dagster webserver with monitoring UI. Headless in-process execution is only available via the explicit `--headless` flag on `run`/`catalog`. The Dagster UI URL (`http://<host>:<port>`) must always be printed prominently at startup.
+**ALL PIPELINE COMMANDS LAUNCH DAGSTER UI BY DEFAULT (CRITICAL).** `pipeline run`, `pipeline score`, `pipeline catalog`, and `pipeline launch` all start the Dagster webserver with monitoring UI. Headless in-process execution is only available via the explicit `--headless` flag on `run`/`score`/`catalog`. The Dagster UI URL (`http://<host>:<port>`) must always be printed prominently at startup. The startup sensor's `jobs=` allowlist must include every job a dedicated command submits — `score_and_push` is required for `pipeline score` (a missing name raises `Expected one of: [...]` and the run never starts).
 
 **EVERY CLI THAT STARTS A SERVER MUST PRINT ITS URL (CRITICAL).** When any CLI command starts a web server or UI (Reflex UI via `uv run ui` or `uv run start`, Dagster UI via `pipeline run`/`catalog`/`launch`), the URL (`http://<host>:<port>`) must be printed prominently in the first lines of output so the user always knows where to open their browser.
 
@@ -590,6 +590,7 @@ Key integration points:
 ### polars-bio caveats
 
 - `polars-bio` uses DataFusion as its query engine for VCF reading. Multi-column aggregations on DataFusion-backed LazyFrames can fail with "all columns in a record batch must have the same length". **Always `.collect()` the joined LazyFrame first**, then compute aggregations on the materialized DataFrame.
+- **Do not use polars-bio for PGEN reads.** `scan_pgen` / `read_pgen` / `read_pgen_matrix` / `describe_pgen` refuse the published PGS Catalog 1000G `.pvar.zst` (~567 MB) because of a hardcoded 512 MB `max_companion_bytes` cap ([polars-bio#453](https://github.com/biodatageeks/polars-bio/issues/453)); that knob is not exposed in Python. All PGEN genotype reads go through `pgenlib` (`read_pgen_genotypes`). Revisit only after the upstream cap is raised.
 
 ---
 
@@ -1175,6 +1176,8 @@ All pipeline commands launch the Dagster UI by default. Headless mode requires e
 | `pipeline run` | Launches Dagster UI; startup sensor submits `full_pipeline` if assets are missing. | Each asset checks disk cache and short-circuits if data exists. |
 | `pipeline run --headless` | Executes `full_pipeline` in-process (no UI). | Same cache-respecting behavior, but no UI monitoring. |
 | `pipeline run --no-cache` | Launches Dagster UI, submits a fresh explicit startup run, and bypasses all on-disk caches. | Metadata is re-downloaded, parquets are re-parsed, scores are recomputed. |
+| `pipeline score` | Launches Dagster UI; startup sensor submits `score_and_push` (`score-and-push` alias). Always sets a startup request id so a previous materialization does not skip the gap fill. | Downloads new EBI IDs and scores only missing PGS IDs. `--no-cache` recomputes everything. |
+| `pipeline score --headless` | Executes `score_and_push` in-process (no UI). | Same skip-existing behavior, but no UI monitoring. |
 | `pipeline catalog` | Launches Dagster UI; startup sensor submits `catalog_pipeline`. | Same cache-respecting behavior. |
 | `pipeline catalog --headless` | Executes `catalog_pipeline` in-process (no UI). | Same cache-respecting behavior, but no UI monitoring. |
 | `pipeline launch` | Launches Dagster UI (no specific job pre-selected). | The sensor submits a job only if key assets are unmaterialized. |

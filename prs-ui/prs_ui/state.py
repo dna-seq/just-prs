@@ -50,6 +50,7 @@ from prs_ui.mixin import (
     _resolve_cache_dir,
     _resolve_preloaded_vcf_path,
     _resolve_preselect_query,
+    trait_group_label_expr,
 )
 
 
@@ -741,12 +742,7 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
             "n_variants", "quality_label",
         ).collect()
 
-        df = df.with_columns(
-            pl.when(pl.col("trait_efo").is_not_null() & (pl.col("trait_efo") != ""))
-            .then(pl.col("trait_efo"))
-            .otherwise(pl.col("trait_reported"))
-            .alias("trait"),
-        )
+        df = df.with_columns(trait_group_label_expr(self.trait_group_by))
 
         grouped = df.group_by("trait").agg(
             pl.col("pgs_id").count().alias("n_models"),
@@ -810,6 +806,12 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
     def set_genome_build(self, value: str) -> Any:
         """Set genome build and reload traits."""
         self.genome_build = value  # type: ignore[attr-defined]
+        if self.traits_loaded:
+            yield from self.load_traits()
+
+    def set_trait_group_by(self, value: str | list[str]) -> Any:
+        """Switch selector + result grouping, then reload the trait grid."""
+        PRSComputeStateMixin.set_trait_group_by(self, value)
         if self.traits_loaded:
             yield from self.load_traits()
 

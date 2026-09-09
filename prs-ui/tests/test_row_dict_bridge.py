@@ -39,6 +39,22 @@ def _enriched(**overrides: object) -> EnrichedPRSResult:
     return EnrichedPRSResult(**base)  # type: ignore[arg-type]
 
 
+def test_reported_trait_is_bridged_separately_from_mapped_efo() -> None:
+    row = _enriched_to_row_dict(
+        _enriched(
+            trait="aging rate",
+            trait_reported="Facial aging, looking 'older than you are'",
+            trait_efo="aging rate",
+            trait_efo_id="OBA_0005494",
+        )
+    )
+
+    assert row["trait_reported"] == "Facial aging, looking 'older than you are'"
+    assert row["trait"] == "Facial aging, looking 'older than you are'"
+    assert row["trait_efo"] == "aging rate"
+    assert row["trait_efo_id"] == "OBA_0005494"
+
+
 def test_new_reliability_and_build_fields_are_bridged() -> None:
     row = _enriched_to_row_dict(_enriched())
 
@@ -101,7 +117,11 @@ def test_ai_links_for_selection_uses_selected_then_first() -> None:
 def test_trait_chart_cache_round_trips_and_clears() -> None:
     clear_cached_trait_charts()
     key = trait_chart_cache_key("intelligence", "high_moderate", "native")
-    assert key == "intelligence|high_moderate|native"
+    assert key == "intelligence|high_moderate|native|ontology"
+    reported_key = trait_chart_cache_key(
+        "intelligence", "high_moderate", "native", "reported"
+    )
+    assert reported_key == "intelligence|high_moderate|native|reported"
     assert get_cached_trait_chart(key) is None
     store_cached_trait_chart(key, {"spec": {"mark": "area"}, "html": "<p>ok</p>", "height": "900px"})
     cached = get_cached_trait_chart(key)

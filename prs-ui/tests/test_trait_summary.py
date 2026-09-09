@@ -1,4 +1,6 @@
+import polars as pl
 from prs_ui.mixin import (
+    TRAIT_GROUP_BY_REPORTED,
     _concise_trait_label,
     _genome_file_label,
     _group_prs_rows_by_trait,
@@ -10,8 +12,36 @@ from prs_ui.mixin import (
     native_superpopulation_from_ancestry,
     reference_population_codes,
     result_grid_height,
+    trait_group_label_expr,
 )
 from just_prs.viz import build_prs_ai_prompt
+
+
+def test_trait_group_label_prefers_catalog_reported_trait_field() -> None:
+    rows = [
+        {
+            "pgs_id": "PGS001071",
+            "trait": "aging rate",
+            "trait_reported": "Facial aging, looking 'about your age'",
+            "trait_efo": "aging rate",
+            "trait_efo_id": "OBA_0005494",
+        },
+        {
+            "pgs_id": "PGS001072",
+            "trait": "aging rate",
+            "trait_reported": "Facial aging, looking 'older than you are'",
+            "trait_efo": "aging rate",
+            "trait_efo_id": "OBA_0005494",
+        },
+    ]
+
+    label, reported_traits = _trait_group_display_label(rows)
+
+    assert label == "aging rate"
+    assert reported_traits == [
+        "Facial aging, looking 'about your age'",
+        "Facial aging, looking 'older than you are'",
+    ]
 
 
 def test_trait_group_label_uses_concise_efo_label_with_reported_aliases() -> None:
@@ -101,6 +131,52 @@ def test_trait_grouping_falls_back_to_reported_trait_without_efo_label() -> None
 
     assert [[r["pgs_id"] for r in g] for g in groups] == [["PGS1", "PGS3"], ["PGS2"]]
     assert _trait_group_key(rows[0]) == _trait_group_key(rows[2]) == "asthma"
+
+
+def test_reported_grouping_splits_opposite_ontology_bins() -> None:
+    rows = [
+        {
+            "pgs_id": "PGS001071",
+            "trait": "aging rate",
+            "trait_reported": "Facial aging, looking 'about your age'",
+            "trait_efo": "aging rate",
+        },
+        {
+            "pgs_id": "PGS001072",
+            "trait": "aging rate",
+            "trait_reported": "Facial aging, looking 'older than you are'",
+            "trait_efo": "aging rate",
+        },
+    ]
+
+    ontology_groups = _group_prs_rows_by_trait(rows)
+    reported_groups = _group_prs_rows_by_trait(rows, TRAIT_GROUP_BY_REPORTED)
+
+    assert len(ontology_groups) == 1
+    assert [r["pgs_id"] for r in ontology_groups[0]] == ["PGS001071", "PGS001072"]
+    assert [[r["pgs_id"] for r in group] for group in reported_groups] == [
+        ["PGS001071"],
+        ["PGS001072"],
+    ]
+    label, aliases = _trait_group_display_label(reported_groups[0], TRAIT_GROUP_BY_REPORTED)
+    assert label == "Facial aging, looking 'about your age'"
+    assert aliases == ["Facial aging, looking 'about your age'"]
+
+
+def test_trait_group_label_expr_prefers_mapped_then_reported() -> None:
+    df = pl.DataFrame(
+        {
+            "trait_efo": ["aging rate", ""],
+            "trait_reported": [
+                "Facial aging, looking 'about your age'",
+                "Asthma",
+            ],
+        }
+    )
+    ontology = df.select(trait_group_label_expr("ontology"))["trait"].to_list()
+    reported = df.select(trait_group_label_expr("reported"))["trait"].to_list()
+    assert ontology == ["aging rate", "Asthma"]
+    assert reported == ["Facial aging, looking 'about your age'", "Asthma"]
 
 
 def test_concise_trait_label_preserves_regular_parenthetical_names() -> None:
@@ -194,9 +270,9 @@ def test_trait_heritability_summary_deduplicates_metrics() -> None:
 
 
 def test_individual_result_grid_height_accounts_for_grouped_headers() -> None:
-    assert result_grid_height(3, 6, grouped_headers=True) == "262px"
-    assert result_grid_height(3, 4) == "222px"
-    assert result_grid_height(10, 10, grouped_headers=True) == "626px"
+    assert result_grid_height(3, 6, grouped_headers=True) == "322px"
+    assert result_grid_height(3, 4) == "282px"
+    assert result_grid_height(10, 10, grouped_headers=True) == "826px"
 
 
 def test_distribution_png_download_js_targets_report_iframe() -> None:

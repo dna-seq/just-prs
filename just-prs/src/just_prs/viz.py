@@ -7,6 +7,7 @@ HTML and JSON export work out of the box.
 
 from __future__ import annotations
 
+import html
 import logging
 import math
 import json
@@ -226,6 +227,26 @@ _QUALITY_NOTE_HTML = (
 # "100.0%" / "0.0%".  Mirrors the source clamp in absolute_risk.py.
 _ABS_RISK_DISPLAY_MAX = 0.999
 _ABS_RISK_DISPLAY_MIN = 0.0001
+
+
+def _result_reported_trait(row: dict[str, Any] | None) -> str:
+    """PGS Catalog reported phenotype from a result or chart row."""
+    if not row:
+        return ""
+    return str(row.get("trait_reported") or row.get("trait") or "").strip()
+
+
+def _show_reported_trait_column(rows: list[dict[str, Any]], group_label: str = "") -> bool:
+    """Show Reported Trait when models differ from each other or from the mapped group."""
+    reported = [_result_reported_trait(row) for row in rows]
+    reported = [value for value in reported if value]
+    if not reported:
+        return False
+    distinct = {value.casefold() for value in reported}
+    if len(distinct) > 1:
+        return True
+    group = group_label.strip().casefold()
+    return bool(group) and next(iter(distinct)) != group
 
 
 def _format_absolute_risk(value: object) -> str:
@@ -655,14 +676,14 @@ def plot_trait_scores(
         risk_ratio: float | None = None
         absolute_risk: float | None = None
         population_prevalence: float | None = None
-        trait_reported: str = row_dict.get("trait_reported", "")
+        trait_reported = _result_reported_trait(user_lookup.get(pgs_id)) if pgs_id in user_lookup else ""
+        if not trait_reported:
+            trait_reported = str(row_dict.get("trait_reported") or "")
         if pgs_id in user_lookup:
             ur = user_lookup[pgs_id]
             risk_ratio = ur.get("risk_ratio")
             absolute_risk = ur.get("absolute_risk")
             population_prevalence = ur.get("population_prevalence")
-            if not trait_reported:
-                trait_reported = ur.get("trait_reported", "")
 
         reliable = True
         if pgs_id in user_lookup:
@@ -1118,8 +1139,7 @@ def plot_trait_scores(
         table_rows = sorted(model_meta, key=lambda m: m.get("n_variants") or 0, reverse=True)
 
     has_risk_data = any(tr.get("risk_ratio") is not None for tr in table_rows)
-    distinct_traits = {tr.get("trait_reported", "") for tr in table_rows} - {""}
-    has_multi_traits = len(distinct_traits) > 1
+    has_multi_traits = _show_reported_trait_column(table_rows, trait)
 
     max_trait_len = 30
     for idx, tr in enumerate(table_rows):
@@ -2504,10 +2524,18 @@ def _trait_url(efo_raw: str | None) -> str:
 
 
 def _trait_link_html(trait_text: str, efo_raw: str | None) -> str:
+    safe = html.escape(trait_text, quote=False)
     url = _trait_url(efo_raw)
     if not url:
-        return trait_text
-    return f'<a href="{url}" target="_blank" rel="noopener">{trait_text}</a>'
+        return safe
+    return f'<a href="{url}" target="_blank" rel="noopener">{safe}</a>'
+
+
+def _reported_trait_cell_html(row: dict[str, Any]) -> str:
+    """Full catalog reported phenotype — wrap in CSS, never ellipsize."""
+    trait_raw = _result_reported_trait(row)
+    trait_cell = _trait_link_html(trait_raw, row.get("trait_efo_id"))
+    return f'<td class="trait-cell" title="{html.escape(trait_raw, quote=True)}">{trait_cell}</td>'
 
 
 def _median_recompute_script(
@@ -2988,7 +3016,10 @@ def trait_report_html(
             ),
         )
 
-        has_multi = len({_any_row(pid).get("trait_reported", "") for pid in sorted_ids} - {""}) > 1
+        has_multi = _show_reported_trait_column(
+            [_any_row(pid) for pid in sorted_ids],
+            trait,
+        )
         # h² is population-level trait metadata (identical for every sample), so
         # the comparison table shows only the selected population's estimate —
         # the all-populations string is noise next to n sample columns.
@@ -3112,10 +3143,7 @@ def trait_report_html(
                 f'data-idx="{len(models_payload) - 1}" checked>{id_display}</td>'
             ]
             if has_multi:
-                trait_raw = base.get("trait_reported", "")
-                trait_short = (trait_raw[:29] + "…") if len(trait_raw) > 30 else trait_raw
-                trait_cell = _trait_link_html(trait_short, base.get("trait_efo_id"))
-                cells.append(f'<td class="trait-cell" title="{trait_raw}">{trait_cell}</td>')
+                cells.append(_reported_trait_cell_html(base))
             for group in groups:
                 for i, name in enumerate(sample_names):
                     border = _GROUP_BORDER if i == 0 else ""
@@ -3157,7 +3185,7 @@ def trait_report_html(
         n_samples = len(sample_names)
         hdr1 = ['<th rowspan="2">PGS ID</th>']
         if has_multi:
-            hdr1.append('<th rowspan="2">Trait</th>')
+            hdr1.append('<th rowspan="2">Reported Trait</th>')
         for group in groups:
             hdr1.append(
                 f'<th colspan="{n_samples}" style="text-align:center;{_GROUP_BORDER}'
@@ -3205,8 +3233,7 @@ def trait_report_html(
             )
             for r in scored
         )
-        distinct_traits = {r.get("trait_reported", "") for r in scored} - {""}
-        has_multi = len(distinct_traits) > 1
+        has_multi = _show_reported_trait_column(scored, trait)
 
         _TIER_ORDER = {"high": 0, "moderate": 1, "low": 2, "very_low": 3}
         sorted_results = sorted(
@@ -3264,10 +3291,7 @@ def trait_report_html(
             id_display = f"{pid_link} ({sname})" if sname else pid_link
             cells = [f'<td class="id-cell">{id_display}</td>']
             if has_multi:
-                trait_raw = r.get("trait_reported", "")
-                trait_short = (trait_raw[:29] + "…") if len(trait_raw) > 30 else trait_raw
-                trait_cell = _trait_link_html(trait_short, r.get("trait_efo_id"))
-                cells.append(f'<td class="trait-cell" title="{trait_raw}">{trait_cell}</td>')
+                cells.append(_reported_trait_cell_html(r))
             cells.append(f'<td style="color:{q_col};font-weight:600">{pctl_s}</td>')
             if has_risk:
                 rr = r.get("risk_ratio")
@@ -3300,7 +3324,7 @@ def trait_report_html(
 
         hdr_cells = ["<th>PGS ID</th>"]
         if has_multi:
-            hdr_cells.append("<th>Trait</th>")
+            hdr_cells.append("<th>Reported Trait</th>")
         hdr_cells.append("<th>Percentile</th>")
         if has_risk:
             hdr_cells.extend(["<th>Risk×</th>", "<th>Abs Risk</th>"])
@@ -3447,7 +3471,7 @@ h1 a:hover {{ border-bottom-color: #666; }}
 .id-cell a {{ color: #1565C0; text-decoration: none; }}
 .id-cell a:hover {{ text-decoration: underline; }}
 .model-toggle {{ margin-right: 7px; vertical-align: middle; accent-color: #1565C0; cursor: pointer; }}
-.trait-cell {{ max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #555; }}
+.trait-cell {{ max-width: 280px; white-space: normal; overflow-wrap: anywhere; line-height: 1.35; color: #555; vertical-align: top; }}
 .h2-cell {{ max-width: 260px; white-space: normal; color: #444; font-size: 0.88em; }}
 .q-dot {{ display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }}
 .cell-sub {{ font-size: 0.78em; color: #999; }}
@@ -3540,7 +3564,7 @@ def bell_curve_report_html(
         vm = r.get("variants_matched")
         vt = r.get("variants_total")
         ql = r.get("quality_label", "")
-        trait = r.get("trait_reported") or r.get("score_name") or ""
+        trait = _result_reported_trait(r) or r.get("score_name") or ""
         reliable = r.get("reliable", True)
 
         pgs_link = f'<a href="https://www.pgscatalog.org/score/{pgs_id}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline dotted">{pgs_id}</a>'

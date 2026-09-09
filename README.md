@@ -8,11 +8,14 @@
 [![MCP ready](https://img.shields.io/badge/MCP-Claude%20%7C%20Cursor%20%7C%20Codex-blueviolet.svg)](https://github.com/dna-seq/just-prs-mcp)
 [![Web UI](https://img.shields.io/badge/UI-browser%20app-2ea44f.svg)](#web-ui)
 
-`just-prs` scores a genome against **5,000+ published
-[PGS Catalog](https://www.pgscatalog.org/) models** (or your own scoring file),
-places the result on a reference-population bell curve, and estimates absolute
-risk when the evidence supports it. It is **research software, not medical
-advice**.
+`just-prs` scores a genome against the **~5,385 published
+[PGS Catalog](https://www.pgscatalog.org/) models** (or your own scoring file).
+**1000 Genomes percentiles** are precomputed for essentially the full catalog
+(a handful of scores are unscorable — HLA / missing coordinates / allele
+defects). Sample **population is inferred from 1000G** (super-population plus
+closest cohort). SNP heritability (**h²**) is mapped for many traits, and
+absolute risk is estimated when the evidence supports it. It is **research
+software, not medical advice**.
 
 Most PRS tools either hide the catalog behind one curated score or dump raw
 sheets with no guidance. `just-prs` shows **every available model** for a trait,
@@ -57,15 +60,21 @@ Never used this repo? Start with the
 <details>
 <summary><strong>Features</strong> — what the toolbox covers</summary>
 
+- **Full PGS Catalog** — ~5,385 published scores. 1000G reference percentiles
+  are precomputed for nearly all of them; a handful stay hidden (unscorable or
+  quarantined). SNP heritability (h²) is mapped for many traits via Pan-UKBB
+  and archival GWAS Atlas.
 - **PRS from VCF or consumer arrays** — normalize, score one or many PGS IDs
   (catalog or a local `.txt.gz` / `.parquet`), inspect match rates, quality
   labels, percentiles, and absolute-risk context.
+- **1000G ancestry** — infer the sample's super-population and closest 1000G
+  cohort; that call drives which reference curve the percentile sits on.
 - **Trait-first analysis** — pick a trait such as type 2 diabetes; compute all
   associated models and summarize agreement, outliers, and quality.
 - **PGS Catalog metadata** — search cleaned score, trait, performance,
-  publication, prevalence, and scoring-file sheets.
+  publication, prevalence, heritability, and scoring-file sheets.
 - **Fast data engine** — Polars and DuckDB scoring, zstd Parquet caches,
-  HuggingFace sync for cleaned metadata and reference distributions.
+  HuggingFace sync for cleaned metadata, 1000G percentiles, and h² tables.
 - **Reference and pgen workflows** — optional Linux/WSL `.pgen` / 1000G /
   HGDP+1kGP scoring and PLINK2 cross-validation.
 - **Reusable UI components** — embed the workbench in another Reflex app via
@@ -591,4 +600,5 @@ live catalog metadata, and Zenodo test VCFs are documented in
 
 **Data sources:** [PGS Catalog REST](https://www.pgscatalog.org/rest/) ·
 [EBI FTP](https://ftp.ebi.ac.uk/pub/databases/spot/pgs/) ·
-[HuggingFace pgs-catalog](https://huggingface.co/datasets/just-dna-seq/pgs-catalog)
+[HuggingFace pgs-catalog](https://huggingface.co/datasets/just-dna-seq/pgs-catalog) ·
+[HuggingFace prs-percentiles](https://huggingface.co/datasets/just-dna-seq/prs-percentiles)

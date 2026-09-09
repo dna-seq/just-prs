@@ -649,3 +649,46 @@ def test_trait_report_html_multi_sample_prompt_matches_builder() -> None:
     assert "Anton=72.0" in prompt
     assert "Livia=41.0" in prompt
     assert "https://grok.com/?q=" in html
+
+
+def test_trait_report_html_shows_catalog_reported_trait() -> None:
+    """Mapped ontology 'aging rate' must not hide the opposite reported phenotypes."""
+    distributions = pl.DataFrame(
+        {
+            "pgs_id": ["PGS001071", "PGS001072"],
+            "superpopulation": ["EUR", "EUR"],
+            "mean": [0.0, 0.0],
+            "std": [1.0, 1.0],
+            "trait_reported": ["aging rate", "aging rate"],
+            "n_variants": [6782, 39],
+        },
+    )
+    user_results = [
+        {
+            "pgs_id": "PGS001071",
+            "trait": "aging rate",
+            "trait_reported": "Facial aging, looking 'about your age'",
+            "score": 0.1,
+            "percentile": 60.8,
+            "match_rate": 62.6,
+            "quality_label": "High",
+        },
+        {
+            "pgs_id": "PGS001072",
+            "trait": "aging rate",
+            "score": -0.2,
+            "percentile": 27.4,
+            "match_rate": 61.5,
+            "quality_label": "Moderate",
+        },
+    ]
+    user_results[1]["trait"] = "Facial aging, looking 'older than you are'"
+
+    chart = plot_trait_scores("aging rate", distributions, user_results=user_results)
+    html = trait_report_html(chart, "aging rate", user_results)
+
+    assert "Reported Trait" in html
+    assert "Facial aging, looking 'about your age'" in html
+    assert "Facial aging, looking 'older than you are'" in html
+    assert "about…" not in html
+    assert "older…" not in html

@@ -1,6 +1,6 @@
 [project]
 name = "prs-ui"
-version = "0.3.16"
+version = "0.3.17"
 description = "Reusable Reflex UI components for Polygenic Risk Score computation with PGS Catalog"
 readme = "README.md"
 authors = [
@@ -8,7 +8,7 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "just-prs>=0.10.0",
+    "just-prs>=0.10.1",
     "reflex>=0.9.10.post1",
     "reflex-components-core>=0.9.9",
     "reflex-components-code>=0.9.4",

@@ -9,6 +9,7 @@ any upload/normalization/results UI.
 
 import reflex as rx
 
+from prs_ui.components.prs_section import trait_group_by_control
 from prs_ui.grid_style import data_grid_scroll_container
 from prs_ui.state import GenomicGridState, TraitBrowserState
 from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
@@ -95,6 +96,7 @@ def trait_selector(
             align="center",
             width="100%",
         ),
+        trait_group_by_control(state),
         rx.cond(
             state.traits_loaded,
             rx.vstack(

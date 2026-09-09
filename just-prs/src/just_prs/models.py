@@ -358,6 +358,10 @@ class EnrichedPRSResult(BaseModel):
 
     pgs_id: str
     trait: str = ""
+    trait_reported: str = Field(
+        "",
+        description="PGS Catalog reported phenotype (the study outcome, not the mapped ontology term)",
+    )
     trait_efo: str = Field("", description="EFO trait label (the trait-grouping key the UI selector uses)")
     trait_efo_id: str = Field("", description="EFO/MONDO/OBA/HP trait ontology ID(s) from PGS Catalog")
     score: float = 0.0

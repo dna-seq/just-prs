@@ -89,7 +89,7 @@ SUPERPOPULATION_LABELS: dict[str, str] = {
     "SAS": "South Asian",
 }
 
-_RESULT_GRID_ROW_HEIGHT_PX = 52
+_RESULT_GRID_ROW_HEIGHT_PX = 72
 _RESULT_GRID_CHROME_HEIGHT_PX = 66
 _RESULT_GRID_GROUP_HEADER_HEIGHT_PX = 40
 VISIBLE_RESULT_ROWS = 10
@@ -112,9 +112,34 @@ _DISTRIBUTIONS_DF: pl.DataFrame | None = None
 _TRAIT_CHART_CACHE: dict[str, dict[str, Any]] = {}
 
 
-def trait_chart_cache_key(trait: str, model_scope: str, dashboard_population: str) -> str:
+TRAIT_GROUP_BY_ONTOLOGY = "ontology"
+TRAIT_GROUP_BY_REPORTED = "reported"
+TRAIT_GROUP_BY_VALUES = (TRAIT_GROUP_BY_ONTOLOGY, TRAIT_GROUP_BY_REPORTED)
+
+
+def normalize_trait_group_by(value: str | list[str] | None) -> str:
+    """Accept a radio/segmented value and fall back to mapped-ontology grouping."""
+    raw = value if isinstance(value, str) else (value[0] if value else TRAIT_GROUP_BY_ONTOLOGY)
+    return raw if raw in TRAIT_GROUP_BY_VALUES else TRAIT_GROUP_BY_ONTOLOGY
+
+
+def trait_group_label_expr(group_by: str) -> pl.Expr:
+    """Polars expression for the By-Trait selector group label."""
+    reported = pl.col("trait_reported").fill_null("").cast(pl.Utf8)
+    efo = pl.col("trait_efo").fill_null("").cast(pl.Utf8)
+    if normalize_trait_group_by(group_by) == TRAIT_GROUP_BY_REPORTED:
+        return pl.when(reported != "").then(reported).otherwise(efo).alias("trait")
+    return pl.when(efo != "").then(efo).otherwise(reported).alias("trait")
+
+
+def trait_chart_cache_key(
+    trait: str,
+    model_scope: str,
+    dashboard_population: str,
+    group_by: str = TRAIT_GROUP_BY_ONTOLOGY,
+) -> str:
     """Stable key for a rendered trait chart / HTML report."""
-    return f"{trait}|{model_scope}|{dashboard_population}"
+    return f"{trait}|{model_scope}|{dashboard_population}|{normalize_trait_group_by(group_by)}"
 
 
 def get_cached_trait_chart(key: str) -> dict[str, Any] | None:
@@ -444,7 +469,8 @@ def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
     """
     row: dict[str, Any] = {
         "pgs_id": enriched.pgs_id,
-        "trait": enriched.trait,
+        "trait": enriched.trait_reported or enriched.trait,
+        "trait_reported": enriched.trait_reported or enriched.trait,
         "trait_efo": enriched.trait_efo,
         "trait_efo_id": enriched.trait_efo_id,
         "score": enriched.score,
@@ -727,41 +753,69 @@ def _concise_trait_label(value: str) -> str:
     return label
 
 
-def _trait_group_key(row: dict[str, Any]) -> str:
+def _row_reported_trait(row: dict[str, Any]) -> str:
+    """Catalog reported phenotype from a result row."""
+    return str(row.get("trait_reported") or row.get("trait") or "").strip()
+
+
+def _trait_group_key(
+    row: dict[str, Any],
+    group_by: str = TRAIT_GROUP_BY_ONTOLOGY,
+) -> str:
     """Grouping key for a PRS result row.
 
-    Identical to the key the trait *selector* groups by — the ``trait_efo`` label,
-    falling back to the reported ``trait`` — so a trait the user selected as one
-    group always renders as one group. It deliberately does NOT key on
+    Default (``ontology``) matches the trait *selector*: the ``trait_efo`` label,
+    falling back to the reported phenotype. ``reported`` splits opposite study
+    outcomes that share one mapped term. It deliberately does NOT key on
     ``trait_efo_id``: a selected group whose members don't all carry an EFO id
     (some empty, some present) would otherwise fragment into several summary rows,
     and a partially-computed group would lose members across rows.
     """
+    reported = _row_reported_trait(row)
+    if normalize_trait_group_by(group_by) == TRAIT_GROUP_BY_REPORTED:
+        key = reported or str(row.get("trait_efo") or "Unlabeled trait").strip()
+        return key.casefold()
     key = str(row.get("trait_efo") or "").strip()
     if not key:
-        key = str(row.get("trait") or "Unlabeled trait").strip()
+        key = reported or "Unlabeled trait"
     return key.casefold()
 
 
 def _group_prs_rows_by_trait(
     rows: list[dict[str, Any]],
+    group_by: str = TRAIT_GROUP_BY_ONTOLOGY,
 ) -> list[list[dict[str, Any]]]:
     """Group PRS result rows into trait groups, preserving first-seen order."""
     grouped: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
-        grouped.setdefault(_trait_group_key(row), []).append(row)
+        grouped.setdefault(_trait_group_key(row, group_by), []).append(row)
     return list(grouped.values())
 
 
-def _trait_group_display_label(rows: list[dict[str, Any]]) -> tuple[str, list[str]]:
+def _trait_group_display_label(
+    rows: list[dict[str, Any]],
+    group_by: str = TRAIT_GROUP_BY_ONTOLOGY,
+) -> tuple[str, list[str]]:
     """Build an honest label for a grouped trait summary row.
 
-    PGS Catalog can map several reported traits to one ontology term.  The
-    grouped result is ontology-level, so keep the visible title concise and
-    carry the reported aliases separately for the detail panel.
+    Ontology grouping keeps the mapped term as the title and carries reported
+    aliases for the detail panel. Reported grouping titles the row with the
+    study phenotype so opposite bins are not averaged together.
     """
     efo_labels = _unique_nonempty_values(rows, "trait_efo")
-    reported_traits = _unique_nonempty_values(rows, "trait")
+    reported_traits = (
+        _unique_nonempty_values(rows, "trait_reported")
+        or _unique_nonempty_values(rows, "trait")
+    )
+    if normalize_trait_group_by(group_by) == TRAIT_GROUP_BY_REPORTED:
+        label = (
+            _concise_trait_label(reported_traits[0])
+            if reported_traits
+            else _concise_trait_label(efo_labels[0])
+            if efo_labels
+            else "Unlabeled trait"
+        )
+        return label, reported_traits
     label = (
         _concise_trait_label(efo_labels[0])
         if efo_labels
@@ -1614,6 +1668,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     trait_model_scope: str = "high_moderate"
     trait_percentile_source: str = "native"
     trait_dashboard_population: str = "native"
+    trait_group_by: str = TRAIT_GROUP_BY_ONTOLOGY
     compute_all_populations: bool = False
     selected_reference_populations: list[str] = []
     show_reference_AFR: bool = False
@@ -1766,6 +1821,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         """
         self.selected_ancestry = value
         if self.prs_results and self.prs_view_mode == "grouped":
+            self.build_trait_summary()
+
+    def set_trait_group_by(self, value: str | list[str]) -> None:
+        """Switch trait grouping between mapped ontology and reported phenotype."""
+        self.trait_group_by = normalize_trait_group_by(value)
+        if self.prs_results:
             self.build_trait_summary()
 
     def set_trait_model_scope(self, value: str | list[str]) -> None:
@@ -2252,6 +2313,16 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
         columns = [
             ColumnDef(field="trait", header_name="Trait", min_width=180, flex=1),
+            ColumnDef(
+                field="reported_traits",
+                header_name="Reported Trait",
+                min_width=280,
+                flex=2,
+                description=(
+                    "PGS Catalog reported phenotype(s). Several reported outcomes "
+                    "can share one mapped ontology term."
+                ),
+            ),
             ColumnDef(field="trait_efo_id", header_name="EFO ID", min_width=140),
             ColumnDef(
                 field="heritability",
@@ -2467,10 +2538,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         clear_cached_trait_charts()
 
         summary_rows: list[dict[str, Any]] = []
-        for index, rows in enumerate(_group_prs_rows_by_trait(self.prs_results)):
+        for index, rows in enumerate(
+            _group_prs_rows_by_trait(self.prs_results, self.trait_group_by)
+        ):
             rows.sort(key=lambda r: float(r.get("synthetic_quality") or 0), reverse=True)
 
-            trait, reported_traits = _trait_group_display_label(rows)
+            trait, reported_traits = _trait_group_display_label(
+                rows, self.trait_group_by
+            )
             efo_id = str(rows[0].get("trait_efo_id") or "")
             pgs_ids = list(dict.fromkeys(
                 str(row.get("pgs_id", "")) for row in rows if row.get("pgs_id")
@@ -3067,7 +3142,25 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 },
             ))
         cols.extend([
-            ColumnDef(field="trait", header_name="Trait", min_width=150, flex=1),
+            ColumnDef(
+                field="trait_reported",
+                header_name="Reported Trait",
+                min_width=220,
+                flex=1,
+                description=(
+                    "PGS Catalog reported phenotype — the actual study outcome, "
+                    "not the mapped ontology term."
+                ),
+            ),
+            ColumnDef(
+                field="trait_efo",
+                header_name="Mapped Trait",
+                min_width=140,
+                description=(
+                    "Ontology term curators mapped this score to. Several reported "
+                    "phenotypes can share one mapped trait."
+                ),
+            ),
             ColumnDef(
                 field="heritability",
                 header_name="Heritability (h²)",
@@ -3757,7 +3850,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "sample": row_sample_label,
                 "build_source": build_source,
                 "match_reliability": match_reliability,
-                "trait": r.get("trait", ""),
+                "trait": r.get("trait_reported") or r.get("trait", ""),
+                "trait_reported": r.get("trait_reported") or r.get("trait", ""),
+                "trait_efo": r.get("trait_efo", ""),
                 "score": r.get("score", 0),
                 "percentile_num": pct_num,
                 "percentile_method": method_label,
@@ -4140,7 +4235,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             yield
 
             info = _catalog.score_info_row(pgs_id)
-            trait = info["trait_reported"] if info else None
+            trait = str(info.get("trait_reported") or "") if info else ""
+            trait = trait or None
 
             vcf_path = sample_path or ""
             result = lookup_precomputed_prs(
@@ -4196,7 +4292,14 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             )
 
             row = _enriched_to_row_dict(enriched)
-            row["trait_efo"] = str(info.get("trait_efo") or "") if info else ""
+            if info:
+                reported = str(info.get("trait_reported") or "")
+                if reported:
+                    row["trait_reported"] = reported
+                    row["trait"] = reported
+                row["trait_efo"] = str(info.get("trait_efo") or "")
+            else:
+                row["trait_efo"] = str(row.get("trait_efo") or "")
             row["original_genome_build"] = original_build_lookup.get(pgs_id, "")
             row["genome_file"] = _genome_file_label(sample_path or self.prs_genotypes_path)
             row["sample"] = sample_label
@@ -4287,7 +4390,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         if not self.prs_results:
             return
         columns = [
-            "pgs_id", "trait", "trait_efo_id", "is_harmonized", "score", "percentile", "absolute_risk",
+            "pgs_id", "trait", "trait_reported", "trait_efo", "trait_efo_id", "is_harmonized", "score", "percentile", "absolute_risk",
             "percentile_reliable", "percentile_caveat", "weight_mass_coverage",
             "z_score", "reference_mean", "reference_std",
             "reference_panel_ancestry", "reference_panel",
@@ -4422,7 +4525,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
     def _trait_chart_cache_key(self, trait: str) -> str:
         return trait_chart_cache_key(
-            trait, self.trait_model_scope, self.trait_dashboard_population,
+            trait,
+            self.trait_model_scope,
+            self.trait_dashboard_population,
+            self.trait_group_by,
         )
 
     def _get_distributions_df(self) -> pl.DataFrame | None:
@@ -4452,7 +4558,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
         pgs_id = result.get("pgs_id", "")
         info: dict[str, Any] = {
             "pgs_id": pgs_id,
-            "trait": result.get("trait", ""),
+            "trait": result.get("trait_reported") or result.get("trait", ""),
+            "trait_reported": result.get("trait_reported") or result.get("trait", ""),
+            "trait_efo": result.get("trait_efo", ""),
             "score": result.get("score"),
             "percentile": result.get("percentile"),
             "percentile_method": result.get("percentile_method", ""),

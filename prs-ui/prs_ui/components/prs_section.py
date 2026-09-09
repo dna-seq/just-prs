@@ -31,7 +31,7 @@ from just_prs.prs import PRSEngine
 from just_prs.reference import SUPERPOPULATIONS
 from prs_ui.components.vega_chart import VegaLiteChart
 from prs_ui.grid_style import data_grid_scroll_container
-from prs_ui.mixin import SUPERPOPULATION_LABELS
+from prs_ui.mixin import SUPERPOPULATION_LABELS, _RESULT_GRID_ROW_HEIGHT_PX
 from prs_ui.state import GenomicGridState
 
 
@@ -756,6 +756,31 @@ def prs_results_table(
     )
 
 
+def trait_group_by_control(state: type[rx.State]) -> rx.Component:
+    """Exclusive switch: group by mapped ontology (default) or reported phenotype."""
+    return rx.hstack(
+        rx.text("Group by:", size="1", weight="medium", color="gray"),
+        rx.segmented_control.root(
+            rx.segmented_control.item("Mapped trait", value="ontology"),
+            rx.segmented_control.item("Reported trait", value="reported"),
+            value=state.trait_group_by,
+            on_change=state.set_trait_group_by,
+            size="1",
+        ),
+        rx.tooltip(
+            rx.icon("info", size=14, color="gray"),
+            content=(
+                "Mapped trait groups scores by the PGS Catalog ontology term "
+                "(default — fewer, broader groups). Reported trait splits by "
+                "the study's actual phenotype, so opposite bins like looking "
+                "'about your age' versus 'older than you are' are not averaged."
+            ),
+        ),
+        spacing="2",
+        align="center",
+    )
+
+
 _TRAIT_QUALITY_THRESHOLD_ITEMS: list[tuple[str, str]] = [
     ("High quality", "high_quality"),
     ("High + Moderate", "high_moderate"),
@@ -785,6 +810,7 @@ def _chart_png_download_button(state: type[rx.State]) -> rx.Component:
 def trait_summary_controls(state: type[rx.State]) -> rx.Component:
     """Dashboard dropdowns that recompute the trait-card numbers."""
     return rx.hstack(
+        trait_group_by_control(state),
         rx.text("Quality:", size="1", weight="medium", color="gray"),
         rx.select.root(
             rx.select.trigger(placeholder="Quality threshold", size="1"),
@@ -1026,6 +1052,14 @@ def _result_info_panel(state: type[rx.State]) -> rx.Component:
                     info["trait"].to(str) != "",  # type: ignore[union-attr]
                     rx.text(info["trait"], size="2", weight="bold", trim="both"),  # type: ignore[index]
                 ),
+                rx.cond(
+                    info["trait_efo"].to(str) != "",  # type: ignore[union-attr]
+                    rx.text(
+                        info["trait_efo"],
+                        size="1",
+                        color="gray",
+                    ),
+                ),
                 spacing="2",
                 align="center",
                 wrap="wrap",
@@ -1216,31 +1250,64 @@ def trait_results_chart_panel(
     )
 
 
-_CLICKABLE_ROW_SX = {
-    "& .MuiDataGrid-row": {
-        "cursor": "pointer !important",
-        "minHeight": "52px !important",
-        "maxHeight": "52px !important",
-        "borderBottom": "1px solid var(--accent-4)",
-        "transition": "background-color 120ms ease, box-shadow 120ms ease",
-    },
-    "& .MuiDataGrid-row *, & .MuiDataGrid-cell, & .MuiDataGrid-cellContent": {
-        "cursor": "pointer !important",
-        "userSelect": "none",
-    },
-    "& .MuiDataGrid-cell": {
-        "display": "flex",
-        "alignItems": "center",
-        "fontSize": "0.9rem",
-    },
-    "& .MuiDataGrid-row:hover": {
-        "backgroundColor": "var(--accent-3)",
-        "boxShadow": "inset 3px 0 0 var(--accent-9)",
-    },
-    "& .MuiDataGrid-row:hover .MuiDataGrid-cell": {
-        "color": "var(--accent-12)",
-    },
-}
+def _clickable_row_sx(
+    row_height: int = 52,
+    wrap_fields: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    """Clickable-row styles. Optional wrap fields override MUI's single-line clip."""
+    sx: dict[str, Any] = {
+        "& .MuiDataGrid-row": {
+            "cursor": "pointer !important",
+            "minHeight": f"{row_height}px !important",
+            "maxHeight": f"{row_height}px !important",
+            "borderBottom": "1px solid var(--accent-4)",
+            "transition": "background-color 120ms ease, box-shadow 120ms ease",
+        },
+        "& .MuiDataGrid-row *, & .MuiDataGrid-cell, & .MuiDataGrid-cellContent": {
+            "cursor": "pointer !important",
+            "userSelect": "none",
+        },
+        "& .MuiDataGrid-cell": {
+            "display": "flex",
+            "alignItems": "center",
+            "fontSize": "0.9rem",
+        },
+        "& .MuiDataGrid-row:hover": {
+            "backgroundColor": "var(--accent-3)",
+            "boxShadow": "inset 3px 0 0 var(--accent-9)",
+        },
+        "& .MuiDataGrid-row:hover .MuiDataGrid-cell": {
+            "color": "var(--accent-12)",
+        },
+    }
+    for field in wrap_fields:
+        sx[f"& .MuiDataGrid-cell[data-field='{field}']"] = {
+            "alignItems": "flex-start",
+            "whiteSpace": "normal !important",
+            "lineHeight": 1.3,
+            "paddingTop": "8px",
+            "paddingBottom": "8px",
+            "overflow": "visible !important",
+        }
+        sx[f"& .MuiDataGrid-cell[data-field='{field}'] .MuiDataGrid-cellContent"] = {
+            "whiteSpace": "normal !important",
+            "overflow": "visible !important",
+            "textOverflow": "clip !important",
+            "lineHeight": 1.3,
+            "display": "block",
+        }
+    return sx
+
+
+_CLICKABLE_ROW_SX = _clickable_row_sx()
+_TRAIT_SUMMARY_ROW_SX = _clickable_row_sx(
+    row_height=_RESULT_GRID_ROW_HEIGHT_PX,
+    wrap_fields=("reported_traits", "heritability"),
+)
+_PRS_RESULTS_ROW_SX = _clickable_row_sx(
+    row_height=_RESULT_GRID_ROW_HEIGHT_PX,
+    wrap_fields=("trait_reported", "heritability"),
+)
 
 
 _CLICKABLE_GRID_WRAPPER_STYLE = {
@@ -1442,11 +1509,11 @@ def prs_results_clickable_table(
                 hide_footer=True,
                 density="standard",
                 height="100%",
-                row_height=52,
+                row_height=_RESULT_GRID_ROW_HEIGHT_PX,
                 column_header_height=40,
                 disable_row_selection_on_click=True,
                 on_row_click=state.select_prs_result,
-                sx=_CLICKABLE_ROW_SX,
+                sx=_PRS_RESULTS_ROW_SX,
             ),
         ),
         height=table_height or state.prs_results_table_height,
@@ -1465,11 +1532,11 @@ def prs_results_clickable_table(
                 hide_footer=True,
                 density="standard",
                 height="100%",
-                row_height=52,
+                row_height=_RESULT_GRID_ROW_HEIGHT_PX,
                 column_header_height=40,
                 disable_row_selection_on_click=True,
                 on_row_click=state.select_prs_result,
-                sx=_CLICKABLE_ROW_SX,
+                sx=_PRS_RESULTS_ROW_SX,
             ),
         ),
         height=state.prs_results_overflow_table_height,
@@ -1517,11 +1584,11 @@ def trait_results_clickable_table(
                 hide_footer=True,
                 density="standard",
                 height="100%",
-                row_height=52,
+                row_height=_RESULT_GRID_ROW_HEIGHT_PX,
                 column_header_height=40,
                 disable_row_selection_on_click=True,
                 on_row_click=state.select_trait_result,
-                sx=_CLICKABLE_ROW_SX,
+                sx=_TRAIT_SUMMARY_ROW_SX,
             ),
         ),
         height=table_height or state.trait_results_table_height,
@@ -1539,11 +1606,11 @@ def trait_results_clickable_table(
                 hide_footer=True,
                 density="standard",
                 height="100%",
-                row_height=52,
+                row_height=_RESULT_GRID_ROW_HEIGHT_PX,
                 column_header_height=40,
                 disable_row_selection_on_click=True,
                 on_row_click=state.select_trait_result,
-                sx=_CLICKABLE_ROW_SX,
+                sx=_TRAIT_SUMMARY_ROW_SX,
             ),
         ),
         height=state.trait_results_overflow_table_height,

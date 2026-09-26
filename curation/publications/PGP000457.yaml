@@ -1,0 +1,18 @@
+pgp_id: PGP000457
+paper: {pmid: null, doi: 10.1101/2022.09.28.509988, title: Polygenic scoring accuracy varies across the genetic ancestry continuum in all human populations}
+evidence_read: {abstract: true, full_text: "europepmc: published Nature 2023 version PMC10284707", supplement: []}
+scores:
+  PGS003510:
+    cluster: cognition.cognitive_ability
+    phenotype: fluid_intelligence
+    measurement_kind: continuous
+    score_effect: {direction: increases, target: fluid intelligence score, coding: null}
+    polarity: 1
+    provenance:
+      - source: full_text
+        locator: Methods (GWAS on training individuals)
+        quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2 using sex, age and precomputed PC1–16 as covariates.
+        confidence: medium
+    lead_variant_check: {status: not_run, note: null}
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of the phenotype, so the sign follows the phenotype coding. Quotes are from the published Nature version. 1000G EUR r=+0.36 to +0.58 with the other intelligence scores.

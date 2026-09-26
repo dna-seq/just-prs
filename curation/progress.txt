@@ -1,0 +1,5 @@
+2026-09-26T20:43:58+00:00 Trait type-1-diabetes: 28/34 in-scope annotated (82.4%), 0 unannotated, 0 undecided, 1 out of scope, 0 verified, lookups 0 | catalog-only pass: 28 scores in 10 papers (OR/HR + 1000G correlation corroboration)
+2026-09-26T20:45:37+00:00 Trait longevity: 3/5 in-scope annotated (60.0%), 1 unannotated, 0 undecided, 1 out of scope, 0 verified, lookups 3 | PGP000095, PGP000237 annotated; PGP000378 unresolved (APOE weights conflict)
+2026-09-26T20:49:37+00:00 Trait type-1-diabetes: 34/34 in-scope annotated (100.0%), 0 unannotated, 0 undecided, 1 out of scope, 0 verified, lookups 3 | resolved: 34/34, PGP000211/214/244/263 read
+2026-09-26T20:49:38+00:00 Trait longevity: 4/5 in-scope annotated (80.0%), 1 unannotated, 0 undecided, 1 out of scope, 0 verified, lookups 4 | needs_review: PGS002795 direction unresolved
+2026-09-26T20:49:38+00:00 Trait intelligence: 7/7 in-scope annotated (100.0%), 0 unannotated, 0 undecided, 0 out of scope, 0 verified, lookups 5 | resolved: 7/7; PGS003723 low-confidence inference

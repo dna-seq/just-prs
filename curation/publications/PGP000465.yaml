@@ -1,0 +1,41 @@
+pgp_id: PGP000465
+paper:
+  pmid: '36150907'
+  doi: 10.1016/j.biopsych.2022.06.034
+  title: Genome-wide Association Study Shows That Executive Functioning Is Influenced by GABAergic Processes and Is a Neurocognitive Genetic Correlate of Psychiatric Disorders.
+evidence_read: {abstract: true, full_text: null, supplement: []}
+scores:
+  PGS003724:
+    cluster: cognition.cognitive_ability
+    phenotype: intelligence_quotient
+    measurement_kind: continuous
+    score_effect: {direction: increases, target: IQ / intelligence test score, coding: null}
+    polarity: 1
+    provenance:
+      - source: catalog
+        locator: scores.trait_reported
+        quote: Intelligence quotient
+        confidence: medium
+    lead_variant_check: {status: agree, note: "rs61769029 C increases intelligence in GCST90565842 and carries the top positive weight"}
+    status: agent_proposed
+    notes: >-
+      No open-access text. Catalog beta 0.149 against IQ; 1000G EUR r = +0.37 to +0.58 with every other
+      intelligence score. This ID is canary-quarantined (PRS collapse on real genomes), so it is hidden
+      from users regardless of direction.
+  PGS003723:
+    cluster: cognition.cognitive_ability
+    phenotype: executive_function
+    measurement_kind: composite
+    score_effect: {direction: increases, target: common executive function factor score, coding: null}
+    polarity: 1
+    provenance:
+      - source: abstract
+        locator: Abstract > Results
+        quote: cEF was genetically correlated with measures of intelligence (IQ) and cognitive processing speed, but cEF and IQ showed differential genetic associations with psychiatric disorders and educational attainment.
+        confidence: low
+    lead_variant_check: {status: not_run, note: "rs61093785 and rs16964219 have no GWAS Catalog associations"}
+    status: agent_proposed
+    notes: >-
+      Factor orientation is not stated in any accessible text (no open-access full text). Direction inferred:
+      catalog beta +0.171 against the cEF factor, and 1000G EUR r = +0.25 to +0.57 with all six intelligence
+      scores (+0.57 with the IQ score from the same paper). Review before trusting.

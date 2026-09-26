@@ -1,0 +1,239 @@
+pgp_id: PGP000517
+scores:
+  PGS003993:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.38 (CI 2.31–2.45) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.77.
+  PGS004009:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.42 (CI 2.35–2.49) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.73.
+  PGS004020:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.45 (CI 2.37–2.52) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.75.
+  PGS004035:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.05 (CI 1.99–2.11) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.66.
+  PGS004063:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.99 (CI 1.94–2.04) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.76.
+  PGS004078:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.14 (CI 2.08–2.21) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.78.
+  PGS004093:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.45 (CI 2.37–2.52) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.74.
+  PGS004102:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.46 (CI 2.38–2.53) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.78.
+  PGS004117:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.76 (CI 1.71–1.82) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.38.
+  PGS004132:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.83 (CI 1.78–1.89) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.45.
+  PGS004147:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.09 (CI 2.02–2.15) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.48.
+  PGS004162:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.28 (CI 2.21–2.35) against 'T1D'; 1000G EUR correlation with anchor PGS004874 r=+0.77.
+paper:
+  pmid: '38908374'
+  doi: 10.1016/j.ajhg.2024.06.003
+  title: Evaluation of polygenic scoring methods in five biobanks shows larger variation between biobanks than methods
+    and finds benefits of ensemble learning.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

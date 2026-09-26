@@ -161,6 +161,10 @@ CACHE_MANIFEST: dict[str, ManifestEntry] = {
         artifact_class=ArtifactClass.DEV,
         note="PRS result cache",
     ),
+    "annotation_lookups": ManifestEntry(
+        artifact_class=ArtifactClass.DEV,
+        note="Paper text fetched by the curation lookup agent (quote verification)",
+    ),
     "sample_scores": ManifestEntry(
         artifact_class=ArtifactClass.RUNTIME,
         note="Published public-genome PRS lookup plus catalog evidence tables (runtime_results may be pending)",

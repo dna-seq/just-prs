@@ -1,0 +1,70 @@
+pgp_id: PGP000781
+scores:
+  PGS005398:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.59 (CI 1.42–1.77) against 'Type 1 diabetes diagnosis'; 1000G EUR correlation with
+      anchor PGS004874 r=+0.21.
+  PGS005399:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.90 (CI 1.63–2.21) against 'Type 1 diabetes diagnosis'; 1000G EUR correlation with
+      anchor PGS004874 r=+0.30.
+  PGS005400:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.32 (CI 1.96–2.73) against 'Type 1 diabetes diagnosis'; 1000G EUR correlation with
+      anchor PGS004874 r=+0.40.
+paper:
+  pmid: '41724362'
+  doi: 10.1016/j.diabres.2026.113181
+  title: Sex specific genomic insights into type 1 diabetes through GWAS and single cell transcriptome analysis.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

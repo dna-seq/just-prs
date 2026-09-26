@@ -1,0 +1,11 @@
+{
+  "name": "just-prs",
+  "displayName": "just-prs",
+  "version": "0.10.1",
+  "description": "Polygenic risk scores with just-prs: compute, plot and interpret PGS Catalog scores (/prs), and — for contributors — curate what a higher score means and group scores by trait (/curate-trait, /curate-papers).",
+  "author": {"name": "Anton Kulaga", "url": "https://github.com/antonkulaga"},
+  "homepage": "https://github.com/dna-seq/just-prs",
+  "repository": "https://github.com/dna-seq/just-prs",
+  "license": "MIT",
+  "keywords": ["genomics", "polygenic-risk-score", "pgs-catalog", "prs", "curation"]
+}

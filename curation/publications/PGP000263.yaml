@@ -1,0 +1,51 @@
+pgp_id: PGP000263
+paper:
+  pmid: '34995502'
+  doi: 10.1016/j.ajhg.2021.11.008
+  title: Portability of 245 polygenic scores when derived from the UK Biobank and applied to 9 ancestry groups from the same cohort.
+evidence_read: {abstract: true, full_text: null, supplement: []}
+scores:
+  PGS001817:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect: {direction: increases, target: risk of type 1 diabetes (phecode 250.1), coding: null}
+    polarity: 1
+    provenance:
+      - {source: catalog, locator: scores.trait_reported, quote: Type 1 diabetes (T1D), confidence: medium}
+    lead_variant_check: {status: not_run, note: "rs9268233 has only a bone-density hit; rs3842756 has no associations"}
+    status: agent_proposed
+    notes: Catalog-only (Methods not accessible). Penalized regression on the phecode; 1000G EUR r=+0.55 with anchor PGS004874.
+  PGS002025:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect: {direction: increases, target: risk of type 1 diabetes (phecode 250.1), coding: null}
+    polarity: 1
+    provenance:
+      - {source: catalog, locator: scores.trait_reported, quote: Type 1 diabetes (T1D), confidence: medium}
+    lead_variant_check: {status: not_run, note: null}
+    status: agent_proposed
+    notes: Catalog-only (Methods not accessible). LDpred2 on the phecode; 1000G EUR r=+0.49 with anchor PGS004874.
+  PGS001919:
+    cluster: cognition.cognitive_ability
+    phenotype: fluid_intelligence
+    measurement_kind: continuous
+    score_effect: {direction: increases, target: fluid intelligence score, coding: null}
+    polarity: 1
+    provenance:
+      - {source: catalog, locator: scores.trait_reported, quote: Fluid intelligence score, confidence: medium}
+    lead_variant_check: {status: not_run, note: "rs4625 and rs42850 have fluid-intelligence hits but no reported allele"}
+    status: agent_proposed
+    notes: Catalog-only (Methods not accessible). 1000G EUR r=+0.25 to +0.37 with the other intelligence scores.
+  PGS002135:
+    cluster: cognition.cognitive_ability
+    phenotype: fluid_intelligence
+    measurement_kind: continuous
+    score_effect: {direction: increases, target: fluid intelligence score, coding: null}
+    polarity: 1
+    provenance:
+      - {source: catalog, locator: scores.trait_reported, quote: Fluid intelligence score, confidence: medium}
+    lead_variant_check: {status: not_run, note: null}
+    status: agent_proposed
+    notes: Catalog-only (Methods not accessible). 1000G EUR r=+0.34 to +0.56 with the other intelligence scores.

@@ -1,0 +1,55 @@
+# Trait hierarchy: domain -> concept -> phenotype (docs/curation-rules.md).
+version: 0
+domains:
+  aging:
+    label: Aging
+    concepts:
+      lifespan:
+        label: Lifespan and survival
+        axis: longer life
+        valence: desirable
+        valence_basis: Longer survival is the outcome people want.
+        status: agent_proposed
+        phenotypes:
+          longevity:
+            label: Survival to old age / longer lifespan
+            sign: 1
+          all_cause_mortality:
+            label: Death from any cause
+            sign: -1
+          parental_age_at_death:
+            label: Parent's age at death (proxy for own lifespan)
+            sign: 1
+  endocrine:
+    label: Endocrine and metabolic
+    concepts:
+      type_1_diabetes:
+        label: Type 1 diabetes
+        axis: higher risk of type 1 diabetes
+        valence: undesirable
+        valence_basis: Type 1 diabetes is a lifelong autoimmune disease requiring insulin.
+        status: agent_proposed
+        phenotypes:
+          type_1_diabetes:
+            label: Type 1 (insulin-dependent) diabetes
+            sign: 1
+  cognition:
+    label: Cognition
+    concepts:
+      cognitive_ability:
+        label: Cognitive ability
+        axis: higher cognitive test performance
+        valence: neutral
+        valence_basis: Test performance is a trait, not a health outcome; left uncolored to avoid ranking
+          people.
+        status: agent_proposed
+        phenotypes:
+          fluid_intelligence:
+            label: Fluid intelligence (reasoning test score)
+            sign: 1
+          intelligence_quotient:
+            label: Intelligence quotient (IQ)
+            sign: 1
+          executive_function:
+            label: Common executive function
+            sign: 1

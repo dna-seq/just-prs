@@ -1,0 +1,12 @@
+{
+  "name": "just-dna-seq",
+  "owner": {"name": "Anton Kulaga", "url": "https://github.com/antonkulaga"},
+  "description": "Claude Code plugins from the just-dna-seq project.",
+  "plugins": [
+    {
+      "name": "just-prs",
+      "source": "./plugins/just-prs",
+      "description": "Compute, plot and interpret polygenic risk scores; curate score direction and trait clusters."
+    }
+  ]
+}

@@ -277,7 +277,7 @@ click-to-install package.
 ### MCP without MCP: the `/prs` skill
 
 If you only want the assistant to run CLI commands (no tool schemas), copy
-[`docs/skills/prs/SKILL.md`](skills/prs/SKILL.md) into your agent's skills
+[`plugins/just-prs/skills/prs/SKILL.md`](../plugins/just-prs/skills/prs/SKILL.md) into your agent's skills
 folder. That path does not start the MCP server.
 
 ### Check that MCP is actually working

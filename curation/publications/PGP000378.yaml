@@ -1,0 +1,16 @@
+pgp_id: PGP000378
+paper:
+  pmid: '34091660'
+  doi: 10.1093/cid/ciab521
+  title: Coronary Artery Disease-Associated and Longevity-Associated Polygenic Risk Scores for Prediction of Coronary Artery Disease Events in Persons Living With HIV.
+evidence_read: {abstract: true, full_text: null, supplement: []}
+scores:
+  PGS002795:
+    score_effect: null
+    unannotated_reason: >-
+      Direction unresolved. The 4 APOE-region weights disagree under any single direction (rs429358 T (+)
+      fits longer life, rs7412 C (+) fits shorter life per GWAS Catalog lipid/AD associations); no open-access
+      full text; the abstract reports only the CAD-PRS + longevity-SNP combination. Weights reportedly from
+      GCST008598 (90th-percentile survival GWAS). Needs a human read of the paper or source GWAS.
+    lead_variant_check: {status: mixed, note: "rs429358 T agrees with longevity, rs7412 C disagrees"}
+    status: agent_proposed

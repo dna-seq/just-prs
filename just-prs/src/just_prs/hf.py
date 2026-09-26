@@ -4,14 +4,14 @@ import json
 import os
 import shutil
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
+import huggingface_hub.constants as _hf_constants
 import polars as pl
 from dotenv import load_dotenv
 from eliot import log_message, start_action
 from huggingface_hub import HfApi, hf_hub_download
-import huggingface_hub.constants as _hf_constants
 
 from just_prs.scoring import parquet_cache_is_readable
 
@@ -133,6 +133,7 @@ def _hf_download_with_retry(
 ) -> str:
     """``hf_hub_download`` with retry on 429 / transient errors."""
     import logging
+
     from huggingface_hub.utils import HfHubHTTPError
 
     _configure_hf_timeouts(HF_DOWNLOAD_TIMEOUT_SEC)
@@ -309,6 +310,7 @@ def pull_reference_distributions(
         Path to the downloaded file, or None if not available in the repo yet.
     """
     import logging
+
     from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
 
     resolved_token = _resolve_token(token)
@@ -571,6 +573,76 @@ def pull_reference_allele_universe(
             return None
 
 
+HF_METADATA_PREFIX = "data/metadata"
+CURATION_FILES = (
+    "score_annotations.parquet",
+    "trait_clusters.parquet",
+    "curation_manifest.json",
+)
+
+
+def push_curation_tables(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_CATALOG_REPO,
+    token: str | None = None,
+    commit_message: str = "Update curated score annotations and trait clusters",
+) -> list[str]:
+    """Upload the compiled curation tables to ``data/metadata/`` in one commit.
+
+    All three files (``CURATION_FILES``) go in a single ``create_commit`` so a
+    reader never sees annotations from one build next to clusters from another.
+    Returns the uploaded names; raises when a file is missing or no token is set.
+    """
+    from huggingface_hub import CommitOperationAdd
+
+    resolved_token = _resolve_token(token)
+    if not resolved_token:
+        raise RuntimeError("HF_TOKEN is not set (explicit arg, .env, or environment); nothing was published.")
+    missing = [name for name in CURATION_FILES if not (local_dir / name).is_file()]
+    if missing:
+        raise FileNotFoundError(f"curation build output is incomplete in {local_dir}: missing {', '.join(missing)}")
+    operations = [
+        CommitOperationAdd(path_in_repo=f"{HF_METADATA_PREFIX}/{name}", path_or_fileobj=str(local_dir / name))
+        for name in CURATION_FILES
+    ]
+    with start_action(action_type="hf:push_curation_tables", repo_id=repo_id):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.create_repo(repo_id=repo_id, repo_type="dataset", exist_ok=True)
+        api.create_commit(
+            repo_id=repo_id,
+            repo_type="dataset",
+            operations=operations,
+            commit_message=commit_message,
+        )
+    return list(CURATION_FILES)
+
+
+def pull_curation_tables(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_CATALOG_REPO,
+    token: str | None = None,
+) -> dict[str, Path]:
+    """Download the curation tables into ``local_dir`` (flat). Missing files are skipped."""
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    resolved_token = _resolve_token(token)
+    pulled: dict[str, Path] = {}
+    with start_action(action_type="hf:pull_curation_tables", repo_id=repo_id):
+        local_dir.mkdir(parents=True, exist_ok=True)
+        for name in CURATION_FILES:
+            try:
+                pulled[name] = _pull_flat(
+                    repo_id=repo_id,
+                    hf_path=f"{HF_METADATA_PREFIX}/{name}",
+                    local_dir=local_dir,
+                    token=resolved_token,
+                )
+            except (EntryNotFoundError, RepositoryNotFoundError):
+                continue
+    return pulled
+
+
 def push_reference_audit_sidecars(
     *,
     quality_report_path: Path | None = None,
@@ -613,6 +685,7 @@ def pull_sample_scores(
     lands. Network or repo errors propagate to the caller.
     """
     import logging
+
     from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
 
     resolved_token = _resolve_token(token)
@@ -900,6 +973,7 @@ def pull_catalog_scoring_flags(
         token: HF API token. If None, loaded from .env / HF_TOKEN env var.
     """
     import logging
+
     from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
 
     resolved_token = _resolve_token(token)
@@ -954,6 +1028,7 @@ def pull_chip_coverage(
         Path to the downloaded file, or None if not available in the repo yet.
     """
     import logging
+
     from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
 
     resolved_token = _resolve_token(token)
@@ -1025,6 +1100,7 @@ def pull_ld_proxy_table(
         Path to the downloaded file, or None if not available in the repo yet.
     """
     import logging
+
     from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
 
     resolved_token = _resolve_token(token)
@@ -1087,8 +1163,8 @@ def _generate_catalog_dataset_card(
     Includes statistics and timestamps for both cleaned metadata and scoring
     file parquets.
     """
-    now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    now_human = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    now = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    now_human = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
     metadata_lines: list[str] = []
     n_unique_pgs = 0
@@ -1322,8 +1398,8 @@ def _upload_large_folder_with_retry(
 
     Uses exponential backoff: delay doubles each attempt (30s, 60s, 120s, 240s).
     """
-    import httpx
     import httpcore
+    import httpx
 
     last_exc: Exception | None = None
     for attempt in range(1, max_retries + 1):

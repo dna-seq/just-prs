@@ -247,3 +247,6 @@ scores/
 
 # Intellij IDEA
 .idea/
+
+# curation map-reduce scratch (one private copy per trait agent)
+curation/staging/

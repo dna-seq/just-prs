@@ -229,7 +229,7 @@ def test_manifest_covers_documented_cache_layout() -> None:
         "metadata", "percentiles", "reference", "ancestry", "chip_manifests",
         "liftover", "scores", "reference_panel", "reference_fasta",
         "reference_scores", "normalized", "genomes", "test-data", "results",
-        "sample_scores", "plink2", "scoring",
+        "annotation_lookups", "sample_scores", "plink2", "scoring",
     }
     assert set(CACHE_MANIFEST) == documented
 

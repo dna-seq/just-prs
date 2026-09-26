@@ -1,0 +1,126 @@
+slug: type-1-diabetes
+query: sort out type 1 diabetes scores
+match:
+  terms:
+  - T1D
+  - autoimmune diabetes
+  - insulin-dependent diabetes
+  - latent autoimmune diabetes
+  - type 1 diabetes
+  - type 1 diabetes mellitus
+  efo_ids: []
+  exclude: []
+anchor: PGS004874
+status: resolved
+concepts:
+- endocrine.type_1_diabetes
+scores:
+  PGS000021:
+    decision: in_scope
+    note: null
+  PGS000022:
+    decision: in_scope
+    note: null
+  PGS000023:
+    decision: in_scope
+    note: null
+  PGS000024:
+    decision: in_scope
+    note: null
+  PGS000833:
+    decision: in_scope
+    note: null
+  PGS000869:
+    decision: in_scope
+    note: null
+  PGS001294:
+    decision: out_of_scope
+    note: 'false hit: ''Non-insulin-dependent diabetes'' is type 2 diabetes'
+  PGS001296:
+    decision: in_scope
+    note: null
+  PGS001297:
+    decision: in_scope
+    note: null
+  PGS001817:
+    decision: in_scope
+    note: null
+  PGS002025:
+    decision: in_scope
+    note: null
+  PGS003749:
+    decision: in_scope
+    note: null
+  PGS003750:
+    decision: in_scope
+    note: null
+  PGS003993:
+    decision: in_scope
+    note: null
+  PGS004009:
+    decision: in_scope
+    note: null
+  PGS004020:
+    decision: in_scope
+    note: null
+  PGS004035:
+    decision: in_scope
+    note: null
+  PGS004063:
+    decision: in_scope
+    note: null
+  PGS004078:
+    decision: in_scope
+    note: null
+  PGS004093:
+    decision: in_scope
+    note: null
+  PGS004102:
+    decision: in_scope
+    note: null
+  PGS004117:
+    decision: in_scope
+    note: null
+  PGS004132:
+    decision: in_scope
+    note: null
+  PGS004147:
+    decision: in_scope
+    note: null
+  PGS004162:
+    decision: in_scope
+    note: null
+  PGS004171:
+    decision: in_scope
+    note: null
+  PGS004172:
+    decision: in_scope
+    note: null
+  PGS004173:
+    decision: in_scope
+    note: null
+  PGS004174:
+    decision: in_scope
+    note: null
+  PGS004175:
+    decision: in_scope
+    note: null
+  PGS004874:
+    decision: in_scope
+    note: null
+  PGS005398:
+    decision: in_scope
+    note: null
+  PGS005399:
+    decision: in_scope
+    note: null
+  PGS005400:
+    decision: in_scope
+    note: null
+  PGS012555:
+    decision: in_scope
+    note: null
+summary: 'All 34 type 1 diabetes scores point the same way: a higher score means higher T1D risk. 28 are
+  annotated from catalog metadata only (OR/HR > 1 against T1D where reported, plus positive 1000G correlation
+  with the anchor PGS004874); 6 were checked against paper text. None of 561 score pairs disagree after
+  alignment. PGS001294 was a search false hit (type 2 diabetes).'

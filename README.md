@@ -159,29 +159,47 @@ args = ["just-prs-mcp@latest", "stdio"]
 </details>
 
 <details>
-<summary>Claude Code / Antigravity <code>/prs</code> skill (no MCP required)</summary>
+<summary>Claude Code plugin: <code>/prs</code>, <code>/curate-trait</code>, <code>/curate-papers</code> (no MCP required)</summary>
 
-The skill at [`docs/skills/prs/SKILL.md`](docs/skills/prs/SKILL.md) teaches the
-assistant to search the catalog, compute scores, generate Altair charts, and
-interpret results through the CLI.
+This repo is a Claude Code plugin marketplace with one plugin, `just-prs`
+([`plugins/just-prs/`](plugins/just-prs/)):
 
-Workspace (this repo):
-
-```bash
-mkdir -p .claude/skills/prs
-ln -sf ../../../docs/skills/prs/SKILL.md .claude/skills/prs/SKILL.md
+```
+/plugin marketplace add dna-seq/just-prs
+/plugin install just-prs@just-dna-seq
 ```
 
-Personal (every project):
+- **`/prs`**: search the catalog, compute scores, make Altair charts, and interpret the
+  results through `uvx just-prs`. For example `/prs BMI` or `/prs type 2 diabetes`.
+- **`/curate-traits top 10`**, **`/curate-trait longevity`** and **`/curate-papers explore`** (contributors): record what a
+  *higher* score means and group scores by meaning rather than by ontology term. They drive
+  `prs curation`, a low-effort Opus lookup agent (`score-lookup`), and the rules in
+  [`docs/curation-rules.md`](docs/curation-rules.md). Run them from a clone of this repo, since
+  the curated files live in [`curation/`](curation/). Design:
+  [`docs/score-annotation-plan.md`](docs/score-annotation-plan.md).
+
+Working on the plugin itself: `claude --plugin-dir ./plugins/just-prs`. A clone of this repo
+also picks the skills up without installing, through the symlinks in the ignored `.claude/`:
+
+```bash
+mkdir -p .claude/skills/{prs,curate-papers,curate-trait,curate-traits} .claude/agents
+for s in prs curate-papers curate-trait curate-traits; do
+  ln -sfn ../../../plugins/just-prs/skills/$s/SKILL.md .claude/skills/$s/SKILL.md
+done
+for a in score-lookup trait-curator; do
+  ln -sfn ../../plugins/just-prs/agents/$a.md .claude/agents/$a.md
+done
+```
+
+Only `/prs`, without the plugin:
 
 ```bash
 mkdir -p ~/.claude/skills/prs
 curl -o ~/.claude/skills/prs/SKILL.md \
-  https://raw.githubusercontent.com/dna-seq/just-prs/main/docs/skills/prs/SKILL.md
+  https://raw.githubusercontent.com/dna-seq/just-prs/main/plugins/just-prs/skills/prs/SKILL.md
 ```
 
-Then `/prs BMI` or `/prs type 2 diabetes`. The skill calls `uvx just-prs`.
-Use the skill for interactive sessions; use MCP when you need typed tool schemas.
+Use the skills for interactive sessions; use MCP when you need typed tool schemas.
 
 </details>
 

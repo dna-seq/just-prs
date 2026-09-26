@@ -1,0 +1,41 @@
+pgp_id: PGP000095
+paper:
+  pmid: '32758451'
+  doi: 10.1016/j.ajhg.2020.07.002
+  title: Combined Utility of 25 Disease and Risk Factor Polygenic Risk Scores for Stratifying Risk of All-Cause Mortality.
+evidence_read: {abstract: true, full_text: null, supplement: []}
+scores:
+  PGS000318:
+    cluster: aging.lifespan
+    phenotype: all_cause_mortality
+    measurement_kind: composite
+    score_effect: {direction: increases, target: hazard of death from any cause (women), coding: null}
+    polarity: -1
+    strata: {sex: female}
+    provenance:
+      - source: abstract
+        locator: Abstract
+        quote: "These cPRS were moderately associated with all-cause mortality in independent data within the UK Biobank: the estimated hazard ratios per standard deviation were 1.10 (95% confidence interval: 1.05, 1.16) and 1.15 (1.10, 1.19) for women and men, respectively."
+        confidence: high
+      - source: abstract
+        locator: Abstract
+        quote: We used data from the UK Biobank to combine polygenic risk scores (PRS) for 13 diseases and 12 mortality risk factors into sex-specific composite PRS (cPRS).
+        confidence: high
+    lead_variant_check: {status: agree, note: "rs11591147 T and rs7254892 A lower LDL and carry negative weights; rs62235681 G raises breast cancer risk and is positive"}
+    status: agent_proposed
+    notes: Composite of 25 disease and risk-factor PRS weighted by log(HR) for mortality; no open-access full text.
+  PGS000319:
+    cluster: aging.lifespan
+    phenotype: all_cause_mortality
+    measurement_kind: composite
+    score_effect: {direction: increases, target: hazard of death from any cause (men), coding: null}
+    polarity: -1
+    strata: {sex: male}
+    provenance:
+      - source: abstract
+        locator: Abstract
+        quote: "These cPRS were moderately associated with all-cause mortality in independent data within the UK Biobank: the estimated hazard ratios per standard deviation were 1.10 (95% confidence interval: 1.05, 1.16) and 1.15 (1.10, 1.19) for women and men, respectively."
+        confidence: high
+    lead_variant_check: {status: agree, note: "rs1229984 C (alcohol-related disorders) and rs186696265 T (raises Lp(a)) both carry positive weights"}
+    status: agent_proposed
+    notes: Male model of the same composite score; no open-access full text.

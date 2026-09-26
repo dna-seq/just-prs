@@ -1,0 +1,83 @@
+pgp_id: PGP000244
+paper:
+  pmid: '35324888'
+  doi: 10.1371/journal.pgen.1010105
+  title: Significant sparse polygenic risk scores across 813 traits in UK Biobank.
+evidence_read: {abstract: true, full_text: europepmc, supplement: []}
+template:
+  rule: >-
+    Each score is a snpnet regression predicting the phenotype itself: binomial model on case status
+    for binary traits (higher score = more likely case), Gaussian model on the median raw value for
+    quantitative traits (higher score = higher value). Reverse-coded questionnaire fields need their own coding.
+  provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case” status if the participants are classified as the case in at least one of their visits and “control” otherwise. For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+scores:
+  PGS001393:
+    cluster: aging.lifespan
+    phenotype: parental_age_at_death
+    measurement_kind: continuous
+    score_effect: {direction: increases, target: father's age at death in years, coding: "UKB 1807: integer, years"}
+    polarity: 1
+    provenance:
+      - source: full_text
+        locator: Methods (model families)
+        quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial family and the AUC-ROC metric for the binary traits [ 10 ].
+        confidence: medium
+      - source: full_text
+        locator: UK Biobank showcase field 1807
+        quote: Father's age at death
+        confidence: medium
+    lead_variant_check: {status: agree, note: "rs16969968 A (more cigarettes/day) and rs4977574 G (CAD risk) both carry negative weights"}
+    status: agent_proposed
+    notes: Only for participants whose father had died; a proxy for inherited lifespan.
+  PGS001232:
+    cluster: cognition.cognitive_ability
+    phenotype: fluid_intelligence
+    measurement_kind: continuous
+    score_effect: {direction: increases, target: fluid intelligence score (number of correct answers), coding: "UKB 20016: integer, correct answers"}
+    polarity: 1
+    provenance:
+      - source: full_text
+        locator: Methods (model families)
+        quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial family and the AUC-ROC metric for the binary traits [ 10 ].
+        confidence: medium
+      - source: full_text
+        locator: UK Biobank showcase field 20016
+        quote: Fluid intelligence score
+        confidence: medium
+    lead_variant_check: {status: agree, note: "rs1487445 T raises educational attainment and carries a positive weight; rs13107325 has no cognition hit"}
+    status: agent_proposed
+  PGS001297:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect: {direction: increases, target: risk of type 1 diabetes, coding: null}
+    polarity: 1
+    provenance:
+      - source: full_text
+        locator: Methods > Phenotype definitions
+        quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case” status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        confidence: medium
+    lead_variant_check: {status: agree, note: "rs9273363 A (HLA-DQ, T1D OR 5.48) carries the largest positive weight"}
+    status: agent_proposed
+  PGS001296:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: time_to_event
+    score_effect: {direction: increases, target: hazard of insulin-dependent diabetes (ICD-10 E10), coding: null}
+    polarity: 1
+    provenance:
+      - source: full_text
+        locator: Methods (model families)
+        quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial family and the AUC-ROC metric for the binary traits [ 10 ].
+        confidence: low
+    lead_variant_check: {status: agree, note: "HLA-DRB1*04:01 and rs9273363 A carry the largest positive weights"}
+    status: agent_proposed
+    notes: The time-to-event setup is not described in the paper; direction taken from the paper-wide rule and HLA weights.

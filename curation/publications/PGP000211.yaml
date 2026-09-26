@@ -1,0 +1,18 @@
+pgp_id: PGP000211
+paper: {pmid: '34737425', doi: 10.1038/s41588-021-00948-2, title: Genome-wide association analyses highlight etiological differences underlying newly defined subtypes of diabetes.}
+evidence_read: {abstract: true, full_text: null, supplement: []}
+scores:
+  PGS000833:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect: {direction: increases, target: genetic risk of type 1 diabetes, coding: null}
+    polarity: 1
+    provenance:
+      - {source: catalog, locator: scores.trait_reported, quote: Type 1 diabetes (T1D), confidence: medium}
+    lead_variant_check: {status: not_run, note: "variants have no rsIDs in the scoring file"}
+    status: agent_proposed
+    notes: >-
+      T1D GRS from the Onengut-Gumuscu 2015 T1D GWAS (GCST005536), used to compare diabetes subtypes. The
+      catalog metric is against MARD (a type 2 subtype) and its CI includes 1, so it carries no direction.
+      1000G EUR r=+0.22 with anchor PGS004874.

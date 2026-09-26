@@ -1727,6 +1727,10 @@ cache_app = typer.Typer(
 )
 app.add_typer(cache_app, name="cache")
 
+from just_prs.curation import app as curation_app  # noqa: E402
+
+app.add_typer(curation_app, name="curation")
+
 
 @cache_app.command("report")
 def cache_report(

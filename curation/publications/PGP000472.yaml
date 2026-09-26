@@ -1,0 +1,48 @@
+pgp_id: PGP000472
+scores:
+  PGS003749:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation with anchor PGS004874 r=+0.57.
+  PGS003750:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation with anchor PGS004874 r=+0.57.
+paper:
+  pmid: '36821788'
+  doi: 10.1002/gepi.22521
+  title: Evaluation of polygenic risk scores to differentiate between type 1 and type 2 diabetes.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

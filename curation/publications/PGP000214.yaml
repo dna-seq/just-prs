@@ -1,0 +1,23 @@
+pgp_id: PGP000214
+paper: {pmid: '31697830', doi: 10.1210/clinem/dgz102, title: Genetic Modifiers of Cystic Fibrosis-Related Diabetes Have Extensive Overlap With Type 2 Diabetes and Related Traits.}
+evidence_read: {abstract: true, full_text: null, supplement: []}
+scores:
+  PGS000869:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect: {direction: increases, target: genetic risk of type 1 diabetes (sum of T1D log-OR), coding: null}
+    polarity: 1
+    evaluation_outcome: {expected_metric_sign: 1, basis: "Evaluated on cystic-fibrosis-related diabetes onset, which the abstract says is associated with T1D PRSs (more weakly than with T2D PRSs)."}
+    provenance:
+      - source: abstract
+        locator: Abstract
+        quote: Weighted polygenic risk scores (PRSs) for type 1 diabetes (T1D), T2D, and diabetes endophenotypes were tested for association with CFRD.
+        confidence: medium
+      - source: abstract
+        locator: Abstract
+        quote: CFRD was strongly associated with PRSs for T2D, insulin secretion, postchallenge glucose concentration, and fasting plasma glucose, and less strongly with T1D PRSs.
+        confidence: medium
+    lead_variant_check: {status: agree, note: "rs689 T (INS, T1D OR 2.38) and rs2476601 A (PTPN22, T1D OR 1.72) both carry positive weights"}
+    status: agent_proposed
+    notes: 48 T1D variants weighted by log(OR) from GCST005536.

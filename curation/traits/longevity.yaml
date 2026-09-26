@@ -1,0 +1,42 @@
+slug: longevity
+query: sort out longevity scores
+match:
+  terms:
+  - age at death
+  - all-cause mortality
+  - healthspan
+  - life span
+  - lifespan
+  - longevity
+  - parental longevity
+  - survival
+  efo_ids: []
+  exclude: []
+anchor: PGS000318
+status: needs_review
+concepts:
+- aging.lifespan
+scores:
+  PGS000318:
+    decision: in_scope
+    note: null
+  PGS000319:
+    decision: in_scope
+    note: null
+  PGS000718:
+    decision: out_of_scope
+    note: drug response (beta-blocker survival benefit), not a lifespan score
+  PGS000906:
+    decision: in_scope
+    note: null
+  PGS001393:
+    decision: in_scope
+    note: null
+  PGS002795:
+    decision: in_scope
+    note: null
+summary: 'Lifespan scores run in two directions. Higher PGS000906 (longevity) and PGS001393 (father''s
+  age at death) mean longer expected life; higher PGS000318/PGS000319 (all-cause mortality, female/male)
+  mean shorter expected life, so they flip when aligned to ''longer life''. PGS002795 (4-SNP APOE longevity
+  score) is unresolved: its weights conflict and no full text was available. PGS000718 is a drug-response
+  score and out of scope.'

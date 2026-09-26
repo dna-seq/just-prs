@@ -1,0 +1,31 @@
+pgp_id: PGP000618
+scores:
+  PGS004874:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.11 (CI 1.98–2.24) against 'Incident T1D'; 1000G EUR correlation with anchor PGS004874
+      r=+1.00.
+paper:
+  pmid: '38866767'
+  doi: 10.1038/s41467-024-48938-2
+  title: A unified framework for estimating country-specific cumulative incidence for 18 diseases stratified by
+    polygenic risk.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

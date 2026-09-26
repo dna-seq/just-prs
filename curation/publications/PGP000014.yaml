@@ -1,0 +1,30 @@
+pgp_id: PGP000014
+scores:
+  PGS000024:
+    cluster: endocrine.type_1_diabetes
+    phenotype: type_1_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 1 diabetes (T1D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation with anchor PGS004874 r=+0.23.
+paper:
+  pmid: '30655379'
+  doi: 10.2337/dc18-1785
+  title: Development and Standardization of an Improved Type 1 Diabetes Genetic Risk Score for Use in Newborn Screening
+    and Incident Diagnosis.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

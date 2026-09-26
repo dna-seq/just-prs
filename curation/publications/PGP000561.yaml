@@ -1,0 +1,15 @@
+pgp_id: PGP000561
+paper: {pmid: '38351177', doi: 10.1038/s42003-024-05874-7, title: Integration of risk factor polygenic risk score with disease polygenic risk score for disease prediction.}
+evidence_read: {abstract: true, full_text: europepmc, supplement: []}
+scores:
+  PGS004427:
+    cluster: cognition.cognitive_ability
+    phenotype: fluid_intelligence
+    measurement_kind: continuous
+    score_effect: {direction: increases, target: fluid intelligence score, coding: null}
+    polarity: 1
+    provenance:
+      - {source: catalog, locator: scores.trait_reported, quote: Fluid intelligence score, confidence: medium}
+    lead_variant_check: {status: not_run, note: null}
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait; evaluated only against diseases. 1000G EUR r=+0.25 to +0.58 with the other intelligence scores.

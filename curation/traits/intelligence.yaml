@@ -1,0 +1,46 @@
+slug: intelligence
+query: sort out intelligence scores
+match:
+  terms:
+  - IQ
+  - cognitive ability
+  - cognitive function
+  - cognitive performance
+  - executive function
+  - fluid intelligence
+  - g factor
+  - general cognitive
+  - intelligence
+  efo_ids: []
+  exclude: []
+anchor: PGS004427
+status: resolved
+concepts:
+- cognition.cognitive_ability
+scores:
+  PGS001232:
+    decision: in_scope
+    note: null
+  PGS001919:
+    decision: in_scope
+    note: null
+  PGS002135:
+    decision: in_scope
+    note: null
+  PGS003510:
+    decision: in_scope
+    note: null
+  PGS003724:
+    decision: in_scope
+    note: null
+  PGS004427:
+    decision: in_scope
+    note: null
+  PGS003723:
+    decision: in_scope
+    note: same paper as the IQ score; neighbouring phenotype
+summary: 'All 7 cognitive-ability scores point the same way: a higher score means higher test performance
+  (fluid intelligence, IQ, executive function); all pairwise 1000G correlations are positive (+0.25 to
+  +0.58). The executive-function direction (PGS003723) is inferred from correlations and the catalog beta,
+  not stated in accessible text. PGS003724 (IQ) is canary-quarantined and hidden from users anyway. Valence
+  is neutral: percentiles stay uncolored.'

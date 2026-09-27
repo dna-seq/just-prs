@@ -106,29 +106,86 @@ def test_unknown_keys_fail_instead_of_being_dropped(tmp_path: Path, unknown_key:
 def test_build_exports_annotations_and_clusters(tmp_path: Path) -> None:
     from just_prs.curation import write_tables
 
+    confident = _entry(-1, "All-cause mortality (age at death in females)")
+    confident["provenance"][0]["confidence"] = "medium"
     _write(
         tmp_path,
         {
-            "PGS000318": _entry(-1, "All-cause mortality (age at death in females)"),
+            "PGS000318": confident,
             "PGS000319": {"score_effect": None, "unannotated_reason": "not read yet"},
         },
     )
     out = tmp_path / "out"
     manifest = write_tables(tmp_path, out)
     annotations = pl.read_parquet(out / "score_annotations.parquet")
+    review = pl.read_parquet(out / "curation_review.parquet")
     clusters = pl.read_parquet(out / "trait_clusters.parquet")
-    assert set(annotations["pgs_id"]) == {"PGS000318", "PGS000319"}
-    row = annotations.filter(pl.col("pgs_id") == "PGS000318").row(0, named=True)
+    assert set(annotations["pgs_id"]) == {"PGS000318"}
+    assert review["review_reason"].to_list() == ["unannotated: not read yet"]
+    row = annotations.row(0, named=True)
     assert (row["polarity"], row["axis"], row["valence"]) == (-1, "longer life", "desirable")
     assert row["higher_percentile_means"] == "higher score = more hazard of death from any cause"
-    assert annotations.filter(pl.col("pgs_id") == "PGS000319")["annotated"].to_list() == [False]
+    assert row["pgs_catalog_url"] == "https://www.pgscatalog.org/score/PGS000318/"
     usage = dict(zip(clusters["phenotype"], clusters["n_scores"], strict=True))
     assert usage == {"all_cause_mortality": 1, "longevity": 0}
-    assert (manifest["n_scores"], manifest["n_annotated"], manifest["n_verified"]) == (2, 1, 0)
+    assert (manifest["n_scores"], manifest["n_annotated"], manifest["n_review"]) == (1, 1, 1)
     assert set(json.loads((out / "curation_manifest.json").read_text())["sha256"]) == {
         "score_annotations.parquet",
         "trait_clusters.parquet",
+        "concept_search_terms.parquet",
+        "curation_review.parquet",
     }
+
+
+@pytest.mark.parametrize(
+    ("change", "reason"),
+    [
+        ({}, "low-confidence evidence only"),
+        ({"review_reason": "coding inferred"}, "coding inferred; low-confidence evidence only"),
+        ({"lead_variant_check": {"status": "mixed"}}, "low-confidence evidence only; lead variants mixed"),
+    ],
+)
+def test_uncertain_directions_go_to_review_not_publication(tmp_path: Path, change: dict, reason: str) -> None:
+    from just_prs.curation import write_tables
+
+    _write(tmp_path, {"PGS000318": {**_entry(-1, "All-cause mortality (age at death in females)"), **change}})
+    write_tables(tmp_path, tmp_path / "out")
+    assert pl.read_parquet(tmp_path / "out" / "score_annotations.parquet").height == 0
+    assert pl.read_parquet(tmp_path / "out" / "curation_review.parquet")["review_reason"].to_list() == [reason]
+
+
+def test_human_verified_direction_is_published_despite_low_confidence(tmp_path: Path) -> None:
+    from just_prs.curation import write_tables
+
+    _write(tmp_path, {"PGS000318": {**_entry(-1, "All-cause mortality (age at death in females)"), "status": "human_verified"}})
+    write_tables(tmp_path, tmp_path / "out")
+    assert pl.read_parquet(tmp_path / "out" / "score_annotations.parquet")["pgs_id"].to_list() == ["PGS000318"]
+
+
+def test_merged_scores_stay_findable_by_every_catalog_name(tmp_path: Path) -> None:
+    from just_prs.curation import write_tables
+
+    clusters = yaml.safe_load(yaml.safe_dump(CLUSTERS))
+    clusters["domains"]["aging"]["concepts"]["lifespan"]["aliases"] = ["how long will I live"]
+    _write(tmp_path, {"PGS000318": _entry(-1, "All-cause mortality (age at death in females)")})
+    (tmp_path / "clusters.yaml").write_text(yaml.safe_dump(clusters))
+    catalog = pl.DataFrame(
+        {
+            "pgs_id": ["PGS000318"],
+            "name": ["GRS_mortality"],
+            "trait_reported": ["All-cause mortality (female)"],
+            "trait_efo": ["age at death|female"],
+            "trait_efo_id": ["EFO_0004312"],
+        }
+    )
+    write_tables(tmp_path, tmp_path / "out", catalog_scores=catalog)
+    terms = pl.read_parquet(tmp_path / "out" / "concept_search_terms.parquet")
+    by_term = {row["term_normalized"]: row for row in terms.iter_rows(named=True)}
+    # Low confidence sends the score to review, but its names still lead to the concept.
+    for term in ("how long will i live", "age at death", "all-cause mortality (female)", "grs_mortality", "efo_0004312"):
+        assert by_term[term]["cluster"] == "aging.lifespan"
+    assert by_term["age at death"]["phenotype"] == "all_cause_mortality"
+    assert "female" in by_term  # split from the composite ontology label
 
 
 def test_build_refuses_inconsistent_files(tmp_path: Path) -> None:
@@ -147,6 +204,11 @@ def test_merge_keeps_published_rows_and_protects_verified(tmp_path: Path) -> Non
     verified = {**_entry(-1, "All-cause mortality (age at death in females)"), "status": "human_verified"}
     _write(published_root, {"PGS000318": verified, "PGS000319": {"score_effect": None, "unannotated_reason": "old"}})
     write_tables(published_root, tmp_path / "published_out")
+    # Stand-in for an older release that published everything, before the review split.
+    everything = pl.concat(
+        [pl.read_parquet(tmp_path / "published_out" / f) for f in ("score_annotations.parquet", "curation_review.parquet")]
+    )
+    everything.write_parquet(tmp_path / "published_out" / "score_annotations.parquet")
     # This clone has only an unreviewed PGS000318 and nothing about PGS000319.
     _write(local_root, {"PGS000318": {**verified, "status": "agent_proposed", "notes": "local edit"}})
     out = tmp_path / "out"
@@ -217,3 +279,73 @@ def test_merge_reports_conflicting_edits_and_keeps_staging(tmp_path: Path) -> No
     assert "CONFLICT PGP000095/PGS000318" in output
     assert yaml.safe_load(main_path.read_text())["scores"]["PGS000318"]["notes"] == "edited in main"
     assert (tmp_path / "staging" / "longevity").exists()
+
+
+def test_score_moved_to_review_leaves_the_published_table(tmp_path: Path) -> None:
+    from just_prs.curation import merge_with_published, write_tables
+
+    resolved = _entry(-1, "All-cause mortality (age at death in females)")
+    resolved["provenance"][0]["confidence"] = "medium"
+    _write(tmp_path / "published", {"PGS000318": resolved})
+    write_tables(tmp_path / "published", tmp_path / "published_out")
+    _write(tmp_path / "local", {"PGS000318": {**resolved, "review_reason": "new evidence contradicts the quote"}})
+    write_tables(tmp_path / "local", tmp_path / "out")
+    merge_with_published(tmp_path / "out", tmp_path / "published_out")
+    assert pl.read_parquet(tmp_path / "out" / "score_annotations.parquet").height == 0
+    assert pl.read_parquet(tmp_path / "out" / "curation_review.parquet")["pgs_id"].to_list() == ["PGS000318"]
+
+
+def _inverted_entry(**correction_overrides: object) -> dict:
+    """A mortality score whose deposited file behaves as the negated score (allele swap)."""
+    entry = _entry(1, "All-cause mortality (age at death in females)")
+    entry["provenance"][0]["confidence"] = "medium"
+    entry["score_effect"] = {"direction": "decreases", "target": "hazard of death, weights as distributed"}
+    entry["corrections"] = [
+        {
+            "kind": "deposit_inverted",
+            "action": "polarity_as_distributed",
+            "effect": "Percentile reads as 'higher score = lower hazard of death'.",
+            "paper_direction": "increases",
+            "evidence": "3/3 lead loci carry the risk allele with a negative weight; r = -0.9 vs consensus scores.",
+            "recorded": "2026-09-27",
+            "by": "agent",
+            **correction_overrides,
+        }
+    ]
+    return entry
+
+
+def test_inverted_deposit_is_recorded_and_held_for_review_until_verified(tmp_path: Path) -> None:
+    from just_prs.curation import write_tables
+
+    _write(tmp_path, {"PGS000318": _inverted_entry()})
+    assert _by_check(run_checks(tmp_path, "PGP000095", threshold=0.2))["polarity"] == {Level.OK}
+    write_tables(tmp_path, tmp_path / "out")
+    review = pl.read_parquet(tmp_path / "out" / "curation_review.parquet").row(0, named=True)
+    assert review["review_reason"] == "correction deposit_inverted (polarity_as_distributed)"
+    assert review["correction_kinds"] == "deposit_inverted"
+    assert json.loads(review["corrections_json"])[0]["paper_direction"] == "increases"
+
+    verified = {**_inverted_entry(by="human:anton"), "status": "human_verified"}
+    verified["corrections"][0]["by"] = "human:anton"
+    _write(tmp_path / "verified", {"PGS000318": verified})
+    write_tables(tmp_path / "verified", tmp_path / "verified_out")
+    published = pl.read_parquet(tmp_path / "verified_out" / "score_annotations.parquet").row(0, named=True)
+    assert (published["direction"], published["polarity"]) == ("decreases", 1)
+    assert json.loads(published["corrections_json"])[0]["by"] == "human:anton"
+
+
+@pytest.mark.parametrize(
+    ("overrides", "entry_change", "message"),
+    [
+        ({"paper_direction": None}, {}, "paper_direction"),
+        ({}, {"score_effect": {"direction": "increases", "target": "hazard of death"}, "polarity": -1}, "differ from paper_direction"),
+        ({"kind": "broken_weights"}, {}, "whole-file inversion"),
+        ({"by": "claude"}, {}, "human:<name>"),
+    ],
+)
+def test_inconsistent_corrections_fail_schema(tmp_path: Path, overrides: dict, entry_change: dict, message: str) -> None:
+    _write(tmp_path, {"PGS000318": {**_inverted_entry(**overrides), **entry_change}})
+    findings = run_checks(tmp_path, "PGP000095", threshold=0.2)
+    assert findings[0].check == "schema" and findings[0].level == Level.ERROR
+    assert message in findings[0].message

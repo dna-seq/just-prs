@@ -1,0 +1,34 @@
+pgp_id: PGP000202
+scores:
+  PGS000818:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary heart disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.41 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+paper:
+  pmid: '34082474'
+  doi: 10.1002/gepi.22389
+  title: Comparison of genetic risk prediction models to improve prediction of coronary heart disease in two large
+    cohorts of the MONICA/KORA study.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

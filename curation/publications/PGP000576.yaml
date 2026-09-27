@@ -1,0 +1,34 @@
+pgp_id: PGP000576
+scores:
+  PGS004596:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary heart disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.37 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+paper:
+  pmid: '36839222'
+  doi: 10.3390/nu15040864
+  title: 'Lifestyle Factors, Genetic Risk, and Cardiovascular Disease Risk among Breast Cancer Survivors: A Prospective
+    Cohort Study in UK Biobank.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

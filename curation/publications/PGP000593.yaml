@@ -1,0 +1,126 @@
+pgp_id: PGP000593
+scores:
+  PGS004615:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.75 with already-annotated PGS002308.
+  PGS004616:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.78 with already-annotated PGS004615.
+  PGS004617:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.83 with already-annotated PGS004615.
+  PGS004618:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.90 with already-annotated PGS004615.
+  PGS004619:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.87 with already-annotated PGS004616.
+  PGS004620:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.89 with already-annotated PGS004617.
+paper:
+  pmid: '38862855'
+  doi: 10.1038/s41588-024-01782-y
+  title: Body mass index stratification optimizes polygenic prediction of type 2 diabetes in cross-biobank analyses.

@@ -1,0 +1,14 @@
+pgp_id: PGP000275
+scores:
+  PGS002248:
+    score_effect: null
+    unannotated_reason: 'not read: lookup budget reached (childhood asthma; 1000G correlation with other asthma
+      scores ~0, so catalog-only corroboration fails)'
+paper:
+  pmid: '35055391'
+  doi: 10.3390/jpm12010075
+  title: Integration of Genomic Risk Scores to Improve the Prediction of Childhood Asthma Diagnosis
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

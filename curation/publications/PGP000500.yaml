@@ -1,0 +1,139 @@
+pgp_id: PGP000500
+scores:
+  PGS003862:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (EUR-specific MR-MEGA weights)
+      coding: null
+    polarity: 1
+    strata:
+      ancestry: EUR
+    provenance:
+    - source: full_text
+      locator: Results > Multi-ancestry GRS for FEV1/FVC and COPD
+      quote: We built multi-ancestry and ancestry-specific GRSs weighted by FEV 1 /FVC effect sizes and tested association
+        with FEV 1 /FVC and COPD (GOLD stage 2–4)
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung function (FEV1/FVC)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'EUR weights: chr6:142367832 A (lowers FEV1/FVC in GCST007431) -6.66; AGER chr6:32183666 C (lowers FEV1/FVC)
+        -5.60; so weights are per-allele effects on FEV1/FVC.'
+    review_reason: catalog COPD OR 1.63 per SD contradicts higher = better lung function
+    status: agent_proposed
+    notes: Higher = higher FEV1/FVC (better lung function), from the weight signs, the catalog beta +0.28/SD on
+      FEV1/FVC and 1000G EUR r=+0.63 with PGS002545, +0.51 with PGS001180. The paper reports COPD OR 1.63 "per s.d.
+      of GRS increase" and never states which allele was counted; that OR is only consistent if the paper re-oriented
+      the GRS to lower FEV1/FVC for the COPD test. Catalog COPD ORs for these scores therefore point the wrong way;
+      check Supplementary Tables 20-23.
+  PGS003863:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (AFR-specific MR-MEGA weights)
+      coding: null
+    polarity: 1
+    strata:
+      ancestry: AFR
+    provenance:
+    - source: full_text
+      locator: Results > Multi-ancestry GRS for FEV1/FVC and COPD
+      quote: We built multi-ancestry and ancestry-specific GRSs weighted by FEV 1 /FVC effect sizes and tested association
+        with FEV 1 /FVC and COPD (GOLD stage 2–4)
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung function (FEV1/FVC)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'EUR weights: chr6:142367832 A (lowers FEV1/FVC in GCST007431) -6.66; AGER chr6:32183666 C (lowers FEV1/FVC)
+        -5.60; so weights are per-allele effects on FEV1/FVC.'
+    review_reason: catalog COPD OR 1.63 per SD contradicts higher = better lung function
+    status: agent_proposed
+    notes: Higher = higher FEV1/FVC (better lung function), from the weight signs, the catalog beta +0.28/SD on
+      FEV1/FVC and 1000G EUR r=+0.38 with PGS003862. The paper reports COPD OR 1.63 "per s.d. of GRS increase" and
+      never states which allele was counted; that OR is only consistent if the paper re-oriented the GRS to lower
+      FEV1/FVC for the COPD test. Catalog COPD ORs for these scores therefore point the wrong way; check Supplementary
+      Tables 20-23.
+  PGS003864:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (AMR-specific MR-MEGA weights)
+      coding: null
+    polarity: 1
+    strata:
+      ancestry: AMR
+    provenance:
+    - source: full_text
+      locator: Results > Multi-ancestry GRS for FEV1/FVC and COPD
+      quote: We built multi-ancestry and ancestry-specific GRSs weighted by FEV 1 /FVC effect sizes and tested association
+        with FEV 1 /FVC and COPD (GOLD stage 2–4)
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung function (FEV1/FVC)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'EUR weights: chr6:142367832 A (lowers FEV1/FVC in GCST007431) -6.66; AGER chr6:32183666 C (lowers FEV1/FVC)
+        -5.60; so weights are per-allele effects on FEV1/FVC.'
+    review_reason: catalog COPD OR 1.63 per SD contradicts higher = better lung function
+    status: agent_proposed
+    notes: Higher = higher FEV1/FVC (better lung function), from the weight signs, the catalog beta +0.28/SD on
+      FEV1/FVC and 1000G EUR r=+0.86 with PGS003862. The paper reports COPD OR 1.63 "per s.d. of GRS increase" and
+      never states which allele was counted; that OR is only consistent if the paper re-oriented the GRS to lower
+      FEV1/FVC for the COPD test. Catalog COPD ORs for these scores therefore point the wrong way; check Supplementary
+      Tables 20-23.
+  PGS003865:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (EAS-specific MR-MEGA weights)
+      coding: null
+    polarity: 1
+    strata:
+      ancestry: EAS
+    provenance:
+    - source: full_text
+      locator: Results > Multi-ancestry GRS for FEV1/FVC and COPD
+      quote: We built multi-ancestry and ancestry-specific GRSs weighted by FEV 1 /FVC effect sizes and tested association
+        with FEV 1 /FVC and COPD (GOLD stage 2–4)
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung function (FEV1/FVC)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'EUR weights: chr6:142367832 A (lowers FEV1/FVC in GCST007431) -6.66; AGER chr6:32183666 C (lowers FEV1/FVC)
+        -5.60; so weights are per-allele effects on FEV1/FVC.'
+    review_reason: catalog COPD OR 1.63 per SD contradicts higher = better lung function
+    status: agent_proposed
+    notes: Higher = higher FEV1/FVC (better lung function), from the weight signs, the catalog beta +0.28/SD on
+      FEV1/FVC and 1000G EUR r=+0.57 with PGS003862. The paper reports COPD OR 1.63 "per s.d. of GRS increase" and
+      never states which allele was counted; that OR is only consistent if the paper re-oriented the GRS to lower
+      FEV1/FVC for the COPD test. Catalog COPD ORs for these scores therefore point the wrong way; check Supplementary
+      Tables 20-23.
+paper:
+  pmid: '36914875'
+  doi: 10.1038/s41588-023-01314-0
+  title: Multi-ancestry genome-wide association analyses improve resolution of genes and pathways influencing lung
+    function and chronic obstructive pulmonary disease risk.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

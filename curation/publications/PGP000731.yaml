@@ -1,0 +1,123 @@
+pgp_id: PGP000731
+scores:
+  PGS005211:
+    cluster: substance_use.alcohol_consumption
+    phenotype: alcohol_quantity
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: AUDIT-C alcohol consumption score
+      coding: 'AUDIT-C: 3 consumption items, higher = more drinking'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alcohol use disorder (3-item consumption index)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Despite the catalog label, the 3-item AUDIT-C index measures
+      consumption, so it sits in alcohol_consumption. Corroborated by 1000G EUR r = +0.29 with PGS002752 and +0.28
+      with PGS000203 (drinks per week); catalog beta 0.12 has no CI.
+  PGS005212:
+    cluster: substance_use.alcohol_use_disorder
+    phenotype: problematic_alcohol_use
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: AUDIT-P problematic alcohol use score
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alcohol use disorder (7-item problematic use index)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Corroborated by 1000G EUR r = +0.77 with PGS000201 and +0.74
+      with PGS000202 (problematic alcohol use); catalog beta 0.07 has no CI.
+  PGS005213:
+    cluster: substance_use.alcohol_use_disorder
+    phenotype: alcohol_use_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of DSM-5 alcohol use disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: alcohol_use_disorder
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alcohol use disorder by DSM-V
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Corroborated by 1000G EUR r = +0.59 with PGS002738 (AUD); catalog
+      beta 0.03 against DSM-5 AUD symptom count has no CI.
+  PGS005214:
+    cluster: substance_use.alcohol_use_disorder
+    phenotype: problematic_alcohol_use
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: liability to problematic alcohol use
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Problematic alcohol use
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Corroborated by 1000G EUR r = +0.75 with PGS000201 and +0.79
+      with PGS000202; catalog beta 0.06 on the AUDIT-P index has no CI.
+  PGS005216:
+    cluster: substance_use.alcohol_consumption
+    phenotype: alcohol_quantity
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: alcoholic drinks per week
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Drinks per week
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'top-2000 shared variants: 100% sign agreement with PGS000203'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Corroborated by 1000G EUR r = +0.82 with PGS002752 and +0.83
+      with PGS000203; catalog beta 0.13 on BMI-adjusted drinks per week has no CI.
+paper:
+  pmid: '38261344'
+  doi: 10.1093/alcalc/agad093
+  title: A high-resolution PheWAS approach to alcohol-related polygenic risk scores reveals mechanistic influences
+    of alcohol reinforcing value and drinking motives.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

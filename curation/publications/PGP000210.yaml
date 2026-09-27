@@ -1,0 +1,105 @@
+pgp_id: PGP000210
+scores:
+  PGS000824:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 5 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.79 with already-annotated PGS004936.
+  PGS000826:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 2 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.87 with already-annotated PGS000847.
+  PGS000831:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '5 of 5 reference lead SNPs carry the cholesterol-raising sign: rs11591147 T -0.334; rs1367117 A +0.0995;
+        rs12916 C +0.0684; rs6511720 T -0.185; rs7412 T -0.374'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.77 with already-annotated PGS003135.
+  PGS000829:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI) (male)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.61 with catalog-annotated PGS004050 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.28.
+  PGS000830:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI) (female)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.66 with catalog-annotated PGS004104 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.24.
+paper:
+  pmid: '31048771'
+  doi: 10.1038/s41598-019-43058-0
+  title: Genetic Predisposition Impacts Clinical Changes in a Lifestyle Coaching Program.

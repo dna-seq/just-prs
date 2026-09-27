@@ -1,0 +1,76 @@
+pgp_id: PGP000502
+scores:
+  PGS003895:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Standing height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.93 with PGS001229 (annotated, same phenotype).
+  PGS003896:
+    cluster: anthropometry.height
+    phenotype: sitting_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: sitting height
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Sitting height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.90 with PGS000969 (annotated, same phenotype).
+  PGS003897:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.85 with catalog-annotated PGS001228 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.42.
+paper:
+  pmid: '37890495'
+  doi: 10.1016/j.ajhg.2023.09.013
+  title: 'Power of inclusion: Enhancing polygenic prediction with admixed individuals'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

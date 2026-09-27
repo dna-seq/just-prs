@@ -1,0 +1,546 @@
+slug: kidney-function
+query: kidney function (eGFR, creatinine, cystatin C) and chronic kidney disease
+match:
+  terms:
+  - CKD
+  - GFR change measurement
+  - chronic kidney disease
+  - creatine level
+  - creatinine
+  - cystatin C
+  - eGFR
+  - glomerular filtration rate
+  - kidney failure
+  - renal failure
+  - serum creatinine amount
+  efo_ids: []
+  exclude: []
+anchor: PGS002810
+status: needs_review
+concepts:
+- kidney.kidney_function
+- kidney.chronic_kidney_disease
+scores:
+  PGS000303:
+    decision: in_scope
+    note: null
+  PGS000664:
+    decision: in_scope
+    note: null
+  PGS000678:
+    decision: in_scope
+    note: null
+  PGS000679:
+    decision: out_of_scope
+    note: urine creatinine concentration; not a filtration marker
+  PGS000680:
+    decision: in_scope
+    note: null
+  PGS000682:
+    decision: in_scope
+    note: null
+  PGS000708:
+    decision: in_scope
+    note: null
+  PGS000728:
+    decision: in_scope
+    note: null
+  PGS000822:
+    decision: out_of_scope
+    note: 'urine albumin-to-creatinine ratio (albuminuria): later batch'
+  PGS000859:
+    decision: in_scope
+    note: null
+  PGS000860:
+    decision: in_scope
+    note: null
+  PGS000861:
+    decision: out_of_scope
+    note: 'urine albumin-to-creatinine ratio (albuminuria): later batch'
+  PGS000883:
+    decision: in_scope
+    note: null
+  PGS000884:
+    decision: in_scope
+    note: null
+  PGS000885:
+    decision: in_scope
+    note: null
+  PGS001107:
+    decision: out_of_scope
+    note: 'UACR > 30 mg/g (albuminuria): later batch'
+  PGS001272:
+    decision: in_scope
+    note: null
+  PGS001944:
+    decision: out_of_scope
+    note: urine creatinine concentration; not a filtration marker
+  PGS001945:
+    decision: in_scope
+    note: null
+  PGS001947:
+    decision: in_scope
+    note: null
+  PGS002162:
+    decision: out_of_scope
+    note: urine creatinine concentration; not a filtration marker
+  PGS002163:
+    decision: in_scope
+    note: null
+  PGS002165:
+    decision: in_scope
+    note: null
+  PGS002237:
+    decision: in_scope
+    note: null
+  PGS002757:
+    decision: in_scope
+    note: null
+  PGS002810:
+    decision: in_scope
+    note: null
+  PGS003219:
+    decision: in_scope
+    note: null
+  PGS003220:
+    decision: in_scope
+    note: null
+  PGS003221:
+    decision: in_scope
+    note: null
+  PGS003222:
+    decision: in_scope
+    note: null
+  PGS003223:
+    decision: in_scope
+    note: null
+  PGS003224:
+    decision: in_scope
+    note: null
+  PGS003225:
+    decision: in_scope
+    note: null
+  PGS003226:
+    decision: in_scope
+    note: null
+  PGS003227:
+    decision: in_scope
+    note: null
+  PGS003228:
+    decision: in_scope
+    note: null
+  PGS003229:
+    decision: out_of_scope
+    note: urine creatinine concentration (UKB 30510); reflects urine dilution and muscle mass, not filtration
+  PGS003230:
+    decision: out_of_scope
+    note: urine creatinine concentration (UKB 30510); reflects urine dilution and muscle mass, not filtration
+  PGS003231:
+    decision: out_of_scope
+    note: urine creatinine concentration (UKB 30510); reflects urine dilution and muscle mass, not filtration
+  PGS003232:
+    decision: out_of_scope
+    note: urine creatinine concentration (UKB 30510); reflects urine dilution and muscle mass, not filtration
+  PGS003233:
+    decision: out_of_scope
+    note: urine creatinine concentration (UKB 30510); reflects urine dilution and muscle mass, not filtration
+  PGS003234:
+    decision: out_of_scope
+    note: urine creatinine concentration (UKB 30510); reflects urine dilution and muscle mass, not filtration
+  PGS003235:
+    decision: out_of_scope
+    note: urine creatinine concentration (UKB 30510); reflects urine dilution and muscle mass, not filtration
+  PGS003236:
+    decision: out_of_scope
+    note: urine creatinine concentration (UKB 30510); reflects urine dilution and muscle mass, not filtration
+  PGS003237:
+    decision: out_of_scope
+    note: urine creatinine concentration (UKB 30510); reflects urine dilution and muscle mass, not filtration
+  PGS003238:
+    decision: out_of_scope
+    note: urine creatinine concentration (UKB 30510); reflects urine dilution and muscle mass, not filtration
+  PGS003239:
+    decision: in_scope
+    note: null
+  PGS003240:
+    decision: in_scope
+    note: null
+  PGS003241:
+    decision: in_scope
+    note: null
+  PGS003242:
+    decision: in_scope
+    note: null
+  PGS003243:
+    decision: in_scope
+    note: null
+  PGS003244:
+    decision: in_scope
+    note: null
+  PGS003245:
+    decision: in_scope
+    note: null
+  PGS003246:
+    decision: in_scope
+    note: null
+  PGS003247:
+    decision: in_scope
+    note: null
+  PGS003248:
+    decision: in_scope
+    note: null
+  PGS003249:
+    decision: in_scope
+    note: null
+  PGS003250:
+    decision: in_scope
+    note: null
+  PGS003251:
+    decision: in_scope
+    note: null
+  PGS003252:
+    decision: in_scope
+    note: null
+  PGS003253:
+    decision: in_scope
+    note: null
+  PGS003254:
+    decision: in_scope
+    note: null
+  PGS003255:
+    decision: in_scope
+    note: null
+  PGS003256:
+    decision: in_scope
+    note: null
+  PGS003257:
+    decision: in_scope
+    note: null
+  PGS003258:
+    decision: in_scope
+    note: null
+  PGS003259:
+    decision: in_scope
+    note: null
+  PGS003260:
+    decision: in_scope
+    note: null
+  PGS003261:
+    decision: in_scope
+    note: null
+  PGS003262:
+    decision: in_scope
+    note: null
+  PGS003263:
+    decision: in_scope
+    note: null
+  PGS003264:
+    decision: in_scope
+    note: null
+  PGS003265:
+    decision: in_scope
+    note: null
+  PGS003266:
+    decision: in_scope
+    note: null
+  PGS003267:
+    decision: in_scope
+    note: null
+  PGS003268:
+    decision: in_scope
+    note: null
+  PGS003269:
+    decision: in_scope
+    note: null
+  PGS003270:
+    decision: in_scope
+    note: null
+  PGS003271:
+    decision: in_scope
+    note: null
+  PGS003272:
+    decision: in_scope
+    note: null
+  PGS003273:
+    decision: in_scope
+    note: null
+  PGS003274:
+    decision: in_scope
+    note: null
+  PGS003275:
+    decision: in_scope
+    note: null
+  PGS003276:
+    decision: in_scope
+    note: null
+  PGS003277:
+    decision: in_scope
+    note: null
+  PGS003278:
+    decision: in_scope
+    note: null
+  PGS003279:
+    decision: in_scope
+    note: null
+  PGS003280:
+    decision: in_scope
+    note: null
+  PGS003281:
+    decision: in_scope
+    note: null
+  PGS003282:
+    decision: in_scope
+    note: null
+  PGS003283:
+    decision: in_scope
+    note: null
+  PGS003284:
+    decision: in_scope
+    note: null
+  PGS003285:
+    decision: in_scope
+    note: null
+  PGS003286:
+    decision: in_scope
+    note: null
+  PGS003287:
+    decision: in_scope
+    note: null
+  PGS003288:
+    decision: in_scope
+    note: null
+  PGS003289:
+    decision: in_scope
+    note: null
+  PGS003290:
+    decision: in_scope
+    note: null
+  PGS003291:
+    decision: in_scope
+    note: null
+  PGS003292:
+    decision: in_scope
+    note: null
+  PGS003293:
+    decision: in_scope
+    note: null
+  PGS003294:
+    decision: in_scope
+    note: null
+  PGS003295:
+    decision: in_scope
+    note: null
+  PGS003296:
+    decision: in_scope
+    note: null
+  PGS003297:
+    decision: in_scope
+    note: null
+  PGS003298:
+    decision: in_scope
+    note: null
+  PGS003299:
+    decision: in_scope
+    note: null
+  PGS003300:
+    decision: in_scope
+    note: null
+  PGS003301:
+    decision: in_scope
+    note: null
+  PGS003302:
+    decision: in_scope
+    note: null
+  PGS003303:
+    decision: in_scope
+    note: null
+  PGS003304:
+    decision: in_scope
+    note: null
+  PGS003305:
+    decision: in_scope
+    note: null
+  PGS003306:
+    decision: in_scope
+    note: null
+  PGS003307:
+    decision: in_scope
+    note: null
+  PGS003308:
+    decision: in_scope
+    note: null
+  PGS003309:
+    decision: in_scope
+    note: null
+  PGS003310:
+    decision: in_scope
+    note: null
+  PGS003311:
+    decision: in_scope
+    note: null
+  PGS003312:
+    decision: in_scope
+    note: null
+  PGS003313:
+    decision: in_scope
+    note: null
+  PGS003314:
+    decision: in_scope
+    note: null
+  PGS003315:
+    decision: in_scope
+    note: null
+  PGS003316:
+    decision: in_scope
+    note: null
+  PGS003317:
+    decision: in_scope
+    note: null
+  PGS003318:
+    decision: in_scope
+    note: null
+  PGS003377:
+    decision: in_scope
+    note: null
+  PGS003526:
+    decision: in_scope
+    note: null
+  PGS003528:
+    decision: in_scope
+    note: null
+  PGS003589:
+    decision: out_of_scope
+    note: cystatin C production (non-GFR determinant of cystatin C), not a filtration marker
+  PGS003590:
+    decision: out_of_scope
+    note: cystatin C production (non-GFR determinant of cystatin C), not a filtration marker
+  PGS003988:
+    decision: in_scope
+    note: null
+  PGS003989:
+    decision: in_scope
+    note: null
+  PGS004004:
+    decision: in_scope
+    note: null
+  PGS004005:
+    decision: in_scope
+    note: null
+  PGS004016:
+    decision: in_scope
+    note: null
+  PGS004017:
+    decision: in_scope
+    note: null
+  PGS004030:
+    decision: in_scope
+    note: null
+  PGS004031:
+    decision: in_scope
+    note: null
+  PGS004045:
+    decision: in_scope
+    note: null
+  PGS004046:
+    decision: in_scope
+    note: null
+  PGS004058:
+    decision: in_scope
+    note: null
+  PGS004059:
+    decision: in_scope
+    note: null
+  PGS004074:
+    decision: in_scope
+    note: null
+  PGS004075:
+    decision: in_scope
+    note: null
+  PGS004088:
+    decision: in_scope
+    note: null
+  PGS004089:
+    decision: in_scope
+    note: null
+  PGS004101:
+    decision: in_scope
+    note: null
+  PGS004112:
+    decision: in_scope
+    note: null
+  PGS004113:
+    decision: in_scope
+    note: null
+  PGS004128:
+    decision: in_scope
+    note: null
+  PGS004129:
+    decision: in_scope
+    note: null
+  PGS004142:
+    decision: in_scope
+    note: null
+  PGS004143:
+    decision: in_scope
+    note: null
+  PGS004158:
+    decision: in_scope
+    note: null
+  PGS004159:
+    decision: in_scope
+    note: null
+  PGS004224:
+    decision: in_scope
+    note: null
+  PGS004334:
+    decision: in_scope
+    note: null
+  PGS004491:
+    decision: out_of_scope
+    note: 'acute kidney injury (ICD-10 N17): a separate condition from CKD'
+  PGS004492:
+    decision: in_scope
+    note: null
+  PGS004561:
+    decision: out_of_scope
+    note: 'acute kidney injury (ICD-10 N17): a separate condition from CKD'
+  PGS004562:
+    decision: in_scope
+    note: null
+  PGS004747:
+    decision: in_scope
+    note: null
+  PGS004748:
+    decision: in_scope
+    note: null
+  PGS004749:
+    decision: in_scope
+    note: null
+  PGS004750:
+    decision: in_scope
+    note: null
+  PGS004889:
+    decision: in_scope
+    note: null
+  PGS004897:
+    decision: out_of_scope
+    note: 'urine albumin-to-creatinine ratio (albuminuria): later batch'
+  PGS005090:
+    decision: in_scope
+    note: null
+  PGS005113:
+    decision: in_scope
+    note: null
+  PGS005318:
+    decision: in_scope
+    note: null
+  PGS012543:
+    decision: in_scope
+    note: null
+summary: >-
+  eGFR, serum creatinine and cystatin C sit in kidney.kidney_function (eGFR +1, creatinine and cystatin C -1); CKD and
+  kidney failure in kidney.chronic_kidney_disease. 120 of 151 in-scope scores annotated (mostly catalog-only or the
+  ExPRSweb template), no aligned-correlation conflicts. ExPRSweb (PGP000393) is a method grid, not sign flips, except
+  the 20 scores built from the CKDGen 1000 Genomes eGFRcrea/eGFRcys files, which run the creatinine way and are left
+  unannotated. "Creatine" in the catalog means creatinine (UKB 30700 serum; 30510 is urine creatinine, out of scope).
+  PGS002757, PGS000883-885, PGS003377 await lookups; PGS005090 and PGS005318 unread.

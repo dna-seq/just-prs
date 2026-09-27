@@ -1,4 +1,3 @@
-# Trait hierarchy: domain -> concept -> phenotype (docs/curation-rules.md).
 version: 0
 domains:
   aging:
@@ -10,6 +9,12 @@ domains:
         valence: desirable
         valence_basis: Longer survival is the outcome people want.
         status: agent_proposed
+        aliases:
+        - longevity
+        - life expectancy
+        - life span
+        - mortality
+        - age at death
         phenotypes:
           longevity:
             label: Survival to old age / longer lifespan
@@ -29,10 +34,38 @@ domains:
         valence: undesirable
         valence_basis: Type 1 diabetes is a lifelong autoimmune disease requiring insulin.
         status: agent_proposed
+        aliases:
+        - T1D
+        - juvenile diabetes
+        - insulin-dependent diabetes
         phenotypes:
           type_1_diabetes:
             label: Type 1 (insulin-dependent) diabetes
             sign: 1
+      type_2_diabetes:
+        label: Type 2 diabetes
+        axis: higher risk of type 2 diabetes
+        valence: undesirable
+        valence_basis: Type 2 diabetes is a chronic metabolic disease with vascular, kidney and eye complications.
+        status: agent_proposed
+        aliases:
+        - adult-onset diabetes
+        - high blood sugar
+        - insulin resistance diabetes
+        - diabetes risk
+        phenotypes:
+          type_2_diabetes:
+            label: Type 2 (non-insulin-dependent) diabetes
+            sign: 1
+            aliases:
+            - incident type 2 diabetes
+            - early-onset type 2 diabetes
+          genetic_beta_cell_function:
+            label: Genetically determined beta cell function (insulin secretion)
+            sign: -1
+            aliases:
+            - insulin secretion
+            - beta cell function
   cognition:
     label: Cognition
     concepts:
@@ -43,6 +76,11 @@ domains:
         valence_basis: Test performance is a trait, not a health outcome; left uncolored to avoid ranking
           people.
         status: agent_proposed
+        aliases:
+        - intelligence
+        - IQ
+        - general cognitive ability
+        - reasoning
         phenotypes:
           fluid_intelligence:
             label: Fluid intelligence (reasoning test score)
@@ -53,3 +91,583 @@ domains:
           executive_function:
             label: Common executive function
             sign: 1
+  pigmentation:
+    label: Pigmentation and appearance
+    concepts:
+      skin_tanning:
+        label: Skin tanning ability
+        axis: tans more easily
+        valence: neutral
+        valence_basis: Appearance trait; poor tanning raises skin-cancer risk, but that is a separate
+          concept.
+        status: agent_proposed
+        aliases:
+        - tanning
+        - suntan
+        - sunburn
+        - burns easily
+        - skin type
+        phenotypes:
+          tanning_ability:
+            label: Overall ease of tanning (ordinal UKB 1727 treated as a scale)
+            sign: 1
+          tan_very:
+            label: Gets very tanned (UKB 1727 answer 1)
+            sign: 1
+          tan_moderate:
+            label: Gets moderately tanned (UKB 1727 answer 2)
+            sign: 1
+          tan_mild:
+            label: Gets mildly or occasionally tanned (UKB 1727 answer 3)
+            sign: -1
+          never_tan_only_burn:
+            label: Never tans, only burns (UKB 1727 answer 4)
+            sign: -1
+          childhood_sunburn:
+            label: Childhood sunburn occasions before age 15 (UKB 1737)
+            sign: -1
+      hair_color:
+        label: Hair color
+        axis: darker hair
+        valence: neutral
+        valence_basis: Appearance trait with no health ranking.
+        status: agent_proposed
+        aliases:
+        - hair colour
+        - blonde
+        - brunette
+        - dark hair
+        - light hair
+        phenotypes:
+          hair_darkness:
+            label: Natural hair darkness (ordinal scale)
+            sign: 1
+          black_hair:
+            label: Black natural hair (UKB 1747 = 5)
+            sign: 1
+          dark_brown_hair:
+            label: Dark brown natural hair (UKB 1747 = 4)
+            sign: 1
+          brown_hair:
+            label: Brown natural hair (GBE grouping of UKB 1747)
+            sign: 1
+          light_brown_hair:
+            label: Light brown natural hair (UKB 1747 = 3)
+            sign: -1
+          blonde_hair:
+            label: Blonde natural hair (UKB 1747 = 1)
+            sign: -1
+      red_hair:
+        label: Red hair
+        axis: red hair
+        valence: neutral
+        valence_basis: Appearance trait with no health ranking.
+        status: agent_proposed
+        aliases:
+        - ginger hair
+        - redhead
+        - red hair colour
+        phenotypes:
+          red_hair:
+            label: Red natural hair (UKB 1747 = 2)
+            sign: 1
+  lifestyle:
+    label: Lifestyle and behavior
+    concepts:
+      sun_exposure:
+        label: Sun exposure and protection
+        axis: more sun exposure
+        valence: context_dependent
+        valence_basis: More UV exposure raises skin-cancer risk but also vitamin D; sun protection is
+          the reverse side of the same axis.
+        status: agent_proposed
+        aliases:
+        - sunscreen
+        - sun protection
+        - time outdoors
+        - UV exposure
+        phenotypes:
+          sun_protection_use:
+            label: Use of sun/UV protection (ordinal UKB 2267 treated as a scale, more protection)
+            sign: -1
+          sun_protection_never_rarely:
+            label: Never or rarely uses sun protection (UKB 2267 answer 1)
+            sign: 1
+          sun_protection_sometimes:
+            label: Sometimes uses sun protection (UKB 2267 answer 2)
+            sign: 1
+          sun_protection_always:
+            label: Always uses sun protection (UKB 2267 answer 4)
+            sign: -1
+          time_outdoors_summer:
+            label: Hours per day spent outdoors in summer (UKB 1050)
+            sign: 1
+          time_outdoors_winter:
+            label: Hours per day spent outdoors in winter (UKB 1060)
+            sign: 1
+  substance_use:
+    label: Substance use
+    concepts:
+      smoking:
+        label: Smoking
+        axis: more smoking
+        valence: undesirable
+        valence_basis: Smoking is the leading preventable cause of disease and death.
+        status: agent_proposed
+        aliases:
+        - tobacco
+        - cigarettes
+        - smoker
+        - never smoker
+        - quitting smoking
+        phenotypes:
+          ever_smoked:
+            label: Ever smoked (ever vs never; includes smoking initiation = ever a regular smoker)
+            sign: 1
+          never_smoker:
+            label: Never smoked (never smokers are the cases)
+            sign: -1
+          smoking_status:
+            label: Smoking status (ever/never or never/previous/current; exact coding not stated)
+            sign: 1
+          previous_smoker:
+            label: Former smoker vs everyone else (controls are mostly never smokers plus current smokers)
+            sign: 1
+          current_smoker:
+            label: Current smoker (vs everyone else)
+            sign: 1
+          cigarettes_per_day:
+            label: Cigarettes smoked per day
+            sign: 1
+          difficulty_abstaining:
+            label: 'Difficulty going without smoking for a day (UKB 3476: 1 very easy to 4 very difficult)'
+            sign: 1
+          time_to_first_cigarette:
+            label: Time from waking to first cigarette (longer time = lighter dependence)
+            sign: -1
+          age_stopped_smoking:
+            label: Age stopped smoking (later quitting = longer smoking career)
+            sign: 1
+          age_at_smoking_initiation:
+            label: Age at starting regular smoking (later start = less smoking)
+            sign: -1
+      alcohol_consumption:
+        label: Alcohol consumption
+        axis: more alcohol drinking
+        valence: undesirable
+        valence_basis: Alcohol harm rises with the amount consumed.
+        status: agent_proposed
+        aliases:
+        - drinking
+        - alcohol intake
+        - drinks per week
+        phenotypes:
+          alcohol_quantity:
+            label: Amount of alcohol drunk (drinks per week, grams, typical-day amount, AUDIT-C)
+            sign: 1
+          alcohol_intake_frequency:
+            label: How often alcohol is drunk
+            sign: 1
+          current_drinker:
+            label: Being a current drinker rather than a never or former drinker
+            sign: 1
+          drinking_more_than_before:
+            label: Drinking more now than 10 years ago
+            sign: 1
+      alcohol_use_disorder:
+        label: Alcohol use disorder
+        axis: higher risk of problematic alcohol use
+        valence: undesirable
+        valence_basis: Alcohol dependence and problematic use are clinical disorders.
+        status: agent_proposed
+        aliases:
+        - alcoholism
+        - alcohol dependence
+        - problem drinking
+        - alcohol addiction
+        phenotypes:
+          alcohol_use_disorder:
+            label: Alcohol use disorder or dependence (DSM diagnosis or criterion count, ICD-10 F10)
+            sign: 1
+          problematic_alcohol_use:
+            label: Problematic alcohol use (AUDIT-P problems score, PAU meta-analysis phenotype)
+            sign: 1
+      nicotine_dependence:
+        label: Nicotine dependence (tobacco use disorder)
+        axis: more nicotine dependence
+        valence: undesirable
+        valence_basis: Tobacco use disorder is a diagnosed addiction that drives continued smoking and
+          its harms.
+        status: agent_proposed
+        aliases:
+        - nicotine addiction
+        - tobacco use disorder
+        phenotypes:
+          tobacco_use_disorder:
+            label: Tobacco use disorder / ICD-10 F17 / nicotine dependence diagnosis
+            sign: 1
+  sleep:
+    label: Sleep
+    concepts:
+      chronotype:
+        label: Chronotype (morning vs evening person)
+        axis: more of a morning person
+        valence: neutral
+        valence_basis: A circadian preference, not a health outcome.
+        status: agent_proposed
+        aliases:
+        - morning person
+        - evening person
+        - night owl
+        - early bird
+        - lark
+        phenotypes:
+          morningness:
+            label: Morning person (morning chronotype)
+            sign: 1
+          eveningness:
+            label: Evening person (evening chronotype)
+            sign: -1
+          ease_getting_up:
+            label: Ease of getting up in the morning
+            sign: 1
+  kidney:
+    label: Kidney
+    concepts:
+      kidney_function:
+        label: Kidney function
+        axis: better kidney filtration (higher eGFR)
+        valence: desirable
+        valence_basis: Higher filtration means healthier kidneys.
+        status: agent_proposed
+        aliases:
+        - eGFR
+        - renal function
+        - kidney filtration
+        - creatinine
+        - cystatin C
+        phenotypes:
+          egfr:
+            label: Estimated glomerular filtration rate (eGFR)
+            sign: 1
+          serum_creatinine:
+            label: Serum creatinine (higher = lower filtration)
+            sign: -1
+          cystatin_c:
+            label: Serum cystatin C (higher = lower filtration)
+            sign: -1
+      chronic_kidney_disease:
+        label: Chronic kidney disease
+        axis: higher risk of chronic kidney disease
+        valence: undesirable
+        valence_basis: CKD is progressive loss of kidney function.
+        status: agent_proposed
+        aliases:
+        - CKD
+        - kidney disease
+        - renal failure
+        - kidney failure
+        phenotypes:
+          chronic_kidney_disease:
+            label: Chronic kidney disease (incl. stage 3+, ICD-10 N18, CKD or dialysis)
+            sign: 1
+          kidney_failure:
+            label: Kidney failure / end-stage kidney disease
+            sign: 1
+  respiratory:
+    label: Respiratory
+    concepts:
+      lung_function:
+        label: Lung function
+        axis: better lung function
+        valence: desirable
+        valence_basis: Higher spirometry values mean better breathing capacity.
+        status: agent_proposed
+        aliases:
+        - spirometry
+        - FEV1
+        - FVC
+        - breathing capacity
+        - peak flow
+        phenotypes:
+          fev1:
+            label: Forced expiratory volume in 1 second (FEV1)
+            sign: 1
+          fvc:
+            label: Forced vital capacity (FVC)
+            sign: 1
+          fev1_fvc_ratio:
+            label: FEV1/FVC ratio (low ratio = airflow obstruction)
+            sign: 1
+          pef:
+            label: Peak expiratory flow (PEF)
+            sign: 1
+          fev1_percent_predicted:
+            label: FEV1 as a percentage of the value predicted for age, sex and height
+            sign: 1
+          pef_percent_predicted:
+            label: PEF relative to the predicted value
+            sign: 1
+      copd:
+        label: Chronic obstructive pulmonary disease (COPD)
+        axis: higher risk of COPD
+        valence: undesirable
+        valence_basis: COPD is a progressive lung disease.
+        status: agent_proposed
+        aliases:
+        - COPD
+        - emphysema
+        - chronic bronchitis
+        - airway obstruction
+        phenotypes:
+          copd:
+            label: COPD or chronic airway obstruction (diagnosis)
+            sign: 1
+          emphysema:
+            label: Emphysema (diagnosis)
+            sign: 1
+          family_history_copd:
+            label: Parent or sibling with chronic bronchitis or emphysema
+            sign: 1
+      asthma:
+        label: Asthma
+        axis: higher risk of asthma
+        valence: undesirable
+        valence_basis: Asthma is a chronic inflammatory airway disease that limits breathing.
+        status: agent_proposed
+        aliases:
+        - asthmatic
+        - wheezing
+        - allergic asthma
+        - bronchial asthma
+        - no asthma
+        phenotypes:
+          asthma:
+            label: Asthma (any age; self-reported, doctor-diagnosed, ICD-10 J45 or incident)
+            sign: 1
+            aliases:
+            - adult-onset asthma
+            - doctor-diagnosed asthma
+          childhood_asthma:
+            label: Childhood-onset asthma
+            sign: 1
+            aliases:
+            - pediatric asthma
+            - asthma in children
+          allergic_disease:
+            label: Allergic disease (asthma, hay fever or eczema combined)
+            sign: 1
+            aliases:
+            - atopy
+            - allergies
+            - hay fever and eczema
+      asthma_onset_age:
+        label: Age at asthma diagnosis
+        axis: later age at asthma diagnosis
+        valence: context_dependent
+        valence_basis: Only defined for people who have asthma; earlier onset is typical of allergic childhood
+          asthma, later onset of often more severe adult-onset asthma, so neither end is simply better.
+        status: agent_proposed
+        aliases:
+        - asthma age of onset
+        - when did asthma start
+        - early-onset asthma
+        - late-onset asthma
+        phenotypes:
+          age_asthma_diagnosed:
+            label: Age (years) when asthma was first diagnosed (UK Biobank field 3786)
+            sign: 1
+  lipids:
+    label: Blood lipids
+    concepts:
+      ldl_cholesterol:
+        label: LDL cholesterol
+        axis: higher LDL cholesterol
+        valence: undesirable
+        valence_basis: Higher LDL cholesterol causes atherosclerosis and coronary disease. Non-HDL cholesterol
+          and apolipoprotein B are phenotypes here, not sibling concepts, because they measure the same
+          atherogenic apoB-containing lipoproteins, correlate about 0.9 with LDL-C, and share its axis
+          and valence.
+        status: agent_proposed
+        aliases:
+        - LDL
+        - bad cholesterol
+        - LDL-C
+        - apoB
+        - non-HDL cholesterol
+        phenotypes:
+          ldl_cholesterol:
+            label: LDL cholesterol level (incl. statin-adjusted and direct LDL)
+            sign: 1
+          non_hdl_cholesterol:
+            label: Non-HDL cholesterol level
+            sign: 1
+          apolipoprotein_b:
+            label: Apolipoprotein B level
+            sign: 1
+      triglycerides:
+        label: Triglycerides
+        axis: higher triglycerides
+        valence: undesirable
+        valence_basis: Higher fasting or non-fasting triglycerides mark triglyceride-rich lipoproteins
+          that raise coronary disease and, at very high levels, pancreatitis risk. A separate concept
+          from LDL cholesterol because it is a distinct lab value people ask about by name.
+        status: agent_proposed
+        aliases:
+        - TG
+        - blood fats
+        - serum triglycerides
+        - high triglycerides
+        - hypertriglyceridemia
+        phenotypes:
+          triglycerides:
+            label: Triglyceride level (incl. log-transformed)
+            sign: 1
+      total_cholesterol:
+        label: Total cholesterol
+        axis: higher total cholesterol
+        valence: undesirable
+        valence_basis: Higher total cholesterol, mostly carried in LDL, raises the risk of atherosclerosis
+          and coronary disease. Kept apart from LDL cholesterol because total cholesterol also counts
+          HDL, so the two are different lab values a person reads separately. Diagnosed or self-reported
+          high cholesterol (hypercholesterolemia) is a phenotype here because it is defined by the same
+          measurement.
+        status: agent_proposed
+        aliases:
+        - TC
+        - serum cholesterol
+        - high cholesterol
+        - blood cholesterol
+        - hypercholesterolemia
+        phenotypes:
+          total_cholesterol:
+            label: Total cholesterol level (incl. statin-adjusted)
+            sign: 1
+          hypercholesterolemia:
+            label: High cholesterol / hypercholesterolemia (diagnosis or self-report)
+            sign: 1
+            aliases:
+            - diagnosed high cholesterol
+  cardiovascular:
+    label: Heart and blood vessels
+    concepts:
+      blood_pressure:
+        label: Blood pressure
+        axis: higher blood pressure
+        valence: undesirable
+        valence_basis: Higher blood pressure raises the risk of stroke, heart attack and kidney disease.
+        status: agent_proposed
+        aliases:
+        - high blood pressure
+        - hypertension
+        - SBP
+        - low blood pressure
+        - hypotension
+        phenotypes:
+          systolic_blood_pressure:
+            label: Systolic blood pressure (mmHg, incl. medication-adjusted and automated readings)
+            sign: 1
+            aliases:
+            - upper blood pressure number
+            - SBP
+          hypertension:
+            label: Hypertension (diagnosis or treated high blood pressure)
+            sign: 1
+      coronary_artery_disease:
+        label: Coronary artery disease and heart attack
+        axis: higher risk of coronary artery disease
+        valence: undesirable
+        valence_basis: Coronary artery disease narrows the heart's arteries and causes heart attacks;
+          myocardial infarction is a phenotype here, not a sibling concept, because it is the main clinical
+          event of the same disease and the scores correlate strongly in 1000G.
+        status: agent_proposed
+        aliases:
+        - heart attack
+        - CAD
+        - coronary heart disease
+        - ischemic heart disease
+        - heart disease risk
+        phenotypes:
+          coronary_artery_disease:
+            label: Coronary artery / coronary heart disease (incl. chronic ischaemic heart disease, ICD-10
+              I25)
+            sign: 1
+            aliases:
+            - CHD
+            - IHD
+            - blocked heart arteries
+          myocardial_infarction:
+            label: Myocardial infarction (heart attack; incl. acute MI I21, NSTEMI, PheCode 411.2)
+            sign: 1
+            aliases:
+            - heart attack
+            - MI
+            - STEMI
+            - NSTEMI
+  anthropometry:
+    label: Body size and shape
+    concepts:
+      height:
+        label: Body height
+        axis: taller
+        valence: neutral
+        valence_basis: Height is a normal physical trait; neither tall nor short is an outcome to want
+          in itself.
+        status: agent_proposed
+        aliases:
+        - how tall
+        - stature
+        - short stature
+        - tall
+        - short
+        phenotypes:
+          standing_height:
+            label: Standing height (adult)
+            sign: 1
+          sitting_height:
+            label: Sitting height (trunk and head length)
+            sign: 1
+            aliases:
+            - trunk length
+          childhood_comparative_height:
+            label: Self-reported height at age 10 compared with peers
+            sign: 1
+            aliases:
+            - tall as a child
+            - short as a child
+      adiposity:
+        label: Body mass index and adiposity
+        axis: higher body mass index (heavier for one's height)
+        valence: context_dependent
+        valence_basis: For most people a higher BMI means more obesity-related disease, but very low BMI
+          (underweight, thinness) also carries health risk, so the relationship is U-shaped.
+        status: agent_proposed
+        aliases:
+        - BMI
+        - weight
+        - overweight
+        - body fat
+        - being thin
+        phenotypes:
+          body_mass_index:
+            label: Body mass index (weight / height squared), continuous or in categories
+            sign: 1
+            aliases:
+            - body weight for height
+          obesity:
+            label: Obesity or overweight (BMI-based or diagnosed)
+            sign: 1
+            aliases:
+            - obese
+          thinness:
+            label: Thinness (low BMI)
+            sign: -1
+            aliases:
+            - underweight
+            - skinny
+          childhood_body_size:
+            label: Self-reported body size at age 10 compared with peers
+            sign: 1
+            aliases:
+            - childhood obesity
+            - body size as a child

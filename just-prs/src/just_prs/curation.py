@@ -16,7 +16,7 @@ import csv
 import html
 import json
 import re
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
@@ -149,6 +149,8 @@ class _Strict(BaseModel):
 class Phenotype(_Strict):
     label: str
     sign: int
+    #: Other names people search for (plain words, synonyms, opposite phrasings).
+    aliases: list[str] = Field(default_factory=list)
 
     @field_validator("sign")
     @classmethod
@@ -164,6 +166,8 @@ class Concept(_Strict):
     valence: Valence
     valence_basis: str
     status: AnnotationStatus = AnnotationStatus.AGENT_PROPOSED
+    #: Other names people search for; catalog labels of member scores are added at build time.
+    aliases: list[str] = Field(default_factory=list)
     phenotypes: dict[str, Phenotype]
 
 
@@ -219,6 +223,65 @@ class LeadVariantCheck(_Strict):
     note: str | None = None
 
 
+class CorrectionKind(StrEnum):
+    """What is wrong with the deposited scoring file relative to its paper."""
+
+    #: Every lead locus points the other way: the file behaves as the negated score (allele swap).
+    DEPOSIT_INVERTED = "deposit_inverted"
+    #: Some loci are opposite to known effects; no single sign repairs the file.
+    PARTIAL_ALLELE_INCONSISTENCY = "partial_allele_inconsistency"
+    #: Degenerate weights (near-constant, anti-correlated siblings): the file is not the published score.
+    BROKEN_WEIGHTS = "broken_weights"
+    #: The catalog's AUROC/OR/HR were measured on the authors' own score, not on this file.
+    METRIC_NOT_FROM_FILE = "metric_not_from_file"
+
+
+class CorrectionAction(StrEnum):
+    """What we did about it. Scoring weights are never edited: the file stays as distributed."""
+
+    #: Direction and polarity describe the file as distributed, not the paper's intent.
+    POLARITY_AS_DISTRIBUTED = "polarity_as_distributed"
+    #: Proposed: hide the score from search and percentiles (catalog_scoring_flags).
+    QUARANTINE = "quarantine"
+    #: Do not let the file borrow the paper's performance metrics for its quality tier.
+    DISCOUNT_METRICS = "discount_metrics"
+    #: Recorded for the future; nothing changes for users yet.
+    NONE = "none"
+
+
+class Correction(_Strict):
+    """A deliberate deviation from the paper or the catalog record, kept for audit and future users.
+
+    The scoring file is never modified. A correction records how we interpret it differently from
+    its paper (and why), so later readers can see that a ``decreases`` direction on a risk score is
+    intentional, re-check the evidence, and undo it once PGS Catalog fixes the deposit.
+    """
+
+    kind: CorrectionKind
+    action: CorrectionAction
+    #: What changes for someone scoring this file, in plain words.
+    effect: str = Field(min_length=10)
+    #: The direction the paper states, when it differs from the recorded (as-distributed) one.
+    paper_direction: Direction | None = None
+    #: The observations behind the call: lead-variant signs, 1000G correlations, metric provenance.
+    evidence: str = Field(min_length=10)
+    recorded: date
+    #: ``agent`` or ``human:<name>``.
+    by: str = Field(min_length=3)
+    #: Issue URL, e-mail date or ticket once the problem is reported to PGS Catalog.
+    upstream_report: str | None = None
+
+    @model_validator(mode="after")
+    def _consistent(self) -> Correction:
+        if self.kind == CorrectionKind.DEPOSIT_INVERTED and self.paper_direction is None:
+            raise ValueError("deposit_inverted needs paper_direction (what the paper says higher means)")
+        if self.action == CorrectionAction.POLARITY_AS_DISTRIBUTED and self.kind != CorrectionKind.DEPOSIT_INVERTED:
+            raise ValueError("polarity_as_distributed only repairs a whole-file inversion (deposit_inverted)")
+        if not (self.by == "agent" or self.by.startswith("human:")):
+            raise ValueError("by must be 'agent' or 'human:<name>'")
+        return self
+
+
 class ScoreAnnotation(_Strict):
     cluster: str | None = None
     phenotype: str | None = None
@@ -230,11 +293,25 @@ class ScoreAnnotation(_Strict):
     provenance: list[Provenance] = Field(default_factory=list)
     lead_variant_check: LeadVariantCheck = Field(default_factory=LeadVariantCheck)
     unannotated_reason: str | None = None
+    #: Set when the direction is recorded but a human should look before it is published.
+    review_reason: str | None = None
+    #: Deliberate deviations from the paper or catalog record (inverted deposit, broken file, …).
+    corrections: list[Correction] = Field(default_factory=list)
     status: AnnotationStatus = AnnotationStatus.AGENT_PROPOSED
     notes: str | None = None
 
     @model_validator(mode="after")
     def _complete(self) -> ScoreAnnotation:
+        for correction in self.corrections:
+            if correction.action != CorrectionAction.POLARITY_AS_DISTRIBUTED:
+                continue
+            if self.score_effect is None:
+                raise ValueError("polarity_as_distributed needs a recorded score_effect (the as-distributed direction)")
+            if self.score_effect.direction == correction.paper_direction:
+                raise ValueError(
+                    "polarity_as_distributed: score_effect.direction must describe the file, "
+                    "so it has to differ from paper_direction"
+                )
         if self.score_effect is None:
             if not self.unannotated_reason:
                 raise ValueError("score_effect is null: set unannotated_reason (never guess a direction)")
@@ -1065,12 +1142,123 @@ def _higher_percentile_means(ann: ScoreAnnotation) -> str | None:
     return f"higher score = {verb} {ann.score_effect.target}"
 
 
-def build_tables(root: Path, verified_only: bool = False) -> tuple[pl.DataFrame, pl.DataFrame, dict[str, object]]:
-    """Compile ``curation/`` into ``score_annotations`` and ``trait_clusters`` tables.
+def _source_links(pgs_id: str, pgp_id: str, paper: Paper) -> dict[str, str | None]:
+    """Where a reviewer can re-read the evidence: public URLs plus the cached raw files.
+
+    ``lookup_files_json`` lists file names under ``<cache>/annotation_lookups/<pgp_id>/`` on the
+    machine that built the table (downloaded sources are not published; the quotes are). Agent
+    output (``lookup*.json``) is excluded because it is never evidence.
+    """
+    pmid = str(paper.pmid) if paper.pmid is not None else None
+    lookup = _lookup_dir(pgp_id)
+    files = (
+        sorted(f.name for f in lookup.iterdir() if f.is_file() and not f.name.startswith("lookup"))
+        if lookup.is_dir()
+        else []
+    )
+    return {
+        "pgs_catalog_url": f"https://www.pgscatalog.org/score/{pgs_id}/",
+        "publication_url": f"https://www.pgscatalog.org/publication/{pgp_id}/",
+        "pubmed_url": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/" if pmid else None,
+        "europepmc_url": f"https://europepmc.org/article/MED/{pmid}" if pmid else None,
+        "doi_url": f"https://doi.org/{paper.doi}" if paper.doi else None,
+        "lookup_files_json": json.dumps(files),
+    }
+
+
+_REVIEW_LEAD_VARIANT = (LeadVariantStatus.DISAGREE, LeadVariantStatus.MIXED)
+
+
+def _review_reasons(ann: ScoreAnnotation, confidence: str | None) -> list[str]:
+    """Why a score entry goes to the review queue instead of the published table (empty = resolved).
+
+    A ``human_verified`` direction is always resolved. Otherwise an entry needs review when it has
+    no direction, carries an explicit ``review_reason``, rests only on low-confidence evidence, or
+    its lead variants disagree with the GWAS Catalog, or it carries a correction (a deliberate
+    deviation from the paper such as an inverted deposit) that no human has confirmed yet.
+    """
+    if ann.score_effect is None:
+        return [f"unannotated: {ann.unannotated_reason}"]
+    if ann.status == AnnotationStatus.HUMAN_VERIFIED:
+        return []
+    reasons = [ann.review_reason] if ann.review_reason else []
+    if confidence == Confidence.LOW.value:
+        reasons.append("low-confidence evidence only")
+    if ann.lead_variant_check.status in _REVIEW_LEAD_VARIANT:
+        reasons.append(f"lead variants {ann.lead_variant_check.status.value}")
+    reasons.extend(f"correction {c.kind.value} ({c.action.value})" for c in ann.corrections)
+    return reasons
+
+
+class CurationTables(BaseModel):
+    """One compiled build: published rows, the review queue, clusters, and search terms."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    annotations: pl.DataFrame
+    review: pl.DataFrame
+    clusters: pl.DataFrame
+    search_terms: pl.DataFrame
+    manifest: dict[str, object]
+
+
+def _search_terms(
+    clusters: ClusterFile, members: pl.DataFrame, catalog_scores: pl.DataFrame | None
+) -> pl.DataFrame:
+    """Every name a concept can be found by. Grain: ``(cluster, phenotype, term)``.
+
+    Merging scores into a concept must never hide them from search, so the catalog names of every
+    member score (ontology label and ID, reported trait, score name) stay attached as terms next to
+    the concept and phenotype labels and their curated aliases.
+    """
+    rows: list[dict[str, str | None]] = []
+
+    def add(cluster: str, phenotype: str | None, term: str | None, kind: str) -> None:
+        if term and term.strip():
+            rows.append({"cluster": cluster, "phenotype": phenotype, "term": term.strip(), "term_kind": kind})
+
+    for domain_key, domain in clusters.domains.items():
+        for concept_key, concept in domain.concepts.items():
+            cluster = f"{domain_key}.{concept_key}"
+            add(cluster, None, concept.label, "concept_label")
+            add(cluster, None, concept_key.replace("_", " "), "concept_key")
+            for alias in concept.aliases:
+                add(cluster, None, alias, "alias")
+            for phenotype_key, phenotype in concept.phenotypes.items():
+                add(cluster, phenotype_key, phenotype.label, "phenotype_label")
+                add(cluster, phenotype_key, phenotype_key.replace("_", " "), "phenotype_key")
+                for alias in phenotype.aliases:
+                    add(cluster, phenotype_key, alias, "alias")
+    if catalog_scores is not None and members.height:
+        joined = members.join(catalog_scores, on="pgs_id", how="inner")
+        for row in joined.iter_rows(named=True):
+            for column, kind in (
+                ("trait_efo", "catalog_trait"),
+                ("trait_efo_id", "ontology_id"),
+                ("trait_reported", "reported_trait"),
+                ("name", "score_name"),
+            ):
+                for part in str(row.get(column) or "").split("|"):
+                    add(row["cluster"], row["phenotype"], part, kind)
+    schema = {"cluster": pl.Utf8, "phenotype": pl.Utf8, "term": pl.Utf8, "term_kind": pl.Utf8}
+    terms = pl.DataFrame(rows, schema=schema).with_columns(pl.col("term").str.to_lowercase().alias("term_normalized"))
+    return terms.unique(subset=["cluster", "phenotype", "term_normalized"], keep="first", maintain_order=True).sort(
+        "cluster", "phenotype", "term_normalized", nulls_last=False
+    )
+
+
+def build_tables(
+    root: Path, verified_only: bool = False, catalog_scores: pl.DataFrame | None = None
+) -> CurationTables:
+    """Compile ``curation/`` into the published tables plus a review queue.
 
     Every publication file must parse and every annotated entry must point at an existing
     concept + phenotype with a consistent polarity; otherwise ``CurationBuildError``.
     ``rejected`` entries are never exported; ``verified_only`` also drops ``agent_proposed``.
+    Rows with a ``_review_reasons`` hit go to ``review`` (same columns plus ``review_reason``);
+    the rest are ``annotations``, the table that is published. ``catalog_scores`` (``pgs_id``,
+    ``name``, ``trait_reported``, ``trait_efo``, ``trait_efo_id``) adds catalog names to the
+    search terms; without it only curated labels and aliases are searchable.
     """
     clusters = _load_clusters(root)
     problems: list[str] = []
@@ -1104,6 +1292,10 @@ def build_tables(root: Path, verified_only: bool = False) -> tuple[pl.DataFrame,
                     continue
                 usage[(ann.cluster or "", ann.phenotype or "")] = usage.get((ann.cluster or "", ann.phenotype or ""), 0) + 1
             outcome = ann.evaluation_outcome
+            confidence = (
+                max((p.confidence for p in ann.provenance), key=_CONFIDENCE_RANK.get).value if ann.provenance else None
+            )
+            reasons = _review_reasons(ann, confidence)
             rows.append(
                 {
                     "pgs_id": pgs_id,
@@ -1127,16 +1319,18 @@ def build_tables(root: Path, verified_only: bool = False) -> tuple[pl.DataFrame,
                     "evaluation_outcome_phenotype": outcome.phenotype if outcome else None,
                     "expected_metric_sign": outcome.expected_metric_sign if outcome else None,
                     "strata_json": json.dumps(ann.strata, sort_keys=True),
-                    "confidence": max((p.confidence for p in ann.provenance), key=_CONFIDENCE_RANK.get).value
-                    if ann.provenance
-                    else None,
+                    "confidence": confidence,
                     "provenance_json": json.dumps([p.model_dump(mode="json") for p in ann.provenance], ensure_ascii=False),
                     "lead_variant_status": ann.lead_variant_check.status.value,
                     "lead_variant_note": ann.lead_variant_check.note,
+                    "corrections_json": json.dumps([c.model_dump(mode="json") for c in ann.corrections], ensure_ascii=False),
+                    "correction_kinds": ";".join(c.kind.value for c in ann.corrections) or None,
                     "unannotated_reason": ann.unannotated_reason,
+                    "review_reason": "; ".join(reasons) or None,
                     "notes": ann.notes,
                     "paper_pmid": str(pub.paper.pmid) if pub.paper.pmid is not None else None,
                     "paper_doi": pub.paper.doi,
+                    **_source_links(pgs_id, path.stem, pub.paper),
                 }
             )
     if problems:
@@ -1170,7 +1364,10 @@ def build_tables(root: Path, verified_only: bool = False) -> tuple[pl.DataFrame,
         "polarity": pl.Int8, "higher_percentile_means": pl.Utf8, "evaluation_outcome_phenotype": pl.Utf8,
         "expected_metric_sign": pl.Int8, "strata_json": pl.Utf8, "confidence": pl.Utf8,
         "provenance_json": pl.Utf8, "lead_variant_status": pl.Utf8, "lead_variant_note": pl.Utf8,
-        "unannotated_reason": pl.Utf8, "notes": pl.Utf8, "paper_pmid": pl.Utf8, "paper_doi": pl.Utf8,
+        "corrections_json": pl.Utf8, "correction_kinds": pl.Utf8,
+        "unannotated_reason": pl.Utf8, "review_reason": pl.Utf8, "notes": pl.Utf8, "paper_pmid": pl.Utf8,
+        "paper_doi": pl.Utf8, "pgs_catalog_url": pl.Utf8, "publication_url": pl.Utf8, "pubmed_url": pl.Utf8,
+        "europepmc_url": pl.Utf8, "doi_url": pl.Utf8, "lookup_files_json": pl.Utf8,
     }
     cluster_schema = {
         "cluster": pl.Utf8, "domain": pl.Utf8, "domain_label": pl.Utf8, "concept": pl.Utf8,
@@ -1178,8 +1375,20 @@ def build_tables(root: Path, verified_only: bool = False) -> tuple[pl.DataFrame,
         "concept_status": pl.Utf8, "phenotype": pl.Utf8, "phenotype_label": pl.Utf8,
         "phenotype_sign": pl.Int8, "n_scores": pl.Int32,
     }
-    annotations = pl.DataFrame(rows, schema=annotation_schema).sort("pgs_id")
-    cluster_df = pl.DataFrame(cluster_rows, schema=cluster_schema).sort("cluster", "phenotype")
+    everything = pl.DataFrame(rows, schema=annotation_schema).sort("pgs_id")
+    annotations = everything.filter(pl.col("review_reason").is_null())
+    review = everything.filter(pl.col("review_reason").is_not_null())
+    usage_resolved = annotations.group_by("cluster", "phenotype").len()
+    cluster_df = (
+        pl.DataFrame(cluster_rows, schema=cluster_schema)
+        .drop("n_scores")
+        .join(usage_resolved, on=["cluster", "phenotype"], how="left")
+        .with_columns(pl.col("len").fill_null(0).cast(pl.Int32).alias("n_scores"))
+        .drop("len")
+        .sort("cluster", "phenotype")
+    )
+    members = everything.filter(pl.col("cluster").is_not_null()).select("pgs_id", "cluster", "phenotype")
+    search_terms = _search_terms(clusters, members, catalog_scores)
     manifest: dict[str, object] = {
         "built_at": _now(),
         "source_commit": _git_commit(root),
@@ -1187,20 +1396,33 @@ def build_tables(root: Path, verified_only: bool = False) -> tuple[pl.DataFrame,
         "n_scores": annotations.height,
         "n_annotated": int(annotations["annotated"].sum()),
         "n_verified": int((annotations["annotation_status"] == AnnotationStatus.HUMAN_VERIFIED.value).sum()),
+        "n_review": review.height,
+        "n_review_unannotated": int((~review["annotated"]).sum()),
         "n_publications": annotations["pgp_id"].n_unique(),
-        "n_concepts": cluster_df["cluster"].n_unique(),
+        "n_concepts": cluster_df.filter(pl.col("n_scores") > 0)["cluster"].n_unique(),
         "n_phenotypes": cluster_df.height,
+        "n_search_terms": search_terms.height,
     }
-    return annotations, cluster_df, manifest
+    return CurationTables(
+        annotations=annotations, review=review, clusters=cluster_df, search_terms=search_terms, manifest=manifest
+    )
 
 
-def write_tables(root: Path, out_dir: Path, verified_only: bool = False) -> dict[str, object]:
-    """Build and write the three curation files; the manifest records their SHA256."""
+def write_tables(
+    root: Path, out_dir: Path, verified_only: bool = False, catalog_scores: pl.DataFrame | None = None
+) -> dict[str, object]:
+    """Build and write the curation files; the manifest records their SHA256."""
     import hashlib
 
-    annotations, cluster_df, manifest = build_tables(root, verified_only)
+    tables = build_tables(root, verified_only, catalog_scores)
+    manifest = tables.manifest
     out_dir.mkdir(parents=True, exist_ok=True)
-    files = {"score_annotations.parquet": annotations, "trait_clusters.parquet": cluster_df}
+    files = {
+        "score_annotations.parquet": tables.annotations,
+        "trait_clusters.parquet": tables.clusters,
+        "concept_search_terms.parquet": tables.search_terms,
+        "curation_review.parquet": tables.review,
+    }
     hashes: dict[str, str] = {}
     for name, frame in files.items():
         tmp = out_dir / f"{name}.tmp"
@@ -1218,16 +1440,27 @@ def build(
     verified_only: Annotated[bool, typer.Option("--verified-only", help="Export human_verified entries only")] = False,
     root: RootOpt = DEFAULT_ROOT,
 ) -> None:
-    """Compile curation/ into score_annotations.parquet, trait_clusters.parquet and a manifest."""
+    """Compile curation/ into the published tables, the review queue, search terms and a manifest."""
     try:
-        manifest = write_tables(root, out, verified_only)
+        manifest = write_tables(root, out, verified_only, _catalog_search_columns())
     except CurationBuildError as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(1) from exc
     typer.echo(
-        f"built {out}: {manifest['n_scores']} scores ({manifest['n_annotated']} annotated, "
-        f"{manifest['n_verified']} verified) from {manifest['n_publications']} papers; "
-        f"{manifest['n_concepts']} concepts / {manifest['n_phenotypes']} phenotypes"
+        f"built {out}: {manifest['n_scores']} resolved scores to publish ({manifest['n_verified']} verified) "
+        f"from {manifest['n_publications']} papers; {manifest['n_review']} in curation_review.parquet "
+        f"({manifest['n_review_unannotated']} without a direction); {manifest['n_concepts']} concepts / "
+        f"{manifest['n_phenotypes']} phenotypes; {manifest['n_search_terms']} search terms"
+    )
+
+
+def _catalog_search_columns() -> pl.DataFrame:
+    """Catalog names of every score, inherited as search terms by the concept it is curated into."""
+    return (
+        PRSCatalog()
+        .scores(include_excluded=True)
+        .select("pgs_id", "name", "trait_reported", "trait_efo", "trait_efo_id")
+        .collect()
     )
 
 
@@ -1249,15 +1482,23 @@ def merge_with_published(out_dir: Path, published_dir: Path) -> dict[str, object
     manifest = json.loads((out_dir / "curation_manifest.json").read_text())
     remote_ann_path = published_dir / "score_annotations.parquet"
     remote_clu_path = published_dir / "trait_clusters.parquet"
+    review_path = out_dir / "curation_review.parquet"
+    # A score this clone sent to review is still "known here": its old published row must go.
+    review_ids = set(pl.read_parquet(review_path, columns=["pgs_id"])["pgs_id"]) if review_path.exists() else set()
     kept_remote = protected = 0
     if remote_ann_path.exists():
-        remote_ann = pl.read_parquet(remote_ann_path).select(local_ann.columns).cast(local_ann.schema)
+        remote_ann = pl.read_parquet(remote_ann_path)
+        for column, dtype in local_ann.schema.items():
+            if column not in remote_ann.columns:
+                remote_ann = remote_ann.with_columns(pl.lit(None, dtype=dtype).alias(column))
+        remote_ann = remote_ann.select(local_ann.columns).cast(local_ann.schema)
         verified = remote_ann.filter(pl.col("annotation_status") == AnnotationStatus.HUMAN_VERIFIED.value)
-        protect_ids = set(verified["pgs_id"]) & set(
+        unreviewed_here = set(
             local_ann.filter(pl.col("annotation_status") != AnnotationStatus.HUMAN_VERIFIED.value)["pgs_id"]
-        )
+        ) | review_ids
+        protect_ids = set(verified["pgs_id"]) & unreviewed_here
         protected = len(protect_ids)
-        local_ids = set(local_ann["pgs_id"]) - protect_ids
+        local_ids = (set(local_ann["pgs_id"]) | review_ids) - protect_ids
         remote_keep = remote_ann.filter(~pl.col("pgs_id").is_in(list(local_ids)))
         kept_remote = remote_keep.height - protected
         local_ann = pl.concat([local_ann.filter(pl.col("pgs_id").is_in(list(local_ids))), remote_keep]).sort("pgs_id")
@@ -1284,7 +1525,7 @@ def merge_with_published(out_dir: Path, published_dir: Path) -> dict[str, object
         .select(local_clu.columns)
         .sort("cluster", "phenotype")
     )
-    hashes: dict[str, str] = {}
+    hashes: dict[str, str] = dict(manifest.get("sha256", {}))
     for name, frame in (("score_annotations.parquet", local_ann), ("trait_clusters.parquet", local_clu)):
         tmp = out_dir / f"{name}.tmp"
         frame.write_parquet(tmp, compression="zstd")
@@ -1295,7 +1536,7 @@ def merge_with_published(out_dir: Path, published_dir: Path) -> dict[str, object
         n_annotated=int(local_ann["annotated"].sum()),
         n_verified=int((local_ann["annotation_status"] == AnnotationStatus.HUMAN_VERIFIED.value).sum()),
         n_publications=local_ann["pgp_id"].n_unique(),
-        n_concepts=local_clu["cluster"].n_unique(),
+        n_concepts=local_clu.filter(pl.col("n_scores") > 0)["cluster"].n_unique(),
         n_phenotypes=local_clu.height,
         merged_from_published=remote_ann_path.exists(),
         n_kept_from_published=kept_remote,
@@ -1314,7 +1555,11 @@ def push(
     repo: Annotated[str | None, typer.Option("--repo", help="HF dataset (default just-dna-seq/pgs-catalog)")] = None,
     root: RootOpt = DEFAULT_ROOT,
 ) -> None:
-    """Rebuild, merge with the published release, and upload all three files in one HF commit."""
+    """Rebuild, merge with the published release, and upload the curation files in one HF commit.
+
+    Only resolved rows are published as annotations; ``curation_review.parquet`` goes alongside
+    as the open review queue and is never merged into the annotations.
+    """
     import tempfile
 
     from just_prs.hf import (
@@ -1325,7 +1570,7 @@ def push(
 
     repo_id = repo or DEFAULT_HF_CATALOG_REPO
     try:
-        manifest = write_tables(root, out, verified_only)
+        manifest = write_tables(root, out, verified_only, _catalog_search_columns())
         if not replace:
             with tempfile.TemporaryDirectory() as tmp:
                 pull_curation_tables(Path(tmp), repo_id=repo_id)
@@ -1345,7 +1590,8 @@ def push(
         out,
         repo_id=repo_id,
         commit_message=(
-            f"Curation: {manifest['n_annotated']} annotated / {manifest['n_verified']} verified scores, "
+            f"Curation: {manifest['n_annotated']} resolved / {manifest['n_verified']} verified scores, "
+            f"{manifest['n_review']} in review, "
             f"{manifest['n_concepts']} concepts (source {manifest['source_commit'] or 'uncommitted'})"
         ),
     )

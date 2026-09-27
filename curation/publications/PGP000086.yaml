@@ -1,0 +1,42 @@
+pgp_id: PGP000086
+scores:
+  PGS000210:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: FEV1/FVC ratio (weights count FEV1/FVC-decreasing, COPD-risk alleles)
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog ORs (1.2-1.9) are for COPD; a higher score means lower FEV1/FVC and higher COPD risk. The negative
+        catalog betas are on FEV1/FVC.
+    provenance:
+    - source: full_text
+      locator: Online Methods > Effect on COPD susceptibility - genetic risk score in multiple ancestries
+      quote: Weights were derived using the FEV 1 /FVC decreasing (generally COPD risk increasing) alleles.
+      confidence: high
+    - source: full_text
+      locator: Results > Association with FEV1/FVC and COPD in multiple ancestries
+      quote: The GRS was associated with a significant decrease in lung function, and corresponding significant
+        increase in COPD risk in each of the independent ancestry groups (Figure 3a).
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: All 5 top variants (rs2070600 C, rs1799807 C, rs10498230 C, rs148274477 C, rs113473882 T) carry positive
+        weights on the FEV1/FVC-lowering allele; one conflicting GWAS Catalog row for rs1799807 (GCST90468165).
+    status: agent_proposed
+    notes: 'Reported trait says "Lung function (FEV1/FVC)" but the score is a COPD-risk-oriented GRS: higher score
+      = lower FEV1/FVC. 1000G EUR r=-0.69 with PGS003862 and negative with the other FEV1/FVC scores; +0.47 with
+      PGS012564 (COPD).'
+paper:
+  pmid: '30804560'
+  doi: 10.1038/s41588-018-0321-7
+  title: New genetic signals for lung function highlight pathways and chronic obstructive pulmonary disease associations
+    across multiple ancestries.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

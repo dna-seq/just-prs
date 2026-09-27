@@ -1,0 +1,38 @@
+pgp_id: PGP000103
+scores:
+  PGS000336:
+    cluster: sleep.chronotype
+    phenotype: eveningness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being an evening type (weights are Jones 2019 morningness coefficients, sign-reversed)
+      coding: sMEQ sum 5 (extreme eveningness) to 27 (extreme morningness); evening type = 5-15
+    polarity: -1
+    evaluation_outcome:
+      phenotype: eveningness
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Genetic Risk Score
+      quote: For our analyses, we reversed the direction of the regression coefficients, since the coefficients
+        were originally reported for risk of being a morning type.
+      confidence: high
+    - source: abstract
+      locator: Abstract
+      quote: higher GRS was associated with evening chronotype
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs12040629-A OR 1.07 for morning person in Jones 2019; weight here is -0.07, consistent with the reversal
+    status: agent_proposed
+    notes: Higher PGS000336 = more evening. Beta -0.49 is on the sMEQ score (higher = more morning), ORs 1.24/1.30
+      are for evening type; both agree. Opposite sign to the Weissbrod "morning person" scores by design.
+paper:
+  pmid: '32579418'
+  doi: 10.1177/0748730420935328
+  title: Genetic Associations of Chronotype in the Finnish General Population.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

@@ -1,0 +1,507 @@
+pgp_id: PGP000773
+scores:
+  PGS005353:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.36 [1.21, 1.53] against 'Type 2 diabetes'.
+  PGS005354:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.36 [1.21, 1.53] against 'Type 2 diabetes'.
+  PGS005355:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.36 [1.21, 1.53] against 'Type 2 diabetes'.
+  PGS005356:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.36 [1.21, 1.53] against 'Type 2 diabetes'.
+  PGS005357:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.36 [1.21, 1.53] against 'Type 2 diabetes'.
+  PGS005358:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.13 [1.8, 2.52] against 'Type 2 diabetes'.
+  PGS005359:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.13 [1.8, 2.52] against 'Type 2 diabetes'.
+  PGS005360:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.13 [1.8, 2.52] against 'Type 2 diabetes'.
+  PGS005361:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.13 [1.8, 2.52] against 'Type 2 diabetes'.
+  PGS005362:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.13 [1.8, 2.52] against 'Type 2 diabetes'.
+  PGS005363:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.86 [2.69, 3.04] against 'Type 2 diabetes'.
+  PGS005364:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.86 [2.69, 3.04] against 'Type 2 diabetes'.
+  PGS005365:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.86 [2.69, 3.04] against 'Type 2 diabetes'.
+  PGS005366:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.86 [2.69, 3.04] against 'Type 2 diabetes'.
+  PGS005367:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.86 [2.69, 3.04] against 'Type 2 diabetes'.
+  PGS005368:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.18 [2.05, 2.33] against 'Type 2 diabetes'.
+  PGS005369:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.18 [2.05, 2.33] against 'Type 2 diabetes'.
+  PGS005370:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.18 [2.05, 2.33] against 'Type 2 diabetes'.
+  PGS005371:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.18 [2.05, 2.33] against 'Type 2 diabetes'.
+  PGS005372:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 2.18 [2.05, 2.33] against 'Type 2 diabetes'.
+  PGS005373:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.57 [2.23, 2.95] against 'Type 2 diabetes'.
+  PGS005374:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.57 [2.23, 2.95] against 'Type 2 diabetes'.
+  PGS005375:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.57 [2.23, 2.95] against 'Type 2 diabetes'.
+  PGS005376:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.57 [2.23, 2.95] against 'Type 2 diabetes'.
+  PGS005377:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.57 [2.23, 2.95] against 'Type 2 diabetes'.
+paper:
+  pmid: '40778152'
+  doi: 10.1101/2025.07.21.25331778
+  title: Multi-ancestry polygenic risk scores for the prediction of type 2 diabetes and complications in diverse
+    ancestries

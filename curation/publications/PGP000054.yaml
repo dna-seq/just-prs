@@ -1,0 +1,73 @@
+pgp_id: PGP000054
+scores:
+  PGS000116:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: time_to_event
+    score_effect:
+      direction: decreases
+      target: 'risk of incident coronary artery disease, weights AS DISTRIBUTED (allele-inverted: higher score =
+        lower CAD risk; the authors'' own lassosum score raised risk)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog HR 1.32 per SD (incident CAD) was computed by the authors on their own, non-inverted PRS, not
+        on the deposited file, so it stays > 1.
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results
+      quote: The hazard ratio of polygenic risk score for CAD (per SD increase) for CAD was 1.32 (95% CI, 1.30-1.34
+      confidence: high
+    - source: full_text
+      locator: Methods > Outcomes
+      quote: This definition of CAD includes myocardial infarction
+      confidence: high
+    lead_variant_check:
+      status: disagree
+      note: 'rs9349379-A +0.0214, rs4977574-A +0.0174, rs2891168-A +0.0177, rs10455872-A (LPA) +0.0156; GWAS Catalog:
+        rs9349379-A OR 0.892 for CAD (PMID 36474045), rs10455872-A beta -0.32 for CAD (PMID 39024449), so A is protective.'
+    review_reason: 'Suspected inverted deposit: lead-variant signs and 1000G r = -0.61 vs anchor (-0.72 vs PGS001355)
+      contradict the paper''s risk-increasing PRS.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases risk of incident coronary artery disease,
+        weights AS DISTRIBUTED (allele-inverted: higher score = lower CAD risk; the authors'' own lassosum score
+        raised risk)); the paper says higher = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'rs9349379-A +0.0214, rs4977574-A +0.0174, rs2891168-A +0.0177, rs10455872-A (LPA) +0.0156; GWAS
+        Catalog: rs9349379-A OR 0.892 for CAD (PMID 36474045), rs10455872-A beta -0.32 for CAD (PMID 39024449),
+        so A is protective. | Suspected inverted deposit: lead-variant signs and 1000G r = -0.61 vs anchor (-0.72
+        vs PGS001355) contradict the paper''s risk-increasing PRS. | Lassosum PRS from CARDIoGRAMplusC4D (UK Biobank
+        excluded), 1,037,385 SNPs in the paper (40,079 non-zero weights deposited). The paper says higher PRS =
+        more CAD (HR 1.32 per SD). The deposited file has the protective allele positive a…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Lassosum PRS from CARDIoGRAMplusC4D (UK Biobank excluded), 1,037,385 SNPs in the paper (40,079 non-zero
+      weights deposited). The paper says higher PRS = more CAD (HR 1.32 per SD). The deposited file has the protective
+      allele positive at PHACTR1, 9p21 and LPA; in 1000G EUR it correlates negatively with every other CAD/MI score
+      except PGS004237 (+0.72, also inverted). Neither the text nor the catalog record describes the allele coding.
+      Recorded as distributed. Report to PGS Catalog.
+paper:
+  pmid: '32068818'
+  doi: 10.1001/jama.2019.22241
+  title: Predictive Accuracy of a Polygenic Risk Score-Enhanced Prediction Model vs a Clinical Risk Score for Coronary
+    Artery Disease.
+evidence_read:
+  abstract: true
+  full_text: pmc_html
+  supplement: []

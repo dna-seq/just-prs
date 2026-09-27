@@ -1,0 +1,255 @@
+slug: smoking
+query: 'smoking behaviour: ever/never/current/previous smoking, initiation, cessation, cigarettes per day'
+match:
+  terms:
+  - cigarette
+  - never smoker
+  - smoked
+  - smoker
+  - smoking
+  - tobacco
+  efo_ids:
+  - age at initiation of smoking
+  - cigarettes per day measurement
+  - smoking behavior trait
+  - smoking cessation
+  - smoking initiation
+  - smoking status measurement
+  - tobacco smoke exposure measurement
+  exclude: []
+anchor: PGS003068
+status: resolved
+concepts:
+- substance_use.smoking
+- substance_use.nicotine_dependence
+scores:
+  PGS001046:
+    decision: in_scope
+    note: null
+  PGS001047:
+    decision: in_scope
+    note: null
+  PGS001127:
+    decision: in_scope
+    note: null
+  PGS001128:
+    decision: in_scope
+    note: null
+  PGS001129:
+    decision: in_scope
+    note: null
+  PGS001130:
+    decision: in_scope
+    note: null
+  PGS001139:
+    decision: in_scope
+    note: null
+  PGS001374:
+    decision: in_scope
+    note: null
+  PGS001388:
+    decision: in_scope
+    note: null
+  PGS001515:
+    decision: in_scope
+    note: null
+  PGS001532:
+    decision: in_scope
+    note: null
+  PGS001830:
+    decision: in_scope
+    note: 'tobacco use disorder: separate concept substance_use.nicotine_dependence'
+  PGS001911:
+    decision: in_scope
+    note: null
+  PGS002037:
+    decision: in_scope
+    note: 'tobacco use disorder: separate concept substance_use.nicotine_dependence'
+  PGS002126:
+    decision: in_scope
+    note: null
+  PGS002348:
+    decision: in_scope
+    note: null
+  PGS002375:
+    decision: in_scope
+    note: null
+  PGS002420:
+    decision: in_scope
+    note: null
+  PGS002469:
+    decision: in_scope
+    note: null
+  PGS002518:
+    decision: in_scope
+    note: null
+  PGS002567:
+    decision: in_scope
+    note: null
+  PGS002616:
+    decision: in_scope
+    note: null
+  PGS002665:
+    decision: in_scope
+    note: null
+  PGS002714:
+    decision: in_scope
+    note: null
+  PGS003044:
+    decision: in_scope
+    note: null
+  PGS003045:
+    decision: in_scope
+    note: null
+  PGS003046:
+    decision: in_scope
+    note: null
+  PGS003047:
+    decision: in_scope
+    note: null
+  PGS003048:
+    decision: in_scope
+    note: null
+  PGS003049:
+    decision: in_scope
+    note: null
+  PGS003050:
+    decision: in_scope
+    note: null
+  PGS003051:
+    decision: in_scope
+    note: null
+  PGS003052:
+    decision: in_scope
+    note: null
+  PGS003053:
+    decision: in_scope
+    note: null
+  PGS003054:
+    decision: in_scope
+    note: null
+  PGS003055:
+    decision: in_scope
+    note: null
+  PGS003056:
+    decision: in_scope
+    note: null
+  PGS003057:
+    decision: in_scope
+    note: null
+  PGS003058:
+    decision: in_scope
+    note: null
+  PGS003059:
+    decision: in_scope
+    note: null
+  PGS003060:
+    decision: in_scope
+    note: null
+  PGS003061:
+    decision: in_scope
+    note: null
+  PGS003062:
+    decision: in_scope
+    note: null
+  PGS003063:
+    decision: in_scope
+    note: null
+  PGS003064:
+    decision: in_scope
+    note: null
+  PGS003065:
+    decision: in_scope
+    note: null
+  PGS003066:
+    decision: in_scope
+    note: null
+  PGS003067:
+    decision: in_scope
+    note: null
+  PGS003068:
+    decision: in_scope
+    note: null
+  PGS003357:
+    decision: in_scope
+    note: null
+  PGS003358:
+    decision: in_scope
+    note: null
+  PGS003359:
+    decision: in_scope
+    note: null
+  PGS003360:
+    decision: in_scope
+    note: null
+  PGS003361:
+    decision: in_scope
+    note: null
+  PGS003362:
+    decision: in_scope
+    note: null
+  PGS003363:
+    decision: in_scope
+    note: null
+  PGS003364:
+    decision: in_scope
+    note: null
+  PGS003365:
+    decision: in_scope
+    note: null
+  PGS003366:
+    decision: in_scope
+    note: null
+  PGS003367:
+    decision: in_scope
+    note: null
+  PGS003368:
+    decision: in_scope
+    note: null
+  PGS003369:
+    decision: in_scope
+    note: null
+  PGS003370:
+    decision: in_scope
+    note: null
+  PGS003371:
+    decision: in_scope
+    note: null
+  PGS003372:
+    decision: in_scope
+    note: null
+  PGS003747:
+    decision: in_scope
+    note: null
+  PGS003748:
+    decision: in_scope
+    note: null
+  PGS004164:
+    decision: out_of_scope
+    note: 'lung cancer in never smokers: cancer concept, not smoking behaviour'
+  PGS004450:
+    decision: in_scope
+    note: 'tobacco use disorder: separate concept substance_use.nicotine_dependence'
+  PGS004520:
+    decision: in_scope
+    note: 'tobacco use disorder: separate concept substance_use.nicotine_dependence'
+  PGS004751:
+    decision: in_scope
+    note: null
+  PGS004752:
+    decision: in_scope
+    note: null
+  PGS004753:
+    decision: in_scope
+    note: null
+  PGS004754:
+    decision: in_scope
+    note: null
+summary: '73 in-scope smoking scores: 64 annotated under substance_use.smoking (60) and a new substance_use.nicotine_dependence
+  concept (4 tobacco-use-disorder scores); 1 out of scope (lung cancer in never smokers). The 16 GSCAN 2022 files (PGP000410)
+  look allele-inverted as distributed: CHRNA5 and initiation lead variants carry the opposite sign, PGS003360 correlates -0.72
+  with the anchor, and an independent evaluation of the downloaded files found negative TUD betas. The 9 scores with evidence
+  are annotated as ''decreases''; 7 (AgeSmk non-EUR, all SmkCes) are left unannotated. The -0.98 trio (PGS001139/PGS001388/PGS001515)
+  is real: ''light smokers'' tracks lighter smoking. PGS001139 and PGS001047 stay unannotated because their case groups sit
+  mid-axis. Flip-worded scores resolved from UKB codings: never smoker (-), time to first cigarette (-), difficulty not smoking
+  (+), age stopped smoking (+). No aligned-correlation conflicts remain.'

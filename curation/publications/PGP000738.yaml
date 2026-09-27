@@ -1,0 +1,38 @@
+pgp_id: PGP000738
+scores:
+  PGS005231:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Evaluated on coronary artery calcium, a subclinical marker of coronary atherosclerosis; a higher CAD
+        score is expected to raise it.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.33 [1.26, 1.4] on coronary artery calcium; 1000G EUR r=+0.46 with PGS000018 (metaGRS
+      CAD, HR 1.71 [1.68, 1.73]).
+paper:
+  pmid: '33454274'
+  doi: 10.1016/j.jcmg.2020.11.013
+  title: Targeted Coronary Artery Calcium Screening in High-Risk Younger Individuals Using Consumer Genetic Screening
+    Results.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

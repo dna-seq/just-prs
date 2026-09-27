@@ -1,0 +1,38 @@
+pgp_id: PGP000305
+scores:
+  PGS002277:
+    cluster: endocrine.type_2_diabetes
+    phenotype: genetic_beta_cell_function
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: genetically determined beta cell function (insulin secretion 1 cluster, HOMA-B weighted)
+      coding: null
+    polarity: -1
+    provenance:
+    - source: full_text
+      locator: Methods > Genetic data
+      quote: A lower weighted pPS implies lower genetically determined beta cell function
+      confidence: high
+    - source: full_text
+      locator: Methods > Genetic data
+      quote: weighted for their association with a surrogate estimate of beta cell function (HOMA-B)
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: T2D risk alleles rs7903146 T and rs10830963 G carry negative weights, as expected for a beta-cell-function
+        (HOMA-B) weighted score
+    status: agent_proposed
+    notes: Partitioned score of the 8 Udler 'Insulin secretion 1' variants, weighted by HOMA-B effects (weights
+      from PMID 20081858). Higher = better genetic beta cell function = lower T2D risk, which explains its negative
+      1000G correlation with other T2D scores. The catalog label 'Type 2 diabetes (based on SNPs associated with
+      insulin secretion)' reads the opposite way.
+paper:
+  pmid: '35247066'
+  doi: 10.1007/s00125-022-05671-z
+  title: Young-onset diabetes in Asian Indians is associated with lower measured and genetically determined beta
+    cell function.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

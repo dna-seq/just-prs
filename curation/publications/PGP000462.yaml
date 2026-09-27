@@ -1,0 +1,32 @@
+pgp_id: PGP000462
+scores:
+  PGS003588:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: higher SBP raises the risk of pre-eclampsia/eclampsia
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.75 with PGS005019 (SBP score annotated here). Evaluated on ''Pre-eclampsia/eclampsia'':
+      OR 1.24 [1.17, 1.3]. Score name SBP.'
+paper:
+  pmid: '37248299'
+  doi: 10.1038/s41591-023-02374-9
+  title: Polygenic prediction of preeclampsia and gestational hypertension.

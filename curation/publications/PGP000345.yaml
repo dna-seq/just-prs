@@ -1,0 +1,32 @@
+pgp_id: PGP000345
+scores:
+  PGS002738:
+    cluster: substance_use.alcohol_use_disorder
+    phenotype: alcohol_use_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of alcohol use disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alcohol use disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Corroborated by beta 2.43-2.91 (SE 0.38-0.6) against alcohol
+      use disorder in COGA subgroups by family history; 1000G EUR r = +0.62 to +0.77 with PGS000201/PGS000202/PGS005214.
+paper:
+  pmid: '35267208'
+  doi: 10.1111/acer.14772
+  title: 'Evaluating risk for alcohol use disorder: Polygenic risk scores and family history.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

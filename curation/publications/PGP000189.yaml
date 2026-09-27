@@ -1,0 +1,32 @@
+pgp_id: PGP000189
+scores:
+  PGS000799:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: childhood_asthma
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog OR 1.23 [1.10, 1.38] for asthma ever at age 8 years (CI excludes 1).
+paper:
+  pmid: '31145937'
+  doi: 10.1016/j.jaci.2019.05.017
+  title: Genetic risk scores do not improve asthma prediction in childhood.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

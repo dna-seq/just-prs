@@ -1,0 +1,247 @@
+slug: systolic-blood-pressure
+query: systolic blood pressure
+match:
+  terms:
+  - SBP
+  - systolic blood pressure
+  efo_ids: []
+  exclude: []
+anchor: PGS004231
+status: needs_review
+concepts:
+- cardiovascular.blood_pressure
+scores:
+  PGS000301:
+    decision: in_scope
+    note: null
+  PGS000900:
+    decision: in_scope
+    note: null
+  PGS000901:
+    decision: in_scope
+    note: null
+  PGS000913:
+    decision: in_scope
+    note: null
+  PGS001134:
+    decision: in_scope
+    note: null
+  PGS002009:
+    decision: in_scope
+    note: null
+  PGS002228:
+    decision: in_scope
+    note: null
+  PGS002238:
+    decision: in_scope
+    note: null
+  PGS002257:
+    decision: in_scope
+    note: null
+  PGS002275:
+    decision: in_scope
+    note: null
+  PGS002349:
+    decision: in_scope
+    note: null
+  PGS002376:
+    decision: in_scope
+    note: null
+  PGS002421:
+    decision: in_scope
+    note: null
+  PGS002470:
+    decision: in_scope
+    note: null
+  PGS002519:
+    decision: in_scope
+    note: null
+  PGS002568:
+    decision: in_scope
+    note: null
+  PGS002617:
+    decision: in_scope
+    note: null
+  PGS002666:
+    decision: in_scope
+    note: null
+  PGS002715:
+    decision: in_scope
+    note: null
+  PGS002734:
+    decision: in_scope
+    note: null
+  PGS002807:
+    decision: in_scope
+    note: null
+  PGS003069:
+    decision: in_scope
+    note: null
+  PGS003070:
+    decision: in_scope
+    note: null
+  PGS003071:
+    decision: in_scope
+    note: null
+  PGS003072:
+    decision: in_scope
+    note: null
+  PGS003073:
+    decision: in_scope
+    note: null
+  PGS003074:
+    decision: in_scope
+    note: null
+  PGS003075:
+    decision: in_scope
+    note: null
+  PGS003076:
+    decision: in_scope
+    note: null
+  PGS003077:
+    decision: in_scope
+    note: null
+  PGS003078:
+    decision: in_scope
+    note: null
+  PGS003079:
+    decision: in_scope
+    note: null
+  PGS003080:
+    decision: in_scope
+    note: null
+  PGS003081:
+    decision: in_scope
+    note: null
+  PGS003082:
+    decision: in_scope
+    note: null
+  PGS003083:
+    decision: in_scope
+    note: null
+  PGS003084:
+    decision: in_scope
+    note: null
+  PGS003085:
+    decision: in_scope
+    note: null
+  PGS003086:
+    decision: in_scope
+    note: null
+  PGS003087:
+    decision: in_scope
+    note: null
+  PGS003088:
+    decision: in_scope
+    note: null
+  PGS003571:
+    decision: in_scope
+    note: null
+  PGS003588:
+    decision: in_scope
+    note: null
+  PGS003882:
+    decision: in_scope
+    note: null
+  PGS003965:
+    decision: in_scope
+    note: null
+  PGS003966:
+    decision: in_scope
+    note: null
+  PGS003967:
+    decision: in_scope
+    note: null
+  PGS003968:
+    decision: in_scope
+    note: null
+  PGS003970:
+    decision: in_scope
+    note: null
+  PGS003971:
+    decision: in_scope
+    note: null
+  PGS004231:
+    decision: in_scope
+    note: null
+  PGS004235:
+    decision: in_scope
+    note: null
+  PGS004372:
+    decision: in_scope
+    note: null
+  PGS004594:
+    decision: in_scope
+    note: null
+  PGS004603:
+    decision: in_scope
+    note: null
+  PGS004829:
+    decision: in_scope
+    note: null
+  PGS004830:
+    decision: in_scope
+    note: null
+  PGS004831:
+    decision: in_scope
+    note: null
+  PGS004832:
+    decision: in_scope
+    note: null
+  PGS005008:
+    decision: in_scope
+    note: null
+  PGS005009:
+    decision: in_scope
+    note: null
+  PGS005010:
+    decision: in_scope
+    note: null
+  PGS005011:
+    decision: in_scope
+    note: null
+  PGS005012:
+    decision: in_scope
+    note: null
+  PGS005013:
+    decision: in_scope
+    note: null
+  PGS005014:
+    decision: in_scope
+    note: null
+  PGS005015:
+    decision: in_scope
+    note: null
+  PGS005016:
+    decision: in_scope
+    note: null
+  PGS005017:
+    decision: in_scope
+    note: null
+  PGS005018:
+    decision: in_scope
+    note: null
+  PGS005019:
+    decision: in_scope
+    note: null
+  PGS005020:
+    decision: in_scope
+    note: null
+  PGS005120:
+    decision: in_scope
+    note: null
+  PGS005321:
+    decision: in_scope
+    note: SBP score evaluated on dCCB discontinuation; the score itself targets SBP
+  PGS005350:
+    decision: in_scope
+    note: null
+summary: 'All 75 systolic blood pressure scores are in one concept, cardiovascular.blood_pressure (higher
+  = higher SBP, undesirable). 71 were annotated from the catalog: plain SBP trait names, corroborated
+  by an SBP beta whose CI excludes 0 or by 1000G EUR r >= +0.2 with such a score. Three papers were read.
+  PGS003970/PGS003971 (Shetty 2023, sex-specific PRS-CS) are meant to raise SBP, but the deposited weights
+  look sign-inverted: lead SBP alleles have negative weights and they correlate down to r=-0.77 with every
+  other SBP score. As scored from the file, a higher value likely means lower SBP. They go to review.
+  PGS005321 (Tuerkmen 2024, 240 Evangelou SNPs) also goes to review, because its lead variants are mixed
+  and it barely correlates with other SBP scores. PGS003965 (African component) is resolved from its lead
+  variant and the paper.'

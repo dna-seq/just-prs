@@ -1,0 +1,34 @@
+pgp_id: PGP000361
+scores:
+  PGS002748:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.36 with PGS004119 (annotated, same phenotype). Catalog also reports beta 0.257 (no CI)
+      against Height (male).
+paper:
+  pmid: '35831902'
+  doi: 10.1186/s12916-022-02450-w
+  title: 'Your height affects your health: genetic determinants and health-related outcomes in Taiwan.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

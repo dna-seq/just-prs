@@ -1,0 +1,63 @@
+pgp_id: PGP000471
+scores:
+  PGS003747:
+    cluster: substance_use.smoking
+    phenotype: ever_smoked
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: smoking initiation (341-SNP GSCAN GRS)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking initiation
+      confidence: medium
+    - source: full_text
+      locator: Results
+      quote: There was a strong correlation between the smoking initiation GRS and directly assessed history of
+        smoking (OR = 1.20 per SD, 95% CI = 1.15 to 1.25
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Validated in Rotterdam Study against any history of smoking; 1000G r +0.45 with anchor.
+  PGS003748:
+    cluster: substance_use.smoking
+    phenotype: cigarettes_per_day
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: cigarettes per day (46-SNP GSCAN smoking-intensity GRS)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cigarettes smoked per day
+      confidence: medium
+    - source: full_text
+      locator: Results
+      quote: a strong correlation between the smoking intensity GRS and the measured number of CPD (0.68 CPD per
+        SD, 95% CI = 0.43 to 0.93
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: The catalog lists this as "OR 0.68"; it is actually +0.68 cigarettes per day per SD (a beta), so it supports
+      the positive direction. 1000G r +0.54/+0.56 with PGS001130/PGS001515.
+paper:
+  pmid: '36786746'
+  doi: 10.1167/tvst.12.2.20
+  title: Genetic Associations Between Smoking- and Glaucoma-Related Traits.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

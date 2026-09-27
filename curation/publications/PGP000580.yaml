@@ -1,0 +1,27 @@
+pgp_id: PGP000580
+scores:
+  PGS004602:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.26 [1.13, 1.41] against 'Age at onset of type 2 diabetes ≤ 50 years'.
+paper:
+  pmid: '34433621'
+  doi: 10.2337/dc21-1051
+  title: 'Effect of Diet Quality and Genetic Predisposition on Hemoglobin A1C and Type 2 Diabetes Risk: Gene-Diet
+    Interaction Analysis of 357,419 Individuals.'

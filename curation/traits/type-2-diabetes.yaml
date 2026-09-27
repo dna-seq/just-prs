@@ -1,0 +1,683 @@
+slug: type-2-diabetes
+query: type 2 diabetes
+match:
+  terms:
+  - T2D
+  - diabetes mellitus type 2
+  - incident type 2 diabetes
+  - non-insulin-dependent diabetes
+  - type 2 diabetes
+  - type 2 diabetes mellitus
+  efo_ids:
+  - MONDO_0005148
+  exclude: []
+anchor: PGS004602
+status: needs_review
+concepts:
+- endocrine.type_2_diabetes
+scores:
+  PGS000014:
+    decision: in_scope
+    note: null
+  PGS000020:
+    decision: in_scope
+    note: null
+  PGS000031:
+    decision: in_scope
+    note: null
+  PGS000032:
+    decision: in_scope
+    note: null
+  PGS000033:
+    decision: in_scope
+    note: null
+  PGS000036:
+    decision: in_scope
+    note: null
+  PGS000125:
+    decision: in_scope
+    note: null
+  PGS000330:
+    decision: in_scope
+    note: null
+  PGS000712:
+    decision: in_scope
+    note: null
+  PGS000713:
+    decision: in_scope
+    note: null
+  PGS000729:
+    decision: in_scope
+    note: null
+  PGS000804:
+    decision: in_scope
+    note: null
+  PGS000805:
+    decision: in_scope
+    note: null
+  PGS000806:
+    decision: in_scope
+    note: null
+  PGS000807:
+    decision: in_scope
+    note: null
+  PGS000808:
+    decision: in_scope
+    note: null
+  PGS000832:
+    decision: in_scope
+    note: null
+  PGS000848:
+    decision: in_scope
+    note: null
+  PGS000849:
+    decision: in_scope
+    note: null
+  PGS000850:
+    decision: in_scope
+    note: null
+  PGS000851:
+    decision: in_scope
+    note: null
+  PGS000852:
+    decision: in_scope
+    note: null
+  PGS000853:
+    decision: in_scope
+    note: null
+  PGS000854:
+    decision: in_scope
+    note: null
+  PGS000855:
+    decision: in_scope
+    note: null
+  PGS000856:
+    decision: in_scope
+    note: null
+  PGS000857:
+    decision: in_scope
+    note: null
+  PGS000858:
+    decision: in_scope
+    note: null
+  PGS000864:
+    decision: in_scope
+    note: null
+  PGS000868:
+    decision: in_scope
+    note: null
+  PGS001294:
+    decision: in_scope
+    note: null
+  PGS001295:
+    decision: in_scope
+    note: null
+  PGS001357:
+    decision: in_scope
+    note: null
+  PGS001781:
+    decision: in_scope
+    note: null
+  PGS001818:
+    decision: in_scope
+    note: null
+  PGS002026:
+    decision: in_scope
+    note: null
+  PGS002243:
+    decision: in_scope
+    note: null
+  PGS002277:
+    decision: in_scope
+    note: null
+  PGS002308:
+    decision: in_scope
+    note: null
+  PGS002354:
+    decision: in_scope
+    note: null
+  PGS002379:
+    decision: in_scope
+    note: null
+  PGS002426:
+    decision: in_scope
+    note: null
+  PGS002475:
+    decision: in_scope
+    note: null
+  PGS002524:
+    decision: in_scope
+    note: null
+  PGS002573:
+    decision: in_scope
+    note: null
+  PGS002622:
+    decision: in_scope
+    note: null
+  PGS002671:
+    decision: in_scope
+    note: null
+  PGS002720:
+    decision: in_scope
+    note: null
+  PGS002733:
+    decision: in_scope
+    note: null
+  PGS002771:
+    decision: in_scope
+    note: null
+  PGS002779:
+    decision: in_scope
+    note: null
+  PGS002780:
+    decision: in_scope
+    note: null
+  PGS003089:
+    decision: in_scope
+    note: null
+  PGS003090:
+    decision: in_scope
+    note: null
+  PGS003091:
+    decision: in_scope
+    note: null
+  PGS003092:
+    decision: in_scope
+    note: null
+  PGS003093:
+    decision: in_scope
+    note: null
+  PGS003094:
+    decision: in_scope
+    note: null
+  PGS003095:
+    decision: in_scope
+    note: null
+  PGS003096:
+    decision: in_scope
+    note: null
+  PGS003097:
+    decision: in_scope
+    note: null
+  PGS003098:
+    decision: in_scope
+    note: null
+  PGS003099:
+    decision: in_scope
+    note: null
+  PGS003100:
+    decision: in_scope
+    note: null
+  PGS003101:
+    decision: in_scope
+    note: null
+  PGS003102:
+    decision: in_scope
+    note: null
+  PGS003103:
+    decision: in_scope
+    note: null
+  PGS003104:
+    decision: in_scope
+    note: null
+  PGS003105:
+    decision: in_scope
+    note: null
+  PGS003106:
+    decision: in_scope
+    note: null
+  PGS003107:
+    decision: in_scope
+    note: null
+  PGS003108:
+    decision: in_scope
+    note: null
+  PGS003109:
+    decision: in_scope
+    note: null
+  PGS003110:
+    decision: in_scope
+    note: null
+  PGS003111:
+    decision: in_scope
+    note: null
+  PGS003112:
+    decision: in_scope
+    note: null
+  PGS003113:
+    decision: in_scope
+    note: null
+  PGS003114:
+    decision: in_scope
+    note: null
+  PGS003115:
+    decision: in_scope
+    note: null
+  PGS003116:
+    decision: in_scope
+    note: null
+  PGS003117:
+    decision: in_scope
+    note: null
+  PGS003118:
+    decision: in_scope
+    note: null
+  PGS003119:
+    decision: in_scope
+    note: null
+  PGS003120:
+    decision: in_scope
+    note: null
+  PGS003121:
+    decision: in_scope
+    note: null
+  PGS003122:
+    decision: in_scope
+    note: null
+  PGS003123:
+    decision: in_scope
+    note: null
+  PGS003353:
+    decision: in_scope
+    note: null
+  PGS003402:
+    decision: in_scope
+    note: null
+  PGS003443:
+    decision: in_scope
+    note: null
+  PGS003444:
+    decision: in_scope
+    note: null
+  PGS003445:
+    decision: in_scope
+    note: null
+  PGS003728:
+    decision: in_scope
+    note: null
+  PGS003729:
+    decision: in_scope
+    note: null
+  PGS003730:
+    decision: in_scope
+    note: null
+  PGS003731:
+    decision: in_scope
+    note: null
+  PGS003732:
+    decision: in_scope
+    note: null
+  PGS003733:
+    decision: in_scope
+    note: null
+  PGS003734:
+    decision: in_scope
+    note: null
+  PGS003735:
+    decision: in_scope
+    note: null
+  PGS003751:
+    decision: in_scope
+    note: null
+  PGS003752:
+    decision: in_scope
+    note: null
+  PGS003867:
+    decision: in_scope
+    note: null
+  PGS003982:
+    decision: in_scope
+    note: null
+  PGS003998:
+    decision: in_scope
+    note: null
+  PGS004014:
+    decision: in_scope
+    note: null
+  PGS004024:
+    decision: in_scope
+    note: null
+  PGS004039:
+    decision: in_scope
+    note: null
+  PGS004052:
+    decision: in_scope
+    note: null
+  PGS004068:
+    decision: in_scope
+    note: null
+  PGS004082:
+    decision: in_scope
+    note: null
+  PGS004106:
+    decision: in_scope
+    note: null
+  PGS004122:
+    decision: in_scope
+    note: null
+  PGS004136:
+    decision: in_scope
+    note: null
+  PGS004152:
+    decision: in_scope
+    note: null
+  PGS004181:
+    decision: in_scope
+    note: null
+  PGS004182:
+    decision: in_scope
+    note: null
+  PGS004183:
+    decision: in_scope
+    note: null
+  PGS004184:
+    decision: in_scope
+    note: null
+  PGS004185:
+    decision: in_scope
+    note: null
+  PGS004223:
+    decision: in_scope
+    note: null
+  PGS004225:
+    decision: in_scope
+    note: null
+  PGS004226:
+    decision: in_scope
+    note: null
+  PGS004310:
+    decision: in_scope
+    note: null
+  PGS004311:
+    decision: in_scope
+    note: null
+  PGS004312:
+    decision: in_scope
+    note: null
+  PGS004313:
+    decision: in_scope
+    note: null
+  PGS004314:
+    decision: in_scope
+    note: null
+  PGS004323:
+    decision: in_scope
+    note: null
+  PGS004499:
+    decision: in_scope
+    note: null
+  PGS004569:
+    decision: in_scope
+    note: null
+  PGS004602:
+    decision: in_scope
+    note: null
+  PGS004615:
+    decision: in_scope
+    note: null
+  PGS004616:
+    decision: in_scope
+    note: null
+  PGS004617:
+    decision: in_scope
+    note: null
+  PGS004618:
+    decision: in_scope
+    note: null
+  PGS004619:
+    decision: in_scope
+    note: null
+  PGS004620:
+    decision: in_scope
+    note: null
+  PGS004837:
+    decision: in_scope
+    note: null
+  PGS004838:
+    decision: in_scope
+    note: null
+  PGS004839:
+    decision: in_scope
+    note: null
+  PGS004840:
+    decision: in_scope
+    note: null
+  PGS004859:
+    decision: in_scope
+    note: null
+  PGS004868:
+    decision: in_scope
+    note: null
+  PGS004870:
+    decision: in_scope
+    note: null
+  PGS004887:
+    decision: in_scope
+    note: null
+  PGS004923:
+    decision: in_scope
+    note: null
+  PGS005021:
+    decision: in_scope
+    note: null
+  PGS005022:
+    decision: in_scope
+    note: null
+  PGS005023:
+    decision: in_scope
+    note: null
+  PGS005024:
+    decision: in_scope
+    note: null
+  PGS005025:
+    decision: in_scope
+    note: null
+  PGS005026:
+    decision: in_scope
+    note: null
+  PGS005027:
+    decision: in_scope
+    note: null
+  PGS005028:
+    decision: in_scope
+    note: null
+  PGS005029:
+    decision: in_scope
+    note: null
+  PGS005030:
+    decision: in_scope
+    note: null
+  PGS005031:
+    decision: in_scope
+    note: null
+  PGS005032:
+    decision: in_scope
+    note: null
+  PGS005033:
+    decision: in_scope
+    note: null
+  PGS005108:
+    decision: in_scope
+    note: null
+  PGS005110:
+    decision: in_scope
+    note: null
+  PGS005111:
+    decision: in_scope
+    note: null
+  PGS005115:
+    decision: in_scope
+    note: null
+  PGS005116:
+    decision: in_scope
+    note: null
+  PGS005117:
+    decision: in_scope
+    note: null
+  PGS005118:
+    decision: in_scope
+    note: null
+  PGS005119:
+    decision: in_scope
+    note: null
+  PGS005147:
+    decision: in_scope
+    note: null
+  PGS005157:
+    decision: in_scope
+    note: null
+  PGS005242:
+    decision: in_scope
+    note: null
+  PGS005243:
+    decision: in_scope
+    note: null
+  PGS005244:
+    decision: in_scope
+    note: null
+  PGS005245:
+    decision: in_scope
+    note: null
+  PGS005246:
+    decision: in_scope
+    note: null
+  PGS005247:
+    decision: in_scope
+    note: null
+  PGS005314:
+    decision: in_scope
+    note: null
+  PGS005324:
+    decision: in_scope
+    note: null
+  PGS005325:
+    decision: in_scope
+    note: null
+  PGS005326:
+    decision: in_scope
+    note: null
+  PGS005327:
+    decision: in_scope
+    note: null
+  PGS005328:
+    decision: in_scope
+    note: null
+  PGS005329:
+    decision: in_scope
+    note: null
+  PGS005330:
+    decision: in_scope
+    note: null
+  PGS005333:
+    decision: in_scope
+    note: null
+  PGS005334:
+    decision: in_scope
+    note: null
+  PGS005335:
+    decision: in_scope
+    note: null
+  PGS005336:
+    decision: in_scope
+    note: null
+  PGS005341:
+    decision: in_scope
+    note: null
+  PGS005342:
+    decision: in_scope
+    note: null
+  PGS005343:
+    decision: in_scope
+    note: null
+  PGS005344:
+    decision: in_scope
+    note: null
+  PGS005353:
+    decision: in_scope
+    note: null
+  PGS005354:
+    decision: in_scope
+    note: null
+  PGS005355:
+    decision: in_scope
+    note: null
+  PGS005356:
+    decision: in_scope
+    note: null
+  PGS005357:
+    decision: in_scope
+    note: null
+  PGS005358:
+    decision: in_scope
+    note: null
+  PGS005359:
+    decision: in_scope
+    note: null
+  PGS005360:
+    decision: in_scope
+    note: null
+  PGS005361:
+    decision: in_scope
+    note: null
+  PGS005362:
+    decision: in_scope
+    note: null
+  PGS005363:
+    decision: in_scope
+    note: null
+  PGS005364:
+    decision: in_scope
+    note: null
+  PGS005365:
+    decision: in_scope
+    note: null
+  PGS005366:
+    decision: in_scope
+    note: null
+  PGS005367:
+    decision: in_scope
+    note: null
+  PGS005368:
+    decision: in_scope
+    note: null
+  PGS005369:
+    decision: in_scope
+    note: null
+  PGS005370:
+    decision: in_scope
+    note: null
+  PGS005371:
+    decision: in_scope
+    note: null
+  PGS005372:
+    decision: in_scope
+    note: null
+  PGS005373:
+    decision: in_scope
+    note: null
+  PGS005374:
+    decision: in_scope
+    note: null
+  PGS005375:
+    decision: in_scope
+    note: null
+  PGS005376:
+    decision: in_scope
+    note: null
+  PGS005377:
+    decision: in_scope
+    note: null
+  PGS012547:
+    decision: in_scope
+    note: null
+  PGS012554:
+    decision: in_scope
+    note: null
+summary: 'All 219 scores are type 2 diabetes risk scores in one concept (endocrine.type_2_diabetes); 213
+  are annotated, 211 of them catalog-only. Higher score = higher T2D risk for every annotated score except
+  PGS002277, a HOMA-B-weighted beta-cell-function score where higher = better beta cell function = lower
+  T2D risk. PGS004887 (PGP000619) looks like an inverted deposit: the paper says higher = more incident
+  T2D, but its lead variants and 1000G correlations (r down to -0.97) point the other way; flagged for
+  review. PGS005147 (PGP000704, PRS-CS EAS) has the same inverted pattern and no direction statement,
+  so it is left unannotated. PGS000857 (obesity partition, paywalled paper) and four null-OR scores from
+  PGP000393 are unannotated.'

@@ -44,8 +44,8 @@ Never hand-edit `queue.csv` or `progress.txt`. Only a human sets `status: human_
 | `prioritize [--top N]` | Rank all ontology trait groups by review need (score count, reported-phenotype mix, flip wording, 1000G negative pairs, popularity) → `data/output/curation/trait_priorities.csv`; no LLM |
 | `stage <slug>` | Private copy `curation/staging/<slug>/` (+ `.base/` snapshot) for one parallel trait agent |
 | `merge <slug> [--dry-run] [--keep]` | Three-way merge of a staging copy back into `curation/`; conflicts (changed on both sides, or main `human_verified`) are reported and skipped; validates with a build |
-| `build [--out DIR] [--verified-only]` | Compile `curation/` into `score_annotations.parquet` + `trait_clusters.parquet` + `curation_manifest.json` (default `data/output/curation/`); fails on any inconsistent file |
-| `push [--verified-only] [--replace] [--repo …]` | Rebuild, **merge with the published release** (published rows missing here are kept; published `human_verified` rows are never replaced by unreviewed ones; conflicting cluster definitions abort), then upload all three to `just-dna-seq/pgs-catalog` `data/metadata/` in one commit. Needs `HF_TOKEN`; refuses empty tables; `--replace` overwrites instead |
+| `build [--out DIR] [--verified-only]` | Compile `curation/` into `score_annotations.parquet` (resolved rows, published), `curation_review.parquet` (the review queue), `trait_clusters.parquet`, `concept_search_terms.parquet` and `curation_manifest.json` (default `data/output/curation/`); fails on any inconsistent file |
+| `push [--verified-only] [--replace] [--repo …]` | Rebuild, **merge with the published release** (published rows missing here are kept; published `human_verified` rows are never replaced by unreviewed ones; conflicting cluster definitions abort), then upload all curation files to `just-dna-seq/pgs-catalog` `data/metadata/` in one commit. Needs `HF_TOKEN`; refuses empty tables; `--replace` overwrites instead |
 
 ## What the checks do
 
@@ -90,6 +90,28 @@ Never hand-edit `queue.csv` or `progress.txt`. Only a human sets `status: human_
   and frailty are different concepts in the same domain. Reuse concepts before creating new ones;
   a new concept or phenotype needs a one-line reason.
 - **Never guess.** No quote, no direction: `score_effect: null` plus `unannotated_reason`.
+- **Resolved vs review.** A recorded direction is published only when nothing about it is
+  uncertain. Set `review_reason` (one line) when the direction rests on an inferred coding, a
+  correlation instead of a statement, a suspected inverted deposit, or a metric that contradicts
+  it. Low-confidence-only evidence and `disagree`/`mixed` lead variants go to review
+  automatically. Review rows land in `curation_review.parquet`, with source links, for a human
+  or reviewer agent to settle; a human settles one by fixing the entry or setting `human_verified`.
+- **Inverted deposits and broken files: record, never edit.** When the paper states a
+  direction but the deposited file's lead loci all point the other way (and it anti-correlates
+  with the consensus), the file behaves as the negated score. Record `score_effect` and
+  `polarity` **as distributed** (so users' percentiles read correctly) and add a `corrections`
+  entry: `kind: deposit_inverted`, `action: polarity_as_distributed`, `paper_direction` (what the
+  paper says higher means), plus a second `metric_not_from_file` / `discount_metrics` entry
+  because the paper's OR/HR/AUROC describe the authors' score, not the file. Only a whole-file
+  swap is a pure sign flip; if only some loci are opposite, use `partial_allele_inconsistency`
+  (no sign repairs it). Degenerate weights are `broken_weights` / `quarantine` (proposed).
+  Require a stated paper direction **and** ≥2 opposite canonical loci **and** strong
+  anti-correlation before calling a deposit inverted; correlation alone is not enough. Scoring
+  weights are never modified. An entry with corrections stays in review until `human_verified`;
+  fill `upstream_report` once the problem is reported to PGS Catalog.
+- **Search aliases.** Give each new concept 2–5 `aliases` people would type (plain words,
+  opposite phrasings: "bad cholesterol", "night owl", "evening person"). Phenotypes take
+  `aliases` too. Catalog names of member scores are added automatically at build.
 
 ## Standard lookup questions
 
@@ -116,6 +138,7 @@ domains:
         valence: desirable
         valence_basis: Longer survival is the outcome people want.
         status: agent_proposed
+        aliases: [longevity, life expectancy, how long will I live]
         phenotypes:
           longevity: {label: Survival to old age, sign: 1}
           all_cause_mortality: {label: Death from any cause, sign: -1}
@@ -146,6 +169,16 @@ scores:
         quote: "<copied verbatim from a file in lookup_dir>"
         confidence: high            # high | medium | low
     lead_variant_check: {status: agree, note: "top 5 variants: 4 agree, 1 not in GWAS Catalog"}
+    review_reason: null     # one line when a human should check this direction before it is published
+    corrections: []         # deliberate deviations from the paper, e.g.
+    #  - kind: deposit_inverted          # deposit_inverted | partial_allele_inconsistency | broken_weights | metric_not_from_file
+    #    action: polarity_as_distributed # polarity_as_distributed | quarantine | discount_metrics | none
+    #    effect: "Direction describes the file as distributed; the paper says higher = increases."
+    #    paper_direction: increases      # required for deposit_inverted
+    #    evidence: "3/3 lead loci opposite; r = -0.95 vs consensus"
+    #    recorded: 2026-09-27
+    #    by: agent                       # agent | human:<name>
+    #    upstream_report: null           # issue URL / e-mail date once reported to PGS Catalog
     status: agent_proposed
     notes: null
   PGS000001:
@@ -177,12 +210,13 @@ summary: null
 2. Is `target` the phenotype the score was actually trained on, not the one it was evaluated on?
 3. Do the concept's axis and valence read naturally for a non-expert?
 4. Are the WARNs in `check` explained in `notes`?
+5. For each `corrections` entry: is the evidence still true, and has it been reported upstream?
 
 ## Published tables (`just-dna-seq/pgs-catalog`, `data/metadata/`)
 
 | File | Grain | Key columns |
 |---|---|---|
-| `score_annotations.parquet` | `pgs_id` | `annotated`, `annotation_status`, `cluster`, `axis`, `valence`, `phenotype`, `phenotype_sign`, `direction`, `target`, `coding`, `polarity`, `higher_percentile_means`, `evaluation_outcome_phenotype`, `strata_json`, `confidence`, `provenance_json`, `lead_variant_status`, `unannotated_reason` |
+| `score_annotations.parquet` | `pgs_id` | `annotated`, `annotation_status`, `cluster`, `axis`, `valence`, `phenotype`, `phenotype_sign`, `direction`, `target`, `coding`, `polarity`, `higher_percentile_means`, `evaluation_outcome_phenotype`, `strata_json`, `confidence`, `provenance_json`, `lead_variant_status`, `corrections_json`, `correction_kinds`, `unannotated_reason` |
 | `trait_clusters.parquet` | `(cluster, phenotype)` | `domain`, `concept_label`, `axis`, `valence`, `valence_basis`, `concept_status`, `phenotype_label`, `phenotype_sign`, `n_scores` |
 | `curation_manifest.json` | one per build | `built_at`, `source_commit`, counts, `sha256` of both parquets |
 

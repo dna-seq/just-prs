@@ -1,0 +1,248 @@
+slug: triglycerides
+query: triglycerides
+match:
+  terms:
+  - log triglycerides
+  - serum triglycerides
+  - triglyceride
+  - triglycerides
+  efo_ids: []
+  exclude: []
+anchor: PGS002784
+status: resolved
+concepts:
+- lipids.triglycerides
+scores:
+  PGS000063:
+    decision: in_scope
+    note: suspected inverted deposit (same A2_weight inversion as PGS000061)
+  PGS000066:
+    decision: in_scope
+    note: null
+  PGS000312:
+    decision: in_scope
+    note: null
+  PGS000659:
+    decision: in_scope
+    note: null
+  PGS000699:
+    decision: in_scope
+    note: null
+  PGS000826:
+    decision: in_scope
+    note: null
+  PGS000847:
+    decision: in_scope
+    note: evaluated on moderate age-related diabetes; direction from correlation
+  PGS001979:
+    decision: in_scope
+    note: null
+  PGS002197:
+    decision: in_scope
+    note: null
+  PGS002287:
+    decision: in_scope
+    note: null
+  PGS002353:
+    decision: in_scope
+    note: null
+  PGS002378:
+    decision: in_scope
+    note: null
+  PGS002425:
+    decision: in_scope
+    note: null
+  PGS002474:
+    decision: in_scope
+    note: null
+  PGS002523:
+    decision: in_scope
+    note: null
+  PGS002572:
+    decision: in_scope
+    note: null
+  PGS002621:
+    decision: in_scope
+    note: null
+  PGS002670:
+    decision: in_scope
+    note: null
+  PGS002719:
+    decision: in_scope
+    note: null
+  PGS002784:
+    decision: in_scope
+    note: null
+  PGS003144:
+    decision: in_scope
+    note: null
+  PGS003145:
+    decision: in_scope
+    note: null
+  PGS003146:
+    decision: in_scope
+    note: null
+  PGS003147:
+    decision: in_scope
+    note: null
+  PGS003148:
+    decision: in_scope
+    note: null
+  PGS003149:
+    decision: in_scope
+    note: null
+  PGS003150:
+    decision: in_scope
+    note: null
+  PGS003151:
+    decision: in_scope
+    note: null
+  PGS003152:
+    decision: in_scope
+    note: null
+  PGS003153:
+    decision: in_scope
+    note: null
+  PGS003340:
+    decision: in_scope
+    note: null
+  PGS003349:
+    decision: in_scope
+    note: null
+  PGS003401:
+    decision: in_scope
+    note: null
+  PGS003482:
+    decision: in_scope
+    note: uncorrelated with all other TG scores; evaluated on sleep-apnoea REI
+  PGS003801:
+    decision: in_scope
+    note: null
+  PGS003802:
+    decision: in_scope
+    note: null
+  PGS003803:
+    decision: in_scope
+    note: null
+  PGS003804:
+    decision: in_scope
+    note: null
+  PGS003805:
+    decision: in_scope
+    note: broken near-constant weights (weighted LDpred2)
+  PGS003806:
+    decision: in_scope
+    note: null
+  PGS003807:
+    decision: in_scope
+    note: null
+  PGS003808:
+    decision: in_scope
+    note: null
+  PGS003809:
+    decision: in_scope
+    note: null
+  PGS003810:
+    decision: in_scope
+    note: broken near-constant weights (weighted LDpred2)
+  PGS003811:
+    decision: in_scope
+    note: null
+  PGS003812:
+    decision: in_scope
+    note: null
+  PGS003813:
+    decision: in_scope
+    note: null
+  PGS003814:
+    decision: in_scope
+    note: null
+  PGS003815:
+    decision: in_scope
+    note: broken near-constant weights (weighted LDpred2)
+  PGS003816:
+    decision: in_scope
+    note: null
+  PGS003817:
+    decision: in_scope
+    note: null
+  PGS003854:
+    decision: in_scope
+    note: evaluated on annual change of TG
+  PGS003881:
+    decision: in_scope
+    note: null
+  PGS004342:
+    decision: in_scope
+    note: null
+  PGS004652:
+    decision: in_scope
+    note: null
+  PGS004653:
+    decision: in_scope
+    note: null
+  PGS004654:
+    decision: in_scope
+    note: null
+  PGS004655:
+    decision: in_scope
+    note: null
+  PGS004656:
+    decision: in_scope
+    note: null
+  PGS004657:
+    decision: in_scope
+    note: null
+  PGS004658:
+    decision: in_scope
+    note: null
+  PGS004659:
+    decision: in_scope
+    note: null
+  PGS004660:
+    decision: in_scope
+    note: null
+  PGS004661:
+    decision: in_scope
+    note: null
+  PGS004662:
+    decision: in_scope
+    note: null
+  PGS004663:
+    decision: in_scope
+    note: null
+  PGS004664:
+    decision: in_scope
+    note: null
+  PGS004665:
+    decision: in_scope
+    note: null
+  PGS004666:
+    decision: in_scope
+    note: null
+  PGS004845:
+    decision: in_scope
+    note: null
+  PGS004846:
+    decision: in_scope
+    note: null
+  PGS004847:
+    decision: in_scope
+    note: null
+  PGS004848:
+    decision: in_scope
+    note: null
+  PGS004916:
+    decision: in_scope
+    note: null
+  PGS004937:
+    decision: in_scope
+    note: null
+summary: 'All 75 triglyceride scores map to one new concept, lipids.triglycerides (higher triglycerides,
+  undesirable). 70 are catalog-only "higher score = higher TG", corroborated by positive catalog betas/ORs
+  against TG or 1000G EUR correlation with an annotated TG score, and checked against 8 reference TG lead
+  SNPs. PGS000063 (MESA, PGP000045) is an inverted deposit like PGS000061: as scored from the catalog
+  file, higher = lower TG; it goes to review. Three weighted-LDpred2 files in PGP000489 (PGS003805/3810/3815)
+  have broken near-constant weights, and PGS003482 is uncorrelated with every other TG score; all four
+  are left unannotated. Four ExPRSweb LASSOSUM/PRS-CS builds (PGS003144/3148/3149/3153) carry inverted
+  weights at large-effect TG loci despite positive overall correlation, and are flagged for review.'

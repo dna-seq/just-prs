@@ -1,0 +1,148 @@
+pgp_id: PGP000382
+scores:
+  PGS002800:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.34 with PGS005004 (annotated, same phenotype).
+  PGS002801:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.71 with PGS004999 (annotated, same phenotype).
+  PGS002802:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.87 with PGS005281 (annotated, same phenotype).
+  PGS002803:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.62 with PGS004095 (annotated, same phenotype).
+  PGS002804:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.88 with PGS005281 (annotated, same phenotype).
+  PGS002805:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.68 with PGS004999 (annotated, same phenotype).
+paper:
+  pmid: '36224396'
+  doi: 10.1038/s41586-022-05275-y
+  title: A saturated map of common genetic variants associated with human height.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

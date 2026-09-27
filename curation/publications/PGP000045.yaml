@@ -1,0 +1,209 @@
+pgp_id: PGP000045
+scores:
+  PGS000061:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: LDL cholesterol level (as the deposited weights are oriented)
+    polarity: -1
+    evaluation_outcome:
+      phenotype: ldl_cholesterol
+    provenance:
+    - source: full_text
+      locator: Supporting information, S4 Table legend
+      quote: Weights used to calculate genetic risk scores based on the allelic count/allelic dosage of A2 alleles.
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s006.csv header
+      quote: rs#,Trait,A1,A2,A2_weight
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s006.csv, rs4420638 LDL row
+      quote: rs4420638,LDL,A,G,-0.2153
+      confidence: medium
+    - source: supplement
+      locator: gwas_rs4420638.json (GWAS Catalog, LDL-C, effect allele G)
+      quote: 0.21 unit increase
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: '6 of 6 reference LDL SNPs inverted: rs4420638 G (LDL-raising per GWAS Catalog) -0.2153; rs6511720 G
+        -0.2108; rs629301 G +0.1736; rs1367117 G +0.1307; rs2479409 G -0.0671; rs4299376 G -0.0812'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (decreases LDL cholesterol level (as the deposited
+        weights are oriented)); the paper says higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: '6 of 6 reference LDL SNPs inverted: rs4420638 G (LDL-raising per GWAS Catalog) -0.2153; rs6511720
+        G -0.2108; rs629301 G +0.1736; rs1367117 G +0.1307; rs2479409 G -0.0671; rs4299376 G -0.0812 | The paper
+        intends a higher GRS_LDL = higher LDL (pone.0126361.s004.csv: LDL_GRS estimate +15.00 in Caucasians, positive
+        in all four groups), but the deposited weights follow its "A2_weight" column, which is oriented opposite
+        to established LDL effects at every reference locus. The distributed file correlates about -0.65 with ~125
+        other LDL scores in 1000G EUR. So as scored from the PGS Catalog file, a hi…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'The paper intends a higher GRS_LDL = higher LDL (pone.0126361.s004.csv: LDL_GRS estimate +15.00 in Caucasians,
+      positive in all four groups), but the deposited weights follow its "A2_weight" column, which is oriented opposite
+      to established LDL effects at every reference locus. The distributed file correlates about -0.65 with ~125
+      other LDL scores in 1000G EUR. So as scored from the PGS Catalog file, a higher value means LOWER genetic
+      LDL. The positive catalog beta (15) reflects the authors'' own computation, not this file; the metric_sign
+      WARN is expected. Candidate for a catalog erratum/quarantine.'
+  PGS000063:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: triglyceride level (as the deposited weights are oriented)
+    polarity: -1
+    evaluation_outcome:
+      phenotype: triglycerides
+    provenance:
+    - source: full_text
+      locator: Supporting information, S4 Table legend
+      quote: Weights used to calculate genetic risk scores based on the allelic count/allelic dosage of A2 alleles.
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s006.csv header
+      quote: rs#,Trait,A1,A2,A2_weight
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s006.csv, rs964184 TG row
+      quote: rs964184,TG,C,G,-0.2352
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s006.csv, rs1260326 TG row
+      quote: rs1260326,TG,T,C,0.1159
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s004.csv, TG Caucasian row
+      quote: TG,Cau,5.38E-18,0.041,-0.068,3.04E-01,-0.029,8.14E-01,0.002,9.88E-01,0.464,1.71E-11
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: '4 of 4 reference TG SNPs inverted: rs964184 G (TG-raising, APOA5) weighted negative; rs1260326 T (GCKR)
+        and rs2954029 A (TRIB1) weighted against; rs12678919 G (LPL, TG-lowering) weighted positive'
+    review_reason: 'Suspected inverted deposit: the A2_weight column is oriented opposite to established TG effects;
+      the paper intends higher GRS = higher TG.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (decreases triglyceride level (as the deposited
+        weights are oriented)); the paper says higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: '4 of 4 reference TG SNPs inverted: rs964184 G (TG-raising, APOA5) weighted negative; rs1260326
+        T (GCKR) and rs2954029 A (TRIB1) weighted against; rs12678919 G (LPL, TG-lowering) weighted positive | Suspected
+        inverted deposit: the A2_weight column is oriented opposite to established TG effects; the paper intends
+        higher GRS = higher TG. | Same inversion as PGS000061 (LDL, same paper). The paper intends a higher TG GRS
+        = higher TG (s004.csv TG_GRS_estimate +0.464 in Caucasians, positive in all four groups), but the deposited
+        weights are oriented opposite to established TG effects at every referen…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Same inversion as PGS000061 (LDL, same paper). The paper intends a higher TG GRS = higher TG (s004.csv
+      TG_GRS_estimate +0.464 in Caucasians, positive in all four groups), but the deposited weights are oriented
+      opposite to established TG effects at every reference locus, and the file correlates -0.5 to -0.8 with the
+      ~70 other TG scores in 1000G EUR. As scored from the PGS Catalog file, a higher value means LOWER genetic
+      TG. The positive catalog beta reflects the authors' computation, not this file; a metric_sign WARN is expected.
+      Candidate for a catalog erratum/quarantine.
+  PGS000062:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: total cholesterol level (as the deposited weights are oriented)
+    polarity: -1
+    evaluation_outcome:
+      phenotype: total_cholesterol
+    provenance:
+    - source: full_text
+      locator: Supporting information, S4 Table legend
+      quote: Weights used to calculate genetic risk scores based on the allelic count/allelic dosage of A2 alleles.
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s006.csv header
+      quote: rs#,Trait,A1,A2,A2_weight
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s006.csv, rs4420638 TC row
+      quote: rs4420638,TC,A,G,-0.184
+      confidence: medium
+    - source: supplement
+      locator: gwas_rs4420638.json (GWAS Catalog, LDL-C, effect allele G)
+      quote: 0.21 unit increase
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: '6 of 6 reference cholesterol SNPs inverted: rs629301 G +0.149; rs1367117 G +0.118; rs4299376 G -0.0787;
+        rs12916 C -0.0754; rs6511720 G -0.187; rs4420638 G -0.184'
+    review_reason: 'Suspected inverted deposit: file weights follow the A2_weight column, opposite to known cholesterol
+      effects; sign taken from lead SNPs and 1000G correlation.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (decreases total cholesterol level (as the deposited
+        weights are oriented)); the paper says higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: '6 of 6 reference cholesterol SNPs inverted: rs629301 G +0.149; rs1367117 G +0.118; rs4299376 G
+        -0.0787; rs12916 C -0.0754; rs6511720 G -0.187; rs4420638 G -0.184 | Suspected inverted deposit: file weights
+        follow the A2_weight column, opposite to known cholesterol effects; sign taken from lead SNPs and 1000G
+        correlation. | Same defect as PGS000061 (LDL) from this paper. The paper intends higher GRS_TC = higher
+        TC (pone.0126361.s004.csv TC_GRS estimate +20.69 in Caucasians), but the deposited file is oriented opposite
+        at every reference locus (APOE, LDLR, SORT1, APOB, ABCG8, HMGCR) and correlate…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Same defect as PGS000061 (LDL) from this paper. The paper intends higher GRS_TC = higher TC (pone.0126361.s004.csv
+      TC_GRS estimate +20.69 in Caucasians), but the deposited file is oriented opposite at every reference locus
+      (APOE, LDLR, SORT1, APOB, ABCG8, HMGCR) and correlates about -0.6 to -0.73 with the other TC scores in 1000G
+      EUR (min r=-0.73 with PGS004680). As scored from the catalog file a higher value means LOWER genetic TC; the
+      positive catalog beta reflects the authors' own computation. Candidate for a catalog erratum/quarantine.
+paper:
+  pmid: '25951326'
+  doi: 10.1371/journal.pone.0126361
+  title: An Examination of the Relationship between Lipid Levels and Associated Genetic Markers across Racial/Ethnic
+    Populations in the Multi-Ethnic Study of Atherosclerosis.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement:
+  - pone.0126361.s006.csv
+  - pone.0126361.s004.csv

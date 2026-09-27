@@ -1,0 +1,30 @@
+pgp_id: PGP000557
+scores:
+  PGS004323:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: catalog metric is for 'Fasting plasma glucose', which higher T2D genetic liability also raises
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.78 with already-annotated PGS003728.
+paper:
+  pmid: '37276697'
+  doi: 10.1016/j.jhazmat.2023.131757
+  title: 'Gene-environment interaction in long-term effects of polychlorinated biphenyls exposure on glucose homeostasis
+    and type 2 diabetes: The modifying effects of genetic risk and lifestyle.'

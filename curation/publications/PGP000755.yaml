@@ -1,0 +1,34 @@
+pgp_id: PGP000755
+scores:
+  PGS005281:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by beta 3.6 [3.08, 4.11] against Adult height in Native American (n=787); CI excludes 0.
+paper:
+  pmid: '38483351'
+  doi: 10.1093/hmg/ddae030
+  title: Novel signals and polygenic score for height are associated with pubertal growth traits in Southwestern
+    American Indians.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

@@ -1,0 +1,75 @@
+pgp_id: PGP000532
+scores:
+  PGS004237:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: 'risk of coronary artery disease, weights AS DISTRIBUTED (allele-inverted: higher score = lower CAD
+        risk; the authors'' own score raised risk)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog OR 1.56 (prevalent CAD) and HR 1.53 (incident MI) were computed by the authors on their own,
+        non-inverted PRS, not on the deposited file, so they stay > 1.
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract > Results
+      quote: From 7746 incident MI cases and 393 725 controls, hazard ratio for MI reached 1.53 (95% CI, 1.49-1.56;
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary Artery Disease
+      confidence: low
+    lead_variant_check:
+      status: disagree
+      note: rs4977574-G (9p21) weight -0.0148, rs2891168-G -0.0144, rs9349379-G (PHACTR1) -0.0147; GWAS Catalog
+        lists rs4977574-G as the CAD risk allele (OR 1.2, PMID 29263402) and rs9349379-A as protective (OR 0.892,
+        PMID 36474045).
+    review_reason: 'Suspected inverted deposit: lead-variant signs and 1000G r = -0.95 vs PGS005112/PGS001780 contradict
+      the paper''s risk-increasing PRS.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases risk of coronary artery disease, weights
+        AS DISTRIBUTED (allele-inverted: higher score = lower CAD risk; the authors'' own score raised risk)); the
+        paper says higher = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'rs4977574-G (9p21) weight -0.0148, rs2891168-G -0.0144, rs9349379-G (PHACTR1) -0.0147; GWAS Catalog
+        lists rs4977574-G as the CAD risk allele (OR 1.2, PMID 29263402) and rs9349379-A as protective (OR 0.892,
+        PMID 36474045). | Suspected inverted deposit: lead-variant signs and 1000G r = -0.95 vs PGS005112/PGS001780
+        contradict the paper''s risk-increasing PRS. | The paper (abstract only, not open access) reports HR 1.53
+        per SD for incident MI, so the authors'' PRS raises risk. The distributed file points the other way: every
+        lead CAD variant has the risk allele with a negative weight, and in 1000G E…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'The paper (abstract only, not open access) reports HR 1.53 per SD for incident MI, so the authors''
+      PRS raises risk. The distributed file points the other way: every lead CAD variant has the risk allele with
+      a negative weight, and in 1000G EUR it correlates -0.81 with anchor PGS000018 and -0.95 with PGS005112; it
+      is negative against all 101 other CAD/MI scores except PGS000116 (+0.72, also inverted). Nothing in the abstract
+      or catalog record describes the allele coding. Recorded as distributed (higher score = lower risk). Report
+      to PGS Catalog.'
+paper:
+  pmid: '34670400'
+  doi: 10.1161/circgen.121.003452
+  title: Polygenic Risk Score for Coronary Artery Disease Improves the Prediction of Early-Onset Myocardial Infarction
+    and Mortality in Men.
+evidence_read:
+  abstract: true
+  full_text: null
+  supplement: []

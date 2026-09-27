@@ -1,0 +1,144 @@
+pgp_id: PGP000724
+scores:
+  PGS005198:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    evaluation_outcome:
+      phenotype: obesity
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 4.08 (CI 3.02-5.52) against 'Obesity class I, or higher (BMI ≥30 kg/m2)'; 1000G
+      EUR correlation with anchor PGS000320 r=+0.63.
+  PGS005199:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.37 (CI 0.36-0.37) against 'body mass index (BMI)'; 1000G EUR correlation with
+      anchor PGS000320 r=+0.51.
+  PGS005200:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.3 (CI 0.27-0.32) against 'body mass index (BMI)'; 1000G EUR correlation with
+      anchor PGS000320 r=+0.29.
+  PGS005201:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.46 (CI 0.43-0.49) against 'body mass index (BMI)'; 1000G EUR correlation with
+      anchor PGS000320 r=+0.41.
+  PGS005202:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.36 (CI 0.33-0.39) against 'body mass index (BMI)'; 1000G EUR correlation with
+      anchor PGS000320 r=+0.25.
+  PGS005203:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.37 (CI 0.36-0.37) against 'body mass index (BMI)'; 1000G EUR correlation with
+      anchor PGS000320 r=+0.53.
+  PGS005204:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.34 (CI 0.31-0.38) against 'body mass index (BMI)'; 1000G EUR correlation with
+      anchor PGS000320 r=+0.24.

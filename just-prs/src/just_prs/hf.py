@@ -577,6 +577,8 @@ HF_METADATA_PREFIX = "data/metadata"
 CURATION_FILES = (
     "score_annotations.parquet",
     "trait_clusters.parquet",
+    "concept_search_terms.parquet",
+    "curation_review.parquet",
     "curation_manifest.json",
 )
 
@@ -589,7 +591,7 @@ def push_curation_tables(
 ) -> list[str]:
     """Upload the compiled curation tables to ``data/metadata/`` in one commit.
 
-    All three files (``CURATION_FILES``) go in a single ``create_commit`` so a
+    All files in ``CURATION_FILES`` go in a single ``create_commit`` so a
     reader never sees annotations from one build next to clusters from another.
     Returns the uploaded names; raises when a file is missing or no token is set.
     """

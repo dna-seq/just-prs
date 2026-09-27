@@ -1,0 +1,41 @@
+pgp_id: PGP000766
+scores:
+  PGS005318:
+    score_effect: null
+    unannotated_reason: 'not read: lookup budget reached. Reported eGFR, but the catalog HR 1.06 [1.01,1.10] is
+      for incident CKD (evaluated on another outcome, and HR>1 conflicts with an eGFR-direction score); 1000G r=+0.07
+      with eGFR scores gives no support.'
+  PGS005321:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: authors report that a higher SBP score is associated with lower discontinuation of dihydropyridine
+        CCB prescribing (HR 0.96 per SD)
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Introduction
+      quote: derived by summing the number of trait-increasing alleles they carry and weighting each variant’s contribution
+        according to its effect size
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: high SBP and DBP polygenic scores are associated with decreased the risk of discontinuation
+      confidence: medium
+    lead_variant_check:
+      status: mixed
+      note: 'GWAS Catalog SBP alleles: rs72683923 and rs11112548 agree; rs189267552 and rs138877676 (Evangelou 2018
+        SBP-lowering alleles on the other letter) carry negative weights on the SBP-raising allele, i.e. disagree;
+        rs111464338 not in GWAS Catalog'
+    review_reason: 'Possible partial allele misorientation: 2 of 4 checked top variants disagree with GWAS Catalog
+      SBP alleles and the score barely correlates with other SBP scores in 1000G EUR (max r 0.13).'
+    status: agent_proposed
+    notes: 240 Evangelou 2018 SBP variants (Methods table); weights standardized to SD. Evaluated on dCCB discontinuation
+      in UK Biobank CCB users, not on SBP itself.

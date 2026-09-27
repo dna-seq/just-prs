@@ -1,0 +1,86 @@
+pgp_id: PGP000619
+scores:
+  PGS004889:
+    cluster: kidney.chronic_kidney_disease
+    phenotype: chronic_kidney_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of chronic kidney disease
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Chronic kidney disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.3 [1.18, 1.44] against 'Incident chronic kidney disease cases without diabetes';
+      1000G EUR r=+0.39 (mean) with PGP000517 CKD scores.
+  PGS004887:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: time_to_event
+    score_effect:
+      direction: decreases
+      target: 'risk of incident type 2 diabetes, weights AS DISTRIBUTED (allele-inverted: the authors'' own score
+        raised it)'
+      coding: null
+    polarity: -1
+    provenance:
+    - source: abstract
+      locator: Abstract > Results
+      quote: PGS was associated with incident T2D in all models. Adjusting for age and sex only, the Hazard Ratio
+        (HR) per PGS standard deviation (SD) was 1.76 (95% CI 1.68, 1.84)
+      confidence: high
+    - source: full_text
+      locator: Results, scenario 4
+      quote: In scenario 4, with more clinical variables in the base model, the adjusted HR was 1.48 per SD of the
+        PGS
+      confidence: high
+    lead_variant_check:
+      status: disagree
+      note: 'deposited file: rs10811661 (CDKN2B) effect C weight +0.014 and rs1800961 (HNF4A) effect T weight -0.015;
+        GWAS Catalog T2D risk alleles are T and T -> 2/2 disagree'
+    review_reason: 'suspected inverted deposit: paper''s score raises T2D risk, but the deposited file''s lead variants
+      point the other way and it correlates r=-0.5 to -0.97 with ~190 other T2D scores in 1000G EUR'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases risk of incident type 2 diabetes,
+        weights AS DISTRIBUTED (allele-inverted: the authors'' own score raised it)); the paper says higher = increases.
+        Weights are not modified.'
+      paper_direction: increases
+      evidence: 'deposited file: rs10811661 (CDKN2B) effect C weight +0.014 and rs1800961 (HNF4A) effect T weight
+        -0.015; GWAS Catalog T2D risk alleles are T and T -> 2/2 disagree | suspected inverted deposit: paper''s
+        score raises T2D risk, but the deposited file''s lead variants point the other way and it correlates r=-0.5
+        to -0.97 with ~190 other T2D scores in 1000G EUR | PRS-CS genome-wide score (MVP/DIAMANTE + FinnGen meta-analysis).
+        Computed as deposited, a higher value likely means LOWER T2D risk; direction recorded as the paper states
+        pending a check of the scoring file orientation.'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: PRS-CS genome-wide score (MVP/DIAMANTE + FinnGen meta-analysis). Computed as deposited, a higher value
+      likely means LOWER T2D risk; direction recorded as the paper states pending a check of the scoring file orientation.
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: The catalog metric was computed by the authors on their own non-inverted score, so it stays > null.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

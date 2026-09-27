@@ -1,0 +1,245 @@
+pgp_id: PGP000704
+scores:
+  PGS005143:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.24 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS005152:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.34 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS005141:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: risk of asthma, as the deposited scoring file behaves (suspected inverted effect alleles)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Disease selections
+      quote: 'For asthma, cataract, cholelithiasis, colon polyp, and stroke, cases were chosen if they met any of
+        these criteria: a diagnosis of each respective disease, taking medication for the same, or undergoing treatment
+        for it.'
+      confidence: low
+    - source: full_text
+      locator: Methods > Statistical analysis
+      quote: The perSD OR was derived using this logistic regression.
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: 'Relative to the recorded ''decreases'': deposited weights rs17293632-T -0.0012, rs1837253-C -0.0199,
+        rs10455025-C -0.0093; GWAS Catalog reports T, C, C as the asthma-raising alleles, so all three leads carry
+        negative weights on risk alleles'
+    review_reason: 'Suspected inverted deposit: paper reports a positive perSD OR (1.27 for PRS-CS, Table 2) but
+      the deposited file''s lead risk alleles carry negative weights and the score correlates -0.8 to -0.9 in 1000G
+      with other EAS-derived asthma scores; direction recorded as the file behaves.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (decreases risk of asthma, as the deposited scoring
+        file behaves (suspected inverted effect alleles)); the paper says higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: 'Relative to the recorded ''decreases'': deposited weights rs17293632-T -0.0012, rs1837253-C -0.0199,
+        rs10455025-C -0.0093; GWAS Catalog reports T, C, C as the asthma-raising alleles, so all three leads carry
+        negative weights on risk alleles | Suspected inverted deposit: paper reports a positive perSD OR (1.27 for
+        PRS-CS, Table 2) but the deposited file''s lead risk alleles carry negative weights and the score correlates
+        -0.8 to -0.9 in 1000G with other EAS-derived asthma scores; direction recorded as the file behaves. | Scoring
+        file has only rsID/effect_allele/effect_weight (no other_allele), so …'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Scoring file has only rsID/effect_allele/effect_weight (no other_allele), so the effect allele was probably
+      mislabelled at deposit. As computed from the PGS Catalog file, a higher score means LOWER asthma risk; the
+      authors' own score (per the paper) raised risk. Catalog BETA 1.27/1.31 are the paper's perSD ORs, not a property
+      of the deposited file.
+  PGS005148:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: risk of asthma, as the deposited scoring file behaves (suspected inverted effect alleles)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Disease selections
+      quote: 'For asthma, cataract, cholelithiasis, colon polyp, and stroke, cases were chosen if they met any of
+        these criteria: a diagnosis of each respective disease, taking medication for the same, or undergoing treatment
+        for it.'
+      confidence: low
+    - source: full_text
+      locator: Methods > Statistical analysis
+      quote: The perSD OR was derived using this logistic regression.
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: 'Relative to the recorded ''decreases'': deposited weights rs17293632-T -0.0343, rs1837253-C -0.0272,
+        rs10455025-C -0.0313; GWAS Catalog reports T, C, C as the asthma-raising alleles, so all three leads carry
+        negative weights on risk alleles'
+    review_reason: 'Suspected inverted deposit: paper reports a positive perSD OR (1.27 for PRS-CS, Table 2) but
+      the deposited file''s lead risk alleles carry negative weights and the score correlates -0.8 to -0.9 in 1000G
+      with other EAS-derived asthma scores; direction recorded as the file behaves.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (decreases risk of asthma, as the deposited scoring
+        file behaves (suspected inverted effect alleles)); the paper says higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: 'Relative to the recorded ''decreases'': deposited weights rs17293632-T -0.0343, rs1837253-C -0.0272,
+        rs10455025-C -0.0313; GWAS Catalog reports T, C, C as the asthma-raising alleles, so all three leads carry
+        negative weights on risk alleles | Suspected inverted deposit: paper reports a positive perSD OR (1.27 for
+        PRS-CS, Table 2) but the deposited file''s lead risk alleles carry negative weights and the score correlates
+        -0.8 to -0.9 in 1000G with other EAS-derived asthma scores; direction recorded as the file behaves. | Scoring
+        file has only rsID/effect_allele/effect_weight (no other_allele), so …'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Scoring file has only rsID/effect_allele/effect_weight (no other_allele), so the effect allele was probably
+      mislabelled at deposit. As computed from the PGS Catalog file, a higher score means LOWER asthma risk; the
+      authors' own score (per the paper) raised risk. Catalog BETA 1.27/1.31 are the paper's perSD ORs, not a property
+      of the deposited file.
+  PGS005147:
+    score_effect: null
+    unannotated_reason: 'Suspected inverted deposit: the paper gives no explicit direction statement, the scoring
+      file has no other_allele column, lead variants disagree with GWAS Catalog T2D risk alleles (rs10811661 C +0.019,
+      rs7901695 C -0.013), and it correlates negatively (median r=-0.34, min -0.77) with other T2D scores in 1000G
+      EUR.'
+    status: agent_proposed
+  PGS005157:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs7901695 T -0.020 (risk allele C) and rs10811661 T +0.011 (risk allele T): 2/2 agree with GWAS Catalog
+        T2D risk alleles'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper read; it states no explicit weight direction). PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR correlation r=+0.82 with already-annotated
+      PGS002308.
+  PGS005145:
+    cluster: anthropometry.adiposity
+    phenotype: obesity
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of obesity
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | scores.trait_efo
+      quote: Obesity | obesity disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.82 with catalog-annotated PGS003886 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.19.
+  PGS005154:
+    cluster: anthropometry.adiposity
+    phenotype: obesity
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of obesity
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | scores.trait_efo
+      quote: Obesity | obesity disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.79 with catalog-annotated PGS003887 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.59.
+paper:
+  pmid: '40045046'
+  doi: 10.1038/s42003-025-07767-9
+  title: Assessment of polygenic risk score performance in East Asian populations for ten common diseases.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

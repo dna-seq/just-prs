@@ -1,0 +1,335 @@
+slug: coronary-artery-disease
+query: coronary artery disease
+match:
+  terms:
+  - CAD
+  - coronary artery disease
+  - coronary heart disease
+  - ischemic heart disease
+  - myocardial infarction
+  efo_ids: []
+  exclude: []
+anchor: PGS000018
+status: resolved
+concepts:
+- cardiovascular.coronary_artery_disease
+scores:
+  PGS000010:
+    decision: in_scope
+    note: null
+  PGS000011:
+    decision: in_scope
+    note: null
+  PGS000012:
+    decision: in_scope
+    note: null
+  PGS000013:
+    decision: in_scope
+    note: null
+  PGS000018:
+    decision: in_scope
+    note: null
+  PGS000019:
+    decision: in_scope
+    note: null
+  PGS000057:
+    decision: in_scope
+    note: null
+  PGS000058:
+    decision: in_scope
+    note: null
+  PGS000059:
+    decision: in_scope
+    note: null
+  PGS000116:
+    decision: in_scope
+    note: suspected inverted deposit (higher score = lower risk as distributed)
+  PGS000200:
+    decision: in_scope
+    note: null
+  PGS000296:
+    decision: in_scope
+    note: null
+  PGS000329:
+    decision: in_scope
+    note: null
+  PGS000337:
+    decision: in_scope
+    note: null
+  PGS000349:
+    decision: in_scope
+    note: null
+  PGS000710:
+    decision: in_scope
+    note: null
+  PGS000746:
+    decision: in_scope
+    note: null
+  PGS000747:
+    decision: in_scope
+    note: null
+  PGS000748:
+    decision: in_scope
+    note: null
+  PGS000749:
+    decision: in_scope
+    note: null
+  PGS000798:
+    decision: in_scope
+    note: null
+  PGS000818:
+    decision: in_scope
+    note: null
+  PGS000899:
+    decision: in_scope
+    note: null
+  PGS001048:
+    decision: in_scope
+    note: null
+  PGS001314:
+    decision: in_scope
+    note: null
+  PGS001315:
+    decision: in_scope
+    note: null
+  PGS001316:
+    decision: in_scope
+    note: null
+  PGS001317:
+    decision: in_scope
+    note: null
+  PGS001355:
+    decision: in_scope
+    note: null
+  PGS001780:
+    decision: in_scope
+    note: null
+  PGS002244:
+    decision: in_scope
+    note: null
+  PGS002262:
+    decision: in_scope
+    note: null
+  PGS002775:
+    decision: in_scope
+    note: null
+  PGS002776:
+    decision: in_scope
+    note: null
+  PGS002809:
+    decision: in_scope
+    note: null
+  PGS003355:
+    decision: in_scope
+    note: null
+  PGS003356:
+    decision: in_scope
+    note: null
+  PGS003438:
+    decision: in_scope
+    note: null
+  PGS003446:
+    decision: in_scope
+    note: null
+  PGS003725:
+    decision: in_scope
+    note: null
+  PGS003726:
+    decision: in_scope
+    note: null
+  PGS003727:
+    decision: in_scope
+    note: null
+  PGS003866:
+    decision: in_scope
+    note: null
+  PGS004196:
+    decision: in_scope
+    note: null
+  PGS004197:
+    decision: in_scope
+    note: null
+  PGS004198:
+    decision: in_scope
+    note: null
+  PGS004199:
+    decision: in_scope
+    note: null
+  PGS004200:
+    decision: in_scope
+    note: null
+  PGS004237:
+    decision: in_scope
+    note: suspected inverted deposit (higher score = lower risk as distributed)
+  PGS004305:
+    decision: in_scope
+    note: null
+  PGS004306:
+    decision: in_scope
+    note: null
+  PGS004307:
+    decision: in_scope
+    note: null
+  PGS004308:
+    decision: in_scope
+    note: null
+  PGS004309:
+    decision: in_scope
+    note: null
+  PGS004321:
+    decision: in_scope
+    note: null
+  PGS004443:
+    decision: in_scope
+    note: null
+  PGS004458:
+    decision: in_scope
+    note: null
+  PGS004459:
+    decision: in_scope
+    note: null
+  PGS004513:
+    decision: in_scope
+    note: null
+  PGS004528:
+    decision: in_scope
+    note: null
+  PGS004529:
+    decision: in_scope
+    note: null
+  PGS004595:
+    decision: in_scope
+    note: null
+  PGS004596:
+    decision: in_scope
+    note: null
+  PGS004696:
+    decision: in_scope
+    note: null
+  PGS004697:
+    decision: in_scope
+    note: null
+  PGS004698:
+    decision: in_scope
+    note: null
+  PGS004743:
+    decision: in_scope
+    note: null
+  PGS004744:
+    decision: in_scope
+    note: null
+  PGS004745:
+    decision: in_scope
+    note: null
+  PGS004746:
+    decision: in_scope
+    note: null
+  PGS004879:
+    decision: in_scope
+    note: null
+  PGS004921:
+    decision: in_scope
+    note: null
+  PGS004925:
+    decision: in_scope
+    note: null
+  PGS004941:
+    decision: in_scope
+    note: null
+  PGS005034:
+    decision: in_scope
+    note: null
+  PGS005035:
+    decision: in_scope
+    note: null
+  PGS005036:
+    decision: in_scope
+    note: null
+  PGS005037:
+    decision: in_scope
+    note: null
+  PGS005038:
+    decision: in_scope
+    note: null
+  PGS005039:
+    decision: in_scope
+    note: null
+  PGS005040:
+    decision: in_scope
+    note: null
+  PGS005041:
+    decision: in_scope
+    note: null
+  PGS005042:
+    decision: in_scope
+    note: null
+  PGS005043:
+    decision: in_scope
+    note: null
+  PGS005044:
+    decision: in_scope
+    note: null
+  PGS005045:
+    decision: in_scope
+    note: null
+  PGS005046:
+    decision: in_scope
+    note: null
+  PGS005091:
+    decision: in_scope
+    note: null
+  PGS005092:
+    decision: in_scope
+    note: null
+  PGS005093:
+    decision: in_scope
+    note: null
+  PGS005094:
+    decision: in_scope
+    note: null
+  PGS005112:
+    decision: in_scope
+    note: null
+  PGS005143:
+    decision: in_scope
+    note: null
+  PGS005152:
+    decision: in_scope
+    note: null
+  PGS005231:
+    decision: in_scope
+    note: null
+  PGS005236:
+    decision: in_scope
+    note: null
+  PGS005293:
+    decision: in_scope
+    note: null
+  PGS005294:
+    decision: in_scope
+    note: null
+  PGS005295:
+    decision: in_scope
+    note: null
+  PGS005296:
+    decision: in_scope
+    note: null
+  PGS005297:
+    decision: in_scope
+    note: null
+  PGS005298:
+    decision: in_scope
+    note: null
+  PGS005322:
+    decision: in_scope
+    note: null
+  PGS012542:
+    decision: in_scope
+    note: null
+summary: '104 CAD/CHD/MI scores from 55 papers, all in one concept (cardiovascular.coronary_artery_disease) with
+  two phenotypes: coronary artery disease (83) and myocardial infarction (21). 102 follow the catalog convention
+  (higher score = higher risk), annotated catalog-only on positive HR/OR CIs or 1000G r >= +0.2 with the metaGRS
+  anchor. Two deposits look allele-inverted: PGS004237 (Manikpurage 2021) and PGS000116 (Elliott 2020). Both papers
+  say higher PRS = more CAD, but the files give the protective allele a positive weight at 9p21/PHACTR1/LPA and
+  correlate -0.6 to -0.95 with every other CAD score; they are recorded as distributed (higher score = lower risk)
+  and sent to review. After alignment no same-concept pair correlates below -0.2.'

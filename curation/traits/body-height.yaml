@@ -1,0 +1,361 @@
+slug: body-height
+query: height
+match:
+  terms:
+  - adult height
+  - body height
+  - height
+  - short stature
+  - standing height
+  - stature
+  - tall stature
+  efo_ids: []
+  exclude:
+  - adipose tissue
+anchor: PGS001229
+status: needs_review
+concepts:
+- anthropometry.height
+scores:
+  PGS000297:
+    decision: in_scope
+    note: null
+  PGS000758:
+    decision: in_scope
+    note: null
+  PGS000969:
+    decision: in_scope
+    note: null
+  PGS000998:
+    decision: in_scope
+    note: null
+  PGS001229:
+    decision: in_scope
+    note: null
+  PGS001405:
+    decision: in_scope
+    note: null
+  PGS001929:
+    decision: in_scope
+    note: null
+  PGS002005:
+    decision: in_scope
+    note: null
+  PGS002146:
+    decision: in_scope
+    note: null
+  PGS002224:
+    decision: in_scope
+    note: null
+  PGS002332:
+    decision: in_scope
+    note: null
+  PGS002368:
+    decision: in_scope
+    note: null
+  PGS002404:
+    decision: in_scope
+    note: null
+  PGS002453:
+    decision: in_scope
+    note: null
+  PGS002502:
+    decision: in_scope
+    note: null
+  PGS002551:
+    decision: in_scope
+    note: null
+  PGS002600:
+    decision: in_scope
+    note: null
+  PGS002649:
+    decision: in_scope
+    note: null
+  PGS002698:
+    decision: in_scope
+    note: null
+  PGS002748:
+    decision: in_scope
+    note: null
+  PGS002800:
+    decision: in_scope
+    note: null
+  PGS002801:
+    decision: in_scope
+    note: null
+  PGS002802:
+    decision: in_scope
+    note: null
+  PGS002803:
+    decision: in_scope
+    note: null
+  PGS002804:
+    decision: in_scope
+    note: null
+  PGS002805:
+    decision: in_scope
+    note: null
+  PGS002811:
+    decision: out_of_scope
+    note: adipose tissue volume adjusted for BMI and height (matched only on "height" as a covariate)
+  PGS002812:
+    decision: out_of_scope
+    note: adipose tissue volume adjusted for BMI and height (matched only on "height" as a covariate)
+  PGS002813:
+    decision: out_of_scope
+    note: adipose tissue volume adjusted for BMI and height (matched only on "height" as a covariate)
+  PGS002964:
+    decision: in_scope
+    note: null
+  PGS002965:
+    decision: in_scope
+    note: null
+  PGS002966:
+    decision: in_scope
+    note: null
+  PGS002967:
+    decision: in_scope
+    note: null
+  PGS002968:
+    decision: in_scope
+    note: null
+  PGS002969:
+    decision: in_scope
+    note: null
+  PGS002970:
+    decision: in_scope
+    note: null
+  PGS002971:
+    decision: in_scope
+    note: null
+  PGS002972:
+    decision: in_scope
+    note: null
+  PGS002973:
+    decision: in_scope
+    note: null
+  PGS002974:
+    decision: in_scope
+    note: null
+  PGS002975:
+    decision: in_scope
+    note: null
+  PGS002976:
+    decision: in_scope
+    note: null
+  PGS002977:
+    decision: in_scope
+    note: null
+  PGS002978:
+    decision: in_scope
+    note: null
+  PGS002979:
+    decision: in_scope
+    note: null
+  PGS002980:
+    decision: in_scope
+    note: null
+  PGS002981:
+    decision: in_scope
+    note: null
+  PGS002982:
+    decision: in_scope
+    note: null
+  PGS002983:
+    decision: in_scope
+    note: null
+  PGS002984:
+    decision: in_scope
+    note: null
+  PGS002985:
+    decision: in_scope
+    note: null
+  PGS002986:
+    decision: in_scope
+    note: null
+  PGS002987:
+    decision: in_scope
+    note: null
+  PGS002988:
+    decision: in_scope
+    note: null
+  PGS002989:
+    decision: in_scope
+    note: null
+  PGS002990:
+    decision: in_scope
+    note: null
+  PGS002991:
+    decision: in_scope
+    note: null
+  PGS002992:
+    decision: in_scope
+    note: null
+  PGS002993:
+    decision: in_scope
+    note: null
+  PGS003514:
+    decision: in_scope
+    note: null
+  PGS003569:
+    decision: in_scope
+    note: null
+  PGS003835:
+    decision: in_scope
+    note: null
+  PGS003836:
+    decision: in_scope
+    note: null
+  PGS003837:
+    decision: in_scope
+    note: null
+  PGS003838:
+    decision: in_scope
+    note: null
+  PGS003839:
+    decision: in_scope
+    note: null
+  PGS003840:
+    decision: in_scope
+    note: null
+  PGS003841:
+    decision: in_scope
+    note: null
+  PGS003888:
+    decision: in_scope
+    note: null
+  PGS003889:
+    decision: in_scope
+    note: null
+  PGS003890:
+    decision: in_scope
+    note: null
+  PGS003891:
+    decision: in_scope
+    note: null
+  PGS003895:
+    decision: in_scope
+    note: null
+  PGS003896:
+    decision: in_scope
+    note: null
+  PGS003995:
+    decision: in_scope
+    note: null
+  PGS004011:
+    decision: in_scope
+    note: null
+  PGS004036:
+    decision: in_scope
+    note: null
+  PGS004065:
+    decision: in_scope
+    note: null
+  PGS004095:
+    decision: in_scope
+    note: null
+  PGS004119:
+    decision: in_scope
+    note: null
+  PGS004149:
+    decision: in_scope
+    note: null
+  PGS004211:
+    decision: in_scope
+    note: null
+  PGS004212:
+    decision: in_scope
+    note: null
+  PGS004213:
+    decision: in_scope
+    note: null
+  PGS004214:
+    decision: in_scope
+    note: null
+  PGS004215:
+    decision: in_scope
+    note: null
+  PGS004407:
+    decision: in_scope
+    note: null
+  PGS004408:
+    decision: in_scope
+    note: null
+  PGS004682:
+    decision: in_scope
+    note: null
+  PGS004683:
+    decision: in_scope
+    note: null
+  PGS004684:
+    decision: in_scope
+    note: null
+  PGS004685:
+    decision: in_scope
+    note: null
+  PGS004686:
+    decision: in_scope
+    note: null
+  PGS004779:
+    decision: in_scope
+    note: null
+  PGS004780:
+    decision: in_scope
+    note: null
+  PGS004781:
+    decision: in_scope
+    note: null
+  PGS004782:
+    decision: in_scope
+    note: null
+  PGS004995:
+    decision: in_scope
+    note: null
+  PGS004996:
+    decision: in_scope
+    note: null
+  PGS004997:
+    decision: in_scope
+    note: null
+  PGS004998:
+    decision: in_scope
+    note: null
+  PGS004999:
+    decision: in_scope
+    note: null
+  PGS005000:
+    decision: in_scope
+    note: null
+  PGS005001:
+    decision: in_scope
+    note: null
+  PGS005002:
+    decision: in_scope
+    note: null
+  PGS005003:
+    decision: in_scope
+    note: null
+  PGS005004:
+    decision: in_scope
+    note: null
+  PGS005005:
+    decision: in_scope
+    note: null
+  PGS005006:
+    decision: in_scope
+    note: null
+  PGS005007:
+    decision: in_scope
+    note: null
+  PGS005281:
+    decision: in_scope
+    note: null
+summary: 'All height scores go into one concept, anthropometry.height (axis: taller, neutral), with three
+  phenotypes: adult standing height, sitting height, and self-reported height at age 10. For 98 of the
+  108 in-scope scores, a higher score means taller; 94 of them are catalog-only, backed by beta CIs (PGP000517/679/755)
+  or 1000G r >= +0.2 with such anchors. Ten ExPRSweb scores (PGP000393) built on "GIANT-Yang2012-height"
+  (GCST001676, the Yang 2012 variance GWAS) are left unannotated: eight of them correlate at r -0.3 to
+  -0.58 with every other height score, yet the catalog reports positive betas. PGS000998 (UKB 1697, codes
+  not in height order) and PGS003889 (PRS-CSx ARB component, about zero correlation) have their direction
+  inferred and are flagged for review. Three adipose-volume scores that are only adjusted for height are
+  out of scope.'

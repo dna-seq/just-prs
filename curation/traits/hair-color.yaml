@@ -1,0 +1,89 @@
+slug: hair-color
+query: natural hair color
+match:
+  terms:
+  - black hair
+  - blonde
+  - brown hair
+  - hair color
+  - hair colour
+  - natural, before greying
+  - red hair
+  - strand of hair color
+  efo_ids:
+  - OBA_0002313
+  exclude:
+  - bald|alopecia|hair loss|follicle
+anchor: PGS001098
+status: needs_review
+concepts:
+- pigmentation.hair_color
+- pigmentation.red_hair
+scores:
+  PGS001092:
+    decision: in_scope
+    note: null
+  PGS001093:
+    decision: in_scope
+    note: null
+  PGS001094:
+    decision: in_scope
+    note: null
+  PGS001095:
+    decision: in_scope
+    note: null
+  PGS001096:
+    decision: in_scope
+    note: null
+  PGS001097:
+    decision: in_scope
+    note: UKB 1747 "Other" category; no defined colour, so it has no place on either axis
+  PGS001098:
+    decision: in_scope
+    note: red hair one-hot category -> pigmentation.red_hair
+  PGS002330:
+    decision: in_scope
+    note: null
+  PGS002402:
+    decision: in_scope
+    note: null
+  PGS002451:
+    decision: in_scope
+    note: null
+  PGS002500:
+    decision: in_scope
+    note: null
+  PGS002549:
+    decision: in_scope
+    note: null
+  PGS002598:
+    decision: in_scope
+    note: null
+  PGS002647:
+    decision: in_scope
+    note: null
+  PGS002696:
+    decision: in_scope
+    note: null
+  PGS001896:
+    decision: in_scope
+    note: null
+  PGS002002:
+    decision: in_scope
+    note: binary red hair -> pigmentation.red_hair
+  PGS002109:
+    decision: in_scope
+    note: null
+  PGS002220:
+    decision: in_scope
+    note: binary red hair -> pigmentation.red_hair
+  PGS003496:
+    decision: in_scope
+    note: null
+summary: 'Hair color splits into two concepts: pigmentation.hair_color (axis darker hair) and pigmentation.red_hair,
+  because red is MC1R pheomelanin and does not sit on the dark-light scale. The Tanigawa (GBE) one-hot categories
+  and Privé''s darker_hair0 / red_hair scores are annotated from phenotype code and catalog definitions; after alignment,
+  no pair within a concept correlates negatively. The eight Weissbrod ''Hair color'' (pigment_HAIR) scores stay
+  unannotated: no source we reached gives the value order. In 1000G they run toward lighter hair, so a raw 1747
+  coding would mean their weights are inverted. The ''Other'' category is unannotated because it has no defined
+  colour.'

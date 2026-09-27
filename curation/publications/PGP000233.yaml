@@ -1,0 +1,58 @@
+pgp_id: PGP000233
+scores:
+  PGS000900:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: hypertension
+    strata:
+      sex: female
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure (female)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.81 with PGS002807 (SBP score annotated here). Evaluated on ''Hypertension'':
+      HR 1.42 [1.4, 1.44]. Score name PRS_SBP_f.'
+  PGS000901:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: hypertension
+    strata:
+      sex: male
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure (male)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.67 with PGS002807 (SBP score annotated here). Evaluated on ''Hypertension'':
+      HR 1.27 [1.26, 1.29]. Score name PRS_SBP_m.'
+paper:
+  pmid: '34397277'
+  doi: 10.1161/hypertensionaha.121.17796
+  title: Sex Differences in Genetic Risk for Hypertension.

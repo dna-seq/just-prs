@@ -1,0 +1,234 @@
+pgp_id: PGP000128
+scores:
+  PGS000682:
+    cluster: kidney.kidney_function
+    phenotype: egfr
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: estimated glomerular filtration rate (eGFR)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: eGFR [ml/min/1.73m2]
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.57 (mean) with the PGP000517 eGFR scores (BETA CI excludes 0).
+  PGS000708:
+    cluster: kidney.chronic_kidney_disease
+    phenotype: kidney_failure
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of kidney failure
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Kidney failure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.12 [1.08, 1.16] against 'Renal failure'; 1000G EUR r=+0.42 (mean) with PGP000517
+      CKD scores.
+  PGS000678:
+    cluster: kidney.kidney_function
+    phenotype: serum_creatinine
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum creatinine level
+      coding: null
+    polarity: -1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Creatinine [umol/L]
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.76 with PGS003526 (creatinine, read) and r=-0.59 (mean) with PGP000517
+      eGFR scores.
+  PGS000680:
+    cluster: kidney.kidney_function
+    phenotype: cystatin_c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum cystatin C level
+      coding: null
+    polarity: -1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cystatin C [mg/L]
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.81 with PGS003528 (cystatin C, read) and r=-0.30 (mean) with PGP000517
+      eGFR scores.
+  PGS000672:
+    cluster: lipids.ldl_cholesterol
+    phenotype: apolipoprotein_b
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: apolipoprotein B level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Apolipoprotein B [g/L] (statin adjusted)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 6 agree, 0 disagree'
+    review_reason: annotated from correlation with LDL-C scores, not a same-phenotype seed
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.79 with already-annotated PGS004936 (an LDL-C score in the
+      same concept; no seed of this exact phenotype exists).
+  PGS000688:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol [mmol/L] (statin adjusted)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 6 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.96 with already-annotated PGS000672.
+  PGS000710:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: myocardial_infarction
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of myocardial infarction
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Myocardial infarction
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.19 [1.17, 1.22] on Myocardial infarction; 1000G EUR r=+0.28 with PGS000018 (metaGRS
+      CAD, HR 1.71 [1.68, 1.73]).
+  PGS000699:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides [mmol/L]
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 6 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.86 with already-annotated PGS001979.
+  PGS000677:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cholesterol [mmol/L] (statin adjusted)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '6 of 6 reference lead SNPs carry the cholesterol-raising sign: rs11591147 T -0.0632; rs12740374 T -0.0246;
+        rs6511720 T -0.0346; rs4420638 G +0.0201; rs1367117 A +0.00915; rs12916 C +0.00666'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.76 with already-annotated PGS003138. Statin-adjusted cholesterol
+      is a lipid measurement, not drug response.
+  PGS000712:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: T2D (cases vs HbA1c filtered controls)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.97 with already-annotated PGS000713.
+  PGS000713:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.49 [1.47, 1.51] against 'Type 2 diabetes'.
+paper:
+  pmid: '33462484'
+  doi: 10.1038/s41588-020-00757-z
+  title: Genetics of 35 blood and urine biomarkers in the UK Biobank.

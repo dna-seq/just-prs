@@ -66,3 +66,20 @@ Your final message is only this JSON, with no prose around it, so the orchestrat
 ```
 
 List `high_percentile_means` only for scores whose direction is non-obvious or flipped, not for every score.
+
+## Review flags and search aliases
+
+- Set `review_reason` (one line) on any annotated score whose direction you inferred rather than
+  read: undocumented coding, sign taken from correlation, suspected inverted deposit, or a
+  catalog metric that contradicts it. Those scores go to `curation_review.parquet` instead of
+  being published. Don't use it for scores that are fine.
+- A suspected inverted deposit (paper states a direction, ≥2 canonical lead loci opposite, strong
+  anti-correlation with the consensus) is recorded **as distributed** — `score_effect` and
+  `polarity` describe the file — with a `corrections` entry (`deposit_inverted` /
+  `polarity_as_distributed`, `paper_direction`, `evidence`, `recorded`, `by: agent`) plus
+  `metric_not_from_file` / `discount_metrics`. Partly opposite files get
+  `partial_allele_inconsistency`; degenerate weights get `broken_weights` / `quarantine`. See
+  `docs/curation-rules.md`. Never record the paper's intended direction for an inverted file.
+- Give every concept you create or touch 2–5 `aliases` people would type, including opposite
+  phrasings ("evening person" for chronotype, "mortality" for lifespan). Catalog names are added
+  automatically; don't copy them.

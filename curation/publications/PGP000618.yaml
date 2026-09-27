@@ -20,6 +20,71 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by HR 2.11 (CI 1.98–2.24) against 'Incident T1D'; 1000G EUR correlation with anchor PGS004874
       r=+1.00.
+  PGS004879:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary heart disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.41 [1.4, 1.43] on Incident CHD; 1000G EUR r=+0.44 with PGS000018 (metaGRS CAD,
+      HR 1.71 [1.68, 1.73]).
+  PGS004877:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog HR 1.42 [1.41, 1.44] for incident asthma (CI excludes 1).
+  PGS004870:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.7 [1.69, 1.71] against 'Incident T2D'.
 paper:
   pmid: '38866767'
   doi: 10.1038/s41467-024-48938-2

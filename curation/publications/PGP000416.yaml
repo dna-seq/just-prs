@@ -1,0 +1,24 @@
+pgp_id: PGP000416
+scores:
+  PGS003400:
+    cluster: anthropometry.adiposity
+    phenotype: obesity
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of obesity
+    polarity: 1
+    evaluation_outcome:
+      phenotype: body_mass_index
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | scores.trait_efo
+      quote: Obesity | obesity disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.99 with catalog-annotated PGS000034 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.19.

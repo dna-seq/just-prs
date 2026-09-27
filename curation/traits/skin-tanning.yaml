@@ -1,0 +1,94 @@
+slug: skin-tanning
+query: skin tanning ability, sunburn, and sun exposure / sun protection behaviour
+match:
+  terms:
+  - ease of skin tanning
+  - sun exposure
+  - sun protection
+  - sunburn
+  - suntan
+  - tanning
+  - time spent outdoors
+  - ultraviolet protection
+  efo_ids: []
+  exclude: []
+anchor: PGS001535
+status: resolved
+concepts:
+- pigmentation.skin_tanning
+- lifestyle.sun_exposure
+scores:
+  PGS000980:
+    decision: in_scope
+    note: UKB 2267 one-hot
+  PGS000982:
+    decision: in_scope
+    note: UKB 2267 one-hot
+  PGS001052:
+    decision: in_scope
+    note: time outdoors (summer), sun_exposure
+  PGS001053:
+    decision: in_scope
+    note: time outdoors (winter), sun_exposure
+  PGS001244:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS001245:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS001246:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS001247:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS001257:
+    decision: in_scope
+    note: childhood sunburn under skin_tanning (burn-prone, sign -1)
+  PGS001535:
+    decision: in_scope
+    note: UKB 2267 one-hot
+  PGS001937:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS001993:
+    decision: in_scope
+    note: UKB 2267 as scale
+  PGS002155:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS002210:
+    decision: in_scope
+    note: UKB 2267 as scale
+  PGS002350:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS002422:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS002471:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS002520:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS002569:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS002618:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS002667:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+  PGS002716:
+    decision: in_scope
+    note: UKB 1727 ease of tanning
+summary: 'Tanning scores are UK Biobank field 1727 (1 very tanned .. 4 never tan, only burn), either one-hot
+  per answer (Tanigawa) or as a scale. The -0.96 correlation is "very tanned" vs "mildly tanned": opposite
+  answers, not a sign error. Prive "less_tanned" scores use the raw scale, so higher = tans less (polarity
+  -1); Weissbrod "Tanning" scores point the other way (higher = tans more), inferred from lead variants
+  and correlations because the coding is not documented. Childhood sunburn sits under skin tanning as
+  burn-proneness (r=+0.86 with "never tan"). Sun protection (field 2267) and time outdoors are on the
+  sun-exposure axis; genetically, burn-prone people report more protection. After alignment no same-concept
+  pair correlates negatively.'

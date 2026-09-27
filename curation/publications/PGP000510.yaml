@@ -1,0 +1,107 @@
+pgp_id: PGP000510
+scores:
+  PGS003966:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.41 with PGS003968 (SBP score annotated here). Score name SBP_EAS.
+  PGS003967:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.97 with PGS003968 (SBP score annotated here).
+  PGS003968:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 3.62 [3.47, 3.77] on 'Systolic blood pressure' (CI excludes the
+      null).
+  PGS003965:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg, +15 mmHg if on antihypertensives)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      ancestry: African component
+    provenance:
+    - source: full_text
+      locator: Fig. 4 / Fig. 5 legends
+      quote: betas in units of mmHg per 1 SD increase in the PRS, standardized according to TOPMed
+      confidence: medium
+    - source: full_text
+      locator: Methods, study phenotypes
+      quote: SBP and DBP values were raised by 15 mmHg and 10 mmHg, respectively, in individuals using antihypertensive
+        medications
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs6461992-A (GWAS Catalog SBP-lowering) has a negative weight; rs13068734 not in GWAS Catalog. Aligned
+        to PGS002807, 68.5% of the top-200 variants share sign (weight r +0.05)
+    review_reason: null
+    status: agent_proposed
+    notes: 'SBP_AFR: African-ancestry component (MVP or COGENT GWAS) of the Kurniansyah 2023 PRSsum (PGS003968).
+      No catalog evaluation. Low 1000G EUR correlation (max r 0.18) with other SBP scores is expected for an African-ancestry-trained
+      component, and no correlation is negative.'
+paper:
+  pmid: '37268629'
+  doi: 10.1038/s41467-023-38990-9
+  title: Evaluating the use of blood pressure polygenic risk scores across race/ethnic background groups.

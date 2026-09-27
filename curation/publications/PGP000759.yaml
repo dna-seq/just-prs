@@ -1,0 +1,159 @@
+pgp_id: PGP000759
+scores:
+  PGS005293:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: myocardial_infarction
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.70 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS005294:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: myocardial_infarction
+    strata:
+      sex: female
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.70 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS005295:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: myocardial_infarction
+    strata:
+      sex: male
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.72 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS005296:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: myocardial_infarction
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.74 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS005297:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: myocardial_infarction
+    strata:
+      sex: female
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.67 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS005298:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: myocardial_infarction
+    strata:
+      sex: male
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.74 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+paper:
+  pmid: '41022758'
+  doi: 10.1038/s41525-025-00515-2
+  title: 'Genetic analyses across cardiovascular traits: leveraging genetic correlations to empower locus discovery
+    and prediction in common cardiovascular diseases.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

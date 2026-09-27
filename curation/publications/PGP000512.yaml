@@ -1,0 +1,132 @@
+pgp_id: PGP000512
+scores:
+  PGS003970:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: 'systolic blood pressure, weights AS DISTRIBUTED (allele-inverted: the authors'' own score raised
+        it)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: The catalog metric was computed by the authors on their own non-inverted score, so it stays > null.
+    strata:
+      sex: male
+    provenance:
+    - source: full_text
+      locator: Abstract / Results (PMC author manuscript)
+      quote: had higher odds of developing hypertension per SD increase in SBP PRS compared with males
+      confidence: medium
+    - source: full_text
+      locator: Methods
+      quote: The PRS-CS method was used to generate sex-specific PRSs.
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: SBP-raising alleles rs17367504-A and rs11191548-T are the file's effect alleles with NEGATIVE weights
+        in both files; aligned to PGS002807, 95% of the top-200 variants have the opposite sign (weight r -0.31/-0.38)
+    review_reason: 'Suspected sign-inverted deposit: the paper reports higher PRS = higher hypertension odds, but
+      the deposited weights point the other way (lead variants disagree; 1000G EUR r down to -0.77 with ~70 other
+      SBP scores), so as scored from the file a higher score likely means LOWER SBP.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases systolic blood pressure, weights AS
+        DISTRIBUTED (allele-inverted: the authors'' own score raised it)); the paper says higher = increases. Weights
+        are not modified.'
+      paper_direction: increases
+      evidence: 'SBP-raising alleles rs17367504-A and rs11191548-T are the file''s effect alleles with NEGATIVE
+        weights in both files; aligned to PGS002807, 95% of the top-200 variants have the opposite sign (weight
+        r -0.31/-0.38) | Suspected sign-inverted deposit: the paper reports higher PRS = higher hypertension odds,
+        but the deposited weights point the other way (lead variants disagree; 1000G EUR r down to -0.77 with ~70
+        other SBP scores), so as scored from the file a higher score likely means LOWER SBP. | Sex-specific (male)
+        UK Biobank SBP GWAS -> PRS-CS; evaluated in All of Us for hypertension (OR 1.22 pe…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Sex-specific (male) UK Biobank SBP GWAS -> PRS-CS; evaluated in All of Us for hypertension (OR 1.22 per
+      SD). The +1.22 OR was computed by the authors with their own orientation; do not trust the deposited file's
+      sign. PGS003970 and PGS003971 correlate +0.57 with each other.
+  PGS003971:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: 'systolic blood pressure, weights AS DISTRIBUTED (allele-inverted: the authors'' own score raised
+        it)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: The catalog metric was computed by the authors on their own non-inverted score, so it stays > null.
+    strata:
+      sex: female
+    provenance:
+    - source: full_text
+      locator: Abstract / Results (PMC author manuscript)
+      quote: had higher odds of developing hypertension per SD increase in SBP PRS compared with males
+      confidence: medium
+    - source: full_text
+      locator: Methods
+      quote: The PRS-CS method was used to generate sex-specific PRSs.
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: SBP-raising alleles rs17367504-A and rs11191548-T are the file's effect alleles with NEGATIVE weights
+        in both files; aligned to PGS002807, 95% of the top-200 variants have the opposite sign (weight r -0.31/-0.38)
+    review_reason: 'Suspected sign-inverted deposit: the paper reports higher PRS = higher hypertension odds, but
+      the deposited weights point the other way (lead variants disagree; 1000G EUR r down to -0.77 with ~70 other
+      SBP scores), so as scored from the file a higher score likely means LOWER SBP.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases systolic blood pressure, weights AS
+        DISTRIBUTED (allele-inverted: the authors'' own score raised it)); the paper says higher = increases. Weights
+        are not modified.'
+      paper_direction: increases
+      evidence: 'SBP-raising alleles rs17367504-A and rs11191548-T are the file''s effect alleles with NEGATIVE
+        weights in both files; aligned to PGS002807, 95% of the top-200 variants have the opposite sign (weight
+        r -0.31/-0.38) | Suspected sign-inverted deposit: the paper reports higher PRS = higher hypertension odds,
+        but the deposited weights point the other way (lead variants disagree; 1000G EUR r down to -0.77 with ~70
+        other SBP scores), so as scored from the file a higher score likely means LOWER SBP. | Sex-specific (female)
+        UK Biobank SBP GWAS -> PRS-CS; evaluated in All of Us for hypertension (OR 1.29 …'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Sex-specific (female) UK Biobank SBP GWAS -> PRS-CS; evaluated in All of Us for hypertension (OR 1.29
+      per SD). The +1.29 OR was computed by the authors with their own orientation; do not trust the deposited file's
+      sign. PGS003970 and PGS003971 correlate +0.57 with each other.
+paper:
+  pmid: '37807951'
+  doi: 10.1161/circgen.123.004259
+  title: Sex Differences in the Association of Genome-Wide Systolic Blood Pressure Polygenic Risk Score With Hypertension.
+evidence_read:
+  abstract: true
+  full_text: pmc_author_manuscript
+  supplement: []

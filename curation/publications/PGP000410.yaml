@@ -1,0 +1,629 @@
+pgp_id: PGP000410
+scores:
+  PGS003376:
+    score_effect: null
+    unannotated_reason: 'Deposited weights look sign-inverted. The paper reports a positive beta (0.121, SE 0.016)
+      on drinks per week in Add Health, but the catalog file points the other way from every other drinks-per-week
+      score: 1000G EUR r = -0.87 with PGS002834/PGS002839/PGS000203/PGS002752, and 0% sign agreement over the top
+      2000 shared variants with GSCAN 2019 PGS000203 (GCKR rs1260326 C weight is negative here, positive in all
+      other DPW scores). The paper does not state the effect-allele convention, so the orientation cannot be confirmed.
+      Needs human review; taken as is, a high percentile would probably mean fewer drinks.'
+    notes: LDpred on GSCAN 2022 EUR drinks per week. Suspected effect-allele swap in the deposited file; report
+      to PGS Catalog.
+    corrections:
+    - kind: deposit_inverted
+      action: none
+      effect: Recorded only; the score stays unannotated. The paper says higher = increases, the file looks inverted.
+      paper_direction: increases
+      evidence: 'Deposited weights look sign-inverted. The paper reports a positive beta (0.121, SE 0.016) on drinks
+        per week in Add Health, but the catalog file points the other way from every other drinks-per-week score:
+        1000G EUR r = -0.87 with PGS002834/PGS002839/PGS000203/PGS002752, and 0% sign agreement over the top 2000
+        shared variants with GSCAN 2019 PGS000203 (GCKR rs1260326 C weight is negative here, positive in all other
+        DPW scores). The paper does not state the effect-allele convention, so the orientation cannot be confirmed.
+        Needs human review; taken as is, a high percentile would probably mean fe…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+  PGS003373:
+    score_effect: null
+    unannotated_reason: Same deposition as PGS003376, whose weights look inverted. This AFR LDpred score is uncorrelated
+      with the EUR score (weight r = 0.01; 1000G EUR r near 0 with every other alcohol score), so its orientation
+      cannot be checked. Catalog beta 0.051 (SE 0.028) crosses zero.
+  PGS003374:
+    score_effect: null
+    unannotated_reason: Same deposition as PGS003376, whose weights look inverted. This AMR LDpred score is uncorrelated
+      with the EUR score (weight r = 0.01), so its orientation cannot be checked; catalog beta 0.078 (SE 0.034)
+      is only marginal.
+  PGS003375:
+    score_effect: null
+    unannotated_reason: Same deposition as PGS003376, whose weights look inverted. This EAS LDpred score is uncorrelated
+      with the EUR score (weight r = 0.02), so its orientation cannot be checked. Catalog beta 0.089 (SE 0.057)
+      crosses zero.
+  PGS003360:
+    cluster: substance_use.smoking
+    phenotype: ever_smoked
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: 'smoking initiation (ever a regular smoker), EUR-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted:
+        higher score = less likely to have smoked regularly)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: 'Inverted file: higher score = less smoking, so TUD beta expected negative (observed -0.34 for EUR);
+        Add Health estimates are from the authors'' non-inverted scores.'
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking initiation
+      confidence: low
+    - &id001
+      source: full_text
+      locator: Results > phenotypes
+      quote: Measures of onset included whether an individual ever smoked regularly (smoking initiation (SmkInit);
+        n = 3,383,199) and the age at which the individual began smoking regularly (AgeSmk; n = 728,826). Amount
+        smoked among current and former regular smokers was measured as cigarettes smoked per day (CigDay; n = 784,353).
+      confidence: high
+    - &id002
+      source: full_text
+      locator: Methods > Polygenic scoring
+      quote: Polygenic risk scores were computed using LDpred for each ancestry group separately
+      confidence: medium
+    - &id003
+      source: full_text
+      locator: UCLA ATLAS paper (PMID 38238290), Methods
+      quote: We downloaded these PGS (PGS003357- PGS003372) from the PGS Catalog
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: 'rs11636732: T allele positive here, G allele positive in PGS003068/PGS003063/PGS002126'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases smoking initiation (ever a regular
+        smoker), EUR-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher score = less likely to have
+        smoked regularly)); the paper says higher = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'rs11636732: T allele positive here, G allele positive in PGS003068/PGS003063/PGS002126 | Distributed
+        scoring file appears allele-inverted: the effect_allele column carries the opposite sign to the trait GWAS.
+        1000G r = -0.72 with anchor PGS003068 (GSCAN SmkInit PRS-CS) and -0.61 aligned vs other ever-smoking scores;
+        TUD beta -0.34. An independent evaluation that downloaded these exact files from the PGS Catalog (UCLA ATLAS)
+        found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes scores and a positive beta for
+        AgeSmk, all opposite to expectation. The Add Health "OR" values in…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'Distributed scoring file appears allele-inverted: the effect_allele column carries the opposite sign
+      to the trait GWAS. 1000G r = -0.72 with anchor PGS003068 (GSCAN SmkInit PRS-CS) and -0.61 aligned vs other
+      ever-smoking scores; TUD beta -0.34. An independent evaluation that downloaded these exact files from the
+      PGS Catalog (UCLA ATLAS) found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes scores
+      and a positive beta for AgeSmk, all opposite to expectation. The Add Health "OR" values in the catalog (e.g.
+      0.034, 0.445) are log-odds from the authors'' own scores, not these files. Report to PGS Catalog.'
+  PGS003359:
+    cluster: substance_use.smoking
+    phenotype: ever_smoked
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: 'smoking initiation (ever a regular smoker), EAS-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted:
+        higher score = less likely to have smoked regularly)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: 'Inverted file: higher score = less smoking, so TUD beta expected negative (observed -0.34 for EUR);
+        Add Health estimates are from the authors'' non-inverted scores.'
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking initiation
+      confidence: low
+    - *id001
+    - *id002
+    - *id003
+    lead_variant_check:
+      status: disagree
+      note: rs12914385-C positive (C is the non-risk allele)
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases smoking initiation (ever a regular
+        smoker), EAS-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher score = less likely to have
+        smoked regularly)); the paper says higher = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'rs12914385-C positive (C is the non-risk allele) | Distributed scoring file appears allele-inverted:
+        the effect_allele column carries the opposite sign to the trait GWAS. 1000G r = -0.29 with anchor; TUD beta
+        -0.22; r = -0.33 with BBJ-trained PGS002375. An independent evaluation that downloaded these exact files
+        from the PGS Catalog (UCLA ATLAS) found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes
+        scores and a positive beta for AgeSmk, all opposite to expectation. The Add Health "OR" values in the catalog
+        (e.g. 0.034, 0.445) are log-odds from the authors'' own scores, not …'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'Distributed scoring file appears allele-inverted: the effect_allele column carries the opposite sign
+      to the trait GWAS. 1000G r = -0.29 with anchor; TUD beta -0.22; r = -0.33 with BBJ-trained PGS002375. An independent
+      evaluation that downloaded these exact files from the PGS Catalog (UCLA ATLAS) found negative betas on tobacco
+      use disorder for the SmkInit/CigDay/SmkCes scores and a positive beta for AgeSmk, all opposite to expectation.
+      The Add Health "OR" values in the catalog (e.g. 0.034, 0.445) are log-odds from the authors'' own scores,
+      not these files. Report to PGS Catalog.'
+  PGS003358:
+    cluster: substance_use.smoking
+    phenotype: ever_smoked
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: 'smoking initiation (ever a regular smoker), AMR-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted:
+        higher score = less likely to have smoked regularly)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: 'Inverted file: higher score = less smoking, so TUD beta expected negative (observed -0.34 for EUR);
+        Add Health estimates are from the authors'' non-inverted scores.'
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking initiation
+      confidence: low
+    - *id001
+    - *id002
+    - *id003
+    lead_variant_check:
+      status: disagree
+      note: rs11636732-T weight positive but tiny
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases smoking initiation (ever a regular
+        smoker), AMR-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher score = less likely to have
+        smoked regularly)); the paper says higher = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'rs11636732-T weight positive but tiny | Distributed scoring file appears allele-inverted: the effect_allele
+        column carries the opposite sign to the trait GWAS. 1000G r = -0.11 with anchor. An independent evaluation
+        that downloaded these exact files from the PGS Catalog (UCLA ATLAS) found negative betas on tobacco use
+        disorder for the SmkInit/CigDay/SmkCes scores and a positive beta for AgeSmk, all opposite to expectation.
+        The Add Health "OR" values in the catalog (e.g. 0.034, 0.445) are log-odds from the authors'' own scores,
+        not these files. Report to PGS Catalog.'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'Distributed scoring file appears allele-inverted: the effect_allele column carries the opposite sign
+      to the trait GWAS. 1000G r = -0.11 with anchor. An independent evaluation that downloaded these exact files
+      from the PGS Catalog (UCLA ATLAS) found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes
+      scores and a positive beta for AgeSmk, all opposite to expectation. The Add Health "OR" values in the catalog
+      (e.g. 0.034, 0.445) are log-odds from the authors'' own scores, not these files. Report to PGS Catalog.'
+  PGS003357:
+    cluster: substance_use.smoking
+    phenotype: ever_smoked
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: 'smoking initiation (ever a regular smoker), AFR-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted:
+        higher score = less likely to have smoked regularly)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: 'Inverted file: higher score = less smoking, so TUD beta expected negative (observed -0.34 for EUR);
+        Add Health estimates are from the authors'' non-inverted scores.'
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking initiation
+      confidence: low
+    - *id001
+    - *id002
+    - *id003
+    lead_variant_check:
+      status: disagree
+      note: rs11636732-T weight positive (+1.4e-04); G is the initiation allele in other scores
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases smoking initiation (ever a regular
+        smoker), AFR-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher score = less likely to have
+        smoked regularly)); the paper says higher = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'rs11636732-T weight positive (+1.4e-04); G is the initiation allele in other scores | Distributed
+        scoring file appears allele-inverted: the effect_allele column carries the opposite sign to the trait GWAS.
+        1000G r = +0.02 with anchor (uninformative). An independent evaluation that downloaded these exact files
+        from the PGS Catalog (UCLA ATLAS) found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes
+        scores and a positive beta for AgeSmk, all opposite to expectation. The Add Health "OR" values in the catalog
+        (e.g. 0.034, 0.445) are log-odds from the authors'' own scores, not the…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'Distributed scoring file appears allele-inverted: the effect_allele column carries the opposite sign
+      to the trait GWAS. 1000G r = +0.02 with anchor (uninformative). An independent evaluation that downloaded
+      these exact files from the PGS Catalog (UCLA ATLAS) found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes
+      scores and a positive beta for AgeSmk, all opposite to expectation. The Add Health "OR" values in the catalog
+      (e.g. 0.034, 0.445) are log-odds from the authors'' own scores, not these files. Report to PGS Catalog.'
+  PGS003364:
+    cluster: substance_use.smoking
+    phenotype: age_at_smoking_initiation
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: 'age at starting regular smoking, EUR-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted:
+        higher score = EARLIER start)'
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: 'Inverted file: higher score = earlier start = more smoking, so TUD beta expected positive (observed
+        +0.14).'
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Age of smoking initiation
+      confidence: low
+    - *id001
+    - *id002
+    - *id003
+    lead_variant_check:
+      status: not_run
+      note: no strong single-locus marker for AgeSmk; inversion inferred from sibling files of the same upload
+    review_reason: GSCAN 2022 file looks allele-inverted as distributed; annotated as decreases
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases age at starting regular smoking, EUR-trained
+        GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher score = EARLIER start)); the paper says higher
+        = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'no strong single-locus marker for AgeSmk; inversion inferred from sibling files of the same upload
+        | GSCAN 2022 file looks allele-inverted as distributed; annotated as decreases | Distributed scoring file
+        appears allele-inverted: the effect_allele column carries the opposite sign to the trait GWAS. 1000G r =
+        +0.22 with anchor (later-start scores should correlate negatively with initiation); UCLA TUD beta +0.14.
+        An independent evaluation that downloaded these exact files from the PGS Catalog (UCLA ATLAS) found negative
+        betas on tobacco use disorder for the SmkInit/CigDay/SmkCes scores and a pos…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'Distributed scoring file appears allele-inverted: the effect_allele column carries the opposite sign
+      to the trait GWAS. 1000G r = +0.22 with anchor (later-start scores should correlate negatively with initiation);
+      UCLA TUD beta +0.14. An independent evaluation that downloaded these exact files from the PGS Catalog (UCLA
+      ATLAS) found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes scores and a positive beta
+      for AgeSmk, all opposite to expectation. The Add Health "OR" values in the catalog (e.g. 0.034, 0.445) are
+      log-odds from the authors'' own scores, not these files. Report to PGS Catalog.'
+  PGS003368:
+    cluster: substance_use.smoking
+    phenotype: cigarettes_per_day
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: 'cigarettes smoked per day, EUR-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher
+        score = fewer cigarettes)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: 'Inverted file: higher score = fewer cigarettes; UCLA TUD beta -0.11 for EUR.'
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cigarettes smoked per day
+      confidence: low
+    - *id001
+    - *id002
+    - *id003
+    lead_variant_check:
+      status: disagree
+      note: rs16969968-G (non-risk) weight +0.0029 and rs12914385-C +0.0026; the risk alleles A/T are positive in
+        PGS001515/PGS001130
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases cigarettes smoked per day, EUR-trained
+        GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher score = fewer cigarettes)); the paper says higher
+        = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'rs16969968-G (non-risk) weight +0.0029 and rs12914385-C +0.0026; the risk alleles A/T are positive
+        in PGS001515/PGS001130 | Distributed scoring file appears allele-inverted: the effect_allele column carries
+        the opposite sign to the trait GWAS. 1000G r = -0.33 with PGS001515 and -0.31 with PGS001130 (UKB CPD scores).
+        An independent evaluation that downloaded these exact files from the PGS Catalog (UCLA ATLAS) found negative
+        betas on tobacco use disorder for the SmkInit/CigDay/SmkCes scores and a positive beta for AgeSmk, all opposite
+        to expectation. The Add Health "OR" values in the catalog (e.…'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'Distributed scoring file appears allele-inverted: the effect_allele column carries the opposite sign
+      to the trait GWAS. 1000G r = -0.33 with PGS001515 and -0.31 with PGS001130 (UKB CPD scores). An independent
+      evaluation that downloaded these exact files from the PGS Catalog (UCLA ATLAS) found negative betas on tobacco
+      use disorder for the SmkInit/CigDay/SmkCes scores and a positive beta for AgeSmk, all opposite to expectation.
+      The Add Health "OR" values in the catalog (e.g. 0.034, 0.445) are log-odds from the authors'' own scores,
+      not these files. Report to PGS Catalog.'
+  PGS003366:
+    cluster: substance_use.smoking
+    phenotype: cigarettes_per_day
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: 'cigarettes smoked per day, AMR-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher
+        score = fewer cigarettes)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: 'Inverted file: higher score = fewer cigarettes; UCLA TUD beta -0.11 for EUR.'
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cigarettes smoked per day
+      confidence: low
+    - *id001
+    - *id002
+    - *id003
+    lead_variant_check:
+      status: disagree
+      note: rs16969968-G +0.0009, rs12914385-C +0.0010
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases cigarettes smoked per day, AMR-trained
+        GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher score = fewer cigarettes)); the paper says higher
+        = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'rs16969968-G +0.0009, rs12914385-C +0.0010 | Distributed scoring file appears allele-inverted:
+        the effect_allele column carries the opposite sign to the trait GWAS. An independent evaluation that downloaded
+        these exact files from the PGS Catalog (UCLA ATLAS) found negative betas on tobacco use disorder for the
+        SmkInit/CigDay/SmkCes scores and a positive beta for AgeSmk, all opposite to expectation. The Add Health
+        "OR" values in the catalog (e.g. 0.034, 0.445) are log-odds from the authors'' own scores, not these files.
+        Report to PGS Catalog.'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'Distributed scoring file appears allele-inverted: the effect_allele column carries the opposite sign
+      to the trait GWAS. An independent evaluation that downloaded these exact files from the PGS Catalog (UCLA
+      ATLAS) found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes scores and a positive beta
+      for AgeSmk, all opposite to expectation. The Add Health "OR" values in the catalog (e.g. 0.034, 0.445) are
+      log-odds from the authors'' own scores, not these files. Report to PGS Catalog.'
+  PGS003365:
+    cluster: substance_use.smoking
+    phenotype: cigarettes_per_day
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: 'cigarettes smoked per day, AFR-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher
+        score = fewer cigarettes)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: 'Inverted file: higher score = fewer cigarettes; UCLA TUD beta -0.11 for EUR.'
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cigarettes smoked per day
+      confidence: low
+    - *id001
+    - *id002
+    - *id003
+    lead_variant_check:
+      status: disagree
+      note: rs16969968-G +0.0004, rs12914385-C +0.0006
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases cigarettes smoked per day, AFR-trained
+        GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher score = fewer cigarettes)); the paper says higher
+        = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'rs16969968-G +0.0004, rs12914385-C +0.0006 | Distributed scoring file appears allele-inverted:
+        the effect_allele column carries the opposite sign to the trait GWAS. An independent evaluation that downloaded
+        these exact files from the PGS Catalog (UCLA ATLAS) found negative betas on tobacco use disorder for the
+        SmkInit/CigDay/SmkCes scores and a positive beta for AgeSmk, all opposite to expectation. The Add Health
+        "OR" values in the catalog (e.g. 0.034, 0.445) are log-odds from the authors'' own scores, not these files.
+        Report to PGS Catalog.'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'Distributed scoring file appears allele-inverted: the effect_allele column carries the opposite sign
+      to the trait GWAS. An independent evaluation that downloaded these exact files from the PGS Catalog (UCLA
+      ATLAS) found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes scores and a positive beta
+      for AgeSmk, all opposite to expectation. The Add Health "OR" values in the catalog (e.g. 0.034, 0.445) are
+      log-odds from the authors'' own scores, not these files. Report to PGS Catalog.'
+  PGS003367:
+    cluster: substance_use.smoking
+    phenotype: cigarettes_per_day
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: 'cigarettes smoked per day, EAS-trained GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher
+        score = fewer cigarettes)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: 'Inverted file: higher score = fewer cigarettes; UCLA TUD beta -0.11 for EUR.'
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cigarettes smoked per day
+      confidence: low
+    - *id001
+    - *id002
+    - *id003
+    lead_variant_check:
+      status: disagree
+      note: rs12914385-C +0.0004
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: 'Direction/polarity describe the file as distributed (decreases cigarettes smoked per day, EAS-trained
+        GSCAN 2022 weights AS DISTRIBUTED (allele-inverted: higher score = fewer cigarettes)); the paper says higher
+        = increases. Weights are not modified.'
+      paper_direction: increases
+      evidence: 'rs12914385-C +0.0004 | Distributed scoring file appears allele-inverted: the effect_allele column
+        carries the opposite sign to the trait GWAS. An independent evaluation that downloaded these exact files
+        from the PGS Catalog (UCLA ATLAS) found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes
+        scores and a positive beta for AgeSmk, all opposite to expectation. The Add Health "OR" values in the catalog
+        (e.g. 0.034, 0.445) are log-odds from the authors'' own scores, not these files. Report to PGS Catalog.'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'Distributed scoring file appears allele-inverted: the effect_allele column carries the opposite sign
+      to the trait GWAS. An independent evaluation that downloaded these exact files from the PGS Catalog (UCLA
+      ATLAS) found negative betas on tobacco use disorder for the SmkInit/CigDay/SmkCes scores and a positive beta
+      for AgeSmk, all opposite to expectation. The Add Health "OR" values in the catalog (e.g. 0.034, 0.445) are
+      log-odds from the authors'' own scores, not these files. Report to PGS Catalog.'
+  PGS003361:
+    score_effect: null
+    unannotated_reason: Age of smoking initiation (non-EUR GSCAN 2022). Sibling files of this upload are allele-inverted,
+      but this score has no score-specific evidence (no marker locus, 1000G r ~0), so the distributed direction
+      cannot be stated.
+  PGS003362:
+    score_effect: null
+    unannotated_reason: Age of smoking initiation (non-EUR GSCAN 2022). Sibling files of this upload are allele-inverted,
+      but this score has no score-specific evidence (no marker locus, 1000G r ~0), so the distributed direction
+      cannot be stated.
+  PGS003363:
+    score_effect: null
+    unannotated_reason: Age of smoking initiation (non-EUR GSCAN 2022). Sibling files of this upload are allele-inverted,
+      but this score has no score-specific evidence (no marker locus, 1000G r ~0), so the distributed direction
+      cannot be stated.
+  PGS003369:
+    score_effect: null
+    unannotated_reason: 'Smoking cessation: the paper says only that SmkCes "contrasted current versus former smokers"
+      without stating which group is coded higher, and sibling files of this upload are allele-inverted (PGS003372
+      r = -0.49 with current-smoker PGS003053; UCLA TUD beta -0.11). Direction not determinable without the coding.'
+  PGS003370:
+    score_effect: null
+    unannotated_reason: 'Smoking cessation: the paper says only that SmkCes "contrasted current versus former smokers"
+      without stating which group is coded higher, and sibling files of this upload are allele-inverted (PGS003372
+      r = -0.49 with current-smoker PGS003053; UCLA TUD beta -0.11). Direction not determinable without the coding.'
+  PGS003371:
+    score_effect: null
+    unannotated_reason: 'Smoking cessation: the paper says only that SmkCes "contrasted current versus former smokers"
+      without stating which group is coded higher, and sibling files of this upload are allele-inverted (PGS003372
+      r = -0.49 with current-smoker PGS003053; UCLA TUD beta -0.11). Direction not determinable without the coding.'
+  PGS003372:
+    score_effect: null
+    unannotated_reason: 'Smoking cessation: the paper says only that SmkCes "contrasted current versus former smokers"
+      without stating which group is coded higher, and sibling files of this upload are allele-inverted (PGS003372
+      r = -0.49 with current-smoker PGS003053; UCLA TUD beta -0.11). Direction not determinable without the coding.'
+paper:
+  pmid: '36477530'
+  doi: 10.1038/s41586-022-05477-4
+  title: Genetic diversity fuels gene discovery for tobacco and alcohol use.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []
+exploration_findings: 'The paper reports only incremental R2 for the scores; there is no sentence on direction or
+  on the effect-allele
+
+  column. A per-file allele-orientation check against a reference score of the same trait (sign agreement over top
+
+  shared variants) would catch this kind of deposition error automatically.
+
+  '

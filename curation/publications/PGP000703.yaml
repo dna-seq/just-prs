@@ -1,0 +1,611 @@
+pgp_id: PGP000703
+scores:
+  PGS005121:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forAFR_fromAFR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005122:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forAFR_fromAMR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005123:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs17293632-T (SMAD3) has weight +0.021; GWAS Catalog reports T as the asthma risk allele
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forAFR_fromEAS (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005124:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forAFR_fromEUR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005125:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forAFR_fromSAS (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005126:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forEAS_fromAFR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005127:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forEAS_fromAMR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005128:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forEAS_fromEAS (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005129:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forEAS_fromEUR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005130:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forEAS_fromSAS (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005131:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forEUR_fromAFR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005132:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forEUR_fromAMR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005133:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forEUR_fromEAS (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005134:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forEUR_fromEUR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005135:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forEUR_fromSAS (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005136:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forSAS_fromAFR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005137:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forSAS_fromAMR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005138:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forSAS_fromEAS (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005139:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forSAS_fromEUR (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+  PGS005140:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (GBMI PheCode and/or self-report case definition)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GBMI discovery meta-analysis
+      quote: Despite the standardized phenotype definitions used by each biobank, which included the asthma PheCode
+        and/or self-reported data
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: PRS-CSx posterior weights, catalog name forSAS_fromSAS (target population x GWAS discovery population).
+      The paper reports only liability-scale R2 and never states direction in words; direction follows the PGS Catalog
+      convention (per-allele effects on asthma). Looked up because the from-EAS scores correlate about -0.9 in 1000G
+      EUR with PGP000704 (PGS005141/PGS005148); every PGP000703 score correlates positively (r +0.2 to +0.7) with
+      independently annotated asthma scores (e.g. PGS002754, PGS002727), so PGP000704 is the inverted side.
+paper:
+  pmid: '36778051'
+  doi: 10.1016/j.xgen.2022.100212
+  title: Multi-ancestry meta-analysis of asthma identifies novel associations and highlights the value of increased
+    power and diversity.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

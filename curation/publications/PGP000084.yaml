@@ -1,0 +1,108 @@
+pgp_id: PGP000084
+scores:
+  PGS000201:
+    cluster: substance_use.alcohol_use_disorder
+    phenotype: problematic_alcohol_use
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: liability to problematic alcohol use
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: alcohol_use_disorder
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Problematic alcohol use
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Weights from the problematic-alcohol-use GWAS, scored in COGA.
+      Corroborated by beta 0.099 (SE 0.01) on log DSM-5 AUD criterion count; 1000G EUR r = +0.62 to +0.77 with AUD
+      scores PGS002738, PGS005212, PGS005214.
+  PGS000202:
+    cluster: substance_use.alcohol_use_disorder
+    phenotype: problematic_alcohol_use
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: liability to problematic alcohol use
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: alcohol_use_disorder
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Problematic alcohol use
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Same GWAS as PGS000201, scored in FinnTwin12 (r = +0.91 with
+      PGS000201). Corroborated by beta 0.043 (SE 0.019) on log DSM-5 AUD criterion count.
+  PGS000203:
+    cluster: substance_use.alcohol_consumption
+    phenotype: alcohol_quantity
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: alcoholic drinks per week
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Evaluated on DSM-5 AUD criterion count; heavier drinking raises AUD risk.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alcohol consumption (drinks per week)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: GCKR rs1260326 T carries a negative weight, same orientation as the other DPW scores
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). GSCAN drinks-per-week weights scored in COGA. Corroborated
+      by 1000G EUR r = +0.95 with PGS002752 (OR 1.19 on drinks per week) and beta 0.121 (SE 0.01) on AUD criterion
+      count.
+  PGS000204:
+    cluster: substance_use.alcohol_consumption
+    phenotype: alcohol_quantity
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: alcoholic drinks per week
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Evaluated on DSM-5 AUD criterion count; heavier drinking raises AUD risk.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alcohol consumption (drinks per week)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). GSCAN drinks-per-week weights scored in FinnTwin12. Corroborated
+      by 1000G EUR r = +0.95 with PGS002752 and r = +0.96 with PGS000203; beta 0.114 (SE 0.019) on AUD criterion
+      count.
+paper:
+  pmid: '32555147'
+  doi: 10.1038/s41398-020-00865-8
+  title: Using polygenic scores for identifying individuals at increased risk of substance use disorders in clinical
+    and population samples.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

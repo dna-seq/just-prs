@@ -1,18 +1,281 @@
 pgp_id: PGP000457
-paper: {pmid: null, doi: 10.1101/2022.09.28.509988, title: Polygenic scoring accuracy varies across the genetic ancestry continuum in all human populations}
-evidence_read: {abstract: true, full_text: "europepmc: published Nature 2023 version PMC10284707", supplement: []}
+paper:
+  pmid: null
+  doi: 10.1101/2022.09.28.509988
+  title: Polygenic scoring accuracy varies across the genetic ancestry continuum in all human populations
+evidence_read:
+  abstract: true
+  full_text: 'europepmc: published Nature 2023 version PMC10284707'
+  supplement: []
 scores:
   PGS003510:
     cluster: cognition.cognitive_ability
     phenotype: fluid_intelligence
     measurement_kind: continuous
-    score_effect: {direction: increases, target: fluid intelligence score, coding: null}
+    score_effect:
+      direction: increases
+      target: fluid intelligence score
+      coding: null
     polarity: 1
     provenance:
-      - source: full_text
-        locator: Methods (GWAS on training individuals)
-        quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2 using sex, age and precomputed PC1–16 as covariates.
-        confidence: medium
-    lead_variant_check: {status: not_run, note: null}
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
     status: agent_proposed
-    notes: LDpred2-auto on the paper's own GWAS of the phenotype, so the sign follows the phenotype coding. Quotes are from the published Nature version. 1000G EUR r=+0.36 to +0.58 with the other intelligence scores.
+    notes: LDpred2-auto on the paper's own GWAS of the phenotype, so the sign follows the phenotype coding. Quotes
+      are from the published Nature version. 1000G EUR r=+0.36 to +0.58 with the other intelligence scores.
+  PGS003563:
+    cluster: sleep.chronotype
+    phenotype: eveningness
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: UKB field 1180 value (more evening), trait code more_evening
+      coding: 'UKB 1180 (coding 100342): 1 definitely morning ... 4 definitely evening; raw order inferred from
+        the shared trait code more_evening (Privé et al.)'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Supplementary Table 1 (supp_MOESM4_ESM.xlsx)
+      quote: more_evening,Morning/evening person (chronotype),330081,0.0352,0.13
+      confidence: medium
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs1144566 position not in the scoring file
+    review_reason: Ding more_evening coding inferred from trait code
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of more_evening; the paper does not restate the coding, but the
+      trait code is identical to Privé et al.'s raw field-1180 phenotype. 1000G EUR r=+ with the Privé more_evening
+      scores and -0.79 with Weissbrod BOLT-LMM morning person.
+  PGS003526:
+    cluster: kidney.kidney_function
+    phenotype: serum_creatinine
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum creatinine level
+      coding: null
+    polarity: -1
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of (log) creatinine, so the sign follows the measured level. 1000G
+      EUR r=-0.64 (mean) with PGP000517 eGFR scores, as expected for creatinine. Quote from the published Nature
+      version.
+  PGS003528:
+    cluster: kidney.kidney_function
+    phenotype: cystatin_c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum cystatin C level
+      coding: null
+    polarity: -1
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of (log) cystatin C, so the sign follows the measured level. 1000G
+      EUR r=-0.34 (mean) with PGP000517 eGFR scores, as expected for cystatin C. Quote from the published Nature
+      version.
+  PGS003492:
+    cluster: lipids.ldl_cholesterol
+    phenotype: apolipoprotein_b
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: apolipoprotein B level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Apolipoprotein B
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    review_reason: annotated from correlation with LDL-C scores, not a same-phenotype seed
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.98 with already-annotated PGS002102 (an LDL-C score in the
+      same concept; no seed of this exact phenotype exists).
+  PGS003517:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL direct
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.98 with already-annotated PGS002150.
+  PGS003496:
+    cluster: pigmentation.hair_color
+    phenotype: hair_darkness
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: natural hair darkness (UKB 1747 recoded darker_hair0; red and other excluded)
+      coding: 'darker_hair0 as in Privé et al. 2022 (PGP000263): 1 Blonde -> 1, 3 Light brown -> 2, 4 Dark brown
+        -> 3, 5 Black -> 4; Red, Other NA'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: fulltext_nature.xml, Results (GD impact on PGS vs trait)
+      quote: other traits, such as hair colour, show a highly consistent impact of GD on PGS versus trait (darker_hair,
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hair color (natural, before greying)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs1805007 T (MC1R red allele) weight -0.33, matching PGS001896; rs35391 (SLC45A2) risk allele not checked
+    status: agent_proposed
+    notes: LDpred2-auto; the paper names the trait darker_hair (co-author Privé, same UKBB-PGS phenotype name) but
+      does not restate the coding, which is taken from PGP000263's code. Corroborated by 1000G EUR r=+0.89 / +0.91
+      with the read darker_hair0 scores PGS001896 / PGS002109.
+  PGS003571:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure, automated reading
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.82 with PGS002807 (SBP score annotated here). Score name cont-decay-systolic_BP.
+  PGS003495:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.97 with already-annotated PGS002108.
+  PGS003514:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Standing height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.83 with PGS004095 (annotated, same phenotype).
+  PGS003569:
+    cluster: anthropometry.height
+    phenotype: sitting_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: sitting height
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Sitting height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.80 with PGS000969 (annotated, same phenotype).
+  PGS003525:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.95 with catalog-annotated PGS002161 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.38.

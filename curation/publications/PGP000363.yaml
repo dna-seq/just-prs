@@ -1,0 +1,30 @@
+pgp_id: PGP000363
+scores:
+  PGS002751:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index (rare protein-altering BMI variants)
+    polarity: 1
+    evaluation_outcome:
+      phenotype: obesity
+    provenance:
+    - source: full_text
+      locator: Results, multivariable analysis (Table 2)
+      quote: genetic risk score based on 14 rare/low-frequency protein-altering variants associated with BMI in
+        the general population
+      confidence: high
+    - source: full_text
+      locator: Results, multivariable analysis (Table 2)
+      quote: had significantly higher odds of overweight (OR, 1.64; 95% CI, 1.06-2.54; P =0.026) and obesity (OR,
+        1.80; 95% CI, 1.15-2.82
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: top weight rs13447324 (MC4R) T +0.542
+    status: agent_proposed
+    notes: 'GRSrare: 10th vs 1st decile ORs for overweight/obesity in childhood cancer survivors. Near-zero 1000G
+      correlation with other BMI scores (r=+0.01 with anchor) is expected for a 14-variant rare-variant score. Raw
+      sources fetched by the curator directly.'

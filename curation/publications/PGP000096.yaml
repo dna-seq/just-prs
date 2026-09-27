@@ -1,0 +1,22 @@
+pgp_id: PGP000096
+scores:
+  PGS000320:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.89 with catalog-annotated PGS004012 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+1.00.

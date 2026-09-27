@@ -1,0 +1,34 @@
+pgp_id: PGP000388
+scores:
+  PGS002809:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.53 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+paper:
+  pmid: '36275420'
+  doi: 10.1016/j.ijcha.2022.101136
+  title: Reclassification of coronary artery disease risk using genetic risk score among subjects with borderline
+    or intermediate clinical risk.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

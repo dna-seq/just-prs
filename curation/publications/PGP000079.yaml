@@ -1,0 +1,21 @@
+pgp_id: PGP000079
+scores:
+  PGS000192:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    score_effect: null
+    unannotated_reason: Composite count of 9 "unfavorable" LDL- and HDL-associated alleles; the abstract says higher
+      GS9 = higher LDL and lower HDL, but the counted alleles in the catalog file (rs11591147 T, rs693 G, rs1800588
+      T, rs328 G, rs1800775 A) look like the favorable alleles by established GWAS, and Table 1 (paywalled) is needed
+      to confirm the file orientation. 1000G EUR r with LDL scores is about 0 (-0.16 to +0.19).
+    status: agent_proposed
+    notes: 'Abstract: "With increasing genotype scores, the level of LDL cholesterol increased from 152 mg to 171
+      mg per deciliter". Not LDL-only even if the orientation holds.'
+paper:
+  pmid: '18354102'
+  doi: 10.1056/nejmoa0706728
+  title: Polymorphisms associated with cholesterol and risk of cardiovascular events.
+evidence_read:
+  abstract: true
+  full_text: null
+  supplement: []

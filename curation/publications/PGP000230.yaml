@@ -1,0 +1,243 @@
+pgp_id: PGP000230
+scores:
+  PGS000886:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.65 with already-annotated PGS004975.
+  PGS000887:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.71 with already-annotated PGS004936.
+  PGS000888:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.79 with already-annotated PGS000824.
+  PGS000889:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.79 with already-annotated PGS000888.
+  PGS000890:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.56 with already-annotated PGS004936.
+  PGS000891:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.6 with already-annotated PGS000310.
+  PGS000892:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.94 with already-annotated PGS000888.
+  PGS000893:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.94 with already-annotated PGS000889.
+  PGS000894:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.53 with already-annotated PGS004971.
+  PGS000895:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.73 with already-annotated PGS004936.
+  PGS000896:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.39 with already-annotated PGS004936.
+  PGS000897:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.75 with already-annotated PGS000065.
+paper:
+  pmid: '34887591'
+  doi: https://doi.org/10.1038/s41586-021-04064-3
+  title: The power of genetic diversity in genome-wide association studies of lipids.
+template:
+  rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
+    PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged
+    individually override this.
+  provenance:
+  - source: catalog
+    locator: scores.trait_reported
+    quote: LDL cholesterol
+    confidence: medium

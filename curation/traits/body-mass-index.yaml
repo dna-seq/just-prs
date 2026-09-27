@@ -1,0 +1,492 @@
+slug: body-mass-index
+query: body mass index
+match:
+  terms:
+  - BMI
+  - adiposity
+  - adult body size
+  - body mass index
+  - childhood body size
+  - obesity
+  efo_ids: []
+  exclude: []
+anchor: PGS000320
+status: needs_review
+concepts:
+- anthropometry.adiposity
+scores:
+  PGS000027:
+    decision: in_scope
+    note: null
+  PGS000034:
+    decision: in_scope
+    note: null
+  PGS000298:
+    decision: in_scope
+    note: null
+  PGS000299:
+    decision: out_of_scope
+    note: fat distribution (WHR adjusted for BMI), not BMI
+  PGS000306:
+    decision: out_of_scope
+    note: glycaemic trait adjusted for BMI (fasting glucose)
+  PGS000308:
+    decision: out_of_scope
+    note: glycaemic trait adjusted for BMI (fasting insulin)
+  PGS000320:
+    decision: in_scope
+    note: null
+  PGS000716:
+    decision: in_scope
+    note: null
+  PGS000717:
+    decision: in_scope
+    note: null
+  PGS000770:
+    decision: in_scope
+    note: null
+  PGS000829:
+    decision: in_scope
+    note: null
+  PGS000830:
+    decision: in_scope
+    note: null
+  PGS000841:
+    decision: in_scope
+    note: null
+  PGS000843:
+    decision: out_of_scope
+    note: fat distribution (WHR adjusted for BMI), not BMI
+  PGS000848:
+    decision: out_of_scope
+    note: type 2 diabetes score partitioned on adiposity SNPs; belongs to type 2 diabetes
+  PGS000857:
+    decision: out_of_scope
+    note: type 2 diabetes score partitioned on obesity SNPs; belongs to type 2 diabetes
+  PGS000910:
+    decision: in_scope
+    note: null
+  PGS000921:
+    decision: in_scope
+    note: null
+  PGS001228:
+    decision: in_scope
+    note: null
+  PGS001298:
+    decision: in_scope
+    note: null
+  PGS001825:
+    decision: in_scope
+    note: null
+  PGS001943:
+    decision: in_scope
+    note: null
+  PGS002033:
+    decision: in_scope
+    note: null
+  PGS002161:
+    decision: in_scope
+    note: null
+  PGS002251:
+    decision: in_scope
+    note: null
+  PGS002313:
+    decision: in_scope
+    note: null
+  PGS002360:
+    decision: in_scope
+    note: null
+  PGS002385:
+    decision: in_scope
+    note: null
+  PGS002434:
+    decision: in_scope
+    note: null
+  PGS002483:
+    decision: in_scope
+    note: null
+  PGS002532:
+    decision: in_scope
+    note: null
+  PGS002581:
+    decision: in_scope
+    note: null
+  PGS002630:
+    decision: in_scope
+    note: null
+  PGS002679:
+    decision: in_scope
+    note: null
+  PGS002751:
+    decision: in_scope
+    note: null
+  PGS002811:
+    decision: out_of_scope
+    note: fat depot volume adjusted for BMI and height (fat distribution)
+  PGS002812:
+    decision: out_of_scope
+    note: fat depot volume adjusted for BMI and height (fat distribution)
+  PGS002813:
+    decision: out_of_scope
+    note: fat depot volume adjusted for BMI and height (fat distribution)
+  PGS002840:
+    decision: in_scope
+    note: null
+  PGS002841:
+    decision: in_scope
+    note: null
+  PGS002842:
+    decision: in_scope
+    note: null
+  PGS002843:
+    decision: in_scope
+    note: null
+  PGS002844:
+    decision: in_scope
+    note: null
+  PGS002845:
+    decision: in_scope
+    note: null
+  PGS002846:
+    decision: in_scope
+    note: null
+  PGS002847:
+    decision: in_scope
+    note: null
+  PGS002848:
+    decision: in_scope
+    note: null
+  PGS002849:
+    decision: in_scope
+    note: null
+  PGS002850:
+    decision: in_scope
+    note: null
+  PGS002851:
+    decision: in_scope
+    note: null
+  PGS002852:
+    decision: in_scope
+    note: null
+  PGS002853:
+    decision: in_scope
+    note: null
+  PGS002854:
+    decision: in_scope
+    note: null
+  PGS002855:
+    decision: in_scope
+    note: null
+  PGS002856:
+    decision: in_scope
+    note: null
+  PGS002857:
+    decision: in_scope
+    note: null
+  PGS002858:
+    decision: in_scope
+    note: null
+  PGS002859:
+    decision: in_scope
+    note: null
+  PGS003124:
+    decision: in_scope
+    note: null
+  PGS003125:
+    decision: in_scope
+    note: null
+  PGS003126:
+    decision: in_scope
+    note: null
+  PGS003127:
+    decision: in_scope
+    note: null
+  PGS003128:
+    decision: in_scope
+    note: null
+  PGS003129:
+    decision: in_scope
+    note: null
+  PGS003130:
+    decision: in_scope
+    note: null
+  PGS003131:
+    decision: in_scope
+    note: null
+  PGS003132:
+    decision: in_scope
+    note: null
+  PGS003133:
+    decision: in_scope
+    note: null
+  PGS003400:
+    decision: in_scope
+    note: null
+  PGS003462:
+    decision: in_scope
+    note: null
+  PGS003485:
+    decision: out_of_scope
+    note: fat distribution (WHR adjusted for BMI), not BMI
+  PGS003525:
+    decision: in_scope
+    note: null
+  PGS003842:
+    decision: in_scope
+    note: null
+  PGS003843:
+    decision: in_scope
+    note: null
+  PGS003844:
+    decision: in_scope
+    note: null
+  PGS003845:
+    decision: in_scope
+    note: null
+  PGS003846:
+    decision: in_scope
+    note: null
+  PGS003847:
+    decision: in_scope
+    note: null
+  PGS003848:
+    decision: in_scope
+    note: null
+  PGS003858:
+    decision: out_of_scope
+    note: obstructive sleep apnea adjusted for BMI
+  PGS003884:
+    decision: in_scope
+    note: null
+  PGS003885:
+    decision: in_scope
+    note: null
+  PGS003886:
+    decision: in_scope
+    note: null
+  PGS003887:
+    decision: in_scope
+    note: null
+  PGS003897:
+    decision: in_scope
+    note: null
+  PGS003959:
+    decision: in_scope
+    note: null
+  PGS003980:
+    decision: in_scope
+    note: null
+  PGS003996:
+    decision: in_scope
+    note: null
+  PGS004012:
+    decision: in_scope
+    note: null
+  PGS004022:
+    decision: in_scope
+    note: null
+  PGS004037:
+    decision: in_scope
+    note: null
+  PGS004050:
+    decision: in_scope
+    note: null
+  PGS004066:
+    decision: in_scope
+    note: null
+  PGS004080:
+    decision: in_scope
+    note: null
+  PGS004096:
+    decision: in_scope
+    note: null
+  PGS004104:
+    decision: in_scope
+    note: null
+  PGS004120:
+    decision: in_scope
+    note: null
+  PGS004134:
+    decision: in_scope
+    note: null
+  PGS004150:
+    decision: in_scope
+    note: null
+  PGS004216:
+    decision: in_scope
+    note: null
+  PGS004217:
+    decision: in_scope
+    note: null
+  PGS004218:
+    decision: in_scope
+    note: null
+  PGS004219:
+    decision: in_scope
+    note: null
+  PGS004220:
+    decision: in_scope
+    note: null
+  PGS004319:
+    decision: in_scope
+    note: null
+  PGS004378:
+    decision: in_scope
+    note: null
+  PGS004409:
+    decision: in_scope
+    note: null
+  PGS004447:
+    decision: in_scope
+    note: null
+  PGS004517:
+    decision: in_scope
+    note: null
+  PGS004609:
+    decision: in_scope
+    note: null
+  PGS004610:
+    decision: in_scope
+    note: null
+  PGS004733:
+    decision: in_scope
+    note: null
+  PGS004734:
+    decision: in_scope
+    note: null
+  PGS004735:
+    decision: in_scope
+    note: null
+  PGS004736:
+    decision: in_scope
+    note: null
+  PGS004864:
+    decision: out_of_scope
+    note: 'response score: weights are ORs of the 186 BMI SNPs for low vs high weight-loss trajectory after bariatric
+      surgery (PGP000611 full text), not BMI effects'
+  PGS004900:
+    decision: in_scope
+    note: null
+  PGS004901:
+    decision: in_scope
+    note: null
+  PGS004902:
+    decision: in_scope
+    note: null
+  PGS004982:
+    decision: in_scope
+    note: null
+  PGS004983:
+    decision: in_scope
+    note: null
+  PGS004984:
+    decision: in_scope
+    note: null
+  PGS004985:
+    decision: in_scope
+    note: null
+  PGS004986:
+    decision: in_scope
+    note: null
+  PGS004987:
+    decision: in_scope
+    note: null
+  PGS004988:
+    decision: in_scope
+    note: null
+  PGS004989:
+    decision: in_scope
+    note: null
+  PGS004990:
+    decision: in_scope
+    note: null
+  PGS004991:
+    decision: in_scope
+    note: null
+  PGS004992:
+    decision: in_scope
+    note: null
+  PGS004993:
+    decision: in_scope
+    note: null
+  PGS004994:
+    decision: in_scope
+    note: null
+  PGS005095:
+    decision: out_of_scope
+    note: fat distribution (WHR adjusted for BMI), not BMI
+  PGS005102:
+    decision: in_scope
+    note: null
+  PGS005103:
+    decision: in_scope
+    note: null
+  PGS005114:
+    decision: in_scope
+    note: null
+  PGS005145:
+    decision: in_scope
+    note: null
+  PGS005154:
+    decision: in_scope
+    note: null
+  PGS005198:
+    decision: in_scope
+    note: null
+  PGS005199:
+    decision: in_scope
+    note: null
+  PGS005200:
+    decision: in_scope
+    note: null
+  PGS005201:
+    decision: in_scope
+    note: null
+  PGS005202:
+    decision: in_scope
+    note: null
+  PGS005203:
+    decision: in_scope
+    note: null
+  PGS005204:
+    decision: in_scope
+    note: null
+  PGS005235:
+    decision: in_scope
+    note: null
+  PGS005276:
+    decision: out_of_scope
+    note: glycaemic trait adjusted for BMI (fasting insulin)
+  PGS005277:
+    decision: out_of_scope
+    note: glycaemic trait adjusted for BMI (fasting insulin)
+  PGS005278:
+    decision: out_of_scope
+    note: glycaemic trait adjusted for BMI (fasting insulin)
+  PGS005279:
+    decision: in_scope
+    note: null
+  PGS005331:
+    decision: in_scope
+    note: null
+  PGS005332:
+    decision: in_scope
+    note: null
+  PGS005337:
+    decision: in_scope
+    note: null
+  PGS005338:
+    decision: in_scope
+    note: null
+  PGS005339:
+    decision: in_scope
+    note: null
+  PGS005340:
+    decision: in_scope
+    note: null
+summary: 'All 140 in-scope scores sit in one concept, anthropometry.adiposity (axis: higher BMI). BMI, obesity and
+  childhood body size scores point the same way: a higher score means a higher BMI or more obesity risk. The 8 annotated
+  thinness scores (ExPRSweb, PGP000393) point the other way; they go to review because the paper does not define
+  the thinness cases and their 1000G correlation with BMI scores is mixed. PGS003127, PGS003132 and PGS003846 remain
+  unannotated. PGS004864 turned out to be a weight-loss-after-bariatric-surgery response score and is out of scope,
+  as are 15 BMI-adjusted fat-distribution, glycaemic, sleep-apnea and T2D-partition scores.'

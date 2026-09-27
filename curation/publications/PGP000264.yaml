@@ -1,0 +1,83 @@
+pgp_id: PGP000264
+scores:
+  PGS001800:
+    cluster: respiratory.lung_function
+    phenotype: fev1
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: FEV1 (component of a COPD polygenic risk score; higher = lower FEV1)
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog ORs 1.23-2.47 are for incident COPD before age 50; higher score = lower FEV1 = higher COPD
+        risk.
+    provenance:
+    - source: full_text
+      locator: Results > GOLD spirometry grades
+      quote: In this study, participants with PRISm had a higher average FEV 1 polygenic risk score than participants
+        with GOLD 0 or 1 grades
+      confidence: medium
+    - source: full_text
+      locator: Results
+      quote: 'we generated a combined model: PRS Combined =0·43847 × PRS FEV1 + 0·58833 × PRS FEV1/FVC , in which
+        PRS is polygenic risk score.'
+      confidence: medium
+    - source: full_text
+      locator: Results
+      quote: The combined polygenic risk score was associated with COPD in Europeans (odds ratio [OR] per SD of
+        the score 1·81 [95% CI 1·74–1·88]
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: COPD-risk component under a lung-function name; orientation inferred (Moll 2020 appendix unread)
+    status: agent_proposed
+    notes: The paper never says the weights were sign-flipped (appendix pp 19-21 not read), but PRISm (low FEV1)
+      participants score higher, the score enters a COPD model with a positive coefficient, and 1000G EUR r=-0.56
+      to -0.71 with ordinary FEV1/FVC-family scores. Inferred orientation; treat as a risk score.
+  PGS001801:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: FEV1/FVC ratio (component of a COPD polygenic risk score; higher = lower ratio)
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog ORs are for incident COPD; higher score = lower FEV1/FVC = higher COPD risk.
+    provenance:
+    - source: full_text
+      locator: Results
+      quote: 'we generated a combined model: PRS Combined =0·43847 × PRS FEV1 + 0·58833 × PRS FEV1/FVC , in which
+        PRS is polygenic risk score.'
+      confidence: medium
+    - source: full_text
+      locator: Results
+      quote: The combined polygenic risk score was associated with COPD in Europeans (odds ratio [OR] per SD of
+        the score 1·81 [95% CI 1·74–1·88]
+      confidence: medium
+    - source: full_text
+      locator: Methods > Outcomes
+      quote: The primary outcome measure was moderate-to-severe COPD (FEV 1 /FVC <0·7 and FEV 1 <80% of predicted).
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'Top weights: FAM13A chr4:105897896 G negative; ADGRG6 chr6:142367832 A positive (A lowers FEV1/FVC
+        per GCST007431, see PGP000456 lookup).'
+    review_reason: COPD-risk component under a lung-function name; orientation inferred (Moll 2020 appendix unread)
+    status: agent_proposed
+    notes: No explicit sign statement in the main text (appendix not read). Orientation inferred from the positive
+      coefficient in the COPD model, the lead variants and 1000G EUR r=-0.78 with PGS002326 (FEV1/FVC).
+paper:
+  pmid: '32649918'
+  doi: 10.1016/s2213-2600(20)30101-6
+  title: 'Chronic obstructive pulmonary disease and related phenotypes: polygenic risk scores in population-based
+    and case-control cohorts.'
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

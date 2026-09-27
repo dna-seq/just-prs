@@ -1,0 +1,63 @@
+pgp_id: PGP000132
+scores:
+  PGS000716:
+    cluster: anthropometry.adiposity
+    phenotype: childhood_body_size
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: larger self-reported body size at age 10
+      coding: 'UKB 1687 comparative body size at age 10: thinner < about average < plumper (three ordered categories,
+        additive per category)'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods, Study populations (UK Biobank)
+      quote: Participants were also asked "When you were 10 years old, compared to average would you describe yourself
+        as thinner, plumper, or about average?" This measure is referred to as early life body size.
+      confidence: high
+    - source: full_text
+      locator: Methods, Study populations
+      quote: Effect estimates from our results can be interpreted as the increase in odds conferred for each additive
+        change in body size category.
+      confidence: medium
+    - source: abstract
+      locator: Abstract, Results
+      quote: Having a larger genetically predicted body size in early life was associated with an increased odds
+        of coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs1421085 (FTO) T, the known BMI-lowering allele, has weight -0.047; checked by the curator from catalog
+        weights, not GWAS Catalog
+    status: agent_proposed
+    notes: Raw sources fetched by the curator directly (Europe PMC abstract + full text) because no lookup agent
+      slot was available. Catalog evaluation is AUROC only (childhood BMI in ALSPAC).
+  PGS000717:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: adult body mass index category
+      coding: UK Biobank measured adult BMI cut into three groups with the same proportions as the age-10 thinner
+        / about average / plumper categories
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods, Study populations
+      quote: BMI in adults was converted into a categorical variable with three groups based on the same proportions
+        as the early life body size variable (ie, thinner, plumper, and about average). This was to ensure that
+        both measures were as comparable as possible. This measure is referred to as adult body size.
+      confidence: high
+    - source: full_text
+      locator: Methods, Study populations
+      quote: Effect estimates from our results can be interpreted as the increase in odds conferred for each additive
+        change in body size category.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs56094641 (FTO) A, the BMI-lowering allele, has weight -0.047; checked by the curator from catalog
+        weights
+    status: agent_proposed
+    notes: Raw sources fetched by the curator directly (Europe PMC). Catalog evaluation is AUROC only.

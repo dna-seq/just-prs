@@ -3,81 +3,1749 @@ paper:
   pmid: '35324888'
   doi: 10.1371/journal.pgen.1010105
   title: Significant sparse polygenic risk scores across 813 traits in UK Biobank.
-evidence_read: {abstract: true, full_text: europepmc, supplement: []}
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []
 template:
-  rule: >-
-    Each score is a snpnet regression predicting the phenotype itself: binomial model on case status
-    for binary traits (higher score = more likely case), Gaussian model on the median raw value for
-    quantitative traits (higher score = higher value). Reverse-coded questionnaire fields need their own coding.
+  rule: 'Each score is a snpnet regression predicting the phenotype itself: binomial model on case status for binary
+    traits (higher score = more likely case), Gaussian model on the median raw value for quantitative traits (higher
+    score = higher value). Reverse-coded questionnaire fields need their own coding.'
   provenance:
-    - source: full_text
-      locator: Methods > Phenotype definitions
-      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case” status if the participants are classified as the case in at least one of their visits and “control” otherwise. For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
-      confidence: medium
-    - source: full_text
-      locator: Methods (model families)
-      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial family and the AUC-ROC metric for the binary traits [ 10 ].
-      confidence: medium
+  - source: full_text
+    locator: Methods > Phenotype definitions
+    quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+      status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+    confidence: medium
+  - source: full_text
+    locator: Methods (model families)
+    quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+      family and the AUC-ROC metric for the binary traits [ 10 ].
+    confidence: medium
 scores:
   PGS001393:
     cluster: aging.lifespan
     phenotype: parental_age_at_death
     measurement_kind: continuous
-    score_effect: {direction: increases, target: father's age at death in years, coding: "UKB 1807: integer, years"}
+    score_effect:
+      direction: increases
+      target: father's age at death in years
+      coding: 'UKB 1807: integer, years'
     polarity: 1
     provenance:
-      - source: full_text
-        locator: Methods (model families)
-        quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial family and the AUC-ROC metric for the binary traits [ 10 ].
-        confidence: medium
-      - source: full_text
-        locator: UK Biobank showcase field 1807
-        quote: Father's age at death
-        confidence: medium
-    lead_variant_check: {status: agree, note: "rs16969968 A (more cigarettes/day) and rs4977574 G (CAD risk) both carry negative weights"}
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 1807
+      quote: Father's age at death
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs16969968 A (more cigarettes/day) and rs4977574 G (CAD risk) both carry negative weights
     status: agent_proposed
     notes: Only for participants whose father had died; a proxy for inherited lifespan.
   PGS001232:
     cluster: cognition.cognitive_ability
     phenotype: fluid_intelligence
     measurement_kind: continuous
-    score_effect: {direction: increases, target: fluid intelligence score (number of correct answers), coding: "UKB 20016: integer, correct answers"}
+    score_effect:
+      direction: increases
+      target: fluid intelligence score (number of correct answers)
+      coding: 'UKB 20016: integer, correct answers'
     polarity: 1
     provenance:
-      - source: full_text
-        locator: Methods (model families)
-        quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial family and the AUC-ROC metric for the binary traits [ 10 ].
-        confidence: medium
-      - source: full_text
-        locator: UK Biobank showcase field 20016
-        quote: Fluid intelligence score
-        confidence: medium
-    lead_variant_check: {status: agree, note: "rs1487445 T raises educational attainment and carries a positive weight; rs13107325 has no cognition hit"}
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 20016
+      quote: Fluid intelligence score
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs1487445 T raises educational attainment and carries a positive weight; rs13107325 has no cognition
+        hit
     status: agent_proposed
   PGS001297:
     cluster: endocrine.type_1_diabetes
     phenotype: type_1_diabetes
     measurement_kind: binary
-    score_effect: {direction: increases, target: risk of type 1 diabetes, coding: null}
+    score_effect:
+      direction: increases
+      target: risk of type 1 diabetes
+      coding: null
     polarity: 1
     provenance:
-      - source: full_text
-        locator: Methods > Phenotype definitions
-        quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case” status if the participants are classified as the case in at least one of their visits and “control” otherwise.
-        confidence: medium
-    lead_variant_check: {status: agree, note: "rs9273363 A (HLA-DQ, T1D OR 5.48) carries the largest positive weight"}
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs9273363 A (HLA-DQ, T1D OR 5.48) carries the largest positive weight
     status: agent_proposed
   PGS001296:
     cluster: endocrine.type_1_diabetes
     phenotype: type_1_diabetes
     measurement_kind: time_to_event
-    score_effect: {direction: increases, target: hazard of insulin-dependent diabetes (ICD-10 E10), coding: null}
+    score_effect:
+      direction: increases
+      target: hazard of insulin-dependent diabetes (ICD-10 E10)
+      coding: null
     polarity: 1
     provenance:
-      - source: full_text
-        locator: Methods (model families)
-        quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial family and the AUC-ROC metric for the binary traits [ 10 ].
-        confidence: low
-    lead_variant_check: {status: agree, note: "HLA-DRB1*04:01 and rs9273363 A carry the largest positive weights"}
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: HLA-DRB1*04:01 and rs9273363 A carry the largest positive weights
     status: agent_proposed
-    notes: The time-to-event setup is not described in the paper; direction taken from the paper-wide rule and HLA weights.
+    notes: The time-to-event setup is not described in the paper; direction taken from the paper-wide rule and HLA
+      weights.
+  PGS001246:
+    cluster: pigmentation.skin_tanning
+    phenotype: tan_very
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of answering "get very tanned"
+      coding: 'UKB 1727 (coding 100432): 1 get very tanned, 2 moderately, 3 mildly or occasionally, 4 never tan
+        only burn; -1/-3 missing. Case = gave answer 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - &id001
+      source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - &id002
+      source: full_text
+      locator: UK Biobank showcase field 1727
+      quote: What would happen to your skin if it was repeatedly exposed to bright sunlight without any protection?
+      confidence: high
+    - source: full_text
+      locator: UK Biobank coding 100432
+      quote: Get very tanned
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: MC1R rs1805007-T and rs1805008-T (red hair, burning) carry large negative weights (-0.94, -0.73)
+    status: agent_proposed
+    notes: 'One-hot binary trait (GBE BIN_FC10001727: field 1727 answer 1); the answer-to-FC mapping is inferred
+      from the PGS Catalog label matching the UKB coding, the paper does not describe FC encoding. 1000G EUR r=-0.96
+      with PGS001244 and -0.93 with PGS001247 (opposite answers), not a sign error.'
+  PGS001245:
+    cluster: pigmentation.skin_tanning
+    phenotype: tan_moderate
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of answering "get moderately tanned"
+      coding: 'UKB 1727 (coding 100432): 1 get very tanned, 2 moderately, 3 mildly or occasionally, 4 never tan
+        only burn; -1/-3 missing. Case = gave answer 2'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id001
+    - *id002
+    - source: full_text
+      locator: UK Biobank coding 100432
+      quote: Get moderately tanned
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: MC1R rs1805007-T and rs1805008-T carry negative weights (-0.43, -0.23)
+    review_reason: middle one-hot answer; sign from 1000G correlation, not the paper
+    status: agent_proposed
+    notes: 'One-hot binary trait (GBE BIN_FC20001727: field 1727 answer 2); the answer-to-FC mapping is inferred
+      from the PGS Catalog label matching the UKB coding, the paper does not describe FC encoding. Middle-upper
+      answer; sign +1 because it correlates +0.64 with "very tanned" and -0.79 with "never tan" in 1000G EUR.'
+  PGS001244:
+    cluster: pigmentation.skin_tanning
+    phenotype: tan_mild
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of answering "get mildly or occasionally tanned"
+      coding: 'UKB 1727 (coding 100432): 1 get very tanned, 2 moderately, 3 mildly or occasionally, 4 never tan
+        only burn; -1/-3 missing. Case = gave answer 3'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id001
+    - *id002
+    - source: full_text
+      locator: UK Biobank coding 100432
+      quote: Get mildly or occasionally tanned
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: MC1R rs1805007-T and rs1805008-T carry positive weights (+0.37, +0.28)
+    status: agent_proposed
+    notes: 'One-hot binary trait (GBE BIN_FC30001727: field 1727 answer 3); the answer-to-FC mapping is inferred
+      from the PGS Catalog label matching the UKB coding, the paper does not describe FC encoding. Sign -1: correlates
+      +0.92 with "never tan" and -0.96 with "very tanned" in 1000G EUR.'
+  PGS001247:
+    cluster: pigmentation.skin_tanning
+    phenotype: never_tan_only_burn
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of answering "never tan, only burn"
+      coding: 'UKB 1727 (coding 100432): 1 get very tanned, 2 moderately, 3 mildly or occasionally, 4 never tan
+        only burn; -1/-3 missing. Case = gave answer 4'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id001
+    - *id002
+    - source: full_text
+      locator: UK Biobank coding 100432
+      quote: Never tan, only burn
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: MC1R rs1805007-T and rs1805008-T carry the largest positive weights (+1.05, +0.65)
+    status: agent_proposed
+    notes: 'One-hot binary trait (GBE BIN_FC40001727: field 1727 answer 4); the answer-to-FC mapping is inferred
+      from the PGS Catalog label matching the UKB coding, the paper does not describe FC encoding.'
+  PGS000982:
+    cluster: lifestyle.sun_exposure
+    phenotype: sun_protection_never_rarely
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of answering "never/rarely" wears sun protection
+      coding: 'UKB 2267 (coding 100536): 1 never/rarely, 2 sometimes, 3 most of the time, 4 always, 5 do not go
+        out in sunshine; -1/-3 missing. Case = gave answer 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id001
+    - &id003
+      source: full_text
+      locator: UK Biobank showcase field 2267
+      quote: Do you wear sun protection (e.g. sunscreen lotion, hat) when you spend time outdoors in the summer?
+      confidence: high
+    - source: full_text
+      locator: UK Biobank coding 100536
+      quote: Never/rarely
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: 'MC1R rs1805007-T and rs1805008-T (fair, burn-prone) carry negative weights (-0.23, -0.09): burn-prone
+        people protect more'
+    status: agent_proposed
+    notes: 'One-hot binary trait (GBE BIN_FC10002267: field 2267 answer 1); the answer-to-FC mapping is inferred
+      from the PGS Catalog label matching the UKB coding, the paper does not describe FC encoding.'
+  PGS001535:
+    cluster: lifestyle.sun_exposure
+    phenotype: sun_protection_sometimes
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of answering "sometimes" wears sun protection
+      coding: 'UKB 2267 (coding 100536): 1 never/rarely, 2 sometimes, 3 most of the time, 4 always, 5 do not go
+        out in sunshine; -1/-3 missing. Case = gave answer 2'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id001
+    - *id003
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Use of sun/uv protection (Sometimes)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: MC1R rs1805007-T and rs1805008-T carry small negative weights (-0.09, -0.05)
+    review_reason: middle one-hot answer; sign from 1000G correlation, not the paper
+    status: agent_proposed
+    notes: 'One-hot binary trait (GBE BIN_FC20002267: field 2267 answer 2); the answer-to-FC mapping is inferred
+      from the PGS Catalog label matching the UKB coding, the paper does not describe FC encoding. Middle answer;
+      sign +1 because it correlates +0.64 with "never/rarely" and -0.59 with "always" in 1000G EUR. Weak phenotype
+      (309 variants).'
+  PGS000980:
+    cluster: lifestyle.sun_exposure
+    phenotype: sun_protection_always
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of answering "always" wears sun protection
+      coding: 'UKB 2267 (coding 100536): 1 never/rarely, 2 sometimes, 3 most of the time, 4 always, 5 do not go
+        out in sunshine; -1/-3 missing. Case = gave answer 4'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id001
+    - *id003
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Use of sun / ultraviolet protection (always)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: MC1R rs1805007-T and rs1805008-T carry positive weights (+0.17, +0.08)
+    status: agent_proposed
+    notes: 'One-hot binary trait (GBE BIN_FC40002267: field 2267 answer 4); the answer-to-FC mapping is inferred
+      from the PGS Catalog label matching the UKB coding, the paper does not describe FC encoding.'
+  PGS001257:
+    cluster: pigmentation.skin_tanning
+    phenotype: childhood_sunburn
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: number of painful or blistering sunburns before age 15
+      coding: 'UKB 1737 (coding 100291): integer count of times; -1/-3 missing'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - &id004
+      source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 1737
+      quote: Before the age of 15, how many times did you suffer sunburn that was painful for at least 2 days or
+        caused blistering?
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: MC1R rs1805007-T and rs1805008-T carry positive weights (+0.62, +0.26)
+    status: agent_proposed
+    notes: 'Placed in skin_tanning, not sun_exposure: sunburn count mixes exposure and burn-proneness, but genetically
+      it tracks burn-proneness (1000G EUR r=+0.86 with "never tan, only burn", ~0 with time outdoors).'
+  PGS001052:
+    cluster: lifestyle.sun_exposure
+    phenotype: time_outdoors_summer
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: hours per day spent outdoors in summer
+      coding: 'UKB 1050 (coding 100329): hours/day; -10 less than an hour, -1/-3 missing (handling of -10 not stated)'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id004
+    - source: full_text
+      locator: UK Biobank showcase field 1050
+      quote: how many hours do you spend outdoors?
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: no well-known lead variant to check
+    status: agent_proposed
+    notes: Direction from the paper-wide Gaussian rule; how the -10 "less than an hour" code was treated is not
+      stated. Near-zero 1000G correlation with the tanning/protection scores.
+  PGS001053:
+    cluster: lifestyle.sun_exposure
+    phenotype: time_outdoors_winter
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: hours per day spent outdoors in winter
+      coding: 'UKB 1060 (coding 100329): hours/day; -10 less than an hour, -1/-3 missing (handling of -10 not stated)'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id004
+    - source: full_text
+      locator: UK Biobank showcase field 1060
+      quote: how many hours do you spend outdoors?
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: no well-known lead variant to check
+    status: agent_proposed
+    notes: Direction from the paper-wide Gaussian rule; how the -10 "less than an hour" code was treated is not
+      stated. Near-zero 1000G correlation with the tanning/protection scores.
+  PGS001009:
+    cluster: respiratory.lung_function
+    phenotype: pef
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: peak expiratory flow
+      coding: 'UKB 3064: litres/min'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: null
+  PGS001010:
+    cluster: respiratory.lung_function
+    phenotype: pef_percent_predicted
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: PEF relative to predicted value
+      coding: null
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: catalog
+      locator: scores.trait_reported
+      quote: PEF pred. ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: r = 0.999999 with PGS001180 (FEV1/FVC); one catalog label may be wrong
+    status: agent_proposed
+    notes: GBE_INI1003064. Its 1000G EUR correlation with PGS001180 (FEV1/FVC, GBE_INI1003063) is r=0.999999, so
+      the two catalog entries are practically the same score; one of the labels may be wrong. Direction (higher
+      = better lung function) holds either way.
+  PGS001180:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio
+      coding: null
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung function (FEV1/FVC)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: null
+  PGS001236:
+    cluster: respiratory.lung_function
+    phenotype: fev1
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: forced expiratory volume in 1 second
+      coding: 'UKB 3063: litres'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung function (FEV1)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: null
+  PGS001237:
+    cluster: respiratory.lung_function
+    phenotype: fvc
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: forced vital capacity
+      coding: 'UKB 3062: litres'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung function (FVC)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: null
+  PGS001132:
+    cluster: respiratory.copd
+    phenotype: family_history_copd
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of reporting a parent or sibling with chronic bronchitis/emphysema
+      coding: null
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Family history of chronic bronchitis/emphysema
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'Family-history phenotype (GBE_FH1113): a proxy for inherited COPD liability, not the participant''s
+      own diagnosis.'
+  PGS001326:
+    cluster: respiratory.copd
+    phenotype: emphysema
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of emphysema
+      coding: null
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: null
+  PGS001332:
+    cluster: respiratory.copd
+    phenotype: copd
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of COPD
+      coding: null
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Chronic obstructive pulmonary disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: null
+  PGS001333:
+    cluster: respiratory.copd
+    phenotype: copd
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of algorithmically-defined COPD
+      coding: null
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Chronic obstructive pulmonary disease (algorithmically-defined)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: null
+  PGS001334:
+    cluster: respiratory.copd
+    phenotype: copd
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of other COPD (ICD-10 J44)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other chronic obstructive pulmonary disease (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: The time-to-event setup is not described in the paper; direction taken from the paper-wide rule. 1000G
+      EUR r=+0.23 with PGS012564 (COPD, HR 1.09).
+  PGS001087:
+    cluster: substance_use.alcohol_consumption
+    phenotype: alcohol_intake_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: how often alcohol is drunk
+      coding: GBE QT_FC1001558, a field-coded version of UKB 1558 (raw 1 daily ... 6 never); orientation of the
+        recoding not stated in the sources
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alcohol intake frequency
+      confidence: medium
+    - source: supplement
+      locator: gbe_QT_FC1001558.html, rs1229984 row
+      quote: '"alt": "C", "beta": 0.151'
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: ADH1B rs1229984 C (the common allele, more drinking) weight +0.21, matching GBE's own GWAS beta +0.151
+    review_reason: GBE recoding of UKB 1558 not stated; direction from ADH1B weight and correlations
+    status: agent_proposed
+    notes: 'Not the raw 1558 coding: GBE''s FC phenotype runs toward MORE frequent drinking. Basis: 1000G EUR r
+      = +0.39 with PGS001394 (UKB 20414, 0 never ... 4 four or more times a week), +0.37 with drinks-per-week scores,
+      and -0.62 with the raw-coded Privé scores PGS001934/PGS002152. No text states the recoding; confidence medium.'
+  PGS001088:
+    cluster: substance_use.alcohol_consumption
+    phenotype: alcohol_quantity
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: average weekly beer plus cider intake (pints)
+      coding: UKB 1588 (GBE INI1588), integer pints per week
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: ukb_field_1588.html > Description
+      quote: Average weekly beer plus cider intake
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Gaussian snpnet on the raw weekly count (paper-wide rule). Uncorrelated with the other alcohol scores
+      in 1000G EUR (|r| < 0.2).
+  PGS001394:
+    cluster: substance_use.alcohol_consumption
+    phenotype: alcohol_intake_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: frequency of drinking alcohol
+      coding: 'UKB 20414 (GBE INI20414): 0 never, 1 monthly or less, 2 2-4 times a month, 3 2-3 times a week, 4
+        4 or more times a week'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_521.html
+      quote: 0 Never 1 Monthly or less 2 2 to 4 times a month 3 2 to 3 times a week 4 4 or more times a week
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: AUDIT question 1 from the mental-health questionnaire; the raw coding already runs toward more drinking.
+      1000G EUR r = +0.39 with PGS001087.
+  PGS001085:
+    cluster: substance_use.alcohol_consumption
+    phenotype: drinking_more_than_before
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of drinking more now than 10 years ago
+      coding: 'UKB 1628: case = 1 More nowadays (GBE BIN_FC10001628); 2 about the same, 3 less nowadays'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: gbe_BIN_FC10001628.html > Name
+      quote: '"Name": "Alcohol intake versus 10 years previously (More nowadays)"'
+      confidence: high
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Binomial snpnet on the 'More nowadays' category. Change over time, so not directly comparable with level
+      scores.
+  PGS001086:
+    score_effect: null
+    unannotated_reason: GBE BIN100580 'Alcohol consumed' is a binary phenotype whose UK Biobank source and case
+      definition were not established by the lookup, and it has no same-phenotype corroboration (1000G EUR r < 0.2
+      with the current-drinker scores, +0.35 with PGS001087).
+  PGS001001:
+    cluster: sleep.chronotype
+    phenotype: ease_getting_up
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: self-reported ease of getting up in the morning (UKB field 1170, median value)
+      coding: 'UKB 1170 (coding 100341): 1 Not at all easy, 2 Not very easy, 3 Fairly easy, 4 Very easy; raw order
+        assumed kept by GBE QT_FC'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: supplement
+      locator: UKB showcase coding 100341 (ukb_coding_100341.html)
+      quote: Not at all easy
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: 'rs1144566 (RGS16): C weight -0.024; GWAS Catalog PMID 28604731 reports rs1144566-C with a 0.066 unit
+        decrease in ease of getting up, and Jones 2019 T allele OR 1.24 for morning person'
+    status: agent_proposed
+    notes: The paper does not define the GBE QT_FC prefix or say whether the categorical value order was kept. The
+      raw order (higher = easier) is inferred from the lead-variant agreement and from the 1000G correlations (r
+      = -0.46 with PGS001055, +0.40 with the Weissbrod morning-person scores). Confidence low until the GBE coding
+      is confirmed.
+  PGS001055:
+    cluster: sleep.chronotype
+    phenotype: eveningness
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: self-reported eveningness on the UKB morning/evening person scale (field 1180, median value)
+      coding: 'UKB 1180 (coding 100342): 1 Definitely morning, 2 More morning than evening, 3 More evening than
+        morning, 4 Definitely evening; raw order assumed kept by GBE QT_FC'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: supplement
+      locator: UKB showcase coding 100342 (ukb_coding_100342.html)
+      quote: Prefer not to answer
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: 'rs1144566 (RGS16): C weight +0.051; Jones 2019 T allele (the other allele) OR 1.24 for morning person,
+        so C = evening'
+    status: agent_proposed
+    notes: Higher PGS001055 = more evening. The paper does not say how GBE QT_FC recodes field 1180; raw order (4
+      = definitely evening) is inferred from the lead variant and from 1000G correlations (-0.46 with PGS001001
+      ease of getting up, -0.62 with Weissbrod PolyFun morning person). Confidence low until the GBE coding is confirmed.
+  PGS001272:
+    cluster: kidney.chronic_kidney_disease
+    phenotype: chronic_kidney_disease
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of chronic renal failure
+      coding: null
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Paper-wide rule (snpnet on the phenotype itself). The time-to-event setup is not described in the paper;
+      direction from the paper-wide rule. 1000G EUR r=+0.15 (mean) with PGP000517 CKD scores (weak).
+  PGS001127:
+    cluster: substance_use.smoking
+    phenotype: never_smoker
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being a never smoker (UKB 20116 = 0 "Never")
+      coding: 'UKB 20116 Smoking status: 0 Never, 1 Previous, 2 Current; cases = 0'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Never Smoker
+      confidence: medium
+    - source: supplement
+      locator: UKB data-coding 90
+      quote: 0 Never 1 Previous 2 Current
+      confidence: medium
+    - &id005
+      source: full_text
+      locator: Methods > Phenotype definitions
+      quote: assigned “case” status if the participants are classified as the case in at least one of their visits
+        and “control” otherwise
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'GBE BIN_FC10020116: never smokers are the cases (snpnet binomial on case status). Flip-worded: higher
+      score = LESS smoking. 1000G EUR r = -0.53 with anchor PGS003068 and -0.66 with PGS004751 (current smoker),
+      as expected for the inverse phenotype.'
+  PGS001128:
+    cluster: substance_use.smoking
+    phenotype: previous_smoker
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being a former smoker (UKB 20116 = 1 "Previous") vs everyone else
+      coding: 'UKB 20116: cases = 1 Previous; controls = 0 Never and 2 Current'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Previous smoker
+      confidence: medium
+    - source: supplement
+      locator: UKB data-coding 90
+      quote: 0 Never 1 Previous 2 Current
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: agree
+      note: 'rs16969968-A weight -0.012: heavier-smoking allele lowers the chance of having quit, as expected'
+    status: agent_proposed
+    notes: GBE BIN_FC20020116; controls are all other participants (mostly never smokers, plus current smokers),
+      so genetically it tracks ever smoking (1000G r +0.33 with anchor, +0.37 with PGS001911 ever smoked).
+  PGS001129:
+    cluster: substance_use.smoking
+    phenotype: ever_smoked
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having ever smoked
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking status (ever vs never smokers)
+      confidence: medium
+    - source: supplement
+      locator: UKB data-coding 496
+      quote: 111 Smokes on most or all days 112 Occasionally 113 Ex-smoker 114 Never smoked
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: GBE code BIN_FC30022506 (UKB 22506 Tobacco smoking, online follow-up). The FC3 code would correspond
+      to the third category "Ex-smoker"; the catalog label says ever vs never. Either reading points toward more
+      smoking. 1000G r +0.16 with anchor, -0.30 with never smoker PGS001127, +0.30 with previous smoker PGS001128.
+  PGS001046:
+    cluster: substance_use.smoking
+    phenotype: ever_smoked
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having smoked at least once (UKB 1249 Past tobacco smoking, among people not currently
+        smoking daily)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Past tobacco smoking (Smoked at least once)
+      confidence: medium
+    - source: supplement
+      locator: UKB data-coding 100348
+      quote: 1 Smoked on most or all days 2 Smoked occasionally 3 Just tried once or twice 4 I have never smoked
+      confidence: medium
+    - source: supplement
+      locator: UKB field 1249 notes
+      quote: Field 1249 was collected from all participants except those who indicated they currently smoke on most
+        or all days
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: GBE BIN_FC40001249. Label says smoked at least once (answers 1-3 vs 4 never). 1000G r = -0.52 with never
+      smoker PGS001127 and +0.32 with anchor, consistent with ever smoking.
+  PGS001047:
+    score_effect: null
+    unannotated_reason: 'Case group (UKB 1249 = 2, smoked occasionally in the past) vs everyone else mixes never
+      smokers and past daily smokers in the controls; it sits in the middle of the more-smoking axis, so no single
+      sign applies (rs16969968-A weight -0.081: tracks lighter rather than heavier smoking).'
+  PGS001139:
+    score_effect: null
+    unannotated_reason: UKB 2644 "Light smokers, at least 100 smokes in lifetime" (asked only of occasional/tried-once
+      smokers; GBE cases = Yes, controls = everyone else incl. daily smokers). The case group is lighter than daily
+      smokers but heavier than never smokers, so no single sign on the more-smoking axis. Its 1000G r = -0.97/-0.98
+      with PGS001515/PGS001388 is genuine (11-variant score, rs16969968-A weight -0.069, i.e. it tracks LIGHT smoking),
+      not a file sign error.
+  PGS001130:
+    cluster: substance_use.smoking
+    phenotype: cigarettes_per_day
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: cigarettes previously smoked per day (UKB 2887, former smokers)
+      coding: UKB 2887 integer cigarettes/day
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Number of cigarettes previously smoked per day
+      confidence: medium
+    - source: supplement
+      locator: UKB field 2887
+      quote: Integer, cigarettes/day
+      confidence: medium
+    - &id006
+      source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs16969968-A (CHRNA5 heavy-smoking allele) weight +0.72
+    status: agent_proposed
+    notes: GBE INI2887 (inverse-normal transformed, monotone).
+  PGS001515:
+    cluster: substance_use.smoking
+    phenotype: cigarettes_per_day
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: cigarettes currently smoked per day (UKB 3456, current smokers)
+      coding: UKB 3456 integer cigarettes/day
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Number of cigarettes currently smoked daily (current cigarette smokers)
+      confidence: medium
+    - source: supplement
+      locator: UKB field 3456
+      quote: Integer, cigarettes/day
+      confidence: medium
+    - *id006
+    lead_variant_check:
+      status: agree
+      note: rs16969968-A weight +0.65 (largest of 9 variants)
+    status: agent_proposed
+    notes: 'GBE INI3456. Part of the r=-0.98 trio with PGS001388/PGS001139: r +0.99 with PGS001388 (difficulty abstaining,
+      same direction) and -0.97 with PGS001139 (light smokers, opposite phenotype).'
+  PGS001388:
+    cluster: substance_use.smoking
+    phenotype: difficulty_abstaining
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: difficulty going without smoking for a whole day (UKB 3476, current daily smokers)
+      coding: 'UKB 3476: 1 Very easy, 2 Fairly easy, 3 Fairly difficult, 4 Very difficult (higher = harder to abstain)'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Difficulty not smoking for 1 day
+      confidence: medium
+    - source: supplement
+      locator: UKB data-coding 100357
+      quote: 1 Very easy 2 Fairly easy 3 Fairly difficult 4 Very difficult
+      confidence: medium
+    - *id006
+    lead_variant_check:
+      status: agree
+      note: 'single variant rs16969968-A weight +0.033: heavy-smoking allele raises difficulty'
+    status: agent_proposed
+    notes: GBE QT_FC10003476, one variant. Flip wording ("difficulty NOT smoking") but higher code = more difficult
+      = more dependence.
+  PGS001532:
+    cluster: substance_use.smoking
+    phenotype: time_to_first_cigarette
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: time from waking to first cigarette (UKB 3466; higher code = longer wait = lighter dependence)
+      coding: 'UKB 3466: 1 <5 min ... 5 >2 h (higher = longer)'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Time from waking to first cigarette
+      confidence: medium
+    - source: supplement
+      locator: UKB data-coding 100356
+      quote: 1 Less than 5 minutes 2 Between 5-15 minutes 3 Between 30 minutes - 1 hour 4 Between 1 and 2 hours
+        5 Longer than 2 hours
+      confidence: medium
+    - *id006
+    lead_variant_check:
+      status: agree
+      note: 'rs16969968-A weight -0.048: heavy-smoking allele shortens the time to first cigarette'
+    status: agent_proposed
+    notes: GBE QT_FC10003466. Higher score = LONGER time = less dependent smoker. 1000G r -0.83 with PGS001515 and
+      -0.81 with PGS001388, as expected for an inverse phenotype.
+  PGS001374:
+    cluster: substance_use.smoking
+    phenotype: age_stopped_smoking
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: age (years) at which former smokers stopped smoking (UKB 2897)
+      coding: UKB 2897 integer years
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Age stopped smoking
+      confidence: medium
+    - source: supplement
+      locator: UKB field 2897
+      quote: Integer, years
+      confidence: medium
+    - *id006
+    lead_variant_check:
+      status: agree
+      note: 'rs16969968-A weight +0.047: heavy-smoking allele delays quitting'
+    status: agent_proposed
+    notes: GBE INI2897. Higher score = later quitting (longer smoking career); also partly tracks participant age.
+      1000G r near 0 with other scores, so low confidence on the axis placement.
+  PGS001092:
+    cluster: pigmentation.hair_color
+    phenotype: black_hair
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of black natural hair (UKB 1747 = 5 Black)
+      coding: 'GBE BIN_FC5001747: case = participants reporting this category in UKB 1747 (1 Blonde, 2 Red, 3 Light
+        brown, 4 Dark brown, 5 Black, 6 Other), control otherwise'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100434.html (UKB data-coding 100434 for field 1747)
+      quote: 1 Blonde 2 Red 3 Light brown 4 Dark brown 5 Black 6 Other
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs16891982 G (SLC45A2 light allele) -1.24 and rs12913832 G (HERC2 blue-eye/light allele) -1.01: light
+        alleles lower the score'
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.94 with dark brown PGS001095, +0.71
+      with darker_hair0 PGS001896.
+  PGS001093:
+    cluster: pigmentation.hair_color
+    phenotype: blonde_hair
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of blonde natural hair (UKB 1747 = 1 Blonde)
+      coding: 'GBE BIN_FC1001747: case = participants reporting this category in UKB 1747 (1 Blonde, 2 Red, 3 Light
+        brown, 4 Dark brown, 5 Black, 6 Other), control otherwise'
+    polarity: -1
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100434.html (UKB data-coding 100434 for field 1747)
+      quote: 1 Blonde 2 Red 3 Light brown 4 Dark brown 5 Black 6 Other
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs12913832 G +1.64 and rs16891982 G +1.09 (light alleles raise the score); rs12203592 T (IRF4) -1.25
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=-0.75 with darker_hair0 PGS001896,
+      -0.93 with black PGS001092.
+  PGS001095:
+    cluster: pigmentation.hair_color
+    phenotype: dark_brown_hair
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of dark brown natural hair (UKB 1747 = 4 Dark brown)
+      coding: 'GBE BIN_FC4001747: case = participants reporting this category in UKB 1747 (1 Blonde, 2 Red, 3 Light
+        brown, 4 Dark brown, 5 Black, 6 Other), control otherwise'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100434.html (UKB data-coding 100434 for field 1747)
+      quote: 1 Blonde 2 Red 3 Light brown 4 Dark brown 5 Black 6 Other
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs16891982 G -0.70 (SLC45A2 light allele) and MC1R rs1805008 T -0.68 lower the score
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.75 with darker_hair0 PGS001896,
+      +0.94 with black PGS001092.
+  PGS001096:
+    cluster: pigmentation.hair_color
+    phenotype: light_brown_hair
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of light brown natural hair (UKB 1747 = 3 Light brown)
+      coding: 'GBE BIN_FC3001747: case = participants reporting this category in UKB 1747 (1 Blonde, 2 Red, 3 Light
+        brown, 4 Dark brown, 5 Black, 6 Other), control otherwise'
+    polarity: -1
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100434.html (UKB data-coding 100434 for field 1747)
+      quote: 1 Blonde 2 Red 3 Light brown 4 Dark brown 5 Black 6 Other
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs16891982 G +0.57 and rs12913832 G +0.38 (light alleles raise the score)
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.91 with blonde PGS001093, -0.60
+      with darker_hair0 PGS001896; light brown sits on the lighter side of the one-hot contrast.
+  PGS001098:
+    cluster: pigmentation.red_hair
+    phenotype: red_hair
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of natural red hair (UKB 1747 = 2 Red)
+      coding: 'GBE BIN_FC2001747: case = participants reporting this category in UKB 1747 (1 Blonde, 2 Red, 3 Light
+        brown, 4 Dark brown, 5 Black, 6 Other), control otherwise'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100434.html (UKB data-coding 100434 for field 1747)
+      quote: 1 Blonde 2 Red 3 Light brown 4 Dark brown 5 Black 6 Other
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'MC1R rs1805007 T (R151C) +3.87, rs11547464 A +3.39, rs1805006 A +2.85: red-hair alleles raise the score'
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.85 / +0.91 with Privé red_hair
+      PGS002002 / PGS002220.
+  PGS001094:
+    cluster: pigmentation.hair_color
+    phenotype: brown_hair
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of brown natural hair (GBE category "brown", BIN_FC7001747)
+      coding: 'GBE BIN_FC7001747: case = participants reporting this category in UKB 1747 (1 Blonde, 2 Red, 3 Light
+        brown, 4 Dark brown, 5 Black, 6 Other), control otherwise'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: low
+    - source: supplement
+      locator: gbe_BIN_FC7001747.html (Global Biobank Engine trait page)
+      quote: Hair colour (natural, before greying) brown
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: MC1R rs1805007 T -1.04, rs1805008 T -0.68 and OCA2 rs28934272 T -0.74 lower the score
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). "Brown" (FC7) has no UKB 1747 code; GBE lists
+      340,677 cases, consistent with light + dark brown merged (inference, not stated). 1000G EUR r=+0.88 with dark
+      brown PGS001095, +0.69 with darker_hair0 PGS001896, -0.75 with red PGS001098.
+  PGS001097:
+    score_effect: null
+    unannotated_reason: Case = UKB 1747 "Other" hair colour, a residual category with no defined colour, so it cannot
+      be placed on the darker-hair or red-hair axis. Higher score = more likely to report "Other" (binomial snpnet);
+      1000G EUR r=+0.76 with red PGS001098, suggesting auburn/strawberry shades, but that is not documented.
+  PGS001134:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic BP (AR)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.68 with PGS005120 (SBP score annotated here). Score name GBE_INI4080.
+  PGS001048:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: myocardial_infarction
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of myocardial infarction
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: NSTEMI (algorithmically-defined)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.48 with PGS001314 (Acute myocardial infarction (time-to-event), same
+      paper/phenotype).
+  PGS001314:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: myocardial_infarction
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of myocardial infarction
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Acute myocardial infarction (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.39 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS001315:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: myocardial_infarction
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of myocardial infarction
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Myocardial infarction
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.38 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS001316:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: myocardial_infarction
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of myocardial infarction
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Myocardial infarction (algorithmically-defined)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.39 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS001317:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: myocardial_infarction
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of myocardial infarction
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Vascular/heart problems diagnosed by doctor Heart attack
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.30 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS001341:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.69 with PGS002754 (asthma, annotated).
+  PGS001343:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (algorithmically-defined)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Asthma (algorithmically-defined)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.99 with PGS001341 (asthma, annotated).
+  PGS001344:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (diagnosed by doctor)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Asthma (diagnosed by doctor)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.90 with PGS001341 (asthma, annotated).
+  PGS001345:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (diagnosed by doctor)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Asthma (diagnosed by doctor)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.50 with PGS000799 (asthma, annotated).
+  PGS001346:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma (time-to-event)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Asthma (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.96 with PGS001341 (asthma, annotated).
+  PGS001370:
+    cluster: respiratory.asthma_onset_age
+    phenotype: age_asthma_diagnosed
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: age (years) at which asthma was first diagnosed, among UK Biobank participants with doctor-diagnosed
+        asthma
+      coding: UKB 3786, years; -1 do not know, -3 prefer not to answer
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: UK Biobank showcase, field 3786 (ukb_field_3786.html > Notes)
+      quote: Field 3786 was collected from participants who indicated they were told by a doctor that they have
+        had asthma, as defined by their answers to Field 6152
+      confidence: high
+    - source: supplement
+      locator: UK Biobank showcase, field 3786 (ukb_field_3786.html > summary)
+      quote: Units of measurement are years.
+      confidence: high
+    - source: full_text
+      locator: S1 Table legend
+      quote: the types of link functions in a generalized linear model (Gaussian for quantitative traits and Binomial
+        for binary traits)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs11078928 has no age-of-onset association in GWAS Catalog
+    review_reason: Direction follows the Gaussian-GLM convention (higher linear predictor = older age at diagnosis),
+      not stated in words; handling of UKB -1/-3 codes undocumented.
+    status: agent_proposed
+    notes: 'snpnet PRS for a quantitative INI trait. Consistent with 1000G EUR r=-0.29 with PGS002727 (pediatric
+      asthma risk): asthma-risk alleles tend to lower age at onset (Ferreira 2017: the risk allele is always associated
+      with earlier age-of-onset).'
+  PGS000936:
+    cluster: lipids.total_cholesterol
+    phenotype: hypercholesterolemia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of high cholesterol (case status)
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '6 of 6 reference lead SNPs carry the cholesterol-raising sign: rs11591147 T -0.274; rs12740374 T -0.168;
+        rs6511720 T -0.239; rs4420638 G +0.142; rs1367117 A +0.1; rs12916 C +0.0309'
+    status: agent_proposed
+    notes: Global Biobank Engine binary trait HC269 (high cholesterol); snpnet binomial model on case status per
+      the paper template. corroborated by 1000G EUR correlation r=+0.79 with already-annotated PGS002334.
+  PGS001229:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult), cm
+      coding: 'UKB 50: continuous, cm'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - &id007
+      source: full_text
+      locator: Methods > Construction of sparse PRS models
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - &id008
+      source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: UKB showcase field 50 (ukb_field_50.html)
+      quote: 'Description: Standing height Category: Assessment centre'
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the measured value in cm (paper template rule).
+  PGS000969:
+    cluster: anthropometry.height
+    phenotype: sitting_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: sitting height, cm
+      coding: 'UKB 20015: continuous, cm'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id007
+    - *id008
+    - source: full_text
+      locator: UKB showcase field 20015 (ukb_field_20015.html)
+      quote: 'Description: Sitting height Category: Assessment centre'
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the measured value in cm (paper template rule).
+  PGS001405:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height measured at the imaging visit, cm
+      coding: 'UKB 12144: continuous, cm'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id007
+    - *id008
+    - source: full_text
+      locator: UKB showcase field 12144 (ukb_field_12144.html)
+      quote: 'Description: Height Category: Assessment centre'
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the measured value in cm (paper template rule).
+  PGS000998:
+    cluster: anthropometry.height
+    phenotype: childhood_comparative_height
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: being taller than peers at age 10 (self-reported)
+      coding: 'UKB 1697 (Data-Coding 100429): 1 Shorter, 2 Taller, 3 About average, -1 Do not know, -3 Prefer not
+        to answer; GBE QT_FC recoding to an ordered scale is not documented'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id007
+    - source: full_text
+      locator: UKB showcase field 1697 (ukb_field_1697.html)
+      quote: 'Description: Comparative height size at age 10'
+      confidence: low
+    - source: full_text
+      locator: UKB Data-Coding 100429 (ukb_coding_100429.html)
+      quote: 1 Shorter 2 Taller 3 About average
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Raw UKB 1697 codes are not in height order and the GBE QT_FC recoding is undocumented; sign taken
+      from 1000G EUR correlation (median r +0.56 with ~100 adult height scores).
+    status: agent_proposed
+    notes: 'Direction inferred: a higher score tracks the adult-height scores, so it most likely means taller as
+      a child.'
+  PGS001294:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Non-insulin-dependent diabetes (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.67 with already-annotated PGS000713.
+  PGS001295:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.57 with already-annotated PGS000032.
+  PGS001228:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.66 with catalog-annotated PGS005331 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.41.
+  PGS001298:
+    cluster: anthropometry.adiposity
+    phenotype: obesity
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of obesity
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Obesity (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.34 with catalog-annotated PGS001228 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.17.

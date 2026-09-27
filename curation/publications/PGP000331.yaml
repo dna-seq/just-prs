@@ -1,0 +1,26 @@
+pgp_id: PGP000331
+scores:
+  PGS002308:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.96 [1.91, 2.02] against 'Type 2 diabetes'.
+paper:
+  pmid: '35765100'
+  doi: 10.1186/s13073-022-01074-2
+  title: Development and validation of a trans-ancestry polygenic risk score for type 2 diabetes in diverse populations.

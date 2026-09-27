@@ -1,0 +1,2760 @@
+pgp_id: PGP000332
+scores:
+  PGS002350:
+    cluster: pigmentation.skin_tanning
+    phenotype: tanning_ability
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: ease of skin tanning (tans more easily)
+      coding: UKB 1727 presumed; whether the raw 1 (very tanned) .. 4 (never tan) order was reversed is not stated
+        in any reachable source
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: pigment_TANNING.BOLT-LMM
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: IRF4 rs12203592-T, HERC2 rs12913832-G and MC1R rs1805007-T (all lighter/burn-prone) carry negative weights
+    status: agent_proposed
+    notes: 'BOLT-LMM. Catalog-only: the paper and the reachable Price-lab docs do not give the coding of pigment_TANNING.
+      Direction read from the catalog label "Tanning" (EFO suntan) plus lead variants (lighter-pigmentation alleles
+      negative) and 1000G EUR r=+0.85 with "get very tanned" (PGS001246) and -0.85 with Prive "less_tanned" (PGS002155).
+      If the trait kept raw UKB 1727 coding the label would be misleading, but the weights still point to easier
+      tanning.'
+  PGS002422:
+    cluster: pigmentation.skin_tanning
+    phenotype: tanning_ability
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: ease of skin tanning (tans more easily)
+      coding: UKB 1727 presumed; whether the raw 1 (very tanned) .. 4 (never tan) order was reversed is not stated
+        in any reachable source
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: pigment_TANNING.P+T.0.0001
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: IRF4 rs12203592-T (freckling, poor tanning) carries a negative weight (-0.26)
+    status: agent_proposed
+    notes: 'P+T 1e-4. Catalog-only: the paper and the reachable Price-lab docs do not give the coding of pigment_TANNING.
+      Direction read from the catalog label "Tanning" (EFO suntan) plus lead variants (lighter-pigmentation alleles
+      negative) and 1000G EUR r=+0.85 with "get very tanned" (PGS001246) and -0.85 with Prive "less_tanned" (PGS002155).
+      If the trait kept raw UKB 1727 coding the label would be misleading, but the weights still point to easier
+      tanning.'
+  PGS002471:
+    cluster: pigmentation.skin_tanning
+    phenotype: tanning_ability
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: ease of skin tanning (tans more easily)
+      coding: UKB 1727 presumed; whether the raw 1 (very tanned) .. 4 (never tan) order was reversed is not stated
+        in any reachable source
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: pigment_TANNING.P+T.0.001
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: IRF4 rs12203592-T (freckling, poor tanning) carries a negative weight (-0.26)
+    status: agent_proposed
+    notes: 'P+T 1e-3. Catalog-only: the paper and the reachable Price-lab docs do not give the coding of pigment_TANNING.
+      Direction read from the catalog label "Tanning" (EFO suntan) plus lead variants (lighter-pigmentation alleles
+      negative) and 1000G EUR r=+0.85 with "get very tanned" (PGS001246) and -0.85 with Prive "less_tanned" (PGS002155).
+      If the trait kept raw UKB 1727 coding the label would be misleading, but the weights still point to easier
+      tanning.'
+  PGS002520:
+    cluster: pigmentation.skin_tanning
+    phenotype: tanning_ability
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: ease of skin tanning (tans more easily)
+      coding: UKB 1727 presumed; whether the raw 1 (very tanned) .. 4 (never tan) order was reversed is not stated
+        in any reachable source
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: pigment_TANNING.P+T.0.01
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: IRF4 rs12203592-T (freckling, poor tanning) carries a negative weight (-0.26)
+    status: agent_proposed
+    notes: 'P+T 1e-2. Catalog-only: the paper and the reachable Price-lab docs do not give the coding of pigment_TANNING.
+      Direction read from the catalog label "Tanning" (EFO suntan) plus lead variants (lighter-pigmentation alleles
+      negative) and 1000G EUR r=+0.85 with "get very tanned" (PGS001246) and -0.85 with Prive "less_tanned" (PGS002155).
+      If the trait kept raw UKB 1727 coding the label would be misleading, but the weights still point to easier
+      tanning.'
+  PGS002569:
+    cluster: pigmentation.skin_tanning
+    phenotype: tanning_ability
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: ease of skin tanning (tans more easily)
+      coding: UKB 1727 presumed; whether the raw 1 (very tanned) .. 4 (never tan) order was reversed is not stated
+        in any reachable source
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: pigment_TANNING.P+T.1e-06
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: IRF4 rs12203592-T (freckling, poor tanning) carries a negative weight (-0.26)
+    status: agent_proposed
+    notes: 'P+T 1e-6. Catalog-only: the paper and the reachable Price-lab docs do not give the coding of pigment_TANNING.
+      Direction read from the catalog label "Tanning" (EFO suntan) plus lead variants (lighter-pigmentation alleles
+      negative) and 1000G EUR r=+0.85 with "get very tanned" (PGS001246) and -0.85 with Prive "less_tanned" (PGS002155).
+      If the trait kept raw UKB 1727 coding the label would be misleading, but the weights still point to easier
+      tanning.'
+  PGS002618:
+    cluster: pigmentation.skin_tanning
+    phenotype: tanning_ability
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: ease of skin tanning (tans more easily)
+      coding: UKB 1727 presumed; whether the raw 1 (very tanned) .. 4 (never tan) order was reversed is not stated
+        in any reachable source
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: pigment_TANNING.P+T.5e-08
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: IRF4 rs12203592-T (freckling, poor tanning) carries a negative weight (-0.26)
+    status: agent_proposed
+    notes: 'P+T 5e-8. Catalog-only: the paper and the reachable Price-lab docs do not give the coding of pigment_TANNING.
+      Direction read from the catalog label "Tanning" (EFO suntan) plus lead variants (lighter-pigmentation alleles
+      negative) and 1000G EUR r=+0.85 with "get very tanned" (PGS001246) and -0.85 with Prive "less_tanned" (PGS002155).
+      If the trait kept raw UKB 1727 coding the label would be misleading, but the weights still point to easier
+      tanning.'
+  PGS002667:
+    cluster: pigmentation.skin_tanning
+    phenotype: tanning_ability
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: ease of skin tanning (tans more easily)
+      coding: UKB 1727 presumed; whether the raw 1 (very tanned) .. 4 (never tan) order was reversed is not stated
+        in any reachable source
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: pigment_TANNING.PolyFun-pred
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: HERC2 rs12913832-G and MC1R rs1805007-T carry negative weights (-0.21, -0.53)
+    status: agent_proposed
+    notes: 'PolyFun-pred. Catalog-only: the paper and the reachable Price-lab docs do not give the coding of pigment_TANNING.
+      Direction read from the catalog label "Tanning" (EFO suntan) plus lead variants (lighter-pigmentation alleles
+      negative) and 1000G EUR r=+0.85 with "get very tanned" (PGS001246) and -0.85 with Prive "less_tanned" (PGS002155).
+      If the trait kept raw UKB 1727 coding the label would be misleading, but the weights still point to easier
+      tanning.'
+  PGS002716:
+    cluster: pigmentation.skin_tanning
+    phenotype: tanning_ability
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: ease of skin tanning (tans more easily)
+      coding: UKB 1727 presumed; whether the raw 1 (very tanned) .. 4 (never tan) order was reversed is not stated
+        in any reachable source
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: pigment_TANNING.SBayesR
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: HERC2 rs12913832-G carries a negative weight (-0.09)
+    status: agent_proposed
+    notes: 'SBayesR. Catalog-only: the paper and the reachable Price-lab docs do not give the coding of pigment_TANNING.
+      Direction read from the catalog label "Tanning" (EFO suntan) plus lead variants (lighter-pigmentation alleles
+      negative) and 1000G EUR r=+0.85 with "get very tanned" (PGS001246) and -0.85 with Prive "less_tanned" (PGS002155).
+      If the trait kept raw UKB 1727 coding the label would be misleading, but the weights still point to easier
+      tanning.'
+  PGS002326:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: FEV1/FVC ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.24 with PGS001180 (FEV1/FVC, read) and -0.78 with the sign-flipped PGS001801
+      (read).
+  PGS002398:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: FEV1/FVC ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.64 with PGS002326.
+  PGS002447:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: FEV1/FVC ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS002398.
+  PGS002496:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: FEV1/FVC ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.79 with PGS002447.
+  PGS002545:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: FEV1/FVC ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.91 with PGS002398.
+  PGS002594:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: FEV1/FVC ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.98 with PGS002545.
+  PGS002643:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: FEV1/FVC ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.78 with PGS002326.
+  PGS002692:
+    cluster: respiratory.lung_function
+    phenotype: fev1_fvc_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: FEV1/FVC ratio (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: FEV1/FVC ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.92 with PGS002326.
+  PGS002327:
+    cluster: respiratory.lung_function
+    phenotype: fvc
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: forced vital capacity (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Forced vital capacity
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.60 with PGS001922 and +0.57 with PGS004432.
+  PGS002399:
+    cluster: respiratory.lung_function
+    phenotype: fvc
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: forced vital capacity (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Forced vital capacity
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.57 with PGS002327.
+  PGS002448:
+    cluster: respiratory.lung_function
+    phenotype: fvc
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: forced vital capacity (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Forced vital capacity
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.85 with PGS002399.
+  PGS002497:
+    cluster: respiratory.lung_function
+    phenotype: fvc
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: forced vital capacity (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Forced vital capacity
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.78 with PGS002448.
+  PGS002546:
+    cluster: respiratory.lung_function
+    phenotype: fvc
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: forced vital capacity (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Forced vital capacity
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS002399.
+  PGS002595:
+    cluster: respiratory.lung_function
+    phenotype: fvc
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: forced vital capacity (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Forced vital capacity
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.96 with PGS002546.
+  PGS002644:
+    cluster: respiratory.lung_function
+    phenotype: fvc
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: forced vital capacity (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Forced vital capacity
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 with PGS002327.
+  PGS002693:
+    cluster: respiratory.lung_function
+    phenotype: fvc
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: forced vital capacity (smoking-adjusted z-score)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Forced vital capacity
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.96 with PGS002327.
+  PGS002318:
+    cluster: sleep.chronotype
+    phenotype: morningness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being a morning person (UKB binary trait other_MORNINGPERSON, case fraction 0.625)
+      coding: binary collapse of UKB 1180; morning person = case (inferred from the trait label and 62.5% case fraction
+        in Loh 2018)
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Weissbrod 2022 Supplementary Table 3 (weissbrod_MOESM4.S3.csv)
+      quote: Chronotype (morning person),301397,0.1091,0.0055,No,No
+      confidence: medium
+    - source: supplement
+      locator: Loh et al. 2018 Supplementary Table 1 (Phenotype, N, Fraction phenotyped, Case fraction) (loh2018_MOESM1.txt)
+      quote: Chronotype (morning person) 410520 0.89 0.625
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs1144566-T weight +0.0005 (T = morning allele, Jones 2019 OR 1.24)
+    review_reason: Weissbrod MORNINGPERSON coding inferred from label and case fraction
+    status: agent_proposed
+    notes: BOLT-LMM weights on UKB British GWAS of the binary morning-person trait. Higher = more likely a morning
+      person. Negative 1000G correlations with the evening-coded field-1180 scores (Privé, Ding, GBE, Maukonen)
+      are the expected opposite coding, not a sign flip; no sentence states the case coding outright.
+  PGS002390:
+    cluster: sleep.chronotype
+    phenotype: morningness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being a morning person (UKB binary trait other_MORNINGPERSON, case fraction 0.625)
+      coding: binary collapse of UKB 1180; morning person = case (inferred from the trait label and 62.5% case fraction
+        in Loh 2018)
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Weissbrod 2022 Supplementary Table 3 (weissbrod_MOESM4.S3.csv)
+      quote: Chronotype (morning person),301397,0.1091,0.0055,No,No
+      confidence: medium
+    - source: supplement
+      locator: Loh et al. 2018 Supplementary Table 1 (Phenotype, N, Fraction phenotyped, Case fraction) (loh2018_MOESM1.txt)
+      quote: Chronotype (morning person) 410520 0.89 0.625
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs1144566 not in the scoring file
+    review_reason: Weissbrod MORNINGPERSON coding inferred from label and case fraction
+    status: agent_proposed
+    notes: P+T 1e-4 weights on UKB British GWAS of the binary morning-person trait. Higher = more likely a morning
+      person. Negative 1000G correlations with the evening-coded field-1180 scores (Privé, Ding, GBE, Maukonen)
+      are the expected opposite coding, not a sign flip; no sentence states the case coding outright.
+  PGS002439:
+    cluster: sleep.chronotype
+    phenotype: morningness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being a morning person (UKB binary trait other_MORNINGPERSON, case fraction 0.625)
+      coding: binary collapse of UKB 1180; morning person = case (inferred from the trait label and 62.5% case fraction
+        in Loh 2018)
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Weissbrod 2022 Supplementary Table 3 (weissbrod_MOESM4.S3.csv)
+      quote: Chronotype (morning person),301397,0.1091,0.0055,No,No
+      confidence: medium
+    - source: supplement
+      locator: Loh et al. 2018 Supplementary Table 1 (Phenotype, N, Fraction phenotyped, Case fraction) (loh2018_MOESM1.txt)
+      quote: Chronotype (morning person) 410520 0.89 0.625
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs1144566 not in the scoring file
+    review_reason: Weissbrod MORNINGPERSON coding inferred from label and case fraction
+    status: agent_proposed
+    notes: P+T 1e-3 weights on UKB British GWAS of the binary morning-person trait. Higher = more likely a morning
+      person. Negative 1000G correlations with the evening-coded field-1180 scores (Privé, Ding, GBE, Maukonen)
+      are the expected opposite coding, not a sign flip; no sentence states the case coding outright.
+  PGS002488:
+    cluster: sleep.chronotype
+    phenotype: morningness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being a morning person (UKB binary trait other_MORNINGPERSON, case fraction 0.625)
+      coding: binary collapse of UKB 1180; morning person = case (inferred from the trait label and 62.5% case fraction
+        in Loh 2018)
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Weissbrod 2022 Supplementary Table 3 (weissbrod_MOESM4.S3.csv)
+      quote: Chronotype (morning person),301397,0.1091,0.0055,No,No
+      confidence: medium
+    - source: supplement
+      locator: Loh et al. 2018 Supplementary Table 1 (Phenotype, N, Fraction phenotyped, Case fraction) (loh2018_MOESM1.txt)
+      quote: Chronotype (morning person) 410520 0.89 0.625
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs1144566 not in the scoring file
+    review_reason: Weissbrod MORNINGPERSON coding inferred from label and case fraction
+    status: agent_proposed
+    notes: P+T 0.01 weights on UKB British GWAS of the binary morning-person trait. Higher = more likely a morning
+      person. Negative 1000G correlations with the evening-coded field-1180 scores (Privé, Ding, GBE, Maukonen)
+      are the expected opposite coding, not a sign flip; no sentence states the case coding outright.
+  PGS002537:
+    cluster: sleep.chronotype
+    phenotype: morningness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being a morning person (UKB binary trait other_MORNINGPERSON, case fraction 0.625)
+      coding: binary collapse of UKB 1180; morning person = case (inferred from the trait label and 62.5% case fraction
+        in Loh 2018)
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Weissbrod 2022 Supplementary Table 3 (weissbrod_MOESM4.S3.csv)
+      quote: Chronotype (morning person),301397,0.1091,0.0055,No,No
+      confidence: medium
+    - source: supplement
+      locator: Loh et al. 2018 Supplementary Table 1 (Phenotype, N, Fraction phenotyped, Case fraction) (loh2018_MOESM1.txt)
+      quote: Chronotype (morning person) 410520 0.89 0.625
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs1144566 not in the scoring file
+    review_reason: Weissbrod MORNINGPERSON coding inferred from label and case fraction
+    status: agent_proposed
+    notes: P+T 1e-6 weights on UKB British GWAS of the binary morning-person trait. Higher = more likely a morning
+      person. Negative 1000G correlations with the evening-coded field-1180 scores (Privé, Ding, GBE, Maukonen)
+      are the expected opposite coding, not a sign flip; no sentence states the case coding outright.
+  PGS002586:
+    cluster: sleep.chronotype
+    phenotype: morningness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being a morning person (UKB binary trait other_MORNINGPERSON, case fraction 0.625)
+      coding: binary collapse of UKB 1180; morning person = case (inferred from the trait label and 62.5% case fraction
+        in Loh 2018)
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Weissbrod 2022 Supplementary Table 3 (weissbrod_MOESM4.S3.csv)
+      quote: Chronotype (morning person),301397,0.1091,0.0055,No,No
+      confidence: medium
+    - source: supplement
+      locator: Loh et al. 2018 Supplementary Table 1 (Phenotype, N, Fraction phenotyped, Case fraction) (loh2018_MOESM1.txt)
+      quote: Chronotype (morning person) 410520 0.89 0.625
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs1144566 not in the scoring file
+    review_reason: Weissbrod MORNINGPERSON coding inferred from label and case fraction
+    status: agent_proposed
+    notes: P+T 5e-8 weights on UKB British GWAS of the binary morning-person trait. Higher = more likely a morning
+      person. Negative 1000G correlations with the evening-coded field-1180 scores (Privé, Ding, GBE, Maukonen)
+      are the expected opposite coding, not a sign flip; no sentence states the case coding outright.
+  PGS002635:
+    cluster: sleep.chronotype
+    phenotype: morningness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being a morning person (UKB binary trait other_MORNINGPERSON, case fraction 0.625)
+      coding: binary collapse of UKB 1180; morning person = case (inferred from the trait label and 62.5% case fraction
+        in Loh 2018)
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Weissbrod 2022 Supplementary Table 3 (weissbrod_MOESM4.S3.csv)
+      quote: Chronotype (morning person),301397,0.1091,0.0055,No,No
+      confidence: medium
+    - source: supplement
+      locator: Loh et al. 2018 Supplementary Table 1 (Phenotype, N, Fraction phenotyped, Case fraction) (loh2018_MOESM1.txt)
+      quote: Chronotype (morning person) 410520 0.89 0.625
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs1144566-T weight +0.014 (T = morning allele, Jones 2019 OR 1.24)
+    review_reason: Weissbrod MORNINGPERSON coding inferred from label and case fraction
+    status: agent_proposed
+    notes: PolyFun-pred weights on UKB British GWAS of the binary morning-person trait. Higher = more likely a morning
+      person. Negative 1000G correlations with the evening-coded field-1180 scores (Privé, Ding, GBE, Maukonen)
+      are the expected opposite coding, not a sign flip; no sentence states the case coding outright.
+  PGS002684:
+    cluster: sleep.chronotype
+    phenotype: morningness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of being a morning person (UKB binary trait other_MORNINGPERSON, case fraction 0.625)
+      coding: binary collapse of UKB 1180; morning person = case (inferred from the trait label and 62.5% case fraction
+        in Loh 2018)
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Weissbrod 2022 Supplementary Table 3 (weissbrod_MOESM4.S3.csv)
+      quote: Chronotype (morning person),301397,0.1091,0.0055,No,No
+      confidence: medium
+    - source: supplement
+      locator: Loh et al. 2018 Supplementary Table 1 (Phenotype, N, Fraction phenotyped, Case fraction) (loh2018_MOESM1.txt)
+      quote: Chronotype (morning person) 410520 0.89 0.625
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs1144566-T weight +0.027 (T = morning allele, Jones 2019 OR 1.24)
+    review_reason: Weissbrod MORNINGPERSON coding inferred from label and case fraction
+    status: agent_proposed
+    notes: SBayesR weights on UKB British GWAS of the binary morning-person trait. Higher = more likely a morning
+      person. Negative 1000G correlations with the evening-coded field-1180 scores (Privé, Ding, GBE, Maukonen)
+      are the expected opposite coding, not a sign flip; no sentence states the case coding outright.
+  PGS002337:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.92 with already-annotated PGS001933.
+  PGS002369:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.35 with already-annotated PGS000310.
+  PGS002409:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.82 with already-annotated PGS000824.
+  PGS002458:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.95 with already-annotated PGS002409.
+  PGS002507:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.73 with already-annotated PGS002458.
+  PGS002556:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.97 with already-annotated PGS002409.
+  PGS002605:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.99 with already-annotated PGS002556.
+  PGS002654:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.88 with already-annotated PGS002150.
+  PGS002703:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.94 with already-annotated PGS002337.
+  PGS002348:
+    cluster: substance_use.smoking
+    phenotype: smoking_status
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: UKB smoking status (cov_SMOKING_STATUS; exact coding not stated in the main text)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking status
+      confidence: medium
+    - &id001
+      source: full_text
+      locator: Results
+      quote: We have publicly released SNP effect sizes used for prediction for each of the 4 methods
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs11636732-G (initiation allele) positive
+    status: agent_proposed
+    notes: 'Catalog-only (BOLT-LMM): weights are effect sizes on the trait; 1000G EUR r=+0.75 with anchor PGS003068
+      (smoking initiation). The supplementary trait table was not readable, so the phenotype is kept as generic
+      smoking status.'
+  PGS002420:
+    cluster: substance_use.smoking
+    phenotype: smoking_status
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: UKB smoking status (cov_SMOKING_STATUS; exact coding not stated in the main text)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking status
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'Catalog-only (P+T 1e-4): weights are effect sizes on the trait; 1000G EUR r=+0.43 with anchor PGS003068
+      (smoking initiation). The supplementary trait table was not readable, so the phenotype is kept as generic
+      smoking status.'
+  PGS002469:
+    cluster: substance_use.smoking
+    phenotype: smoking_status
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: UKB smoking status (cov_SMOKING_STATUS; exact coding not stated in the main text)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking status
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'Catalog-only (P+T 1e-3): weights are effect sizes on the trait; 1000G EUR r=+0.43 with anchor PGS003068
+      (smoking initiation). The supplementary trait table was not readable, so the phenotype is kept as generic
+      smoking status.'
+  PGS002518:
+    cluster: substance_use.smoking
+    phenotype: smoking_status
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: UKB smoking status (cov_SMOKING_STATUS; exact coding not stated in the main text)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking status
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'Catalog-only (P+T 0.01): weights are effect sizes on the trait; 1000G EUR r=+0.24 with anchor PGS003068
+      (smoking initiation). The supplementary trait table was not readable, so the phenotype is kept as generic
+      smoking status.'
+  PGS002567:
+    cluster: substance_use.smoking
+    phenotype: smoking_status
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: UKB smoking status (cov_SMOKING_STATUS; exact coding not stated in the main text)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking status
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'Catalog-only (P+T 1e-6): weights are effect sizes on the trait; 1000G EUR r=+0.41 with anchor PGS003068
+      (smoking initiation). The supplementary trait table was not readable, so the phenotype is kept as generic
+      smoking status.'
+  PGS002616:
+    cluster: substance_use.smoking
+    phenotype: smoking_status
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: UKB smoking status (cov_SMOKING_STATUS; exact coding not stated in the main text)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking status
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'Catalog-only (P+T 5e-8): weights are effect sizes on the trait; 1000G EUR r=+0.35 with anchor PGS003068
+      (smoking initiation). The supplementary trait table was not readable, so the phenotype is kept as generic
+      smoking status.'
+  PGS002665:
+    cluster: substance_use.smoking
+    phenotype: smoking_status
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: UKB smoking status (cov_SMOKING_STATUS; exact coding not stated in the main text)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking status
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'Catalog-only (PolyFun-pred): weights are effect sizes on the trait; 1000G EUR r=+0.62 with anchor PGS003068
+      (smoking initiation). The supplementary trait table was not readable, so the phenotype is kept as generic
+      smoking status.'
+  PGS002714:
+    cluster: substance_use.smoking
+    phenotype: smoking_status
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: UKB smoking status (cov_SMOKING_STATUS; exact coding not stated in the main text)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking status
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: agree
+      note: rs11636732-G (initiation allele) positive
+    status: agent_proposed
+    notes: 'Catalog-only (SBayesR): weights are effect sizes on the trait; 1000G EUR r=+0.71 with anchor PGS003068
+      (smoking initiation). The supplementary trait table was not readable, so the phenotype is kept as generic
+      smoking status.'
+  PGS002375:
+    cluster: substance_use.smoking
+    phenotype: smoking_status
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: smoking status, BOLT-LMM trained on Biobank Japan
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Smoking status
+      confidence: low
+    - source: full_text
+      locator: Methods
+      quote: BOLT-LMM, SBayesR, and PRS-CS, respectively, trained using Biobank Japan training data
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'Low confidence: BBJ-trained, so 1000G EUR correlations are weak (max +0.19 with PGS003059). It correlates
+      -0.33 with PGS003359 (GSCAN EAS smoking initiation), which is itself suspected allele-inverted, so that pair
+      supports the conventional direction here.'
+  PGS002330:
+    score_effect: null
+    unannotated_reason: No source states the pigment_HAIR (UKB 1747) coding (categories kept, red/other handling,
+      value order); Weissbrod 2022, PolyFun 2020, Marquez-Luna 2021 and the Loh 2018 supplement text were searched.
+      1000G EUR shows these scores run toward LIGHTER hair (r=-0.70 to -0.81 with darker_hair0 PGS001896, +0.69
+      to +0.89 with blonde PGS001093; MC1R rs1805007 non-red allele C and HERC2 rs12913832 dark allele A carry negative
+      weights). If the trait used raw 1747 order (1 Blonde ... 5 Black) the published weights would be sign-inverted;
+      direction left unset until the coding is found.
+  PGS002402:
+    score_effect: null
+    unannotated_reason: No source states the pigment_HAIR (UKB 1747) coding (categories kept, red/other handling,
+      value order); Weissbrod 2022, PolyFun 2020, Marquez-Luna 2021 and the Loh 2018 supplement text were searched.
+      1000G EUR shows these scores run toward LIGHTER hair (r=-0.70 to -0.81 with darker_hair0 PGS001896, +0.69
+      to +0.89 with blonde PGS001093; MC1R rs1805007 non-red allele C and HERC2 rs12913832 dark allele A carry negative
+      weights). If the trait used raw 1747 order (1 Blonde ... 5 Black) the published weights would be sign-inverted;
+      direction left unset until the coding is found.
+  PGS002451:
+    score_effect: null
+    unannotated_reason: No source states the pigment_HAIR (UKB 1747) coding (categories kept, red/other handling,
+      value order); Weissbrod 2022, PolyFun 2020, Marquez-Luna 2021 and the Loh 2018 supplement text were searched.
+      1000G EUR shows these scores run toward LIGHTER hair (r=-0.70 to -0.81 with darker_hair0 PGS001896, +0.69
+      to +0.89 with blonde PGS001093; MC1R rs1805007 non-red allele C and HERC2 rs12913832 dark allele A carry negative
+      weights). If the trait used raw 1747 order (1 Blonde ... 5 Black) the published weights would be sign-inverted;
+      direction left unset until the coding is found.
+  PGS002500:
+    score_effect: null
+    unannotated_reason: No source states the pigment_HAIR (UKB 1747) coding (categories kept, red/other handling,
+      value order); Weissbrod 2022, PolyFun 2020, Marquez-Luna 2021 and the Loh 2018 supplement text were searched.
+      1000G EUR shows these scores run toward LIGHTER hair (r=-0.70 to -0.81 with darker_hair0 PGS001896, +0.69
+      to +0.89 with blonde PGS001093; MC1R rs1805007 non-red allele C and HERC2 rs12913832 dark allele A carry negative
+      weights). If the trait used raw 1747 order (1 Blonde ... 5 Black) the published weights would be sign-inverted;
+      direction left unset until the coding is found.
+  PGS002549:
+    score_effect: null
+    unannotated_reason: No source states the pigment_HAIR (UKB 1747) coding (categories kept, red/other handling,
+      value order); Weissbrod 2022, PolyFun 2020, Marquez-Luna 2021 and the Loh 2018 supplement text were searched.
+      1000G EUR shows these scores run toward LIGHTER hair (r=-0.70 to -0.81 with darker_hair0 PGS001896, +0.69
+      to +0.89 with blonde PGS001093; MC1R rs1805007 non-red allele C and HERC2 rs12913832 dark allele A carry negative
+      weights). If the trait used raw 1747 order (1 Blonde ... 5 Black) the published weights would be sign-inverted;
+      direction left unset until the coding is found.
+  PGS002598:
+    score_effect: null
+    unannotated_reason: No source states the pigment_HAIR (UKB 1747) coding (categories kept, red/other handling,
+      value order); Weissbrod 2022, PolyFun 2020, Marquez-Luna 2021 and the Loh 2018 supplement text were searched.
+      1000G EUR shows these scores run toward LIGHTER hair (r=-0.70 to -0.81 with darker_hair0 PGS001896, +0.69
+      to +0.89 with blonde PGS001093; MC1R rs1805007 non-red allele C and HERC2 rs12913832 dark allele A carry negative
+      weights). If the trait used raw 1747 order (1 Blonde ... 5 Black) the published weights would be sign-inverted;
+      direction left unset until the coding is found.
+  PGS002647:
+    score_effect: null
+    unannotated_reason: No source states the pigment_HAIR (UKB 1747) coding (categories kept, red/other handling,
+      value order); Weissbrod 2022, PolyFun 2020, Marquez-Luna 2021 and the Loh 2018 supplement text were searched.
+      1000G EUR shows these scores run toward LIGHTER hair (r=-0.70 to -0.81 with darker_hair0 PGS001896, +0.69
+      to +0.89 with blonde PGS001093; MC1R rs1805007 non-red allele C and HERC2 rs12913832 dark allele A carry negative
+      weights). If the trait used raw 1747 order (1 Blonde ... 5 Black) the published weights would be sign-inverted;
+      direction left unset until the coding is found.
+  PGS002696:
+    score_effect: null
+    unannotated_reason: No source states the pigment_HAIR (UKB 1747) coding (categories kept, red/other handling,
+      value order); Weissbrod 2022, PolyFun 2020, Marquez-Luna 2021 and the Loh 2018 supplement text were searched.
+      1000G EUR shows these scores run toward LIGHTER hair (r=-0.70 to -0.81 with darker_hair0 PGS001896, +0.69
+      to +0.89 with blonde PGS001093; MC1R rs1805007 non-red allele C and HERC2 rs12913832 dark allele A carry negative
+      weights). If the trait used raw 1747 order (1 Blonde ... 5 Black) the published weights would be sign-inverted;
+      direction left unset until the coding is found.
+  PGS002349:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.82 with PGS002807 (SBP score annotated here). Score name bp_SYSTOLICadjMEDz.BOLT-LMM.
+  PGS002376:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.28 with PGS003966 (SBP score annotated here). Score name bp_SYSTOLICadjMEDz.BOLT-LMM-BBJ.
+  PGS002421:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.64 with PGS002807 (SBP score annotated here).
+  PGS002470:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.64 with PGS002807 (SBP score annotated here).
+  PGS002519:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.51 with PGS002807 (SBP score annotated here).
+  PGS002568:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.55 with PGS002807 (SBP score annotated here).
+  PGS002617:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.53 with PGS002275 (SBP score annotated here).
+  PGS002666:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.70 with PGS002807 (SBP score annotated here).
+  PGS002715:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Systolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.79 with PGS002807 (SBP score annotated here). Score name bp_SYSTOLICadjMEDz.SBayesR.
+  PGS002311:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.82 with PGS002754 (asthma, annotated).
+  PGS002383:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.51 with PGS002311 (asthma, annotated).
+  PGS002432:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.75 with PGS002383 (asthma, annotated).
+  PGS002481:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.67 with PGS002432 (asthma, annotated).
+  PGS002530:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.74 with PGS002383 (asthma, annotated).
+  PGS002579:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.97 with PGS002530 (asthma, annotated).
+  PGS002628:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.78 with PGS002311 (asthma, annotated).
+  PGS002677:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.92 with PGS002311 (asthma, annotated).
+  PGS002358:
+    score_effect: null
+    unannotated_reason: 'not read: lookup budget reached (BBJ-trained asthma score; 1000G EUR correlation with other
+      asthma scores ~0, so catalog-only corroboration fails)'
+  PGS002621:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 1 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.85 with already-annotated PGS004655.
+  PGS002572:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 1 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.99 with already-annotated PGS002621.
+  PGS002425:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 1 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.96 with already-annotated PGS002572.
+  PGS002474:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 1 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.94 with already-annotated PGS002425.
+  PGS002353:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 3 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.91 with already-annotated PGS001979.
+  PGS002719:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 2 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.96 with already-annotated PGS002353.
+  PGS002670:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 4 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.88 with already-annotated PGS004845.
+  PGS002523:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 1 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.78 with already-annotated PGS002474.
+  PGS002378:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 3 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.35 with already-annotated PGS004657.
+  PGS002334:
+    cluster: lipids.total_cholesterol
+    phenotype: hypercholesterolemia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of high cholesterol (case status)
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High cholesterol
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    review_reason: Case coding of disease_HI_CHOL_SELF_REP is not documented in any reachable source; direction
+      taken from the label and correlation.
+    notes: Catalog-only (disease_HI_CHOL_SELF_REP.BOLT-LMM). The paper, Table S3 and the Price-lab UKBB docs name
+      the trait "High cholesterol" but give no UKB field/case coding (lookup_total-cholesterol.json). Presumed UKB
+      20002 self-reported high cholesterol, cases coded 1. corroborated by 1000G EUR correlation r=+0.86 with already-annotated
+      PGS004783; r with TC scores up to +0.8.
+  PGS002352:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.91 with already-annotated PGS002108.
+  PGS002377:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.28 with already-annotated PGS002108. Weak correlation (r=+0.24
+      with anchor), likely BBJ-trained with low EUR overlap.
+  PGS002406:
+    cluster: lipids.total_cholesterol
+    phenotype: hypercholesterolemia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of high cholesterol (case status)
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High cholesterol
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    review_reason: Case coding of disease_HI_CHOL_SELF_REP is not documented in any reachable source; direction
+      taken from the label and correlation.
+    notes: Catalog-only (disease_HI_CHOL_SELF_REP.P+T.0.0001). The paper, Table S3 and the Price-lab UKBB docs name
+      the trait "High cholesterol" but give no UKB field/case coding (lookup_total-cholesterol.json). Presumed UKB
+      20002 self-reported high cholesterol, cases coded 1. corroborated by 1000G EUR correlation r=+0.69 with already-annotated
+      PGS004783; r with TC scores up to +0.8.
+  PGS002424:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.83 with already-annotated PGS003135.
+  PGS002455:
+    cluster: lipids.total_cholesterol
+    phenotype: hypercholesterolemia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of high cholesterol (case status)
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High cholesterol
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    review_reason: Case coding of disease_HI_CHOL_SELF_REP is not documented in any reachable source; direction
+      taken from the label and correlation.
+    notes: Catalog-only (disease_HI_CHOL_SELF_REP.P+T.0.001). The paper, Table S3 and the Price-lab UKBB docs name
+      the trait "High cholesterol" but give no UKB field/case coding (lookup_total-cholesterol.json). Presumed UKB
+      20002 self-reported high cholesterol, cases coded 1. corroborated by 1000G EUR correlation r=+0.81 with already-annotated
+      PGS002406; r with TC scores up to +0.8.
+  PGS002473:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.94 with already-annotated PGS002424.
+  PGS002504:
+    cluster: lipids.total_cholesterol
+    phenotype: hypercholesterolemia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of high cholesterol (case status)
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High cholesterol
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    review_reason: Case coding of disease_HI_CHOL_SELF_REP is not documented in any reachable source; direction
+      taken from the label and correlation.
+    notes: Catalog-only (disease_HI_CHOL_SELF_REP.P+T.0.01). The paper, Table S3 and the Price-lab UKBB docs name
+      the trait "High cholesterol" but give no UKB field/case coding (lookup_total-cholesterol.json). Presumed UKB
+      20002 self-reported high cholesterol, cases coded 1. corroborated by 1000G EUR correlation r=+0.65 with already-annotated
+      PGS002455; r with TC scores up to +0.8.
+  PGS002522:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.73 with already-annotated PGS002473.
+  PGS002553:
+    cluster: lipids.total_cholesterol
+    phenotype: hypercholesterolemia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of high cholesterol (case status)
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High cholesterol
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    review_reason: Case coding of disease_HI_CHOL_SELF_REP is not documented in any reachable source; direction
+      taken from the label and correlation.
+    notes: Catalog-only (disease_HI_CHOL_SELF_REP.P+T.1e-06). The paper, Table S3 and the Price-lab UKBB docs name
+      the trait "High cholesterol" but give no UKB field/case coding (lookup_total-cholesterol.json). Presumed UKB
+      20002 self-reported high cholesterol, cases coded 1. corroborated by 1000G EUR correlation r=+0.91 with already-annotated
+      PGS002406; r with TC scores up to +0.8.
+  PGS002571:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.97 with already-annotated PGS002424.
+  PGS002602:
+    cluster: lipids.total_cholesterol
+    phenotype: hypercholesterolemia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of high cholesterol (case status)
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High cholesterol
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    review_reason: Case coding of disease_HI_CHOL_SELF_REP is not documented in any reachable source; direction
+      taken from the label and correlation.
+    notes: Catalog-only (disease_HI_CHOL_SELF_REP.P+T.5e-08). The paper, Table S3 and the Price-lab UKBB docs name
+      the trait "High cholesterol" but give no UKB field/case coding (lookup_total-cholesterol.json). Presumed UKB
+      20002 self-reported high cholesterol, cases coded 1. corroborated by 1000G EUR correlation r=+0.99 with already-annotated
+      PGS002553; r with TC scores up to +0.8.
+  PGS002620:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.99 with already-annotated PGS002571.
+  PGS002651:
+    cluster: lipids.total_cholesterol
+    phenotype: hypercholesterolemia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of high cholesterol (case status)
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High cholesterol
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    review_reason: Case coding of disease_HI_CHOL_SELF_REP is not documented in any reachable source; direction
+      taken from the label and correlation.
+    notes: Catalog-only (disease_HI_CHOL_SELF_REP.PolyFun-pred). The paper, Table S3 and the Price-lab UKBB docs
+      name the trait "High cholesterol" but give no UKB field/case coding (lookup_total-cholesterol.json). Presumed
+      UKB 20002 self-reported high cholesterol, cases coded 1. corroborated by 1000G EUR correlation r=+0.84 with
+      already-annotated PGS004783; r with TC scores up to +0.8.
+  PGS002669:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.87 with already-annotated PGS002352.
+  PGS002700:
+    cluster: lipids.total_cholesterol
+    phenotype: hypercholesterolemia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of high cholesterol (case status)
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High cholesterol
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    review_reason: Case coding of disease_HI_CHOL_SELF_REP is not documented in any reachable source; direction
+      taken from the label and correlation.
+    notes: Catalog-only (disease_HI_CHOL_SELF_REP.SBayesR). The paper, Table S3 and the Price-lab UKBB docs name
+      the trait "High cholesterol" but give no UKB field/case coding (lookup_total-cholesterol.json). Presumed UKB
+      20002 self-reported high cholesterol, cases coded 1. corroborated by 1000G EUR correlation r=+0.94 with already-annotated
+      PGS002334; r with TC scores up to +0.8.
+  PGS002718:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 10 reference TC/LDL lead SNPs (APOE, PCSK9, LDLR, SORT1, APOB, ABCG8, HMGCR) matched by rsID
+        in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.94 with already-annotated PGS002352.
+  PGS002332:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.87 with PGS001229 (annotated, same phenotype).
+  PGS002368:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.39 with PGS004095 (annotated, same phenotype).
+  PGS002404:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.80 with PGS004119 (annotated, same phenotype).
+  PGS002453:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.77 with PGS001229 (annotated, same phenotype).
+  PGS002502:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.74 with PGS001229 (annotated, same phenotype).
+  PGS002551:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.81 with PGS004119 (annotated, same phenotype).
+  PGS002600:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.81 with PGS004119 (annotated, same phenotype).
+  PGS002649:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.82 with PGS001229 (annotated, same phenotype).
+  PGS002698:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.87 with PGS001229 (annotated, same phenotype).
+  PGS002354:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.80 with already-annotated PGS003093.
+  PGS002379:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.43 with already-annotated PGS005355.
+  PGS002426:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    review_reason: 'weak corroboration: no catalog OR/HR for T2D and max 1000G r with a metric-corroborated T2D
+      score is +0.10 (chained via correlation)'
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.86 with already-annotated PGS002573.
+  PGS002475:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    review_reason: 'weak corroboration: no catalog OR/HR for T2D and max 1000G r with a metric-corroborated T2D
+      score is +0.13 (chained via correlation)'
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.92 with already-annotated PGS002426.
+  PGS002524:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.23 with already-annotated PGS005244.
+  PGS002573:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    review_reason: 'weak corroboration: no catalog OR/HR for T2D and max 1000G r with a metric-corroborated T2D
+      score is +0.10 (chained via correlation)'
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.58 with already-annotated PGS002524.
+  PGS002622:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    review_reason: 'weak corroboration: no catalog OR/HR for T2D and max 1000G r with a metric-corroborated T2D
+      score is +0.10 (chained via correlation)'
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.98 with already-annotated PGS002573.
+  PGS002671:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.55 [1.52, 1.59] against 'Type 2 diabetes'.
+  PGS002720:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.95 with already-annotated PGS002354.
+  PGS002313:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.86 with catalog-annotated PGS002161 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.44.
+  PGS002360:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.30 with catalog-annotated PGS005202 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.11.
+  PGS002385:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.64 with catalog-annotated PGS004609 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.37.
+  PGS002434:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.86 with catalog-annotated PGS002385 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.36.
+  PGS002483:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.85 with catalog-annotated PGS002434 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.30.
+  PGS002532:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.86 with catalog-annotated PGS002385 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.32.
+  PGS002581:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.95 with catalog-annotated PGS002532 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.30.
+  PGS002630:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.73 with catalog-annotated PGS002161 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.35.
+  PGS002679:
+    cluster: anthropometry.adiposity
+    phenotype: body_mass_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body mass index
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body mass index (BMI)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.95 with catalog-annotated PGS002313 (same concept, same
+      phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.43.
+paper:
+  pmid: '35393596'
+  doi: 10.1038/s41588-022-01036-9
+  title: Leveraging fine-mapping and multipopulation training data to improve cross-population polygenic risk scores.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []
+template:
+  rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
+    PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged
+    individually override this.
+  provenance:
+  - source: catalog
+    locator: scores.trait_reported
+    quote: LDL cholesterol
+    confidence: medium
+exploration_findings: 'Composite hair-colour trait (pigment_HAIR) inherited from the Price lab UKB trait set; the
+  coding lives in no
+
+  open-access text we could reach. A field for "coding defined upstream in <ref>" would help.
+
+  '

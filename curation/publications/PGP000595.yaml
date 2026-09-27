@@ -1,0 +1,1031 @@
+pgp_id: PGP000595
+scores:
+  PGS004637:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 6 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.83 with already-annotated PGS000887.
+  PGS004638:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 12 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.87 with already-annotated PGS004637.
+  PGS004639:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 11 agree, 2 disagree (rs629301,
+        rs693)'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.83 with already-annotated PGS004638.
+  PGS004640:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 12 agree, 1 disagree (rs11591147)'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.98 with already-annotated PGS004637.
+  PGS004641:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 12 agree, 1 disagree (rs11591147)'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.97 with already-annotated PGS004638.
+  PGS004642:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 6 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.82 with already-annotated PGS003791.
+  PGS004643:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 8 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.85 with already-annotated PGS004642.
+  PGS004644:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 12 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.87 with already-annotated PGS003794.
+  PGS004645:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 13 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.88 with already-annotated PGS004644.
+  PGS004646:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 12 agree, 1 disagree (rs11591147)'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.89 with already-annotated PGS004644.
+  PGS004647:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 2 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.87 with already-annotated PGS003796.
+  PGS004648:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 9 agree, 3 disagree (rs693, rs429358,
+        rs4420638)'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.92 with already-annotated PGS004647.
+  PGS004649:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 12 agree, 1 disagree (rs693)'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.94 with already-annotated PGS004639.
+  PGS004650:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 10 agree, 3 disagree (rs12740374,
+        rs1367117, rs11591147)'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.91 with already-annotated PGS004649.
+  PGS004651:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 13 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.96 with already-annotated PGS004650.
+  PGS004664:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 4 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.91 with already-annotated PGS003816.
+  PGS004654:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 4 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.95 with already-annotated PGS004664.
+  PGS004666:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 5 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.91 with already-annotated PGS004664.
+  PGS004665:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 5 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.95 with already-annotated PGS004666.
+  PGS004660:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 4 agree, 1 disagree (rs780094); rs780094
+        opposite sign next to its LD partner rs1260326 is expected in a joint model'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.94 with already-annotated PGS004665.
+  PGS004661:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 4 agree, 1 disagree (rs780094); rs780094
+        opposite sign next to its LD partner rs1260326 is expected in a joint model'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.91 with already-annotated PGS004666.
+  PGS004656:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 4 agree, 1 disagree (rs780094); rs780094
+        opposite sign next to its LD partner rs1260326 is expected in a joint model'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.94 with already-annotated PGS004661.
+  PGS004663:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 5 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.89 with already-annotated PGS004666.
+  PGS004662:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 5 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.95 with already-annotated PGS004663.
+  PGS004655:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 5 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.88 with already-annotated PGS004665.
+  PGS004652:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 4 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.98 with already-annotated PGS004655.
+  PGS004653:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 5 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.89 with already-annotated PGS004655.
+  PGS004658:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 5 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.84 with already-annotated PGS004656.
+  PGS004659:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 4 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.82 with already-annotated PGS004654.
+  PGS004657:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Log triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 4 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.80 with already-annotated PGS004658.
+  PGS004667:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '7 of 7 reference lead SNPs carry the cholesterol-raising sign: rs12740374 T -0.0313; rs629301 T +0.00993;
+        rs1367117 A +0.00803; rs4299376 T -0.00204; rs12916 C +0.00565; rs429358 C +0.0627; rs7412 T -0.109'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.83 with already-annotated PGS003820.
+  PGS004668:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '8 agree, 1 small opposite weights at SNPs in LD with a correctly signed neighbour (joint-model shrinkage):
+        rs12740374 T -0.0313; rs629301 T +0.0144; rs1367117 A +0.0167; rs4299376 T -0.00178; rs12916 C +0.00574;
+        rs6511720 T -9.56e-05; rs429358 C +0.0569; rs7412 T -0.091; rs4420638 G -1.67e-05'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.91 with already-annotated PGS004667.
+  PGS004669:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '8 agree, 2 small opposite weights at SNPs in LD with a correctly signed neighbour (joint-model shrinkage):
+        rs11591147 T -0.0243; rs629301 T -0.0223; rs12740374 T -0.00325; rs1367117 A +0.0136; rs4299376 T -0.00824;
+        rs12916 C +0.0108; rs6511720 T -0.027; rs429358 C +0.0275; rs7412 T -0.365; rs4420638 G -0.000158'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.78 with already-annotated PGS003833.
+  PGS004670:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '9 agree, 1 small opposite weights at SNPs in LD with a correctly signed neighbour (joint-model shrinkage):
+        rs12740374 T -0.0477; rs629301 T +0.0166; rs1367117 A +0.00792; rs4299376 T -0.00478; rs12916 C +0.00222;
+        rs429358 C +0.099; rs7412 T -0.13; rs11591147 T +0.0428; rs4420638 G +0.00554; rs6511720 T -0.00156'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.97 with already-annotated PGS004667.
+  PGS004671:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '9 agree, 1 small opposite weights at SNPs in LD with a correctly signed neighbour (joint-model shrinkage):
+        rs12740374 T -0.0291; rs629301 T +0.0147; rs1367117 A +0.0131; rs4299376 T -0.00327; rs12916 C +0.00429;
+        rs6511720 T -0.00164; rs429358 C +0.0583; rs7412 T -0.0901; rs4420638 G +0.00589; rs11591147 T +0.000301'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.96 with already-annotated PGS004668.
+  PGS004672:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '3 of 3 reference lead SNPs carry the cholesterol-raising sign: rs429358 C +0.0134; rs7412 T -0.0538;
+        rs4420638 G +0.00814'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.78 with already-annotated PGS003826.
+  PGS004673:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '3 of 3 reference lead SNPs carry the cholesterol-raising sign: rs429358 C +0.019; rs7412 T -0.0624;
+        rs4420638 G +0.00698'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.91 with already-annotated PGS004672.
+  PGS004674:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '8 agree, 2 small opposite weights at SNPs in LD with a correctly signed neighbour (joint-model shrinkage):
+        rs11591147 T -0.174; rs629301 T -0.00461; rs12740374 T +0.00191; rs1367117 A +0.00659; rs4299376 T -0.0045;
+        rs12916 C +0.00572; rs6511720 T -0.012; rs429358 C +0.0273; rs7412 T -0.0952; rs4420638 G +0.0097'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.88 with already-annotated PGS003828.
+  PGS004675:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '9 agree, 1 small opposite weights at SNPs in LD with a correctly signed neighbour (joint-model shrinkage):
+        rs12740374 T -0.0214; rs629301 T +0.0137; rs1367117 A +0.00107; rs4299376 T -0.00449; rs12916 C +0.000654;
+        rs429358 C +0.0429; rs7412 T -0.0621; rs11591147 T +0.00229; rs4420638 G +0.015; rs6511720 T -0.00649'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.88 with already-annotated PGS004671.
+  PGS004676:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '10 of 10 reference lead SNPs carry the cholesterol-raising sign: rs12740374 T -0.0138; rs629301 T +0.00847;
+        rs1367117 A +0.0108; rs4299376 T -0.00328; rs12916 C +0.00645; rs6511720 T -0.00325; rs429358 C +0.0393;
+        rs7412 T -0.115; rs4420638 G +0.0114; rs11591147 T -0.0725'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.96 with already-annotated PGS004675.
+  PGS004677:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '4 of 4 reference lead SNPs carry the cholesterol-raising sign: rs12740374 T -0.0112; rs629301 T +0.0104;
+        rs12916 C +0.00452; rs6511720 T -0.00568'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.83 with already-annotated PGS003831.
+  PGS004678:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '6 of 6 reference lead SNPs carry the cholesterol-raising sign: rs12740374 T -2.93e-05; rs629301 T +2.43e-05;
+        rs1367117 A +9.73e-06; rs4299376 T -0.000693; rs12916 C +4.91e-05; rs6511720 T -0.000124'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.92 with already-annotated PGS004677.
+  PGS004679:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '8 agree, 2 small opposite weights at SNPs in LD with a correctly signed neighbour (joint-model shrinkage):
+        rs11591147 T -0.199; rs629301 T -0.00306; rs12740374 T +0.00497; rs1367117 A +0.00813; rs4299376 T -0.00529;
+        rs12916 C +0.00863; rs6511720 T -0.0173; rs429358 C +0.0673; rs7412 T -0.15; rs4420638 G +0.0117'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.91 with already-annotated PGS004669.
+  PGS004680:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '10 of 10 reference lead SNPs carry the cholesterol-raising sign: rs12740374 T -0.0148; rs629301 T +0.0111;
+        rs1367117 A +0.00583; rs4299376 T -0.0048; rs12916 C +0.00738; rs429358 C +0.0259; rs7412 T -0.0739; rs11591147
+        T -0.0875; rs4420638 G +0.0119; rs6511720 T -0.00621'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.94 with already-annotated PGS004675.
+  PGS004681:
+    cluster: lipids.total_cholesterol
+    phenotype: total_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total cholesterol level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '10 of 10 reference lead SNPs carry the cholesterol-raising sign: rs12740374 T -0.0088; rs629301 T +0.00695;
+        rs1367117 A +0.00902; rs4299376 T -0.004; rs12916 C +0.00671; rs6511720 T -0.00437; rs429358 C +0.0182;
+        rs7412 T -0.069; rs4420638 G +0.00912; rs11591147 T -0.0954'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR correlation r=+0.97 with already-annotated PGS004680.
+  PGS004683:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.22 with PGS001405 (annotated, same phenotype).
+  PGS004684:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.67 with PGS004999 (annotated, same phenotype).
+  PGS004685:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.59 with PGS005003 (annotated, same phenotype).
+  PGS004686:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.51 with PGS005003 (annotated, same phenotype).
+  PGS004682:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: body height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.79 with PGS004683 (annotated, same phenotype).
+paper:
+  pmid: '38622117'
+  doi: 10.1038/s41467-024-47357-7
+  title: An ensemble penalized regression method for multi-ancestry polygenic risk prediction.
+template:
+  rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
+    PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged
+    individually override this.
+  provenance:
+  - source: catalog
+    locator: scores.trait_reported
+    quote: LDL cholesterol
+    confidence: medium

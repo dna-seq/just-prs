@@ -1,0 +1,23 @@
+pgp_id: PGP000269
+scores:
+  PGS002237:
+    cluster: kidney.chronic_kidney_disease
+    phenotype: chronic_kidney_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of chronic kidney disease
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Chronic kidney disease (stage 3 or greater)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.49 [1.47, 1.5] against 'Chronic Kidney Disease (stage 3 or greater)'; 1000G EUR
+      r=+0.74 (mean) with PGP000517 CKD scores.

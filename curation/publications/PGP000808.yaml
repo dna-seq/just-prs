@@ -1,0 +1,33 @@
+pgp_id: PGP000808
+scores:
+  PGS012564:
+    cluster: respiratory.copd
+    phenotype: copd
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of COPD
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Chronic obstructive pulmonary disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). 22-variant COPD GRS weighted by log(OR); catalog HR 1.09 [1.06,
+      1.12] for incident COPD per unit/SD of the score.
+    evaluation_outcome:
+      phenotype: copd
+paper:
+  pmid: '38225649'
+  doi: 10.1186/s12916-023-03240-8
+  title: 'Associations between long-term night shift work and incidence of chronic obstructive pulmonary disease:
+    a prospective cohort study of 277,059 UK Biobank participants.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

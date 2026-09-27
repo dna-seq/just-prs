@@ -1,0 +1,66 @@
+slug: chronotype
+query: chronotype — morning vs evening person
+match:
+  terms:
+  - chronotype
+  - evening person
+  - getting up in morning
+  - getting up in the morning
+  - morning person
+  - morningness
+  efo_ids: []
+  exclude: []
+anchor: PGS001001
+status: resolved
+concepts:
+- sleep.chronotype
+scores:
+  PGS000336:
+    decision: in_scope
+    note: null
+  PGS001001:
+    decision: in_scope
+    note: null
+  PGS001055:
+    decision: in_scope
+    note: null
+  PGS001992:
+    decision: in_scope
+    note: null
+  PGS002209:
+    decision: in_scope
+    note: null
+  PGS002318:
+    decision: in_scope
+    note: null
+  PGS002390:
+    decision: in_scope
+    note: null
+  PGS002439:
+    decision: in_scope
+    note: null
+  PGS002488:
+    decision: in_scope
+    note: null
+  PGS002537:
+    decision: in_scope
+    note: null
+  PGS002586:
+    decision: in_scope
+    note: null
+  PGS002635:
+    decision: in_scope
+    note: null
+  PGS002684:
+    decision: in_scope
+    note: null
+  PGS003563:
+    decision: in_scope
+    note: null
+summary: >-
+  All 14 chronotype scores sit in sleep.chronotype (axis: more of a morning person). The UK Biobank question
+  (field 1180) is coded 1 = definitely morning to 4 = definitely evening, so the five scores trained on the raw
+  value (Privé, Ding, GBE) or on sign-reversed morningness weights (Maukonen) point toward eveningness (sign -1).
+  The eight Weissbrod scores use a binary morning-person trait and point toward morningness. The GBE
+  ease-of-getting-up score points toward easier waking. After alignment, none of the 91 pairs conflict. The GBE
+  coding and the Weissbrod case coding are inferred from lead variants and case fractions, not stated outright.

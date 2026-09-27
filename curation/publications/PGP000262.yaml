@@ -1,0 +1,92 @@
+pgp_id: PGP000262
+scores:
+  PGS001783:
+    cluster: respiratory.copd
+    phenotype: copd
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of COPD
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Chronic obstructive pulmonary disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.21 with PGS001333 (COPD, read) and +0.37 with PGS004536.
+  PGS001788:
+    cluster: respiratory.copd
+    phenotype: copd
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of COPD
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Chronic obstructive pulmonary disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.85 with PGS001783 and +0.24 with PGS004536.
+  PGS001782:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.63 with PGS002754 (asthma, annotated).
+  PGS001787:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.92 with PGS001782 (asthma, annotated).
+paper:
+  pmid: '36777179'
+  doi: 10.1016/j.xgen.2022.100241
+  title: Global Biobank analyses provide lessons for developing polygenic risk scores across diverse cohorts.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

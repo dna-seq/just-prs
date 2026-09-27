@@ -1,0 +1,14 @@
+pgp_id: PGP000229
+scores:
+  PGS000883:
+    score_effect: null
+    unannotated_reason: 'Lookup pending: reported eGFR but 1000G EUR r=-0.75 with eGFR scores and -0.85 with PGS000884;
+      OR 1.37 for CKD suggests higher score = lower eGFR.'
+  PGS000884:
+    score_effect: null
+    unannotated_reason: 'Lookup pending: 1000G EUR r=+0.71 with eGFR scores, but catalog HR 1.3 for incident CKD
+      conflicts with an eGFR-direction score.'
+  PGS000885:
+    score_effect: null
+    unannotated_reason: 'Lookup pending: 1000G EUR r=+0.71 with eGFR scores, but catalog HR 1.25 for incident CKD
+      conflicts with an eGFR-direction score.'

@@ -1,0 +1,38 @@
+pgp_id: PGP000195
+scores:
+  PGS000810:
+    cluster: respiratory.asthma
+    phenotype: allergic_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of allergic disease (asthma and/or hay fever and/or eczema vs none)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results, first paragraph
+      quote: comparing 180,129 cases who reported having suffered from asthma and/or hay fever and/or eczema, and
+        180,709 controls who reported not suffering from any of these diseases
+      confidence: high
+    - source: catalog
+      locator: pgscatalog_PGS000810.json > trait_reported, method_name, weight_type
+      quote: Allergic disease (asthma, hay fever or eczema)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs61816761-A (FLG) +0.202 and rs72782676-C +0.265 are the GWAS Catalog risk alleles for allergic disease/asthma
+    status: agent_proposed
+    notes: 136-variant weighted GRS, log(OR) weights for the combined allergic-disease GWAS. Catalog evaluation
+      is on asthma age of onset (no directional metric); the paper states risk alleles are associated with earlier
+      age-of-onset. 1000G EUR r=+0.50 with PGS002754.
+paper:
+  pmid: '29083406'
+  doi: 10.1038/ng.3985
+  title: Shared genetic origin of asthma, hay fever and eczema elucidates allergic disease biology.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

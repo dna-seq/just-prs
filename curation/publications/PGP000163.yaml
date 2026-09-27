@@ -1,0 +1,33 @@
+pgp_id: PGP000163
+scores:
+  PGS000758:
+    cluster: anthropometry.height
+    phenotype: standing_height
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: standing height (adult)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Adult standing height
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). Corroborated
+      by 1000G EUR r = +0.82 with PGS001229 (annotated, same phenotype).
+paper:
+  pmid: '33788949'
+  doi: 10.1210/clinem/dgab215
+  title: A polygenic risk score to predict future adult short stature amongst children.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

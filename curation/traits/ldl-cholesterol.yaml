@@ -1,0 +1,413 @@
+slug: ldl-cholesterol
+query: LDL cholesterol (and non-HDL / apoB as related atherogenic lipids)
+match:
+  terms:
+  - LDL
+  - LDL-C
+  - apoB
+  - apolipoprotein B
+  - apolipoprotein B measurement
+  - low density lipoprotein
+  - low density lipoprotein cholesterol measurement
+  - non-HDL
+  - non-high density lipoprotein cholesterol measurement
+  efo_ids:
+  - EFO_0004611
+  - EFO_0004615
+  - EFO_0005689
+  exclude: []
+anchor: PGS002782
+status: needs_review
+concepts:
+- lipids.ldl_cholesterol
+scores:
+  PGS000061:
+    decision: in_scope
+    note: null
+  PGS000065:
+    decision: in_scope
+    note: null
+  PGS000115:
+    decision: in_scope
+    note: null
+  PGS000192:
+    decision: in_scope
+    note: null
+  PGS000260:
+    decision: out_of_scope
+    note: 'Different phenotype: serum level of the LOX-1 receptor protein, not an LDL/apoB lipid measurement.'
+  PGS000310:
+    decision: in_scope
+    note: null
+  PGS000340:
+    decision: in_scope
+    note: null
+  PGS000661:
+    decision: in_scope
+    note: null
+  PGS000672:
+    decision: in_scope
+    note: null
+  PGS000688:
+    decision: in_scope
+    note: null
+  PGS000814:
+    decision: in_scope
+    note: null
+  PGS000824:
+    decision: in_scope
+    note: null
+  PGS000846:
+    decision: in_scope
+    note: null
+  PGS000875:
+    decision: in_scope
+    note: null
+  PGS000886:
+    decision: in_scope
+    note: null
+  PGS000887:
+    decision: in_scope
+    note: null
+  PGS000888:
+    decision: in_scope
+    note: null
+  PGS000889:
+    decision: in_scope
+    note: null
+  PGS000890:
+    decision: in_scope
+    note: null
+  PGS000891:
+    decision: in_scope
+    note: null
+  PGS000892:
+    decision: in_scope
+    note: null
+  PGS000893:
+    decision: in_scope
+    note: null
+  PGS000894:
+    decision: in_scope
+    note: null
+  PGS000895:
+    decision: in_scope
+    note: null
+  PGS000896:
+    decision: in_scope
+    note: null
+  PGS000897:
+    decision: in_scope
+    note: null
+  PGS001889:
+    decision: in_scope
+    note: null
+  PGS001933:
+    decision: in_scope
+    note: null
+  PGS002102:
+    decision: in_scope
+    note: null
+  PGS002150:
+    decision: in_scope
+    note: null
+  PGS002274:
+    decision: in_scope
+    note: null
+  PGS002285:
+    decision: in_scope
+    note: null
+  PGS002337:
+    decision: in_scope
+    note: null
+  PGS002369:
+    decision: in_scope
+    note: null
+  PGS002409:
+    decision: in_scope
+    note: null
+  PGS002458:
+    decision: in_scope
+    note: null
+  PGS002507:
+    decision: in_scope
+    note: null
+  PGS002556:
+    decision: in_scope
+    note: null
+  PGS002605:
+    decision: in_scope
+    note: null
+  PGS002654:
+    decision: in_scope
+    note: null
+  PGS002703:
+    decision: in_scope
+    note: null
+  PGS002730:
+    decision: out_of_scope
+    note: Drug response (LDL lowering on statins); out of scope for the underlying LDL trait.
+  PGS002782:
+    decision: in_scope
+    note: null
+  PGS003029:
+    decision: in_scope
+    note: null
+  PGS003030:
+    decision: in_scope
+    note: null
+  PGS003031:
+    decision: in_scope
+    note: null
+  PGS003032:
+    decision: in_scope
+    note: null
+  PGS003033:
+    decision: in_scope
+    note: null
+  PGS003034:
+    decision: in_scope
+    note: null
+  PGS003035:
+    decision: in_scope
+    note: null
+  PGS003036:
+    decision: in_scope
+    note: null
+  PGS003037:
+    decision: in_scope
+    note: null
+  PGS003038:
+    decision: in_scope
+    note: null
+  PGS003339:
+    decision: in_scope
+    note: null
+  PGS003348:
+    decision: in_scope
+    note: null
+  PGS003403:
+    decision: in_scope
+    note: null
+  PGS003404:
+    decision: in_scope
+    note: null
+  PGS003405:
+    decision: in_scope
+    note: null
+  PGS003474:
+    decision: in_scope
+    note: null
+  PGS003492:
+    decision: in_scope
+    note: null
+  PGS003517:
+    decision: in_scope
+    note: null
+  PGS003784:
+    decision: in_scope
+    note: null
+  PGS003785:
+    decision: in_scope
+    note: null
+  PGS003786:
+    decision: in_scope
+    note: null
+  PGS003787:
+    decision: in_scope
+    note: null
+  PGS003788:
+    decision: in_scope
+    note: null
+  PGS003789:
+    decision: in_scope
+    note: null
+  PGS003790:
+    decision: in_scope
+    note: null
+  PGS003791:
+    decision: in_scope
+    note: null
+  PGS003792:
+    decision: in_scope
+    note: null
+  PGS003793:
+    decision: in_scope
+    note: null
+  PGS003794:
+    decision: in_scope
+    note: null
+  PGS003795:
+    decision: in_scope
+    note: null
+  PGS003796:
+    decision: in_scope
+    note: null
+  PGS003797:
+    decision: in_scope
+    note: null
+  PGS003798:
+    decision: in_scope
+    note: null
+  PGS003799:
+    decision: in_scope
+    note: null
+  PGS003800:
+    decision: in_scope
+    note: null
+  PGS003855:
+    decision: in_scope
+    note: null
+  PGS003869:
+    decision: in_scope
+    note: null
+  PGS003870:
+    decision: in_scope
+    note: null
+  PGS003871:
+    decision: in_scope
+    note: null
+  PGS003872:
+    decision: in_scope
+    note: null
+  PGS003873:
+    decision: in_scope
+    note: null
+  PGS003874:
+    decision: in_scope
+    note: null
+  PGS003974:
+    decision: in_scope
+    note: null
+  PGS003975:
+    decision: in_scope
+    note: null
+  PGS003976:
+    decision: in_scope
+    note: null
+  PGS003977:
+    decision: in_scope
+    note: null
+  PGS003978:
+    decision: in_scope
+    note: null
+  PGS004637:
+    decision: in_scope
+    note: null
+  PGS004638:
+    decision: in_scope
+    note: null
+  PGS004639:
+    decision: in_scope
+    note: null
+  PGS004640:
+    decision: in_scope
+    note: null
+  PGS004641:
+    decision: in_scope
+    note: null
+  PGS004642:
+    decision: in_scope
+    note: null
+  PGS004643:
+    decision: in_scope
+    note: null
+  PGS004644:
+    decision: in_scope
+    note: null
+  PGS004645:
+    decision: in_scope
+    note: null
+  PGS004646:
+    decision: in_scope
+    note: null
+  PGS004647:
+    decision: in_scope
+    note: null
+  PGS004648:
+    decision: in_scope
+    note: null
+  PGS004649:
+    decision: in_scope
+    note: null
+  PGS004650:
+    decision: in_scope
+    note: null
+  PGS004651:
+    decision: in_scope
+    note: null
+  PGS004791:
+    decision: in_scope
+    note: null
+  PGS004792:
+    decision: in_scope
+    note: null
+  PGS004793:
+    decision: in_scope
+    note: null
+  PGS004794:
+    decision: in_scope
+    note: null
+  PGS004915:
+    decision: in_scope
+    note: null
+  PGS004936:
+    decision: in_scope
+    note: null
+  PGS004969:
+    decision: in_scope
+    note: null
+  PGS004970:
+    decision: in_scope
+    note: null
+  PGS004971:
+    decision: in_scope
+    note: null
+  PGS004972:
+    decision: in_scope
+    note: null
+  PGS004973:
+    decision: in_scope
+    note: null
+  PGS004974:
+    decision: in_scope
+    note: null
+  PGS004975:
+    decision: in_scope
+    note: null
+  PGS004976:
+    decision: in_scope
+    note: null
+  PGS004977:
+    decision: in_scope
+    note: null
+  PGS004978:
+    decision: in_scope
+    note: null
+  PGS004979:
+    decision: in_scope
+    note: null
+  PGS004980:
+    decision: in_scope
+    note: null
+  PGS004981:
+    decision: in_scope
+    note: null
+  PGS005248:
+    decision: in_scope
+    note: null
+  PGS005249:
+    decision: in_scope
+    note: null
+  PGS005250:
+    decision: in_scope
+    note: null
+summary: '125 in-scope LDL-family scores (119 LDL-C, 4 apoB, 1 non-HDL-C, plus GS9) sit in one concept, lipids.ldl_cholesterol;
+  higher = higher atherogenic lipids for all but one. 121 are annotated, mostly catalog-only, corroborated by a
+  CI-excluding beta/OR on LDL or 1000G r >= +0.2 with an annotated score, plus a lead-SNP allele check. The catalog''s
+  strongest negative pair (PGS003788 vs PGS003798, r=-0.965) is a broken deposit, not an inversion: the three PGP000489
+  weighted-LDpred2 files carry a near-constant weight on every variant, so they are left unannotated and should
+  be quarantined. PGS000061 (PGP000045) is a real inversion of the deposited file: the weights follow the paper''s
+  A2_weight column, which is opposite to known LDL effects at all 6 reference loci, so a higher score means lower
+  LDL (polarity -1); a human should confirm. PGS000192 (GS9) stays unannotated: it is an LDL+HDL composite, and
+  its allele orientation cannot be checked without the paywalled Table 1. LOX-1 and statin response are out of scope.'

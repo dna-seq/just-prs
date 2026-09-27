@@ -1,0 +1,275 @@
+slug: total-cholesterol
+query: total cholesterol
+match:
+  terms:
+  - cholesterol
+  - high cholesterol
+  - hypercholesterolemia
+  - serum cholesterol
+  - total cholesterol
+  efo_ids: []
+  exclude:
+  - LDL|HDL|low.density|high.density|lipoprotein
+anchor: PGS002783
+status: resolved
+concepts:
+- lipids.total_cholesterol
+scores:
+  PGS000062:
+    decision: in_scope
+    note: null
+  PGS000192:
+    decision: out_of_scope
+    note: LDL+HDL composite 9-allele gene score (GS9); curated and left unannotated under ldl-cholesterol
+  PGS000311:
+    decision: in_scope
+    note: null
+  PGS000658:
+    decision: in_scope
+    note: null
+  PGS000677:
+    decision: in_scope
+    note: null
+  PGS000831:
+    decision: in_scope
+    note: null
+  PGS000936:
+    decision: in_scope
+    note: null
+  PGS001895:
+    decision: in_scope
+    note: null
+  PGS002108:
+    decision: in_scope
+    note: null
+  PGS002286:
+    decision: in_scope
+    note: null
+  PGS002334:
+    decision: in_scope
+    note: null
+  PGS002352:
+    decision: in_scope
+    note: null
+  PGS002377:
+    decision: in_scope
+    note: null
+  PGS002406:
+    decision: in_scope
+    note: null
+  PGS002424:
+    decision: in_scope
+    note: null
+  PGS002455:
+    decision: in_scope
+    note: null
+  PGS002473:
+    decision: in_scope
+    note: null
+  PGS002504:
+    decision: in_scope
+    note: null
+  PGS002522:
+    decision: in_scope
+    note: null
+  PGS002553:
+    decision: in_scope
+    note: null
+  PGS002571:
+    decision: in_scope
+    note: null
+  PGS002602:
+    decision: in_scope
+    note: null
+  PGS002620:
+    decision: in_scope
+    note: null
+  PGS002651:
+    decision: in_scope
+    note: null
+  PGS002669:
+    decision: in_scope
+    note: null
+  PGS002700:
+    decision: in_scope
+    note: null
+  PGS002718:
+    decision: in_scope
+    note: null
+  PGS002764:
+    decision: in_scope
+    note: null
+  PGS002783:
+    decision: in_scope
+    note: null
+  PGS003134:
+    decision: in_scope
+    note: null
+  PGS003135:
+    decision: in_scope
+    note: null
+  PGS003136:
+    decision: in_scope
+    note: null
+  PGS003137:
+    decision: in_scope
+    note: null
+  PGS003138:
+    decision: in_scope
+    note: null
+  PGS003139:
+    decision: in_scope
+    note: null
+  PGS003140:
+    decision: in_scope
+    note: null
+  PGS003141:
+    decision: in_scope
+    note: null
+  PGS003142:
+    decision: in_scope
+    note: null
+  PGS003143:
+    decision: in_scope
+    note: null
+  PGS003341:
+    decision: in_scope
+    note: null
+  PGS003350:
+    decision: in_scope
+    note: null
+  PGS003481:
+    decision: in_scope
+    note: null
+  PGS003495:
+    decision: in_scope
+    note: null
+  PGS003818:
+    decision: in_scope
+    note: null
+  PGS003819:
+    decision: in_scope
+    note: null
+  PGS003820:
+    decision: in_scope
+    note: null
+  PGS003821:
+    decision: in_scope
+    note: null
+  PGS003822:
+    decision: in_scope
+    note: null
+  PGS003823:
+    decision: in_scope
+    note: null
+  PGS003824:
+    decision: in_scope
+    note: null
+  PGS003825:
+    decision: in_scope
+    note: null
+  PGS003826:
+    decision: in_scope
+    note: null
+  PGS003827:
+    decision: in_scope
+    note: null
+  PGS003828:
+    decision: in_scope
+    note: null
+  PGS003829:
+    decision: in_scope
+    note: null
+  PGS003830:
+    decision: in_scope
+    note: null
+  PGS003831:
+    decision: in_scope
+    note: null
+  PGS003832:
+    decision: in_scope
+    note: null
+  PGS003833:
+    decision: in_scope
+    note: null
+  PGS003834:
+    decision: in_scope
+    note: null
+  PGS003853:
+    decision: in_scope
+    note: null
+  PGS004333:
+    decision: in_scope
+    note: null
+  PGS004667:
+    decision: in_scope
+    note: null
+  PGS004668:
+    decision: in_scope
+    note: null
+  PGS004669:
+    decision: in_scope
+    note: null
+  PGS004670:
+    decision: in_scope
+    note: null
+  PGS004671:
+    decision: in_scope
+    note: null
+  PGS004672:
+    decision: in_scope
+    note: null
+  PGS004673:
+    decision: in_scope
+    note: null
+  PGS004674:
+    decision: in_scope
+    note: null
+  PGS004675:
+    decision: in_scope
+    note: null
+  PGS004676:
+    decision: in_scope
+    note: null
+  PGS004677:
+    decision: in_scope
+    note: null
+  PGS004678:
+    decision: in_scope
+    note: null
+  PGS004679:
+    decision: in_scope
+    note: null
+  PGS004680:
+    decision: in_scope
+    note: null
+  PGS004681:
+    decision: in_scope
+    note: null
+  PGS004783:
+    decision: in_scope
+    note: null
+  PGS004784:
+    decision: in_scope
+    note: null
+  PGS004841:
+    decision: in_scope
+    note: null
+  PGS004842:
+    decision: in_scope
+    note: null
+  PGS004843:
+    decision: in_scope
+    note: null
+  PGS004844:
+    decision: in_scope
+    note: null
+summary: '82 in-scope scores sit in a new concept lipids.total_cholesterol (axis higher total cholesterol,
+  undesirable): 70 total-cholesterol level scores and 12 high-cholesterol / hypercholesterolemia scores.
+  Higher score = higher total cholesterol (or more likely high cholesterol) for all but one; most are
+  catalog-only, seeded by CI-excluding betas (PGP000393, PGS000658) and an OR 1.72 for hypercholesterolemia
+  (PGS002764), then 1000G EUR r >= +0.2, plus a lead-SNP sign check. PGS000062 (PGP000045 GRS_TC) is an
+  inverted deposit like PGS000061 for LDL: 6/6 reference loci flipped, r about -0.7 with other TC scores,
+  so higher = lower TC (review). PGS003822/3827/3832 (PGP000489 weighted LDpred2) are broken deposits
+  and stay unannotated (quarantine). The 8 Price-lab disease_HI_CHOL_SELF_REP scores (PGP000332) have
+  no documented case coding and go to review. GS9 (PGS000192) is out of scope as an LDL+HDL composite.'

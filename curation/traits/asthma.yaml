@@ -1,0 +1,234 @@
+slug: asthma
+query: asthma
+match:
+  terms:
+  - adult-onset asthma
+  - age asthma diagnosed
+  - allergic asthma
+  - asthma
+  - childhood asthma
+  efo_ids: []
+  exclude: []
+anchor: PGS004877
+status: needs_review
+concepts:
+- respiratory.asthma
+- respiratory.asthma_onset_age
+scores:
+  PGS000037:
+    decision: in_scope
+    note: null
+  PGS000799:
+    decision: in_scope
+    note: null
+  PGS000810:
+    decision: in_scope
+    note: combined allergic disease (asthma, hay fever or eczema) phenotype
+  PGS001341:
+    decision: in_scope
+    note: null
+  PGS001343:
+    decision: in_scope
+    note: null
+  PGS001344:
+    decision: in_scope
+    note: null
+  PGS001345:
+    decision: in_scope
+    note: null
+  PGS001346:
+    decision: in_scope
+    note: null
+  PGS001370:
+    decision: in_scope
+    note: age at asthma diagnosis (separate concept respiratory.asthma_onset_age)
+  PGS001782:
+    decision: in_scope
+    note: null
+  PGS001787:
+    decision: in_scope
+    note: null
+  PGS001849:
+    decision: in_scope
+    note: null
+  PGS002061:
+    decision: in_scope
+    note: null
+  PGS002248:
+    decision: in_scope
+    note: null
+  PGS002311:
+    decision: in_scope
+    note: null
+  PGS002358:
+    decision: in_scope
+    note: null
+  PGS002383:
+    decision: in_scope
+    note: null
+  PGS002432:
+    decision: in_scope
+    note: null
+  PGS002481:
+    decision: in_scope
+    note: null
+  PGS002530:
+    decision: in_scope
+    note: null
+  PGS002579:
+    decision: in_scope
+    note: null
+  PGS002628:
+    decision: in_scope
+    note: null
+  PGS002677:
+    decision: in_scope
+    note: null
+  PGS002727:
+    decision: in_scope
+    note: null
+  PGS002754:
+    decision: in_scope
+    note: null
+  PGS004176:
+    decision: in_scope
+    note: null
+  PGS004177:
+    decision: in_scope
+    note: null
+  PGS004178:
+    decision: in_scope
+    note: null
+  PGS004179:
+    decision: in_scope
+    note: null
+  PGS004180:
+    decision: in_scope
+    note: null
+  PGS004252:
+    decision: in_scope
+    note: null
+  PGS004275:
+    decision: in_scope
+    note: null
+  PGS004276:
+    decision: in_scope
+    note: null
+  PGS004277:
+    decision: in_scope
+    note: null
+  PGS004278:
+    decision: in_scope
+    note: null
+  PGS004279:
+    decision: in_scope
+    note: null
+  PGS004439:
+    decision: in_scope
+    note: null
+  PGS004467:
+    decision: in_scope
+    note: null
+  PGS004509:
+    decision: in_scope
+    note: null
+  PGS004537:
+    decision: in_scope
+    note: null
+  PGS004723:
+    decision: in_scope
+    note: null
+  PGS004724:
+    decision: in_scope
+    note: null
+  PGS004725:
+    decision: in_scope
+    note: null
+  PGS004726:
+    decision: in_scope
+    note: null
+  PGS004877:
+    decision: in_scope
+    note: null
+  PGS005121:
+    decision: in_scope
+    note: null
+  PGS005122:
+    decision: in_scope
+    note: null
+  PGS005123:
+    decision: in_scope
+    note: null
+  PGS005124:
+    decision: in_scope
+    note: null
+  PGS005125:
+    decision: in_scope
+    note: null
+  PGS005126:
+    decision: in_scope
+    note: null
+  PGS005127:
+    decision: in_scope
+    note: null
+  PGS005128:
+    decision: in_scope
+    note: null
+  PGS005129:
+    decision: in_scope
+    note: null
+  PGS005130:
+    decision: in_scope
+    note: null
+  PGS005131:
+    decision: in_scope
+    note: null
+  PGS005132:
+    decision: in_scope
+    note: null
+  PGS005133:
+    decision: in_scope
+    note: null
+  PGS005134:
+    decision: in_scope
+    note: null
+  PGS005135:
+    decision: in_scope
+    note: null
+  PGS005136:
+    decision: in_scope
+    note: null
+  PGS005137:
+    decision: in_scope
+    note: null
+  PGS005138:
+    decision: in_scope
+    note: null
+  PGS005139:
+    decision: in_scope
+    note: null
+  PGS005140:
+    decision: in_scope
+    note: null
+  PGS005141:
+    decision: in_scope
+    note: suspected inverted deposit; in review
+  PGS005148:
+    decision: in_scope
+    note: suspected inverted deposit; in review
+  PGS012541:
+    decision: in_scope
+    note: null
+summary: '68 asthma scores from 19 papers; 66 annotated, 2 left unread (lookup budget).
+
+  Almost all are plain asthma-risk scores: higher = more likely to have or develop asthma; 42 annotated
+  catalog-only, corroborated by CI-backed OR/HR or 1000G correlation.
+
+  PGP000704 (PGS005141, PGS005148) looks inverted at deposit: the paper reports OR 1.27 per SD, but the
+  file''s lead risk alleles carry negative weights and it correlates -0.9 with PGP000703 EAS scores; recorded
+  as ''decreases'' and sent to review.
+
+  PGS001370 is age at asthma diagnosis (own concept), PGS000810 combined allergic disease.
+
+  Open: PGS002248 (childhood asthma) and PGS002358 (BBJ) have ~0 correlation with the rest and were not
+  read.'

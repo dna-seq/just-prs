@@ -1,0 +1,35 @@
+pgp_id: PGP000003
+scores:
+  PGS000010:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary heart disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.21 [1.17, 1.26] on Coronary heart disease; 1000G EUR r=+0.33 with PGS000018 (metaGRS
+      CAD, HR 1.71 [1.68, 1.73]).
+paper:
+  pmid: '25748612'
+  doi: 10.1016/S0140-6736(14)61730-X
+  title: 'Genetic risk, coronary heart disease events, and the clinical benefit of statin therapy: an analysis of
+    primary and secondary prevention trials.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

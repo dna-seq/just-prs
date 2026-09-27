@@ -1,0 +1,102 @@
+pgp_id: PGP000364
+scores:
+  PGS002752:
+    cluster: substance_use.alcohol_consumption
+    phenotype: alcohol_quantity
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: alcoholic drinks per week
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alcohol consumption (drinks per week)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: GCKR rs1260326 C (more drinking in every other DPW score) carries a positive weight
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PRS-CS on GSCAN drinks per week; PGS Catalog weights are per-allele
+      effects on the reported trait. Corroborated by OR 1.19 (CI 1.14-1.25) against 'Alcohol consumption (drinks
+      per week)' in FinnGen, and 1000G EUR r = +0.95 with GSCAN 2019 DPW scores PGS000203/PGS000204.
+  PGS002757:
+    score_effect: null
+    unannotated_reason: 'Suspected sign flip, lookup pending: labelled CKD (OR 1.15 [1.05,1.26]) but named eGFR_prscs;
+      1000G EUR r=+0.91 with eGFR scores and -0.91 with PGP000517 CKD scores, so the weights look eGFR-direction.'
+  PGS002754:
+    cluster: respiratory.asthma
+    phenotype: asthma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of asthma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Asthma | asthma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog OR 1.43 [1.39, 1.48] for asthma (CI excludes 1).
+  PGS002764:
+    cluster: lipids.total_cholesterol
+    phenotype: hypercholesterolemia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of high cholesterol (case status)
+    polarity: 1
+    evaluation_outcome:
+      phenotype: hypercholesterolemia
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypercholesterolemia
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: '6 agree, 2 small opposite weights at SNPs in LD with a correctly signed neighbour (joint-model shrinkage):
+        rs629301 T +9.08e-05; rs11591147 T -0.142; rs6511720 T -0.00164; rs7412 T +0.0421; rs4420638 G +0.0273;
+        rs1367117 A -0.000333; rs4299376 T -0.0204; rs12916 C +0.0127'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by its own catalog metric, OR 1.72 [1.67, 1.77] for Hypercholesterolemia, CI excluding
+      the null. Score named LDL_prscs but deposited for hypercholesterolemia (FinnGen).
+  PGS002771:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes (T2D)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.89 [1.85, 1.94] against 'Type 2 diabetes'.
+paper:
+  pmid: '36347255'
+  doi: 10.1016/j.ajhg.2022.10.009
+  title: Systematic comparison of family history and polygenic risk across 24 common diseases.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

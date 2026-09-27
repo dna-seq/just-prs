@@ -1,0 +1,191 @@
+slug: lung-function
+query: lung function (FEV1, FVC, FEV1/FVC, peak flow) and COPD
+match:
+  terms:
+  - COPD
+  - FEV/FVC
+  - FEV1
+  - FVC
+  - airway obstruction
+  - chronic obstructive
+  - emphysema
+  - forced expiratory volume
+  - forced vital capacity
+  - lung function
+  - peak expiratory flow
+  - spirometry
+  - vital capacity
+  efo_ids: []
+  exclude: []
+anchor: PGS001788
+status: needs_review
+concepts:
+- respiratory.lung_function
+- respiratory.copd
+scores:
+  PGS000210:
+    decision: in_scope
+    note: null
+  PGS001009:
+    decision: in_scope
+    note: null
+  PGS001010:
+    decision: in_scope
+    note: null
+  PGS001132:
+    decision: in_scope
+    note: null
+  PGS001180:
+    decision: in_scope
+    note: null
+  PGS001236:
+    decision: in_scope
+    note: null
+  PGS001237:
+    decision: in_scope
+    note: null
+  PGS001326:
+    decision: in_scope
+    note: null
+  PGS001332:
+    decision: in_scope
+    note: null
+  PGS001333:
+    decision: in_scope
+    note: null
+  PGS001334:
+    decision: in_scope
+    note: null
+  PGS001783:
+    decision: in_scope
+    note: null
+  PGS001788:
+    decision: in_scope
+    note: null
+  PGS001800:
+    decision: in_scope
+    note: null
+  PGS001801:
+    decision: in_scope
+    note: null
+  PGS001850:
+    decision: in_scope
+    note: null
+  PGS001918:
+    decision: in_scope
+    note: null
+  PGS001922:
+    decision: in_scope
+    note: null
+  PGS002062:
+    decision: in_scope
+    note: null
+  PGS002134:
+    decision: in_scope
+    note: null
+  PGS002138:
+    decision: in_scope
+    note: null
+  PGS002326:
+    decision: in_scope
+    note: null
+  PGS002327:
+    decision: in_scope
+    note: null
+  PGS002398:
+    decision: in_scope
+    note: null
+  PGS002399:
+    decision: in_scope
+    note: null
+  PGS002447:
+    decision: in_scope
+    note: null
+  PGS002448:
+    decision: in_scope
+    note: null
+  PGS002496:
+    decision: in_scope
+    note: null
+  PGS002497:
+    decision: in_scope
+    note: null
+  PGS002545:
+    decision: in_scope
+    note: null
+  PGS002546:
+    decision: in_scope
+    note: null
+  PGS002594:
+    decision: in_scope
+    note: null
+  PGS002595:
+    decision: in_scope
+    note: null
+  PGS002643:
+    decision: in_scope
+    note: null
+  PGS002644:
+    decision: in_scope
+    note: null
+  PGS002692:
+    decision: in_scope
+    note: null
+  PGS002693:
+    decision: in_scope
+    note: null
+  PGS003465:
+    decision: in_scope
+    note: HCHS/SOL LDpred2 FEV1/FVC score; weights appear oriented to lower FEV1/FVC (lead variants, 1000G r=-0.76);
+      unannotated pending supplement
+  PGS003862:
+    decision: in_scope
+    note: null
+  PGS003863:
+    decision: in_scope
+    note: null
+  PGS003864:
+    decision: in_scope
+    note: null
+  PGS003865:
+    decision: in_scope
+    note: null
+  PGS004432:
+    decision: in_scope
+    note: null
+  PGS004433:
+    decision: in_scope
+    note: null
+  PGS004434:
+    decision: in_scope
+    note: null
+  PGS004435:
+    decision: in_scope
+    note: null
+  PGS004436:
+    decision: in_scope
+    note: null
+  PGS004437:
+    decision: out_of_scope
+    note: UKB 20153 "FEV1, predicted" is the reference value computed from age, sex and height (a body-size proxy),
+      not measured lung function
+  PGS004438:
+    decision: in_scope
+    note: null
+  PGS004466:
+    decision: in_scope
+    note: null
+  PGS004536:
+    decision: in_scope
+    note: null
+  PGS012564:
+    decision: in_scope
+    note: null
+summary: 'Lung function (FEV1, FVC, FEV1/FVC, PEF) and COPD are split into two concepts: respiratory.lung_function
+  (higher = better) and respiratory.copd (higher = more risk). Three scores reported as lung function are COPD-risk
+  oriented (higher = lower lung function): PGS000210 (Shrine 2019, FEV1/FVC-decreasing alleles), PGS001800 and PGS001801
+  (Moll 2020 PRS components); they carry polarity -1. PGS003465 (HCHS/SOL FEV1/FVC) also looks flipped (lead variants,
+  r=-0.76) but the paper does not say so; left unannotated pending its supplement. PGS003862-65 (Shrine 2023) point
+  to higher FEV1/FVC by weights and correlation, but the catalog also lists a COPD OR 1.63 per SD increase, so their
+  catalog COPD metrics look sign-inconsistent. PGS004438 (FEV1 % predicted) not read; PGS004437 (predicted FEV1
+  reference value) out of scope. No aligned-correlation conflicts remain.'

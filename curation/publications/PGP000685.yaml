@@ -1,0 +1,58 @@
+pgp_id: PGP000685
+scores:
+  PGS005093:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.1 [1.09, 1.12] on coronary artery disease. Metabolite/protein-informed CAD PRS
+      (MetPRS/ProPRS); weights not read.
+  PGS005094:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.05 [1.03, 1.07] on coronary artery disease; 1000G EUR r=+0.21 with PGS000018 (metaGRS
+      CAD, HR 1.71 [1.68, 1.73]). Metabolite/protein-informed CAD PRS (MetPRS/ProPRS); weights not read.
+paper:
+  pmid: '41888514'
+  doi: 10.1038/s41467-026-70379-2
+  title: An integrated germline and somatic genomic model for coronary artery disease.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

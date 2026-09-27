@@ -1,0 +1,26 @@
+pgp_id: PGP000420
+scores:
+  PGS003403:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference LDL lead SNPs (APOE, PCSK9, LDLR, APOB, SORT1, ABCG5/8): 5 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.18 [0.18, 0.18] on 'LDL-c blood concentration' (CI excludes the
+      null).
+paper:
+  pmid: '31345425'
+  doi: 10.1016/j.jacc.2019.05.043
+  title: Risk of Premature Atherosclerotic Disease in Patients With Monogenic Versus Polygenic Familial Hypercholesterolemia.

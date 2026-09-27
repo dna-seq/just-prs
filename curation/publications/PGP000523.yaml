@@ -1,0 +1,26 @@
+pgp_id: PGP000523
+scores:
+  PGS004223:
+    cluster: endocrine.type_2_diabetes
+    phenotype: type_2_diabetes
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of type 2 diabetes
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Type 2 diabetes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.5 [1.48, 1.52] against 'Incident type 2 diabetes'.
+paper:
+  pmid: '37201819'
+  doi: 10.1016/j.scitotenv.2023.164253
+  title: Association of time spent in outdoor light and genetic susceptibility with the risk of type 2 diabetes.

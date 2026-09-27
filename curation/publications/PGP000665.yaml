@@ -1,0 +1,47 @@
+pgp_id: PGP000665
+scores:
+  PGS004936:
+    cluster: lipids.ldl_cholesterol
+    phenotype: ldl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: LDL cholesterol level
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: LDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: none of 13 reference LDL lead SNPs present in the scoring file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric OR 1.35 [1.26, 1.46] on 'Low density lipoprotein cholesterol level'
+      (CI excludes the null).
+  PGS004937:
+    cluster: lipids.triglycerides
+    phenotype: triglycerides
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: triglyceride level
+    polarity: 1
+    evaluation_outcome:
+      phenotype: triglycerides
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triglycerides
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference TG lead SNPs (APOA5, GCKR, LPL, TRIB1, TM6SF2): 5 agree, 0 disagree'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog OR 1.64 [1.54, 1.75] against triglyceride level.
+paper:
+  pmid: '39218908'
+  doi: 10.1186/s40246-024-00664-y
+  title: Polygenic risk score portability for common diseases across genetically diverse populations.

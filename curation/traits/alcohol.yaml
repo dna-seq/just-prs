@@ -1,0 +1,187 @@
+slug: alcohol
+query: alcohol drinking and alcohol use disorder
+match:
+  terms:
+  - AUDIT
+  - alcohol
+  - alcohol dependence
+  - alcohol intake frequency
+  - drinker
+  - drinking
+  - drinks per week
+  - problematic alcohol use
+  efo_ids:
+  - alcohol consumption quality
+  - alcohol dependence
+  - alcohol dependence measurement
+  - alcohol drinking
+  - alcohol use disorder measurement
+  - alcohol-induced mental disorder
+  exclude: []
+anchor: PGS001087
+status: needs_review
+concepts:
+- substance_use.alcohol_consumption
+- substance_use.alcohol_use_disorder
+scores:
+  PGS000201:
+    decision: in_scope
+    note: null
+  PGS000202:
+    decision: in_scope
+    note: null
+  PGS000203:
+    decision: in_scope
+    note: null
+  PGS000204:
+    decision: in_scope
+    note: null
+  PGS001085:
+    decision: in_scope
+    note: null
+  PGS001086:
+    decision: in_scope
+    note: null
+  PGS001087:
+    decision: in_scope
+    note: null
+  PGS001088:
+    decision: in_scope
+    note: null
+  PGS001394:
+    decision: in_scope
+    note: null
+  PGS001777:
+    decision: out_of_scope
+    note: alcohol-related cirrhosis is a liver disease; belongs to the liver concept (later)
+  PGS001901:
+    decision: in_scope
+    note: null
+  PGS001934:
+    decision: in_scope
+    note: null
+  PGS002011:
+    decision: out_of_scope
+    note: water intake (UKB 1528), not alcohol; matched on "drinking"
+  PGS002115:
+    decision: in_scope
+    note: null
+  PGS002152:
+    decision: in_scope
+    note: null
+  PGS002230:
+    decision: out_of_scope
+    note: water intake (UKB 1528), not alcohol; matched on "drinking"
+  PGS002738:
+    decision: in_scope
+    note: null
+  PGS002739:
+    decision: in_scope
+    note: null
+  PGS002752:
+    decision: in_scope
+    note: null
+  PGS002825:
+    decision: in_scope
+    note: null
+  PGS002826:
+    decision: in_scope
+    note: null
+  PGS002827:
+    decision: in_scope
+    note: null
+  PGS002828:
+    decision: in_scope
+    note: null
+  PGS002829:
+    decision: in_scope
+    note: null
+  PGS002830:
+    decision: in_scope
+    note: null
+  PGS002831:
+    decision: in_scope
+    note: null
+  PGS002832:
+    decision: in_scope
+    note: null
+  PGS002833:
+    decision: in_scope
+    note: null
+  PGS002834:
+    decision: in_scope
+    note: null
+  PGS002835:
+    decision: in_scope
+    note: null
+  PGS002836:
+    decision: in_scope
+    note: null
+  PGS002837:
+    decision: in_scope
+    note: null
+  PGS002838:
+    decision: in_scope
+    note: null
+  PGS002839:
+    decision: in_scope
+    note: null
+  PGS002909:
+    decision: in_scope
+    note: null
+  PGS002910:
+    decision: in_scope
+    note: null
+  PGS002911:
+    decision: in_scope
+    note: null
+  PGS002912:
+    decision: in_scope
+    note: null
+  PGS002913:
+    decision: in_scope
+    note: null
+  PGS003373:
+    decision: in_scope
+    note: null
+  PGS003374:
+    decision: in_scope
+    note: null
+  PGS003375:
+    decision: in_scope
+    note: null
+  PGS003376:
+    decision: in_scope
+    note: null
+  PGS004449:
+    decision: in_scope
+    note: null
+  PGS004519:
+    decision: in_scope
+    note: null
+  PGS004913:
+    decision: out_of_scope
+    note: alcohol-associated liver cirrhosis is a liver disease; belongs to the liver concept (later)
+  PGS005211:
+    decision: in_scope
+    note: null
+  PGS005212:
+    decision: in_scope
+    note: null
+  PGS005213:
+    decision: in_scope
+    note: null
+  PGS005214:
+    decision: in_scope
+    note: null
+  PGS005216:
+    decision: in_scope
+    note: null
+summary: '47 alcohol scores split into two concepts: drinking level (frequency, amount, current-drinker status, drinking more
+  than before) and alcohol use disorder / problematic use. 40 are annotated. The two Privé scores on UK Biobank field 1558
+  (PGS001934, PGS002152) use the raw coding (1 daily ... 6 never), so a high score means LESS frequent drinking; the GBE version
+  (PGS001087) runs the other way. PGS003376 (GSCAN 2022 EUR drinks per week) has deposited weights inverted against every
+  other drinks-per-week score (r = -0.87), although the paper reports a positive beta, so it is left unannotated and needs
+  a human decision. The same holds for its AFR/AMR/EAS siblings, whose orientation cannot be checked. Two ExPRSweb DBSLMM
+  scores and the GBE ''Alcohol consumed'' score are unannotated for lack of corroboration. Liver cirrhosis and water intake
+  are out of scope.'

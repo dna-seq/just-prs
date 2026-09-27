@@ -1,0 +1,37 @@
+pgp_id: PGP000554
+scores:
+  PGS004321:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Evaluated on major vascular events (mostly coronary events) in a trial placebo arm; expected HR > 1.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary heart disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.1 [1.03, 1.18] on Major vascular events (placebo arm); 1000G EUR r=+0.37 with
+      PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+paper:
+  pmid: '31707849'
+  doi: 10.1161/circulationaha.119.043805
+  title: 'Predicting Benefit From Evolocumab Therapy in Patients With Atherosclerotic Disease Using a Genetic Risk
+    Score: Results From the FOURIER Trial.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

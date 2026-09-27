@@ -1,0 +1,6 @@
+pgp_id: PGP000411
+scores:
+  PGS003377:
+    score_effect: null
+    unannotated_reason: 'Lookup pending: title says ''polygenic score for reduced kidney function''; 1000G EUR r=-0.76
+      with eGFR scores and HR 1.12 for kidney failure suggest higher score = lower eGFR.'

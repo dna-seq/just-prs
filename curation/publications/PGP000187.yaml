@@ -1,0 +1,38 @@
+pgp_id: PGP000187
+scores:
+  PGS000798:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of coronary artery disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Evaluated on coronary artery calcium, a subclinical marker of coronary atherosclerosis; a higher CAD
+        score is expected to raise it.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary heart disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.37 [1.29, 1.45] on Cornary artery calcium (non-zero CAC score); 1000G EUR r=+0.49
+      with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+paper:
+  pmid: '31104941'
+  doi: 10.1016/j.jcct.2019.05.005
+  title: Using a genetic risk score to calculate the optimal age for an individual to undergo coronary artery calcium
+    screening.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

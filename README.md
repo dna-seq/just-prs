@@ -8,8 +8,9 @@
 [![MCP ready](https://img.shields.io/badge/MCP-Claude%20%7C%20Cursor%20%7C%20Codex-blueviolet.svg)](https://github.com/dna-seq/just-prs-mcp)
 [![Web UI](https://img.shields.io/badge/UI-browser%20app-2ea44f.svg)](#web-ui)
 
-`just-prs` scores a genome against the **~5,385 published
-[PGS Catalog](https://www.pgscatalog.org/) models** (or your own scoring file).
+`just-prs` scores a genome against the published
+[PGS Catalog](https://www.pgscatalog.org/) models (or your own scoring file;
+the PGS Catalog had 6,991 scores at its 2026-09-17 release; the bundled metadata snapshot covers the 5,337 published up to 2026-05-07).
 **1000 Genomes percentiles** are precomputed for essentially the full catalog
 (a handful of scores are unscorable — HLA / missing coordinates / allele
 defects). Sample **population is inferred from 1000G** (super-population plus
@@ -60,7 +61,7 @@ Never used this repo? Start with the
 <details>
 <summary><strong>Features</strong> — what the toolbox covers</summary>
 
-- **Full PGS Catalog** — ~5,385 published scores. 1000G reference percentiles
+- **Full PGS Catalog** — every score in the bundled metadata snapshot (5,337, up to the 2026-05-07 release). 1000G reference percentiles
   are precomputed for nearly all of them; a handful stay hidden (unscorable or
   quarantined). SNP heritability (h²) is mapped for many traits via Pan-UKBB
   and archival GWAS Atlas.

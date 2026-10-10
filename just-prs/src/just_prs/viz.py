@@ -1555,7 +1555,8 @@ _REFERENCE_AUDIT_ISSUE_LABELS: dict[str, str] = {
 
 _METHODOLOGY_CONTEXT = (
     "Methodology: percentiles were computed by scoring the 1000 Genomes Project "
-    "phase 3 reference panel (2,504 individuals, 5 superpopulations: AFR, AMR, "
+    "reference panel as distributed by the PGS Catalog (pgsc_1000G_v1: 3,202 "
+    "individuals, 5 superpopulations: AFR, AMR, "
     "EAS, EUR, SAS) on GRCh38 harmonized scoring files from the PGS Catalog. "
     "Each individual's PRS was computed as the sum of effect_weight * dosage "
     "for matched variants, then percentiles were derived per superpopulation. "
@@ -2244,7 +2245,8 @@ def _build_multi_sample_trait_prompt(
         lines.append("== METHODOLOGY ==")
         lines.append(
             "Percentiles computed by scoring the 1000 Genomes Project "
-            "phase 3 reference panel (2,504 individuals, 5 superpopulations: "
+            "reference panel as distributed by the PGS Catalog (pgsc_1000G_v1: 3,202 "
+            "individuals, 5 superpopulations: "
             "AFR, AMR, EAS, EUR, SAS) on GRCh38 harmonized scoring files. "
             "Each sample's percentile uses its own detected reference population "
             "unless a single ancestry was pinned."
@@ -2469,7 +2471,8 @@ def _build_trait_prompt(
         lines.append("== METHODOLOGY ==")
         lines.append(
             "Percentiles computed by scoring the 1000 Genomes Project "
-            "phase 3 reference panel (2,504 individuals, 5 superpopulations: "
+            "reference panel as distributed by the PGS Catalog (pgsc_1000G_v1: 3,202 "
+            "individuals, 5 superpopulations: "
             f"AFR, AMR, EAS, EUR, SAS) on GRCh38 harmonized scoring files. Ancestry: {ancestry}."
         )
         lines.append(

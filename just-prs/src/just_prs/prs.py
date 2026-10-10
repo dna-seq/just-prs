@@ -1434,8 +1434,9 @@ def compute_prs_duckdb(
 
     Functionally equivalent to ``compute_prs()`` but uses DuckDB SQL instead of
     polars for the variant-matching join and weighted-sum aggregation. Scoring
-    files larger than ``PRS_SCORING_JOIN_CHUNK_SIZE`` (default 250_000 rows)
-    are joined in bounded chunks — the same idea as reference-panel genotype
+    files larger than the join chunk size are joined in bounded chunks (the
+    size comes from available RAM, clamped to 250,000-2,000,000 rows, unless
+    ``PRS_SCORING_JOIN_CHUNK_SIZE`` sets it; see ``memory.scoring_join_chunk_size``) — the same idea as reference-panel genotype
     chunking — so a 9.5M-variant score cannot native-crash one giant join.
     ``check_memory_pressure`` runs before each chunk.
 

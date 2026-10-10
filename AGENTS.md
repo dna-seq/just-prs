@@ -175,8 +175,9 @@ Flags: `scoring_gz_present`, `hf_nested_data_dir`, `panel_tarball_present`,
 **One build is the whole catalog.** Every score is published in *both* harmonized
 position files (`_hmPOS_GRCh37` and `_hmPOS_GRCh38`) — verified: identical 5,385-ID
 sets, zero asymmetry. Only ~604 scores are natively GRCh38; the other ~4,700 are
-harmonized into it, and the harmonization loses ~0.016% of variants (worst score
-0.091%). So a GRCh38-only cache serves the entire catalog. The GRCh37 file set is
+harmonized into it, and the harmonization loses ~0.016% of variants (0.091% for the
+worst score with coordinates; the 4 HLA/allelotype scores PGS000343, PGS000941, PGS000966
+and PGS003757 have no position on any row, so they lose 100% and are unscorable). So a GRCh38-only cache serves the entire catalog. The GRCh37 file set is
 needed **only** to score a GRCh37 *sample* natively — lift the sample instead
 (`compute_array_prs(target_build="GRCh38")`) and drop 111 G.
 

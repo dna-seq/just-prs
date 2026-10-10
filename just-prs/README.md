@@ -4,7 +4,7 @@
 [![PyPI version](https://badge.fury.io/py/prs-ui.svg)](https://pypi.org/project/prs-ui/)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 
-A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (PRS)** from the [PGS Catalog](https://www.pgscatalog.org/) (~5,385 published scores). 1000 Genomes reference percentiles are precomputed for essentially the full catalog; sample population is inferred from 1000G; SNP heritability (h²) is mapped for many traits.
+A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (PRS)** from the [PGS Catalog](https://www.pgscatalog.org/) (the PGS Catalog had 6,991 scores at its 2026-09-17 release; the bundled metadata snapshot covers the 5,337 published up to 2026-05-07). 1000 Genomes reference percentiles are precomputed for essentially the full catalog; sample population is inferred from 1000G; SNP heritability (h²) is mapped for many traits.
 
 ## Project Structure
 

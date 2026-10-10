@@ -69,6 +69,38 @@ markers). Arrays actually report *all typed sites* (incl. hom-ref), so "absent" 
 *untyped/off-chip*, which must **not** be blanket hom-ref — that's why restoration is
 **scope-gated** (below) rather than applied to every absent locus.
 
+## Which record is a scoring row's variant (allele-aware matching)
+
+Both engines join on `(chrom, pos)` and then check that the record is the scoring
+row's variant (`vcf.allele_compatible_expr`, mirrored in SQL by
+`prs._duckdb_matched_sql`). Position alone is not identity: an indel shares its
+anchor base with any SNV at the same position.
+
+| scoring row | record | result |
+|---|---|---|
+| SNV (single-base effect and other alleles) | SNV record | dose = called alleles equal to the effect base |
+| SNV | indel / MNV record (`REF=AT, ALT=A`) | allele mismatch |
+| indel | record whose alleles include the effect allele and a known other allele | dose counted |
+| indel | a different indel (`CAAA>C` vs scored `CAAAA/C`) | allele mismatch |
+
+- The other allele is `other_allele`, or else the `/`-separated
+  `hm_inferOtherAllele` candidates. With none known, an indel row needs only its
+  effect allele among the record's alleles.
+- Multi-allelic ALTs (`G|T` from polars-bio, `G,T` in VCF text) are split, so a
+  GT index selects its own allele. A third allele at an SNV (scoring `T/C`,
+  sample `T/G`) still counts the REF copy.
+- A position whose only records fail the check is scored as an **absent** locus
+  (hom-ref when `reference_allele` is known, otherwise unscorable) and counted in
+  `variants_allele_mismatch`. Several records at one position never score a row twice.
+- A consumer array's homozygous encoding (`ref=alt`) skips the other-allele check.
+- **Haploid GT** (`"1"`, male chrX/chrY, chrM) counts as homozygous, 0..2. This is
+  PLINK2's convention (pgen stores haploid calls as homozygous; `--score` defaults
+  to `--xchr-model 2`, males 0..2), and the 1000G reference distributions were
+  scored that way. A male chrX call written diploid (`1/1`) therefore scores the
+  same as `1`. There is no sex inference.
+- No strand flipping: harmonized scoring files are on the forward strand. An
+  effect allele that is neither REF nor any ALT of an SNV record scores 0.
+
 ## Reference restoration scope
 
 `reference_restoration` (on `compute_prs` / `compute_prs_duckdb` / `compute_prs_batch` /

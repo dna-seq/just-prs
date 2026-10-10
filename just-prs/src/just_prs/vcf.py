@@ -201,23 +201,125 @@ def read_genotypes(vcf_path: Path | str) -> pl.LazyFrame:
         return lf
 
 
+def record_alleles_expr(ref_col: str = "ref", alt_col: str = "alt") -> pl.Expr:
+    """``[REF, ALT1, ALT2, ...]`` for a VCF record, so a GT index selects its allele.
+
+    polars-bio joins multi-allelic ALTs with ``|`` (``"G|T"``); VCF text and
+    other producers use ``,``. Both are split, so allele index ``i`` of the GT
+    string is ``list[i]``.
+    """
+    alts = (
+        pl.col(alt_col).cast(pl.Utf8).fill_null("")
+        .str.replace_all(",", "|", literal=True)
+        .str.split("|")
+    )
+    return pl.concat_list([pl.col(ref_col).cast(pl.Utf8), alts])
+
+
+def gt_allele_indices(gt_col: str = "GT") -> tuple[pl.Expr, pl.Expr]:
+    """The two allele indices of a GT string, with a haploid call doubled.
+
+    A haploid GT (``"1"``, written on male chrX, chrY and chrM) counts as a
+    homozygous call, so it scores on the same 0..2 scale as a diploid call. This
+    is PLINK2's convention: its default ``--xchr-model 2`` codes males 0..2, and
+    the 1000G reference distributions behind the percentiles were scored that way.
+    A missing allele (``.``) or an unparseable index gives ``None``.
+    """
+    parts = pl.col(gt_col).cast(pl.Utf8).str.replace_all(r"\|", "/").str.split("/")
+    first = parts.list.get(0, null_on_oob=True).cast(pl.Int64, strict=False)
+    second = (
+        pl.when(parts.list.len() == 1)
+        .then(first)
+        .otherwise(parts.list.get(1, null_on_oob=True).cast(pl.Int64, strict=False))
+    )
+    return first, second
+
+
+def gt_no_call_expr(gt_col: str = "GT") -> pl.Expr:
+    """True for a missing GT, ``.``/``./.``, a half call (``./1``) or a bad index."""
+    first, second = gt_allele_indices(gt_col)
+    return pl.col(gt_col).is_null() | first.is_null() | second.is_null()
+
+
+def _called_alts_expr(alt_col: str) -> pl.Expr:
+    """ALT alleles that are real sequence: no ``<NON_REF>``-style symbols, ``*`` or ``.``."""
+    element = pl.element()
+    return (
+        pl.col(alt_col).cast(pl.Utf8).fill_null("")
+        .str.replace_all(",", "|", literal=True)
+        .str.split("|")
+        .list.eval(
+            element.filter(
+                (element != "") & (element != ".") & (element != "*") & ~element.str.starts_with("<")
+            )
+        )
+    )
+
+
+def record_is_snv_expr(ref_col: str = "ref", alt_col: str = "alt") -> pl.Expr:
+    """True when REF and every sequence ALT of the record are single bases.
+
+    A gVCF reference block (``ALT=<NON_REF>``) counts as an SNV record, so its
+    hom-ref call still scores a single-base effect allele.
+    """
+    return (pl.col(ref_col).cast(pl.Utf8).str.len_chars() == 1) & _called_alts_expr(
+        alt_col
+    ).list.eval(pl.element().str.len_chars() == 1).list.all()
+
+
+def allele_compatible_expr(
+    ref_col: str = "ref",
+    alt_col: str = "alt",
+    effect_allele_col: str = "effect_allele",
+    other_alleles_col: str = "other_alleles",
+    effect_is_snv_col: str = "effect_is_snv",
+) -> pl.Expr:
+    """Whether a VCF record describes the same variant as a scoring row.
+
+    Position alone is not identity: an indel shares its anchor base with any SNV
+    at that position, so a position-only join counts an SNV allele against an
+    indel allele string.
+
+    * An SNV row (single-base effect allele and other alleles) is scored only
+      from an SNV record. Its dose is the count of the effect base, so a third
+      allele (scoring ``T/C``, sample ``T/G``) still counts the REF copy.
+    * An indel row needs its effect allele among the record's alleles and, when
+      an other allele is known (``other_allele`` or ``hm_inferOtherAllele``), one
+      of those too. A record with fewer than two distinct alleles (a consumer
+      array's homozygous ``ref=alt`` encoding) skips the other-allele check.
+
+    The row-side columns come from ``prs._normalize_scoring_columns``.
+    """
+    alleles = record_alleles_expr(ref_col, alt_col)
+    others = pl.col(other_alleles_col)
+    no_other = others.list.len().fill_null(0) == 0
+    other_present = others.list.set_intersection(alleles).list.len() > 0
+    monomorphic = alleles.list.unique().list.len() < 2
+    indel_ok = alleles.list.contains(pl.col(effect_allele_col)) & (no_other | monomorphic | other_present)
+    return (
+        pl.when(pl.col(effect_is_snv_col))
+        .then(record_is_snv_expr(ref_col, alt_col))
+        .otherwise(indel_ok)
+        .fill_null(False)
+    )
+
+
 def compute_dosage_expr(
     gt_col: str = "GT",
     ref_col: str = "ref",
     alt_col: str = "alt",
     effect_allele_col: str = "effect_allele",
 ) -> pl.Expr:
-    """Build a Polars expression that computes effect allele dosage from a GT string.
+    """Build a Polars expression that counts the effect allele in a GT string.
 
-    The GT field is a string like "0/0", "0/1", "1/1", "0|1", etc.
-    Each allele index: 0 = ref, 1 = first alt, 2 = second alt, etc.
+    Each GT index selects an allele from ``[REF, ALT1, ALT2, ...]`` (multi-allelic
+    ALTs are split, see :func:`record_alleles_expr`), and the dosage is the number
+    of selected alleles equal to the effect allele. A haploid GT counts twice (see
+    :func:`gt_allele_indices`). A no-call gives 0; callers that need to tell a
+    no-call from a true 0 use :func:`gt_no_call_expr`.
 
-    Dosage = count of alleles in the genotype that match the effect allele.
-
-    For biallelic sites:
-    - If effect_allele == alt: dosage = number of '1' alleles in GT
-    - If effect_allele == ref: dosage = number of '0' alleles in GT
-    - Otherwise: dosage = 0 (allele not found)
+    This compares allele strings only. Whether the record is the scoring row's
+    variant at all is :func:`allele_compatible_expr`'s job.
 
     Args:
         gt_col: Name of the GT column
@@ -228,39 +330,16 @@ def compute_dosage_expr(
     Returns:
         Polars expression computing dosage as Int64
     """
-    gt = pl.col(gt_col)
-    ref = pl.col(ref_col)
-    alt = pl.col(alt_col)
+    first, second = gt_allele_indices(gt_col)
+    alleles = record_alleles_expr(ref_col, alt_col)
     effect = pl.col(effect_allele_col)
-
-    gt_normalized = gt.str.replace_all(r"\|", "/")
-    allele_1 = gt_normalized.str.split("/").list.get(0)
-    allele_2 = gt_normalized.str.split("/").list.get(1)
-
-    allele_1_int = allele_1.cast(pl.Int64, strict=False)
-    allele_2_int = allele_2.cast(pl.Int64, strict=False)
-
-    is_missing = allele_1_int.is_null() | allele_2_int.is_null()
-    effect_is_alt = effect == alt
-    effect_is_ref = effect == ref
-
-    dosage_when_alt = (
-        allele_1_int.eq(1).cast(pl.Int64).fill_null(0)
-        + allele_2_int.eq(1).cast(pl.Int64).fill_null(0)
-    )
-    dosage_when_ref = (
-        allele_1_int.eq(0).cast(pl.Int64).fill_null(0)
-        + allele_2_int.eq(0).cast(pl.Int64).fill_null(0)
-    )
-
+    allele_1 = alleles.list.get(first, null_on_oob=True)
+    allele_2 = alleles.list.get(second, null_on_oob=True)
+    dosage = (allele_1 == effect).cast(pl.Int64).fill_null(0) + (allele_2 == effect).cast(pl.Int64).fill_null(0)
     return (
-        pl.when(is_missing)
+        pl.when(gt_no_call_expr(gt_col))
         .then(pl.lit(0))
-        .when(effect_is_alt)
-        .then(dosage_when_alt)
-        .when(effect_is_ref)
-        .then(dosage_when_ref)
-        .otherwise(pl.lit(0))
+        .otherwise(dosage)
         .cast(pl.Int64)
         .alias("dosage")
     )

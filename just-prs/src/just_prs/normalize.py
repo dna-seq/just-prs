@@ -68,7 +68,8 @@ def genotype_expr(
     multi-allelic ALTs with ``|`` as separator (e.g. ``"A|G"``).
 
     The two resolved alleles are sorted alphabetically so that ``["A","T"]``
-    and ``["T","A"]`` both become ``["A","T"]``.  Missing genotypes
+    and ``["T","A"]`` both become ``["A","T"]``.  A haploid GT (``"1"``) becomes
+    a homozygous pair (``["G","G"]``).  Missing genotypes
     (``"./."``, ``"."`` , or any unparseable GT) yield an empty list.
     """
     gt = pl.col(gt_col)
@@ -79,7 +80,13 @@ def genotype_expr(
     parts = gt_normalized.str.split("/")
 
     idx0_str = parts.list.get(0, null_on_oob=True)
-    idx1_str = parts.list.get(1, null_on_oob=True)
+    # A haploid call ("1" on male chrX / chrM) is a homozygous genotype, as in
+    # just_prs.vcf.gt_allele_indices.
+    idx1_str = (
+        pl.when(parts.list.len() == 1)
+        .then(idx0_str)
+        .otherwise(parts.list.get(1, null_on_oob=True))
+    )
 
     is_missing = (
         idx0_str.is_null()

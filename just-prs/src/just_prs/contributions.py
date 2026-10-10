@@ -29,10 +29,10 @@ from just_prs.prs import (
     _DUCKDB_RESOLVED_DOSAGE_PRESENT_ONLY,
     _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY,
     _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY_MAF,
-    _DUCKDB_SCORING_RELATION,
     _DUCKDB_WEIGHTED_DOSAGE_ADDITIVE,
     _DUCKDB_WEIGHTED_DOSAGE_GENOBOOST,
     _assert_sample_build_matches,
+    _duckdb_matched_sql,
     _duckdb_scoring_relation,
     _duckdb_universe_sql,
     _normalize_genotype_columns,
@@ -192,7 +192,7 @@ def _attach_identity_columns(raw: pl.LazyFrame, norm: pl.LazyFrame) -> pl.DataFr
 
 
 def _status_sql(*, maf_fill: bool) -> str:
-    no_call = _DUCKDB_NO_CALL_SQL.replace("g.GT", "s.GT")
+    no_call = _DUCKDB_NO_CALL_SQL
     ref_known = _DUCKDB_REFERENCE_KNOWN_SQL
     if maf_fill:
         maf = (
@@ -203,6 +203,7 @@ def _status_sql(*, maf_fill: bool) -> str:
 CASE
     WHEN s.GT IS NOT NULL AND NOT ({no_call}) THEN 'observed'
     WHEN s.GT IS NOT NULL THEN 'no_call'
+    WHEN s.allele_mismatch AND s.resolved_dosage IS NULL THEN 'allele_mismatch'
     WHEN {ref_known} THEN 'restored_hom_ref'
     WHEN {maf} THEN 'maf_filled'
     ELSE 'unscorable'
@@ -211,6 +212,7 @@ END"""
 CASE
     WHEN s.GT IS NOT NULL AND NOT ({no_call}) THEN 'observed'
     WHEN s.GT IS NOT NULL THEN 'no_call'
+    WHEN s.allele_mismatch AND s.resolved_dosage IS NULL THEN 'allele_mismatch'
     WHEN {ref_known} THEN 'restored_hom_ref'
     ELSE 'unscorable'
 END"""
@@ -234,9 +236,8 @@ def _contribution_select_sql(
         WITH resolved AS (
             SELECT
                 s.*,
-                g.GT,
-                g.ref AS sample_ref,
-                g.alt AS sample_alt,
+                s.g_ref AS sample_ref,
+                s.g_alt AS sample_alt,
                 {resolved_dosage_sql} AS resolved_dosage
             {join_sql}
         )
@@ -519,22 +520,14 @@ def extract_prs_contributions(
             )
 
             if resolved_mode == GenotypeInputMode.VARIANT_ONLY:
-                join_sql = f"""
-                    FROM {_DUCKDB_SCORING_RELATION} s
-                    LEFT JOIN {geno_from} g
-                      ON g.chrom = s.chr_name_norm AND g.pos = s.chr_pos_norm
-                """
+                join_sql = _duckdb_matched_sql(geno_from, keep_absent=True)
                 resolved_dosage_sql = (
                     _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY_MAF
                     if do_maf_fill
                     else _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY
                 )
             else:
-                join_sql = f"""
-                    FROM {geno_from} g
-                    JOIN {_DUCKDB_SCORING_RELATION} s
-                      ON g.chrom = s.chr_name_norm AND g.pos = s.chr_pos_norm
-                """
+                join_sql = _duckdb_matched_sql(geno_from, keep_absent=False)
                 resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_PRESENT_ONLY
 
             select_sql = _contribution_select_sql(

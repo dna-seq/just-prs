@@ -248,6 +248,15 @@ class PRSResult(BaseModel):
         default=0,
         description="Scoring loci present in the genotype input but carrying a missing/no-call GT",
     )
+    variants_allele_mismatch: int = Field(
+        default=0,
+        description=(
+            "Scoring loci whose position has genotype records but none for this variant "
+            "(e.g. an SNV row at a called indel sharing its anchor base). They are scored "
+            "as absent loci, so they are also counted in variants_assumed_hom_ref or "
+            "variants_unscorable_absent"
+        ),
+    )
     variants_maf_filled: int = Field(
         default=0,
         description="Absent loci filled with population MAF dosage (2 * allelefrequency_effect) instead of being unscorable",

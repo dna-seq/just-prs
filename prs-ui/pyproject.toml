@@ -9,10 +9,10 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "just-prs>=0.10.1",
-    "reflex>=0.9.10.post1",
-    "reflex-components-core>=0.9.9",
-    "reflex-components-code>=0.9.4",
-    "reflex-components-radix>=0.9.8",
+    "reflex>=0.10.0",
+    "reflex-components-core>=0.10.0",
+    "reflex-components-code>=0.10.0",
+    "reflex-components-radix>=0.10.0",
     "reflex-mui-datagrid>=0.3.14",
 ]
 

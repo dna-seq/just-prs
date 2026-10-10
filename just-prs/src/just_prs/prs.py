@@ -31,7 +31,13 @@ class GenotypeInputMode(str, enum.Enum):
 
 from just_prs.chip_coverage import Chip, chip_typed_positions
 from just_prs.models import PRSResult
-from just_prs.scoring import DEFAULT_CACHE_DIR, load_scoring, parse_scoring_file
+from just_prs.scoring import (
+    DEFAULT_CACHE_DIR,
+    ensure_scoring_file,
+    load_scoring,
+    parse_scoring_file,
+    read_scoring_header,
+)
 from just_prs.vcf import (
     allele_compatible_expr,
     compute_dosage_expr,
@@ -323,6 +329,95 @@ def _resolve_scoring(
     if isinstance(scoring_file, str) and scoring_file.upper().startswith("PGS"):
         return load_scoring(scoring_file, cache_dir=cache_dir, genome_build=genome_build)
     return parse_scoring_file(Path(scoring_file))
+
+
+class ScoringModelFlag(enum.StrEnum):
+    """Scoring-file features the additive engines do not model."""
+
+    DOMINANT = "dominant"
+    RECESSIVE = "recessive"
+    INTERACTION = "interaction"
+    DIPLOTYPE = "diplotype"
+    HAPLOTYPE = "haplotype"
+    RATIO_WEIGHTS = "ratio_weights"
+    DOSAGE_WEIGHTS_IGNORED = "dosage_weights_ignored"
+
+
+_FLAG_COLUMNS: dict[str, ScoringModelFlag] = {
+    "is_dominant": ScoringModelFlag.DOMINANT,
+    "is_recessive": ScoringModelFlag.RECESSIVE,
+    "is_interaction": ScoringModelFlag.INTERACTION,
+    "is_diplotype": ScoringModelFlag.DIPLOTYPE,
+    "is_haplotype": ScoringModelFlag.HAPLOTYPE,
+}
+
+
+def _is_ratio_weight_type(weight_type: str | None) -> bool:
+    """``Odds Ratio`` / ``Hazard Ratio`` weights, as opposed to their logs or betas."""
+    if not weight_type:
+        return False
+    text = weight_type.strip().lower()
+    if "log" in text or "beta" in text:
+        return False
+    return text in {"or", "hr", "rr"} or "odds ratio" in text or "hazard ratio" in text
+
+
+def scoring_model_flags(
+    scoring_lf: pl.LazyFrame,
+    header: dict[str, str] | None = None,
+) -> list[ScoringModelFlag]:
+    """Flag a scoring model that ``sum(effect_weight * dosage)`` only approximates.
+
+    The PGS Catalog marks dominant, recessive, interaction, diplotype and
+    haplotype rows with typed ``is_*`` columns, and ratio-scale weights (PGS000152
+    to 162: "Odds Ratio over expected risk") in the ``weight_type`` header. A file
+    with both ``effect_weight`` and ``dosage_*_weight`` (PGS002246/7/53) is scored
+    from ``effect_weight``. Haplotype and non-nucleotide effect alleles score 0.
+    These scores are still computed additively; the flags say so instead of
+    staying silent.
+    """
+    columns = scoring_lf.collect_schema().names()
+    present = [c for c in _FLAG_COLUMNS if c in columns]
+    flags: list[ScoringModelFlag] = []
+    if present:
+        truthy = scoring_lf.select(
+            pl.col(c).cast(pl.Utf8).str.to_lowercase().is_in(["true", "1"]).any().alias(c)
+            for c in present
+        ).collect()
+        flags.extend(_FLAG_COLUMNS[c] for c in present if bool(truthy[c][0]))
+    if header is not None and _is_ratio_weight_type(header.get("weight_type")):
+        flags.append(ScoringModelFlag.RATIO_WEIGHTS)
+    if "effect_weight" in columns and all(c in columns for c in DOSAGE_WEIGHT_COLUMNS):
+        flags.append(ScoringModelFlag.DOSAGE_WEIGHTS_IGNORED)
+    return flags
+
+
+def _scoring_header(
+    scoring_file: Path | pl.LazyFrame | str,
+    genome_build: str,
+    cache_dir: Path,
+) -> dict[str, str] | None:
+    """The PGS header of a scoring file given by path or PGS ID (None for a frame)."""
+    if isinstance(scoring_file, pl.LazyFrame):
+        return None
+    if isinstance(scoring_file, str) and scoring_file.upper().startswith("PGS"):
+        path = ensure_scoring_file(scoring_file, cache_dir=cache_dir, genome_build=genome_build)
+    else:
+        path = Path(scoring_file)
+    return read_scoring_header(path)
+
+
+def _model_flags(
+    scoring_file: Path | pl.LazyFrame | str,
+    scoring_lf: pl.LazyFrame,
+    genome_build: str,
+    cache_dir: Path,
+    pgs_id: str,
+) -> list[str]:
+    flags = scoring_model_flags(scoring_lf, _scoring_header(scoring_file, genome_build, cache_dir))
+    if flags:
+        log_message(message_type="prs:scored_additively_despite_model_flags", pgs_id=pgs_id, flags=list(flags))
+    return [str(f) for f in flags]
 
 
 DOSAGE_WEIGHT_COLUMNS = ("dosage_0_weight", "dosage_1_weight", "dosage_2_weight")
@@ -868,6 +963,7 @@ def compute_prs(
         else:
             genotypes_lf = _normalize_genotype_columns(genotypes_lf)
         scoring_lf = _resolve_scoring(scoring_file, genome_build, cache_dir)
+        model_flags = _model_flags(scoring_file, scoring_lf, genome_build, cache_dir, pgs_id)
         scoring_norm = _normalize_scoring_columns(scoring_lf)
 
         schema_names = scoring_norm.collect_schema().names()
@@ -1069,6 +1165,7 @@ def compute_prs(
             build_mismatch=build_mismatch,
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
+            model_flags=model_flags,
             theoretical_mean=theoretical_mean,
             theoretical_std=theoretical_std,
             percentile=percentile,
@@ -1481,6 +1578,7 @@ def compute_prs_duckdb(
         genome_build=genome_build,
     ):
         scoring_lf = _resolve_scoring(scoring_file, genome_build, cache_dir)
+        model_flags = _model_flags(scoring_file, scoring_lf, genome_build, cache_dir, pgs_id)
         scoring_norm = _normalize_scoring_columns(scoring_lf)
 
         # Resolve the genotype input mode up front (cheap — schema + 1-row probe)
@@ -1714,6 +1812,7 @@ def compute_prs_duckdb(
             build_mismatch=build_mismatch,
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
+            model_flags=model_flags,
             theoretical_mean=theoretical_mean,
             theoretical_std=theoretical_std,
             percentile=percentile,

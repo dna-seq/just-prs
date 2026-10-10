@@ -100,6 +100,9 @@ anchor base with any SNV at the same position.
   same as `1`. There is no sex inference.
 - No strand flipping: harmonized scoring files are on the forward strand. An
   effect allele that is neither REF nor any ALT of an SNV record scores 0.
+- Scores the additive sum only approximates (dominant/recessive/interaction/
+  diplotype/haplotype rows, ratio-scale weights, ignored per-dosage weights) are
+  still summed additively, and listed in `PRSResult.model_flags`.
 
 ## Reference restoration scope
 

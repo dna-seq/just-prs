@@ -301,6 +301,15 @@ class PRSResult(BaseModel):
         default=False,
         description="Whether the scoring file contained allelefrequency_effect data",
     )
+    model_flags: list[str] = Field(
+        default_factory=list,
+        description=(
+            "ScoringModelFlag values for a scoring model that the additive sum only "
+            "approximates (dominant/recessive/interaction/diplotype/haplotype rows, "
+            "ratio-scale weights, ignored per-dosage weights). Empty for a plain "
+            "additive score. The score is still sum(effect_weight * dosage)"
+        ),
+    )
     theoretical_mean: float | None = Field(
         default=None,
         description="Theoretical population mean PRS computed from allele frequencies: sum(w_i * 2 * p_i)",

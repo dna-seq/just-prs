@@ -225,13 +225,10 @@ def gt_allele_indices(gt_col: str = "GT") -> tuple[pl.Expr, pl.Expr]:
     the 1000G reference distributions behind the percentiles were scored that way.
     A missing allele (``.``) or an unparseable index gives ``None``.
     """
-    parts = pl.col(gt_col).cast(pl.Utf8).str.replace_all(r"\|", "/").str.split("/")
-    first = parts.list.get(0, null_on_oob=True).cast(pl.Int64, strict=False)
-    second = (
-        pl.when(parts.list.len() == 1)
-        .then(first)
-        .otherwise(parts.list.get(1, null_on_oob=True).cast(pl.Int64, strict=False))
-    )
+    parts = pl.col(gt_col).cast(pl.Utf8).str.replace_all("|", "/", literal=True).str.split_exact("/", 1)
+    first = parts.struct.field("field_0").cast(pl.Int64, strict=False)
+    second_raw = parts.struct.field("field_1")
+    second = pl.when(second_raw.is_null()).then(first).otherwise(second_raw.cast(pl.Int64, strict=False))
     return first, second
 
 
@@ -257,21 +254,40 @@ def _called_alts_expr(alt_col: str) -> pl.Expr:
 
 
 def record_is_snv_expr(ref_col: str = "ref", alt_col: str = "alt") -> pl.Expr:
-    """True when REF and every sequence ALT of the record are single bases.
+    """True when REF is one base and the record carries an SNV allele.
 
-    A gVCF reference block (``ALT=<NON_REF>``) counts as an SNV record, so its
-    hom-ref call still scores a single-base effect allele.
+    A multi-allelic record mixing an SNV and an indel ALT (``REF=G, ALT=A|AA``)
+    qualifies: the SNV allele is counted and the indel allele, compared as a
+    string, never equals a single-base effect allele. A pure insertion
+    (``REF=A, ALT=AT``) does not. A gVCF reference block (``ALT=<NON_REF>``)
+    has no sequence ALT and qualifies, so its hom-ref call still scores.
     """
-    return (pl.col(ref_col).cast(pl.Utf8).str.len_chars() == 1) & _called_alts_expr(
-        alt_col
-    ).list.eval(pl.element().str.len_chars() == 1).list.all()
+    alts = _called_alts_expr(alt_col)
+    return (pl.col(ref_col).cast(pl.Utf8).str.len_chars() == 1) & (
+        (alts.list.len() == 0) | alts.list.eval(pl.element().str.len_chars() == 1).list.any()
+    )
+
+
+def other_alleles_expr(
+    candidates_col: str = "other_candidates", effect_allele_col: str = "effect_allele"
+) -> pl.Expr:
+    """The ``/``-separated other-allele candidates as a list, without the effect allele."""
+    return (
+        pl.col(candidates_col).cast(pl.Utf8).fill_null("").str.split("/")
+        .list.set_difference(pl.concat_list([pl.col(effect_allele_col).cast(pl.Utf8), pl.lit("")]))
+    )
+
+
+def biallelic_snv_record_expr(ref_col: str = "ref", alt_col: str = "alt") -> pl.Expr:
+    """One-base REF and one-character ALT: decided without splitting any list."""
+    return (pl.col(ref_col).str.len_chars() == 1) & (pl.col(alt_col).str.len_chars() == 1)
 
 
 def allele_compatible_expr(
     ref_col: str = "ref",
     alt_col: str = "alt",
     effect_allele_col: str = "effect_allele",
-    other_alleles_col: str = "other_alleles",
+    other_candidates_col: str = "other_candidates",
     effect_is_snv_col: str = "effect_is_snv",
 ) -> pl.Expr:
     """Whether a VCF record describes the same variant as a scoring row.
@@ -281,17 +297,20 @@ def allele_compatible_expr(
     indel allele string.
 
     * An SNV row (single-base effect allele and other alleles) is scored only
-      from an SNV record. Its dose is the count of the effect base, so a third
-      allele (scoring ``T/C``, sample ``T/G``) still counts the REF copy.
+      from a record with a one-base REF and an SNV allele (``record_is_snv_expr``).
+      Its dose is the count of the effect base, so a third allele (scoring
+      ``T/C``, sample ``T/G``) still counts the REF copy.
     * An indel row needs its effect allele among the record's alleles and, when
       an other allele is known (``other_allele`` or ``hm_inferOtherAllele``), one
       of those too. A record with fewer than two distinct alleles (a consumer
       array's homozygous ``ref=alt`` encoding) skips the other-allele check.
 
-    The row-side columns come from ``prs._normalize_scoring_columns``.
+    The row-side columns come from ``prs._normalize_scoring_columns``. This
+    splits lists, so engines apply it only to rows that
+    :func:`biallelic_snv_record_expr` does not already decide.
     """
     alleles = record_alleles_expr(ref_col, alt_col)
-    others = pl.col(other_alleles_col)
+    others = other_alleles_expr(other_candidates_col, effect_allele_col)
     no_other = others.list.len().fill_null(0) == 0
     other_present = others.list.set_intersection(alleles).list.len() > 0
     monomorphic = alleles.list.unique().list.len() < 2
@@ -302,6 +321,28 @@ def allele_compatible_expr(
         .otherwise(indel_ok)
         .fill_null(False)
     )
+
+
+def biallelic_dosage_expr(
+    gt_col: str = "GT",
+    ref_col: str = "ref",
+    alt_col: str = "alt",
+    effect_allele_col: str = "effect_allele",
+) -> pl.Expr:
+    """:func:`compute_dosage_expr` for a record with one ALT, without list operations.
+
+    Only valid where ALT holds a single allele; a multi-allelic record needs
+    :func:`compute_dosage_expr`. The GT is parsed once here.
+    """
+    first, second = gt_allele_indices(gt_col)
+    effect = pl.col(effect_allele_col)
+    effect_is_ref = pl.col(ref_col) == effect
+    effect_is_alt = pl.col(alt_col) == effect
+
+    def copies(index: pl.Expr) -> pl.Expr:
+        return ((index == 0) & effect_is_ref).cast(pl.Int64) + ((index == 1) & effect_is_alt).cast(pl.Int64)
+
+    return (copies(first) + copies(second)).fill_null(0).cast(pl.Int64).alias("dosage")
 
 
 def compute_dosage_expr(

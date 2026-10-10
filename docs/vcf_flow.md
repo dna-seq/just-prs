@@ -78,8 +78,8 @@ anchor base with any SNV at the same position.
 
 | scoring row | record | result |
 |---|---|---|
-| SNV (single-base effect and other alleles) | SNV record | dose = called alleles equal to the effect base |
-| SNV | indel / MNV record (`REF=AT, ALT=A`) | allele mismatch |
+| SNV (single-base effect and other alleles) | one-base REF with an SNV ALT (incl. `REF=G, ALT=A\|AA`) | dose = called alleles equal to the effect base |
+| SNV | deletion / MNV (`REF=AT, ALT=A`) or pure insertion (`REF=A, ALT=AT`) | allele mismatch |
 | indel | record whose alleles include the effect allele and a known other allele | dose counted |
 | indel | a different indel (`CAAA>C` vs scored `CAAAA/C`) | allele mismatch |
 

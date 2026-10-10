@@ -40,6 +40,8 @@ from just_prs.scoring import (
 )
 from just_prs.vcf import (
     allele_compatible_expr,
+    biallelic_dosage_expr,
+    biallelic_snv_record_expr,
     compute_dosage_expr,
     detect_genome_build,
     gt_no_call_expr,
@@ -495,37 +497,27 @@ def _normalize_scoring_columns(scoring_lf: pl.LazyFrame) -> pl.LazyFrame:
 
 
 def _other_allele_exprs(columns: list[str]) -> list[pl.Expr]:
-    """``other_alleles`` and ``effect_is_snv``: the row side of the allele-aware join.
+    """``other_candidates`` and ``effect_is_snv``: the row side of the allele-aware join.
 
-    ``other_alleles`` is the author's ``other_allele`` when given, else the PGS
-    Catalog's ``/``-separated ``hm_inferOtherAllele`` candidates, minus the effect
-    allele. ``effect_is_snv`` marks a row whose effect and other alleles are all
-    single bases. ``_srow`` (added by the caller) identifies the scoring row, so
-    a position holding several records still scores each row once. See
-    ``vcf.allele_compatible_expr``.
+    ``other_candidates`` is the author's ``other_allele`` when given, else the PGS
+    Catalog's ``/``-separated ``hm_inferOtherAllele`` candidates. It stays a
+    string; only the few rows that need the full check split it
+    (``vcf.other_alleles_expr``). ``effect_is_snv`` marks a row whose effect
+    allele and every candidate are single bases. ``_srow`` (added by the caller)
+    identifies the scoring row, so a position holding several records still
+    scores each row once. See ``vcf.allele_compatible_expr``.
     """
     effect = pl.col("effect_allele").cast(pl.Utf8)
-    empty = pl.lit([], dtype=pl.List(pl.Utf8))
-    candidates: pl.Expr = empty
-    if "hm_inferOtherAllele" in columns:
-        inferred = pl.col("hm_inferOtherAllele").cast(pl.Utf8)
-        candidates = pl.when(inferred.str.len_chars() > 0).then(inferred.str.split("/")).otherwise(empty)
-    if "other_allele" in columns:
-        stated = pl.col("other_allele").cast(pl.Utf8)
-        candidates = pl.when(stated.str.len_chars() > 0).then(stated.str.split("/")).otherwise(candidates)
-    others = (
-        candidates.fill_null(empty)
-        .list.set_difference(pl.concat_list([effect, pl.lit("")]))
-        .alias("other_alleles")
-    )
+    candidates: pl.Expr = pl.lit(None, dtype=pl.Utf8)
+    for col in ("hm_inferOtherAllele", "other_allele"):
+        if col in columns:
+            value = pl.col(col).cast(pl.Utf8)
+            candidates = pl.when(value.str.len_chars() > 0).then(value).otherwise(candidates)
     effect_is_snv = (
         (effect.str.len_chars() == 1)
-        & candidates.fill_null(empty)
-        .list.set_difference(pl.concat_list([effect, pl.lit("")]))
-        .list.eval(pl.element().str.len_chars() == 1)
-        .list.all()
-    ).fill_null(False).alias("effect_is_snv")
-    return [others, effect_is_snv]
+        & (candidates.is_null() | candidates.str.contains(r"^[^/]?(/[^/]?)*$"))
+    ).fill_null(False)
+    return [candidates.alias("other_candidates"), effect_is_snv.alias("effect_is_snv")]
 
 
 def _normalize_genotype_input_mode(mode: str | GenotypeInputMode) -> GenotypeInputMode:
@@ -584,7 +576,8 @@ def _match_genotypes_polars(
     """One row per scoring row, carrying the genotype record that is its variant.
 
     The join is on ``(chrom, pos)``, then ``allele_compatible_expr`` decides
-    whether each record is this row's variant; when several records share the
+    whether each record is this row's variant and ``dosage`` counts the effect
+    allele in its GT; when several records share the
     position the compatible one wins, so a row is never scored twice. A row whose
     position has only incompatible records keeps the record's ``ref``/``alt`` for
     inspection, gets ``GT = null`` and ``is_allele_mismatch = True``, and is then
@@ -599,23 +592,47 @@ def _match_genotypes_polars(
         pl.col("alt").cast(pl.Utf8),
         pl.col("GT").cast(pl.Utf8).alias("_gt_raw"),
     )
+    # Materialized once: it is scoring-file sized, and every step below reads
+    # it twice (the decided/undecided split, then the repeated-row split).
     pairs = scoring_norm.join(
         genotypes,
         left_on=["chr_name_norm", "chr_pos_norm"],
         right_on=["chrom", "pos"],
         how="left",
-    ).with_columns(
-        (pl.col("_gt_raw").is_not_null() & allele_compatible_expr()).fill_null(False).alias("_allele_ok")
-    )
-    picked = (
-        pairs.sort(
+    ).collect()
+    # List operations are the expensive part. A biallelic one-base record
+    # against an SNV row (most rows) is decided, and dosed, by plain string
+    # comparisons; only indels, multi-allelic records and indel rows split lists.
+    absent = pl.col("_gt_raw").is_null()
+    decided = pl.col("effect_is_snv") & biallelic_snv_record_expr()
+    pairs = pl.concat([
+        pairs.filter(absent).with_columns(
+            pl.lit(False).alias("_allele_ok"),
+            pl.lit(0, dtype=pl.Int64).alias("dosage"),
+        ),
+        pairs.filter(~absent & decided).with_columns(
+            pl.lit(True).alias("_allele_ok"),
+            biallelic_dosage_expr(gt_col="_gt_raw"),
+        ),
+        pairs.filter(~absent & ~decided).with_columns(
+            allele_compatible_expr().alias("_allele_ok"),
+            compute_dosage_expr(gt_col="_gt_raw"),
+        ),
+    ])
+    # A scoring row joins several records only where the input repeats a
+    # position; only those rows are ranked (compatible record first) and cut to one.
+    pairs = pairs.with_columns(pl.col("_srow").is_duplicated().alias("_repeated"))
+    repeated = pl.col("_repeated")
+    picked = pl.concat([
+        pairs.filter(~repeated),
+        pairs.filter(repeated)
+        .sort(
             ["_srow", "_allele_ok", "ref", "alt"],
             descending=[False, True, False, False],
             nulls_last=True,
-            maintain_order=True,
         )
-        .unique(subset=["_srow"], keep="first", maintain_order=True)
-    )
+        .unique(subset=["_srow"], keep="first", maintain_order=True),
+    ]).drop("_repeated").lazy()
     if resolved_mode != GenotypeInputMode.VARIANT_ONLY:
         picked = picked.filter(pl.col("_gt_raw").is_not_null())
     return picked.with_columns(
@@ -988,12 +1005,6 @@ def compute_prs(
         joined = joined.with_columns(
             pl.col("GT").is_not_null().alias("is_present"),
             _gt_no_call_expr().alias("is_no_call"),
-            compute_dosage_expr(
-                gt_col="GT",
-                ref_col="ref",
-                alt_col="alt",
-                effect_allele_col="effect_allele",
-            )
         )
 
         dosage_weight = DOSAGE_WEIGHT_COLUMNS[0] in schema_names
@@ -1178,20 +1189,31 @@ def compute_prs(
 
 _DUCKDB_RECORD_ALTS_SQL = "string_split(replace(coalesce(g.alt, ''), ',', '|'), '|')"
 
+_DUCKDB_OTHER_ALLELES_SQL = (
+    "list_filter(string_split(coalesce(sr.other_candidates, ''), '/'),"
+    " lambda o: o <> '' AND o <> sr.effect_allele)"
+)
+
+# CASE evaluates per row, so the list-based checks run only on indels,
+# multi-allelic records and indel rows; a biallelic one-base record against an
+# SNV row is decided by length. Mirrors vcf.allele_compatible_expr.
 _DUCKDB_ALLELE_OK_SQL = f"""\
-(g.GT IS NOT NULL AND COALESCE(
-    CASE
+CASE
+    WHEN g.GT IS NULL THEN FALSE
+    WHEN sr.effect_is_snv AND length(g.ref) = 1 AND length(g.alt) = 1 THEN TRUE
+    ELSE COALESCE(CASE
         WHEN sr.effect_is_snv THEN
-            length(g.ref) = 1 AND COALESCE(list_bool_and(list_transform(
+            length(g.ref) = 1 AND COALESCE(list_bool_or(list_transform(
                 list_filter({_DUCKDB_RECORD_ALTS_SQL},
                             lambda a: a <> '' AND a <> '.' AND a <> '*' AND NOT starts_with(a, '<')),
                 lambda a: length(a) = 1)), TRUE)
         ELSE
             list_contains(list_prepend(g.ref, {_DUCKDB_RECORD_ALTS_SQL}), sr.effect_allele)
-            AND (len(sr.other_alleles) = 0
+            AND (len({_DUCKDB_OTHER_ALLELES_SQL}) = 0
                  OR len(list_distinct(list_prepend(g.ref, {_DUCKDB_RECORD_ALTS_SQL}))) < 2
-                 OR list_has_any(sr.other_alleles, list_prepend(g.ref, {_DUCKDB_RECORD_ALTS_SQL})))
-    END, FALSE))"""
+                 OR list_has_any({_DUCKDB_OTHER_ALLELES_SQL}, list_prepend(g.ref, {_DUCKDB_RECORD_ALTS_SQL})))
+    END, FALSE)
+END"""
 
 
 def _duckdb_matched_sql(geno_from: str, *, keep_absent: bool) -> str:
@@ -1209,37 +1231,46 @@ def _duckdb_matched_sql(geno_from: str, *, keep_absent: bool) -> str:
     return f"""
         FROM (
             SELECT
-                q.* EXCLUDE (_gt_raw, _allele_ok, _gt_parts, _alleles, _i1, _i2),
+                q.* EXCLUDE (_gt_raw, _allele_ok, _alleles, _i1, _i2),
                 CASE WHEN q._allele_ok THEN q._gt_raw END AS GT,
                 (q._gt_raw IS NOT NULL AND NOT q._allele_ok) AS allele_mismatch,
                 (NOT q._allele_ok OR q._i1 IS NULL OR q._i2 IS NULL) AS gt_no_call,
                 CASE
                     WHEN NOT q._allele_ok OR q._i1 IS NULL OR q._i2 IS NULL THEN 0
+                    WHEN q._alleles IS NULL THEN
+                        CAST(COALESCE(CASE q._i1 WHEN 0 THEN q.g_ref WHEN 1 THEN q.g_alt END = q.effect_allele, FALSE) AS INTEGER)
+                      + CAST(COALESCE(CASE q._i2 WHEN 0 THEN q.g_ref WHEN 1 THEN q.g_alt END = q.effect_allele, FALSE) AS INTEGER)
                     ELSE CAST(COALESCE(q._alleles[q._i1 + 1] = q.effect_allele, FALSE) AS INTEGER)
                        + CAST(COALESCE(q._alleles[q._i2 + 1] = q.effect_allele, FALSE) AS INTEGER)
                 END AS gt_dosage
             FROM (
                 SELECT
-                    p.* EXCLUDE (_rn),
-                    TRY_CAST(p._gt_parts[1] AS BIGINT) AS _i1,
-                    CASE WHEN len(p._gt_parts) = 1 THEN TRY_CAST(p._gt_parts[1] AS BIGINT)
-                         ELSE TRY_CAST(p._gt_parts[2] AS BIGINT) END AS _i2
+                    p.* EXCLUDE (_rn, _gt),
+                    TRY_CAST(split_part(p._gt, '/', 1) AS BIGINT) AS _i1,
+                    CASE WHEN strpos(p._gt, '/') = 0 THEN TRY_CAST(split_part(p._gt, '/', 1) AS BIGINT)
+                         ELSE TRY_CAST(split_part(p._gt, '/', 2) AS BIGINT) END AS _i2
                 FROM (
                     SELECT
-                        sr.*,
-                        g.GT AS _gt_raw,
-                        g.ref AS g_ref,
-                        g.alt AS g_alt,
-                        {_DUCKDB_ALLELE_OK_SQL} AS _allele_ok,
-                        string_split(replace(g.GT, '|', '/'), '/') AS _gt_parts,
-                        list_prepend(g.ref, {_DUCKDB_RECORD_ALTS_SQL}) AS _alleles,
+                        m.*,
+                        replace(m._gt_raw, '|', '/') AS _gt,
+                        CASE WHEN contains(m.g_alt, '|') OR contains(m.g_alt, ',')
+                             THEN list_prepend(m.g_ref, string_split(replace(m.g_alt, ',', '|'), '|'))
+                        END AS _alleles,
                         row_number() OVER (
-                            PARTITION BY sr._srow
-                            ORDER BY {_DUCKDB_ALLELE_OK_SQL} DESC, g.ref NULLS LAST, g.alt NULLS LAST
+                            PARTITION BY m._srow
+                            ORDER BY m._allele_ok DESC, m.g_ref NULLS LAST, m.g_alt NULLS LAST
                         ) AS _rn
-                    FROM {_DUCKDB_SCORING_RELATION} sr
-                    LEFT JOIN {geno_from} g
-                      ON g.chrom = sr.chr_name_norm AND g.pos = sr.chr_pos_norm
+                    FROM (
+                        SELECT
+                            sr.*,
+                            g.GT AS _gt_raw,
+                            g.ref AS g_ref,
+                            g.alt AS g_alt,
+                            {_DUCKDB_ALLELE_OK_SQL} AS _allele_ok
+                        FROM {_DUCKDB_SCORING_RELATION} sr
+                        LEFT JOIN {geno_from} g
+                          ON g.chrom = sr.chr_name_norm AND g.pos = sr.chr_pos_norm
+                    ) m
                 ) p
                 WHERE p._rn = 1{absent_filter}
             ) q
@@ -1476,7 +1507,6 @@ def _duckdb_score_registered(
                 {variant_mass_sql} AS variant_mass,
                 {counter_sql}
             {join_sql}
-            GROUP BY ALL
         )
         SELECT
             COALESCE(SUM({weighted_sql}), 0.0) AS prs_score,
@@ -1665,39 +1695,39 @@ def compute_prs_duckdb(
                 if do_maf_fill_ddb:
                     resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY_MAF
                     counter_sql = f"""
-                        SUM(CASE WHEN s.GT IS NOT NULL THEN 1 ELSE 0 END) AS variants_observed,
-                        SUM(CASE WHEN s.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN 1 ELSE 0 END) AS observed_called,
-                        SUM(CASE WHEN s.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
-                        SUM(CASE WHEN s.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND NOT ({_DUCKDB_MAF_AVAILABLE_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
-                        SUM(CASE WHEN s.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
-                        SUM(CASE WHEN s.allele_mismatch THEN 1 ELSE 0 END) AS variants_allele_mismatch,
-                        SUM(CASE WHEN s.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND {_DUCKDB_MAF_AVAILABLE_SQL} THEN 1 ELSE 0 END) AS variants_maf_filled,
-                        SUM(CASE WHEN s.GT IS NULL AND s.ref_resolved_source = 'panel' THEN 1 ELSE 0 END) AS variants_ref_resolved_panel,
-                        SUM(CASE WHEN s.GT IS NULL AND s.ref_resolved_source = 'fasta' THEN 1 ELSE 0 END) AS variants_ref_resolved_fasta
+                        (CASE WHEN s.GT IS NOT NULL THEN 1 ELSE 0 END) AS variants_observed,
+                        (CASE WHEN s.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN 1 ELSE 0 END) AS observed_called,
+                        (CASE WHEN s.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
+                        (CASE WHEN s.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND NOT ({_DUCKDB_MAF_AVAILABLE_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
+                        (CASE WHEN s.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
+                        (CASE WHEN s.allele_mismatch THEN 1 ELSE 0 END) AS variants_allele_mismatch,
+                        (CASE WHEN s.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND {_DUCKDB_MAF_AVAILABLE_SQL} THEN 1 ELSE 0 END) AS variants_maf_filled,
+                        (CASE WHEN s.GT IS NULL AND s.ref_resolved_source = 'panel' THEN 1 ELSE 0 END) AS variants_ref_resolved_panel,
+                        (CASE WHEN s.GT IS NULL AND s.ref_resolved_source = 'fasta' THEN 1 ELSE 0 END) AS variants_ref_resolved_fasta
                     """
                 else:
                     resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY
                     counter_sql = f"""
-                        SUM(CASE WHEN s.GT IS NOT NULL THEN 1 ELSE 0 END) AS variants_observed,
-                        SUM(CASE WHEN s.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN 1 ELSE 0 END) AS observed_called,
-                        SUM(CASE WHEN s.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
-                        SUM(CASE WHEN s.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
-                        SUM(CASE WHEN s.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
-                        SUM(CASE WHEN s.allele_mismatch THEN 1 ELSE 0 END) AS variants_allele_mismatch,
+                        (CASE WHEN s.GT IS NOT NULL THEN 1 ELSE 0 END) AS variants_observed,
+                        (CASE WHEN s.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN 1 ELSE 0 END) AS observed_called,
+                        (CASE WHEN s.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 1 ELSE 0 END) AS variants_assumed_hom_ref,
+                        (CASE WHEN s.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) THEN 1 ELSE 0 END) AS variants_unscorable_absent,
+                        (CASE WHEN s.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
+                        (CASE WHEN s.allele_mismatch THEN 1 ELSE 0 END) AS variants_allele_mismatch,
                         0 AS variants_maf_filled,
-                        SUM(CASE WHEN s.GT IS NULL AND s.ref_resolved_source = 'panel' THEN 1 ELSE 0 END) AS variants_ref_resolved_panel,
-                        SUM(CASE WHEN s.GT IS NULL AND s.ref_resolved_source = 'fasta' THEN 1 ELSE 0 END) AS variants_ref_resolved_fasta
+                        (CASE WHEN s.GT IS NULL AND s.ref_resolved_source = 'panel' THEN 1 ELSE 0 END) AS variants_ref_resolved_panel,
+                        (CASE WHEN s.GT IS NULL AND s.ref_resolved_source = 'fasta' THEN 1 ELSE 0 END) AS variants_ref_resolved_fasta
                     """
             else:
                 join_sql = _duckdb_matched_sql(geno_from, keep_absent=False)
                 resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_PRESENT_ONLY
                 counter_sql = f"""
-                    SUM(CASE WHEN s.GT IS NOT NULL THEN 1 ELSE 0 END) AS variants_observed,
-                    SUM(CASE WHEN s.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN 1 ELSE 0 END) AS observed_called,
+                    (CASE WHEN s.GT IS NOT NULL THEN 1 ELSE 0 END) AS variants_observed,
+                    (CASE WHEN s.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN 1 ELSE 0 END) AS observed_called,
                     0 AS variants_assumed_hom_ref,
                     0 AS variants_unscorable_absent,
-                    SUM(CASE WHEN s.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
-                    SUM(CASE WHEN s.allele_mismatch THEN 1 ELSE 0 END) AS variants_allele_mismatch,
+                    (CASE WHEN s.GT IS NOT NULL AND {_DUCKDB_NO_CALL_SQL} THEN 1 ELSE 0 END) AS variants_no_call,
+                    (CASE WHEN s.allele_mismatch THEN 1 ELSE 0 END) AS variants_allele_mismatch,
                     0 AS variants_maf_filled,
                     0 AS variants_ref_resolved_panel,
                     0 AS variants_ref_resolved_fasta

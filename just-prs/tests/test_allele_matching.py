@@ -193,6 +193,17 @@ class TestAlleleAwareJoin:
         assert polars_result.score == pytest.approx(1.0)
         _assert_same(polars_result, duckdb_result)
 
+    def test_snv_allele_of_a_mixed_multiallelic_record_counts(self, tmp_path: Path) -> None:
+        geno = _genotypes([("1", 6000, "G", "A|AA", "1/2")])
+        for effect, expected in (("A", 1.0), ("G", 0.0)):
+            scoring = _scoring([{"chr_position": 6000, "effect_allele": effect, "other_allele": "GA".replace(effect, "")}]).with_columns(
+                pl.lit("G").alias("reference_allele")
+            )
+            polars_result, duckdb_result = _both_engines(tmp_path, geno, scoring)
+            assert polars_result.score == pytest.approx(expected), effect
+            assert polars_result.variants_observed == 1
+            _assert_same(polars_result, duckdb_result)
+
     def test_snv_and_indel_records_at_one_position_score_once(self, tmp_path: Path) -> None:
         geno = _genotypes([("1", 4000, "GT", "G", "0/1"), ("1", 4000, "G", "A", "0/1")])
         scoring = _scoring([{"chr_position": 4000, "effect_allele": "A", "other_allele": "G"}])
@@ -274,7 +285,7 @@ class TestRealGenome:
             & (pl.col("other_allele").is_null() | (pl.col("other_allele").str.len_chars() == 1))
             & (
                 (pl.col("sample_ref").str.len_chars() != 1)
-                | alts.list.eval(pl.element().str.len_chars() != 1).list.any()
+                | ~alts.list.eval(pl.element().str.len_chars() == 1).list.any()
             )
         )
         assert snv_on_indel.height == 0

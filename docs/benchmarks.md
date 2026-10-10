@@ -1,8 +1,14 @@
 # Engine Benchmark: Polars vs DuckDB vs PLINK2
 
-This page presents a reproducible benchmark comparing three PRS computation engines
-on a real personal genome. The goal is to demonstrate that **just-prs** matches
-PLINK2 in accuracy while being substantially faster and far more memory-efficient.
+This page describes a reproducible benchmark of three PRS engines on one real
+personal genome: just-prs's two engines (Polars and DuckDB) and PLINK2 as the
+reference implementation. It measures agreement, runtime and memory.
+
+> **Status (2026-10-11).** The timed rerun with the fixed engines and fixed
+> benchmark inputs is queued; its results land in
+> `just-prs/benchmarks/results/2026-10-11/` and replace the tables below. The
+> numbers from the March 2026 run are kept at the end of this page for the
+> record, with what was wrong with them.
 
 ---
 
@@ -12,214 +18,133 @@ PLINK2 in accuracy while being substantially faster and far more memory-efficien
 
 | Item | Details |
 |------|---------|
-| **VCF** | Personal whole-genome VCF of a single individual ([Zenodo 18370498](https://zenodo.org/records/18370498)) |
-| **Variants** | 4,661,444 biallelic sites (auto-downloaded, normalized to Parquet, ~55 MB) |
-| **Genome build** | GRCh38 (harmonized PGS Catalog scoring files) |
-| **PGS IDs** | 100 consecutive IDs: PGS000006 – PGS000106 (5 warm-up IDs excluded from results) |
-| **Scoring files** | Fetched from PGS Catalog FTP; range from 77 variants (PGS000001) to 6.9 M variants (PGS000014) |
+| **VCF** | Personal whole-genome VCF of one individual, DeepVariant 1.1.0 ([Zenodo 18370498](https://zenodo.org/records/18370498), `antonkulaga.vcf`, md5 `21598da4f77d8237577662ab89e8a55d`) |
+| **Records scored** | PASS (or `.`) records on chromosomes 1–22: 4,516,566. All 4,661,444 PASS records, of which 76,657 are multi-allelic and 115,416 on chrX; DeepVariant RefCall records (1,418,300) are excluded |
+| **Genome build** | GRCh38 (PGS Catalog harmonized scoring files, `hmPOS_GRCh38`) |
+| **PGS IDs** | PGS000006 – PGS000106 without PGS000085 (no GRCh38 harmonized file): 100 IDs, listed in `pgs_ids.txt`. Warm-up: PGS000001–003, not counted |
+| **Scoring files** | 77 to 6.9 M variants; checksums and harmonization dates in `scoring_files.csv` |
 
-### System
+### Making the three engines read the same data
 
-| Property | Value |
-|----------|-------|
-| OS | Linux 6.8.0 (lowlatency) |
-| Python | 3.13.5 |
-| CPU | 32 logical cores |
-| RAM | 94 GB |
-| PLINK2 | v2.0 (20260110) |
+| Input | just-prs (Polars, DuckDB) | PLINK2 |
+|---|---|---|
+| Records | `normalize_vcf(pass_filters=["PASS", "."])`, then chromosomes 1–22 | `--vcf-filter --chr 1-22 --make-pgen`, IDs `@:#:$r:$a` |
+| Allele matching | position join, then the allele check (`docs/vcf_flow.md`) | `CHROM:POS:A:B` IDs |
+| Score input | the scoring file | `_prepare_plink2_score_input`: both allele orders, **every** `hm_inferOtherAllele` candidate, liftover-duplicate (variant, allele) pairs summed |
+| Missing genotype | not counted (`variants_no_call`) | `no-mean-imputation` |
+| Output | sum of `effect_weight × dosage` | `cols=scoresums` (`SCORE1_SUM`) |
+
+chrX is left out of every engine because a PLINK2 pgen needs sample sex to
+code it; just-prs scores chrX haploid and diploid-coded male calls 0..2,
+like PLINK2's default `--xchr-model 2`.
 
 ### Engines
 
-| Engine | Description | Variant matching | Genotype input |
-|--------|-------------|-----------------|---------------|
-| **polars** | `compute_prs()` with LazyFrame from normalized Parquet | Polars inner join on (chrom, pos) | Pre-normalized `.parquet` |
-| **duckdb** | SQL join via `duckdb.connect()` on normalized Parquet | DuckDB vectorized hash join | Pre-normalized `.parquet` |
-| **plink2** | PLINK2 binary v2.0, `--pfile --score no-mean-imputation cols=scoresums` | 4-part chr:pos:ref:alt ID match | Pre-converted `.pgen` (autosomes only) |
+| Engine | Call | Genotype input |
+|--------|------|----------------|
+| **polars** | `compute_prs(genotypes_lf=pl.scan_parquet(...))` | normalized Parquet |
+| **duckdb** | `compute_prs_duckdb(genotypes_parquet=...)` | normalized Parquet (DuckDB `read_parquet`) |
+| **plink2** | `plink2 --pfile ... --score <input> 1 2 3 header no-mean-imputation cols=scoresums` | pre-converted pgen |
 
-**Pre-computation** (done once, not included in per-PGS timings):
+PLINK2 is v2.0.0-a.6.33LM (28 Feb 2026), the build the script downloads. Its
+captured stdout/stderr and `.log` are kept per ID in `plink2_logs/`.
 
-- polars / duckdb: VCF → normalized Parquet via `normalize_vcf()` (~4 min for 483 MB VCF)
-- plink2: VCF → pgen via `plink2 --vcf --set-all-var-ids @:#:$r:$a --chr 1-22 --make-pgen` (~3 min)
+**Pre-computation** (done once, not in the per-PGS timings): VCF → normalized
+Parquet with `normalize_vcf()`; VCF → pgen with `plink2 --vcf-filter`.
 
 ### Memory measurement
 
-- **polars / duckdb**: `tracemalloc` peak Python heap allocation per scoring call.
-  This captures in-process allocations (scoring file loading, join structures, result
-  arrays) without OS page-cache noise from memory-mapped Parquet files.
-- **plink2**: subprocess peak RSS sampled every 100 ms via `psutil`. Captures the
-  full footprint of the external binary including its internal data structures.
+- **polars / duckdb**: process RSS, peak during the call minus the RSS before it,
+  sampled every 10 ms with `psutil`. RSS includes the native Rust (Polars) and
+  C++ (DuckDB) allocations.
+- **plink2**: peak RSS of the subprocess, sampled every 100 ms.
 
-> These two measures are not directly comparable in scale, but they each represent
-> the *additional* memory cost incurred per scoring run on top of the data already
-> held in the OS page cache.
+The two numbers are not the same quantity: one is the extra memory a call costs
+inside an already running Python process, the other is a whole process.
 
 ---
 
 ## Results
 
-### Runtime — 100 PGS IDs
+Pending the 2026-10-11 run (see the status note above).
 
-> Median and mean elapsed time per PGS ID scoring call (wall-clock, seconds).
-> "Excluding large" = the 7 PGS IDs with ≥1 M variants (see below).
+---
 
-| Engine | N scored | Median (all) | Mean (all) | Median (≤1M vars) | Mean (≤1M vars) | Speedup vs PLINK2 (median) |
-|--------|:--------:|:------------:|:----------:|:-----------------:|:---------------:|:--------------------------:|
-| **duckdb** | 100 | **0.049 s** | 0.394 s | 0.048 s | 0.059 s | **12.3×** |
-| **polars** | 100 | 0.106 s | 0.466 s | 0.105 s | 0.117 s | 5.7× |
-| plink2 | 96 | 0.603 s | 0.703 s | 0.603 s | 0.640 s | 1× (baseline) |
+## Why the March 2026 run disagreed with PLINK2
 
-**Key takeaways:**
+The March 2026 run reported r = 0.999859 and a largest difference of 21.4
+(PGS000012), and PLINK2 failed on PGS000013/014/016/017. A per-variant
+recomputation of both routes by a just-dna-lite review (2026-10-10)
+reproduced every score and assigned every difference to a cause, with no
+residual:
 
-- DuckDB's vectorized SQL join is **2.2× faster than Polars** at the median.
-- Both Python engines are **5–12× faster than PLINK2** at the median.
-- PLINK2 has a near-constant ~600 ms floor per PGS regardless of scoring file size,
-  dominated by loading and decompressing the pgen file for every scoring call.
-- polars and duckdb scale near-linearly with scoring file size; for small scores
-  (< 1 000 variants), duckdb achieves < 30 ms.
+| Share of Σ\|Δ\| | Cause | Fixed by |
+|---:|---|---|
+| 71.4% | The PLINK2 score input used only the **first** `hm_inferOtherAllele` candidate, so 2,024 heterozygous effect=REF variants in 20 scores went unmatched (all of PGS000012's +21.44) | listing every candidate |
+| 15.7% | The pgen was converted from the **unfiltered** VCF, so PLINK2 counted 1,497 DeepVariant RefCall 0/0 sites as two REF copies; just-prs reads PASS only | `--vcf-filter` |
+| 9.6% | just-prs matched by **position only**: an SNV row took a dose from an indel record sharing its anchor base, and an indel row matched a different indel | allele-aware matching (just-prs 0.10.2) |
+| 1.4% | just-prs compared the effect allele with the **joined** multi-allelic ALT string (`C\|G`) | ALT splitting (just-prs 0.10.2) |
+| 1.9% | chrX, scored by just-prs but cut by `--chr 1-22` | both engines now score 1–22 |
 
-### Runtime — Large scoring files (≥ 1 M variants)
+The PLINK2 failures were not caused by unmatched IDs (those are skipped with a
+warning). Each of the four files has pairs of GRCh37 variants that lift over to
+the same GRCh38 variant; writing both allele orders repeated a (variant,
+allele) line, and PLINK2 stops with `ALT1 allele for variant ... appears
+multiple times`. The score input now sums such pairs, which is also what
+just-prs computes when it scores both rows against one genotype.
 
-These 7 genome-wide PGS IDs are scored by all engines but represent atypical workloads.
+The matched counts in the March table differed by far more than "1–3
+variants": on PGS000012, just-prs matched 24,005 rows and PLINK2 20,328.
 
-| PGS ID | Variants | Polars (s) | DuckDB (s) | PLINK2 |
-|--------|:--------:|:----------:|:----------:|:------:|
-| PGS000014 | 6,917,436 | 6.72 | 6.42 | FAILED |
-| PGS000017 | 6,907,112 | 6.77 | 6.42 | FAILED |
-| PGS000016 | 6,730,541 | 6.65 | 6.28 | FAILED |
-| PGS000013 | 6,630,150 | 6.71 | 6.42 | FAILED |
-| PGS000039 | 3,225,583 | 4.12 | 3.84 | 1.79 s |
-| PGS000027 | 2,100,302 | 2.48 | 2.28 | 1.71 s |
-| PGS000018 | 1,745,179 | 2.32 | 2.23 | 1.41 s |
+### March 2026 numbers (superseded)
 
-PLINK2 **failed to produce a score** for the four largest files
-(PGS000013/014/016/017, each ≈ 6.6–6.9 M variants). These genome-wide scoring
-files contain variants without a matching 4-part `chr:pos:ref:alt` ID in the pgen
-(which covers autosomes only). Both just-prs engines scored all 100 IDs
-successfully using flexible position-based matching.
+just-prs commit 5add116, PLINK2 a6.32, 32 cores / 94 GB. Memory was then
+measured with `tracemalloc` (Python heap only), which does not see native
+allocations; the script now measures RSS.
 
-For the three files where PLINK2 did succeed, PLINK2 was faster for very large
-files because it can leverage compiled C++ SIMD operations on pre-indexed data;
-just-prs currently reads the full scoring file as a DataFrame before joining.
-Future versions will use streaming joins for files > 1 M variants.
-
-### Memory — per scoring call
-
-| Engine | Median peak | Mean peak | Max peak | Method |
-|--------|:-----------:|:---------:|:--------:|--------|
-| **duckdb** | **0.2 MB** | 139 MB | 2,594 MB | tracemalloc heap |
-| **polars** | **0.2 MB** | 139 MB | 2,594 MB | tracemalloc heap |
-| plink2 | **590 MB** | 595 MB | 974 MB | subprocess RSS |
-
-**Key takeaways:**
-
-- For typical PGS IDs (< 500 K variants), polars and duckdb allocate **< 1 MB**
-  of Python heap per scoring call. The normalized Parquet is memory-mapped by the
-  OS and does not appear in the tracemalloc peak.
-- PLINK2 allocates **~590 MB per scoring call** because it must load the compressed
-  pgen, pvar, and psam files into its own address space for every `--score`
-  invocation. This is roughly **590–3000× more RAM** than our Python engines.
-- The mean/max for polars and duckdb are high because they are dominated by the
-  7 large scoring files (6–7 M variants × 8 bytes × several columns ≈ 2–3 GB
-  DataFrames). Future streaming support will eliminate this spike.
-- PLINK2's RAM usage is stable across scoring file sizes (590–974 MB) because
-  the pgen reading cost is invariant; it is limited by the pgen file size, not
-  the scoring file size.
-
-### Score agreement
-
-All engines produce numerically equivalent results. Pearson correlations and
-maximum absolute differences across 100 PGS IDs (96 PGS IDs for PLINK2 pairs,
-since 4 IDs failed):
+| Engine | N scored | Median time | Mean time |
+|--------|:--------:|:-----------:|:---------:|
+| duckdb | 100 | 0.049 s | 0.394 s |
+| polars | 100 | 0.106 s | 0.466 s |
+| plink2 | 96 | 0.603 s | 0.703 s |
 
 | Engine pair | N PGS | Pearson r | Max \|Δ score\| |
 |-------------|:-----:|:---------:|:---------------:|
-| **duckdb ↔ polars** | 100 | **1.000000** | < 1.1 × 10⁻¹³ |
-| duckdb ↔ plink2 | 96 | 0.999859 | 21.4 |
+| duckdb ↔ polars | 100 | 1.000000 | < 1.1 × 10⁻¹³ |
 | polars ↔ plink2 | 96 | 0.999859 | 21.4 |
-
-**Notes on the absolute difference:**
-
-- The near-zero difference between DuckDB and Polars confirms they implement
-  the same algorithm: position-based join, dosage from GT string, weighted sum.
-- The absolute max difference vs PLINK2 (21.4) reflects two sources:
-  1. **Scale**: PLINK2 `cols=scoresums` returns a raw sum, but our engines also
-     compute a raw sum. For genome-wide scores (millions of variants), even a
-     fractional difference in the set of matched variants causes large absolute diffs.
-  2. **Variant matching**: PLINK2 requires an exact 4-part `chr:pos:ref:alt` ID
-     match; our engines use position-only matching followed by allele orientation
-     detection. For ambiguous or multiallelic sites, 1–3 extra variants are
-     included or excluded, shifting the sum slightly.
-- The **Pearson correlation of 0.9999** confirms that per-individual risk rankings
-  are effectively identical. For percentile estimation and clinical interpretation,
-  rank correlation is the relevant metric.
 
 ---
 
 ## Reproducing the benchmark
 
-All results are fully reproducible. The benchmark auto-downloads all inputs on
-first run; subsequent runs use cached files.
+The script downloads the VCF, the scoring files and PLINK2 on first use, then
+reuses them.
 
 ```bash
-# Clone and install
-git clone https://github.com/just-dna-seq/just-prs.git
-cd just-prs
 uv sync --all-packages
 
-# Full 100-PGS benchmark (auto-downloads VCF + scoring files on first run, ~5–10 min)
-uv run python just-prs/benchmarks/benchmark_engines.py
+# The published set: PGS000006-PGS000106 without PGS000085
+uv run python just-prs/benchmarks/benchmark_engines.py --output just-prs/benchmarks/results/<date>
 
-# Skip PLINK2 (if binary not available)
+# Other IDs, or without PLINK2
+uv run python just-prs/benchmarks/benchmark_engines.py --pgs-ids PGS000001-PGS000050 --exclude ""
 uv run python just-prs/benchmarks/benchmark_engines.py --skip-plink2
 
-# Custom number of PGS IDs or output directory
-uv run python just-prs/benchmarks/benchmark_engines.py --n-pgs 50 --output my_results/
-
-# Results are written to:
-#   data/output/benchmarks/benchmark_results.csv      (per-PGS per-engine timings)
-#   data/output/benchmarks/benchmark_validation.csv   (cross-engine correlations)
-#   data/output/benchmarks/benchmark_metadata.csv     (system info)
+# Attribute every remaining just-prs vs PLINK2 difference to a cause
+uv run python just-prs/benchmarks/attribute_residual.py \
+    --run just-prs/benchmarks/results/<date> \
+    --genotypes <cache>/benchmark/vcf/antonkulaga_normalized_autosomes.parquet \
+    --pvar <cache>/benchmark/pgen/benchmark_pgen_pass.pvar
 ```
 
-### Output schema
+### Outputs
 
-`benchmark_results.csv`:
-
-| Column | Description |
-|--------|-------------|
-| `pgs_id` | PGS Catalog score identifier |
-| `engine` | `polars`, `duckdb`, or `plink2` |
-| `elapsed_sec` | Wall-clock time (seconds) |
-| `peak_memory_mb` | Peak heap MB (polars/duckdb) or peak subprocess RSS MB (plink2) |
-| `score` | Raw PRS sum (effect_weight × dosage) |
-| `variants_matched` | Variants matched between VCF and scoring file |
-| `variants_total` | Total variants in scoring file |
-| `match_rate` | `variants_matched / variants_total` |
-| `error` | Error message if engine failed, else null |
-
----
-
-## Discussion
-
-### When to use each engine
-
-| Scenario | Recommended engine |
-|----------|--------------------|
-| Single individual, typical PGS (< 100 K variants) | **duckdb** (fastest, lowest RAM) |
-| Batch scoring many individuals | **polars** (pure Python, easily parallelizable) |
-| Cross-validation against published tools | **plink2** (standard reference implementation) |
-| Genome-wide scores (> 1 M variants), large files | **duckdb** or **polars** (PLINK2 may fail) |
-
-### Limitations and future work
-
-1. **Large scoring files**: For genome-wide PGS (6–7 M variants), all engines
-   currently load the scoring DataFrame into memory. A future streaming join will
-   reduce the memory peak from ~2.5 GB to < 100 MB for these cases.
-2. **PLINK2 pgen scope**: The pre-converted pgen covers autosomes only (chr 1–22)
-   due to chrX pseudoautosomal region complications. This causes PLINK2 to miss
-   X-linked variants in scoring files. Our engines use the full-genome normalized
-   Parquet, so they score X-linked variants correctly.
-3. **Match rate**: All engines achieve ~50–54% variant match rate. The unmatched
-   ~50% consists mainly of insertions/deletions and multiallelic sites that are
-   not directly representable in the VCF as biallelic SNPs, plus any build-specific
-   coordinate shifts.
+| File | Contents |
+|------|----------|
+| `benchmark_results.csv` | one row per PGS ID × engine: time, memory, score, matched, `variants_allele_mismatch`, error |
+| `benchmark_per_pgs.csv` | one row per PGS ID: each engine's score and matched count, and the deltas |
+| `benchmark_validation.csv` | Pearson r and max \|Δ\| per engine pair |
+| `benchmark_metadata.csv` | versions (incl. the just-prs git commit), PLINK2 build and flags, VCF md5, machine |
+| `pgs_ids.txt`, `scoring_files.csv` | the exact IDs; scoring-file md5 and harmonization date |
+| `plink2_logs/` | per ID: PLINK2 `.log` and captured console output; `vcf_to_pgen.log` |
+| `residual_by_cause.csv`, `residual_per_pgs.csv`, `residual_per_variant.csv` | from `attribute_residual.py` |

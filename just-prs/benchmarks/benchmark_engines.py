@@ -12,6 +12,20 @@ duckdb  — DuckDB SQL join of the normalized parquet with the scoring DataFrame
 plink2  — PLINK2 binary, pre-converted pgen dataset (chr:pos:ref:alt IDs).
            Amortizes VCF→pgen conversion over the full benchmark run.
 
+Inputs are made identical for all three engines
+-----------------------------------------------
+- Only PASS (or ".") records: just-prs reads ``normalize_vcf(pass_filters=["PASS", "."])``
+  and the pgen is converted with ``--vcf-filter``, so DeepVariant RefCall 0/0 sites
+  are excluded from both. (Without it PLINK2 counted them as two REF copies.)
+- Autosomes only (``--autosomes-only``, default): PLINK2 converts ``--chr 1-22``
+  and the just-prs engines read the same records filtered to chromosomes 1-22.
+- The PLINK2 score input lists every ``hm_inferOtherAllele`` candidate and sums
+  liftover-duplicate (variant, allele) pairs (``_prepare_plink2_score_input``).
+- The PGS IDs are an explicit list (``--pgs-ids``), written to ``pgs_ids.txt``.
+
+Outputs (``--output``): long and per-PGS CSVs, the exact ID list, scoring-file
+checksums, and PLINK2's ``.log`` plus captured stdout/stderr for every ID.
+
 Memory measurement
 ------------------
 polars / duckdb: process RSS delta (peak RSS during call minus RSS before call),
@@ -23,13 +37,15 @@ plink2:          subprocess peak RSS sampled every 100 ms via psutil — the ful
 Usage
 -----
     uv run python just-prs/benchmarks/benchmark_engines.py
-    uv run python just-prs/benchmarks/benchmark_engines.py --n-pgs 50
+    uv run python just-prs/benchmarks/benchmark_engines.py --pgs-ids PGS000001-PGS000050
     uv run python just-prs/benchmarks/benchmark_engines.py --output data/output/benchmarks
 """
 
 from __future__ import annotations
 
+import hashlib
 import platform
+import re
 import shutil
 import stat
 import subprocess
@@ -39,19 +55,18 @@ import time
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable
+from typing import Callable, TypeVar
 
 import httpx
 import polars as pl
 import psutil
 import typer
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
-from just_prs.prs import _normalize_scoring_columns, compute_prs, compute_prs_duckdb
-from just_prs.scoring import download_scoring_file, parse_scoring_file, resolve_cache_dir
+from just_prs.prs import compute_prs, compute_prs_duckdb
+from just_prs.scoring import ensure_scoring_file, read_scoring_header, resolve_cache_dir
 from just_prs.reference import _prepare_plink2_score_input
 
 app = typer.Typer(pretty_exceptions_enable=False)
@@ -63,6 +78,13 @@ console = Console()
 
 VCF_URL = "https://zenodo.org/api/records/18370498/files/antonkulaga.vcf/content"
 VCF_FILENAME = "antonkulaga.vcf"
+VCF_MD5 = "21598da4f77d8237577662ab89e8a55d"
+
+# The PGS IDs of the published benchmark (Paper 1, Table 5): PGS000006 to
+# PGS000106 without PGS000085, after the three warm-up IDs.
+DEFAULT_PGS_IDS = "PGS000006-PGS000106"
+DEFAULT_EXCLUDE = "PGS000085"
+DEFAULT_WARMUP_IDS = "PGS000001,PGS000002,PGS000003"
 
 PLINK2_BASE_URL = "https://s3.amazonaws.com/plink2-assets"
 PLINK2_RELEASE_PATH = "alpha6"
@@ -91,6 +113,7 @@ class EngineResult:
     score: float | None
     variants_matched: int
     variants_total: int
+    variants_allele_mismatch: int = 0
     error: str | None = None
 
     @property
@@ -121,9 +144,10 @@ def _track_subprocess_peak_memory(pid: int) -> float:
     return peak
 
 
-def measure_engine(
-    fn: Callable[[], tuple[float | None, int, int]],
-) -> tuple[tuple[float | None, int, int], float, float]:
+T = TypeVar("T")
+
+
+def measure_engine(fn: Callable[[], T]) -> tuple[T, float, float]:
     """Run *fn* with RSS-based memory tracking.
 
     Returns (result, elapsed_sec, rss_delta_mb).
@@ -255,66 +279,91 @@ def resolve_plink2() -> Path | None:
     return download_plink2(cache_dir)
 
 
-def vcf_to_pgen(vcf_path: Path, plink2_bin: Path, out_dir: Path) -> Path:
-    """Convert VCF to PLINK2 pgen format with chr:pos:ref:alt IDs.
+def parse_pgs_ids(spec: str) -> list[str]:
+    """Expand ``"PGS000006-PGS000106,PGS000200"`` into an ordered ID list."""
+    ids: list[str] = []
+    for part in (p.strip() for p in spec.split(",")):
+        if not part:
+            continue
+        m = re.fullmatch(r"PGS(\d{6})-PGS(\d{6})", part, flags=re.IGNORECASE)
+        if m:
+            ids.extend(f"PGS{n:06d}" for n in range(int(m.group(1)), int(m.group(2)) + 1))
+        else:
+            ids.append(part.upper())
+    return list(dict.fromkeys(ids))
 
-    This is a one-time setup step for the PLINK2 engine benchmarks.
-    Returns the path prefix (without .pgen/.pvar/.psam extension).
+
+def file_md5(path: Path) -> str:
+    digest = hashlib.md5()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def vcf_to_pgen(vcf_path: Path, plink2_bin: Path, out_dir: Path, log_dir: Path) -> Path:
+    """Convert the VCF to a PASS-only, autosomal PLINK2 pgen with chr:pos:ref:alt IDs.
+
+    ``--vcf-filter`` keeps the records just-prs reads (FILTER PASS or "."); the
+    unfiltered conversion counted DeepVariant RefCall 0/0 sites as two REF copies.
+    The prefix differs from the old unfiltered ``benchmark_pgen`` so a cached
+    unfiltered pgen is never reused. Returns the path prefix.
     """
-    prefix = out_dir / "benchmark_pgen"
+    prefix = out_dir / "benchmark_pgen_pass"
     pgen_file = Path(str(prefix) + ".pgen")
-    if pgen_file.exists():
+    if not pgen_file.exists():
+        out_dir.mkdir(parents=True, exist_ok=True)
+        console.print(f"[cyan]Converting VCF → PASS-only PGEN → {prefix}[/cyan]")
+        cmd = [
+            str(plink2_bin),
+            "--vcf", str(vcf_path),
+            "--vcf-filter",
+            "--set-all-var-ids", "@:#:$r:$a",
+            "--new-id-max-allele-len", "10000",
+            "--chr", "1-22",  # chrX needs sex info; the just-prs inputs are cut to 1-22 too
+            "--make-pgen",
+            "--out", str(prefix),
+            "--threads", "4",
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            console.print(f"[red]PLINK2 VCF→PGEN failed:[/red]\n{result.stderr[-2000:]}")
+            raise RuntimeError("PLINK2 VCF→PGEN conversion failed")
+        console.print("[green]PGEN conversion done.[/green]")
+    else:
         console.print(f"[green]PGEN already cached:[/green] {prefix}.pgen")
-        return prefix
-
-    out_dir.mkdir(parents=True, exist_ok=True)
-    console.print(f"[cyan]Converting VCF → PGEN format → {prefix}[/cyan]")
-    cmd = [
-        str(plink2_bin),
-        "--vcf", str(vcf_path),
-        "--set-all-var-ids", "@:#:$r:$a",
-        "--new-id-max-allele-len", "10000",
-        "--chr", "1-22",  # autosomes only; skip chrX/Y sex-info complications
-        "--make-pgen",
-        "--out", str(prefix),
-        "--threads", "4",
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        console.print(f"[red]PLINK2 VCF→PGEN failed:[/red]\n{result.stderr[-2000:]}")
-        raise RuntimeError("PLINK2 VCF→PGEN conversion failed")
-    console.print(f"[green]PGEN conversion done.[/green]")
+    log_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(Path(str(prefix) + ".log"), log_dir / "vcf_to_pgen.log")
     return prefix
 
 
-def download_scoring_files(
-    n: int,
-    cache_dir: Path,
-    genome_build: str = GENOME_BUILD,
-) -> list[tuple[str, Path]]:
-    """Download N scoring files from PGS Catalog. Returns list of (pgs_id, path) tuples."""
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    results: list[tuple[str, Path]] = []
-    attempted = 0
-    pgs_num = 1
+def autosome_parquet(normalized_parquet: Path) -> Path:
+    """The normalized genotypes restricted to chromosomes 1-22 (PLINK2's ``--chr 1-22``)."""
+    out = normalized_parquet.with_name(normalized_parquet.stem + "_autosomes.parquet")
+    if out.exists() and out.stat().st_mtime >= normalized_parquet.stat().st_mtime:
+        return out
+    autosomes = [str(c) for c in range(1, 23)]
+    pl.scan_parquet(normalized_parquet).filter(pl.col("chrom").is_in(autosomes)).sink_parquet(out)
+    return out
 
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as prog:
-        task = prog.add_task(f"Downloading scoring files (target: {n})", total=None)
-        while len(results) < n and pgs_num <= 1000:
-            pgs_id = f"PGS{pgs_num:06d}"
-            pgs_num += 1
-            attempted += 1
-            prog.update(task, description=f"Downloading scoring files ({len(results)}/{n}) — trying {pgs_id}")
-            try:
-                path = download_scoring_file(pgs_id, cache_dir, genome_build=genome_build)
-                # Verify it can be parsed
-                df = _normalize_scoring_columns(parse_scoring_file(path)).collect()
-                if df.height > 0:
-                    results.append((pgs_id, path))
-            except Exception:
-                pass  # skip unavailable or unparseable scoring files
-    console.print(f"[green]Collected {len(results)} scoring files (attempted {attempted})[/green]")
-    return results
+
+def resolve_scoring_files(
+    pgs_ids: list[str],
+    scores_dir: Path,
+    genome_build: str = GENOME_BUILD,
+) -> tuple[list[tuple[str, Path]], dict[str, str]]:
+    """Resolve each ID to its cached harmonized parquet. Returns (found, {id: error})."""
+    found: list[tuple[str, Path]] = []
+    failed: dict[str, str] = {}
+    for pgs_id in pgs_ids:
+        try:
+            found.append((pgs_id, ensure_scoring_file(pgs_id, scores_dir, genome_build=genome_build)))
+        except Exception as exc:  # recorded and reported, not silently dropped
+            failed[pgs_id] = f"{type(exc).__name__}: {exc}"
+    console.print(f"[green]Scoring files: {len(found)} resolved, {len(failed)} failed[/green]")
+    for pgs_id, err in failed.items():
+        console.print(f"  [yellow]{pgs_id}: {err}[/yellow]")
+    return found, failed
 
 
 # ---------------------------------------------------------------------------
@@ -326,8 +375,8 @@ def score_polars(
     pgs_id: str,
     scoring_file: Path,
     genotypes_lf: pl.LazyFrame,
-) -> tuple[float | None, int, int]:
-    """Score with our polars engine. Returns (score, variants_matched, variants_total)."""
+) -> tuple[float | None, int, int, int]:
+    """Score with the polars engine. Returns (score, matched, total, allele_mismatch)."""
     result = compute_prs(
         vcf_path="__unused__",
         scoring_file=scoring_file,
@@ -335,7 +384,7 @@ def score_polars(
         pgs_id=pgs_id,
         genotypes_lf=genotypes_lf,
     )
-    return result.score, result.variants_matched, result.variants_total
+    return result.score, result.variants_matched, result.variants_total, result.variants_allele_mismatch
 
 
 # ---------------------------------------------------------------------------
@@ -347,8 +396,8 @@ def score_duckdb(
     pgs_id: str,
     scoring_file: Path,
     normalized_parquet: Path,
-) -> tuple[float | None, int, int]:
-    """Score with DuckDB SQL engine. Returns (score, variants_matched, variants_total)."""
+) -> tuple[float | None, int, int, int]:
+    """Score with the DuckDB engine. Returns (score, matched, total, allele_mismatch)."""
     result = compute_prs_duckdb(
         vcf_path="__unused__",
         scoring_file=scoring_file,
@@ -356,12 +405,31 @@ def score_duckdb(
         pgs_id=pgs_id,
         genotypes_parquet=normalized_parquet,
     )
-    return result.score, result.variants_matched, result.variants_total
+    return result.score, result.variants_matched, result.variants_total, result.variants_allele_mismatch
 
 
 # ---------------------------------------------------------------------------
 # PLINK2 engine
 # ---------------------------------------------------------------------------
+
+
+def _read_plink2_score(out_prefix: Path) -> tuple[float | None, int]:
+    """SCORE*_SUM from the .sscore and the matched-variant count from the .log."""
+    sscore = Path(str(out_prefix) + ".sscore")
+    score: float | None = None
+    if sscore.exists():
+        df = pl.read_csv(sscore, separator="\t")
+        df = df.rename({c: c.lstrip("#") for c in df.columns})
+        score_col = next((c for c in df.columns if "SCORE" in c.upper() and "SUM" in c.upper()), None)
+        if score_col is not None and df.height > 0:
+            score = float(df[score_col][0])
+    variants_matched = 0
+    log_path = Path(str(out_prefix) + ".log")
+    if log_path.exists():
+        m = re.search(r"--score:\s+(\d+)\s+variants? processed", log_path.read_text())
+        if m:
+            variants_matched = int(m.group(1))
+    return score, variants_matched
 
 
 def score_plink2(
@@ -370,131 +438,55 @@ def score_plink2(
     pgen_prefix: Path,
     plink2_bin: Path,
     tmp_dir: Path,
-) -> tuple[float | None, int, int]:
-    """Score with PLINK2 binary. Returns (score, variants_matched, variants_total)."""
-    scoring_df = _normalize_scoring_columns(parse_scoring_file(scoring_file)).collect()
-    variants_total = scoring_df.height
+    log_dir: Path | None = None,
+) -> tuple[tuple[float | None, int, int, int], float, float, str | None]:
+    """Score with PLINK2, tracking subprocess peak RSS.
 
+    Returns ``((score, matched, total, 0), elapsed, peak_mb, error)``. PLINK2's
+    stdout/stderr and ``.log`` are copied to *log_dir* when given.
+    """
+    variants_total = parse_scoring_file_height(scoring_file)
     score_input = _prepare_plink2_score_input(scoring_file, pgs_id, tmp_dir)
     if score_input is None:
-        return None, 0, variants_total
+        return (None, 0, variants_total, 0), 0.0, 0.0, "no score input"
 
     out_prefix = tmp_dir / pgs_id
     cmd = [
         str(plink2_bin),
         "--pfile", str(pgen_prefix),
         "--score", str(score_input), "1", "2", "3", "header", "no-mean-imputation",
-        "cols=scoresums",  # force SUM output for direct comparison with polars/duckdb
+        "cols=scoresums",  # SUM output, directly comparable with polars/duckdb
         "--out", str(out_prefix),
         "--threads", "4",
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-
-    sscore = Path(str(out_prefix) + ".sscore")
-    if result.returncode != 0 or not sscore.exists():
-        return None, 0, variants_total
-
-    df = pl.read_csv(sscore, separator="\t")
-    df = df.rename({c: c.lstrip("#") for c in df.columns})
-
-    score_col = next(
-        (c for c in df.columns if "SCORE" in c.upper() and "SUM" in c.upper()), None
-    )
-    if score_col is None:
-        score_col = next(
-            (c for c in df.columns if "SCORE" in c.upper() and "AVG" in c.upper()), None
-        )
-    if score_col is None or df.height == 0:
-        return None, 0, variants_total
-
-    score = float(df[score_col].to_list()[0])
-
-    # Extract variants matched from PLINK2 log
-    log_path = Path(str(out_prefix) + ".log")
-    variants_matched = 0
-    if log_path.exists():
-        log_text = log_path.read_text()
-        import re
-        m = re.search(r"--score:\s+(\d+)\s+valid predictor", log_text)
-        if m:
-            variants_matched = int(m.group(1))
-        else:
-            m = re.search(r"--score:\s+(\d+)\s+variant", log_text)
-            if m:
-                variants_matched = int(m.group(1))
-
-    return score, variants_matched, variants_total
-
-
-# ---------------------------------------------------------------------------
-# PLINK2 memory tracking (subprocess)
-# ---------------------------------------------------------------------------
-
-
-def score_plink2_with_memory(
-    pgs_id: str,
-    scoring_file: Path,
-    pgen_prefix: Path,
-    plink2_bin: Path,
-    tmp_dir: Path,
-) -> tuple[tuple[float | None, int, int], float, float]:
-    """Score with PLINK2 and track subprocess peak memory. Returns (result, elapsed, peak_mb)."""
-    scoring_df = _normalize_scoring_columns(parse_scoring_file(scoring_file)).collect()
-    variants_total = scoring_df.height
-
-    score_input = _prepare_plink2_score_input(scoring_file, pgs_id, tmp_dir)
-    if score_input is None:
-        return (None, 0, variants_total), 0.0, 0.0
-
-    out_prefix = tmp_dir / pgs_id
-    cmd = [
-        str(plink2_bin),
-        "--pfile", str(pgen_prefix),
-        "--score", str(score_input), "1", "2", "3", "header", "no-mean-imputation",
-        "cols=scoresums",  # force SUM output for direct comparison with polars/duckdb
-        "--out", str(out_prefix),
-        "--threads", "4",
-    ]
-
+    console_path = tmp_dir / f"{pgs_id}.console.txt"
     t0 = time.perf_counter()
-    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    peak_mb = _track_subprocess_peak_memory(proc.pid)
-    proc.wait()
+    with console_path.open("w") as console_fh:
+        proc = subprocess.Popen(cmd, stdout=console_fh, stderr=subprocess.STDOUT)
+        peak_mb = _track_subprocess_peak_memory(proc.pid)
+        proc.wait()
     elapsed = time.perf_counter() - t0
 
-    sscore = Path(str(out_prefix) + ".sscore")
-    if proc.returncode != 0 or not sscore.exists():
-        return (None, 0, variants_total), elapsed, peak_mb
+    if log_dir is not None:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(console_path, log_dir / f"{pgs_id}.console.txt")
+        log_path = Path(str(out_prefix) + ".log")
+        if log_path.exists():
+            shutil.copy2(log_path, log_dir / f"{pgs_id}.log")
 
-    df = pl.read_csv(sscore, separator="\t")
-    df = df.rename({c: c.lstrip("#") for c in df.columns})
+    score, variants_matched = _read_plink2_score(out_prefix)
+    error = None
+    if proc.returncode != 0 or score is None:
+        tail = console_path.read_text().strip().splitlines()[-1:] or [""]
+        error = f"exit {proc.returncode}: {tail[0]}"
+        score = None
+    return (score, variants_matched, variants_total, 0), elapsed, peak_mb, error
 
-    score_col = next(
-        (c for c in df.columns if "SCORE" in c.upper() and "SUM" in c.upper()), None
-    )
-    if score_col is None:
-        score_col = next(
-            (c for c in df.columns if "SCORE" in c.upper() and "AVG" in c.upper()), None
-        )
-    if score_col is None or df.height == 0:
-        return (None, 0, variants_total), elapsed, peak_mb
 
-    score = float(df[score_col].to_list()[0])
+def parse_scoring_file_height(scoring_file: Path) -> int:
+    from just_prs.scoring import parse_scoring_file
 
-    log_path = Path(str(out_prefix) + ".log")
-    variants_matched = 0
-    if log_path.exists():
-        import re
-        log_text = log_path.read_text()
-        m = re.search(r"--score:\s+(\d+)\s+valid predictor", log_text)
-        if m:
-            variants_matched = int(m.group(1))
-        else:
-            m = re.search(r"--score:\s+(\d+)\s+variant", log_text)
-            if m:
-                variants_matched = int(m.group(1))
-
-    return (score, variants_matched, variants_total), elapsed, peak_mb
+    return int(parse_scoring_file(scoring_file).select(pl.len()).collect().item())
 
 
 # ---------------------------------------------------------------------------
@@ -619,45 +611,109 @@ def print_validation_table(validation_df: pl.DataFrame) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _engine_result(
+    pgs_id: str,
+    engine: str,
+    run: Callable[[], tuple[float | None, int, int, int]],
+) -> EngineResult:
+    try:
+        (score, matched, total, mismatch), elapsed, peak = measure_engine(run)
+    except Exception as exc:
+        return EngineResult(
+            pgs_id=pgs_id, engine=engine, elapsed_sec=0.0, peak_memory_mb=0.0,
+            score=None, variants_matched=0, variants_total=0, error=f"{type(exc).__name__}: {exc}",
+        )
+    return EngineResult(
+        pgs_id=pgs_id, engine=engine, elapsed_sec=elapsed, peak_memory_mb=peak,
+        score=score, variants_matched=matched, variants_total=total,
+        variants_allele_mismatch=mismatch,
+    )
+
+
+def per_pgs_table(results_df: pl.DataFrame) -> pl.DataFrame:
+    """One row per PGS ID: each engine's score and matched count, and the deltas."""
+    wide = results_df.pivot(
+        values=["score", "variants_matched", "error"], index="pgs_id", on="engine",
+        aggregate_function="first",
+    )
+    totals = results_df.group_by("pgs_id", maintain_order=True).agg(
+        pl.col("variants_total").max(),
+        pl.col("variants_allele_mismatch").filter(pl.col("engine") == "duckdb").first(),
+    )
+    out = totals.join(wide, on="pgs_id", how="left")
+    if {"score_polars", "score_duckdb"} <= set(out.columns):
+        out = out.with_columns((pl.col("score_duckdb") - pl.col("score_polars")).alias("delta_duckdb_polars"))
+    if {"score_polars", "score_plink2"} <= set(out.columns):
+        out = out.with_columns((pl.col("score_polars") - pl.col("score_plink2")).alias("delta_polars_plink2"))
+    return out
+
+
 @app.command()
 def run_benchmark(
-    n_pgs: int = typer.Option(100, help="Number of PGS IDs to benchmark."),
+    pgs_ids: str = typer.Option(
+        DEFAULT_PGS_IDS,
+        help="Comma-separated PGS IDs and ranges (PGS000006-PGS000106) to benchmark.",
+    ),
+    exclude: str = typer.Option(DEFAULT_EXCLUDE, help="Comma-separated IDs/ranges to leave out."),
+    warmup_ids: str = typer.Option(
+        DEFAULT_WARMUP_IDS, help="IDs scored once before timing starts (not counted)."
+    ),
     output: Path = typer.Option(
         Path("data/output/benchmarks"),
-        help="Directory to write benchmark results (CSV, Parquet).",
+        help="Directory to write benchmark results (CSV, Parquet, PLINK2 logs).",
     ),
     skip_plink2: bool = typer.Option(False, help="Skip the PLINK2 engine."),
+    autosomes_only: bool = typer.Option(
+        True,
+        "--autosomes-only/--all-chromosomes",
+        help="Score chromosomes 1-22 only in every engine, as PLINK2's pgen holds.",
+    ),
     cache_dir: Path = typer.Option(
         None,
-        help="Cache directory for VCF, scoring files, and pgen data. "
-             "Defaults to just-prs cache dir.",
+        help="Cache directory for the VCF and pgen data. Defaults to <just-prs cache>/benchmark.",
     ),
-    n_warmup: int = typer.Option(3, help="Number of PGS IDs to use as a warm-up (not counted)."),
+    scores_dir: Path = typer.Option(
+        None, help="Scoring-file cache. Defaults to <just-prs cache>/scores."
+    ),
 ) -> None:
     """Benchmark Polars, DuckDB, and PLINK2 PRS engines on a real personal genome."""
     if cache_dir is None:
         cache_dir = resolve_cache_dir() / "benchmark"
+    if scores_dir is None:
+        scores_dir = resolve_cache_dir() / "scores"
     cache_dir.mkdir(parents=True, exist_ok=True)
     output.mkdir(parents=True, exist_ok=True)
+    log_dir = output / "plink2_logs"
+
+    excluded = set(parse_pgs_ids(exclude))
+    benchmark_ids = [i for i in parse_pgs_ids(pgs_ids) if i not in excluded]
+    warmup_list = parse_pgs_ids(warmup_ids)
+    (output / "pgs_ids.txt").write_text("\n".join(benchmark_ids) + "\n")
+    console.print(f"Benchmark IDs: {len(benchmark_ids)} ({benchmark_ids[0]} … {benchmark_ids[-1]})")
 
     # ------------------------------------------------------------------
     # Step 1: Download + normalize VCF
     # ------------------------------------------------------------------
     console.rule("[bold blue]Step 1: Download + normalize VCF[/bold blue]")
     vcf_path = download_vcf(cache_dir / "vcf")
+    vcf_md5 = file_md5(vcf_path)
+    if vcf_md5 != VCF_MD5:
+        console.print(f"[red]VCF md5 {vcf_md5} != expected {VCF_MD5}[/red]")
+        raise typer.Exit(1)
     normalized_parquet = normalize_vcf_cached(vcf_path, cache_dir / "vcf")
+    if autosomes_only:
+        normalized_parquet = autosome_parquet(normalized_parquet)
     genotypes_lf = pl.scan_parquet(normalized_parquet)
 
     n_variants = genotypes_lf.select(pl.len()).collect().item()
-    console.print(f"Normalized parquet: [bold]{n_variants:,}[/bold] variants")
+    console.print(f"Genotype input: [bold]{n_variants:,}[/bold] PASS records ({normalized_parquet.name})")
 
     # ------------------------------------------------------------------
     # Step 2: Setup PLINK2 (optional)
     # ------------------------------------------------------------------
     plink2_bin: Path | None = None
     pgen_prefix: Path | None = None
-    plink2_tmp: Path = cache_dir / "plink2_tmp"
-    plink2_tmp.mkdir(parents=True, exist_ok=True)
+    plink2_version = ""
 
     if not skip_plink2:
         console.rule("[bold blue]Step 2: Setup PLINK2[/bold blue]")
@@ -666,25 +722,33 @@ def run_benchmark(
             console.print("[yellow]PLINK2 not available — skipping PLINK2 engine.[/yellow]")
             skip_plink2 = True
         else:
-            pgen_dir = cache_dir / "pgen"
-            pgen_dir.mkdir(parents=True, exist_ok=True)
-            pgen_prefix = vcf_to_pgen(vcf_path, plink2_bin, pgen_dir)
+            plink2_version = subprocess.run(
+                [str(plink2_bin), "--version"], capture_output=True, text=True
+            ).stdout.strip()
+            console.print(f"PLINK2: {plink2_bin} ({plink2_version})")
+            pgen_prefix = vcf_to_pgen(vcf_path, plink2_bin, cache_dir / "pgen", log_dir)
 
     # ------------------------------------------------------------------
-    # Step 3: Download scoring files
+    # Step 3: Scoring files
     # ------------------------------------------------------------------
-    console.rule("[bold blue]Step 3: Download scoring files[/bold blue]")
-    scoring_cache = cache_dir / "scores"
-    total_needed = n_pgs + n_warmup
-    scoring_files = download_scoring_files(total_needed, scoring_cache)
-
-    if len(scoring_files) < n_warmup + 1:
-        console.print(f"[red]Only {len(scoring_files)} scoring files available — need at least {n_warmup + 1}.[/red]")
-        raise typer.Exit(1)
-
-    warmup_pairs = scoring_files[:n_warmup]
-    benchmark_pairs = scoring_files[n_warmup:n_warmup + n_pgs]
-    console.print(f"Warm-up: {len(warmup_pairs)} PGS IDs | Benchmark: {len(benchmark_pairs)} PGS IDs")
+    console.rule("[bold blue]Step 3: Scoring files[/bold blue]")
+    benchmark_pairs, scoring_failures = resolve_scoring_files(benchmark_ids, scores_dir)
+    warmup_pairs, _ = resolve_scoring_files(warmup_list, scores_dir)
+    scoring_rows = []
+    for pgs_id, sf in benchmark_pairs:
+        header = read_scoring_header(sf)
+        scoring_rows.append({
+            "pgs_id": pgs_id,
+            "file": sf.name,
+            "md5": file_md5(sf),
+            "format_version": header.get("format_version"),
+            "HmPOS_build": header.get("HmPOS_build"),
+            "HmPOS_date": header.get("HmPOS_date"),
+            "variants_number": header.get("variants_number"),
+        })
+    for pgs_id, err in scoring_failures.items():
+        scoring_rows.append({"pgs_id": pgs_id, "file": None, "md5": None, "error": err})
+    pl.DataFrame(scoring_rows).write_csv(output / "scoring_files.csv")
 
     # ------------------------------------------------------------------
     # Step 4: Warm-up (not counted)
@@ -707,78 +771,24 @@ def run_benchmark(
 
     for idx, (pgs_id, sf) in enumerate(benchmark_pairs):
         console.print(f"  [{idx + 1}/{len(benchmark_pairs)}] {pgs_id}", end="  ")
+        for engine, run in (
+            ("polars", lambda _sf=sf, _pgs=pgs_id: score_polars(_pgs, _sf, genotypes_lf)),
+            ("duckdb", lambda _sf=sf, _pgs=pgs_id: score_duckdb(_pgs, _sf, normalized_parquet)),
+        ):
+            res = _engine_result(pgs_id, engine, run)
+            all_results.append(res)
+            console.print(f"{engine}={'ERR' if res.error else f'{res.elapsed_sec:.2f}s'} ", end="")
 
-        # --- Polars engine ---
-        try:
-            (score, matched, total), elapsed, peak = measure_engine(
-                lambda _sf=sf, _pgs=pgs_id: score_polars(_pgs, _sf, genotypes_lf)
-            )
-            all_results.append(EngineResult(
-                pgs_id=pgs_id, engine="polars",
-                elapsed_sec=elapsed, peak_memory_mb=peak,
-                score=score, variants_matched=matched, variants_total=total,
-            ))
-            console.print(f"polars={elapsed:.2f}s ", end="")
-        except Exception as exc:
-            all_results.append(EngineResult(
-                pgs_id=pgs_id, engine="polars",
-                elapsed_sec=0.0, peak_memory_mb=0.0,
-                score=None, variants_matched=0, variants_total=0,
-                error=str(exc),
-            ))
-            console.print("polars=ERR ", end="")
-
-        # --- DuckDB engine ---
-        try:
-            (score, matched, total), elapsed, peak = measure_engine(
-                lambda _sf=sf, _pgs=pgs_id: score_duckdb(_pgs, _sf, normalized_parquet)
-            )
-            all_results.append(EngineResult(
-                pgs_id=pgs_id, engine="duckdb",
-                elapsed_sec=elapsed, peak_memory_mb=peak,
-                score=score, variants_matched=matched, variants_total=total,
-            ))
-            console.print(f"duckdb={elapsed:.2f}s ", end="")
-        except Exception as exc:
-            all_results.append(EngineResult(
-                pgs_id=pgs_id, engine="duckdb",
-                elapsed_sec=0.0, peak_memory_mb=0.0,
-                score=None, variants_matched=0, variants_total=0,
-                error=str(exc),
-            ))
-            console.print("duckdb=ERR ", end="")
-
-        # --- PLINK2 engine ---
         if not skip_plink2 and plink2_bin and pgen_prefix:
-            try:
-                with tempfile.TemporaryDirectory() as td:
-                    (score, matched, total), elapsed, peak = score_plink2_with_memory(
-                        pgs_id, sf, pgen_prefix, plink2_bin, Path(td)
-                    )
-                if score is not None:
-                    all_results.append(EngineResult(
-                        pgs_id=pgs_id, engine="plink2",
-                        elapsed_sec=elapsed, peak_memory_mb=peak,
-                        score=score, variants_matched=matched, variants_total=total,
-                    ))
-                    console.print(f"plink2={elapsed:.2f}s", end="")
-                else:
-                    all_results.append(EngineResult(
-                        pgs_id=pgs_id, engine="plink2",
-                        elapsed_sec=elapsed, peak_memory_mb=peak,
-                        score=None, variants_matched=0, variants_total=total,
-                        error="PLINK2 produced no score",
-                    ))
-                    console.print("plink2=NOSCORE", end="")
-            except Exception as exc:
-                all_results.append(EngineResult(
-                    pgs_id=pgs_id, engine="plink2",
-                    elapsed_sec=0.0, peak_memory_mb=0.0,
-                    score=None, variants_matched=0, variants_total=0,
-                    error=str(exc),
-                ))
-                console.print("plink2=ERR", end="")
-
+            with tempfile.TemporaryDirectory() as td:
+                (score, matched, total, _), elapsed, peak, error = score_plink2(
+                    pgs_id, sf, pgen_prefix, plink2_bin, Path(td), log_dir=log_dir
+                )
+            all_results.append(EngineResult(
+                pgs_id=pgs_id, engine="plink2", elapsed_sec=elapsed, peak_memory_mb=peak,
+                score=score, variants_matched=matched, variants_total=total, error=error,
+            ))
+            console.print(f"plink2={'ERR' if error else f'{elapsed:.2f}s'}", end="")
         console.print()
 
     # ------------------------------------------------------------------
@@ -795,6 +805,7 @@ def run_benchmark(
             "score": r.score,
             "variants_matched": r.variants_matched,
             "variants_total": r.variants_total,
+            "variants_allele_mismatch": r.variants_allele_mismatch,
             "match_rate": r.match_rate,
             "error": r.error,
         }
@@ -810,43 +821,53 @@ def run_benchmark(
     # Step 7: Save results
     # ------------------------------------------------------------------
     console.rule("[bold blue]Step 7: Save results[/bold blue]")
-    results_path = output / "benchmark_results.parquet"
-    results_csv = output / "benchmark_results.csv"
-    validation_path = output / "benchmark_validation.parquet"
-    validation_csv = output / "benchmark_validation.csv"
+    results_df.write_parquet(output / "benchmark_results.parquet")
+    results_df.write_csv(output / "benchmark_results.csv")
+    per_pgs_table(results_df).write_csv(output / "benchmark_per_pgs.csv")
+    validation_df.write_parquet(output / "benchmark_validation.parquet")
+    validation_df.write_csv(output / "benchmark_validation.csv")
 
-    results_df.write_parquet(results_path)
-    results_df.write_csv(results_csv)
-    validation_df.write_parquet(validation_path)
-    validation_df.write_csv(validation_csv)
-
-    # Save system metadata for reproducibility
     import sys
-    mem_gb = psutil.virtual_memory().total / 1024**3
-    cpu_count = psutil.cpu_count(logical=True)
+    from importlib.metadata import version
+
+    import just_prs
+
+    src_dir = Path(just_prs.__file__).resolve().parent
+    git = ["git", "-C", str(src_dir)]
+    commit = subprocess.run([*git, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    dirty = bool(subprocess.run([*git, "status", "--porcelain", "--", "."], capture_output=True, text=True).stdout.strip())
     meta = {
+        "just_prs_version": version("just-prs"),
+        "just_prs_source": str(src_dir),
+        "just_prs_git_commit": commit or "unknown",
+        "just_prs_source_dirty": dirty,
         "python_version": sys.version.split()[0],
         "platform": platform.platform(),
-        "cpu_count_logical": cpu_count,
-        "total_ram_gb": round(mem_gb, 1),
+        "cpu_count_logical": psutil.cpu_count(logical=True),
+        "total_ram_gb": round(psutil.virtual_memory().total / 1024**3, 1),
         "n_pgs_benchmarked": len(benchmark_pairs),
-        "n_pgs_warmup": len(warmup_pairs),
+        "n_pgs_scoring_failed": len(scoring_failures),
+        "warmup_ids": ",".join(p for p, _ in warmup_pairs),
         "vcf_url": VCF_URL,
+        "vcf_md5": vcf_md5,
+        "genotype_input": normalized_parquet.name,
+        "genotype_records": n_variants,
+        "autosomes_only": autosomes_only,
         "genome_build": GENOME_BUILD,
-        "plink2_available": str(not skip_plink2),
+        "plink2_version": plink2_version or "skipped",
+        "plink2_pgen": "--vcf-filter --chr 1-22 --set-all-var-ids @:#:$r:$a",
+        "plink2_score": "header no-mean-imputation cols=scoresums",
         "memory_method_python": "rss_delta_peak_minus_baseline",
         "memory_method_plink2": "subprocess_peak_rss",
     }
-    meta_df = pl.DataFrame([{"key": k, "value": str(v)} for k, v in meta.items()])
-    meta_df.write_csv(output / "benchmark_metadata.csv")
+    pl.DataFrame([{"key": k, "value": str(v)} for k, v in meta.items()]).write_csv(
+        output / "benchmark_metadata.csv"
+    )
 
-    console.print(f"\n[green]Results saved:[/green]")
-    console.print(f"  {results_path}")
-    console.print(f"  {results_csv}")
-    console.print(f"  {validation_path}")
-    console.print(f"  {validation_csv}")
-    console.print(f"  {output / 'benchmark_metadata.csv'}")
-    console.print(f"\n[dim]* RAM: polars/duckdb = process RSS delta (peak - baseline); plink2 = subprocess peak RSS[/dim]")
+    console.print(f"\n[green]Results saved to {output}[/green]: benchmark_results.csv, "
+                  "benchmark_per_pgs.csv, benchmark_validation.csv, benchmark_metadata.csv, "
+                  "scoring_files.csv, pgs_ids.txt, plink2_logs/")
+    console.print("\n[dim]* RAM: polars/duckdb = process RSS delta (peak - baseline); plink2 = subprocess peak RSS[/dim]")
 
 
 if __name__ == "__main__":

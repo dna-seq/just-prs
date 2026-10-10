@@ -778,73 +778,45 @@ def compute_reference_prs_plink2(
         return joined
 
 
-def _resolve_other_allele_col(df: pl.DataFrame) -> str | None:
-    """Find the column containing the non-effect allele, if available."""
-    if "other_allele" in df.columns:
-        return "other_allele"
-    if "hm_inferOtherAllele" in df.columns:
-        return "hm_inferOtherAllele"
-    if "reference_allele" in df.columns:
-        return "reference_allele"
-    return None
-
-
 def _prepare_plink2_score_input(
     scoring_file: Path,
     pgs_id: str,
     out_dir: Path,
 ) -> Path | None:
-    """Convert a PGS Catalog harmonized scoring file to the 3-column PLINK2 --score format.
+    """Convert a PGS Catalog scoring file to the 3-column PLINK2 --score format.
 
     PLINK2 --score expects: variant_id, effect_allele, effect_weight (tab-separated).
 
-    The PGS Catalog 1000G reference panel uses variant IDs in ``CHROM:POS:REF:ALT``
-    format (e.g. ``1:10397:C:A``).  Since the scoring file doesn't specify which
-    allele is REF vs ALT, we emit **both orderings** for each variant (e.g.
-    ``11:69516650:C:T`` and ``11:69516650:T:C``).  PLINK2 matches by string
-    equality, so exactly one ordering will match the .pvar ID and the other will
-    be counted as "missing" and silently skipped.
+    The pgen datasets here use ``CHROM:POS:REF:ALT`` variant IDs. The scoring
+    file does not say which allele is REF, so each variant is written in **both
+    orders** (``11:69516650:C:T`` and ``11:69516650:T:C``); PLINK2 matches the
+    one in the .pvar and skips the other with a warning.
 
-    When neither ``other_allele`` nor ``hm_inferOtherAllele`` is available, falls
-    back to the 2-part ``CHROM:POS`` format (which will only work with reference
-    panels that use that simpler scheme).
+    The other allele is the row's ``other_allele``, else every ``/``-separated
+    ``hm_inferOtherAllele`` candidate (the sample's ALT may be any of them, not
+    only the first), else ``reference_allele``. With none of these, the ID falls
+    back to ``CHROM:POS``, which only works with panels using that scheme.
 
-    Returns path to the prepared score input file, or None if parsing fails.
+    PLINK2 aborts when a (variant, allele) pair appears twice. Harmonized files
+    contain such pairs: two GRCh37 variants can lift over to the same GRCh38
+    variant (PGS000013/014/016/017). Their weights are summed into one line,
+    which is what just-prs computes when it scores both rows against the same
+    genotype.
+
+    Accepts a ``.txt.gz`` scoring file or its cached parquet.
+    Returns the path to the prepared score input file, or None if there is no data.
     """
-    import gzip
+    from just_prs.scoring import parse_scoring_file
 
-    open_fn = gzip.open if str(scoring_file).endswith(".gz") else open
-    with open_fn(scoring_file, "rt") as f:  # type: ignore[call-overload]
-        header_lines = []
-        data_lines = []
-        for line in f:
-            if line.startswith("#"):
-                header_lines.append(line)
-            else:
-                data_lines.append(line)
-
-    if not data_lines:
+    df = parse_scoring_file(Path(scoring_file)).collect()
+    df = df.rename({c: c.lstrip("#") for c in df.columns})
+    if df.height == 0:
         log_message(
             message_type="reference:score_no_data_lines",
             pgs_id=pgs_id,
             scoring_file=str(scoring_file),
         )
         return None
-
-    import io
-    raw = "".join(data_lines)
-    df = pl.read_csv(
-        io.StringIO(raw),
-        separator="\t",
-        infer_schema_length=10000,
-        schema_overrides={
-            "chr_name": pl.Utf8,
-            "chr_position": pl.Utf8,
-            "hm_chr": pl.Utf8,
-            "hm_pos": pl.Utf8,
-        },
-    )
-    df = df.rename({c: c.lstrip("#") for c in df.columns})
 
     chr_col = "hm_chr" if "hm_chr" in df.columns else "chr_name"
     pos_col = "hm_pos" if "hm_pos" in df.columns else "chr_position"
@@ -857,65 +829,68 @@ def _prepare_plink2_score_input(
         )
         return None
 
+    df = df.filter(
+        pl.col("effect_allele").is_not_null()
+        & pl.col("effect_weight").is_not_null()
+        & pl.col(chr_col).is_not_null()
+        & pl.col(pos_col).is_not_null()
+    )
     chrom_expr = pl.col(chr_col).cast(pl.Utf8).str.replace("(?i)^chr", "")
     pos_expr = pl.col(pos_col).cast(pl.Utf8)
+    effect = pl.col("effect_allele").cast(pl.Utf8)
 
-    other_col = _resolve_other_allele_col(df)
+    other: pl.Expr = pl.lit(None, dtype=pl.Utf8)
+    other_sources = [
+        c for c in ("reference_allele", "hm_inferOtherAllele", "other_allele") if c in df.columns
+    ]
+    for col in other_sources:
+        value = pl.col(col).cast(pl.Utf8)
+        other = pl.when(value.str.len_chars() > 0).then(value).otherwise(other)
 
-    if other_col is not None:
-        df = df.filter(
-            pl.col("effect_allele").is_not_null()
-            & pl.col("effect_weight").is_not_null()
-            & pl.col(chr_col).is_not_null()
-            & pl.col(pos_col).is_not_null()
-            & pl.col(other_col).is_not_null()
-            & (pl.col(other_col).cast(pl.Utf8).str.len_chars() > 0)
+    if other_sources:
+        df = (
+            df.with_columns(other.str.split("/").alias("_other"))
+            .filter(pl.col("_other").is_not_null())
+            .explode("_other", empty_as_null=True)
+            .filter((pl.col("_other").str.len_chars() > 0) & (pl.col("_other") != effect))
         )
-
-        other_clean = pl.col(other_col).cast(pl.Utf8).str.split("/").list.first()
-
-        id_fwd = (
-            chrom_expr + pl.lit(":") + pos_expr
-            + pl.lit(":") + other_clean
-            + pl.lit(":") + pl.col("effect_allele").cast(pl.Utf8)
+        prefix = chrom_expr + pl.lit(":") + pos_expr + pl.lit(":")
+        df_fwd = df.select(
+            (prefix + pl.col("_other") + pl.lit(":") + effect).alias("variant_id"),
+            effect.alias("effect_allele"),
+            pl.col("effect_weight").cast(pl.Float64),
         )
-        id_rev = (
-            chrom_expr + pl.lit(":") + pos_expr
-            + pl.lit(":") + pl.col("effect_allele").cast(pl.Utf8)
-            + pl.lit(":") + other_clean
+        df_rev = df.select(
+            (prefix + effect + pl.lit(":") + pl.col("_other")).alias("variant_id"),
+            effect.alias("effect_allele"),
+            pl.col("effect_weight").cast(pl.Float64),
         )
-
-        df_fwd = df.with_columns(id_fwd.alias("variant_id")).select(
-            ["variant_id", "effect_allele", "effect_weight"]
-        )
-        df_rev = df.with_columns(id_rev.alias("variant_id")).select(
-            ["variant_id", "effect_allele", "effect_weight"]
-        )
-        out_df = pl.concat([df_fwd, df_rev])
-
-        log_message(
-            message_type="reference:score_input_4part_ids",
-            pgs_id=pgs_id,
-            n_variants=df.height,
-            n_rows_with_both_orderings=out_df.height,
-            other_allele_source=other_col,
-        )
+        id_lines = pl.concat([df_fwd, df_rev])
+        message_type = "reference:score_input_4part_ids"
     else:
-        df = df.filter(
-            pl.col("effect_allele").is_not_null()
-            & pl.col("effect_weight").is_not_null()
-            & pl.col(chr_col).is_not_null()
-            & pl.col(pos_col).is_not_null()
-        ).with_columns(
-            (chrom_expr + pl.lit(":") + pos_expr).alias("variant_id")
+        id_lines = df.select(
+            (chrom_expr + pl.lit(":") + pos_expr).alias("variant_id"),
+            effect.alias("effect_allele"),
+            pl.col("effect_weight").cast(pl.Float64),
         )
-        out_df = df.select(["variant_id", "effect_allele", "effect_weight"])
+        message_type = "reference:score_input_2part_ids_fallback"
 
-        log_message(
-            message_type="reference:score_input_2part_ids_fallback",
-            pgs_id=pgs_id,
-            n_variants=out_df.height,
-        )
+    # A liftover duplicate emits an (id, allele) line a second time; sum it.
+    out_df = (
+        id_lines.group_by(["variant_id", "effect_allele"], maintain_order=True)
+        .agg(pl.col("effect_weight").sum(), pl.len().alias("_rows"))
+    )
+    n_merged = int(out_df.filter(pl.col("_rows") > 1).height)
+    out_df = out_df.drop("_rows")
+
+    log_message(
+        message_type=message_type,
+        pgs_id=pgs_id,
+        n_variants=df.height,
+        n_score_lines=out_df.height,
+        n_duplicate_pairs_summed=n_merged,
+        other_allele_sources=other_sources,
+    )
 
     score_input = out_dir / f"{pgs_id}_score_input.txt"
     out_df.write_csv(score_input, separator="\t", include_header=True)

@@ -399,3 +399,46 @@ def compute_dosage_expr(
         .cast(pl.Int64)
         .alias("dosage")
     )
+
+
+_DRAGEN_VERSION = re.compile(r'##DRAGENCommandLine=<ID=dragen,Version="([^"]+)"')
+_GATK_LINE = re.compile(r'##GATKCommandLine(?:\.[\w-]+)?=<ID=([\w-]+).*?Version="?([^",>]+)')
+
+
+def read_vcf_provenance(path: Path | str) -> dict[str, str]:
+    """Caller, caller version and declared karyotype from a VCF header.
+
+    A caller's ploidy convention is not in the GT: DeepVariant 1.1.0 writes a
+    man's X diploid (``1/1``), DRAGEN writes it sex-aware and declares
+    ``##referenceSexKaryotype``. Recording which caller wrote a file is what
+    lets a reader interpret its X and Y calls later. Keys present only when
+    found: ``vcf_format``, ``caller``, ``caller_version``, ``source``,
+    ``declared_karyotype``. Reads the header only.
+    """
+    found: dict[str, str] = {}
+    with open_maybe_compressed(path) as handle:
+        for line in handle:
+            if not line.startswith("##"):
+                break
+            line = line.rstrip("\n")
+            if line.startswith("##fileformat="):
+                found["vcf_format"] = line.split("=", 1)[1]
+            elif (match := _DRAGEN_VERSION.match(line)) is not None:
+                found["caller"], found["caller_version"] = "DRAGEN", match.group(1)
+            elif line.startswith("##DeepVariant_version=") and found.get("caller") != "DRAGEN":
+                found["caller"], found["caller_version"] = "DeepVariant", line.split("=", 1)[1]
+            elif (match := _GATK_LINE.match(line)) is not None and "caller" not in found:
+                found["caller"], found["caller_version"] = f"GATK {match.group(1)}", match.group(2)
+            elif line.startswith("##bcftools_callVersion=") and "caller" not in found:
+                found["caller"], found["caller_version"] = "bcftools call", line.split("=", 1)[1]
+            elif line.startswith("##source="):
+                found.setdefault("source", line.split("=", 1)[1])
+            elif line.startswith("##source_version="):
+                found.setdefault("source_version", line.split("=", 1)[1])
+            elif line.startswith("##referenceSexKaryotype="):
+                found["declared_karyotype"] = line.split("=", 1)[1]
+    if "caller" not in found and "source" in found:
+        found["caller"] = found["source"]
+        if "source_version" in found:
+            found["caller_version"] = found["source_version"]
+    return found

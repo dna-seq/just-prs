@@ -301,6 +301,43 @@ class PRSResult(BaseModel):
         default=False,
         description="Whether the scoring file contained allelefrequency_effect data",
     )
+    karyotype: str | None = Field(
+        default=None,
+        description=(
+            "Sex-chromosome karyotype used for scoring (XX, XY, XXY, X0, unknown); "
+            "it sets how many copies non-PAR X, Y and MT have (just_prs.karyotype)"
+        ),
+    )
+    karyotype_source: str | None = Field(
+        default=None, description="'provided' by the caller or 'inferred' from the genotypes"
+    )
+    x_coding: str = Field(
+        default="copies",
+        description=(
+            "How a one-copy region is counted: 'copies' (0..1, a man has one X) or "
+            "'dosage_compensation' (0..2, PLINK2 --xchr-model 2 / 1000G pgen parity)"
+        ),
+    )
+    variants_ploidy_conflict: int = Field(
+        default=0,
+        description=(
+            "Present loci whose GT the karyotype rules out (a het on a man's non-PAR X/Y "
+            "or MT, any call on Y without a Y). Treated as no-calls, so also counted in "
+            "variants_no_call"
+        ),
+    )
+    variants_hemizygous: int = Field(
+        default=0,
+        description="Scored loci in a one- or zero-copy region (male non-PAR X/Y, MT, a woman's Y)",
+    )
+    reference_coding_mismatch: bool = Field(
+        default=False,
+        description=(
+            "True when x_coding is 'copies' and hemizygous loci were scored: the 1000G "
+            "reference distributions count a man's X twice (pgen stores it 0/2), so a "
+            "chrX/Y/MT-weighted percentile is biased until the reference is rescored"
+        ),
+    )
     model_flags: list[str] = Field(
         default_factory=list,
         description=(

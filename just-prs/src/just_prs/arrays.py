@@ -37,6 +37,8 @@ import polars as pl
 from eliot import log_message, start_action
 
 from just_prs.io_utils import open_maybe_compressed
+from just_prs.karyotype import infer_karyotype
+from just_prs.normalize import PROVENANCE_PREFIX
 
 # Tokens that denote a missing/no-call allele across vendors.
 _MISSING_ALLELES = ["-", "0", ".", "?", ""]
@@ -223,8 +225,22 @@ def normalize_array(
             & is_missing.not_()
         ).select("chrom", "pos", "rsid", "ref", "alt", "GT", "genotype")
 
+        # Same provenance keys as normalize_vcf: an array's ploidy model is
+        # sex-aware when it writes one-letter calls (23andMe).
+        karyotype = infer_karyotype(df.lazy(), genome_build)
+        provenance = {
+            "caller": f"{fmt} array export",
+            "genome_build": genome_build,
+            "ploidy_model": "sex_aware" if (df["GT"] == "1").any() else "diploid",
+            "karyotype": karyotype.karyotype.value,
+            "karyotype_evidence": karyotype.model_dump_json(),
+        }
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        df.write_parquet(output_path, compression="zstd")
+        df.write_parquet(
+            output_path,
+            compression="zstd",
+            metadata={f"{PROVENANCE_PREFIX}{key}": value for key, value in provenance.items()},
+        )
 
         log_message(
             message_type="array:normalize_complete",

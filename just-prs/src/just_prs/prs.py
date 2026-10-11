@@ -30,6 +30,13 @@ class GenotypeInputMode(str, enum.Enum):
     PLINK_PRESENT_ONLY = "plink_present_only"
 
 from just_prs.chip_coverage import Chip, chip_typed_positions
+from just_prs.karyotype import (
+    Karyotype,
+    KaryotypeCall,
+    XChromosomeCoding,
+    ploidy_expr,
+    resolve_karyotype,
+)
 from just_prs.models import PRSResult
 from just_prs.scoring import (
     DEFAULT_CACHE_DIR,
@@ -44,6 +51,7 @@ from just_prs.vcf import (
     biallelic_snv_record_expr,
     compute_dosage_expr,
     detect_genome_build,
+    gt_allele_indices,
     gt_no_call_expr,
     read_genotypes,
 )
@@ -205,6 +213,7 @@ class PreparedGenotypeTables:
     tables: dict[str, str]
     modes: dict[str, GenotypeInputMode]
     memory_limit: str
+    paths: dict[str, Path] = field(default_factory=dict)
     _closed: bool = field(default=False, repr=False)
 
     def table_name(self, key: str) -> str:
@@ -251,6 +260,7 @@ def prepare_genotype_tables(
         conn.execute("SET arrow_large_buffer_size = true")
         tables: dict[str, str] = {}
         modes: dict[str, GenotypeInputMode] = {}
+        paths: dict[str, Path] = {}
         requested = _normalize_genotype_input_mode(genotype_input_mode)
         for index, (key, raw_path) in enumerate(samples.items()):
             path = Path(raw_path)
@@ -285,6 +295,7 @@ def prepare_genotype_tables(
                 f"FROM read_parquet('{_sql_literal_path(path)}')"
             )
             tables[key] = table
+            paths[key] = path
     except Exception:
         conn.close()
         raise
@@ -299,6 +310,7 @@ def prepare_genotype_tables(
         tables=tables,
         modes=modes,
         memory_limit=mem_limit,
+        paths=paths,
     )
 
 
@@ -563,6 +575,42 @@ def _resolve_genotype_input_mode(
     return normalized
 
 
+def _add_ploidy_columns(
+    scoring_norm: pl.LazyFrame,
+    karyotype: KaryotypeCall,
+    genome_build: str,
+    x_coding: XChromosomeCoding | str,
+) -> pl.LazyFrame:
+    """``_ploidy`` (copies of the row's region) and ``_dose_scale`` per scoring row.
+
+    ``_dose_scale`` is 2 on one-copy rows under ``dosage_compensation`` (PLINK2
+    ``--xchr-model 2`` parity), else 1.
+    """
+    compensate = XChromosomeCoding(x_coding) == XChromosomeCoding.DOSAGE_COMPENSATION
+    return scoring_norm.with_columns(
+        ploidy_expr(karyotype.karyotype, genome_build).alias("_ploidy"),
+    ).with_columns(
+        pl.when(pl.lit(compensate) & (pl.col("_ploidy") == 1))
+        .then(pl.lit(2))
+        .otherwise(pl.lit(1))
+        .cast(pl.Int8)
+        .alias("_dose_scale"),
+    )
+
+
+def _karyotype_result_fields(
+    karyotype: KaryotypeCall, x_coding: XChromosomeCoding | str, variants_hemizygous: int
+) -> dict[str, object]:
+    coding = XChromosomeCoding(x_coding)
+    return {
+        "karyotype": karyotype.karyotype.value,
+        "karyotype_source": karyotype.source.value,
+        "x_coding": coding.value,
+        "variants_hemizygous": variants_hemizygous,
+        "reference_coding_mismatch": coding == XChromosomeCoding.COPIES and variants_hemizygous > 0,
+    }
+
+
 def _gt_no_call_expr(gt_col: str = "GT") -> pl.Expr:
     """Return an expression identifying missing/no-call genotypes (haploid calls are called)."""
     return gt_no_call_expr(gt_col)
@@ -632,7 +680,28 @@ def _match_genotypes_polars(
             nulls_last=True,
         )
         .unique(subset=["_srow"], keep="first", maintain_order=True),
-    ]).drop("_repeated").lazy()
+    ]).drop("_repeated")
+    # Outside diploid regions (a man's non-PAR X/Y, MT, a woman's Y) the GT is
+    # read against the karyotype: a diploid-written hom counts once, a het or
+    # any call where there is no copy is a ploidy conflict, scored as a no-call.
+    first, second = gt_allele_indices("_gt_raw")
+    diploid_written = second.is_not_null()
+    conflict = (
+        pl.col("_allele_ok")
+        & first.is_not_null()
+        & ((pl.col("_ploidy") == 0) | ((pl.col("_ploidy") == 1) & diploid_written & (first != second)))
+    ).fill_null(False)
+    diploid_region = pl.col("_ploidy") == 2
+    picked = pl.concat([
+        picked.filter(diploid_region).with_columns(pl.lit(False).alias("is_ploidy_conflict")),
+        picked.filter(~diploid_region).with_columns(
+            conflict.alias("is_ploidy_conflict"),
+            pl.when(conflict).then(pl.lit(0, dtype=pl.Int64))
+            .when((pl.col("_ploidy") == 1) & diploid_written).then(pl.col("dosage") // 2)
+            .otherwise(pl.col("dosage"))
+            .alias("dosage"),
+        ),
+    ]).lazy()
     if resolved_mode != GenotypeInputMode.VARIANT_ONLY:
         picked = picked.filter(pl.col("_gt_raw").is_not_null())
     return picked.with_columns(
@@ -932,6 +1001,8 @@ def compute_prs(
     reference_universe_path: Path | str | None = None,
     reference_universe: ReferenceUniverse | None = None,
     sample_build: str | None = None,
+    sample_karyotype: Karyotype | KaryotypeCall | str | None = None,
+    x_coding: XChromosomeCoding | str = XChromosomeCoding.COPIES,
 ) -> PRSResult:
     """Compute a polygenic risk score for a single VCF against a scoring file.
 
@@ -963,6 +1034,11 @@ def compute_prs(
         maf_fill: When True and the scoring file has ``allelefrequency_effect``,
             substitute ``dosage = 2 * MAF`` for absent variants that would
             otherwise be unscorable. Tracked as ``variants_maf_filled``.
+        sample_karyotype: XX / XY / XXY / X0 / ``unknown``, or a
+            ``KaryotypeCall``. ``None`` (default) infers it from the genotypes
+            (``just_prs.karyotype``); ``unknown`` scores every GT as written.
+        x_coding: ``copies`` (default: a man's X allele counts once) or
+            ``dosage_compensation`` (0..2, PLINK2 ``--xchr-model 2`` parity).
 
     Returns:
         PRSResult with computed score, match statistics, and optionally
@@ -975,6 +1051,7 @@ def compute_prs(
         pgs_id=pgs_id,
         genome_build=genome_build,
     ):
+        genotypes_file = vcf_path if genotypes_lf is None else None
         if genotypes_lf is None:
             genotypes_lf = read_genotypes(vcf_path)
         else:
@@ -1000,11 +1077,18 @@ def compute_prs(
             cache_dir=cache_dir,
         )
         scoring_norm = _apply_reference_resolution(scoring_norm, ref_universe)
+        karyotype = resolve_karyotype(
+            sample_karyotype,
+            genotypes_lf=genotypes_lf,
+            genotypes_parquet=genotypes_file,
+            genome_build=genome_build,
+        )
+        scoring_norm = _add_ploidy_columns(scoring_norm, karyotype, genome_build, x_coding)
 
         joined = _match_genotypes_polars(scoring_norm, genotypes_lf, resolved_mode)
         joined = joined.with_columns(
             pl.col("GT").is_not_null().alias("is_present"),
-            _gt_no_call_expr().alias("is_no_call"),
+            (_gt_no_call_expr() | pl.col("is_ploidy_conflict")).alias("is_no_call"),
         )
 
         dosage_weight = DOSAGE_WEIGHT_COLUMNS[0] in schema_names
@@ -1034,18 +1118,18 @@ def compute_prs(
                 pl.when(pl.col("is_present") & pl.col("is_no_call").not_())
                 .then(pl.col("dosage"))
                 .when(absent & ref_known & (pl.col("effect_allele") == pl.col("reference_allele")))
-                .then(pl.lit(2))
+                .then(pl.col("_ploidy").cast(pl.Int64))
                 .when(absent & ref_known)
                 .then(pl.lit(0))
             )
             if do_maf_fill:
                 maf_available = pl.col("allelefrequency_effect").is_not_null() & (pl.col("allelefrequency_effect") > 0.0) & (pl.col("allelefrequency_effect") < 1.0)
                 dosage_chain = dosage_chain.when(absent & ref_known.not_() & maf_available).then(
-                    (2.0 * pl.col("allelefrequency_effect")).cast(pl.Float64)
+                    (pl.col("_ploidy") * pl.col("allelefrequency_effect")).cast(pl.Float64)
                 )
             dosage_chain = dosage_chain.otherwise(pl.lit(None, dtype=pl.Float64))
 
-            joined = joined.with_columns(dosage_chain.alias("resolved_dosage"))
+            joined = joined.with_columns((dosage_chain * pl.col("_dose_scale")).alias("resolved_dosage"))
 
             if do_maf_fill:
                 joined = joined.with_columns(
@@ -1058,7 +1142,7 @@ def compute_prs(
             joined = joined.with_columns(
                 pl.when(pl.col("is_no_call"))
                 .then(pl.lit(None, dtype=pl.Int64))
-                .otherwise(pl.col("dosage"))
+                .otherwise(pl.col("dosage") * pl.col("_dose_scale"))
                 .alias("resolved_dosage"),
                 pl.lit(False).alias("is_maf_filled"),
             )
@@ -1088,6 +1172,8 @@ def compute_prs(
             (absent_expr & ref_known_expr.not_() & pl.col("is_maf_filled").not_()).cast(pl.Int64).sum().alias("variants_unscorable_absent"),
             (pl.col("is_present") & pl.col("is_no_call")).cast(pl.Int64).sum().alias("variants_no_call"),
             pl.col("is_allele_mismatch").cast(pl.Int64).sum().alias("variants_allele_mismatch"),
+            (pl.col("is_present") & pl.col("is_ploidy_conflict")).cast(pl.Int64).sum().alias("variants_ploidy_conflict"),
+            (pl.col("resolved_dosage").is_not_null() & (pl.col("_ploidy") != 2)).cast(pl.Int64).sum().alias("variants_hemizygous"),
             pl.col("is_maf_filled").cast(pl.Int64).sum().alias("variants_maf_filled"),
             (absent_expr & (pl.col("ref_resolved_source") == "panel")).cast(pl.Int64).sum().alias("variants_ref_resolved_panel"),
             (absent_expr & (pl.col("ref_resolved_source") == "fasta")).cast(pl.Int64).sum().alias("variants_ref_resolved_fasta"),
@@ -1104,6 +1190,8 @@ def compute_prs(
         variants_unscorable_absent = int(agg["variants_unscorable_absent"][0] or 0)
         variants_no_call = int(agg["variants_no_call"][0] or 0)
         variants_allele_mismatch = int(agg["variants_allele_mismatch"][0] or 0)
+        variants_ploidy_conflict = int(agg["variants_ploidy_conflict"][0] or 0)
+        variants_hemizygous = int(agg["variants_hemizygous"][0] or 0)
         variants_maf_filled = int(agg["variants_maf_filled"][0] or 0)
         variants_ref_resolved_panel = int(agg["variants_ref_resolved_panel"][0] or 0)
         variants_ref_resolved_fasta = int(agg["variants_ref_resolved_fasta"][0] or 0)
@@ -1165,6 +1253,7 @@ def compute_prs(
             variants_unscorable_absent=variants_unscorable_absent,
             variants_no_call=variants_no_call,
             variants_allele_mismatch=variants_allele_mismatch,
+            variants_ploidy_conflict=variants_ploidy_conflict,
             variants_maf_filled=variants_maf_filled,
             variants_ref_resolved_panel=variants_ref_resolved_panel,
             variants_ref_resolved_fasta=variants_ref_resolved_fasta,
@@ -1177,6 +1266,7 @@ def compute_prs(
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
             model_flags=model_flags,
+            **_karyotype_result_fields(karyotype, x_coding, variants_hemizygous),
             theoretical_mean=theoretical_mean,
             theoretical_std=theoretical_std,
             percentile=percentile,
@@ -1224,31 +1314,38 @@ def _duckdb_matched_sql(geno_from: str, *, keep_absent: bool) -> str:
     ``GT`` (null when absent or allele-mismatched), the record's ``g_ref`` /
     ``g_alt``, ``allele_mismatch``, ``gt_no_call`` and ``gt_dosage``. The GT is
     parsed once here: multi-allelic ALTs are split and a haploid call is one allele
-    (``vcf.gt_allele_indices``). ``keep_absent=False`` drops rows with
+    (``vcf.gt_allele_indices``). The scoring rows carry ``_ploidy``
+    (``_add_ploidy_columns``): on a one-copy row a diploid-written hom counts once,
+    and ``ploidy_conflict`` (a het there, or any call where there is no copy) is a
+    no-call. ``keep_absent=False`` drops rows with
     no record at the position (the all-sites / PLINK present-only modes).
     """
     absent_filter = "" if keep_absent else " AND p._gt_raw IS NOT NULL"
     return f"""
         FROM (
             SELECT
-                q.* EXCLUDE (_gt_raw, _allele_ok, _alleles, _i1, _i2, _haploid),
+                q.* EXCLUDE (_gt_raw, _allele_ok, _alleles, _i1, _i2, _haploid, _conflict),
                 CASE WHEN q._allele_ok THEN q._gt_raw END AS GT,
                 (q._gt_raw IS NOT NULL AND NOT q._allele_ok) AS allele_mismatch,
-                (NOT q._allele_ok OR q._i1 IS NULL OR (q._i2 IS NULL AND NOT q._haploid)) AS gt_no_call,
-                CASE
-                    WHEN NOT q._allele_ok OR q._i1 IS NULL OR (q._i2 IS NULL AND NOT q._haploid) THEN 0
+                q._conflict AS ploidy_conflict,
+                (NOT q._allele_ok OR q._i1 IS NULL OR (q._i2 IS NULL AND NOT q._haploid) OR q._conflict) AS gt_no_call,
+                (CASE
+                    WHEN NOT q._allele_ok OR q._i1 IS NULL OR (q._i2 IS NULL AND NOT q._haploid) OR q._conflict THEN 0
                     WHEN q._alleles IS NULL THEN
                         CAST(COALESCE(CASE q._i1 WHEN 0 THEN q.g_ref WHEN 1 THEN q.g_alt END = q.effect_allele, FALSE) AS INTEGER)
                       + CAST(COALESCE(CASE q._i2 WHEN 0 THEN q.g_ref WHEN 1 THEN q.g_alt END = q.effect_allele, FALSE) AS INTEGER)
                     ELSE CAST(COALESCE(q._alleles[q._i1 + 1] = q.effect_allele, FALSE) AS INTEGER)
                        + CAST(COALESCE(q._alleles[q._i2 + 1] = q.effect_allele, FALSE) AS INTEGER)
-                END AS gt_dosage
+                END) // (CASE WHEN q._ploidy = 1 AND q._i2 IS NOT NULL THEN 2 ELSE 1 END) AS gt_dosage
             FROM (
                 SELECT
                     p.* EXCLUDE (_rn, _gt),
                     TRY_CAST(split_part(p._gt, '/', 1) AS BIGINT) AS _i1,
                     CASE WHEN strpos(p._gt, '/') > 0 THEN TRY_CAST(split_part(p._gt, '/', 2) AS BIGINT) END AS _i2,
-                    strpos(p._gt, '/') = 0 AS _haploid
+                    strpos(p._gt, '/') = 0 AS _haploid,
+                    COALESCE(p._allele_ok AND _i1 IS NOT NULL AND (
+                        p._ploidy = 0 OR (p._ploidy = 1 AND _i2 IS NOT NULL AND _i1 <> _i2)
+                    ), FALSE) AS _conflict
                 FROM (
                     SELECT
                         m.*,
@@ -1294,7 +1391,7 @@ END"""
 _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY = f"""\
 CASE
     WHEN s.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN ({_DUCKDB_DOSAGE_SQL})
-    WHEN s.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} AND s.effect_allele = s.reference_allele THEN 2
+    WHEN s.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} AND s.effect_allele = s.reference_allele THEN s._ploidy
     WHEN s.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 0
     ELSE NULL
 END"""
@@ -1305,9 +1402,9 @@ _DUCKDB_MAF_AVAILABLE_SQL = """\
 _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY_MAF = f"""\
 CASE
     WHEN s.GT IS NOT NULL AND NOT ({_DUCKDB_NO_CALL_SQL}) THEN ({_DUCKDB_DOSAGE_SQL})
-    WHEN s.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} AND s.effect_allele = s.reference_allele THEN 2
+    WHEN s.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} AND s.effect_allele = s.reference_allele THEN s._ploidy
     WHEN s.GT IS NULL AND {_DUCKDB_REFERENCE_KNOWN_SQL} THEN 0
-    WHEN s.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND {_DUCKDB_MAF_AVAILABLE_SQL} THEN 2.0 * s.allelefrequency_effect
+    WHEN s.GT IS NULL AND NOT ({_DUCKDB_REFERENCE_KNOWN_SQL}) AND {_DUCKDB_MAF_AVAILABLE_SQL} THEN s._ploidy * s.allelefrequency_effect
     ELSE NULL
 END"""
 
@@ -1365,6 +1462,8 @@ class _DuckDbScoreAgg:
     variants_ref_resolved_panel: int = 0
     variants_ref_resolved_fasta: int = 0
     weight_mass_matched: float = 0.0
+    variants_ploidy_conflict: int = 0
+    variants_hemizygous: int = 0
 
     def add(self, other: _DuckDbScoreAgg) -> None:
         self.prs_score += other.prs_score
@@ -1378,6 +1477,8 @@ class _DuckDbScoreAgg:
         self.variants_ref_resolved_panel += other.variants_ref_resolved_panel
         self.variants_ref_resolved_fasta += other.variants_ref_resolved_fasta
         self.weight_mass_matched += other.weight_mass_matched
+        self.variants_ploidy_conflict += other.variants_ploidy_conflict
+        self.variants_hemizygous += other.variants_hemizygous
 
 
 def _scoring_weight_mass_total(scoring_norm: pl.LazyFrame, *, dosage_weight: bool) -> float:
@@ -1503,7 +1604,7 @@ def _duckdb_score_registered(
         WITH resolved AS (
             SELECT
                 s.*,
-                {resolved_dosage_sql} AS resolved_dosage,
+                ({resolved_dosage_sql}) * s._dose_scale AS resolved_dosage,
                 {variant_mass_sql} AS variant_mass,
                 {counter_sql}
             {join_sql}
@@ -1519,7 +1620,9 @@ def _duckdb_score_registered(
             COALESCE(SUM(variants_maf_filled), 0) AS variants_maf_filled,
             COALESCE(SUM(variants_ref_resolved_panel), 0) AS variants_ref_resolved_panel,
             COALESCE(SUM(variants_ref_resolved_fasta), 0) AS variants_ref_resolved_fasta,
-            COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL THEN variant_mass ELSE 0.0 END), 0.0) AS weight_mass_matched
+            COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL THEN variant_mass ELSE 0.0 END), 0.0) AS weight_mass_matched,
+            COALESCE(SUM(CASE WHEN s.GT IS NOT NULL AND s.ploidy_conflict THEN 1 ELSE 0 END), 0) AS variants_ploidy_conflict,
+            COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL AND s._ploidy <> 2 THEN 1 ELSE 0 END), 0) AS variants_hemizygous
         FROM resolved s
     """).fetchone()
     assert row is not None
@@ -1535,6 +1638,8 @@ def _duckdb_score_registered(
         variants_ref_resolved_panel=int(row[8]),
         variants_ref_resolved_fasta=int(row[9]),
         weight_mass_matched=float(row[10] or 0.0),
+        variants_ploidy_conflict=int(row[11]),
+        variants_hemizygous=int(row[12]),
     )
 
 
@@ -1556,6 +1661,8 @@ def compute_prs_duckdb(
     reference_universe_path: Path | str | None = None,
     reference_universe: ReferenceUniverse | None = None,
     sample_build: str | None = None,
+    sample_karyotype: Karyotype | KaryotypeCall | str | None = None,
+    x_coding: XChromosomeCoding | str = XChromosomeCoding.COPIES,
 ) -> PRSResult:
     """Compute a polygenic risk score using DuckDB for the join and aggregation.
 
@@ -1595,6 +1702,9 @@ def compute_prs_duckdb(
         maf_fill: When True and the scoring file has ``allelefrequency_effect``,
             substitute ``dosage = 2 * MAF`` for absent variants that would
             otherwise be unscorable. Tracked as ``variants_maf_filled``.
+        sample_karyotype: As in :func:`compute_prs`; inferred (cached per
+            parquet) when ``None``.
+        x_coding: As in :func:`compute_prs`.
 
     Returns:
         PRSResult with computed score, match statistics, and optionally
@@ -1647,6 +1757,23 @@ def compute_prs_duckdb(
             genome_build=genome_build,
             cache_dir=cache_dir,
         )
+
+        if shared_tables is not None:
+            karyotype = resolve_karyotype(
+                sample_karyotype,
+                genotypes_parquet=shared_tables.paths.get(str(genotype_table_key)),
+                genome_build=genome_build,
+            )
+        else:
+            karyotype = resolve_karyotype(
+                sample_karyotype,
+                genotypes_lf=genotypes_lf,
+                genotypes_parquet=genotypes_parquet if genotypes_parquet is not None else (
+                    vcf_path if genotypes_lf is None else None
+                ),
+                genome_build=genome_build,
+            )
+        scoring_norm = _add_ploidy_columns(scoring_norm, karyotype, genome_build, x_coding)
 
         from just_prs.memory import check_memory_pressure, scoring_join_chunk_size
 
@@ -1779,6 +1906,8 @@ def compute_prs_duckdb(
         variants_unscorable_absent = agg.variants_unscorable_absent
         variants_no_call = agg.variants_no_call
         variants_allele_mismatch = agg.variants_allele_mismatch
+        variants_ploidy_conflict = agg.variants_ploidy_conflict
+        variants_hemizygous = agg.variants_hemizygous
         variants_maf_filled = agg.variants_maf_filled
         variants_ref_resolved_panel = agg.variants_ref_resolved_panel
         variants_ref_resolved_fasta = agg.variants_ref_resolved_fasta
@@ -1831,6 +1960,7 @@ def compute_prs_duckdb(
             variants_unscorable_absent=variants_unscorable_absent,
             variants_no_call=variants_no_call,
             variants_allele_mismatch=variants_allele_mismatch,
+            variants_ploidy_conflict=variants_ploidy_conflict,
             variants_maf_filled=variants_maf_filled,
             variants_ref_resolved_panel=variants_ref_resolved_panel,
             variants_ref_resolved_fasta=variants_ref_resolved_fasta,
@@ -1843,6 +1973,7 @@ def compute_prs_duckdb(
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
             model_flags=model_flags,
+            **_karyotype_result_fields(karyotype, x_coding, variants_hemizygous),
             theoretical_mean=theoretical_mean,
             theoretical_std=theoretical_std,
             percentile=percentile,
@@ -1897,6 +2028,8 @@ def compute_prs_batch(
     reference_universe_path: Path | str | None = None,
     reference_universe: ReferenceUniverse | None = None,
     sample_build: str | None = None,
+    sample_karyotype: Karyotype | KaryotypeCall | str | None = None,
+    x_coding: XChromosomeCoding | str = XChromosomeCoding.COPIES,
 ) -> "PRSBatchResult":
     """Compute multiple PRS scores for a single VCF file.
 
@@ -1962,6 +2095,16 @@ def compute_prs_batch(
         genotype_tables: PreparedGenotypeTables | None = None
         table_key: str | None = None
         parquet_path = Path(str(vcf_path))
+        # The karyotype is a property of the sample: inferred once for the batch.
+        if parquet_path.suffix == ".parquet" and parquet_path.is_file() and genotypes_lf is None:
+            karyotype = resolve_karyotype(sample_karyotype, genotypes_parquet=parquet_path, genome_build=genome_build)
+        else:
+            karyotype = resolve_karyotype(
+                sample_karyotype,
+                genotypes_lf=genotypes_lf,
+                genotypes_parquet=vcf_path if genotypes_lf is None else None,
+                genome_build=genome_build,
+            )
         try:
             if (
                 engine == PRSEngine.DUCKDB
@@ -2000,6 +2143,8 @@ def compute_prs_batch(
                                 reference_restoration=reference_restoration,
                                 reference_universe_path=reference_universe_path,
                                 reference_universe=reference_universe,
+                                sample_karyotype=karyotype,
+                                x_coding=x_coding,
                             )
                         else:
                             result = compute_prs(
@@ -2014,6 +2159,8 @@ def compute_prs_batch(
                                 reference_restoration=reference_restoration,
                                 reference_universe_path=reference_universe_path,
                                 reference_universe=reference_universe,
+                                sample_karyotype=karyotype,
+                                x_coding=x_coding,
                             )
 
                         results.append(result)
@@ -2052,6 +2199,8 @@ def compute_prs_batch(
                                             reference_restoration=reference_restoration,
                                             reference_universe_path=reference_universe_path,
                                             reference_universe=reference_universe,
+                                            sample_karyotype=karyotype,
+                                            x_coding=x_coding,
                                         )
                                     else:
                                         result = compute_prs(
@@ -2066,6 +2215,8 @@ def compute_prs_batch(
                                             reference_restoration=reference_restoration,
                                             reference_universe_path=reference_universe_path,
                                             reference_universe=reference_universe,
+                                            sample_karyotype=karyotype,
+                                            x_coding=x_coding,
                                         )
                                     results.append(result)
                                     outcomes.append(PRSBatchOutcome(

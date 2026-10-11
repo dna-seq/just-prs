@@ -6,7 +6,8 @@ import polars as pl
 from eliot import start_action
 from pydantic import BaseModel, Field
 
-from just_prs.vcf import scan_vcf
+from just_prs.karyotype import Karyotype, infer_karyotype
+from just_prs.vcf import detect_genome_build, read_vcf_provenance, scan_vcf
 
 
 class VcfFilterConfig(BaseModel):
@@ -193,6 +194,7 @@ def normalize_vcf(
 
         # DataFusion-backed LazyFrames need collect() before aggregations
         df = lf.collect()
+        provenance = _genotype_provenance(vcf_path, df)
 
         # --- quality filters (applied on the materialized DataFrame) ---
         if config.pass_filters is not None:
@@ -219,14 +221,96 @@ def normalize_vcf(
                     note="chrY variants found for a female sample. They are kept but may indicate sample mix-up.",
                 )
 
+        karyotype = infer_karyotype(df.lazy(), provenance.get("genome_build", "GRCh38"))
+        provenance["karyotype"] = karyotype.karyotype.value
+        provenance["karyotype_evidence"] = karyotype.model_dump_json()
+        declared = provenance.get("declared_karyotype")
+        if declared and karyotype.karyotype != Karyotype.UNKNOWN and declared != karyotype.karyotype.value:
+            action.log(
+                message_type="vcf:karyotype_disagrees_with_caller",
+                declared=declared,
+                inferred=karyotype.karyotype.value,
+            )
+        if config.sex is not None and karyotype.x_copies is not None:
+            expected = {"female": 2, "male": 1}.get(config.sex.lower())
+            if expected is not None and expected != karyotype.x_copies:
+                action.log(
+                    message_type="vcf:karyotype_disagrees_with_sex",
+                    sex=config.sex,
+                    inferred=karyotype.karyotype.value,
+                )
+
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        df.write_parquet(output_path, compression="zstd")
+        df.write_parquet(
+            output_path,
+            compression="zstd",
+            metadata={f"{PROVENANCE_PREFIX}{key}": value for key, value in provenance.items()},
+        )
 
         action.log(
             message_type="vcf:normalize_complete",
             rows=df.height,
             columns=df.columns,
             output_path=str(output_path),
+            caller=provenance.get("caller"),
+            caller_version=provenance.get("caller_version"),
+            ploidy_model=provenance.get("ploidy_model"),
+            karyotype=provenance.get("karyotype"),
         )
 
         return output_path
+
+
+PROVENANCE_PREFIX = "just_prs."
+
+
+def _genotype_provenance(vcf_path: Path, df: pl.DataFrame) -> dict[str, str]:
+    """Header provenance plus the caller's ploidy model, read from the unfiltered calls.
+
+    ``ploidy_model`` is ``sex_aware`` when the caller wrote a haploid X/Y GT,
+    filtered a call as ``PloidyConflict`` or declared a karyotype; otherwise
+    ``diploid`` (every X/Y call written with two alleles, as DeepVariant 1.1.0
+    does for a man).
+    """
+    provenance = read_vcf_provenance(vcf_path)
+    build = detect_genome_build(vcf_path)
+    if build:
+        provenance["genome_build"] = build
+    sex_contigs = df.filter(pl.col("chrom").is_in(["X", "Y"]))
+    haploid_calls = sex_contigs.filter(
+        pl.col("GT").is_not_null() & ~pl.col("GT").str.contains(r"[/|]") & (pl.col("GT") != ".")
+    ).height
+    ploidy_conflicts = (
+        sex_contigs.filter(pl.col("filter").str.contains("PloidyConflict")).height
+        if "filter" in df.columns
+        else 0
+    )
+    sex_aware = haploid_calls > 0 or ploidy_conflicts > 0 or "declared_karyotype" in provenance
+    provenance["ploidy_model"] = "sex_aware" if sex_aware else "diploid"
+    provenance["normalized_by"] = f"just-prs {_package_version()}"
+    return provenance
+
+
+def _package_version() -> str:
+    from importlib.metadata import PackageNotFoundError, version
+
+    try:
+        return version("just-prs")
+    except PackageNotFoundError:
+        return "unknown"
+
+
+def read_genotype_provenance(parquet_path: Path | str) -> dict[str, str]:
+    """The provenance :func:`normalize_vcf` stored in a normalized parquet.
+
+    Keys (when known): ``caller``, ``caller_version``, ``vcf_format``,
+    ``declared_karyotype``, ``genome_build``, ``ploidy_model``, ``karyotype``,
+    ``karyotype_evidence`` (JSON), ``normalized_by``. Empty for a parquet
+    written by something else.
+    """
+    metadata = pl.read_parquet_metadata(parquet_path)
+    return {
+        key.removeprefix(PROVENANCE_PREFIX): value
+        for key, value in metadata.items()
+        if key.startswith(PROVENANCE_PREFIX)
+    }

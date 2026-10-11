@@ -93,13 +93,26 @@ anchor base with any SNV at the same position.
   (hom-ref when `reference_allele` is known, otherwise unscorable) and counted in
   `variants_allele_mismatch`. Several records at one position never score a row twice.
 - A consumer array's homozygous encoding (`ref=alt`) skips the other-allele check.
-- **Haploid GT** (`"1"`, male chrX/chrY, chrM) is one allele: it counts 0 or 1
-  copies of the effect allele, and the normalized `genotype` is one-element
-  (`["G"]`). A man has one X. PLINK2 stores such calls as homozygous and scores
-  males 0..2 by default (`--xchr-model 2`); just-prs deliberately does not. A
-  caller that writes a male chrX call diploid (`1/1`) scores 2: the engines score
-  the ploidy the caller wrote and infer no sex. A consumer-array one-letter call
-  is normalized to `GT="1"`, `ref=alt`.
+- **Copies follow the karyotype.** A man has one X. Many callers do not write it
+  that way: DeepVariant 1.1.0 writes anton's non-PAR X as 99,903 `1/1` and 4,818
+  `0/1` and has no haploid GT, while DRAGEN writes it sex-aware and declares
+  `##referenceSexKaryotype`. So the engines do not trust the GT's length.
+  `just_prs.karyotype` infers XX / XY / XXY / X0 from the non-PAR X het rate
+  (relative to the autosomes) and the called Y records, or takes
+  `sample_karyotype=`. In a one-copy region (a man's non-PAR X and Y, MT in
+  anyone), `1` and `1/1` both count once, a het (or any call on Y without a Y) is
+  a no-call counted in `variants_ploidy_conflict`, and an absent hom-ref locus
+  counts one copy. PAR is diploid. `unknown` scores every GT as written.
+- **Coding.** `x_coding="copies"` (default) counts copies, 0..1 on a man's X.
+  `"dosage_compensation"` counts 0..2, as PLINK2 `--xchr-model 2`, many GWAS and
+  the 1000G pgen do (one active X in either sex). The 1000G reference
+  distributions were built that way (a pgenlib read of 2,000 non-PAR X sites:
+  males `{0, 2}`, never 1), so under `copies` a result that scored one-copy loci
+  carries `reference_coding_mismatch=True` until the reference is rescored.
+- **Provenance.** `normalize_vcf` stores the caller, its version, the declared
+  karyotype, the caller's ploidy model (`sex_aware` / `diploid`) and the
+  inferred karyotype as parquet metadata; read them with
+  `normalize.read_genotype_provenance`.
 - No strand flipping: harmonized scoring files are on the forward strand. An
   effect allele that is neither REF nor any ALT of an SNV record scores 0.
 - Scores the additive sum only approximates (dominant/recessive/interaction/

@@ -197,7 +197,10 @@ class PercentileResult(BaseModel):
     )
     method: str = Field(
         default="unavailable",
-        description="Percentile method: 'reference_panel', 'theoretical', 'auroc_approx', or 'unavailable'",
+        description=(
+            "Percentile method: 'reference_panel', 'theoretical', 'auroc_approx', or 'unavailable'. "
+            "'auroc_approx' identifies an unsupported fallback; its percentile is None."
+        ),
     )
     z_score: float | None = Field(
         default=None, description="Standardized score (prs_score - reference_mean) / reference_std"
@@ -217,7 +220,7 @@ class PercentileResult(BaseModel):
     )
     reliable: bool = Field(
         default=True,
-        description="False when weight-mass coverage (C_wt) is too low to trust the percentile",
+        description="False when calibration is unavailable or coverage makes the percentile unreliable",
     )
     caveat: str = Field(
         default="", description="Human-readable reliability caveat when reliable is False"

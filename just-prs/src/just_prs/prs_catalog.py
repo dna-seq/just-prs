@@ -1682,7 +1682,8 @@ class PRSCatalog:
         Tier 1 — Reference panel (best): look up (pgs_id, ancestry) in the pre-computed
             reference distributions pulled from just-dna-seq/prs-percentiles.
         Tier 2 — Theoretical (partial): allele-frequency mean/std passed explicitly.
-        Tier 3 — AUROC approximation (rough): effective SD from Cohen's d.
+        Tier 3 — AUROC only: report the unsupported fallback without a percentile.
+            Discrimination alone does not identify raw-score population mean/SD.
 
         Unlike :meth:`percentile`, this returns the **true** ``z_score`` and the
         ``reference_mean`` / ``reference_std`` used — so callers no longer re-derive z
@@ -1697,7 +1698,7 @@ class PRSCatalog:
             prs_score: The computed PRS value.
             pgs_id: PGS Catalog Score ID.
             ancestry: 1000G superpopulation code (AFR, AMR, EAS, EUR, SAS).
-            mean: Population mean used when ``std`` is provided (Tier 2) or for Tier 3.
+            mean: Population mean used when ``std`` is provided (Tier 2).
             std: Population SD. When provided (>0), uses it directly (Tier 2).
             panel: Reference panel identifier for Tier 1 lookup.
             weight_mass_coverage: Optional C_wt for the reliability verdict.
@@ -1739,16 +1740,17 @@ class PRSCatalog:
                 if best_df.height > 0:
                     auroc = best_df.row(0, named=True).get("auroc_estimate")
                     if auroc is not None and 0.5 < float(auroc) < 1.0:
-                        d = _auroc_to_cohens_d(float(auroc))
-                        if d is not None and d > 0:
-                            effective_std = math.sqrt(1.0 + d * d / 4.0)
-                            z = (prs_score - mean) / effective_std
-                            pct = round(_norm_cdf(z) * 100.0, 2)
-                            method = "auroc_approx"
-                            ref_mean, ref_std = mean, effective_std
+                        # AUROC describes discrimination, not the location or scale
+                        # of this raw score. It cannot supply population calibration.
+                        method = "auroc_approx"
 
-        reliable = True
-        caveat = ""
+        reliable = pct is not None
+        caveat = "" if reliable else (
+            "AUROC alone does not establish the raw-score population mean or SD; "
+            "no calibrated population percentile is available."
+            if method == "auroc_approx" else
+            "No reference distribution or explicit population mean/SD is available."
+        )
         if (
             pct is not None
             and weight_mass_coverage is not None
@@ -1804,13 +1806,13 @@ class PRSCatalog:
         Resolves the percentile via :meth:`percentile_full` (using the **true**
         z-score, not a percentile inversion) and feeds that z into
         :meth:`absolute_risk_bundle`. Returns an empty bundle if no percentile /
-        z-score could be derived.
+        z-score could be derived, or the calibration is flagged unreliable.
         """
         pr = self.percentile_full(
             score, pgs_id, ancestry=ancestry, panel=panel,
             weight_mass_coverage=weight_mass_coverage,
         )
-        if pr.z_score is None:
+        if not pr.reliable or pr.z_score is None:
             return AbsoluteRiskBundle()
         return self.absolute_risk_bundle(
             pgs_id, pr.z_score, sex=sex, selected_ancestry=ancestry,

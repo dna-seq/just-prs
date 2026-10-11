@@ -1085,7 +1085,7 @@ wheels = [
 
 [[package]]
 name = "just-prs"
-version = "0.10.2"
+version = "0.10.3"
 source = { editable = "just-prs" }
 dependencies = [
     { name = "altair" },

@@ -68,8 +68,8 @@ def genotype_expr(
     multi-allelic ALTs with ``|`` as separator (e.g. ``"A|G"``).
 
     The two resolved alleles are sorted alphabetically so that ``["A","T"]``
-    and ``["T","A"]`` both become ``["A","T"]``.  A haploid GT (``"1"``) becomes
-    a homozygous pair (``["G","G"]``).  Missing genotypes
+    and ``["T","A"]`` both become ``["A","T"]``.  A haploid GT (``"1"``, male
+    chrX/chrY, chrM) is one allele (``["G"]``).  Missing genotypes
     (``"./."``, ``"."`` , or any unparseable GT) yield an empty list.
     """
     gt = pl.col(gt_col)
@@ -80,19 +80,15 @@ def genotype_expr(
     parts = gt_normalized.str.split("/")
 
     idx0_str = parts.list.get(0, null_on_oob=True)
-    # A haploid call ("1" on male chrX / chrM) is a homozygous genotype, as in
+    # A haploid call ("1" on male chrX / chrM) has one allele, as in
     # just_prs.vcf.gt_allele_indices.
-    idx1_str = (
-        pl.when(parts.list.len() == 1)
-        .then(idx0_str)
-        .otherwise(parts.list.get(1, null_on_oob=True))
-    )
+    haploid = parts.list.len() == 1
+    idx1_str = parts.list.get(1, null_on_oob=True)
 
     is_missing = (
         idx0_str.is_null()
-        | idx1_str.is_null()
         | (idx0_str == ".")
-        | (idx1_str == ".")
+        | (~haploid & (idx1_str.is_null() | (idx1_str == ".")))
     )
 
     idx0 = idx0_str.cast(pl.Int64, strict=False)
@@ -105,12 +101,16 @@ def genotype_expr(
     allele0 = alleles.list.get(idx0, null_on_oob=True)
     allele1 = alleles.list.get(idx1, null_on_oob=True)
 
-    pair_unsorted = pl.concat_list([allele0, allele1])
-    pair = pair_unsorted.list.sort()
+    pair = pl.concat_list([allele0, allele1]).list.sort()
+    empty = pl.lit([], dtype=pl.List(pl.Utf8))
 
     return (
-        pl.when(is_missing | idx0.is_null() | idx1.is_null() | allele0.is_null() | allele1.is_null())
-        .then(pl.lit([], dtype=pl.List(pl.Utf8)))
+        pl.when(is_missing | idx0.is_null() | allele0.is_null())
+        .then(empty)
+        .when(haploid)
+        .then(pl.concat_list([allele0]))
+        .when(idx1.is_null() | allele1.is_null())
+        .then(empty)
         .otherwise(pair)
         .alias("genotype")
     )

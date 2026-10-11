@@ -12,6 +12,7 @@ ref/alt + GT indices. We map each call so the existing
 ``compute_dosage_expr`` counts the effect allele correctly:
     - heterozygous ``a1≠a2`` → ``ref=a1, alt=a2, GT="0/1"``
     - homozygous   ``a1==a2`` → ``ref=a1, alt=a1, GT="1/1"``
+    - one allele   ``a``      → ``ref=a, alt=a, GT="1"`` (male X/Y, MT: one copy)
     - no-call               → ``GT="./.", genotype=[]``
 Dosage = count of the effect allele among the two observed alleles, which this
 encoding reproduces exactly for both engines.
@@ -24,8 +25,8 @@ lifted to GRCh38.
 
 Known limitations (documented, not silently handled): strand flips (alleles
 reported on the opposite strand from the harmonized scoring file won't match),
-indels (``I``/``D`` 23andMe codes won't match sequence effect alleles), and
-hemizygous male X/Y calls (a single observed allele is treated as homozygous).
+and indels (``I``/``D`` 23andMe codes won't match sequence effect alleles). A
+one-letter call (male X/Y, MT) is kept as one allele and counts at most one copy.
 """
 
 import io
@@ -132,7 +133,7 @@ def _allele_columns(df: pl.DataFrame, array_format: str) -> pl.DataFrame:
     length = g.str.len_chars()
     return df.with_columns(
         g.str.slice(0, 1).alias("a1"),
-        pl.when(length >= 2).then(g.str.slice(1, 1)).otherwise(g.str.slice(0, 1)).alias("a2"),
+        pl.when(length >= 2).then(g.str.slice(1, 1)).alias("a2"),
     )
 
 
@@ -176,11 +177,12 @@ def normalize_array(
         df = _read_array_dataframe(text, fmt)
         df = _allele_columns(df, fmt)
 
+        # A one-letter call (23andMe on male X/Y and MT) has no a2: one allele.
+        is_haploid = pl.col("a2").is_null()
         is_missing = (
             pl.col("a1").is_in(_MISSING_ALLELES)
-            | pl.col("a2").is_in(_MISSING_ALLELES)
+            | pl.col("a2").is_in(_MISSING_ALLELES).fill_null(False)
             | pl.col("a1").is_null()
-            | pl.col("a2").is_null()
         )
         is_hom = pl.col("a1") == pl.col("a2")
 
@@ -196,15 +198,19 @@ def normalize_array(
             pl.col("position").cast(pl.Int64, strict=False).alias("pos"),
             pl.col("rsid").cast(pl.Utf8).alias("rsid"),
             pl.col("a1").alias("ref"),
-            pl.col("a2").alias("alt"),
+            pl.col("a2").fill_null(pl.col("a1")).alias("alt"),
             pl.when(is_missing)
             .then(pl.lit("./."))
+            .when(is_haploid)
+            .then(pl.lit("1"))
             .when(is_hom)
             .then(pl.lit("1/1"))
             .otherwise(pl.lit("0/1"))
             .alias("GT"),
             pl.when(is_missing)
             .then(pl.lit([], dtype=pl.List(pl.Utf8)))
+            .when(is_haploid)
+            .then(pl.concat_list(["a1"]))
             .otherwise(pl.concat_list(["a1", "a2"]).list.sort())
             .alias("genotype"),
         )

@@ -217,25 +217,32 @@ def record_alleles_expr(ref_col: str = "ref", alt_col: str = "alt") -> pl.Expr:
 
 
 def gt_allele_indices(gt_col: str = "GT") -> tuple[pl.Expr, pl.Expr]:
-    """The two allele indices of a GT string, with a haploid call doubled.
+    """The allele indices of a GT string; the second is null for a haploid call.
 
-    A haploid GT (``"1"``, written on male chrX, chrY and chrM) counts as a
-    homozygous call, so it scores on the same 0..2 scale as a diploid call. This
-    is PLINK2's convention: its default ``--xchr-model 2`` codes males 0..2, and
-    the 1000G reference distributions behind the percentiles were scored that way.
-    A missing allele (``.``) or an unparseable index gives ``None``.
+    A haploid GT (``"1"``, written on male chrX/chrY and on chrM) is one allele,
+    so it contributes one copy at most: a man has one X. A missing allele (``.``)
+    or an unparseable index also gives ``None``; :func:`gt_no_call_expr` tells
+    the two apart.
     """
     parts = pl.col(gt_col).cast(pl.Utf8).str.replace_all("|", "/", literal=True).str.split_exact("/", 1)
     first = parts.struct.field("field_0").cast(pl.Int64, strict=False)
-    second_raw = parts.struct.field("field_1")
-    second = pl.when(second_raw.is_null()).then(first).otherwise(second_raw.cast(pl.Int64, strict=False))
+    second = parts.struct.field("field_1").cast(pl.Int64, strict=False)
     return first, second
+
+
+def gt_is_haploid_expr(gt_col: str = "GT") -> pl.Expr:
+    """True for a one-allele GT (no ``/`` or ``|`` separator)."""
+    return ~pl.col(gt_col).cast(pl.Utf8).str.contains(r"[/|]")
 
 
 def gt_no_call_expr(gt_col: str = "GT") -> pl.Expr:
     """True for a missing GT, ``.``/``./.``, a half call (``./1``) or a bad index."""
     first, second = gt_allele_indices(gt_col)
-    return pl.col(gt_col).is_null() | first.is_null() | second.is_null()
+    return (
+        pl.col(gt_col).is_null()
+        | first.is_null()
+        | (second.is_null() & ~gt_is_haploid_expr(gt_col))
+    )
 
 
 def _called_alts_expr(alt_col: str) -> pl.Expr:
@@ -340,9 +347,17 @@ def biallelic_dosage_expr(
     effect_is_alt = pl.col(alt_col) == effect
 
     def copies(index: pl.Expr) -> pl.Expr:
-        return ((index == 0) & effect_is_ref).cast(pl.Int64) + ((index == 1) & effect_is_alt).cast(pl.Int64)
+        return (
+            ((index == 0) & effect_is_ref).cast(pl.Int64) + ((index == 1) & effect_is_alt).cast(pl.Int64)
+        ).fill_null(0)
 
-    return (copies(first) + copies(second)).fill_null(0).cast(pl.Int64).alias("dosage")
+    return (
+        pl.when(gt_no_call_expr(gt_col))
+        .then(pl.lit(0, dtype=pl.Int64))
+        .otherwise(copies(first) + copies(second))
+        .cast(pl.Int64)
+        .alias("dosage")
+    )
 
 
 def compute_dosage_expr(
@@ -355,8 +370,8 @@ def compute_dosage_expr(
 
     Each GT index selects an allele from ``[REF, ALT1, ALT2, ...]`` (multi-allelic
     ALTs are split, see :func:`record_alleles_expr`), and the dosage is the number
-    of selected alleles equal to the effect allele. A haploid GT counts twice (see
-    :func:`gt_allele_indices`). A no-call gives 0; callers that need to tell a
+    of selected alleles equal to the effect allele. A haploid GT has one allele,
+    so it gives 0 or 1 (see :func:`gt_allele_indices`). A no-call gives 0; callers that need to tell a
     no-call from a true 0 use :func:`gt_no_call_expr`.
 
     This compares allele strings only. Whether the record is the scoring row's

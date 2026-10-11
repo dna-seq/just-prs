@@ -34,9 +34,9 @@ reference implementation. It measures agreement, runtime and memory.
 | Missing genotype | not counted (`variants_no_call`) | `no-mean-imputation` |
 | Output | sum of `effect_weight × dosage` | `cols=scoresums` (`SCORE1_SUM`) |
 
-chrX is left out of every engine because a PLINK2 pgen needs sample sex to
-code it; just-prs scores chrX haploid and diploid-coded male calls 0..2,
-like PLINK2's default `--xchr-model 2`.
+chrX is left out of every engine: a PLINK2 pgen needs sample sex to code it,
+and the two disagree on it by design. PLINK2 scores a male X call 0..2
+(`--xchr-model 2`); just-prs counts a haploid call as the one copy it is.
 
 ### Engines
 

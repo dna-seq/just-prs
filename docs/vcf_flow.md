@@ -93,11 +93,13 @@ anchor base with any SNV at the same position.
   (hom-ref when `reference_allele` is known, otherwise unscorable) and counted in
   `variants_allele_mismatch`. Several records at one position never score a row twice.
 - A consumer array's homozygous encoding (`ref=alt`) skips the other-allele check.
-- **Haploid GT** (`"1"`, male chrX/chrY, chrM) counts as homozygous, 0..2. This is
-  PLINK2's convention (pgen stores haploid calls as homozygous; `--score` defaults
-  to `--xchr-model 2`, males 0..2), and the 1000G reference distributions were
-  scored that way. A male chrX call written diploid (`1/1`) therefore scores the
-  same as `1`. There is no sex inference.
+- **Haploid GT** (`"1"`, male chrX/chrY, chrM) is one allele: it counts 0 or 1
+  copies of the effect allele, and the normalized `genotype` is one-element
+  (`["G"]`). A man has one X. PLINK2 stores such calls as homozygous and scores
+  males 0..2 by default (`--xchr-model 2`); just-prs deliberately does not. A
+  caller that writes a male chrX call diploid (`1/1`) scores 2: the engines score
+  the ploidy the caller wrote and infer no sex. A consumer-array one-letter call
+  is normalized to `GT="1"`, `ref=alt`.
 - No strand flipping: harmonized scoring files are on the forward strand. An
   effect allele that is neither REF nor any ALT of an SNV record scores 0.
 - Scores the additive sum only approximates (dominant/recessive/interaction/

@@ -18,8 +18,8 @@ The contract both engines must now honour:
   the record's alleles;
 * a position whose only records fail the check is *absent* for that row
   (``variants_allele_mismatch``), never a silent dose;
-* a haploid call counts as homozygous (0..2), matching PLINK2's default
-  ``--xchr-model 2`` and the 1000G reference distributions.
+* a haploid call (``"1"``: male chrX/chrY, chrM) is one allele and counts
+  0 or 1 copies. A man has one X; no tool convention changes that.
 
 The real-data class reads the anton genome (Zenodo 18370498) and a real
 PGS Catalog scoring file.
@@ -94,22 +94,60 @@ def _assert_same(a: PRSResult, b: PRSResult) -> None:
 
 
 class TestHaploidGenotype:
-    def test_haploid_alt_counts_as_homozygous_in_both_engines(self, tmp_path: Path) -> None:
-        geno = _genotypes([("X", 100, "A", "G", "1"), ("MT", 200, "C", "T", "0")])
+    def test_haploid_call_is_one_copy_in_both_engines(self, tmp_path: Path) -> None:
+        geno = _genotypes([
+            ("X", 100, "A", "G", "1"),
+            ("MT", 200, "C", "T", "0"),
+            ("Y", 300, "G", "T,C", "2"),
+        ])
         scoring = _scoring([
-            {"chr_name": "X", "chr_position": 100, "effect_allele": "G", "other_allele": "A"},
-            {"chr_name": "MT", "chr_position": 200, "effect_allele": "C", "other_allele": "T"},
+            {"chr_name": "X", "chr_position": 100, "effect_allele": "G", "other_allele": "A", "effect_weight": 1.0},
+            {"chr_name": "MT", "chr_position": 200, "effect_allele": "C", "other_allele": "T", "effect_weight": 10.0},
+            {"chr_name": "Y", "chr_position": 300, "effect_allele": "C", "other_allele": "G", "effect_weight": 100.0},
         ])
         polars_result, duckdb_result = _both_engines(tmp_path, geno, scoring)
-        assert polars_result.score == pytest.approx(4.0)
+        assert polars_result.score == pytest.approx(111.0)
         assert polars_result.variants_no_call == 0
         _assert_same(polars_result, duckdb_result)
 
-    def test_haploid_matches_diploid_coded_hemizygous_call(self, tmp_path: Path) -> None:
+    def test_haploid_reference_call_is_zero_copies(self, tmp_path: Path) -> None:
+        geno = _genotypes([("X", 100, "A", "G", "0")])
+        scoring = _scoring([{"chr_name": "X", "chr_position": 100, "effect_allele": "G", "other_allele": "A"}])
+        polars_result, duckdb_result = _both_engines(tmp_path, geno, scoring)
+        assert polars_result.score == 0.0
+        assert polars_result.variants_observed == 1
+        _assert_same(polars_result, duckdb_result)
+
+    def test_haploid_scores_half_of_diploid_hom_alt(self, tmp_path: Path) -> None:
+        """The caller's ploidy is what is scored: ``1`` is one copy, ``1/1`` two."""
         scoring = _scoring([{"chr_name": "X", "chr_position": 100, "effect_allele": "G", "other_allele": "A"}])
         haploid = _both_engines(tmp_path, _genotypes([("X", 100, "A", "G", "1")]), scoring)
         diploid = _both_engines(tmp_path, _genotypes([("X", 100, "A", "G", "1/1")]), scoring)
-        assert haploid[0].score == diploid[0].score == haploid[1].score == diploid[1].score == 2.0
+        assert [r.score for r in haploid] == [1.0, 1.0]
+        assert [r.score for r in diploid] == [2.0, 2.0]
+
+    def test_normalized_genotype_keeps_one_allele(self) -> None:
+        from just_prs.normalize import genotype_expr
+
+        frame = _genotypes([
+            ("X", 1, "A", "G", "1"),
+            ("X", 2, "A", "G", "0"),
+            ("MT", 3, "C", "T|G", "2"),
+            ("1", 4, "A", "G", "0|1"),
+            ("1", 5, "A", "G", "."),
+            ("1", 6, "A", "G", "./1"),
+        ])
+        assert frame.select(genotype_expr())["genotype"].to_list() == [
+            ["G"], ["A"], ["G"], ["A", "G"], [], [],
+        ]
+
+    def test_half_call_is_still_no_call(self, tmp_path: Path) -> None:
+        geno = _genotypes([("1", 100, "A", "G", "./1")])
+        scoring = _scoring([{"chr_name": "1", "chr_position": 100, "effect_allele": "G", "other_allele": "A"}])
+        polars_result, duckdb_result = _both_engines(tmp_path, geno, scoring)
+        assert polars_result.variants_no_call == 1
+        assert polars_result.score == 0.0
+        _assert_same(polars_result, duckdb_result)
 
     def test_haploid_missing_is_no_call(self, tmp_path: Path) -> None:
         geno = _genotypes([("X", 100, "A", "G", ".")])

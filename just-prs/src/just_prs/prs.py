@@ -1223,20 +1223,20 @@ def _duckdb_matched_sql(geno_from: str, *, keep_absent: bool) -> str:
     ``vcf.allele_compatible_expr``). Besides the scoring columns, each row carries
     ``GT`` (null when absent or allele-mismatched), the record's ``g_ref`` /
     ``g_alt``, ``allele_mismatch``, ``gt_no_call`` and ``gt_dosage``. The GT is
-    parsed once here: multi-allelic ALTs are split and a haploid call counts as
-    homozygous (``vcf.gt_allele_indices``). ``keep_absent=False`` drops rows with
+    parsed once here: multi-allelic ALTs are split and a haploid call is one allele
+    (``vcf.gt_allele_indices``). ``keep_absent=False`` drops rows with
     no record at the position (the all-sites / PLINK present-only modes).
     """
     absent_filter = "" if keep_absent else " AND p._gt_raw IS NOT NULL"
     return f"""
         FROM (
             SELECT
-                q.* EXCLUDE (_gt_raw, _allele_ok, _alleles, _i1, _i2),
+                q.* EXCLUDE (_gt_raw, _allele_ok, _alleles, _i1, _i2, _haploid),
                 CASE WHEN q._allele_ok THEN q._gt_raw END AS GT,
                 (q._gt_raw IS NOT NULL AND NOT q._allele_ok) AS allele_mismatch,
-                (NOT q._allele_ok OR q._i1 IS NULL OR q._i2 IS NULL) AS gt_no_call,
+                (NOT q._allele_ok OR q._i1 IS NULL OR (q._i2 IS NULL AND NOT q._haploid)) AS gt_no_call,
                 CASE
-                    WHEN NOT q._allele_ok OR q._i1 IS NULL OR q._i2 IS NULL THEN 0
+                    WHEN NOT q._allele_ok OR q._i1 IS NULL OR (q._i2 IS NULL AND NOT q._haploid) THEN 0
                     WHEN q._alleles IS NULL THEN
                         CAST(COALESCE(CASE q._i1 WHEN 0 THEN q.g_ref WHEN 1 THEN q.g_alt END = q.effect_allele, FALSE) AS INTEGER)
                       + CAST(COALESCE(CASE q._i2 WHEN 0 THEN q.g_ref WHEN 1 THEN q.g_alt END = q.effect_allele, FALSE) AS INTEGER)
@@ -1247,8 +1247,8 @@ def _duckdb_matched_sql(geno_from: str, *, keep_absent: bool) -> str:
                 SELECT
                     p.* EXCLUDE (_rn, _gt),
                     TRY_CAST(split_part(p._gt, '/', 1) AS BIGINT) AS _i1,
-                    CASE WHEN strpos(p._gt, '/') = 0 THEN TRY_CAST(split_part(p._gt, '/', 1) AS BIGINT)
-                         ELSE TRY_CAST(split_part(p._gt, '/', 2) AS BIGINT) END AS _i2
+                    CASE WHEN strpos(p._gt, '/') > 0 THEN TRY_CAST(split_part(p._gt, '/', 2) AS BIGINT) END AS _i2,
+                    strpos(p._gt, '/') = 0 AS _haploid
                 FROM (
                     SELECT
                         m.*,

@@ -4,11 +4,10 @@ This page describes a reproducible benchmark of three PRS engines on one real
 personal genome: just-prs's two engines (Polars and DuckDB) and PLINK2 as the
 reference implementation. It measures agreement, runtime and memory.
 
-> **Status (2026-10-11).** The timed rerun with the fixed engines and fixed
-> benchmark inputs is queued; its results land in
-> `just-prs/benchmarks/results/2026-10-11/` and replace the tables below. The
-> numbers from the March 2026 run are kept at the end of this page for the
-> record, with what was wrong with them.
+> **Status (2026-10-11).** The results below are from the timed run of
+> 2026-10-11 (just-prs 0.10.2, commit f15dd7b), in
+> `just-prs/benchmarks/results/2026-10-11/`. The March 2026 numbers are kept
+> at the end of this page for the record, with what was wrong with them.
 
 ---
 
@@ -36,7 +35,8 @@ reference implementation. It measures agreement, runtime and memory.
 
 chrX is left out of every engine: a PLINK2 pgen needs sample sex to code it,
 and the two disagree on it by design. PLINK2 scores a male X call 0..2
-(`--xchr-model 2`); just-prs counts a haploid call as the one copy it is.
+(`--xchr-model 2`); just-prs counts a man's non-PAR X as the one copy it is
+(`just_prs.karyotype`, from 0.10.3).
 
 ### Engines
 
@@ -66,7 +66,52 @@ inside an already running Python process, the other is a whole process.
 
 ## Results
 
-Pending the 2026-10-11 run (see the status note above).
+Run 2026-10-11, 06:57–07:02 CEST, on a 16-thread / 62.7 GB machine. The run
+started only when the 1-minute load average was at most 1.5; the machine was
+otherwise not reserved. All three engines scored all 100 IDs.
+
+### Agreement
+
+| Engine pair | N PGS | Pearson r | Max \|Δ score\| |
+|-------------|:-----:|:---------:|:---------------:|
+| duckdb ↔ polars | 100 | 1.000000 | 5.7 × 10⁻¹⁴ |
+| polars ↔ plink2 | 100 | 0.99999996 | 0.049 (PGS000015, score 58.69) |
+
+75 of the 100 scores agree with PLINK2 to within 10⁻³. `attribute_residual.py`
+recomputes both sides per variant and assigns every remaining difference to a
+cause. After the per-variant sums, each engine's score differs from its own
+variant sum by at most 5.7 × 10⁻¹⁴; PLINK2's six-significant-digit `.sscore`
+rounding is at most 4.7 × 10⁻⁴.
+
+| Share of Σ\|Δ\| | Scores | Variants | Cause |
+|---:|---:|---:|---|
+| 92.2% | 30 | 1,184 | The effect or other allele is the **second or later ALT** of a multi-allelic record. The pgen ID `@:#:$r:$a` names the first ALT only, so PLINK2 cannot match the row; just-prs splits the ALTs and scores it |
+| 7.8% | 15 | 1,008 | An SNV record whose called ALT is neither allele of the row's pair (a third allele). just-prs counts the copies of the effect allele the GT carries; PLINK2 has no `CHROM:POS:A:B` ID to match |
+
+Both causes are limits of matching by a constructed ID, not genotype errors on
+either side.
+
+### Runtime and memory
+
+| Engine | Median time | Mean time | Max time | Total (100 IDs) | Median memory | Max memory |
+|--------|:-----------:|:---------:|:--------:|:---------------:|:-------------:|:----------:|
+| duckdb | 0.082 s | 0.217 s | 2.80 s | 21.7 s | 4.8 MB | 163 MB |
+| polars | 0.309 s | 0.438 s | 2.92 s | 43.8 s | 1,070 MB | 3,461 MB |
+| plink2 | 0.602 s | 0.753 s | 3.51 s | 75.3 s | 508 MB | 890 MB |
+
+Memory is the RSS increase during the call for duckdb and polars, and the whole
+process for PLINK2 (see *Memory measurement*). The largest scores (PGS000013 and
+PGS000014, 6.6 M and 6.9 M variants) take 2.6–2.7 s in DuckDB at 140–160 MB,
+2.9 s in Polars at 3.1–3.5 GB, and 3.4–3.5 s in PLINK2 at about 870 MB.
+DuckDB streams the join out of the Parquet file and can spill; Polars builds
+the join's hash table on the heap.
+
+### Does it still hold after 0.10.2?
+
+The run used tag v0.10.2. just-prs 0.10.3 adds copy-aware scoring of X, Y and
+MT, which does not touch chromosomes 1–22. Rescoring the same 100 IDs on the
+same autosomal file with the 0.10.3 code gave the same scores (largest
+difference 5.7 × 10⁻¹⁴) and the same matched counts in both engines.
 
 ---
 

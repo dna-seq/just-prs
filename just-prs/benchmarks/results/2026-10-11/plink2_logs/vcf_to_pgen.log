@@ -1,0 +1,40 @@
+PLINK v2.0.0-a.6.33LM 64-bit Intel (28 Feb 2026)
+Options in effect:
+  --chr 1-22
+  --make-pgen
+  --new-id-max-allele-len 10000
+  --out /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass
+  --set-all-var-ids @:#:$r:$a
+  --threads 4
+  --var-filter
+  --vcf /data/just-dna-cache/prs-benchmark/vcf/antonkulaga.vcf
+
+Hostname: October
+Working directory: /data/sources/just-prs
+Start time: Sat Oct 10 23:07:59 2026
+
+Random number seed: 1791666479
+64241 MiB RAM detected, ~29111 available; reserving 29047 MiB for main
+workspace.
+Using up to 4 compute threads.
+--vcf: 5772593 variants scanned (307151 skipped).
+--vcf:
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass-temporary.pgen +
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass-temporary.pvar.zst
++ /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass-temporary.psam
+written.
+1 sample (0 females, 0 males, 1 ambiguous; 1 founder) loaded from
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass-temporary.psam.
+Note: 145 nonstandard chromosome codes present.
+4516566 out of 5772593 variants loaded from
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass-temporary.pvar.zst.
+Note: No phenotype data present.
+4516566 variants remaining after main filters.
+Writing /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass.psam ...
+done.
+Writing /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass.pvar ...
+done.
+Writing /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass.pgen ...
+done.
+
+End time: Sat Oct 10 23:08:03 2026

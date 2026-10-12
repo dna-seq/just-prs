@@ -251,7 +251,10 @@ def _find_reference_panel_file(
 ) -> Path:
     """Find a build-specific reference panel file without silently crossing builds."""
     tokens = tuple(token.lower() for token in _build_name_tokens(genome_build))
-    all_files = sorted(path for path in ref_dir.rglob(f"*{extension}") if path.is_file())
+    # "._name" files are macOS AppleDouble metadata copied off a Mac, not panel data.
+    all_files = sorted(
+        path for path in ref_dir.rglob(f"*{extension}") if path.is_file() and not path.name.startswith("._")
+    )
     matches = [path for path in all_files if any(token in path.name.lower() for token in tokens)]
     if matches:
         return matches[0]
@@ -747,10 +750,8 @@ def compute_reference_prs_plink2(
             ["iid", "score"]
         )
 
-        psam_files = list(ref_dir.rglob("*.psam"))
-        if not psam_files:
-            raise Plink2Error(f"[{pgs_id}] No .psam file found in {ref_dir}")
-        psam_df = parse_psam(psam_files[0])
+        # The scored pgen's own sample file: the panel directory holds both builds'.
+        psam_df = parse_psam(Path(pfile_prefix + ".psam"))
 
         joined = scores_df.join(psam_df, on="iid", how="inner").with_columns(
             pl.lit(pgs_id).alias("pgs_id")
@@ -1240,10 +1241,9 @@ class _ResolvedRefPanel:
 
         self.pgen_path = _find_reference_panel_file(ref_dir, genome_build, ".pgen")
 
-        psam_files = list(ref_dir.rglob("*.psam"))
-        if not psam_files:
-            raise ReferencePanelError(f"No .psam file found in {ref_dir}")
-        self.psam_df = parse_psam(psam_files[0])
+        # By build: a panel directory holds the GRCh37 and GRCh38 sample files side by
+        # side, with different samples (2,504 vs 3,202 in pgsc_1000G_v1).
+        self.psam_df = parse_psam(_find_reference_panel_file(ref_dir, genome_build, ".psam"))
 
         _require_duckdb()
         import duckdb

@@ -1296,7 +1296,7 @@ class _ResolvedRefPanel:
 
     __slots__ = (
         "pvar_variant_ct", "psam_df", "pgen_path",
-        "pvar_zst_path", "pvar_parquet_path",
+        "pvar_zst_path", "pvar_parquet_path", "_allele_offsets",
     )
 
     def __init__(self, ref_dir: Path, genome_build: str = "GRCh38") -> None:
@@ -1311,6 +1311,7 @@ class _ResolvedRefPanel:
                 parse_pvar(self.pvar_zst_path)
 
         self.pgen_path = _find_reference_panel_file(ref_dir, genome_build, ".pgen")
+        self._allele_offsets: Any = None
 
         # By build: a panel directory holds the GRCh37 and GRCh38 sample files side by
         # side, with different samples (2,504 vs 3,202 in pgsc_1000G_v1).
@@ -1330,6 +1331,19 @@ class _ResolvedRefPanel:
             n_samples=self.psam_df.height,
             pvar_parquet=str(self.pvar_parquet_path),
         )
+
+    def allele_offsets(self) -> Any:
+        """pgenlib's ``allele_idx_offsets`` for the panel, built once per resolved panel.
+
+        A cumulative sum over every panel variant (75M for 1000G GRCh38, 573 MB):
+        rebuilding it per PGS ID cost about 1.4 s of a ~1.5 s warm score.
+        """
+        if self._allele_offsets is None:
+            offsets_cache = _allele_offsets_cache_path(self.pvar_zst_path)
+            if not offsets_cache.exists():
+                _build_allele_offsets_cache(self.pvar_zst_path)
+            self._allele_offsets = _load_allele_idx_offsets(offsets_cache, variant_ct=self.pvar_variant_ct)
+        return self._allele_offsets
 
     def match_scoring(
         self,
@@ -1742,10 +1756,7 @@ def compute_reference_prs_polars(
             del weights
         del is_alt, variant_indices
 
-        offsets_cache = _allele_offsets_cache_path(panel.pvar_zst_path)
-        if not offsets_cache.exists():
-            _build_allele_offsets_cache(panel.pvar_zst_path)
-        allele_offsets = _load_allele_idx_offsets(offsets_cache, variant_ct=panel.pvar_variant_ct)
+        allele_offsets = panel.allele_offsets()
 
         prs_sum = np.zeros(n_samples, dtype=np.float64)
         delta_copies = np.zeros(n_samples, dtype=np.float64)

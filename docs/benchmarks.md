@@ -171,6 +171,10 @@ uv sync --all-packages
 # The published set: PGS000006-PGS000106 without PGS000085
 uv run python just-prs/benchmarks/benchmark_engines.py --output just-prs/benchmarks/results/<date>
 
+# Also X, Y, PAR and MT: the sample marked male in PLINK2 and given as XY to just-prs;
+# copies vs --xchr-model 1 (polars, duckdb, plink2) and 0..2 vs --xchr-model 2 (*_dc, plink2_xchr2)
+uv run python just-prs/benchmarks/benchmark_engines.py --sex-chromosomes --output just-prs/benchmarks/results/<date>-sexchr
+
 # Other IDs, or without PLINK2
 uv run python just-prs/benchmarks/benchmark_engines.py --pgs-ids PGS000001-PGS000050 --exclude ""
 uv run python just-prs/benchmarks/benchmark_engines.py --skip-plink2

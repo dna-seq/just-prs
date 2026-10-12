@@ -19,6 +19,13 @@ Inputs are made identical for all three engines
   are excluded from both. (Without it PLINK2 counted them as two REF copies.)
 - Autosomes only (``--autosomes-only``, default): PLINK2 converts ``--chr 1-22``
   and the just-prs engines read the same records filtered to chromosomes 1-22.
+- ``--sex-chromosomes`` adds X, Y, PAR1/PAR2 and MT. PLINK2 imports them with
+  ``--split-par hg38`` and the sample's sex (``--update-sex``; a man's non-PAR X/Y
+  het becomes missing, a hom one copy), and the just-prs engines read every PASS
+  record with the same karyotype. Each engine then runs under two codings:
+  ``polars``/``duckdb`` count copies against PLINK2 ``--xchr-model 1`` (``plink2``),
+  and ``polars_dc``/``duckdb_dc`` count a man's X 0..2 against ``--xchr-model 2``
+  (``plink2_xchr2``). Y and MT are one copy in both, as PLINK2 counts them.
 - The PLINK2 score input lists every ``hm_inferOtherAllele`` candidate and sums
   liftover-duplicate (variant, allele) pairs (``_prepare_plink2_score_input``).
 - The PGS IDs are an explicit list (``--pgs-ids``), written to ``pgs_ids.txt``.
@@ -64,6 +71,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from just_prs.karyotype import Karyotype, XChromosomeCoding, infer_karyotype_from_file
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs import compute_prs, compute_prs_duckdb
 from just_prs.scoring import ensure_scoring_file, read_scoring_header, resolve_cache_dir
@@ -301,15 +309,39 @@ def file_md5(path: Path) -> str:
     return digest.hexdigest()
 
 
-def vcf_to_pgen(vcf_path: Path, plink2_bin: Path, out_dir: Path, log_dir: Path) -> Path:
-    """Convert the VCF to a PASS-only, autosomal PLINK2 pgen with chr:pos:ref:alt IDs.
+def _vcf_sample_id(vcf_path: Path) -> str:
+    """The single sample column of the VCF header, as PLINK2 names the IID."""
+    with vcf_path.open() as fh:
+        for line in fh:
+            if line.startswith("#CHROM"):
+                samples = line.rstrip("\n").split("\t")[9:]
+                if len(samples) != 1:
+                    raise RuntimeError(f"expected one sample in {vcf_path}, found {len(samples)}")
+                return samples[0]
+    raise RuntimeError(f"no #CHROM header in {vcf_path}")
+
+
+def vcf_to_pgen(
+    vcf_path: Path,
+    plink2_bin: Path,
+    out_dir: Path,
+    log_dir: Path,
+    sample_karyotype: Karyotype | None = None,
+) -> Path:
+    """Convert the VCF to a PASS-only PLINK2 pgen with chr:pos:ref:alt IDs.
 
     ``--vcf-filter`` keeps the records just-prs reads (FILTER PASS or "."); the
     unfiltered conversion counted DeepVariant RefCall 0/0 sites as two REF copies.
     The prefix differs from the old unfiltered ``benchmark_pgen`` so a cached
-    unfiltered pgen is never reused. Returns the path prefix.
+    unfiltered pgen is never reused. Without ``sample_karyotype`` the pgen holds
+    chromosomes 1-22; with it, also X, Y, PAR1/PAR2 (``--split-par hg38``) and MT,
+    and the sample's sex is set at import, which is when PLINK2 turns a man's
+    non-PAR X/Y het into a missing call. IDs are set before the PAR split, so PAR
+    variants keep ``X:pos:ref:alt`` as the score input names them. Returns the
+    path prefix.
     """
-    prefix = out_dir / "benchmark_pgen_pass"
+    sex_chromosomes = sample_karyotype is not None
+    prefix = out_dir / ("benchmark_pgen_pass_sexchr" if sex_chromosomes else "benchmark_pgen_pass")
     pgen_file = Path(str(prefix) + ".pgen")
     if not pgen_file.exists():
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -320,11 +352,15 @@ def vcf_to_pgen(vcf_path: Path, plink2_bin: Path, out_dir: Path, log_dir: Path) 
             "--vcf-filter",
             "--set-all-var-ids", "@:#:$r:$a",
             "--new-id-max-allele-len", "10000",
-            "--chr", "1-22",  # chrX needs sex info; the just-prs inputs are cut to 1-22 too
-            "--make-pgen",
-            "--out", str(prefix),
-            "--threads", "4",
         ]
+        if sex_chromosomes:
+            sex_code = {Karyotype.XY: "1", Karyotype.XX: "2"}[Karyotype(sample_karyotype)]
+            sex_file = out_dir / f"{prefix.name}.sex.txt"
+            sex_file.write_text(f"#IID\tSEX\n{_vcf_sample_id(vcf_path)}\t{sex_code}\n")
+            cmd += ["--split-par", "hg38", "--chr", "1-22,X,Y,PAR1,PAR2,MT", "--update-sex", str(sex_file)]
+        else:
+            cmd += ["--chr", "1-22"]  # chrX needs sex info; the just-prs inputs are cut to 1-22 too
+        cmd += ["--make-pgen", "--out", str(prefix), "--threads", "4"]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
             console.print(f"[red]PLINK2 VCF→PGEN failed:[/red]\n{result.stderr[-2000:]}")
@@ -334,6 +370,10 @@ def vcf_to_pgen(vcf_path: Path, plink2_bin: Path, out_dir: Path, log_dir: Path) 
         console.print(f"[green]PGEN already cached:[/green] {prefix}.pgen")
     log_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(Path(str(prefix) + ".log"), log_dir / "vcf_to_pgen.log")
+    if sex_chromosomes:
+        psam = Path(str(prefix) + ".psam").read_text()
+        if "\t1\n" not in psam and "\t2\n" not in psam:
+            raise RuntimeError(f"PLINK2 did not record the sample's sex: {psam!r}")
     return prefix
 
 
@@ -375,6 +415,8 @@ def score_polars(
     pgs_id: str,
     scoring_file: Path,
     genotypes_lf: pl.LazyFrame,
+    sample_karyotype: Karyotype | None = None,
+    x_coding: XChromosomeCoding = XChromosomeCoding.COPIES,
 ) -> tuple[float | None, int, int, int]:
     """Score with the polars engine. Returns (score, matched, total, allele_mismatch)."""
     result = compute_prs(
@@ -383,6 +425,8 @@ def score_polars(
         genome_build=GENOME_BUILD,
         pgs_id=pgs_id,
         genotypes_lf=genotypes_lf,
+        sample_karyotype=sample_karyotype,
+        x_coding=x_coding,
     )
     return result.score, result.variants_matched, result.variants_total, result.variants_allele_mismatch
 
@@ -396,6 +440,8 @@ def score_duckdb(
     pgs_id: str,
     scoring_file: Path,
     normalized_parquet: Path,
+    sample_karyotype: Karyotype | None = None,
+    x_coding: XChromosomeCoding = XChromosomeCoding.COPIES,
 ) -> tuple[float | None, int, int, int]:
     """Score with the DuckDB engine. Returns (score, matched, total, allele_mismatch)."""
     result = compute_prs_duckdb(
@@ -404,6 +450,8 @@ def score_duckdb(
         genome_build=GENOME_BUILD,
         pgs_id=pgs_id,
         genotypes_parquet=normalized_parquet,
+        sample_karyotype=sample_karyotype,
+        x_coding=x_coding,
     )
     return result.score, result.variants_matched, result.variants_total, result.variants_allele_mismatch
 
@@ -439,8 +487,12 @@ def score_plink2(
     plink2_bin: Path,
     tmp_dir: Path,
     log_dir: Path | None = None,
+    xchr_model: int | None = None,
 ) -> tuple[tuple[float | None, int, int, int], float, float, str | None]:
     """Score with PLINK2, tracking subprocess peak RSS.
+
+    ``xchr_model`` adds ``--xchr-model`` (1: a man's X 0..1, 2: 0..2; Y and MT are
+    one copy under both). Model 0 crashes ``--score`` in a6.33, so it is not offered.
 
     Returns ``((score, matched, total, 0), elapsed, peak_mb, error)``. PLINK2's
     stdout/stderr and ``.log`` are copied to *log_dir* when given.
@@ -459,6 +511,8 @@ def score_plink2(
         "--out", str(out_prefix),
         "--threads", "4",
     ]
+    if xchr_model is not None:
+        cmd += ["--xchr-model", str(xchr_model)]
     console_path = tmp_dir / f"{pgs_id}.console.txt"
     t0 = time.perf_counter()
     with console_path.open("w") as console_fh:
@@ -645,6 +699,12 @@ def per_pgs_table(results_df: pl.DataFrame) -> pl.DataFrame:
         out = out.with_columns((pl.col("score_duckdb") - pl.col("score_polars")).alias("delta_duckdb_polars"))
     if {"score_polars", "score_plink2"} <= set(out.columns):
         out = out.with_columns((pl.col("score_polars") - pl.col("score_plink2")).alias("delta_polars_plink2"))
+    if {"score_polars_dc", "score_duckdb_dc"} <= set(out.columns):
+        out = out.with_columns((pl.col("score_duckdb_dc") - pl.col("score_polars_dc")).alias("delta_duckdb_dc_polars_dc"))
+    if {"score_polars_dc", "score_plink2_xchr2"} <= set(out.columns):
+        out = out.with_columns(
+            (pl.col("score_polars_dc") - pl.col("score_plink2_xchr2")).alias("delta_polars_dc_plink2_xchr2")
+        )
     return out
 
 
@@ -667,6 +727,14 @@ def run_benchmark(
         True,
         "--autosomes-only/--all-chromosomes",
         help="Score chromosomes 1-22 only in every engine, as PLINK2's pgen holds.",
+    ),
+    sex_chromosomes: bool = typer.Option(
+        False,
+        "--sex-chromosomes",
+        help="Also score X, Y, PAR and MT, under both X codings (overrides --autosomes-only).",
+    ),
+    sample_karyotype: Karyotype = typer.Option(
+        Karyotype.XY, help="The sample's karyotype for --sex-chromosomes (XY or XX), given to every engine."
     ),
     cache_dir: Path = typer.Option(
         None,
@@ -701,6 +769,12 @@ def run_benchmark(
         console.print(f"[red]VCF md5 {vcf_md5} != expected {VCF_MD5}[/red]")
         raise typer.Exit(1)
     normalized_parquet = normalize_vcf_cached(vcf_path, cache_dir / "vcf")
+    karyotype = Karyotype(sample_karyotype) if sex_chromosomes else None
+    inferred_karyotype = ""
+    if sex_chromosomes:
+        autosomes_only = False
+        inferred_karyotype = infer_karyotype_from_file(normalized_parquet, GENOME_BUILD).karyotype.value
+        console.print(f"Karyotype given: {karyotype.value}; inferred from the genotypes: {inferred_karyotype}")
     if autosomes_only:
         normalized_parquet = autosome_parquet(normalized_parquet)
     genotypes_lf = pl.scan_parquet(normalized_parquet)
@@ -726,7 +800,7 @@ def run_benchmark(
                 [str(plink2_bin), "--version"], capture_output=True, text=True
             ).stdout.strip()
             console.print(f"PLINK2: {plink2_bin} ({plink2_version})")
-            pgen_prefix = vcf_to_pgen(vcf_path, plink2_bin, cache_dir / "pgen", log_dir)
+            pgen_prefix = vcf_to_pgen(vcf_path, plink2_bin, cache_dir / "pgen", log_dir, karyotype)
 
     # ------------------------------------------------------------------
     # Step 3: Scoring files
@@ -754,13 +828,17 @@ def run_benchmark(
     # Step 4: Warm-up (not counted)
     # ------------------------------------------------------------------
     console.rule("[bold blue]Step 4: Warm-up[/bold blue]")
+    codings = [(XChromosomeCoding.COPIES, "", "plink2", 1 if sex_chromosomes else None)]
+    if sex_chromosomes:
+        codings.append((XChromosomeCoding.DOSAGE_COMPENSATION, "_dc", "plink2_xchr2", 2))
     for pgs_id, sf in warmup_pairs:
         console.print(f"  Warm-up {pgs_id} ...")
-        score_polars(pgs_id, sf, genotypes_lf)
-        score_duckdb(pgs_id, sf, normalized_parquet)
-        if plink2_bin and pgen_prefix:
-            with tempfile.TemporaryDirectory() as td:
-                score_plink2(pgs_id, sf, pgen_prefix, plink2_bin, Path(td))
+        for coding, _, _, xchr_model in codings:
+            score_polars(pgs_id, sf, genotypes_lf, karyotype, coding)
+            score_duckdb(pgs_id, sf, normalized_parquet, karyotype, coding)
+            if plink2_bin and pgen_prefix:
+                with tempfile.TemporaryDirectory() as td:
+                    score_plink2(pgs_id, sf, pgen_prefix, plink2_bin, Path(td), xchr_model=xchr_model)
     console.print("[green]Warm-up complete.[/green]")
 
     # ------------------------------------------------------------------
@@ -771,24 +849,29 @@ def run_benchmark(
 
     for idx, (pgs_id, sf) in enumerate(benchmark_pairs):
         console.print(f"  [{idx + 1}/{len(benchmark_pairs)}] {pgs_id}", end="  ")
-        for engine, run in (
-            ("polars", lambda _sf=sf, _pgs=pgs_id: score_polars(_pgs, _sf, genotypes_lf)),
-            ("duckdb", lambda _sf=sf, _pgs=pgs_id: score_duckdb(_pgs, _sf, normalized_parquet)),
-        ):
-            res = _engine_result(pgs_id, engine, run)
-            all_results.append(res)
-            console.print(f"{engine}={'ERR' if res.error else f'{res.elapsed_sec:.2f}s'} ", end="")
+        for coding, suffix, plink2_engine, xchr_model in codings:
+            for engine, run in (
+                ("polars" + suffix,
+                 lambda _sf=sf, _pgs=pgs_id, _c=coding: score_polars(_pgs, _sf, genotypes_lf, karyotype, _c)),
+                ("duckdb" + suffix,
+                 lambda _sf=sf, _pgs=pgs_id, _c=coding: score_duckdb(_pgs, _sf, normalized_parquet, karyotype, _c)),
+            ):
+                res = _engine_result(pgs_id, engine, run)
+                all_results.append(res)
+                console.print(f"{engine}={'ERR' if res.error else f'{res.elapsed_sec:.2f}s'} ", end="")
 
-        if not skip_plink2 and plink2_bin and pgen_prefix:
-            with tempfile.TemporaryDirectory() as td:
-                (score, matched, total, _), elapsed, peak, error = score_plink2(
-                    pgs_id, sf, pgen_prefix, plink2_bin, Path(td), log_dir=log_dir
-                )
-            all_results.append(EngineResult(
-                pgs_id=pgs_id, engine="plink2", elapsed_sec=elapsed, peak_memory_mb=peak,
-                score=score, variants_matched=matched, variants_total=total, error=error,
-            ))
-            console.print(f"plink2={'ERR' if error else f'{elapsed:.2f}s'}", end="")
+            if not skip_plink2 and plink2_bin and pgen_prefix:
+                with tempfile.TemporaryDirectory() as td:
+                    (score, matched, total, _), elapsed, peak, error = score_plink2(
+                        pgs_id, sf, pgen_prefix, plink2_bin, Path(td),
+                        log_dir=log_dir / plink2_engine if sex_chromosomes else log_dir,
+                        xchr_model=xchr_model,
+                    )
+                all_results.append(EngineResult(
+                    pgs_id=pgs_id, engine=plink2_engine, elapsed_sec=elapsed, peak_memory_mb=peak,
+                    score=score, variants_matched=matched, variants_total=total, error=error,
+                ))
+                console.print(f"{plink2_engine}={'ERR' if error else f'{elapsed:.2f}s'} ", end="")
         console.print()
 
     # ------------------------------------------------------------------
@@ -853,10 +936,18 @@ def run_benchmark(
         "genotype_input": normalized_parquet.name,
         "genotype_records": n_variants,
         "autosomes_only": autosomes_only,
+        "sex_chromosomes": sex_chromosomes,
+        "sample_karyotype_given": karyotype.value if karyotype else "",
+        "sample_karyotype_inferred": inferred_karyotype,
         "genome_build": GENOME_BUILD,
         "plink2_version": plink2_version or "skipped",
-        "plink2_pgen": "--vcf-filter --chr 1-22 --set-all-var-ids @:#:$r:$a",
-        "plink2_score": "header no-mean-imputation cols=scoresums",
+        "plink2_pgen": (
+            "--vcf-filter --split-par hg38 --chr 1-22,X,Y,PAR1,PAR2,MT --update-sex --set-all-var-ids @:#:$r:$a"
+            if sex_chromosomes
+            else "--vcf-filter --chr 1-22 --set-all-var-ids @:#:$r:$a"
+        ),
+        "plink2_score": "header no-mean-imputation cols=scoresums"
+        + (" (plink2: --xchr-model 1, plink2_xchr2: --xchr-model 2)" if sex_chromosomes else ""),
         "memory_method_python": "rss_delta_peak_minus_baseline",
         "memory_method_plink2": "subprocess_peak_rss",
     }

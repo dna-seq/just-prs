@@ -478,8 +478,8 @@ def _distributions_path(
     asset="reference_scores",
     description=(
         "Per-sex, per-X-coding curves ({panel}_distributions_by_sex.parquet): every PGS ID of the "
-        "legacy distributions has them; each (superpopulation, coding) has an all, male and female "
-        "curve whose sample counts add up; means and stds are finite."
+        "legacy distributions has them; each (superpopulation, coding) has an all curve, and a male "
+        "and a female curve either both or neither, whose sample counts add up; finite mean/std."
     ),
 )
 def check_distributions_by_sex_valid(
@@ -504,7 +504,7 @@ def check_distributions_by_sex_valid(
     for sex in ("all", "male", "female"):
         if sex not in n.columns:
             n = n.with_columns(pl.lit(None, dtype=pl.UInt32).alias(sex))
-    incomplete = n.filter(pl.any_horizontal(pl.col("all", "male", "female").is_null()))
+    incomplete = n.filter(pl.col("all").is_null() | (pl.col("male").is_null() != pl.col("female").is_null()))
     # 1000G has no sample of unknown sex, so all = male + female; allow unknowns on other panels.
     bad_counts = n.filter(pl.col("all") < pl.col("male") + pl.col("female"))
     non_finite = by_sex.filter(~pl.col("mean").is_finite() | ~pl.col("std").is_finite())

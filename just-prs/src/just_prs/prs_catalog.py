@@ -1756,8 +1756,9 @@ class PRSCatalog:
             karyotype: The sample's karyotype (``PRSResult.karyotype``). With it, or
                 with ``x_coding``, Tier 1 reads the per-sex curves
                 (:meth:`reference_distributions_by_sex`): XX the female curve, XY the
-                male one, anything else both sexes. Falls back to the legacy curve
-                when no per-sex curve exists for the score.
+                male one, anything else both sexes; a score without non-PAR X or Y
+                rows has only the both-sexes curve. Falls back to the legacy curve
+                when the score has no curve there at all.
             x_coding: The coding the score was computed under
                 (``PRSResult.x_coding``); default ``copies``.
 
@@ -1784,15 +1785,18 @@ class PRSCatalog:
             if karyotype is not None or x_coding is not None:
                 by_sex = self.reference_distributions_by_sex(panel=panel)
                 if by_sex is not None:
-                    reference_sex = reference_curve_sex(karyotype)
                     reference_x_coding = XChromosomeCoding(x_coding or XChromosomeCoding.COPIES).value
-                    stats = ancestry_distribution_stats(
-                        pgs_id,
-                        ancestry,
-                        by_sex.filter(
-                            (pl.col("sex") == reference_sex) & (pl.col("x_coding") == reference_x_coding)
-                        ),
-                    )
+                    # A score with no non-PAR X or Y rows has only the both-sexes curve.
+                    for reference_sex in dict.fromkeys([reference_curve_sex(karyotype), "all"]):
+                        stats = ancestry_distribution_stats(
+                            pgs_id,
+                            ancestry,
+                            by_sex.filter(
+                                (pl.col("sex") == reference_sex) & (pl.col("x_coding") == reference_x_coding)
+                            ),
+                        )
+                        if stats is not None:
+                            break
                     if stats is None:
                         reference_sex = reference_x_coding = None
             if stats is None:

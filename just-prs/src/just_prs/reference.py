@@ -1719,6 +1719,7 @@ def compute_reference_prs_polars(
         variants_matched_par = int(matched["chrom"].is_in(["PAR1", "PAR2"]).sum())
         del matched
         variants_matched_one_copy = int((region != _REGION_DIPLOID).sum())
+        variants_matched_sex_linked = int(((region == _REGION_X) | (region == _REGION_Y)).sum())
         sex = panel.psam_df["sex"].to_numpy()
         male = sex == "male"
         female = sex == "female"
@@ -1879,6 +1880,7 @@ def compute_reference_prs_polars(
                 pl.lit(variants_matched).alias("variants_matched"),
                 pl.lit(variants_matched / variants_total if variants_total > 0 else None).alias("match_rate"),
                 pl.lit(variants_matched_one_copy).alias("variants_matched_one_copy"),
+                pl.lit(variants_matched_sex_linked).alias("variants_matched_sex_linked"),
                 pl.lit(variants_matched_par).alias("variants_matched_par"),
             )
         )
@@ -1921,23 +1923,29 @@ DISTRIBUTIONS_BY_SEX_SCHEMA: dict[str, pl.DataType] = {
 
 
 def aggregate_sex_aware_distributions(scores: pl.DataFrame | pl.LazyFrame) -> pl.DataFrame:
-    """Per-superpopulation curves by sex (``all``/``male``/``female``) and X coding.
+    """Per-superpopulation curves by X coding, and by sex where sex changes the score.
 
     Reads the per-sample ``score_copies`` / ``score_dosage_compensation`` and ``sex``
-    columns of a reference score frame. A coding that is null for every sample (a
+    columns of a reference score frame. Every score gets an ``all`` curve per coding.
+    A ``male`` and a ``female`` curve are added only when the score matched non-PAR X
+    or Y rows (``variants_matched_sex_linked > 0``): elsewhere the sexes score alike,
+    and a curve of half the samples (224 to 459 per sex and superpopulation in 1000G)
+    would only add sampling noise. A coding that is null for every sample (a
     per-dosage-weight score with one-copy rows) yields no rows for that coding.
     Samples of unknown sex count toward ``all`` only.
     """
-    lf = scores.lazy().unpivot(
+    lf = scores.lazy()
+    sex_linked = lf.select(pl.col("variants_matched_sex_linked").max()).collect().item() or 0
+    lf = lf.unpivot(
         index=["pgs_id", "superpop", "sex"],
         on=list(SEX_AWARE_SCORE_COLUMNS),
         variable_name="x_coding",
         value_name="value",
     ).with_columns(pl.col("x_coding").replace_strict(SEX_AWARE_SCORE_COLUMNS))
-    by_sex = pl.concat([
-        lf.with_columns(pl.lit("all").alias("sex")),
-        lf.filter(pl.col("sex").is_in(["male", "female"])),
-    ])
+    parts = [lf.with_columns(pl.lit("all").alias("sex"))]
+    if sex_linked > 0:
+        parts.append(lf.filter(pl.col("sex").is_in(["male", "female"])))
+    by_sex = pl.concat(parts)
     return (
         by_sex.filter(pl.col("value").is_not_null())
         .group_by(["pgs_id", "superpop", "sex", "x_coding"])
@@ -1969,7 +1977,7 @@ def _has_sex_aware_scores(parquet_path: Path) -> bool:
         names = pl.read_parquet_schema(parquet_path)
     except Exception:
         return True
-    return {"sex", *SEX_AWARE_SCORE_COLUMNS}.issubset(names)
+    return {"sex", "variants_matched_sex_linked", *SEX_AWARE_SCORE_COLUMNS}.issubset(names)
 
 
 class _CorruptParquet(Exception):
@@ -2056,7 +2064,7 @@ def _aggregate_single_pgs(parquet_path: Path, pgs_id: str) -> _SinglePgsAgg | No
         dist, stats = pl.collect_all([agg_lf, stats_lf])
         by_sex = (
             aggregate_sex_aware_distributions(lf)
-            if {"sex", *SEX_AWARE_SCORE_COLUMNS}.issubset(schema.names())
+            if {"sex", "variants_matched_sex_linked", *SEX_AWARE_SCORE_COLUMNS}.issubset(schema.names())
             else pl.DataFrame(schema=DISTRIBUTIONS_BY_SEX_SCHEMA)
         )
     except _CorruptParquet:

@@ -117,9 +117,12 @@ anchor base with any SNV at the same position.
   `reference_coding_mismatch=True` against `{panel}_distributions.parquet`.
 - **Per-sex curves.** The reference scorer also writes each 1000G sample's
   `copies` and `dosage_compensation` score, and the batch publishes
-  `{panel}_distributions_by_sex.parquet` (all / male / female × coding) beside the
-  unchanged legacy file. A percentile lookup that knows the karyotype reads the
-  matching curve (XX female, XY male, else both sexes) and says which one in
+  `{panel}_distributions_by_sex.parquet` beside the unchanged legacy file: a
+  both-sexes curve per coding for every score, and a male and a female curve only
+  for a score with non-PAR X or Y rows (elsewhere the sexes score alike, and a
+  curve of 224 to 459 people per sex and superpopulation only adds noise). A
+  percentile lookup that knows the karyotype reads the matching curve (XX female,
+  XY male, else both sexes) and says which one in
   `PercentileResult.reference_sex` / `reference_x_coding`; the flag above then
   no longer applies to that percentile. The panel's PAR1/PAR2 contigs, never
   matched before, now score as two copies in either sex.

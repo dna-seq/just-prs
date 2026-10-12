@@ -74,7 +74,7 @@ class TestOneCopyDeltas:
         assert copies.tolist() == [-5.0, 0.0]
 
 
-def _sample_scores() -> pl.DataFrame:
+def _sample_scores(sex_linked: int = 3) -> pl.DataFrame:
     rows = []
     for superpop, base in (("EUR", 0.0), ("AFR", 10.0)):
         for i in range(6):
@@ -86,6 +86,7 @@ def _sample_scores() -> pl.DataFrame:
     ).with_columns(
         pl.lit("PGS1").alias("pgs_id"),
         pl.col("score").alias("score_dosage_compensation"),
+        pl.lit(sex_linked).alias("variants_matched_sex_linked"),
     )
 
 
@@ -123,6 +124,12 @@ class TestAggregateSexAware:
         assert legacy.columns == [
             "pgs_id", "superpopulation", "mean", "std", "n", "median", "p5", "p25", "p75", "p95"
         ]
+
+    def test_no_sex_linked_rows_means_one_curve_for_both_sexes(self) -> None:
+        """Men and women score alike without X or Y rows; half-size curves would only add noise."""
+        curves = aggregate_sex_aware_distributions(_sample_scores(sex_linked=0))
+        assert set(curves["sex"]) == {"all"}
+        assert curves.height == 2 * 2
 
     def test_a_null_coding_yields_no_curve(self) -> None:
         scores = _sample_scores().with_columns(pl.lit(None, dtype=pl.Float64).alias("score_copies"))
@@ -207,6 +214,13 @@ class TestPercentileCurveChoice:
         result = _offline_catalog(tmp_path).percentile_full(10.0, "PGS1", ancestry="EUR")
         assert (result.reference_mean, result.reference_sex, result.reference_x_coding) == (10.0, None, None)
 
+    def test_a_score_without_sex_linked_rows_uses_the_both_sexes_curve(self, tmp_path: Path) -> None:
+        catalog = _offline_catalog(tmp_path)
+        path = tmp_path / "percentiles" / "1000g_distributions_by_sex.parquet"
+        pl.read_parquet(path).filter(pl.col("sex") == "all").write_parquet(path)
+        result = catalog.percentile_full(10.0, "PGS1", ancestry="EUR", karyotype="XY")
+        assert (result.reference_mean, result.reference_sex, result.reference_x_coding) == (9.5, "all", "copies")
+
     def test_a_score_without_per_sex_curves_falls_back_to_legacy(self, tmp_path: Path) -> None:
         result = _offline_catalog(tmp_path).percentile_full(10.0, "PGS2", ancestry="EUR", karyotype="XY")
         assert (result.method, result.reference_mean, result.reference_sex) == ("reference_panel", 10.0, None)
@@ -246,7 +260,8 @@ class TestRealPanel:
         panel = _ResolvedRefPanel(ref_dir, "GRCh38")
         scores = compute_reference_prs_polars("PGS000030", scoring_file, ref_dir, tmp_path, _panel=panel)
         assert scores.height == panel.psam_df.height == 3202
-        assert scores["variants_matched_one_copy"][0] > 0
+        assert scores["variants_matched_one_copy"][0] == scores["variants_matched_sex_linked"][0] > 0
+        assert set(aggregate_sex_aware_distributions(scores)["sex"]) == {"all", "male", "female"}
 
         female = scores.filter(pl.col("sex") == "female")
         assert (female["score"] - female["score_copies"]).abs().max() == 0.0

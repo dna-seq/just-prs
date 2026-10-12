@@ -222,6 +222,17 @@ class PercentileResult(BaseModel):
     caveat: str = Field(
         default="", description="Human-readable reliability caveat when reliable is False"
     )
+    reference_sex: str | None = Field(
+        default=None,
+        description=(
+            "Sex of the per-sex reference curve used ('male', 'female' or 'all'); None when the "
+            "legacy curve was used, which counts a man's X and Y and everyone's MT twice"
+        ),
+    )
+    reference_x_coding: str | None = Field(
+        default=None,
+        description="X coding of the per-sex reference curve used ('copies' or 'dosage_compensation')",
+    )
 
 
 class PRSResult(BaseModel):

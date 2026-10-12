@@ -115,6 +115,14 @@ anchor base with any SNV at the same position.
   both sexes with ~430 hets each), and the scorer summed it as two copies. A
   result with any one-copy row that is not doubled carries
   `reference_coding_mismatch=True` against `{panel}_distributions.parquet`.
+- **Per-sex curves.** The reference scorer also writes each 1000G sample's
+  `copies` and `dosage_compensation` score, and the batch publishes
+  `{panel}_distributions_by_sex.parquet` (all / male / female × coding) beside the
+  unchanged legacy file. A percentile lookup that knows the karyotype reads the
+  matching curve (XX female, XY male, else both sexes) and says which one in
+  `PercentileResult.reference_sex` / `reference_x_coding`; the flag above then
+  no longer applies to that percentile. The panel's PAR1/PAR2 contigs, never
+  matched before, now score as two copies in either sex.
 - **Provenance.** `normalize_vcf` stores the caller, its version, the declared
   karyotype, the caller's ploidy model (`sex_aware` / `diploid`) and the
   inferred karyotype as parquet metadata; read them with

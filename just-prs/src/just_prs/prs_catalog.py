@@ -23,6 +23,7 @@ from just_prs.cleanup import (
 )
 from just_prs.ftp import download_metadata_sheet, _atomic_write_parquet
 from just_prs.hf import (
+    distributions_by_sex_filename,
     distributions_filename,
     pull_ancestry_model,
     pull_catalog_scoring_flags,
@@ -30,7 +31,9 @@ from just_prs.hf import (
     needs_pull,
     pull_cleaned_parquets,
     pull_reference_distributions,
+    pull_reference_distributions_by_sex,
 )
+from just_prs.karyotype import XChromosomeCoding, reference_curve_sex
 from just_prs.models import (
     AbsoluteRisk,
     AbsoluteRiskBundle,
@@ -170,6 +173,7 @@ class PRSCatalog:
         self._prevalence_lf: pl.LazyFrame | None = None
         self._heritability_lf: pl.LazyFrame | None = None
         self._ref_dist_cache: dict[str, pl.LazyFrame] = {}
+        self._ref_dist_by_sex_cache: dict[str, pl.LazyFrame | None] = {}
         self._ref_dist_refresh_attempted: set[str] = set()
         self._ref_dist_source: dict[str, str] = {}
 
@@ -571,20 +575,12 @@ class PRSCatalog:
             self._ref_dist_source[panel] = "local_cache"
 
         df = pl.read_parquet(local)
-        issue_path = local.with_name(f"{panel}_distribution_quality_issues.parquet")
-        quality_path = local.with_name(f"{panel}_quality.parquet")
-        if issue_path.exists():
-            issue_df = pl.read_parquet(issue_path)
-        else:
-            quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
-            issue_df = reference_distribution_audit_issues(df, quality_df)
-        error_issue_df = issue_df.filter(pl.col("severity") == "ERROR")
-        if error_issue_df.height > 0:
-            bad_ids = error_issue_df.select("pgs_id").unique()
-            df = df.join(bad_ids, on="pgs_id", how="anti")
+        bad_ids = self._reference_error_ids(panel, df)
+        if bad_ids:
+            df = df.filter(~pl.col("pgs_id").is_in(bad_ids))
             logger.warning(
                 "Filtered %s untrustworthy reference PGS IDs from %s.",
-                bad_ids.height,
+                len(bad_ids),
                 local,
             )
         excluded = self.excluded_catalog_pgs_ids()
@@ -602,6 +598,50 @@ class PRSCatalog:
         self._ref_dist_cache[panel] = lf
         return lf
 
+    def _reference_error_ids(self, panel: str, legacy_df: pl.DataFrame) -> set[str]:
+        """PGS IDs with an ERROR-severity reference audit issue (the audit sidecar, else recomputed)."""
+        issue_path = self.percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
+        quality_path = self.percentiles_dir / f"{panel}_quality.parquet"
+        if issue_path.exists():
+            issue_df = pl.read_parquet(issue_path)
+        else:
+            quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
+            issue_df = reference_distribution_audit_issues(legacy_df, quality_df)
+        return set(issue_df.filter(pl.col("severity") == "ERROR")["pgs_id"].unique().to_list())
+
+    def reference_distributions_by_sex(self, panel: str = "1000g") -> pl.LazyFrame | None:
+        """Per-sex, per-X-coding reference curves, or None when none are published.
+
+        Columns: pgs_id, superpopulation, sex (``all``/``male``/``female``), x_coding
+        (``copies``/``dosage_compensation``), mean, std, n, median, p5, p25, p75, p95.
+        Pulled from HuggingFace on a local miss. The same PGS IDs are dropped as from
+        :meth:`reference_distributions` (ERROR audit issues and canary exclusions), so
+        a score quarantined there never gets a percentile from here either.
+        """
+        if panel in self._ref_dist_by_sex_cache:
+            return self._ref_dist_by_sex_cache[panel]
+        from huggingface_hub.errors import HfHubHTTPError, LocalEntryNotFoundError
+
+        local = self.percentiles_dir / distributions_by_sex_filename(panel)
+        if needs_pull(local):
+            try:
+                pulled = pull_reference_distributions_by_sex(self.percentiles_dir, panel=panel)
+            except (HfHubHTTPError, LocalEntryNotFoundError, OSError) as exc:
+                # The legacy curves still answer; the caller falls back to them.
+                log_message(message_type="prs_catalog:by_sex_pull_failed", panel=panel, error=str(exc))
+                pulled = None
+            if pulled is None or not local.exists():
+                self._ref_dist_by_sex_cache[panel] = None
+                return None
+
+        self.reference_distributions(panel=panel)  # pulls the audit sidecars when missing
+        legacy = self.percentiles_dir / distributions_filename(panel)
+        legacy_df = pl.read_parquet(legacy) if legacy.exists() else pl.read_parquet(local).head(0)
+        excluded = self._reference_error_ids(panel, legacy_df) | set(self.excluded_catalog_pgs_ids())
+        lf = pl.read_parquet(local).filter(~pl.col("pgs_id").is_in(excluded)).lazy()
+        self._ref_dist_by_sex_cache[panel] = lf
+        return lf
+
     def _refresh_reference_distributions(self, panel: str = "1000g") -> None:
         """Pull the latest reference distributions parquet from HF and reload cache.
 
@@ -616,12 +656,14 @@ class PRSCatalog:
             pulled = pull_reference_distributions(self.percentiles_dir, panel=panel)
             if pulled is not None:
                 self._ref_dist_cache.pop(panel, None)
+                self._ref_dist_by_sex_cache.pop(panel, None)
                 self._ref_dist_source[panel] = "hf_sync"
 
     def refresh_reference_cache(self, panel: str = "1000g") -> None:
         """Force-pull reference distributions and audit sidecars from HuggingFace."""
         self._ref_dist_refresh_attempted.discard(panel)
         self._ref_dist_cache.pop(panel, None)
+        self._ref_dist_by_sex_cache.pop(panel, None)
         self._refresh_reference_distributions(panel=panel)
 
     def reload(self) -> None:
@@ -631,6 +673,7 @@ class PRSCatalog:
         self._best_perf_lf = None
         self._publications_lf = None
         self._ref_dist_cache.clear()
+        self._ref_dist_by_sex_cache.clear()
         self._ref_dist_refresh_attempted.clear()
         self._ref_dist_source.clear()
         self._catalog_flags_lf = None
@@ -1638,6 +1681,8 @@ class PRSCatalog:
         mean: float = 0.0,
         std: float | None = None,
         panel: str = "1000g",
+        karyotype: str | None = None,
+        x_coding: str | None = None,
     ) -> tuple[float | None, str]:
         """Estimate population percentile for a given PRS score (3-tier fallback).
 
@@ -1646,7 +1691,8 @@ class PRSCatalog:
         true z-score / reference mean-std and the coverage-aware reliability verdict.
         """
         res = self.percentile_full(
-            prs_score, pgs_id, ancestry=ancestry, mean=mean, std=std, panel=panel
+            prs_score, pgs_id, ancestry=ancestry, mean=mean, std=std, panel=panel,
+            karyotype=karyotype, x_coding=x_coding,
         )
         return res.percentile, res.method
 
@@ -1674,6 +1720,8 @@ class PRSCatalog:
         panel: str = "1000g",
         weight_mass_coverage: float | None = None,
         user_match_rate: float | None = None,
+        karyotype: str | None = None,
+        x_coding: str | None = None,
     ) -> PercentileResult:
         """Estimate population percentile and expose the statistics behind it.
 
@@ -1705,6 +1753,13 @@ class PRSCatalog:
                 (0-1). Compared against the reference panel's match rate to detect
                 coverage mismatch that makes the raw score incomparable to the
                 reference distribution.
+            karyotype: The sample's karyotype (``PRSResult.karyotype``). With it, or
+                with ``x_coding``, Tier 1 reads the per-sex curves
+                (:meth:`reference_distributions_by_sex`): XX the female curve, XY the
+                male one, anything else both sexes. Falls back to the legacy curve
+                when no per-sex curve exists for the score.
+            x_coding: The coding the score was computed under
+                (``PRSResult.x_coding``); default ``copies``.
 
         Returns:
             A :class:`PercentileResult`.
@@ -1716,6 +1771,8 @@ class PRSCatalog:
         z: float | None = None
         ref_mean: float | None = None
         ref_std: float | None = None
+        reference_sex: str | None = None
+        reference_x_coding: str | None = None
 
         if std is not None and std > 0:
             z = (prs_score - mean) / std
@@ -1723,8 +1780,24 @@ class PRSCatalog:
             method = "theoretical"
             ref_mean, ref_std = mean, std
         else:
-            ref_lf = self.reference_distributions(panel=panel)
-            stats = ancestry_distribution_stats(pgs_id, ancestry, ref_lf)
+            stats = None
+            if karyotype is not None or x_coding is not None:
+                by_sex = self.reference_distributions_by_sex(panel=panel)
+                if by_sex is not None:
+                    reference_sex = reference_curve_sex(karyotype)
+                    reference_x_coding = XChromosomeCoding(x_coding or XChromosomeCoding.COPIES).value
+                    stats = ancestry_distribution_stats(
+                        pgs_id,
+                        ancestry,
+                        by_sex.filter(
+                            (pl.col("sex") == reference_sex) & (pl.col("x_coding") == reference_x_coding)
+                        ),
+                    )
+                    if stats is None:
+                        reference_sex = reference_x_coding = None
+            if stats is None:
+                ref_lf = self.reference_distributions(panel=panel)
+                stats = ancestry_distribution_stats(pgs_id, ancestry, ref_lf)
             if stats is None:
                 self._refresh_reference_distributions(panel=panel)
                 ref_lf = self.reference_distributions(panel=panel)
@@ -1788,6 +1861,8 @@ class PRSCatalog:
             panel=used_panel,
             reliable=reliable,
             caveat=caveat,
+            reference_sex=reference_sex if method == "reference_panel" else None,
+            reference_x_coding=reference_x_coding if method == "reference_panel" else None,
         )
 
     def absolute_risk_from_score(

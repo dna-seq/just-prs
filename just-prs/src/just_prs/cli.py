@@ -3477,6 +3477,7 @@ def _compute_trait_results(
                 r.score, r.pgs_id, ancestry=ancestry,
                 weight_mass_coverage=r.weight_mass_coverage,
                 user_match_rate=r.match_rate,
+                karyotype=r.karyotype, x_coding=r.x_coding,
             )
             pctl = pctl_result.percentile
             z_score = pctl_result.z_score
@@ -3695,6 +3696,7 @@ def plot_bell_curve_cmd(
                     result.score, result.pgs_id, ancestry=ancestry,
                     weight_mass_coverage=result.weight_mass_coverage,
                     user_match_rate=result.match_rate,
+                    karyotype=result.karyotype, x_coding=result.x_coding,
                 )
                 score = result.score
                 score_info = catalog.score_info_row(pgs_id, genome_build=sample_build)
@@ -3754,6 +3756,7 @@ def plot_bell_curve_cmd(
                         result.score, result.pgs_id, ancestry=ancestry,
                         weight_mass_coverage=result.weight_mass_coverage,
                         user_match_rate=result.match_rate,
+                        karyotype=result.karyotype, x_coding=result.x_coding,
                     )
                     multi_scores[label] = result.score
                     s_rd = {

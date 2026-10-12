@@ -69,6 +69,7 @@ from just_prs.reference import (
     ReferencePanelError,
     ScoringOutcome,
     aggregate_distributions,
+    aggregate_sex_aware_distributions,
     ancestry_percentile,
     compute_reference_prs_batch,
     compute_reference_prs_polars,

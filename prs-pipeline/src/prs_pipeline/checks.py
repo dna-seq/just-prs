@@ -474,6 +474,57 @@ def _distributions_path(
     return percentiles_dir / f"{panel}_distributions.parquet"
 
 
+@asset_check(
+    asset="reference_scores",
+    description=(
+        "Per-sex, per-X-coding curves ({panel}_distributions_by_sex.parquet): every PGS ID of the "
+        "legacy distributions has them; each (superpopulation, coding) has an all, male and female "
+        "curve whose sample counts add up; means and stds are finite."
+    ),
+)
+def check_distributions_by_sex_valid(
+    cache_dir_resource: CacheDirResource,
+) -> AssetCheckResult:
+    panel = os.environ.get("PRS_PIPELINE_PANEL", "1000g")
+    test_spec = os.environ.get("PRS_PIPELINE_TEST_IDS", "").strip()
+    subdir = "test" if test_spec else None
+    dist_path = _distributions_path(cache_dir_resource, panel, subdir)
+    by_sex_path = dist_path.with_name(f"{panel}_distributions_by_sex.parquet")
+    if not by_sex_path.exists() or not dist_path.exists():
+        return AssetCheckResult(
+            passed=False,
+            severity=AssetCheckSeverity.ERROR,
+            metadata={"error": "distributions or per-sex distributions missing", "path": str(by_sex_path)},
+        )
+
+    by_sex = pl.read_parquet(by_sex_path)
+    legacy_ids = set(pl.read_parquet(dist_path)["pgs_id"].unique().to_list())
+    missing_ids = sorted(legacy_ids - set(by_sex["pgs_id"].unique().to_list()))
+    n = by_sex.pivot(on="sex", index=["pgs_id", "superpopulation", "x_coding"], values="n")
+    for sex in ("all", "male", "female"):
+        if sex not in n.columns:
+            n = n.with_columns(pl.lit(None, dtype=pl.UInt32).alias(sex))
+    incomplete = n.filter(pl.any_horizontal(pl.col("all", "male", "female").is_null()))
+    # 1000G has no sample of unknown sex, so all = male + female; allow unknowns on other panels.
+    bad_counts = n.filter(pl.col("all") < pl.col("male") + pl.col("female"))
+    non_finite = by_sex.filter(~pl.col("mean").is_finite() | ~pl.col("std").is_finite())
+
+    passed = not missing_ids and incomplete.height == 0 and bad_counts.height == 0 and non_finite.height == 0
+    return AssetCheckResult(
+        passed=passed,
+        severity=AssetCheckSeverity.ERROR,
+        metadata={
+            "n_pgs_ids": int(by_sex["pgs_id"].n_unique()),
+            "n_rows": by_sex.height,
+            "n_missing_pgs_ids": len(missing_ids),
+            "missing_examples": missing_ids[:5],
+            "n_incomplete_sex_sets": incomplete.height,
+            "n_bad_sample_counts": bad_counts.height,
+            "n_non_finite": non_finite.height,
+        },
+    )
+
+
 # ---------------------------------------------------------------------------
 # Collect all checks for registration
 # ---------------------------------------------------------------------------
@@ -939,6 +990,7 @@ ALL_ASSET_CHECKS = [
     check_distributions_quantile_ordering,
     check_distributions_vs_raw_scores,
     check_distributions_sample_sizes,
+    check_distributions_by_sex_valid,
     check_enriched_has_metadata_columns,
     check_cleaned_metadata_quality,
     check_dev_ancestry_valid,

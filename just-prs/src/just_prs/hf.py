@@ -123,6 +123,11 @@ def distributions_filename(panel: str = "1000g") -> str:
     return f"{panel}_distributions.parquet"
 
 
+def distributions_by_sex_filename(panel: str = "1000g") -> str:
+    """Filename of the per-sex, per-X-coding curves published beside the legacy file."""
+    return f"{panel}_distributions_by_sex.parquet"
+
+
 def _hf_download_with_retry(
     repo_id: str,
     filename: str,
@@ -333,6 +338,7 @@ def pull_reference_distributions(
                 f"{panel}_quality.parquet",
                 f"{panel}_distribution_quality_issues.parquet",
                 f"{panel}_distribution_audit_summary.json",
+                distributions_by_sex_filename(panel),
             ]:
                 try:
                     _pull_flat(
@@ -351,6 +357,28 @@ def pull_reference_distributions(
         return None
 
 
+def pull_reference_distributions_by_sex(
+    local_dir: Path,
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+    panel: str = "1000g",
+) -> Path | None:
+    """Download ``{panel}_distributions_by_sex.parquet``, or None if it is not published yet."""
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    with start_action(action_type="hf:pull_reference_distributions_by_sex", repo_id=repo_id, panel=panel):
+        local_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            return _pull_flat(
+                repo_id=repo_id,
+                hf_path=f"{HF_DATA_PREFIX}/{distributions_by_sex_filename(panel)}",
+                local_dir=local_dir,
+                token=_resolve_token(token),
+            )
+        except (EntryNotFoundError, RepositoryNotFoundError):
+            return None
+
+
 def push_reference_distributions(
     parquet_path: Path,
     repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
@@ -359,6 +387,7 @@ def push_reference_distributions(
     quality_report_path: Path | None = None,
     issue_report_path: Path | None = None,
     audit_summary_path: Path | None = None,
+    by_sex_path: Path | None = None,
 ) -> None:
     """Upload a distributions parquet to the prs-percentiles HF dataset repo.
 
@@ -378,6 +407,8 @@ def push_reference_distributions(
         quality_report_path: Optional sidecar parquet with per-PGS scoring quality.
         issue_report_path: Optional sidecar parquet with quarantined distribution issues.
         audit_summary_path: Optional compact JSON audit summary.
+        by_sex_path: Optional per-sex, per-X-coding curves, uploaded as
+            ``data/{panel}_distributions_by_sex.parquet``.
     """
     resolved_token = _resolve_token(token)
     panel_file = distributions_filename(panel)
@@ -412,6 +443,32 @@ def push_reference_distributions(
                 repo_id=repo_id,
                 repo_type="dataset",
             )
+        if by_sex_path is not None and by_sex_path.exists():
+            api.upload_file(
+                path_or_fileobj=str(by_sex_path),
+                path_in_repo=f"{HF_DATA_PREFIX}/{distributions_by_sex_filename(panel)}",
+                repo_id=repo_id,
+                repo_type="dataset",
+            )
+
+
+def push_reference_distributions_by_sex(
+    parquet_path: Path,
+    repo_id: str = DEFAULT_HF_PERCENTILES_REPO,
+    token: str | None = None,
+    panel: str = "1000g",
+) -> None:
+    """Upload only ``data/{panel}_distributions_by_sex.parquet``, leaving the legacy curves as published."""
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:push_reference_distributions_by_sex", repo_id=repo_id, panel=panel):
+        _configure_hf_timeouts()
+        api = HfApi(token=resolved_token)
+        api.upload_file(
+            path_or_fileobj=str(parquet_path),
+            path_in_repo=f"{HF_DATA_PREFIX}/{distributions_by_sex_filename(panel)}",
+            repo_id=repo_id,
+            repo_type="dataset",
+        )
 
 
 REFERENCE_ALLELE_UNIVERSE_FILE = "reference_allele_universe.parquet"

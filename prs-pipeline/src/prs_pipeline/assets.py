@@ -54,6 +54,7 @@ from just_prs.hf import (
     push_chip_coverage,
     push_reference_allele_universe,
     push_reference_distributions,
+    distributions_by_sex_filename,
     reference_allele_universe_filename,
 )
 from just_prs.sample_scores.publish import (
@@ -2203,6 +2204,18 @@ def hf_prs_percentiles(
 
         enriched.write_parquet(parquet_path)
 
+        # The per-sex curves publish exactly the PGS IDs the legacy curves publish.
+        by_sex_path = percentiles_dir / distributions_by_sex_filename(panel)
+        if by_sex_path.exists():
+            by_sex = pl.read_parquet(by_sex_path)
+            by_sex = by_sex.filter(pl.col("pgs_id").is_in(list(published_pgs_ids_set)))
+            by_sex.write_parquet(by_sex_path)
+            context.log.info(
+                f"Per-sex curves: {by_sex['pgs_id'].n_unique()} PGS IDs, {by_sex.height} rows ({by_sex_path})."
+            )
+        else:
+            context.log.warning(f"No per-sex curves at {by_sex_path}; publishing the legacy curves only.")
+
         if is_test:
             context.log.info(
                 f"TEST MODE: skipping HuggingFace push. "
@@ -2242,6 +2255,7 @@ def hf_prs_percentiles(
             quality_report_path=percentiles_dir / f"{panel}_quality.parquet",
             issue_report_path=issue_report_path,
             audit_summary_path=audit_summary_path,
+            by_sex_path=percentiles_dir / distributions_by_sex_filename(panel),
         )
 
     url = f"https://huggingface.co/datasets/{repo_id}"

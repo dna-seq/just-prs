@@ -215,6 +215,7 @@ class BatchScoringResult(BaseModel):
     outcomes: list[ScoringOutcome]
     quality_df: pl.DataFrame
     distribution_issues_df: pl.DataFrame
+    distributions_by_sex_df: pl.DataFrame | None = None
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -529,11 +530,13 @@ def download_reference_fasta(
 def parse_psam(psam_path: Path) -> pl.DataFrame:
     """Parse a PLINK2 .psam file and return a DataFrame with sample population labels.
 
-    Expected columns: #IID (or IID), SuperPop (or SUP), Population (or POP).
+    Expected columns: #IID (or IID), SuperPop (or SUP), Population (or POP), and
+    optionally SEX (PLINK coding: 1 male, 2 female, anything else unknown).
     The '#' prefix on the first column header is stripped automatically.
 
     Returns:
-        DataFrame with columns: iid, superpop, population
+        DataFrame with columns: iid, superpop, population, sex
+        (``male`` / ``female`` / ``unknown``)
     """
     with start_action(action_type="reference:parse_psam", path=str(psam_path)):
         df = pl.read_csv(
@@ -547,7 +550,13 @@ def parse_psam(psam_path: Path) -> pl.DataFrame:
             if match:
                 col_map[match] = canonical
 
-        df = df.rename(col_map).select(["iid", "superpop", "population"])
+        sex_col = next((c for c in df.columns if c.upper() == "SEX"), None)
+        sex = (
+            pl.col(sex_col).replace_strict({"1": "male", "2": "female"}, default="unknown")
+            if sex_col
+            else pl.lit("unknown")
+        )
+        df = df.rename(col_map).select(["iid", "superpop", "population", sex.alias("sex")])
         log_message(
             message_type="reference:psam_loaded",
             n_samples=df.height,
@@ -1215,6 +1224,68 @@ def read_pgen_genotypes(
     return geno_buf[unsort_order]
 
 
+# PLINK2 panels split the pseudoautosomal ends of X into contigs PAR1 and PAR2 (both
+# pgsc_1000G_v1 builds do), while scoring files place those rows on X. Joining on the
+# raw contig left every PAR row unmatched; ``chrom`` itself keeps PAR1/PAR2, which is
+# how the scorer tells PAR (two copies in either sex) from non-PAR X.
+_PANEL_CHROM_AS_SCORING_SQL = "(CASE WHEN p.chrom IN ('PAR1', 'PAR2') THEN 'X' ELSE p.chrom END)"
+
+# Region codes for the reference scorer's per-row copy number.
+_REGION_DIPLOID, _REGION_X, _REGION_Y, _REGION_MT = 0, 1, 2, 3
+
+
+def _panel_region_codes(chrom: pl.Series) -> "np.ndarray[Any, np.dtype[np.int8]]":
+    """Region of each matched panel row: diploid (autosome or PAR), non-PAR X, Y or MT."""
+    return (
+        pl.select(
+            pl.when(chrom == "X").then(_REGION_X)
+            .when(chrom == "Y").then(_REGION_Y)
+            .when(chrom.is_in(["MT", "M"])).then(_REGION_MT)
+            .otherwise(_REGION_DIPLOID)
+            .cast(pl.Int8)
+        )
+        .to_series()
+        .to_numpy()
+    )
+
+
+def _one_copy_deltas(
+    geno: "np.ndarray[Any, np.dtype[np.int8]]",
+    contrib: "np.ndarray[Any, np.dtype[np.float32]]",
+    region: "np.ndarray[Any, np.dtype[np.int8]]",
+    male: "np.ndarray[Any, np.dtype[np.bool_]]",
+    female: "np.ndarray[Any, np.dtype[np.bool_]]",
+) -> tuple["np.ndarray[Any, np.dtype[np.float64]]", "np.ndarray[Any, np.dtype[np.float64]]"]:
+    """Per-sample change from the legacy sum under ``copies`` and ``dosage_compensation``.
+
+    ``geno`` and ``contrib`` hold only one-copy-capable rows (non-PAR X, Y, MT):
+    pgenlib's call (0/1/2, -9 missing; a haploid call reads as 0 or 2) and the legacy
+    contribution ``weight x dose`` with missing already 0. The legacy sum counted a
+    haploid call as two copies. The rules match the sample engines
+    (``just_prs.karyotype``): one copy halves the call and a het there is a no-call;
+    ``dosage_compensation`` keeps a man's X at 0..2 (hets still no-calls) and counts Y
+    and MT once, as PLINK2 does; a woman has no Y, so any Y call counts 0; a sample of
+    unknown sex keeps X and Y as written, MT once.
+    """
+    import numpy as np
+
+    het = geno == 1
+    once = np.where(het, np.float32(0.0), contrib * np.float32(0.5))
+    called_twice = np.where(het, np.float32(0.0), contrib)
+    male_row = male[np.newaxis, :]
+    female_row = female[np.newaxis, :]
+    is_x = (region == _REGION_X)[:, np.newaxis]
+    is_y = (region == _REGION_Y)[:, np.newaxis]
+
+    y_once = np.where(male_row, once, np.where(female_row, np.float32(0.0), contrib))
+    copies = np.where(is_x, np.where(male_row, once, contrib), np.where(is_y, y_once, once))
+    compensated = np.where(is_x, np.where(male_row, called_twice, contrib), np.where(is_y, y_once, once))
+    return (
+        (copies - contrib).sum(axis=0, dtype=np.float64),
+        (compensated - contrib).sum(axis=0, dtype=np.float64),
+    )
+
+
 class _ResolvedRefPanel:
     """Pre-resolved reference panel paths and shared data.
 
@@ -1354,7 +1425,7 @@ class _ResolvedRefPanel:
                         END AS effect_is_alt
                     FROM '{pvar}' p
                     INNER JOIN scoring s
-                        ON p.chrom = s.chr_name_norm AND p."POS" = s.chr_pos_norm
+                        ON {_PANEL_CHROM_AS_SCORING_SQL} = s.chr_name_norm AND p."POS" = s.chr_pos_norm
                     WHERE
                         (s.effect_allele = p."ALT" AND s.other_allele = p."REF")
                         OR (s.effect_allele = p."REF" AND s.other_allele = p."ALT")
@@ -1376,7 +1447,7 @@ class _ResolvedRefPanel:
                         END AS effect_is_alt
                     FROM '{pvar}' p
                     INNER JOIN scoring s
-                        ON p.chrom = s.chr_name_norm AND p."POS" = s.chr_pos_norm
+                        ON {_PANEL_CHROM_AS_SCORING_SQL} = s.chr_name_norm AND p."POS" = s.chr_pos_norm
                     WHERE s.effect_allele = p."ALT" OR s.effect_allele = p."REF"
                 """
 
@@ -1571,7 +1642,14 @@ def compute_reference_prs_polars(
             (loads pvar into memory — fine for single calls, wasteful for batches).
 
     Returns:
-        DataFrame with columns: iid, superpop, population, score, pgs_id
+        DataFrame with columns: iid, superpop, population, sex, pgs_id, the match
+        counts, and three scores. ``score`` is the legacy sum (pgenlib reads a haploid
+        call as 0/2, so a man's X and Y and everyone's MT count twice), kept so the
+        published ``{panel}_distributions.parquet`` stays reproducible.
+        ``score_copies`` counts copies (``XChromosomeCoding.COPIES``) and
+        ``score_dosage_compensation`` a man's non-PAR X 0..2 with Y and MT once
+        (``DOSAGE_COMPENSATION``); both are null for a per-dosage-weight score with
+        one-copy rows. PAR1/PAR2 rows are matched as X and count two copies.
     """
     import os
 
@@ -1637,7 +1715,13 @@ def compute_reference_prs_polars(
         else:
             weights = matched["effect_weight"].to_numpy().astype(np.float32)
         is_alt = matched["effect_is_alt"].to_numpy()
+        region = _panel_region_codes(matched["chrom"])
+        variants_matched_par = int(matched["chrom"].is_in(["PAR1", "PAR2"]).sum())
         del matched
+        variants_matched_one_copy = int((region != _REGION_DIPLOID).sum())
+        sex = panel.psam_df["sex"].to_numpy()
+        male = sex == "male"
+        female = sex == "female"
 
         _require_pgenlib()
         import pgenlib
@@ -1645,6 +1729,8 @@ def compute_reference_prs_polars(
         sort_order = np.argsort(variant_indices)
         sorted_all = variant_indices[sort_order]
         is_alt_sorted = is_alt[sort_order]
+        region_sorted = region[sort_order]
+        del region
         if dosage_weight:
             w0_sorted = w0[sort_order]
             w1_sorted = w1[sort_order]
@@ -1661,6 +1747,8 @@ def compute_reference_prs_polars(
         allele_offsets = _load_allele_idx_offsets(offsets_cache, variant_ct=panel.pvar_variant_ct)
 
         prs_sum = np.zeros(n_samples, dtype=np.float64)
+        delta_copies = np.zeros(n_samples, dtype=np.float64)
+        delta_compensated = np.zeros(n_samples, dtype=np.float64)
 
         geno_t0 = time.monotonic()
         with pgenlib.PgenReader(
@@ -1718,8 +1806,20 @@ def compute_reference_prs_polars(
                         geno_float[ref_effect_mask, :] = np.float32(2.0) - geno_float[ref_effect_mask, :]
                     geno_float[missing_mask] = 0.0
 
-                    prs_sum += (geno_float * batch_weights[:, np.newaxis]).sum(axis=0)
-                    del geno_float, batch_weights
+                    contrib = geno_float * batch_weights[:, np.newaxis]
+                    prs_sum += contrib.sum(axis=0)
+                    one_copy_rows = region_sorted[start:end] != _REGION_DIPLOID
+                    if one_copy_rows.any():
+                        d_copies, d_compensated = _one_copy_deltas(
+                            geno_buf[one_copy_rows],
+                            contrib[one_copy_rows],
+                            region_sorted[start:end][one_copy_rows],
+                            male,
+                            female,
+                        )
+                        delta_copies += d_copies
+                        delta_compensated += d_compensated
+                    del geno_float, batch_weights, contrib, one_copy_rows
 
                 del geno_buf, missing_mask, batch_indices, batch_is_alt
                 start = end
@@ -1730,7 +1830,22 @@ def compute_reference_prs_polars(
             del sorted_all, is_alt_sorted, w0_sorted, w1_sorted, w2_sorted, allele_offsets
         else:
             del sorted_all, weights_sorted, is_alt_sorted, allele_offsets
+        del region_sorted
         prs_scores = prs_sum
+        if dosage_weight and variants_matched_one_copy > 0:
+            # A per-dosage weight (GenoBoost) has no defined value for one copy of a
+            # haploid locus, so the one-copy codings are left unscored rather than guessed.
+            scores_copies = np.full(n_samples, np.nan)
+            scores_compensated = np.full(n_samples, np.nan)
+            log_message(
+                message_type="reference:one_copy_codings_skipped",
+                pgs_id=pgs_id,
+                reason="per-dosage weights on one-copy rows",
+                variants_matched_one_copy=variants_matched_one_copy,
+            )
+        else:
+            scores_copies = prs_sum + delta_copies
+            scores_compensated = prs_sum + delta_compensated
         t_compute = time.monotonic() - t0
         log_message(
             message_type="reference:phase_pgen_read",
@@ -1750,16 +1865,24 @@ def compute_reference_prs_polars(
 
         t0 = time.monotonic()
         result = (
-            pl.DataFrame({"iid": panel.psam_df["iid"].to_list(), "score": prs_scores.tolist()})
+            pl.DataFrame({
+                "iid": panel.psam_df["iid"].to_list(),
+                "score": prs_scores,
+                "score_copies": scores_copies,
+                "score_dosage_compensation": scores_compensated,
+            })
+            .with_columns(pl.col("score_copies", "score_dosage_compensation").fill_nan(None))
             .join(panel.psam_df, on="iid", how="inner")
             .with_columns(
                 pl.lit(pgs_id).alias("pgs_id"),
                 pl.lit(variants_total).alias("variants_total"),
                 pl.lit(variants_matched).alias("variants_matched"),
                 pl.lit(variants_matched / variants_total if variants_total > 0 else None).alias("match_rate"),
+                pl.lit(variants_matched_one_copy).alias("variants_matched_one_copy"),
+                pl.lit(variants_matched_par).alias("variants_matched_par"),
             )
         )
-        del prs_scores
+        del prs_scores, scores_copies, scores_compensated
         t_join = time.monotonic() - t0
         t_total = time.monotonic() - t_total_start
 
@@ -1783,7 +1906,70 @@ class _SinglePgsAgg(BaseModel):
     """Aggregated distribution + outcome for a single cached PGS ID."""
     df: pl.DataFrame
     outcome: ScoringOutcome
+    by_sex: pl.DataFrame
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+SEX_AWARE_SCORE_COLUMNS = {"score_copies": "copies", "score_dosage_compensation": "dosage_compensation"}
+"""Per-sample score column -> the ``XChromosomeCoding`` value it was counted under."""
+
+DISTRIBUTIONS_BY_SEX_SCHEMA: dict[str, pl.DataType] = {
+    "pgs_id": pl.Utf8, "superpopulation": pl.Utf8, "sex": pl.Utf8, "x_coding": pl.Utf8,
+    "mean": pl.Float64, "std": pl.Float64, "n": pl.UInt32, "median": pl.Float64,
+    "p5": pl.Float64, "p25": pl.Float64, "p75": pl.Float64, "p95": pl.Float64,
+}
+
+
+def aggregate_sex_aware_distributions(scores: pl.DataFrame | pl.LazyFrame) -> pl.DataFrame:
+    """Per-superpopulation curves by sex (``all``/``male``/``female``) and X coding.
+
+    Reads the per-sample ``score_copies`` / ``score_dosage_compensation`` and ``sex``
+    columns of a reference score frame. A coding that is null for every sample (a
+    per-dosage-weight score with one-copy rows) yields no rows for that coding.
+    Samples of unknown sex count toward ``all`` only.
+    """
+    lf = scores.lazy().unpivot(
+        index=["pgs_id", "superpop", "sex"],
+        on=list(SEX_AWARE_SCORE_COLUMNS),
+        variable_name="x_coding",
+        value_name="value",
+    ).with_columns(pl.col("x_coding").replace_strict(SEX_AWARE_SCORE_COLUMNS))
+    by_sex = pl.concat([
+        lf.with_columns(pl.lit("all").alias("sex")),
+        lf.filter(pl.col("sex").is_in(["male", "female"])),
+    ])
+    return (
+        by_sex.filter(pl.col("value").is_not_null())
+        .group_by(["pgs_id", "superpop", "sex", "x_coding"])
+        .agg(
+            pl.col("value").mean().alias("mean"),
+            pl.col("value").std().alias("std"),
+            pl.len().cast(pl.UInt32).alias("n"),
+            pl.col("value").median().alias("median"),
+            pl.col("value").quantile(0.05).alias("p5"),
+            pl.col("value").quantile(0.25).alias("p25"),
+            pl.col("value").quantile(0.75).alias("p75"),
+            pl.col("value").quantile(0.95).alias("p95"),
+        )
+        .rename({"superpop": "superpopulation"})
+        .sort(["pgs_id", "superpopulation", "sex", "x_coding"])
+        .collect()
+        .cast(DISTRIBUTIONS_BY_SEX_SCHEMA)
+    )
+
+
+def _has_sex_aware_scores(parquet_path: Path) -> bool:
+    """Whether a cached per-PGS score parquet carries the sex-aware columns.
+
+    A parquet written before those columns existed is stale, not corrupt: it lacks
+    the per-sex curves and was matched without PAR rows. An unreadable file answers
+    True here so the aggregator's corrupt-file path handles it.
+    """
+    try:
+        names = pl.read_parquet_schema(parquet_path)
+    except Exception:
+        return True
+    return {"sex", *SEX_AWARE_SCORE_COLUMNS}.issubset(names)
 
 
 class _CorruptParquet(Exception):
@@ -1868,6 +2054,11 @@ def _aggregate_single_pgs(parquet_path: Path, pgs_id: str) -> _SinglePgsAgg | No
             ])
         stats_lf = lf.select(stat_exprs)
         dist, stats = pl.collect_all([agg_lf, stats_lf])
+        by_sex = (
+            aggregate_sex_aware_distributions(lf)
+            if {"sex", *SEX_AWARE_SCORE_COLUMNS}.issubset(schema.names())
+            else pl.DataFrame(schema=DISTRIBUTIONS_BY_SEX_SCHEMA)
+        )
     except _CorruptParquet:
         raise
     except Exception as exc:
@@ -1878,6 +2069,7 @@ def _aggregate_single_pgs(parquet_path: Path, pgs_id: str) -> _SinglePgsAgg | No
     status = "zero_variance" if score_std is not None and score_std < 1e-10 else "ok"
     return _SinglePgsAgg(
         df=dist,
+        by_sex=by_sex,
         outcome=ScoringOutcome(
             pgs_id=pgs_id,
             status=status,
@@ -2460,6 +2652,7 @@ def compute_reference_prs_batch(
 
     outcomes: list[ScoringOutcome] = []
     dist_parts: list[pl.DataFrame] = []
+    by_sex_parts: list[pl.DataFrame] = []
     _DIST_FLUSH_EVERY = 200  # compact dist_parts every N IDs to release small frames
     total = len(pgs_ids)
     started_at = time.monotonic()
@@ -2533,6 +2726,14 @@ def compute_reference_prs_batch(
                         output_mtime=result_parquet.stat().st_mtime,
                     )
 
+                if not stale and not _has_sex_aware_scores(result_parquet):
+                    stale = True
+                    log_message(
+                        message_type="reference:batch_cache_stale",
+                        pgs_id=pgs_id,
+                        reason="cached score predates the sex-aware columns and PAR matching",
+                    )
+
                 if not stale:
                     try:
                         dist = _aggregate_single_pgs(result_parquet, pgs_id)
@@ -2547,6 +2748,7 @@ def compute_reference_prs_batch(
                         dist = None
                     if dist is not None:
                         dist_parts.append(dist.df)
+                        by_sex_parts.append(dist.by_sex)
                         outcomes.append(dist.outcome)
                         n_processed += 1
                         n_ok += 1
@@ -2560,6 +2762,7 @@ def compute_reference_prs_batch(
                         _emit_progress(last_pgs_id=pgs_id, last_status="cached")
                         if len(dist_parts) >= _DIST_FLUSH_EVERY:
                             dist_parts = [pl.concat(dist_parts, how="diagonal_relaxed")]
+                            by_sex_parts = [pl.concat(by_sex_parts, how="vertical")]
                             gc.collect()
                         continue
 
@@ -2619,6 +2822,7 @@ def compute_reference_prs_batch(
 
             per_pgs_dist = aggregate_distributions(df)
             dist_parts.append(per_pgs_dist)
+            by_sex_parts.append(aggregate_sex_aware_distributions(df))
             del df
 
             # Reclaim eagerly after a large score instead of waiting for the
@@ -2667,6 +2871,7 @@ def compute_reference_prs_batch(
             # and RSS grows monotonically until OOM.
             if len(dist_parts) >= _DIST_FLUSH_EVERY:
                 dist_parts = [pl.concat(dist_parts, how="diagonal_relaxed")]
+                by_sex_parts = [pl.concat(by_sex_parts, how="vertical")]
                 gc.collect()
 
         quality_rows = [o.model_dump() for o in outcomes]
@@ -2687,6 +2892,11 @@ def compute_reference_prs_batch(
                 "p75": pl.Float64, "p95": pl.Float64,
             })
 
+        distributions_by_sex_df = (
+            pl.concat(by_sex_parts, how="vertical") if by_sex_parts
+            else pl.DataFrame(schema=DISTRIBUTIONS_BY_SEX_SCHEMA)
+        )
+
         distribution_issues_df = reference_distribution_audit_issues(
             distributions_df,
             quality_df,
@@ -2702,6 +2912,7 @@ def compute_reference_prs_batch(
             percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
         )
         distributions_df.write_parquet(percentiles_dir / f"{panel}_distributions.parquet")
+        distributions_by_sex_df.write_parquet(percentiles_dir / f"{panel}_distributions_by_sex.parquet")
 
         n_ok = sum(1 for o in outcomes if o.status == "ok")
         n_failed = sum(1 for o in outcomes if o.status == "failed")
@@ -2729,6 +2940,7 @@ def compute_reference_prs_batch(
             outcomes=outcomes,
             quality_df=quality_df,
             distribution_issues_df=distribution_issues_df,
+            distributions_by_sex_df=distributions_by_sex_df,
         )
 
 

@@ -112,6 +112,17 @@ def _par_expr(chrom: pl.Expr, pos: pl.Expr, contig: str, genome_build: str) -> p
     return (chrom == contig) & in_par
 
 
+def reference_curve_sex(karyotype: Karyotype | str | None) -> str:
+    """Which per-sex reference curve a sample is compared with: ``female``, ``male`` or ``all``.
+
+    XX and XY have a curve of their own. XXY, X0 and ``unknown`` have none in a
+    reference panel of XX and XY samples, so they get the curve of both sexes.
+    """
+    if karyotype is None:
+        return "all"
+    return {Karyotype.XX: "female", Karyotype.XY: "male"}.get(Karyotype(karyotype), "all")
+
+
 def ploidy_expr(
     karyotype: Karyotype,
     genome_build: str,

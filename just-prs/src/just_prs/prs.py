@@ -583,14 +583,15 @@ def _add_ploidy_columns(
 ) -> pl.LazyFrame:
     """``_ploidy`` (copies of the row's region) and ``_dose_scale`` per scoring row.
 
-    ``_dose_scale`` is 2 on one-copy rows under ``dosage_compensation`` (PLINK2
-    ``--xchr-model 2`` parity), else 1.
+    ``_dose_scale`` is 2 on a one-copy non-PAR X row under ``dosage_compensation``,
+    else 1. That is PLINK2's ``--xchr-model 2``: it doubles a man's X and nothing
+    else, and counts Y and MT once under every model (measured on PLINK2 a6.33).
     """
     compensate = XChromosomeCoding(x_coding) == XChromosomeCoding.DOSAGE_COMPENSATION
     return scoring_norm.with_columns(
         ploidy_expr(karyotype.karyotype, genome_build).alias("_ploidy"),
     ).with_columns(
-        pl.when(pl.lit(compensate) & (pl.col("_ploidy") == 1))
+        pl.when(pl.lit(compensate) & (pl.col("_ploidy") == 1) & (pl.col("chr_name_norm").cast(pl.Utf8) == "X"))
         .then(pl.lit(2))
         .otherwise(pl.lit(1))
         .cast(pl.Int8)
@@ -599,15 +600,23 @@ def _add_ploidy_columns(
 
 
 def _karyotype_result_fields(
-    karyotype: KaryotypeCall, x_coding: XChromosomeCoding | str, variants_hemizygous: int
+    karyotype: KaryotypeCall,
+    x_coding: XChromosomeCoding | str,
+    variants_hemizygous: int,
+    variants_counted_once: int,
 ) -> dict[str, object]:
+    """``variants_counted_once``: scored one-copy rows not doubled by ``_dose_scale``.
+
+    The legacy 1000G curves (``{panel}_distributions.parquet``) count every such
+    row twice, so any of them makes the result differ from those curves.
+    """
     coding = XChromosomeCoding(x_coding)
     return {
         "karyotype": karyotype.karyotype.value,
         "karyotype_source": karyotype.source.value,
         "x_coding": coding.value,
         "variants_hemizygous": variants_hemizygous,
-        "reference_coding_mismatch": coding == XChromosomeCoding.COPIES and variants_hemizygous > 0,
+        "reference_coding_mismatch": variants_counted_once > 0,
     }
 
 
@@ -1174,6 +1183,8 @@ def compute_prs(
             pl.col("is_allele_mismatch").cast(pl.Int64).sum().alias("variants_allele_mismatch"),
             (pl.col("is_present") & pl.col("is_ploidy_conflict")).cast(pl.Int64).sum().alias("variants_ploidy_conflict"),
             (pl.col("resolved_dosage").is_not_null() & (pl.col("_ploidy") != 2)).cast(pl.Int64).sum().alias("variants_hemizygous"),
+            (pl.col("resolved_dosage").is_not_null() & (pl.col("_ploidy") != 2) & (pl.col("_dose_scale") == 1))
+            .cast(pl.Int64).sum().alias("variants_counted_once"),
             pl.col("is_maf_filled").cast(pl.Int64).sum().alias("variants_maf_filled"),
             (absent_expr & (pl.col("ref_resolved_source") == "panel")).cast(pl.Int64).sum().alias("variants_ref_resolved_panel"),
             (absent_expr & (pl.col("ref_resolved_source") == "fasta")).cast(pl.Int64).sum().alias("variants_ref_resolved_fasta"),
@@ -1192,6 +1203,7 @@ def compute_prs(
         variants_allele_mismatch = int(agg["variants_allele_mismatch"][0] or 0)
         variants_ploidy_conflict = int(agg["variants_ploidy_conflict"][0] or 0)
         variants_hemizygous = int(agg["variants_hemizygous"][0] or 0)
+        variants_counted_once = int(agg["variants_counted_once"][0] or 0)
         variants_maf_filled = int(agg["variants_maf_filled"][0] or 0)
         variants_ref_resolved_panel = int(agg["variants_ref_resolved_panel"][0] or 0)
         variants_ref_resolved_fasta = int(agg["variants_ref_resolved_fasta"][0] or 0)
@@ -1266,7 +1278,7 @@ def compute_prs(
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
             model_flags=model_flags,
-            **_karyotype_result_fields(karyotype, x_coding, variants_hemizygous),
+            **_karyotype_result_fields(karyotype, x_coding, variants_hemizygous, variants_counted_once),
             theoretical_mean=theoretical_mean,
             theoretical_std=theoretical_std,
             percentile=percentile,
@@ -1464,6 +1476,7 @@ class _DuckDbScoreAgg:
     weight_mass_matched: float = 0.0
     variants_ploidy_conflict: int = 0
     variants_hemizygous: int = 0
+    variants_counted_once: int = 0
 
     def add(self, other: _DuckDbScoreAgg) -> None:
         self.prs_score += other.prs_score
@@ -1479,6 +1492,7 @@ class _DuckDbScoreAgg:
         self.weight_mass_matched += other.weight_mass_matched
         self.variants_ploidy_conflict += other.variants_ploidy_conflict
         self.variants_hemizygous += other.variants_hemizygous
+        self.variants_counted_once += other.variants_counted_once
 
 
 def _scoring_weight_mass_total(scoring_norm: pl.LazyFrame, *, dosage_weight: bool) -> float:
@@ -1622,7 +1636,9 @@ def _duckdb_score_registered(
             COALESCE(SUM(variants_ref_resolved_fasta), 0) AS variants_ref_resolved_fasta,
             COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL THEN variant_mass ELSE 0.0 END), 0.0) AS weight_mass_matched,
             COALESCE(SUM(CASE WHEN s.GT IS NOT NULL AND s.ploidy_conflict THEN 1 ELSE 0 END), 0) AS variants_ploidy_conflict,
-            COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL AND s._ploidy <> 2 THEN 1 ELSE 0 END), 0) AS variants_hemizygous
+            COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL AND s._ploidy <> 2 THEN 1 ELSE 0 END), 0) AS variants_hemizygous,
+            COALESCE(SUM(CASE WHEN resolved_dosage IS NOT NULL AND s._ploidy <> 2 AND s._dose_scale = 1 THEN 1 ELSE 0 END), 0)
+                AS variants_counted_once
         FROM resolved s
     """).fetchone()
     assert row is not None
@@ -1640,6 +1656,7 @@ def _duckdb_score_registered(
         weight_mass_matched=float(row[10] or 0.0),
         variants_ploidy_conflict=int(row[11]),
         variants_hemizygous=int(row[12]),
+        variants_counted_once=int(row[13]),
     )
 
 
@@ -1908,6 +1925,7 @@ def compute_prs_duckdb(
         variants_allele_mismatch = agg.variants_allele_mismatch
         variants_ploidy_conflict = agg.variants_ploidy_conflict
         variants_hemizygous = agg.variants_hemizygous
+        variants_counted_once = agg.variants_counted_once
         variants_maf_filled = agg.variants_maf_filled
         variants_ref_resolved_panel = agg.variants_ref_resolved_panel
         variants_ref_resolved_fasta = agg.variants_ref_resolved_fasta
@@ -1973,7 +1991,7 @@ def compute_prs_duckdb(
             trait_reported=trait_reported,
             has_allele_frequencies=has_freqs,
             model_flags=model_flags,
-            **_karyotype_result_fields(karyotype, x_coding, variants_hemizygous),
+            **_karyotype_result_fields(karyotype, x_coding, variants_hemizygous, variants_counted_once),
             theoretical_mean=theoretical_mean,
             theoretical_std=theoretical_std,
             percentile=percentile,

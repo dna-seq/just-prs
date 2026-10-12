@@ -104,11 +104,17 @@ anchor base with any SNV at the same position.
   a no-call counted in `variants_ploidy_conflict`, and an absent hom-ref locus
   counts one copy. PAR is diploid. `unknown` scores every GT as written.
 - **Coding.** `x_coding="copies"` (default) counts copies, 0..1 on a man's X.
-  `"dosage_compensation"` counts 0..2, as PLINK2 `--xchr-model 2`, many GWAS and
-  the 1000G pgen do (one active X in either sex). The 1000G reference
-  distributions were built that way (a pgenlib read of 2,000 non-PAR X sites:
-  males `{0, 2}`, never 1), so under `copies` a result that scored one-copy loci
-  carries `reference_coding_mismatch=True` until the reference is rescored.
+  `"dosage_compensation"` counts a man's non-PAR X 0..2 (one active X in either
+  sex), as PLINK2's default `--xchr-model 2` and many GWAS do; Y and MT stay one
+  copy, because PLINK2 counts them once under every model (measured on a6.33 with
+  anton marked male: 10 hom-alt X sites score 10 under `--xchr-model 1` and 20
+  under `2`; Y and MT score 1 per site under both). `copies` is `--xchr-model 1`.
+- **The legacy 1000G curves count every one-copy call twice.** pgenlib returns a
+  haploid call as `{0, 2}` (a read of the GRCh38 panel: a man's non-PAR X `{0, 2}`
+  with 3 hets in 2.4M calls, his Y `{0, 2}`, a woman's Y missing, MT `{0, 2}` in
+  both sexes with ~430 hets each), and the scorer summed it as two copies. A
+  result with any one-copy row that is not doubled carries
+  `reference_coding_mismatch=True` against `{panel}_distributions.parquet`.
 - **Provenance.** `normalize_vcf` stores the caller, its version, the declared
   karyotype, the caller's ploidy model (`sex_aware` / `diploid`) and the
   inferred karyotype as parquet metadata; read them with

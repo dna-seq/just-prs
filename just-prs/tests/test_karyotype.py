@@ -137,8 +137,8 @@ class TestCopyAwareScoring:
         [
             # XY: X hom 1, X het conflict, PAR 2, Y 1, MT 1, autosome 2, absent X hom-ref 1.
             (Karyotype.XY, XChromosomeCoding.COPIES, 1 + 0 + 200 + 1000 + 10_000 + 200_000 + 1_000_000, 1),
-            # The same counted 0..2 (PLINK2 --xchr-model 2).
-            (Karyotype.XY, XChromosomeCoding.DOSAGE_COMPENSATION, 2 + 0 + 200 + 2000 + 20_000 + 200_000 + 2_000_000, 1),
+            # PLINK2 --xchr-model 2: a man's non-PAR X counts 0..2; Y and MT stay one copy.
+            (Karyotype.XY, XChromosomeCoding.DOSAGE_COMPENSATION, 2 + 0 + 200 + 1000 + 10_000 + 200_000 + 2_000_000, 1),
             # XX: X as written, any Y call is a conflict, absent X hom-ref 2.
             (Karyotype.XX, XChromosomeCoding.COPIES, 2 + 10 + 200 + 0 + 10_000 + 200_000 + 2_000_000, 1),
             # XXY: two X, one Y.
@@ -162,11 +162,16 @@ class TestCopyAwareScoring:
         assert polars_result.variants_matched == duckdb_result.variants_matched
 
     def test_reference_coding_mismatch_flag(self, tmp_path: Path) -> None:
-        copies, _ = _both(tmp_path, _GENOS, _SCORING, Karyotype.XY)
-        compensated, _ = _both(tmp_path, _GENOS, _SCORING, Karyotype.XY, XChromosomeCoding.DOSAGE_COMPENSATION)
+        # The legacy 1000G curves count every one-copy row twice.
+        x_only = _scoring([("X", X_NON_PAR, "T", "C", 1.0, None), ("1", 100, "G", "A", 1.0, None)])
+        copies, copies_duck = _both(tmp_path, _GENOS, _SCORING, Karyotype.XY)
+        compensated, compensated_duck = _both(tmp_path, _GENOS, _SCORING, Karyotype.XY, XChromosomeCoding.DOSAGE_COMPENSATION)
+        compensated_x, compensated_x_duck = _both(tmp_path, _GENOS, x_only, Karyotype.XY, XChromosomeCoding.DOSAGE_COMPENSATION)
         autosomal, _ = _both(tmp_path, _GENOS, _scoring([("1", 100, "G", "A", 1.0, None)]), Karyotype.XY)
-        assert copies.reference_coding_mismatch is True
-        assert compensated.reference_coding_mismatch is False
+        assert copies.reference_coding_mismatch is copies_duck.reference_coding_mismatch is True
+        # Y and MT count once under 0..2 too, so they still differ from the legacy curves.
+        assert compensated.reference_coding_mismatch is compensated_duck.reference_coding_mismatch is True
+        assert compensated_x.reference_coding_mismatch is compensated_x_duck.reference_coding_mismatch is False
         assert autosomal.reference_coding_mismatch is False
         # X hom, Y, MT and the absent X hom-ref row are one-copy rows; the het is a no-call.
         assert copies.variants_hemizygous == 4

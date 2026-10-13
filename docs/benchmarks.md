@@ -113,6 +113,44 @@ MT, which does not touch chromosomes 1–22. Rescoring the same 100 IDs on the
 same autosomal file with the 0.10.3 code gave the same scores (largest
 difference 5.7 × 10⁻¹⁴) and the same matched counts in both engines.
 
+### X, Y, PAR and MT (0.10.4)
+
+Run 2026-10-13, 19:36–19:47 CEST, tag v0.10.4, `--sex-chromosomes`, results in
+`just-prs/benchmarks/results/2026-10-13-sexchr/`. 195 IDs: the 100 above, the 27
+scores with Y rows, the 58 with MT rows and the 10 largest X scores. The sample is
+marked male in PLINK2 (`--update-sex`, `--split-par hg38`) and given to just-prs as
+XY. Two codings are compared: one copy for a man's non-PAR X (polars, duckdb)
+against `--xchr-model 1` (plink2), and 0..2 (polars_dc, duckdb_dc) against
+`--xchr-model 2` (plink2_xchr2). Every engine scored all 195 IDs. Timings are not
+reported: the load gate opened at 1.07, but the load rose to 5.8 during the run.
+
+| Engine pair | N PGS | Pearson r | Max \|Δ score\| |
+|-------------|:-----:|:---------:|:---------------:|
+| duckdb ↔ polars | 195 | 1.000000 | 2.3 × 10⁻¹³ |
+| duckdb_dc ↔ polars_dc | 195 | 1.000000 | 9.1 × 10⁻¹³ |
+| polars ↔ plink2 | 195 | 0.99999847 | 2.95 (PGS001108, score 854.9) |
+| polars_dc ↔ plink2_xchr2 | 195 | 0.99999537 | 5.89 (PGS001108) |
+
+114 of the 195 scores agree with PLINK2 to within 10⁻³ under copies, 113 under 0..2.
+
+The large differences come from one kind of call: a **heterozygous genotype on a
+man's non-PAR X**. just-prs counts it as a no-call (`variants_ploidy_conflict`): a
+man has one X, so a het there is a genotyping error. PLINK2 scores it as half a
+copy under `--xchr-model 1` and as one copy under `--xchr-model 2`. Each such row
+therefore contributes exactly twice as much to the difference under model 2 as
+under model 1, which separates it from every other cause in `benchmark_per_pgs.csv`.
+For PGS001108, scored per chromosome group in both engines, chromosomes 1–22
+(787.031), PAR (4.967) and Y (−7.295) are equal. On non-PAR X just-prs gives 67.279
+and PLINK2 70.227. The difference, 2.947, is half the weight (5.894) of the
+single het call at X:119469881 (GT 0/1). PGS003903 (2.62) and the next ones down
+(PGS001229, PGS003895: 0.076, 0.074) have the same signature.
+
+Without that part, the largest remaining difference is 0.14 (PGS002861, 414,578
+variants, score 301.9). It is the same under both codings, so it is not on a man's
+X. This run's residual was not attributed per variant. The two autosomal causes
+found on 2026-10-11 (multi-allelic later ALT, third allele) are the likely ones,
+but this was not checked.
+
 ---
 
 ## Why the March 2026 run disagreed with PLINK2

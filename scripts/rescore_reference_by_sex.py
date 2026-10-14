@@ -8,7 +8,9 @@ per sample (legacy 0/2, copies, dosage compensation) and the sex. Outputs land i
 
 * ``{panel}_distributions.parquet`` etc.: the batch's own outputs. The legacy curve
   rebuilt here is a regression check: for a score without PAR rows it must equal the
-  published curve, since only PAR matching changed for the legacy coding.
+  published curve, since only PAR matching changed for the legacy coding. The published
+  curves were summed in float32 chunks, so up to ~1e-3 SD of rounding is expected on
+  scores over ~500k variants; anything larger is a real change.
 * ``{panel}_distributions_by_sex.parquet``: the new curves (all IDs scored).
 * ``{panel}_distributions_by_sex.publish.parquet``: the same, restricted to the PGS IDs
   the published legacy curves still serve (not quarantined) — what would go to HF.
@@ -17,7 +19,7 @@ per sample (legacy 0/2, copies, dosage compensation) and the sex. Outputs land i
 Nothing is uploaded. The push command is printed at the end.
 
 Resumable: per-PGS raw scores live in ``<cache>/reference_scores/{panel}/<id>/`` and a
-rerun reuses every one that already has the sex-aware columns.
+rerun reuses every one whose ``scores_version`` is current.
 
 Usage:
     uv run python scripts/rescore_reference_by_sex.py --output-subdir sex-aware-2026-10-13
@@ -165,6 +167,7 @@ def main(
         "legacy_regression_no_par_rows": no_par.height,
         "legacy_regression_no_par_max_shift_sd": no_par["mean_shift_sd"].max(),
         "legacy_regression_no_par_n_shift_over_1e-6_sd": int(no_par.filter(pl.col("mean_shift_sd") > 1e-6).height),
+        "legacy_regression_no_par_n_shift_over_1e-3_sd": int(no_par.filter(pl.col("mean_shift_sd") > 1e-3).height),
         "male_copies_shift_sd_median": shift["male_shift_sd"].median(),
         "male_copies_shift_sd_max_abs": shift["male_shift_sd"].abs().max(),
     }

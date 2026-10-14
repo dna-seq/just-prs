@@ -17,9 +17,11 @@ import pytest
 from just_prs.karyotype import Karyotype, reference_curve_sex
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.reference import (
+    REFERENCE_SCORES_VERSION,
     _REGION_MT,
     _REGION_X,
     _REGION_Y,
+    _cached_scores_current,
     _one_copy_deltas,
     aggregate_distributions,
     aggregate_sex_aware_distributions,
@@ -149,6 +151,23 @@ class TestPanelFiles:
         psam = tmp_path / "x.psam"
         psam.write_text("#IID\tSuperPop\tPopulation\nA\tEUR\tGBR\n")
         assert parse_psam(psam)["sex"].to_list() == ["unknown"]
+
+    @pytest.mark.parametrize(
+        ("version", "current"),
+        [(None, False), (REFERENCE_SCORES_VERSION - 1, False), (REFERENCE_SCORES_VERSION, True)],
+    )
+    def test_a_cached_score_from_older_code_is_stale(self, tmp_path: Path, version: int | None, current: bool) -> None:
+        scores = pl.DataFrame({"iid": ["A"], "score": [1.0]})
+        if version is not None:
+            scores = scores.with_columns(pl.lit(version, dtype=pl.Int32).alias("scores_version"))
+        path = tmp_path / "scores.parquet"
+        scores.write_parquet(path)
+        assert _cached_scores_current(path) is current
+
+    def test_an_unreadable_cached_score_is_left_to_the_corrupt_file_path(self, tmp_path: Path) -> None:
+        path = tmp_path / "scores.parquet"
+        path.write_bytes(b"not a parquet")
+        assert _cached_scores_current(path) is True
 
 
 @pytest.mark.parametrize(
@@ -280,3 +299,28 @@ class TestRealPanel:
         male = (scores["sex"] == "male").to_numpy()
         drop = (scores["score"] - scores["score_copies"]).to_numpy()
         np.testing.assert_allclose(drop[male], (half_x + het_x)[male], atol=1e-4)
+
+    def test_scores_do_not_depend_on_the_genotype_chunk_size(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The chunk size follows free RAM, so two runs split a score differently. Summing
+        each chunk in float32 made the 1000G curves of ~1M-variant scores move by up to
+        4e-4 SD between runs; the sums must not depend on where the chunks end."""
+        from just_prs.reference import _ResolvedRefPanel, compute_reference_prs_polars
+        from just_prs.scoring import ensure_scoring_file, resolve_cache_dir
+
+        ref_dir = _panel_dir()
+        scoring_file = ensure_scoring_file("PGS000337", resolve_cache_dir() / "scores", "GRCh38")
+        panel = _ResolvedRefPanel(ref_dir, "GRCh38")
+        runs = []
+        for chunk in ("1000", "1000000"):
+            monkeypatch.setenv("PRS_GENO_CHUNK_SIZE", chunk)
+            runs.append(compute_reference_prs_polars(
+                "PGS000337", scoring_file, ref_dir, tmp_path / chunk, _panel=panel,
+            ))
+        small, whole = runs
+        assert small["variants_matched"][0] == whole["variants_matched"][0] > 70_000
+        assert whole["scores_version"][0] == REFERENCE_SCORES_VERSION
+        for col in ("score", "score_copies", "score_dosage_compensation"):
+            diff = (small[col] - whole[col]).abs().max()
+            assert diff <= 1e-9 * whole[col].std(), (col, diff, whole[col].std())

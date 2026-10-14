@@ -1807,7 +1807,7 @@ def compute_reference_prs_polars(
                             ),
                         ),
                     )
-                    prs_sum += contrib.sum(axis=0)
+                    prs_sum += contrib.sum(axis=0, dtype=np.float64)
                     del geno_int, contrib, batch_w0, batch_w1, batch_w2
                 else:
                     batch_weights = weights_sorted[start:end]
@@ -1819,7 +1819,7 @@ def compute_reference_prs_polars(
                     geno_float[missing_mask] = 0.0
 
                     contrib = geno_float * batch_weights[:, np.newaxis]
-                    prs_sum += contrib.sum(axis=0)
+                    prs_sum += contrib.sum(axis=0, dtype=np.float64)
                     one_copy_rows = region_sorted[start:end] != _REGION_DIPLOID
                     if one_copy_rows.any():
                         d_copies, d_compensated = _one_copy_deltas(
@@ -1893,6 +1893,7 @@ def compute_reference_prs_polars(
                 pl.lit(variants_matched_one_copy).alias("variants_matched_one_copy"),
                 pl.lit(variants_matched_sex_linked).alias("variants_matched_sex_linked"),
                 pl.lit(variants_matched_par).alias("variants_matched_par"),
+                pl.lit(REFERENCE_SCORES_VERSION, dtype=pl.Int32).alias("scores_version"),
             )
         )
         del prs_scores, scores_copies, scores_compensated
@@ -1977,18 +1978,26 @@ def aggregate_sex_aware_distributions(scores: pl.DataFrame | pl.LazyFrame) -> pl
     )
 
 
-def _has_sex_aware_scores(parquet_path: Path) -> bool:
-    """Whether a cached per-PGS score parquet carries the sex-aware columns.
+# Version of a per-PGS ``scores.parquet``. A cached file with an older version is
+# stale, not corrupt. 1: sex-aware columns and PAR matching (0.10.4). 2: genotype
+# chunks summed in float64, so a score no longer depends on where the chunks end.
+REFERENCE_SCORES_VERSION = 2
 
-    A parquet written before those columns existed is stale, not corrupt: it lacks
-    the per-sex curves and was matched without PAR rows. An unreadable file answers
-    True here so the aggregator's corrupt-file path handles it.
+
+def _cached_scores_current(parquet_path: Path) -> bool:
+    """Whether a cached per-PGS score parquet was written by the current scoring code.
+
+    A file without ``scores_version`` predates version 2; one without the sex-aware
+    columns predates version 1. An unreadable file answers True here so the
+    aggregator's corrupt-file path handles it.
     """
     try:
-        names = pl.read_parquet_schema(parquet_path)
+        if "scores_version" not in pl.read_parquet_schema(parquet_path):
+            return False
+        version = pl.read_parquet(parquet_path, columns=["scores_version"], n_rows=1)["scores_version"]
     except Exception:
         return True
-    return {"sex", "variants_matched_sex_linked", *SEX_AWARE_SCORE_COLUMNS}.issubset(names)
+    return version.len() > 0 and version[0] >= REFERENCE_SCORES_VERSION
 
 
 class _CorruptParquet(Exception):
@@ -2745,12 +2754,12 @@ def compute_reference_prs_batch(
                         output_mtime=result_parquet.stat().st_mtime,
                     )
 
-                if not stale and not _has_sex_aware_scores(result_parquet):
+                if not stale and not _cached_scores_current(result_parquet):
                     stale = True
                     log_message(
                         message_type="reference:batch_cache_stale",
                         pgs_id=pgs_id,
-                        reason="cached score predates the sex-aware columns and PAR matching",
+                        reason=f"cached score predates scores_version {REFERENCE_SCORES_VERSION}",
                     )
 
                 if not stale:

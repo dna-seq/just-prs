@@ -112,7 +112,7 @@ results = catalog.compute_prs_batch(
     pgs_ids=["PGS000001", "PGS000002"],
 )
 
-# Percentile estimation (AUROC-based or explicit mean/std)
+# Percentile estimation (reference distribution or explicit mean/std)
 pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014")
 pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", panel="1000g")
 pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", mean=0.0, std=1.0)
@@ -124,6 +124,9 @@ pct, method = catalog.percentile(prs_score=1.5, pgs_id="PGS000014", mean=0.0, st
 pr = catalog.percentile_full(prs_score=1.5, pgs_id="PGS000014", weight_mass_coverage=result.weight_mass_coverage)
 #   pr.percentile, pr.method, pr.z_score, pr.reference_mean, pr.reference_std,
 #   pr.ancestry, pr.panel (reference_panel method), pr.reliable, pr.caveat
+# Without calibration: percentile/z/mean/SD are None, reliable is False, and
+# caveat explains why. method="auroc_approx" identifies an unsupported AUROC-only
+# fallback; AUROC alone cannot establish the raw-score population scale.
 
 # Single-score compute can reuse a normalized genotype frame AND attach performance
 # in one call (genotypes_lf mirrors compute_prs_batch). The result also surfaces the
@@ -133,6 +136,7 @@ result = catalog.compute_prs(vcf_path="sample.vcf.gz", pgs_id="PGS000014",
 #   result.detected_genome_build, result.build_mismatch, result.performance
 
 # Raw score -> z -> absolute risk in one call (uses the true z, not a percentile inversion)
+# Returns an empty bundle when calibration is missing or flagged unreliable.
 risk_bundle = catalog.absolute_risk_from_score(pgs_id="PGS000014", score=1.5)
 
 # Reference distributions (panel-aware)

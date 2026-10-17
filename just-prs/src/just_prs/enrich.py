@@ -441,7 +441,8 @@ def _build_risk_hint(
     else:
         hint += (
             f" Reference distributions source status: {ref_source_label}. "
-            "Percentile falls back to theoretical/AUROC approximation when available."
+            "A theoretical percentile requires explicit population mean/SD; "
+            "AUROC alone cannot establish a population percentile."
         )
     return hint
 

@@ -169,6 +169,18 @@ CACHE_MANIFEST: dict[str, ManifestEntry] = {
         artifact_class=ArtifactClass.RUNTIME,
         note="Published public-genome PRS lookup plus catalog evidence tables (runtime_results may be pending)",
     ),
+    "sumstats": ManifestEntry(
+        artifact_class=ArtifactClass.REBUILD,
+        note="GWAS Catalog summary statistics (raw .h.tsv.gz + normalized parquet) for building custom scores",
+    ),
+    "prscs": ManifestEntry(
+        artifact_class=ArtifactClass.REBUILD,
+        note="Pinned PRS-CS source and extracted LD reference blocks (tarballs discarded)",
+    ),
+    "custom_scores": ManifestEntry(
+        artifact_class=ArtifactClass.RUNTIME,
+        note="User-built scoring files with their reference distributions and PRS-CS work files",
+    ),
     "plink2": ManifestEntry(
         artifact_class=ArtifactClass.REBUILD,
         note="Auto-downloaded PLINK2 binary (LD-pruning at build time)",

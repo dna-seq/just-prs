@@ -230,6 +230,7 @@ def test_manifest_covers_documented_cache_layout() -> None:
         "liftover", "scores", "reference_panel", "reference_fasta",
         "reference_scores", "normalized", "genomes", "test-data", "results",
         "annotation_lookups", "sample_scores", "plink2", "scoring",
+        "sumstats", "prscs", "custom_scores",
     }
     assert set(CACHE_MANIFEST) == documented
 

@@ -24,6 +24,7 @@ from just_prs.scoring import (
     DEFAULT_CACHE_DIR,
     download_scoring_file,
     ensure_scoring_file,
+    read_scoring_header,
     resolve_cache_dir,
 )
 
@@ -757,8 +758,13 @@ def compute(
     except Exception:
         sample_build = None
 
+    custom_percentile_rows: list[tuple[str, dict[str, float]]] = []
     if scoring_file:
-        label = scoring_file.stem
+        from just_prs.custom_scores import custom_percentiles, resolve_custom_score
+
+        scoring_file = resolve_custom_score(scoring_file, genome_build=build)
+        header = read_scoring_header(scoring_file) if scoring_file.suffix == ".parquet" or scoring_file.name.endswith(".gz") else {}
+        label = header.get("pgs_id") or scoring_file.name.removesuffix(".gz").removesuffix(".txt").removesuffix(".parquet")
         console.print(f"Computing PRS from custom scoring file [cyan]{scoring_file}[/cyan] on {vcf_path}...")
         result = compute_prs(
             vcf_path=vcf_path,
@@ -766,6 +772,7 @@ def compute(
             genome_build=build,
             cache_dir=cache_dir,
             pgs_id=label,
+            trait_reported=header.get("trait_reported"),
             genotype_input_mode=genotype_input_mode,
             reference_restoration=scope,
             reference_universe_path=universe_path,
@@ -773,6 +780,9 @@ def compute(
         )
         result.computation_source = result.computation_source or "computed"
         results: list[PRSResult] = [result]
+        percentiles = custom_percentiles(scoring_file, result.score)
+        if percentiles:
+            custom_percentile_rows.append((label, percentiles))
     else:
         from just_prs.sample_scores import (
             PrecomputedMiss,
@@ -895,6 +905,9 @@ def compute(
         )
 
     console.print(table)
+    for label, percentiles in custom_percentile_rows:
+        pct = "  ".join(f"{pop} {value:.1f}" for pop, value in percentiles.items())
+        console.print(f"[bold]{label}[/bold] 1000G percentile by population: {pct}")
 
     if ancestry and results:
         base_cache = cache_dir.parent if cache_dir == DEFAULT_CACHE_DIR else cache_dir
@@ -4451,6 +4464,77 @@ def prompt_cmd(
             console.print(f"[green]Saved to {output.resolve()}[/green]")
             return
     sys.stdout.write(payload if payload.endswith("\n") else payload + "\n")
+
+
+custom_app = typer.Typer(
+    name="custom",
+    help="Build scores from GWAS summary statistics (PRS-CS-auto) and give them 1000G percentiles.",
+    no_args_is_help=True,
+)
+app.add_typer(custom_app, name="custom")
+
+
+@custom_app.command("build")
+def custom_build(
+    gcst: Annotated[str, typer.Option("--gcst", help="GWAS Catalog study accession with harmonised summary statistics")],
+    score_id: Annotated[str, typer.Option("--id", help="Short id for the new score, e.g. healthspan_prscs")],
+    trait: Annotated[Optional[str], typer.Option("--trait", help="Trait label (default: GWAS Catalog trait)")] = None,
+    direction: Annotated[
+        Optional[str], typer.Option("--direction", help="What a higher score means, stored in the file header")
+    ] = None,
+    n_gwas: Annotated[Optional[int], typer.Option("--n-gwas", help="GWAS sample size (default: study metadata)")] = None,
+    ld_panel: Annotated[str, typer.Option("--ld-panel", help="PRS-CS LD reference: ukbb or 1kg")] = "ukbb",
+    population: Annotated[
+        str, typer.Option("--population", help="Ancestry of the GWAS (not the sample): afr, amr, eas, eur, sas")
+    ] = "eur",
+    workers: Annotated[Optional[int], typer.Option("--workers", help="Parallel chromosome jobs (default: fits RAM)")] = None,
+    reference: Annotated[
+        bool, typer.Option("--reference/--no-reference", help="Also score the local 1000G panel for percentiles")
+    ] = True,
+) -> None:
+    """Build a PRS-CS-auto score from a GWAS Catalog study (cached, resumable)."""
+    from just_prs.custom_scores import build_custom_reference_distribution
+    from just_prs.prscs import build_prscs_score
+
+    result = build_prscs_score(
+        gcst, score_id, trait_reported=trait, n_gwas=n_gwas, ld_panel=ld_panel,
+        population=population, workers=workers, direction=direction, log=console.print,
+    )
+    console.print(f"[green]Scoring file:[/green] {result.scoring_file} ({result.n_variants:,} variants, N={result.n_gwas:,})")
+    if reference:
+        dist = build_custom_reference_distribution(result.scoring_file, score_id)
+        console.print(f"[green]1000G distribution:[/green] {dist}")
+    console.print(f"Score a genome with: prs compute --vcf <path> --scoring-file {score_id}")
+
+
+@custom_app.command("reference")
+def custom_reference(
+    score: Annotated[str, typer.Argument(help="Custom score id or path to a scoring file")],
+    panel: Annotated[str, typer.Option("--panel", help="Reference panel")] = "1000g",
+    force: Annotated[bool, typer.Option("--force", help="Recompute even if cached")] = False,
+) -> None:
+    """Score a custom scoring file on the reference panel and store its distribution."""
+    from just_prs.custom_scores import build_custom_reference_distribution, resolve_custom_score
+
+    path = build_custom_reference_distribution(resolve_custom_score(score), panel=panel, force=force)
+    console.print(pl.read_parquet(path).select("pgs_id", "superpopulation", "mean", "std", "n"))
+    console.print(f"[green]Saved {path}[/green]")
+
+
+@custom_app.command("list")
+def custom_list() -> None:
+    """List built custom scores."""
+    from just_prs.custom_scores import list_custom_scores
+
+    table = Table(title="Custom scores")
+    for col in ("ID", "Trait", "Method", "Source GWAS", "Variants", "Percentiles"):
+        table.add_column(col)
+    for s in list_custom_scores():
+        table.add_row(
+            s.score_id, s.header.get("trait_reported", ""), s.header.get("method_name", ""),
+            s.header.get("source_gwas", ""), s.header.get("variants_number", ""), ", ".join(s.distributions) or "none",
+        )
+    console.print(table)
 
 
 def run() -> None:

@@ -43,6 +43,8 @@ Arguments (`$ARGUMENTS`):
 3. For each publication:
    1. `curation claim <PGP>`, then `curation context <PGP>`. Add `--top-variants 5` when there are
       at most 20 target scores; otherwise pass `--pgs-ids` in blocks of ≤ 20.
+      Never score genomes or panels (`prs compute`, `prs plot`, `prs reference`, `pipeline …`) to check
+      a direction; `--top-variants` is the only scoring-file read and is memory-safe.
    2. Dispatch `score-lookup` with `pgp_id`, `pmid`/`doi`, `lookup_dir`, the target scores with
       their reported traits, the lead-variant rsIDs with effect allele and weight sign, the
       standard questions from `docs/curation-rules.md`, and any score-specific questions (for

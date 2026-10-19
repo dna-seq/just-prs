@@ -25,6 +25,7 @@ import numpy as np
 import polars as pl
 import typer
 import yaml
+from filelock import FileLock
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -34,8 +35,14 @@ from pydantic import (
     model_validator,
 )
 
+from just_prs.hf import pull_scoring_parquet
 from just_prs.prs_catalog import PRSCatalog
-from just_prs.scoring import ensure_scoring_file, resolve_cache_dir
+from just_prs.scoring import (
+    ensure_scoring_file,
+    parquet_cache_is_readable,
+    resolve_cache_dir,
+    scoring_parquet_path,
+)
 
 DEFAULT_ROOT = Path("curation")  # relative to the working directory (the repo root)
 MAX_ATTEMPTS = 3
@@ -43,6 +50,8 @@ STALE_HOURS = 6.0
 CORR_THRESHOLD = 0.2
 CORR_MIN_SAMPLES = 100
 TOP_VARIANTS_MAX_SCORES = 20
+TOP_VARIANT_COLUMNS = ("rsID", "hm_rsID", "hm_chr", "hm_pos", "effect_allele", "other_allele", "effect_weight")
+SCORING_FETCH_LOCK = "annotation_lookups/.scoring_fetch.lock"  # under the cache dir; see _scoring_parquet_for_lookup
 
 QUEUE_COLUMNS = [
     "pgp_id",
@@ -64,6 +73,9 @@ _MIXED_POLARITY_RE = re.compile(
     flags=re.IGNORECASE,
 )
 _SOURCE_SUFFIXES = {".txt", ".md", ".xml", ".html", ".htm", ".json", ".tsv", ".csv"}
+# Only real markup: a tag name, comment/doctype, or processing instruction. A bare "<[^>]+>" also
+# matched source code ("y <- …" through a later "y > 25"), deleting the quoted lines in between.
+_MARKUP_TAG_RE = re.compile(r"<(?:/?[A-Za-z][\w:.-]*(?:\s[^<>]*)?/?|![^<>]*|\?[^<>]*)>")
 _AGENT_OUTPUT_PREFIX = "lookup"  # lookup.json / lookup_<slug>.json are agent output, never evidence
 
 TRIAGE_SIGN_R = 0.1
@@ -424,6 +436,39 @@ def _lookup_dir(pgp_id: str) -> Path:
     return resolve_cache_dir() / "annotation_lookups" / pgp_id
 
 
+def _scoring_parquet_for_lookup(pgs_id: str, cache_dir: Path, genome_build: str) -> Path:
+    """Resolve a scoring parquet for a lead-variant lookup without stacking RAM across agents.
+
+    A cache hit costs nothing.  A miss takes a cross-process lock first, so parallel curation
+    agents fetch one score at a time: ``ensure_scoring_file`` parses a ``.txt.gz`` eagerly, which
+    for a multi-million-variant score is several GB, and several at once can exhaust memory.
+    Inside the lock the parquet mirror on Hugging Face is tried first (no parse at all); EBI plus
+    the local parse is the fallback for IDs the mirror lacks.
+    """
+    scores_dir = cache_dir / "scores"
+    parquet = scoring_parquet_path(pgs_id, scores_dir, genome_build)
+    if parquet_cache_is_readable(parquet):
+        return parquet
+    lock_path = cache_dir / SCORING_FETCH_LOCK
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with FileLock(lock_path):
+        if parquet_cache_is_readable(parquet):  # another agent fetched it while we waited
+            return parquet
+        return pull_scoring_parquet(pgs_id, scores_dir, genome_build) or ensure_scoring_file(pgs_id, scores_dir, genome_build)
+
+
+def _top_weight_variants(lf: pl.LazyFrame, n: int) -> list[dict[str, object]]:
+    """The n largest-|effect_weight| rows, streamed: only the projected columns are read."""
+    return (
+        lf.with_columns(pl.col("effect_weight").abs().alias("_abs_weight"))
+        .top_k(n, by="_abs_weight")
+        .sort("_abs_weight", descending=True)
+        .drop("_abs_weight")
+        .collect(engine="streaming")
+        .to_dicts()
+    )
+
+
 def _read_queue(root: Path) -> dict[str, dict[str, str]]:
     path = _queue_path(root)
     if not path.exists():
@@ -503,7 +548,7 @@ def _annotation_counts(pub: PublicationFile | None) -> tuple[int, int]:
 
 
 def _normalize_text(text: str) -> str:
-    text = html.unescape(re.sub(r"<[^>]+>", " ", text))
+    text = html.unescape(_MARKUP_TAG_RE.sub(" ", text))
     text = text.translate(str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"', "–": "-", "—": "-", "−": "-"}))
     text = re.sub(r"\s+", " ", text)
     # Stripped citation tags leave "( 15 )"; close brackets so verbatim quotes still match.
@@ -887,18 +932,13 @@ def context(
             typer.echo(f"--top-variants needs --pgs-ids with <= {TOP_VARIANTS_MAX_SCORES} scores", err=True)
             raise typer.Exit(2)
         for pgs_id in ids:
-            path = ensure_scoring_file(pgs_id, catalog.cache_dir / "scores", "GRCh38")
+            path = _scoring_parquet_for_lookup(pgs_id, catalog.cache_dir, "GRCh38")
             lf = pl.scan_parquet(path)
-            if "effect_weight" not in lf.collect_schema().names():
+            names = lf.collect_schema().names()
+            if "effect_weight" not in names:
                 variants[pgs_id] = "per-dosage weights (no single effect_weight); check lead variants by hand"
                 continue
-            variants[pgs_id] = (
-                lf.sort(pl.col("effect_weight").abs(), descending=True)
-                .head(top_variants)
-                .select([c for c in ("rsID", "hm_rsID", "hm_chr", "hm_pos", "effect_allele", "other_allele", "effect_weight") if c in lf.collect_schema().names()])
-                .collect()
-                .to_dicts()
-            )
+            variants[pgs_id] = _top_weight_variants(lf.select([c for c in TOP_VARIANT_COLUMNS if c in names]), top_variants)
 
     clusters = _load_clusters(root)
     cluster_index = [

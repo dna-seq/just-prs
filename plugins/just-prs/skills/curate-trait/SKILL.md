@@ -58,6 +58,10 @@ slug (`longevity`, `type-2-diabetes`, `intelligence`). With `status`, run only
    standard questions plus trait-specific ones, write the entries, then run `curation check <PGP>`.
    Fix ERRORs; for a WARN send one narrower follow-up lookup. After each paper, run
    `curation trait-log <slug> --message "<PGP>: <n> scores" --lookups <K>`.
+
+   Never score a genome or a reference panel to check a direction (`prs compute`, `prs plot`,
+   `prs reference`, `pipeline …`): it can't answer the question and parallel runs on million-variant
+   scores exhaust RAM. `--top-variants` is the only scoring-file read, and it is memory-safe.
 5. **Consolidate.** Run `curation trait-status <slug>`. Look at:
    - aligned-correlation conflicts: two scores in one concept that disagree after alignment. Re-read
      both with a targeted lookup, since a phenotype or polarity is probably wrong;

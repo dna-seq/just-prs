@@ -47,6 +47,20 @@ Never hand-edit `queue.csv` or `progress.txt`. Only a human sets `status: human_
 | `build [--out DIR] [--verified-only]` | Compile `curation/` into `score_annotations.parquet` (resolved rows, published), `curation_review.parquet` (the review queue), `trait_clusters.parquet`, `concept_search_terms.parquet` and `curation_manifest.json` (default `data/output/curation/`); fails on any inconsistent file |
 | `push [--verified-only] [--replace] [--repo …]` | Rebuild, **merge with the published release** (published rows missing here are kept; published `human_verified` rows are never replaced by unreviewed ones; conflicting cluster definitions abort), then upload all curation files to `just-dna-seq/pgs-catalog` `data/metadata/` in one commit. Needs `HF_TOKEN`; refuses empty tables; `--replace` overwrites instead |
 
+## Memory safety
+
+Curation never scores a genome or a reference panel: direction comes from quotes, metric signs and cached
+1000G correlations. The only scoring-file read is `curation context --top-variants`, which
+
+- returns at once on a cached parquet and reads only the projected columns with a streaming `top_k`;
+- on a cache miss takes the shared lock `<cache>/annotation_lookups/.scoring_fetch.lock`, so parallel
+  agents fetch one score at a time (an eager `.txt.gz` parse of a multi-million-variant score costs
+  several GB);
+- inside the lock pulls the parquet mirror from `just-dna-seq/pgs-catalog` first and falls back to EBI
+  plus the local parse only for IDs the mirror lacks.
+
+Every score still gets its lead-variant check; large ones just wait their turn.
+
 ## What the checks do
 
 | Check | ERROR / WARN when | Never |
@@ -223,5 +237,7 @@ summary: null
 Unannotated entries are exported with `annotated = false` and their reason, so "not read" and
 "no direction found" stay distinguishable. `rejected` entries are never exported. Consumers
 show `agent_proposed` rows as unreviewed; `--verified-only` builds a reviewed-only release.
+The Curated tab in the app compiles this directory on open (Reload picks up edits) and
+browses the same resolved, review, and cluster tables.
 Push only when the user asks. Curation is incremental: curate any slice, push, and later pushes
 add to it. Uncurated scores simply have no row.

@@ -1014,6 +1014,40 @@ def push_catalog_scoring_flags(
         )
 
 
+def pull_scoring_parquet(
+    pgs_id: str,
+    scores_dir: Path,
+    genome_build: str = "GRCh38",
+    repo_id: str = DEFAULT_HF_CATALOG_REPO,
+    token: str | None = None,
+) -> Path | None:
+    """Download one scoring parquet from the catalog mirror (``data/scores/``).
+
+    The mirror holds the same spec-parsed parquet ``ensure_scoring_file`` would
+    write, so pulling it skips the eager ``.txt.gz`` parse, which for a
+    multi-million-variant score costs several GB of RAM.
+
+    Returns:
+        Path to ``<scores_dir>/<pgs_id>_hmPOS_<build>.parquet``, or None when the
+        mirror has no file for this ID/build.
+    """
+    from huggingface_hub.errors import EntryNotFoundError, RepositoryNotFoundError
+
+    resolved_token = _resolve_token(token)
+    with start_action(action_type="hf:pull_scoring_parquet", pgs_id=pgs_id, genome_build=genome_build):
+        scores_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            return _pull_flat(
+                repo_id=repo_id,
+                hf_path=f"{HF_DATA_PREFIX}/scores/{pgs_id}_hmPOS_{genome_build}.parquet",
+                local_dir=scores_dir,
+                token=resolved_token,
+            )
+        except (EntryNotFoundError, RepositoryNotFoundError):
+            log_message(message_type="hf:scoring_parquet_not_mirrored", pgs_id=pgs_id, genome_build=genome_build)
+            return None
+
+
 def pull_chip_coverage(
     local_dir: Path,
     repo_id: str = DEFAULT_HF_PERCENTILES_REPO,

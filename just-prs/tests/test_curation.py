@@ -10,7 +10,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 import yaml
-from just_prs.curation import Level, run_checks
+from just_prs.curation import Level, _normalize_text, run_checks
 
 CLUSTERS = {
     "version": 0,
@@ -349,3 +349,96 @@ def test_inconsistent_corrections_fail_schema(tmp_path: Path, overrides: dict, e
     findings = run_checks(tmp_path, "PGP000095", threshold=0.2)
     assert findings[0].check == "schema" and findings[0].level == Level.ERROR
     assert message in findings[0].message
+
+
+# Lines 200-265 of privefl/UKBB-PGS code/prepare-pheno-fields.R (the PGP000263 phenotype script),
+# abridged: R assignments and comparisons are full of '<' and '>' but contain no markup.
+_PRIVE_R_SOURCE = """y[y < 0] <- NA
+SUMMARY(y)
+saveRDS(log(y), "data/ukbb-quant-pheno/more_sunscreen.rds")
+
+# Hair/balding pattern (2395)
+y <- fread2(csv, select = "2395-0.0")[[1]]
+y[y < 0 | covar$sex == 0] <- NA
+SUMMARY(y)
+saveRDS(y, "data/ukbb-quant-pheno/M_less_hair.rds")
+
+y[y < 15 | y > 25] <- NA
+"""
+
+
+@pytest.mark.parametrize(
+    "quote",
+    ['saveRDS(y, "data/ukbb-quant-pheno/M_less_hair.rds")', "y[y < 0 | covar$sex == 0] <- NA"],
+)
+def test_quote_from_source_code_survives_markup_stripping(quote: str) -> None:
+    """A '<-' and a later 'y >' must not be read as one HTML tag that swallows the lines between."""
+    assert quote in _PRIVE_R_SOURCE
+    assert _normalize_text(quote) in _normalize_text(_PRIVE_R_SOURCE)
+
+
+def test_markup_is_still_stripped_from_html_and_jats_sources() -> None:
+    source = (
+        '<?xml version="1.0"?><!DOCTYPE article><p>A higher <i>PRS</i> was associated with '
+        'increased risk<xref ref-type="bibr" rid="B15"> 15 </xref>.<br/>OR<sub>per SD</sub> = 1.5</p>'
+    )
+    normalized = _normalize_text(source)
+    assert "a higher prs was associated with increased risk 15 ." in normalized
+    assert "or per sd = 1.5" in normalized
+    assert "<" not in normalized and ">" not in normalized
+
+
+# --- lead-variant lookups: memory-safe scoring-file resolution (real PGS000001 data) ---
+
+LOOKUP_PGS = "PGS000001"
+
+
+def test_top_weight_variants_matches_eager_sort(tmp_path: Path) -> None:
+    from just_prs.curation import (
+        TOP_VARIANT_COLUMNS,
+        _scoring_parquet_for_lookup,
+        _top_weight_variants,
+    )
+
+    path = _scoring_parquet_for_lookup(LOOKUP_PGS, tmp_path, "GRCh38")
+    lf = pl.scan_parquet(path)
+    cols = [c for c in TOP_VARIANT_COLUMNS if c in lf.collect_schema().names()]
+    eager = lf.select(cols).collect().sort(pl.col("effect_weight").abs(), descending=True).head(5)
+    streamed = _top_weight_variants(lf.select(cols), 5)
+    assert streamed == eager.to_dicts()
+
+
+def test_lookup_uses_parquet_mirror_identical_to_ebi_parse(tmp_path: Path) -> None:
+    from just_prs.curation import _scoring_parquet_for_lookup
+    from just_prs.scoring import ensure_scoring_file
+
+    mirrored = _scoring_parquet_for_lookup(LOOKUP_PGS, tmp_path / "mirror", "GRCh38")
+    parsed = ensure_scoring_file(LOOKUP_PGS, tmp_path / "ebi" / "scores", "GRCh38")
+    # the mirror path never downloads or parses a .txt.gz
+    assert not list((tmp_path / "mirror" / "scores").glob("*.txt.gz"))
+    a, b = pl.read_parquet(mirrored), pl.read_parquet(parsed)
+    shared = sorted(set(a.columns) & set(b.columns))
+    assert "effect_weight" in shared
+    assert a.select(shared).sort(shared).equals(b.select(shared).sort(shared))
+
+
+def test_cache_miss_waits_for_the_shared_fetch_lock(tmp_path: Path) -> None:
+    import threading
+
+    from filelock import FileLock
+    from just_prs.curation import SCORING_FETCH_LOCK, _scoring_parquet_for_lookup
+    from just_prs.scoring import parquet_cache_is_readable
+
+    lock_path = tmp_path / SCORING_FETCH_LOCK
+    lock_path.parent.mkdir(parents=True)
+    result: dict[str, Path] = {}
+    worker = threading.Thread(target=lambda: result.update(path=_scoring_parquet_for_lookup(LOOKUP_PGS, tmp_path, "GRCh38")))
+    with FileLock(lock_path):  # another agent is mid-fetch
+        worker.start()
+        worker.join(timeout=3)
+        assert worker.is_alive(), "a cache miss must not fetch while another fetch holds the lock"
+    worker.join(timeout=120)
+    assert parquet_cache_is_readable(result["path"])
+    # a cache hit never touches the lock: it returns even while the lock is held
+    with FileLock(lock_path):
+        assert _scoring_parquet_for_lookup(LOOKUP_PGS, tmp_path, "GRCh38") == result["path"]

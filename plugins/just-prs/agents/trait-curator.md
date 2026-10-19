@@ -26,6 +26,12 @@ Follow the preloaded **curate-trait** skill and `docs/curation-rules.md`, with t
 - Other trait agents run at the same time and may share papers with you. When you brief a lookup,
   tell it to write `lookup_<slug>.json`, not `lookup.json`. The raw source files are shared on
   purpose; don't delete any.
+- **Never score genomes or reference panels.** Don't run `prs compute`, `prs plot`, `prs prompt --vcf`,
+  `prs contributions`, `prs reference`, `prs pgen score`, or any `pipeline` command. Direction comes from
+  paper quotes, metric signs and cached 1000G correlations; one genome's score can't show it. Several
+  agents scoring million-variant PRS at once exhaust RAM (each DuckDB join claims half the machine).
+  Only `prs curation …` touches scoring files, and `context --top-variants` fetches them one at a time
+  under a shared lock.
 
 ## Budget: read as little as possible
 

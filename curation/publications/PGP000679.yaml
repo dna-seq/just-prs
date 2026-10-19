@@ -1682,6 +1682,642 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by BETA 0.33 (CI 0.32-0.34) against 'Body mass index (BMI)'; 1000G EUR correlation with
       anchor PGS000320 r=+0.42.
+  PGS005060:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.208 [1.16, 1.26] on Atrial fibrillation; 1000G EUR r=+0.25 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.35 with PGS005313.
+  PGS005061:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.639 [1.57, 1.71] on Atrial fibrillation; 1000G EUR r=+0.31 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.62 with PGS005313.
+  PGS005062:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.206 [1.16, 1.26] on Atrial fibrillation; 1000G EUR r=+0.47 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.53 with PGS004190.
+  PGS005063:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.619 [1.55, 1.69] on Atrial fibrillation; 1000G EUR r=+0.63 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.81 with PGS005313.
+  PGS005064:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.497 [1.44, 1.56] on Atrial fibrillation; 1000G EUR r=+0.74 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.77 with PGS005168.
+  PGS005065:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.67 [1.6, 1.74] on Atrial fibrillation; 1000G EUR r=+0.46 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.77 with PGS005313.
+  PGS005066:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.164 [1.12, 1.21] on Atrial fibrillation; 1000G EUR r=+0.28 with PGS005313.
+  PGS005067:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.734 [1.66, 1.81] on Atrial fibrillation; 1000G EUR r=+0.51 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.84 with PGS005313.
+  PGS005068:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.146 [1.1, 1.2] on Atrial fibrillation; 1000G EUR r=+0.22 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.34 with PGS000016.
+  PGS005069:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.578 [1.51, 1.65] on Atrial fibrillation; 1000G EUR r=+0.66 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.82 with PGS005313.
+  PGS005070:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.685 [1.61, 1.76] on Atrial fibrillation; 1000G EUR r=+0.64 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.84 with PGS005313.
+  PGS005071:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.693 [1.62, 1.77] on Atrial fibrillation; 1000G EUR r=+0.56 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.87 with PGS005313.
+  PGS005072:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation (PheCode 427.21)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.684 [1.61, 1.76] on Atrial fibrillation; 1000G EUR r=+0.64 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.89 with PGS005313.
+  PGS004956:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.053 [0.04, 0.06] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.08).
+  PGS004957:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.102 [0.09, 0.11] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.17).
+  PGS004958:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.052 [0.04, 0.06] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.07).
+  PGS004959:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.114 [0.1, 0.12] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.33).
+  PGS004960:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.117 [0.11, 0.13] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.34).
+  PGS004961:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.129 [0.12, 0.14] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.40).
+  PGS004962:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.044 [0.03, 0.05] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.06).
+  PGS004963:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.134 [0.12, 0.14] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.18).
+  PGS004964:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.053 [0.04, 0.06] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.06).
+  PGS004965:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.114 [0.1, 0.12] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.30).
+  PGS004966:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.131 [0.12, 0.14] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.36).
+  PGS004967:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.135 [0.12, 0.15] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.41).
+  PGS004968:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.139 [0.13, 0.15] on 'Hemoglobin' (CI excludes the null). 1000G
+      EUR r with all other in-scope hemoglobin scores is positive (min +0.32).
 paper:
   pmid: '39323095'
   doi: 10.1016/j.xhgg.2024.100355

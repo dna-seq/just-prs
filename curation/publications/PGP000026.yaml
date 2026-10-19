@@ -1,0 +1,29 @@
+pgp_id: PGP000026
+scores:
+  PGS000038:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: ischemic_stroke
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; PRS90 (90 MEGASTROKE variants); corroborated by HR 1.13 [1.10, 1.17] on ischaemic stroke before age
+      75 (UK Biobank); 1000G EUR r=+0.89 with PGS005230 and +0.46 with PGS004108. Its only 1000G EUR anti-correlation
+      inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR, PGP000704), which anti-correlates with every
+      stroke score and is recorded as an inverted deposit.

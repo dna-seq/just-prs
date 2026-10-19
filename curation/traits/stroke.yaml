@@ -1,0 +1,134 @@
+slug: stroke
+query: stroke
+match:
+  terms:
+  - cardioembolic stroke
+  - cerebrovascular
+  - intracerebral hemorrhage
+  - ischaemic stroke
+  - ischemic stroke
+  - stroke
+  efo_ids: []
+  exclude: []
+anchor: PGS004322
+status: resolved
+concepts:
+- cardiovascular.stroke
+scores:
+  PGS000038:
+    decision: in_scope
+    note: null
+  PGS000039:
+    decision: in_scope
+    note: null
+  PGS000665:
+    decision: in_scope
+    note: null
+  PGS000911:
+    decision: in_scope
+    note: null
+  PGS001413:
+    decision: out_of_scope
+    note: LV stroke volume is a cardiac MRI measurement (blood ejected per heartbeat), not cerebrovascular stroke
+  PGS001793:
+    decision: in_scope
+    note: null
+  PGS001798:
+    decision: in_scope
+    note: null
+  PGS002053:
+    decision: in_scope
+    note: null
+  PGS002259:
+    decision: in_scope
+    note: null
+  PGS002724:
+    decision: in_scope
+    note: null
+  PGS002725:
+    decision: in_scope
+    note: null
+  PGS002770:
+    decision: in_scope
+    note: null
+  PGS003457:
+    decision: in_scope
+    note: null
+  PGS003984:
+    decision: in_scope
+    note: null
+  PGS004000:
+    decision: in_scope
+    note: null
+  PGS004015:
+    decision: in_scope
+    note: null
+  PGS004026:
+    decision: in_scope
+    note: null
+  PGS004041:
+    decision: in_scope
+    note: null
+  PGS004054:
+    decision: in_scope
+    note: null
+  PGS004070:
+    decision: in_scope
+    note: null
+  PGS004084:
+    decision: in_scope
+    note: null
+  PGS004098:
+    decision: in_scope
+    note: null
+  PGS004108:
+    decision: in_scope
+    note: null
+  PGS004124:
+    decision: in_scope
+    note: null
+  PGS004138:
+    decision: in_scope
+    note: null
+  PGS004154:
+    decision: in_scope
+    note: null
+  PGS004322:
+    decision: in_scope
+    note: null
+  PGS004597:
+    decision: in_scope
+    note: null
+  PGS004835:
+    decision: in_scope
+    note: null
+  PGS004836:
+    decision: in_scope
+    note: null
+  PGS004942:
+    decision: in_scope
+    note: null
+  PGS004943:
+    decision: in_scope
+    note: null
+  PGS005156:
+    decision: in_scope
+    note: suspected inverted deposit (anti-correlates with all stroke scores; canonical risk alleles carry negative
+      weights)
+  PGS005230:
+    decision: in_scope
+    note: null
+  PGS012545:
+    decision: in_scope
+    note: null
+  PGS012551:
+    decision: in_scope
+    note: null
+summary: '35 stroke scores sit in one new concept, cardiovascular.stroke (higher = higher stroke risk), split into
+  any stroke (22), ischaemic stroke (9), intracerebral haemorrhage (2) and cerebrovascular disease (1). LV stroke
+  volume (PGS001413) is a heart measurement and out of scope. PGS005156 (PRS-CSx EAS+EUR, PGP000704) anti-correlates
+  with every other stroke score and its canonical risk alleles (rs12445022 A, COL4A1/2 rs9521686 C) carry weights
+  against risk: recorded as an inverted deposit (higher file score = lower risk), the same pattern as that paper''s
+  asthma deposits. PGS004836 (PRSmix+) goes to review because its direction rests on the training design only. The
+  remaining weak negative pairs are the ICH score PGS003457 against any-stroke scores (r about -0.2), which is plausible
+  biology rather than a sign error.'

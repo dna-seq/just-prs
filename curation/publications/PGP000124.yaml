@@ -4,3 +4,7 @@ scores:
     score_effect: null
     unannotated_reason: 'not read: lookup budget reached (binary "rapid eGFR decline" outcome; no directional metric;
       1000G r=+0.24 with CKD scores is only a hint).'
+paper:
+  pmid: '33137338'
+  doi: 10.1016/j.kint.2020.09.030
+  title: Meta-analysis uncovers genome-wide significant variants for rapid kidney function decline.

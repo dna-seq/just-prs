@@ -1,0 +1,47 @@
+pgp_id: PGP000744
+scores:
+  PGS005251:
+    cluster: immune.c_reactive_protein
+    phenotype: infla_score
+    measurement_kind: composite
+    score_effect:
+      direction: increases
+      target: INFLA-score (composite of white cell count, platelet count, neutrophil-to-lymphocyte ratio and serum
+        CRP)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Development of an INFLA-Score Polygenic Risk Score (iPRS) in the UK Biobank
+      quote: is a composite measure including WBC count, platelet count, NLR, and serum CRP
+      confidence: high
+    - source: full_text
+      locator: Methods > Development of an INFLA-Score Polygenic Risk Score (iPRS) in the UK Biobank
+      quote: Each SNP was tested for association with INFLA-Score using linear regression
+      confidence: high
+    - source: full_text
+      locator: Methods > Development of an INFLA-Score Polygenic Risk Score (iPRS) in the UK Biobank
+      quote: weighted by the regression coefficient from the UK Biobank GWAS
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: CRP-locus weight (1:159749612 T, -0.83) has the same sign as the UK Biobank CRP scores PGS002864/PGS002865/PGS002870
+        at that position; 1000G EUR r=+0.30 (mean) with the main CRP scores.
+    review_reason: null
+    status: agent_proposed
+    notes: iPRS = 1,113 clumped SNPs weighted by per-allele betas from a UK Biobank GWAS of the INFLA-score itself
+      (372,299 Europeans, both sexes), so higher score = higher INFLA-score. The main text defines INFLA-score as
+      a composite measure of low-grade systemic inflammation; the decile-sum coding (higher = more inflammation)
+      is in reference 23, not quoted here. Catalog beta 0.4274 [0.4072, 0.4472] against INFLA-score agrees. Applied
+      in the paper to women with breast cancer (higher iPRS = worse fatigue before chemotherapy).
+paper:
+  pmid: '40956996'
+  doi: 10.1200/po-25-00303
+  title: Association of Genetic Predisposition to Inflammation With Cancer-Related Cognitive Impairment and Fatigue
+    in Women Who Received Chemotherapy for Nonmetastatic Breast Cancer.
+evidence_read:
+  abstract: true
+  full_text: pmc_html
+  supplement: []

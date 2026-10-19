@@ -85,6 +85,190 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by HR 1.7 [1.69, 1.71] against 'Incident T2D'.
+  PGS004878:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.61 [1.6, 1.63] on Incident AF; 1000G EUR r=+0.22 with anchor PGS000035 (HR 1.34
+      [1.31, 1.37] incident AF), r=+0.39 with PGS005287.
+  PGS004872:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.96 [1.92, 1.99] on Incident Prostate Cancer; 1000G EUR r=+0.36 with already-annotated
+      PGS004055.
+  PGS004869:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.67 [1.64, 1.7] on Incident Breast Cancer; 1000G EUR r=+0.52 with PGS004153 (OR
+      1.79574 [1.76612, 1.82587] on Breast cancer).
+  PGS004886:
+    cluster: cancer.melanoma
+    phenotype: melanoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of melanoma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name | scores.trait_reported
+      quote: INTERVENE_MegaPRS_Melanoma | Melanoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.37 [1.32, 1.42] on Incident Melanoma; 1000G EUR r=+0.16 with anchor PGS000079.
+  PGS004880:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.54 [1.5, 1.58] on Incident Colorectal Cancer.
+  PGS004871:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.87 (CI 1.83-1.91) against incident gout; trait anchor.
+  PGS004873:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.87 [1.76, 1.99] against 'Incident RA'. Anchor score of this trait.
+  PGS004884:
+    cluster: cancer.lung_cancer
+    phenotype: lung_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of lung cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; INTERVENE MegaPRS; corroborated by HR 1.24 [1.20, 1.28] on incident lung cancer; 1000G EUR r=+0.2 with
+      PGS000740.
 paper:
   pmid: '38866767'
   doi: 10.1038/s41467-024-48938-2

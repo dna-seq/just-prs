@@ -1,0 +1,131 @@
+slug: lung-cancer
+query: lung cancer
+match:
+  terms:
+  - lung adenocarcinoma
+  - lung cancer
+  - lung carcinoma
+  - small cell lung
+  - squamous cell lung
+  efo_ids: []
+  exclude: []
+anchor: PGS002808
+status: resolved
+concepts:
+- cancer.lung_cancer
+scores:
+  PGS000070:
+    decision: in_scope
+    note: null
+  PGS000078:
+    decision: in_scope
+    note: null
+  PGS000156:
+    decision: in_scope
+    note: null
+  PGS000388:
+    decision: in_scope
+    note: null
+  PGS000389:
+    decision: in_scope
+    note: null
+  PGS000390:
+    decision: in_scope
+    note: null
+  PGS000391:
+    decision: in_scope
+    note: null
+  PGS000392:
+    decision: in_scope
+    note: null
+  PGS000393:
+    decision: in_scope
+    note: null
+  PGS000394:
+    decision: in_scope
+    note: null
+  PGS000395:
+    decision: in_scope
+    note: null
+  PGS000396:
+    decision: in_scope
+    note: null
+  PGS000397:
+    decision: in_scope
+    note: null
+  PGS000721:
+    decision: in_scope
+    note: null
+  PGS000740:
+    decision: in_scope
+    note: null
+  PGS000789:
+    decision: in_scope
+    note: null
+  PGS000880:
+    decision: in_scope
+    note: null
+  PGS001392:
+    decision: in_scope
+    note: family-history proxy phenotype
+  PGS002270:
+    decision: in_scope
+    note: null
+  PGS002808:
+    decision: in_scope
+    note: null
+  PGS003391:
+    decision: in_scope
+    note: null
+  PGS003392:
+    decision: in_scope
+    note: squamous subtype
+  PGS003393:
+    decision: in_scope
+    note: adenocarcinoma subtype
+  PGS004164:
+    decision: in_scope
+    note: never-smoking women
+  PGS004165:
+    decision: in_scope
+    note: never-smoking women
+  PGS004246:
+    decision: in_scope
+    note: null
+  PGS004325:
+    decision: in_scope
+    note: smokers
+  PGS004442:
+    decision: in_scope
+    note: null
+  PGS004512:
+    decision: in_scope
+    note: null
+  PGS004691:
+    decision: in_scope
+    note: null
+  PGS004860:
+    decision: in_scope
+    note: null
+  PGS004884:
+    decision: in_scope
+    note: null
+  PGS004955:
+    decision: in_scope
+    note: null
+  PGS005163:
+    decision: in_scope
+    note: null
+  PGS005169:
+    decision: in_scope
+    note: adenocarcinoma subtype
+  PGS005397:
+    decision: in_scope
+    note: null
+summary: All 36 lung-cancer scores sit in one concept, cancer.lung_cancer (higher = higher risk), with
+  subtype phenotypes (adenocarcinoma, squamous) and a family-history proxy. 30 were annotated from the
+  catalog (OR/HR > 1 or 1000G correlation with OR-corroborated scores); 6 were read (PGP000518, 000596,
+  000607, 000780). Two deposited files, PGS004691 (Hu 2024) and PGS005397 (Boumtje 2026), point against
+  the known risk alleles at 15q25 CHRNA5, 19q13 and (PGS005397) 5p15 CLPTM1L and anti-correlate with the
+  consensus; they are recorded as distributed (higher = lower risk) with deposit_inverted corrections
+  and stay in review. Never-smoker (East Asian women) and smoker strata are recorded where quoted.

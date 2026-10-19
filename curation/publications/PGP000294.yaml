@@ -1,0 +1,58 @@
+pgp_id: PGP000294
+scores:
+  PGS002265:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.95 with catalog-annotated PGS000734 (catalog metric here: no directional metric on Colorectal
+      cancer).'
+  PGS003851:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.76 with catalog-annotated PGS003979 (catalog metric here: no directional metric on Colorectal
+      cancer).'
+paper:
+  pmid: '32758450'
+  doi: 10.1016/j.ajhg.2020.07.006
+  title: Genome-wide Modeling of Polygenic Risk Score in Colorectal Cancer Risk.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

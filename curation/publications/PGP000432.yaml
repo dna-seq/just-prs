@@ -1,0 +1,28 @@
+pgp_id: PGP000432
+scores:
+  PGS003425:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.69 with PGS004968 (PGP000679 hemoglobin score, catalog beta CI excludes
+      the null). 1000G EUR r with all other in-scope hemoglobin scores is positive (min +0.14). Catalog evaluation
+      is on hemoglobin levels in males; the score itself is not sex-specific.

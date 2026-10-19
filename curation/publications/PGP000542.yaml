@@ -1,0 +1,127 @@
+pgp_id: PGP000542
+scores:
+  PGS004251:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.78 [1.72, 1.85] on Prostate cancer; 1000G EUR r=+0.93 with already-annotated PGS000030.
+  PGS004242:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.58 [1.53, 1.64] on Breast cancer; 1000G EUR r=+0.98 with PGS000005 (HR 1.23 [1.16,
+      1.31] on Metachronous contralateral breast cancer).
+  PGS004247:
+    cluster: cancer.melanoma
+    phenotype: melanoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of melanoma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name | scores.trait_reported
+      quote: PRS65_melanoma | Melanoma
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: MC1R rs1805007 T (R151C, red-hair/melanoma risk allele) carries the positive weight (or C the negative
+        one); SLC45A2 rs16891982 G / ASIP rs6059655 A consistent where present
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.78 [1.62, 1.96] on Melanoma; 1000G EUR r=+0.61 with anchor PGS000079.
+  PGS004243:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.49 [1.39, 1.61] on Colorectal cancer.
+  PGS004246:
+    cluster: cancer.lung_cancer
+    phenotype: lung_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of lung cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.18 [1.08, 1.28] on lung cancer; 1000G EUR r=+0.9 with PGS000078.
+paper:
+  pmid: '37087533'
+  doi: 10.1038/s41698-023-00377-w
+  title: Potential utility of risk stratification for multicancer screening with liquid biopsy tests.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

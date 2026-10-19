@@ -279,3 +279,395 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.95 with catalog-annotated PGS002161 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.38.
+  PGS003534:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 8 agree, 0 disagree; rs4846914
+        G -0.000986; rs12678919 G +7.87e-06; rs1883025 T -0.00711; rs1532085 A +0.00553; rs3764261 A +0.0232; rs2271293
+        A +0.00018; rs1800961 T -0.0336; rs6065906 C -0.00416'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.71 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS003498:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure, automated reading
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.94 with PGS002114 (DBP score annotated here). Score name cont-decay-diastolic_BP.
+  PGS003533:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Glycated haemoglobin (HbA1c)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.62 (median +0.56) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS003554:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.81 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1).
+  PGS003527:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 4 of 4 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.85 with PGS002868 (ExPRSweb PRS-CS on UKB field 30710 CRP, annotated
+      from the ExPRSweb full text).
+  PGS003551:
+    cluster: blood.reticulocyte_count
+    phenotype: reticulocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score cont-decay-log_reticulocyte. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.76 with already-annotated same-phenotype
+      seed PGS000111 (PGP000051). Trained on log-transformed values (monotonic, same direction).
+  PGS003512:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Haemoglobin concentration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.58 with PGS004968 (PGP000679 hemoglobin score, catalog beta CI excludes
+      the null). 1000G EUR r with all other in-scope hemoglobin scores is positive (min +0.18).
+  PGS003546:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: log platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs3184504 not in file
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of log platelet count (plink2), so the sign follows the phenotype.
+      1000G EUR r=+0.83 with PGS001238.
+  PGS003558:
+    score_effect: null
+    unannotated_reason: The paper lists M_less_hair only as "Hair/balding pattern" (Supplementary Table 1) and never
+      states how UKB 2395 was transformed or what a higher score means. It likely reuses Privé's M_less_hair (raw
+      pattern number), but the paper does not cite that definition.
+    status: agent_proposed
+  PGS003550:
+    cluster: cardiovascular.heart_rate
+    phenotype: resting_heart_rate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: pulse rate, automated reading (log-transformed bpm)
+      coding: 'UKB 102: log(bpm)'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Pulse rate, automated reading
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs17362588 A (2:178856319) carries a positive top weight; GWAS Catalog GCST001969 (den Hoed 2013) A
+        = 0.736 unit increase in heart rate
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of log pulse rate, so the sign follows the phenotype coding. 1000G
+      EUR r=+0.74 with PGS001233.
+  PGS003535:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of the phenotype (paper template, see other entries); 1000G EUR
+      r=+0.81 with PGS001402 (heel BMD, annotated) and +0.86 with anchor PGS002315.
+  PGS003509:
+    cluster: anthropometry.adiposity
+    phenotype: body_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body fat percentage (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body fat percentage
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own UK Biobank GWAS of the measurement, so the sign follows the measured
+      value. 1000G EUR r = +0.71 with PGS001101 (PGP000244, same phenotype).
+  PGS003531:
+    cluster: anthropometry.lean_mass
+    phenotype: fat_free_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body fat-free mass (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body fat-free mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own UK Biobank GWAS of the measurement, so the sign follows the measured
+      value. 1000G EUR r = +0.95 with PGS002168 (PGP000263, same phenotype).
+  PGS003532:
+    cluster: anthropometry.adiposity
+    phenotype: fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body fat mass (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body fat mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own UK Biobank GWAS of the measurement, so the sign follows the measured
+      value. 1000G EUR r = +0.70 with PGS001149 (PGP000244, same phenotype).
+  PGS003540:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the whole body (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Impedance of whole body
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own UK Biobank GWAS of the measurement, so the sign follows the measured
+      value. 1000G EUR r = +0.75 with PGS001161 (PGP000244, same phenotype). Higher impedance means less lean tissue
+      and body water, so polarity is -1 on the lean-mass axis.
+  PGS003542:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: log lipoprotein(a) concentration (UKB, trait code log_lipoA)
+      coding: UKB Lp(a) log-transformed (trait code log_lipoA, Supplementary Table 1)
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals), Nature version PMC10284707
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: supplement
+      locator: Supplementary Table 1 (supp_MOESM4_ESM.Supplementary_Table_1.csv)
+      quote: log_lipoA,Lipoprotein A
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'top-300 weights allele-aligned vs PGS000689: 23 agree / 4 disagree; vs PGS002181: 214 / 4'
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of log Lp(a), so the sign follows the phenotype. 1000G EUR r=+0.70
+      with anchor PGS000667.

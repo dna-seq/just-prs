@@ -1,0 +1,79 @@
+pgp_id: PGP000354
+scores:
+  PGS002742:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.51 [1.37, 1.67] on Colorectal cancer.
+  PGS002743:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.39 [1.26, 1.53] on Colorectal cancer.
+  PGS002744:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.5 [1.36, 1.66] on Colorectal cancer.
+paper:
+  pmid: '35765848'
+  doi: 10.1002/ijc.34194
+  title: Developing and validating polygenic risk scores for colorectal cancer risk prediction in East Asians.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

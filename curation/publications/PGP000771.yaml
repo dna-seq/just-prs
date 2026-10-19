@@ -1,0 +1,126 @@
+pgp_id: PGP000771
+scores:
+  PGS005345:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast carcinoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.83 with PGS004153 (OR 1.79574 [1.76612, 1.82587] on Breast cancer).
+  PGS005346:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast carcinoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.96 with PGS004040 (OR 1.77072 [1.74154, 1.80038] on Breast cancer).
+  PGS005347:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast carcinoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.95 with PGS000508 (OR 1.756 [1.709, 1.804] on Breast cancer [female]).
+  PGS005348:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast carcinoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.94 with PGS004137 (OR 1.66993 [1.64184, 1.69851] on Breast cancer).
+  PGS005349:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast carcinoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.81 with PGS004040 (OR 1.77072 [1.74154, 1.80038] on Breast cancer).
+paper:
+  pmid: '41526671'
+  doi: 10.1038/s41431-025-02003-8
+  title: 'Performance of different polygenic risk scores for breast cancer risk prediction: in-depth evaluations
+    across large UK and Australian cohorts.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

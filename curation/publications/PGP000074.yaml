@@ -1,0 +1,18 @@
+pgp_id: PGP000074
+scores:
+  PGS000151:
+    score_effect: null
+    unannotated_reason: Abstract only (not open access); it names SC-GRS as a simple count GRS but never states
+      which alleles are counted or that a higher count means higher CRC risk. No directional catalog metric, near-zero
+      1000G EUR correlation with other CRC scores, and 3 of 8 lead alleles are opposite the GWAS Catalog CRC risk
+      allele.
+    notes: 'GWAS Catalog check: rs3802842 C, rs10506868 T, rs7229639 A, rs3824999 G, rs12603526 C agree; rs4711689
+      G, rs11169552 T, rs4779584 C opposite.'
+paper:
+  pmid: '29908285'
+  doi: 10.1016/j.gene.2018.06.035
+  title: Evaluating the effect of multiple genetic risk score models on colorectal cancer risk prediction.
+evidence_read:
+  abstract: true
+  full_text: null
+  supplement: []

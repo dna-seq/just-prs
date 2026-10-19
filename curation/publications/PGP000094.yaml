@@ -1,0 +1,34 @@
+pgp_id: PGP000094
+scores:
+  PGS000317:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.58 [1.52, 1.64] on Breast cancer; 1000G EUR r=+0.93 with PGS000783 (HR 1.52 [1.47,
+      1.56] on Incident breast cancer).
+paper:
+  pmid: '31553449'
+  doi: 10.1093/jnci/djz174
+  title: A Polygenic Risk Score for Breast Cancer in US Latinas and Latin American Women.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

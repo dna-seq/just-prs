@@ -88,6 +88,102 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by OR 1.46 [1.42, 1.49] against 'Type 2 diabetes'.
+  PGS002773:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Incident atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.41 [1.35, 1.48] on Incident atrial fibrillation; 1000G EUR r=+0.90 with PGS000035.
+  PGS002774:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Incident atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.49 [1.42, 1.57] on Incident atrial fibrillation; 1000G EUR r=+0.77 with PGS000035.
+  PGS002777:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of incident hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Incident hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score GTG_Hypertension_maxCT; PGS Catalog weights are per-allele
+      effects on the reported trait. Corroborated by OR 1.23 [1.18, 1.27] for incident hypertension (CI excludes
+      1) against hypertension; 1000G EUR r = +0.85 with PGS002778. Genes & Health / GTG incident hypertension.
+  PGS002778:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of incident hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Incident hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score GTG_Hypertension_SCT; PGS Catalog weights are per-allele
+      effects on the reported trait. Corroborated by OR 1.26 [1.22, 1.3] for incident hypertension (CI excludes
+      1) against hypertension; 1000G EUR r = +0.85 with PGS002777. Genes & Health / GTG incident hypertension.
 paper:
   pmid: '36459520'
   doi: 10.1371/journal.pone.0278764

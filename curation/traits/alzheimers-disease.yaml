@@ -1,0 +1,229 @@
+slug: alzheimers-disease
+query: Alzheimer's disease
+match:
+  terms:
+  - Alzheimer disease
+  - Alzheimer's disease
+  - dementia
+  - family history of Alzheimer
+  - late-onset Alzheimer
+  efo_ids: []
+  exclude: []
+anchor: PGS002289
+status: resolved
+concepts:
+- neurology.alzheimers_disease
+- neurology.dementia
+scores:
+  PGS000025:
+    decision: in_scope
+    note: null
+  PGS000026:
+    decision: in_scope
+    note: null
+  PGS000053:
+    decision: in_scope
+    note: null
+  PGS000054:
+    decision: in_scope
+    note: null
+  PGS000334:
+    decision: in_scope
+    note: null
+  PGS000777:
+    decision: out_of_scope
+    note: Parkinson's disease dementia (3-SNP PD-dementia hazard score); belongs with Parkinson's disease
+  PGS000779:
+    decision: in_scope
+    note: null
+  PGS000811:
+    decision: in_scope
+    note: null
+  PGS000812:
+    decision: in_scope
+    note: null
+  PGS000823:
+    decision: in_scope
+    note: null
+  PGS000876:
+    decision: in_scope
+    note: null
+  PGS000898:
+    decision: in_scope
+    note: null
+  PGS000929:
+    decision: in_scope
+    note: null
+  PGS000945:
+    decision: in_scope
+    note: null
+  PGS000946:
+    decision: in_scope
+    note: null
+  PGS001179:
+    decision: in_scope
+    note: null
+  PGS001347:
+    decision: in_scope
+    note: null
+  PGS001348:
+    decision: in_scope
+    note: null
+  PGS001349:
+    decision: in_scope
+    note: null
+  PGS001775:
+    decision: in_scope
+    note: null
+  PGS001827:
+    decision: in_scope
+    note: null
+  PGS001828:
+    decision: in_scope
+    note: null
+  PGS002035:
+    decision: in_scope
+    note: null
+  PGS002249:
+    decision: in_scope
+    note: null
+  PGS002280:
+    decision: in_scope
+    note: null
+  PGS002289:
+    decision: in_scope
+    note: null
+  PGS002731:
+    decision: in_scope
+    note: null
+  PGS002753:
+    decision: in_scope
+    note: null
+  PGS003334:
+    decision: in_scope
+    note: null
+  PGS003440:
+    decision: in_scope
+    note: null
+  PGS003441:
+    decision: in_scope
+    note: null
+  PGS003574:
+    decision: in_scope
+    note: null
+  PGS003953:
+    decision: in_scope
+    note: null
+  PGS003954:
+    decision: in_scope
+    note: null
+  PGS003955:
+    decision: in_scope
+    note: null
+  PGS003956:
+    decision: in_scope
+    note: null
+  PGS003957:
+    decision: in_scope
+    note: null
+  PGS003958:
+    decision: in_scope
+    note: null
+  PGS003992:
+    decision: in_scope
+    note: null
+  PGS004008:
+    decision: in_scope
+    note: null
+  PGS004034:
+    decision: in_scope
+    note: null
+  PGS004062:
+    decision: in_scope
+    note: null
+  PGS004092:
+    decision: in_scope
+    note: null
+  PGS004116:
+    decision: in_scope
+    note: null
+  PGS004146:
+    decision: in_scope
+    note: null
+  PGS004227:
+    decision: in_scope
+    note: null
+  PGS004228:
+    decision: in_scope
+    note: null
+  PGS004229:
+    decision: in_scope
+    note: null
+  PGS004280:
+    decision: in_scope
+    note: null
+  PGS004281:
+    decision: in_scope
+    note: null
+  PGS004282:
+    decision: in_scope
+    note: null
+  PGS004283:
+    decision: in_scope
+    note: null
+  PGS004284:
+    decision: in_scope
+    note: null
+  PGS004285:
+    decision: in_scope
+    note: null
+  PGS004286:
+    decision: in_scope
+    note: null
+  PGS004287:
+    decision: in_scope
+    note: null
+  PGS004288:
+    decision: in_scope
+    note: null
+  PGS004289:
+    decision: in_scope
+    note: null
+  PGS004318:
+    decision: in_scope
+    note: null
+  PGS004588:
+    decision: in_scope
+    note: null
+  PGS004589:
+    decision: in_scope
+    note: null
+  PGS004590:
+    decision: in_scope
+    note: null
+  PGS004600:
+    decision: in_scope
+    note: null
+  PGS004863:
+    decision: in_scope
+    note: null
+  PGS004898:
+    decision: in_scope
+    note: null
+  PGS004918:
+    decision: in_scope
+    note: null
+  PGS005170:
+    decision: in_scope
+    note: null
+  PGS012548:
+    decision: in_scope
+    note: null
+summary: '67 of 68 matched scores are in scope; all are annotated and every one points the same way: a higher score means
+  higher risk. Most are Alzheimer''s disease scores (neurology.alzheimers_disease, incl. one family-history score); all-cause,
+  vascular and unspecified dementia scores go to a separate neurology.dementia concept. No negative 1000G pairs; 65 were
+  annotated without a new lookup (58 catalog-only from OR/HR or r>=0.2 with a corroborated AD score, 7 UKB snpnet scores
+  from the already-read PGP000244 template), PGS000876 and PGS004318 were read. About half the files contain no APOE-region
+  variant (recorded as strata apoe_region: excluded), which explains their low correlation with APOE-dominated scores.
+  PGS004318 is in review: its rs7412 (APOE e2) weight points the wrong way. PGS000777 (Parkinson''s disease dementia)
+  is out of scope.'

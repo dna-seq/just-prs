@@ -40,3 +40,8 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.98 with catalog-annotated PGS004900 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.19.
+paper:
+  pmid: '32525877'
+  doi: 10.1371/journal.pgen.1008790
+  title: 'Exclusive breastfeeding can attenuate body-mass-index increase among genetically susceptible children:
+    A longitudinal study from the ALSPAC cohort.'

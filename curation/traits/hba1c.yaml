@@ -1,0 +1,144 @@
+slug: hba1c
+query: HbA1c
+match:
+  terms:
+  - HbA1c
+  - glycated haemoglobin
+  - glycated hemoglobin
+  - glycosylated
+  - hemoglobin A1c
+  efo_ids: []
+  exclude: []
+anchor: PGS000712
+status: resolved
+concepts:
+- endocrine.glycemia
+scores:
+  PGS000127:
+    decision: in_scope
+    note: null
+  PGS000128:
+    decision: in_scope
+    note: null
+  PGS000129:
+    decision: in_scope
+    note: null
+  PGS000130:
+    decision: in_scope
+    note: null
+  PGS000131:
+    decision: in_scope
+    note: null
+  PGS000132:
+    decision: in_scope
+    note: null
+  PGS000304:
+    decision: in_scope
+    note: null
+  PGS000685:
+    decision: in_scope
+    note: null
+  PGS000712:
+    decision: out_of_scope
+    note: Type 2 diabetes case/control score (controls filtered on HbA1c); belongs to endocrine.type_2_diabetes, already annotated there.
+  PGS001352:
+    decision: in_scope
+    note: null
+  PGS001953:
+    decision: in_scope
+    note: null
+  PGS002171:
+    decision: in_scope
+    note: null
+  PGS002331:
+    decision: in_scope
+    note: null
+  PGS002367:
+    decision: in_scope
+    note: null
+  PGS002403:
+    decision: in_scope
+    note: null
+  PGS002452:
+    decision: in_scope
+    note: null
+  PGS002501:
+    decision: in_scope
+    note: null
+  PGS002550:
+    decision: in_scope
+    note: null
+  PGS002599:
+    decision: in_scope
+    note: null
+  PGS002648:
+    decision: in_scope
+    note: null
+  PGS002697:
+    decision: in_scope
+    note: null
+  PGS003337:
+    decision: in_scope
+    note: null
+  PGS003346:
+    decision: in_scope
+    note: null
+  PGS003471:
+    decision: in_scope
+    note: null
+  PGS003533:
+    decision: in_scope
+    note: null
+  PGS003987:
+    decision: in_scope
+    note: null
+  PGS004003:
+    decision: in_scope
+    note: null
+  PGS004029:
+    decision: in_scope
+    note: null
+  PGS004044:
+    decision: in_scope
+    note: null
+  PGS004057:
+    decision: in_scope
+    note: null
+  PGS004073:
+    decision: in_scope
+    note: null
+  PGS004087:
+    decision: in_scope
+    note: null
+  PGS004111:
+    decision: in_scope
+    note: null
+  PGS004127:
+    decision: in_scope
+    note: null
+  PGS004141:
+    decision: in_scope
+    note: null
+  PGS004157:
+    decision: in_scope
+    note: null
+  PGS004337:
+    decision: in_scope
+    note: null
+  PGS004701:
+    decision: in_scope
+    note: null
+  PGS004702:
+    decision: in_scope
+    note: null
+  PGS004703:
+    decision: in_scope
+    note: null
+  PGS004704:
+    decision: in_scope
+    note: null
+summary: 'All 40 HbA1c scores sit in the new concept endocrine.glycemia (axis: higher blood sugar), phenotype hba1c (+1); a higher percentile means higher
+  HbA1c. 34 were annotated from the catalog, corroborated by PGP000517 betas against HbA1c (CI excludes 0) and positive 1000G EUR correlations (no same-concept
+  pair below -0.2). The six Wheeler 2017 scores (PGP000064) were read: all weight HbA1c-raising alleles; the three erythrocytic (GS-E) scores raise HbA1c
+  through red-cell biology, not glucose, and do not raise T2D risk. PGS002367 (Biobank Japan-trained) correlates only weakly (r~+0.1) with European scores
+  and is flagged for review. PGS000712 is a T2D score and out of scope.'

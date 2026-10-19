@@ -1,0 +1,561 @@
+slug: breast-cancer
+query: breast cancer
+match:
+  terms:
+  - ER-negative breast cancer
+  - ER-positive breast cancer
+  - breast cancer
+  - breast carcinoma
+  - female breast cancer
+  efo_ids: []
+  exclude: []
+anchor: PGS000004
+status: resolved
+concepts:
+- cancer.breast_cancer
+- cancer.breast_cancer_aggressiveness
+scores:
+  PGS000001:
+    decision: in_scope
+    note: null
+  PGS000002:
+    decision: in_scope
+    note: null
+  PGS000003:
+    decision: in_scope
+    note: null
+  PGS000004:
+    decision: in_scope
+    note: null
+  PGS000005:
+    decision: in_scope
+    note: null
+  PGS000006:
+    decision: in_scope
+    note: null
+  PGS000007:
+    decision: in_scope
+    note: null
+  PGS000008:
+    decision: in_scope
+    note: null
+  PGS000009:
+    decision: in_scope
+    note: null
+  PGS000015:
+    decision: in_scope
+    note: null
+  PGS000028:
+    decision: in_scope
+    note: null
+  PGS000029:
+    decision: in_scope
+    note: null
+  PGS000045:
+    decision: in_scope
+    note: null
+  PGS000046:
+    decision: in_scope
+    note: null
+  PGS000047:
+    decision: in_scope
+    note: null
+  PGS000050:
+    decision: in_scope
+    note: null
+  PGS000051:
+    decision: in_scope
+    note: null
+  PGS000052:
+    decision: in_scope
+    note: null
+  PGS000072:
+    decision: in_scope
+    note: null
+  PGS000153:
+    decision: in_scope
+    note: null
+  PGS000212:
+    decision: in_scope
+    note: null
+  PGS000213:
+    decision: in_scope
+    note: null
+  PGS000214:
+    decision: in_scope
+    note: null
+  PGS000215:
+    decision: in_scope
+    note: null
+  PGS000216:
+    decision: in_scope
+    note: null
+  PGS000317:
+    decision: in_scope
+    note: null
+  PGS000332:
+    decision: in_scope
+    note: null
+  PGS000335:
+    decision: in_scope
+    note: null
+  PGS000344:
+    decision: in_scope
+    note: null
+  PGS000345:
+    decision: in_scope
+    note: null
+  PGS000346:
+    decision: in_scope
+    note: null
+  PGS000347:
+    decision: in_scope
+    note: null
+  PGS000472:
+    decision: in_scope
+    note: null
+  PGS000473:
+    decision: in_scope
+    note: null
+  PGS000474:
+    decision: in_scope
+    note: null
+  PGS000475:
+    decision: in_scope
+    note: null
+  PGS000476:
+    decision: in_scope
+    note: null
+  PGS000477:
+    decision: in_scope
+    note: null
+  PGS000478:
+    decision: in_scope
+    note: null
+  PGS000479:
+    decision: in_scope
+    note: null
+  PGS000480:
+    decision: in_scope
+    note: null
+  PGS000481:
+    decision: in_scope
+    note: null
+  PGS000482:
+    decision: in_scope
+    note: null
+  PGS000483:
+    decision: in_scope
+    note: null
+  PGS000484:
+    decision: in_scope
+    note: null
+  PGS000485:
+    decision: in_scope
+    note: null
+  PGS000486:
+    decision: in_scope
+    note: null
+  PGS000487:
+    decision: in_scope
+    note: null
+  PGS000488:
+    decision: in_scope
+    note: null
+  PGS000489:
+    decision: in_scope
+    note: null
+  PGS000490:
+    decision: in_scope
+    note: null
+  PGS000491:
+    decision: in_scope
+    note: null
+  PGS000492:
+    decision: in_scope
+    note: null
+  PGS000493:
+    decision: in_scope
+    note: null
+  PGS000494:
+    decision: in_scope
+    note: null
+  PGS000495:
+    decision: in_scope
+    note: null
+  PGS000496:
+    decision: in_scope
+    note: null
+  PGS000497:
+    decision: in_scope
+    note: null
+  PGS000498:
+    decision: in_scope
+    note: null
+  PGS000499:
+    decision: in_scope
+    note: null
+  PGS000500:
+    decision: in_scope
+    note: null
+  PGS000501:
+    decision: in_scope
+    note: null
+  PGS000502:
+    decision: in_scope
+    note: null
+  PGS000503:
+    decision: in_scope
+    note: null
+  PGS000504:
+    decision: in_scope
+    note: null
+  PGS000505:
+    decision: in_scope
+    note: null
+  PGS000506:
+    decision: in_scope
+    note: null
+  PGS000507:
+    decision: in_scope
+    note: null
+  PGS000508:
+    decision: in_scope
+    note: null
+  PGS000509:
+    decision: in_scope
+    note: null
+  PGS000510:
+    decision: in_scope
+    note: null
+  PGS000511:
+    decision: in_scope
+    note: null
+  PGS000512:
+    decision: in_scope
+    note: null
+  PGS000513:
+    decision: in_scope
+    note: null
+  PGS000514:
+    decision: in_scope
+    note: null
+  PGS000515:
+    decision: in_scope
+    note: null
+  PGS000516:
+    decision: in_scope
+    note: null
+  PGS000517:
+    decision: in_scope
+    note: null
+  PGS000518:
+    decision: in_scope
+    note: null
+  PGS000519:
+    decision: in_scope
+    note: null
+  PGS000520:
+    decision: in_scope
+    note: null
+  PGS000521:
+    decision: in_scope
+    note: null
+  PGS000522:
+    decision: in_scope
+    note: null
+  PGS000523:
+    decision: in_scope
+    note: null
+  PGS000524:
+    decision: in_scope
+    note: null
+  PGS000525:
+    decision: in_scope
+    note: null
+  PGS000526:
+    decision: in_scope
+    note: null
+  PGS000527:
+    decision: in_scope
+    note: null
+  PGS000528:
+    decision: in_scope
+    note: null
+  PGS000529:
+    decision: in_scope
+    note: null
+  PGS000530:
+    decision: in_scope
+    note: null
+  PGS000531:
+    decision: in_scope
+    note: null
+  PGS000532:
+    decision: in_scope
+    note: null
+  PGS000533:
+    decision: in_scope
+    note: null
+  PGS000534:
+    decision: in_scope
+    note: null
+  PGS000535:
+    decision: in_scope
+    note: null
+  PGS000536:
+    decision: in_scope
+    note: null
+  PGS000537:
+    decision: in_scope
+    note: null
+  PGS000538:
+    decision: in_scope
+    note: null
+  PGS000539:
+    decision: in_scope
+    note: null
+  PGS000540:
+    decision: in_scope
+    note: null
+  PGS000773:
+    decision: in_scope
+    note: null
+  PGS000774:
+    decision: in_scope
+    note: null
+  PGS000775:
+    decision: in_scope
+    note: null
+  PGS000783:
+    decision: in_scope
+    note: null
+  PGS000873:
+    decision: in_scope
+    note: null
+  PGS001336:
+    decision: in_scope
+    note: null
+  PGS001337:
+    decision: in_scope
+    note: null
+  PGS001778:
+    decision: in_scope
+    note: null
+  PGS001804:
+    decision: in_scope
+    note: null
+  PGS002015:
+    decision: in_scope
+    note: null
+  PGS002242:
+    decision: in_scope
+    note: null
+  PGS002294:
+    decision: in_scope
+    note: null
+  PGS003380:
+    decision: in_scope
+    note: null
+  PGS003396:
+    decision: in_scope
+    note: null
+  PGS003397:
+    decision: in_scope
+    note: null
+  PGS003398:
+    decision: in_scope
+    note: null
+  PGS003399:
+    decision: in_scope
+    note: null
+  PGS003738:
+    decision: in_scope
+    note: null
+  PGS003758:
+    decision: in_scope
+    note: null
+  PGS003759:
+    decision: in_scope
+    note: null
+  PGS003983:
+    decision: in_scope
+    note: null
+  PGS003999:
+    decision: in_scope
+    note: null
+  PGS004025:
+    decision: in_scope
+    note: null
+  PGS004040:
+    decision: in_scope
+    note: null
+  PGS004053:
+    decision: in_scope
+    note: null
+  PGS004069:
+    decision: in_scope
+    note: null
+  PGS004083:
+    decision: in_scope
+    note: null
+  PGS004107:
+    decision: in_scope
+    note: null
+  PGS004123:
+    decision: in_scope
+    note: null
+  PGS004137:
+    decision: in_scope
+    note: null
+  PGS004153:
+    decision: in_scope
+    note: null
+  PGS004166:
+    decision: in_scope
+    note: null
+  PGS004167:
+    decision: in_scope
+    note: null
+  PGS004168:
+    decision: in_scope
+    note: null
+  PGS004169:
+    decision: in_scope
+    note: null
+  PGS004170:
+    decision: in_scope
+    note: null
+  PGS004242:
+    decision: in_scope
+    note: null
+  PGS004295:
+    decision: in_scope
+    note: null
+  PGS004296:
+    decision: in_scope
+    note: null
+  PGS004297:
+    decision: in_scope
+    note: null
+  PGS004298:
+    decision: in_scope
+    note: null
+  PGS004299:
+    decision: in_scope
+    note: null
+  PGS004441:
+    decision: in_scope
+    note: null
+  PGS004511:
+    decision: in_scope
+    note: null
+  PGS004579:
+    decision: in_scope
+    note: null
+  PGS004611:
+    decision: in_scope
+    note: case-only tumour aggressiveness (ROR-P) score, not incidence; concept breast_cancer_aggressiveness
+  PGS004688:
+    decision: in_scope
+    note: null
+  PGS004737:
+    decision: in_scope
+    note: null
+  PGS004738:
+    decision: in_scope
+    note: null
+  PGS004865:
+    decision: in_scope
+    note: null
+  PGS004866:
+    decision: in_scope
+    note: null
+  PGS004867:
+    decision: in_scope
+    note: null
+  PGS004869:
+    decision: in_scope
+    note: null
+  PGS004890:
+    decision: in_scope
+    note: case-case TNBC vs luminal subtype score; concept breast_cancer_aggressiveness
+  PGS004891:
+    decision: in_scope
+    note: null
+  PGS004892:
+    decision: in_scope
+    note: null
+  PGS004893:
+    decision: in_scope
+    note: null
+  PGS004894:
+    decision: in_scope
+    note: null
+  PGS004895:
+    decision: in_scope
+    note: null
+  PGS005104:
+    decision: in_scope
+    note: null
+  PGS005105:
+    decision: in_scope
+    note: null
+  PGS005106:
+    decision: in_scope
+    note: null
+  PGS005164:
+    decision: in_scope
+    note: null
+  PGS005345:
+    decision: in_scope
+    note: null
+  PGS005346:
+    decision: in_scope
+    note: null
+  PGS005347:
+    decision: in_scope
+    note: null
+  PGS005348:
+    decision: in_scope
+    note: null
+  PGS005349:
+    decision: in_scope
+    note: null
+  PGS005378:
+    decision: in_scope
+    note: null
+  PGS005379:
+    decision: in_scope
+    note: null
+  PGS005380:
+    decision: in_scope
+    note: null
+  PGS005381:
+    decision: in_scope
+    note: null
+  PGS005382:
+    decision: in_scope
+    note: null
+  PGS005383:
+    decision: in_scope
+    note: null
+  PGS005384:
+    decision: in_scope
+    note: null
+  PGS005385:
+    decision: in_scope
+    note: null
+  PGS005386:
+    decision: in_scope
+    note: null
+  PGS005387:
+    decision: in_scope
+    note: null
+summary: '179 breast cancer scores from 45 papers. 177 are ordinary risk scores (overall, ER+, ER-, triple-negative,
+  intrinsic-like subtypes, one family-history proxy): higher score = higher risk of that breast cancer.
+  173 were annotated catalog-only (per-allele weights plus OR/HR CI > 1 or 1000G r >= 0.2 with such a
+  score); PGP000478 and PGP000620 were read. Two scores are not risk scores and sit in a separate concept,
+  breast cancer aggressiveness: PGS004611 (case-only ROR-P tumour recurrence score; higher = more aggressive,
+  shorter survival) and PGS004890 (case-case; higher = more likely TNBC than luminal). No same-concept
+  negative correlations; no inverted deposits found.'

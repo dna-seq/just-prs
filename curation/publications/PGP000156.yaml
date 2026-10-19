@@ -1,0 +1,33 @@
+pgp_id: PGP000156
+scores:
+  PGS000751:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.81 with already-annotated PGS000742.
+paper:
+  pmid: '31226226'
+  doi: 10.1002/ijc.32525
+  title: A genome-wide association study of prostate cancer in Latinos.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

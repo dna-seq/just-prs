@@ -1,0 +1,64 @@
+slug: lipoprotein-a
+query: lipoprotein(a)
+match:
+  terms:
+  - LPA
+  - Lp(a)
+  - lipoprotein A
+  - lipoprotein(a)
+  efo_ids: []
+  exclude: []
+anchor: PGS000667
+status: resolved
+concepts:
+- lipids.lipoprotein_a
+scores:
+  PGS000313:
+    decision: in_scope
+    note: null
+  PGS000667:
+    decision: in_scope
+    note: null
+  PGS000689:
+    decision: in_scope
+    note: null
+  PGS000752:
+    decision: in_scope
+    note: null
+  PGS001963:
+    decision: in_scope
+    note: null
+  PGS002181:
+    decision: in_scope
+    note: null
+  PGS002297:
+    decision: in_scope
+    note: null
+  PGS003542:
+    decision: in_scope
+    note: null
+  PGS004201:
+    decision: in_scope
+    note: null
+  PGS004202:
+    decision: in_scope
+    note: null
+  PGS004203:
+    decision: in_scope
+    note: null
+  PGS004204:
+    decision: in_scope
+    note: null
+  PGS004205:
+    decision: in_scope
+    note: null
+  PGS005320:
+    decision: in_scope
+    note: Burgess 2018 36-SNP Lp(a) score, evaluated on heart failure in dCCB users
+summary: 'All 14 Lp(a) scores sit in the new concept lipids.lipoprotein_a (axis higher Lp(a), undesirable). 13 scores
+  increase Lp(a): PGS000667, PGS002297, PGS000752''s paper and PGS005320 were read, PGS001963/PGS002181/PGS003542
+  use the authors'' own log Lp(a) GWAS, and PGS000313, PGS000689 and PGS004201-5 are catalog-only, backed by 1000G
+  r +0.81 to +0.90 with the anchor and agreeing rs10455872/rs3798220 alleles. PGS000752 (Dron 2021) is recorded
+  as distributed: the paper says higher = higher Lp(a), but most LPA-region weights are opposite and it anti-correlates
+  (r -0.59 to -0.81) with every other score, so it carries a deposit_inverted correction and sits in the review
+  queue. After alignment no conflicts remain.'

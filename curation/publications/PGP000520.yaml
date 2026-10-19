@@ -635,6 +635,484 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.99 with catalog-annotated PGS004216 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.35.
+  PGS004186:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.64 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.74 with PGS005168.
+  PGS004187:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.59 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.71 with PGS004293.
+  PGS004188:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.67 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.75 with PGS005168.
+  PGS004189:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.65 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.74 with PGS005168.
+  PGS004190:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.68 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.77 with PGS004292.
+      The catalog evaluation row is labelled 'Hypertension' but carries only AUROC (no direction); the reported
+      trait is atrial fibrillation.
+  PGS004166:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.64 with PGS000516 (OR 1.477 [1.39, 1.57] on Breast cancer [female]).
+  PGS004167:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.78 with PGS000479 (OR 1.438 [1.354, 1.528] on Breast cancer [female]).
+  PGS004168:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.64 with PGS000479 (OR 1.438 [1.354, 1.528] on Breast cancer [female]).
+  PGS004169:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.76 with PGS000479 (OR 1.438 [1.354, 1.528] on Breast cancer [female]).
+  PGS004170:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.71 with PGS000479 (OR 1.438 [1.354, 1.528] on Breast cancer [female]).
+  PGS004191:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score hyper_1; PGS Catalog weights are per-allele effects on
+      the reported trait. Corroborated by 1000G EUR r = +0.48 with PGS002998. Raben 2023 sparse ML predictor for
+      UKB hypertension.
+  PGS004192:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score hyper_2; PGS Catalog weights are per-allele effects on
+      the reported trait. Corroborated by 1000G EUR r = +0.53 with PGS002998. Raben 2023 sparse ML predictor for
+      UKB hypertension.
+  PGS004193:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score hyper_3; PGS Catalog weights are per-allele effects on
+      the reported trait. Corroborated by 1000G EUR r = +0.49 with PGS002998. Raben 2023 sparse ML predictor for
+      UKB hypertension.
+  PGS004194:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score hyper_4; PGS Catalog weights are per-allele effects on
+      the reported trait. Corroborated by 1000G EUR r = +0.54 with PGS002778. Raben 2023 sparse ML predictor for
+      UKB hypertension.
+  PGS004195:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score hyper_5; PGS Catalog weights are per-allele effects on
+      the reported trait. Corroborated by 1000G EUR r = +0.55 with PGS002998. Raben 2023 sparse ML predictor for
+      UKB hypertension; the catalog evaluation (AUROC only) is on coronary artery disease, which carries no direction;
+      positive correlation with the hypertension block confirms it is a hypertension score.
+  PGS004201:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lipoprotein(a) concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lipoprotein A
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs10455872 A weight -1.73 (G raises) and rs3798220 T -0.77 (C raises): both agree with the literature'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.90 with read anchor PGS000667. Sparse ML predictor (lpa_1), one of five
+      near-identical training replicates.
+  PGS004202:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lipoprotein(a) concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lipoprotein A
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs10455872 A weight -1.73 (G raises) and rs3798220 T -0.77 (C raises): both agree with the literature'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.90 with read anchor PGS000667. Sparse ML predictor (lpa_2), one of five
+      near-identical training replicates.
+  PGS004203:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lipoprotein(a) concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lipoprotein A
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs10455872 A weight -1.73 (G raises) and rs3798220 T -0.77 (C raises): both agree with the literature'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.90 with read anchor PGS000667. Sparse ML predictor (lpa_3), one of five
+      near-identical training replicates.
+  PGS004204:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lipoprotein(a) concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lipoprotein A
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs10455872 A weight -1.73 (G raises) and rs3798220 T -0.77 (C raises): both agree with the literature'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.90 with read anchor PGS000667. Sparse ML predictor (lpa_4), one of five
+      near-identical training replicates.
+  PGS004205:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lipoprotein(a) concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lipoprotein A
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs10455872 A weight -1.73 (G raises) and rs3798220 T -0.77 (C raises): both agree with the literature'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.90 with read anchor PGS000667. Sparse ML predictor (lpa_5), one of five
+      near-identical training replicates.
 paper:
   pmid: '37468507'
   doi: 10.1038/s41598-023-37580-5

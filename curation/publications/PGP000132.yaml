@@ -61,3 +61,8 @@ scores:
         weights
     status: agent_proposed
     notes: Raw sources fetched by the curator directly (Europe PMC). Catalog evaluation is AUROC only.
+paper:
+  pmid: '32376654'
+  doi: 10.1136/bmj.m1203
+  title: 'Use of genetic variation to separate the effects of early and later life adiposity on disease risk: mendelian
+    randomisation study.'

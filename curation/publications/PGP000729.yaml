@@ -1,0 +1,51 @@
+pgp_id: PGP000729
+scores:
+  PGS005208:
+    cluster: cancer.melanoma
+    phenotype: melanoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of melanoma (evaluated in childhood cancer survivors)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name | scores.trait_reported
+      quote: Melanoma_PRS | Melanoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.6 [1.31, 1.67] on Risk of melanoma in childhood cancer survivors; 1000G EUR r=+0.59
+      with anchor PGS000079.
+  PGS005210:
+    cluster: cancer.thyroid_cancer
+    phenotype: thyroid_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of thyroid cancer (evaluated as subsequent thyroid cancer in childhood cancer survivors)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.48 [1.31, 1.67] on Risk of thyroid cancer in childhood cancer survivors; 1000G
+      EUR r=+0.81 with anchor PGS000087 (CC_Thyroid, OR 1.55 [1.44, 1.67]). Evaluated in childhood cancer survivors;
+      weights are GWAS thyroid cancer effects.

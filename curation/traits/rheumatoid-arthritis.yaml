@@ -1,0 +1,119 @@
+slug: rheumatoid-arthritis
+query: rheumatoid arthritis
+match:
+  terms:
+  - inflammatory arthritis
+  - rheumatoid arthritis
+  - seropositive rheumatoid
+  efo_ids: []
+  exclude: []
+anchor: PGS004873
+status: resolved
+concepts:
+- immune.rheumatoid_arthritis
+scores:
+  PGS000194:
+    decision: in_scope
+    note: "catalog reported trait says CCP-negative but score is G-PROB CCP+ RA (mislabel)"
+  PGS000195:
+    decision: in_scope
+    note: null
+  PGS001309:
+    decision: in_scope
+    note: null
+  PGS001310:
+    decision: in_scope
+    note: null
+  PGS001311:
+    decision: in_scope
+    note: null
+  PGS001875:
+    decision: in_scope
+    note: null
+  PGS002088:
+    decision: in_scope
+    note: null
+  PGS002260:
+    decision: in_scope
+    note: "RA-susceptibility PRS evaluated on radiographic progression; scored as RA risk"
+  PGS002745:
+    decision: in_scope
+    note: null
+  PGS002769:
+    decision: in_scope
+    note: null
+  PGS003994:
+    decision: in_scope
+    note: null
+  PGS004010:
+    decision: in_scope
+    note: null
+  PGS004021:
+    decision: in_scope
+    note: null
+  PGS004049:
+    decision: in_scope
+    note: null
+  PGS004064:
+    decision: in_scope
+    note: null
+  PGS004079:
+    decision: in_scope
+    note: null
+  PGS004094:
+    decision: in_scope
+    note: null
+  PGS004103:
+    decision: in_scope
+    note: null
+  PGS004118:
+    decision: in_scope
+    note: null
+  PGS004133:
+    decision: in_scope
+    note: null
+  PGS004148:
+    decision: in_scope
+    note: null
+  PGS004163:
+    decision: in_scope
+    note: null
+  PGS004255:
+    decision: in_scope
+    note: null
+  PGS004256:
+    decision: in_scope
+    note: null
+  PGS004257:
+    decision: in_scope
+    note: null
+  PGS004258:
+    decision: in_scope
+    note: null
+  PGS004259:
+    decision: in_scope
+    note: null
+  PGS004326:
+    decision: in_scope
+    note: null
+  PGS004817:
+    decision: in_scope
+    note: null
+  PGS004818:
+    decision: in_scope
+    note: null
+  PGS004819:
+    decision: in_scope
+    note: null
+  PGS004820:
+    decision: in_scope
+    note: null
+  PGS004873:
+    decision: in_scope
+    note: null
+summary: |
+  All 33 rheumatoid arthritis scores are RA-risk scores in one concept (immune.rheumatoid_arthritis); higher score = higher genetic risk of RA.
+  30 were annotated from the catalog (per-allele weights, OR/HR against RA or 1000G correlation with the anchor PGS004873); PGP000081 (G-PROB) and PGP000286 were read.
+  PGS000194 is the G-PROB CCP-positive RA score despite a catalog reported trait of "CCP-negative"; PGS000195 is the CCP-negative score.
+  PGS002260 is an RA-susceptibility PRS evaluated on radiographic progression in Japanese RA patients, which explains its near-zero EUR correlation.
+  No negative correlations within the concept.

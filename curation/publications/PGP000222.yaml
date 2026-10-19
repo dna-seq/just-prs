@@ -1,0 +1,44 @@
+pgp_id: PGP000222
+scores:
+  PGS000876:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: alzheimers_disease
+    strata:
+      apoe_region: excluded
+    provenance:
+    - source: full_text
+      locator: Methods > Samples
+      quote: For PRS calculation we used SNP's log(OR) from the meta‐analysis of three consortia (EADI, CHARGE and
+        ADGC), excluding GERAD, hereby referred to as IGAP_noGERAD.
+      confidence: high
+    - source: full_text
+      locator: Introduction
+      quote: The advantage of Cox regression over LR is that the former estimates an instantaneous risk for developing
+        AD, based on genotype and age
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs74615166 T -0.30 (GWAS Catalog: C raises LOAD risk) and rs11218343 T +0.25 (SORL1; C protective)
+        both agree'
+    review_reason: null
+    status: agent_proposed
+    notes: 'Weights are IGAP (no GERAD) log(OR) of the AD risk allele, so higher = higher AD risk. The catalog''s
+      ''Age at Alzheimer''s disease onset'' betas (0.28, 0.13) are Cox proportional-hazards coefficients for AD
+      with age at onset as survival time: positive = higher hazard / earlier onset, consistent with the direction.
+      APOE e2/e4 were covariates, not in the score; 1000G EUR r=+0.73 with PGS000025.'
+paper:
+  pmid: '30911569'
+  doi: 10.1002/acn3.716
+  title: Polygenic risk and hazard scores for Alzheimer's disease prediction.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

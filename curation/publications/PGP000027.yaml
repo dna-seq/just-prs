@@ -1,0 +1,41 @@
+pgp_id: PGP000027
+scores:
+  PGS000039:
+    cluster: cardiovascular.stroke
+    phenotype: ischemic_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of ischaemic stroke
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > metaGRS derivation
+      quote: to model the associations between the 19 GRSs and stroke, adjusting for sex, genotyping chip (UKB vs
+        BiLEVE), and 10 genetic PCs.
+      confidence: high
+    - source: abstract
+      locator: Abstract
+      quote: 'The metaGRS hazard ratio for IS (1.26, 95% CI 1.22–1.31 per metaGRS standard deviation) doubles that
+        of a previous GRS, identifying a subset of individuals at monogenic levels of risk: the top 0.25% of metaGRS
+        have three-fold risk of IS.'
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'metaGRS: elastic-net logistic combination of 19 stroke and risk-factor GRSs fitted on stroke status
+      (derivation set enriched for IS); HR 1.26 per SD for IS by age 75 in UKB. 1000G EUR r=+0.89 with PGS000038
+      family.'
+paper:
+  pmid: '31862893'
+  doi: 10.1038/s41467-019-13848-1
+  title: Genomic risk score offers predictive performance comparable to clinical risk factors for ischaemic stroke.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

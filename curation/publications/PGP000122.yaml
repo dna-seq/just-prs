@@ -1,0 +1,34 @@
+pgp_id: PGP000122
+scores:
+  PGS000662:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+1.00 with already-annotated PGS003460.
+paper:
+  pmid: '33398198'
+  doi: 10.1038/s41588-020-00748-0
+  title: Trans-ancestry genome-wide association meta-analysis of prostate cancer identifies new susceptibility loci
+    and informs genetic risk prediction.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

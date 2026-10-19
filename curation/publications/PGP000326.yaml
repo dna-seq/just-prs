@@ -1,0 +1,32 @@
+pgp_id: PGP000326
+scores:
+  PGS002296:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score PRS2166_HT; PGS Catalog weights are per-allele effects
+      on the reported trait. Corroborated by OR 3.22 [2.06, 5.1] (CI excludes 1) against hypertension; 1000G EUR
+      r = +0.67 with PGS002998. Maj 2022 genome-wide 2166-variant hypertension PRS (not one of the pathway-specific
+      partitions).
+paper:
+  pmid: '35252394'
+  doi: null
+  title: 'Dissecting the Polygenic Basis of Primary Hypertension: Identification of Key Pathway-Specific Components.'

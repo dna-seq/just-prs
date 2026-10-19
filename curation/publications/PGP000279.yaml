@@ -1,0 +1,34 @@
+pgp_id: PGP000279
+scores:
+  PGS002252:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.59 [1.51, 1.68] on Early-onset colorectal cancer.
+paper:
+  pmid: '35026030'
+  doi: 10.1093/jnci/djac003
+  title: 'Risk Stratification for Early-Onset Colorectal Cancer Using a Combination of Genetic and Environmental
+    Risk Scores: An International Multi-Center Study.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

@@ -1,0 +1,39 @@
+pgp_id: PGP000286
+scores:
+  PGS002260:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Evaluated on severe radiographic progression within RA patients; top vs bottom PRS quintile OR 1.90
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract (Methods)
+      quote: We constructed polygenic risk scores using GWAS summary data on associations of single-nucleotide polymorphisms
+        with RA susceptibility.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'RA-susceptibility PRS (source GWAS GCST002318, trans-ethnic RA meta-analysis) with log(OR) weights,
+      so higher = higher genetic RA risk by catalog convention; abstract only (not open access). Abstract: top vs
+      bottom quintile OR 1.90 for severe radiographic progression in Japanese RA patients. Near-zero 1000G EUR correlation
+      with other RA scores (max +0.16) is consistent with its East Asian-weighted build and 43k-variant thresholding;
+      not a sign problem.'
+paper:
+  pmid: '35048562'
+  doi: 10.1002/art.42051
+  title: Polygenic risk scores are associated with radiographic progression in patients with rheumatoid arthritis.

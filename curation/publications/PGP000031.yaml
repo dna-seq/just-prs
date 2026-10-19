@@ -1,0 +1,34 @@
+pgp_id: PGP000031
+scores:
+  PGS000044:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.51 with already-annotated PGS000030.
+paper:
+  pmid: '26291059'
+  doi: 10.1038/bjc.2015.289
+  title: 'Reducing overdiagnosis by polygenic risk-stratified screening: findings from the Finnish section of the
+    ERSPC.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

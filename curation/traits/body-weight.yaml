@@ -1,0 +1,55 @@
+slug: body-weight
+query: body weight
+match:
+  terms:
+  - body weight
+  - weight
+  efo_ids: []
+  exclude: []
+anchor: PGS005234
+status: needs_review
+concepts:
+- anthropometry.adiposity
+scores:
+  PGS001006:
+    decision: out_of_scope
+    note: 'weight change compared with 1 year ago (UKB 2306, categorical change), not body weight'
+  PGS001226:
+    decision: out_of_scope
+    note: 'birth weight is a separate (perinatal) trait'
+  PGS001230:
+    decision: in_scope
+    note: null
+  PGS001892:
+    decision: out_of_scope
+    note: 'birth weight is a separate (perinatal) trait'
+  PGS002105:
+    decision: out_of_scope
+    note: 'birth weight is a separate (perinatal) trait'
+  PGS003494:
+    decision: out_of_scope
+    note: 'birth weight is a separate (perinatal) trait'
+  PGS003898:
+    decision: in_scope
+    note: null
+  PGS004373:
+    decision: in_scope
+    note: null
+  PGS004410:
+    decision: in_scope
+    note: null
+  PGS004426:
+    decision: out_of_scope
+    note: 'birth weight is a separate (perinatal) trait'
+  PGS005232:
+    decision: out_of_scope
+    note: 'birth size (self-reported comparative size at birth); perinatal, not adult body weight'
+  PGS005234:
+    decision: out_of_scope
+    note: 'composite "body size and adipose distribution" factor score; not plain body weight, needs its own loadings'
+summary: 'Four adult body-weight scores, placed as a body_weight phenotype (sign +1) in anthropometry.adiposity
+  because weight tracks the same heavier-body axis as BMI (r = +0.64 to +0.87 with each other). PGS001230, PGS003898
+  (Tanigawa snpnet, UKB 21002) and PGS004410 (Jung LDpred2, UKB 21002) mean higher = heavier. PGS004373 (Jung, UKB
+  23098 bioimpedance weight) is an inverted deposit: r = -0.996 with PGS004410 and FTO/GNAT2 BMI-raising alleles
+  carry negative weights, so as distributed a high percentile means lighter; recorded as distributed with corrections,
+  awaiting human review. Birth weight/size, weight change and the composite body-size factor are out of scope.'

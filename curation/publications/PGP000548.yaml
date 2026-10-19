@@ -1,0 +1,56 @@
+pgp_id: PGP000548
+scores:
+  PGS004318:
+    cluster: neurology.dementia
+    phenotype: all_cause_dementia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of all-cause dementia
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: full_text
+      locator: Methods > Genetic risk score
+      quote: A PRS at the individual level was then calculated by weighting each SNP’s risk alleles (0, 1, or 2)
+        with its effect size
+      confidence: high
+    - source: full_text
+      locator: Results > Genetic susceptibility and dementia risk
+      quote: compared to individuals with a low genetic susceptibility, the HRs and 95% CIs of dementia were 1.29
+        (1.21–1.38) for those with a middle genetic susceptibility and 2.76 (2.60–2.93) for those with a high genetic
+        susceptibility
+      confidence: high
+    lead_variant_check:
+      status: mixed
+      note: rs429358 C (APOE e4) +0.99 agrees; rs7412 T (APOE e2, protective) +0.65 is opposite to its known effect,
+        as in the paper's Supplementary Table 3 (A1=T, 0.65), whose allele columns are malformed elsewhere
+    review_reason: rs7412 (APOE e2) T allele carries a positive weight, opposite to its known protective effect;
+      rest of the score points up as the paper states.
+    corrections:
+    - kind: partial_allele_inconsistency
+      action: none
+      effect: Direction describes the file as distributed (higher = more dementia risk, as the paper states); APOE
+        e2 carriers score higher than they should.
+      evidence: rs7412 T weight +0.65 in the file and in Supplementary Table 3 (A1=T); the supplement repeats one
+        allele in both columns for many SNPs (e.g. rs4844610 A A); 1000G EUR r=+0.71 with PGS004034 (ldpred2 AD).
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Weights are per-allele log OR of risk alleles from published AD/dementia GWAS; tertiles of the standardized
+      PRS. Outcome is all-cause dementia (UKB 42018/42019). The supplement also names the Global Urate Genetics
+      Consortium as a beta source, apparently a copy-paste error.
+paper:
+  pmid: '36870957'
+  doi: 10.1186/s12877-023-03854-w
+  title: 'Association of laxatives use with incident dementia and modifying effect of genetic susceptibility: a
+    population-based cohort study with propensity score matching.'
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement:
+  - Supplementary Table 3 (12877_2023_3854_MOESM1_ESM.docx)

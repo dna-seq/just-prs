@@ -1,0 +1,70 @@
+pgp_id: PGP000430
+scores:
+  PGS003418:
+    cluster: cancer.prostate_cancer
+    strata: {}
+    review_reason: null
+    status: agent_proposed
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer (case vs control)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: full_text
+      locator: Methods > PRS construction
+      quote: For PRS construction, variants were weighted by log (base 10) odds ratio from the training set association
+        statistics, oriented to PrCa risk allele, and combined.
+      confidence: high
+    - source: full_text
+      locator: Methods > Genome-wide association analyses (GWAS)
+      quote: PLINK (RRID:SCR_001757) GLM method [28] was used to conduct association analyses with PrCa case/control
+        in European and African ancestry groups.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs77541621 (chr8:127064901) A carries +0.74; GWAS Catalog risk allele A (OR 1.74-2.04)
+    notes: European-trained PRS (log10 OR weights oriented to risk allele) applied to African ancestry men; near-random
+      AUC 0.52 there.
+  PGS003419:
+    cluster: cancer.prostate_cancer
+    strata: {}
+    review_reason: null
+    status: agent_proposed
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer (case vs control)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: full_text
+      locator: Methods > PRS construction
+      quote: For PRS construction, variants were weighted by log (base 10) odds ratio from the training set association
+        statistics, oriented to PrCa risk allele, and combined.
+      confidence: high
+    - source: full_text
+      locator: Methods > PRS construction
+      quote: For trans-ancestry group analysis, European and African ancestry training sets were combined and tested
+        on African ancestry test sets.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: top 8q24 weights positive (chr8:127091872 G +3.32, same allele positive in PGS003418); rsIDs not checked
+        individually
+    notes: Trans-ancestry (European+African training) PRS for African ancestry men. Weak but positive 1000G EUR
+      correlations (r=+0.09 with anchor, +0.35 with PGS000714), expected for an 8q24-dominated African-ancestry
+      score.
+paper:
+  pmid: '36494783'
+  doi: 10.1186/s12885-022-10258-3
+  title: 'PRState: Incorporating genetic ancestry in prostate cancer risk scores for men of African ancestry.'
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

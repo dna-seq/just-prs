@@ -205,3 +205,7 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by BETA 1.32 (CI 1.28-1.36) against 'body mass index'; 1000G EUR correlation with anchor
       PGS000320 r=+0.70.
+paper:
+  pmid: '40032831'
+  doi: 10.1038/s41467-025-56695-z
+  title: Identification of plasma proteomic markers underlying polygenic risk of type 2 diabetes and related comorbidities.

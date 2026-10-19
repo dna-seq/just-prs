@@ -1,0 +1,58 @@
+slug: male-pattern-baldness
+query: balding / male pattern baldness
+match:
+  terms:
+  - androgenetic alopecia
+  - balding
+  - balding pattern
+  - hair loss
+  - male pattern baldness
+  efo_ids: []
+  exclude: []
+anchor: PGS002680
+status: needs_review
+concepts:
+- pigmentation.male_pattern_baldness
+scores:
+  PGS001987:
+    decision: in_scope
+    note: UKB 2395 men 'less_hair' (Privé phenotype)
+  PGS002204:
+    decision: in_scope
+    note: UKB 2395 men 'less_hair' (Privé phenotype)
+  PGS002314:
+    decision: in_scope
+    note: UKB 2395 men; Weissbrod BALDING1 (probably pattern 1 = no balding)
+  PGS002386:
+    decision: in_scope
+    note: UKB 2395 men; Weissbrod BALDING1 (probably pattern 1 = no balding)
+  PGS002435:
+    decision: in_scope
+    note: UKB 2395 men; Weissbrod BALDING1 (probably pattern 1 = no balding)
+  PGS002484:
+    decision: in_scope
+    note: UKB 2395 men; Weissbrod BALDING1 (probably pattern 1 = no balding)
+  PGS002533:
+    decision: in_scope
+    note: UKB 2395 men; Weissbrod BALDING1 (probably pattern 1 = no balding)
+  PGS002582:
+    decision: in_scope
+    note: UKB 2395 men; Weissbrod BALDING1 (probably pattern 1 = no balding)
+  PGS002631:
+    decision: in_scope
+    note: UKB 2395 men; Weissbrod BALDING1 (probably pattern 1 = no balding)
+  PGS002680:
+    decision: in_scope
+    note: UKB 2395 men; Weissbrod BALDING1 (probably pattern 1 = no balding)
+  PGS003558:
+    decision: in_scope
+    note: UKB 2395 men 'less_hair' (Privé phenotype)
+summary: 'All 11 scores measure UK Biobank male hair/balding pattern (field 2395), from
+  three papers. Privé (PGP000263: PGS001987, PGS002204) uses the raw pattern number 1-4
+  in men as a quantitative trait, so a higher score means a higher pattern number (more
+  balding); both carry a review_reason because no source describes the patterns in words.
+  The 8 Weissbrod ''Balding Type 1'' scores (PGP000332) and Ding PGS003558 (PGP000457)
+  stay unannotated: no reachable source states how field 2395 was coded. The Weissbrod
+  scores anti-correlate with the Privé/Ding scores in 1000G EUR (r down to -0.85) and
+  weight the opposite allele at chr2:173746578, consistent with Type 1 meaning no balding,
+  but that is inference, not a quote.'

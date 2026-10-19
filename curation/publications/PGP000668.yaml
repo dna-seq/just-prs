@@ -24,6 +24,66 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by HR 1.42 [1.36, 1.49] on Incident coronary artery disease; 1000G EUR r=+0.66 with PGS000018
       (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS004942:
+    cluster: cardiovascular.stroke
+    phenotype: ischemic_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of ischaemic stroke
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract
+      quote: Here we developed three polygenic risk scores, called MetaPRSs, for coronary artery disease, ischaemic
+        stroke and intracerebral haemorrhage by combining PRSs for CVD and CVD-related risk factors in 96,400 participants
+        from the prospective China Kadoorie Biobank.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Ischemic stroke
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: CKB IS MetaPRS (abstract only, no OA full text); corroborated by catalog HR 1.18 [1.16, 1.21] on incident
+      ischaemic stroke and 1000G EUR r=+0.44 to +0.47 with PGS001793/PGS001798, +0.80 with PGS004943. Its only 1000G
+      EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR, PGP000704), which anti-correlates
+      with every stroke score and is recorded as an inverted deposit.
+  PGS004943:
+    cluster: cardiovascular.stroke
+    phenotype: intracerebral_hemorrhage
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of intracerebral haemorrhage
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract
+      quote: Here we developed three polygenic risk scores, called MetaPRSs, for coronary artery disease, ischaemic
+        stroke and intracerebral haemorrhage by combining PRSs for CVD and CVD-related risk factors in 96,400 participants
+        from the prospective China Kadoorie Biobank.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Intracerebral hemorrhage
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: CKB ICH MetaPRS (abstract only); corroborated by catalog HR 1.31 [1.24, 1.39] on incident intracerebral
+      haemorrhage; 1000G EUR r=+0.80 with PGS004942. r=-0.22 with PGS005156 (inverted deposit).
 paper:
   pmid: '38987358'
   doi: 10.1038/s41562-024-01923-7

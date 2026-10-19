@@ -12,3 +12,8 @@ scores:
     score_effect: null
     unannotated_reason: 'Lookup pending: 1000G EUR r=+0.71 with eGFR scores, but catalog HR 1.25 for incident CKD
       conflicts with an eGFR-direction score.'
+paper:
+  pmid: '34548389'
+  doi: 10.1681/asn.2020111599
+  title: Polygenic Risk Scores for Kidney Function and Their Associations with Circulating Proteome, and Incident
+    Kidney Diseases.

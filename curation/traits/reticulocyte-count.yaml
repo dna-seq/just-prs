@@ -1,0 +1,181 @@
+slug: reticulocyte-count
+query: reticulocyte count
+match:
+  terms:
+  - high light scatter reticulocyte
+  - immature red
+  - reticulocyte
+  - reticulocyte count
+  - reticulocytes
+  efo_ids: []
+  exclude: []
+anchor: PGS000095
+status: resolved
+concepts:
+- blood.reticulocyte_count
+scores:
+  PGS000094:
+    decision: in_scope
+    note: null
+  PGS000095:
+    decision: in_scope
+    note: null
+  PGS000096:
+    decision: out_of_scope
+    note: immature reticulocyte fraction measures maturity mix within reticulocytes, not abundance; separate concept
+  PGS000111:
+    decision: in_scope
+    note: null
+  PGS000112:
+    decision: in_scope
+    note: null
+  PGS000169:
+    decision: in_scope
+    note: null
+  PGS000170:
+    decision: in_scope
+    note: null
+  PGS000171:
+    decision: out_of_scope
+    note: immature reticulocyte fraction measures maturity mix within reticulocytes, not abundance; separate concept
+  PGS000180:
+    decision: out_of_scope
+    note: mean reticulocyte volume is reticulocyte size, not abundance; separate concept
+  PGS000189:
+    decision: in_scope
+    note: null
+  PGS000190:
+    decision: in_scope
+    note: null
+  PGS000987:
+    decision: out_of_scope
+    note: mean reticulocyte volume is reticulocyte size, not abundance; separate concept
+  PGS000988:
+    decision: in_scope
+    note: null
+  PGS000989:
+    decision: in_scope
+    note: null
+  PGS001406:
+    decision: in_scope
+    note: null
+  PGS001408:
+    decision: out_of_scope
+    note: immature reticulocyte fraction measures maturity mix within reticulocytes, not abundance; separate concept
+  PGS001528:
+    decision: in_scope
+    note: null
+  PGS001930:
+    decision: out_of_scope
+    note: immature reticulocyte fraction measures maturity mix within reticulocytes, not abundance; separate concept
+  PGS001959:
+    decision: in_scope
+    note: null
+  PGS001976:
+    decision: in_scope
+    note: null
+  PGS002003:
+    decision: out_of_scope
+    note: mean reticulocyte volume is reticulocyte size, not abundance; separate concept
+  PGS002147:
+    decision: out_of_scope
+    note: immature reticulocyte fraction measures maturity mix within reticulocytes, not abundance; separate concept
+  PGS002177:
+    decision: in_scope
+    note: null
+  PGS002194:
+    decision: in_scope
+    note: null
+  PGS002221:
+    decision: out_of_scope
+    note: mean reticulocyte volume is reticulocyte size, not abundance; separate concept
+  PGS002333:
+    decision: in_scope
+    note: null
+  PGS002405:
+    decision: in_scope
+    note: null
+  PGS002454:
+    decision: in_scope
+    note: null
+  PGS002503:
+    decision: in_scope
+    note: null
+  PGS002552:
+    decision: in_scope
+    note: null
+  PGS002601:
+    decision: in_scope
+    note: null
+  PGS002650:
+    decision: in_scope
+    note: null
+  PGS002699:
+    decision: in_scope
+    note: null
+  PGS003515:
+    decision: out_of_scope
+    note: immature reticulocyte fraction measures maturity mix within reticulocytes, not abundance; separate concept
+  PGS003551:
+    decision: in_scope
+    note: null
+  PGS003567:
+    decision: out_of_scope
+    note: mean reticulocyte volume is reticulocyte size, not abundance; separate concept
+  PGS003946:
+    decision: in_scope
+    note: null
+  PGS003947:
+    decision: in_scope
+    note: null
+  PGS003948:
+    decision: out_of_scope
+    note: mean reticulocyte volume is reticulocyte size, not abundance; separate concept
+  PGS003950:
+    decision: out_of_scope
+    note: immature reticulocyte fraction measures maturity mix within reticulocytes, not abundance; separate concept
+  PGS003951:
+    decision: in_scope
+    note: null
+  PGS003952:
+    decision: in_scope
+    note: null
+  PGS004363:
+    decision: in_scope
+    note: null
+  PGS004364:
+    decision: in_scope
+    note: null
+  PGS004365:
+    decision: out_of_scope
+    note: mean reticulocyte volume is reticulocyte size, not abundance; separate concept
+  PGS004367:
+    decision: out_of_scope
+    note: immature reticulocyte fraction measures maturity mix within reticulocytes, not abundance; separate concept
+  PGS004368:
+    decision: in_scope
+    note: null
+  PGS004369:
+    decision: in_scope
+    note: null
+  PGS005172:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based): predicts dispersion of the trait, not its level'
+  PGS005176:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based): predicts dispersion of the trait, not its level'
+  PGS005179:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based): predicts dispersion of the trait, not its level'
+  PGS005180:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based): predicts dispersion of the trait, not its level'
+  PGS005196:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based): predicts dispersion of the trait, not its level'
+summary: 'All 33 in-scope scores (reticulocyte count, reticulocyte percentage, high light scatter reticulocyte count
+  and percentage) sit in blood.reticulocyte_count and point the same way: a higher score means more reticulocytes.
+  Eight seeds were read (Xu 2022 elastic net on trait level; Vuckovic 2020 GWAS-beta scores aligned to correlate
+  positively with the trait); the other 25 are catalog-only, each correlating +0.47 to +0.81 with a same-phenotype
+  seed in 1000G EUR. No negative correlations or direction splits were found. Mean reticulocyte volume, immature
+  reticulocyte fraction and variance (vQTL) scores are out of scope and need their own concepts.'

@@ -99,7 +99,77 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.66 with catalog-annotated PGS004104 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.24.
+  PGS000825:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: HDL cholesterol level (as the deposited weights are oriented)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    provenance:
+    - source: full_text
+      locator: Results (HDL-C change by PGS quartile)
+      quote: predisposed to higher/better HDL-C levels
+      confidence: medium
+    - source: full_text
+      locator: Methods, Polygenic Score Creation
+      quote: summing up the published effect size for each selected SNP multiplied by the number of effect alleles
+        the individual carried for that SNP
+      confidence: medium
+    - source: supplement
+      locator: 41598_2019_43058_MOESM2_ESM.xlsx, sheet HDL-C (header)
+      quote: profile,rsid,chr,pos,altAllele,altFreq,beta
+      confidence: medium
+    - source: supplement
+      locator: 41598_2019_43058_MOESM2_ESM.xlsx, sheet HDL-C, rs1800961 row
+      quote: polygenic_hdl,rs1800961,20,43042364,T,0.026315789,0.127
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: '3 of 3 reference HDL SNPs inverted: rs4846914 A (GALNT2, HDL-raising) -0.0479; rs1883025 T (ABCA1,
+        HDL-lowering) +0.0698; rs1800961 T (HNF4A, HDL-lowering) +0.127'
+    review_reason: 'Suspected inverted deposit: the paper says a higher HDL-C PGS = higher HDL-C, but the deposited
+      (and supplementary) weights point to lower HDL-C at every canonical locus and anti-correlate with the consensus.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (decreases HDL cholesterol level); the paper says
+        higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: '3 of 3 reference HDL SNPs inverted: rs4846914 A (GALNT2, HDL-raising) -0.0479; rs1883025 T (ABCA1,
+        HDL-lowering) +0.0698; rs1800961 T (HNF4A, HDL-lowering) +0.127 | paper: Q4 of the HDL-C PGS is ''predisposed
+        to higher/better HDL-C levels'' (Table 3 baseline difference Q4 +6.67 mg/dL) | Supplementary Table 5 (MOESM2,
+        sheet HDL-C) lists the same weights as the deposited file | 1000G EUR r=-0.81 with anchor PGS004635, -0.60
+        max with PGP000517 HDL scores, min r=-0.88 with PGS000845'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics describe the authors' own score, not this inverted file, so they must
+        not raise its quality tier.
+      paper_direction: null
+      evidence: The paper's quartile results (Q4 = higher HDL-C) describe the non-inverted score; the deposited
+        file behaves as its negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'The paper states Q4 of the HDL-C PGS is predisposed to higher HDL-C (Table 3: Q4 baseline +6.67 mg/dL
+      vs Q2/Q3), but Supplementary Table 5 and the deposited file carry betas whose sign points to LOWER HDL-C at
+      GALNT2, ABCA1 and HNF4A, and the file correlates about -0.81 with the HDL consensus in 1000G EUR. Likely the
+      listed betas refer to the other allele than ''altAllele''. As scored from the PGS Catalog file a higher value
+      means LOWER genetic HDL-C. Sibling LDL/TG/TC scores from this paper are not inverted. Candidate for a catalog
+      erratum.'
 paper:
   pmid: '31048771'
   doi: 10.1038/s41598-019-43058-0
   title: Genetic Predisposition Impacts Clinical Changes in a Lifestyle Coaching Program.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement:
+  - 41598_2019_43058_MOESM2_ESM.xlsx (HDL-C sheet)

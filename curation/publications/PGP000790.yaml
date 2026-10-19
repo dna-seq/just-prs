@@ -86,3 +86,39 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by OR 2.08 [2.03, 2.13] against 'Type 2 diabetes mellitus'.
+  PGS012545:
+    cluster: cardiovascular.stroke
+    phenotype: ischemic_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of ischaemic stroke
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract > Methods
+      quote: Multitrait PGS models were trained using elastic net regression in the UK Biobank (N = 307,230 individuals)
+        and validated in both an internal set of UK Biobank individuals (N = 39,122) and All of Us (N = 116,394)
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Ischemic stroke
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Multi-trait elastic-net PGS (abstract only, no OA text); corroborated by catalog OR 1.49 [1.45, 1.53]
+      on ischaemic stroke (UKB) and 1000G EUR r=+0.49 with PGS000039 (metaGRS IS), +0.47 with PGS004942/PGS004835.
+paper:
+  pmid: '41800596'
+  doi: 10.1016/j.gim.2026.102548
+  title: Leveraging pleiotropy to improve genetic risk prediction across diseases.
+evidence_read:
+  abstract: true
+  full_text: null
+  supplement: []

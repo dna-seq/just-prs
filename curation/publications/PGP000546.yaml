@@ -325,6 +325,946 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.72 with already-annotated PGS004313.
+  PGS004290:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.63 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.77 with PGS001841.
+  PGS004291:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.61 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.75 with PGS001841.
+  PGS004292:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.69 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.82 with PGS001841.
+  PGS004293:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.67 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.80 with PGS001841.
+  PGS004294:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.64 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.78 with PGS001841.
+  PGS004295:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.74 with PGS000479 (OR 1.438 [1.354, 1.528] on Breast cancer [female]).
+  PGS004296:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.73 with PGS000479 (OR 1.438 [1.354, 1.528] on Breast cancer [female]).
+  PGS004297:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.78 with PGS000515 (OR 1.453 [1.367, 1.544] on Breast cancer [female]).
+  PGS004298:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.68 with PGS000479 (OR 1.438 [1.354, 1.528] on Breast cancer [female]).
+  PGS004299:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.72 with PGS000479 (OR 1.438 [1.354, 1.528] on Breast cancer [female]).
+  PGS004280:
+    cluster: neurology.dementia
+    phenotype: all_cause_dementia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of dementia (any cause)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: All-cause dementia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.80 with PGS004034 (OR 1.5321 [1.50892, 1.55564] vs 'AD'). APOE region variants present
+      in the file. GenoBoost per-genotype (dosage) weights; still oriented so a higher sum means higher risk.
+  PGS004281:
+    cluster: neurology.dementia
+    phenotype: all_cause_dementia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of dementia (any cause)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: All-cause dementia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.81 with PGS004034 (OR 1.5321 [1.50892, 1.55564] vs 'AD'). APOE region variants present
+      in the file. GenoBoost per-genotype (dosage) weights; still oriented so a higher sum means higher risk.
+  PGS004282:
+    cluster: neurology.dementia
+    phenotype: all_cause_dementia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of dementia (any cause)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: All-cause dementia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.78 with PGS004146 (OR 1.52213 [1.49865, 1.54597] vs 'AD'). APOE region variants present
+      in the file. GenoBoost per-genotype (dosage) weights; still oriented so a higher sum means higher risk.
+  PGS004283:
+    cluster: neurology.dementia
+    phenotype: all_cause_dementia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of dementia (any cause)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: All-cause dementia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.83 with PGS004034 (OR 1.5321 [1.50892, 1.55564] vs 'AD'). APOE region variants present
+      in the file. GenoBoost per-genotype (dosage) weights; still oriented so a higher sum means higher risk.
+  PGS004284:
+    cluster: neurology.dementia
+    phenotype: all_cause_dementia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of dementia (any cause)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: All-cause dementia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.82 with PGS004034 (OR 1.5321 [1.50892, 1.55564] vs 'AD'). APOE region variants present
+      in the file. GenoBoost per-genotype (dosage) weights; still oriented so a higher sum means higher risk.
+  PGS004285:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.75 with PGS004008 (OR 1.48397 [1.46157, 1.50672] vs 'AD'). APOE region variants present
+      in the file. GenoBoost per-genotype (dosage) weights; still oriented so a higher sum means higher risk.
+  PGS004286:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.81 with PGS004034 (OR 1.5321 [1.50892, 1.55564] vs 'AD'). APOE region variants present
+      in the file. GenoBoost per-genotype (dosage) weights; still oriented so a higher sum means higher risk.
+  PGS004287:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.78 with PGS004034 (OR 1.5321 [1.50892, 1.55564] vs 'AD'). APOE region variants present
+      in the file. GenoBoost per-genotype (dosage) weights; still oriented so a higher sum means higher risk.
+  PGS004288:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.80 with PGS004034 (OR 1.5321 [1.50892, 1.55564] vs 'AD'). APOE region variants present
+      in the file. GenoBoost per-genotype (dosage) weights; still oriented so a higher sum means higher risk.
+  PGS004289:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.80 with PGS004034 (OR 1.5321 [1.50892, 1.55564] vs 'AD'). APOE region variants present
+      in the file. GenoBoost per-genotype (dosage) weights; still oriented so a higher sum means higher risk.
+  PGS004300:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.50 with catalog-annotated PGS000375 (catalog metric here: no directional metric on Colorectal
+      cancer).'
+  PGS004301:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.46 with catalog-annotated PGS000375 (catalog metric here: no directional metric on Colorectal
+      cancer).'
+  PGS004302:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.47 with catalog-annotated PGS000375 (catalog metric here: no directional metric on Colorectal
+      cancer).'
+  PGS004303:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.49 with catalog-annotated PGS000375 (catalog metric here: no directional metric on Colorectal
+      cancer).'
+  PGS004304:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.39 with catalog-annotated PGS000375 (catalog metric here: no directional metric on Colorectal
+      cancer).'
+  PGS004265:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by GenoBoost per-dosage weights; 1000G EUR r>=+0.75 with OR-corroborated PGS004931; catalog
+      evaluation AUROC only.
+  PGS004266:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by GenoBoost per-dosage weights; 1000G EUR r>=+0.75 with OR-corroborated PGS004931; catalog
+      evaluation AUROC only.
+  PGS004267:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by GenoBoost per-dosage weights; 1000G EUR r>=+0.75 with OR-corroborated PGS004931; catalog
+      evaluation AUROC only.
+  PGS004268:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by GenoBoost per-dosage weights; 1000G EUR r>=+0.75 with OR-corroborated PGS004931; catalog
+      evaluation AUROC only.
+  PGS004269:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by GenoBoost per-dosage weights; 1000G EUR r>=+0.75 with OR-corroborated PGS004931; catalog
+      evaluation AUROC only.
+  PGS004255:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GenoBoost per-dosage (non-additive) weights; corroborated by 1000G EUR r=+0.38 with anchor PGS004873.
+  PGS004256:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GenoBoost per-dosage (non-additive) weights; corroborated by 1000G EUR r=+0.37 with anchor PGS004873.
+  PGS004257:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GenoBoost per-dosage (non-additive) weights; corroborated by 1000G EUR r=+0.37 with anchor PGS004873.
+  PGS004258:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GenoBoost per-dosage (non-additive) weights; corroborated by 1000G EUR r=+0.35 with anchor PGS004873.
+  PGS004259:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GenoBoost per-dosage (non-additive) weights; corroborated by 1000G EUR r=+0.39 with anchor PGS004873.
+  PGS004260:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: per-dosage weights
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GenoBoost (per-dosage weights) replicate 0. 1000G EUR r=+0.33 with anchor PGS002293 and >=+0.49 with
+      PGS001871/PGS001312; AUROC only.
+  PGS004261:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: per-dosage weights
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GenoBoost (per-dosage weights) replicate 1. 1000G EUR r=+0.37 with anchor PGS002293 and >=+0.49 with
+      PGS001871/PGS001312; AUROC only.
+  PGS004262:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: per-dosage weights
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GenoBoost (per-dosage weights) replicate 2. 1000G EUR r=+0.32 with anchor PGS002293 and >=+0.49 with
+      PGS001871/PGS001312; AUROC only.
+  PGS004263:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: per-dosage weights
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GenoBoost (per-dosage weights) replicate 3. 1000G EUR r=+0.36 with anchor PGS002293 and >=+0.49 with
+      PGS001871/PGS001312; AUROC only.
+  PGS004264:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: per-dosage weights
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GenoBoost (per-dosage weights) replicate 4. 1000G EUR r=+0.38 with anchor PGS002293 and >=+0.49 with
+      PGS001871/PGS001312; AUROC only.
 paper:
   pmid: '38811555'
   doi: 10.1038/s41467-024-48654-x

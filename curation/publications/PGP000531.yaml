@@ -25,8 +25,95 @@ scores:
     notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR r=+0.68 with PGS005017 (SBP score annotated here). Evaluated on ''Prevelant
       hypertension'': no HR/OR/beta (AUROC and C-index carry no direction).'
+  PGS004234:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score HTN_PAN-UKBB; PGS Catalog weights are per-allele effects
+      on the reported trait. Corroborated by 1000G EUR r = +0.71 with PGS002996. Pan-UKBB hypertension PRS; evaluated
+      on prevalent hypertension (AUROC only).
+  PGS004236:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: composite
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension (SBP >= 130, DBP >= 80, diagnosis or antihypertensive use)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRSsum
+      quote: We summed non-adaptively, i.e., unweighted sum with PRSsum
+      confidence: high
+    - source: full_text
+      locator: Results (stage 2)
+      quote: PRSsum based on selected CV-PRS had the strongest association with hypertension
+      confidence: high
+    - source: full_text
+      locator: Discussion
+      quote: high values of PRSsum may capture individuals with either high SBP, DBP, or hypertension PRS values
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: gwas-mcp unavailable this session
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'HTN-PRS of Kurniansyah 2022: unweighted sum of standardized SBP, DBP and hypertension PRSs (all pointing
+      to higher BP). OR 2.10 [1.99, 2.21] per SD for prevalent hypertension; 1000G EUR r = +0.46 with PGS004234
+      and +0.45 with PGS002998.'
+  PGS004233:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: hypertension
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.46 with PGS004604 (DBP score annotated here). Score name DBP_MVP. Flagged
+      canary_collapsed_percentile in catalog_scoring_flags (a scale/coverage issue, not a direction issue).
 paper:
   pmid: '35729114'
   doi: 10.1038/s41467-022-31080-2
   title: A multi-ethnic polygenic risk score is associated with hypertension prevalence and progression throughout
     adulthood.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

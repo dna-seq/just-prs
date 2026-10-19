@@ -1,0 +1,299 @@
+slug: hdl-cholesterol
+query: HDL cholesterol
+match:
+  terms:
+  - HDL
+  - HDL cholesterol
+  - HDL-C
+  - high density lipoprotein
+  efo_ids: []
+  exclude: []
+anchor: PGS004635
+status: resolved
+concepts:
+- lipids.hdl_cholesterol
+scores:
+  PGS000060:
+    decision: in_scope
+    note: null
+  PGS000064:
+    decision: in_scope
+    note: null
+  PGS000192:
+    decision: out_of_scope
+    note: composite count of 9 unfavourable LDL- and HDL-associated alleles (GS9), evaluated on LDL; not an HDL
+      score (already recorded, unannotated, under lipids.ldl_cholesterol)
+  PGS000309:
+    decision: in_scope
+    note: null
+  PGS000660:
+    decision: in_scope
+    note: null
+  PGS000686:
+    decision: in_scope
+    note: null
+  PGS000825:
+    decision: in_scope
+    note: null
+  PGS000845:
+    decision: in_scope
+    note: null
+  PGS001954:
+    decision: in_scope
+    note: null
+  PGS002172:
+    decision: in_scope
+    note: null
+  PGS002284:
+    decision: in_scope
+    note: null
+  PGS002329:
+    decision: in_scope
+    note: null
+  PGS002366:
+    decision: in_scope
+    note: null
+  PGS002401:
+    decision: in_scope
+    note: null
+  PGS002450:
+    decision: in_scope
+    note: null
+  PGS002499:
+    decision: in_scope
+    note: null
+  PGS002548:
+    decision: in_scope
+    note: null
+  PGS002597:
+    decision: in_scope
+    note: null
+  PGS002646:
+    decision: in_scope
+    note: null
+  PGS002695:
+    decision: in_scope
+    note: null
+  PGS002781:
+    decision: in_scope
+    note: null
+  PGS002782:
+    decision: out_of_scope
+    note: non-HDL cholesterol score (already annotated under lipids.ldl_cholesterol.non_hdl_cholesterol)
+  PGS002954:
+    decision: in_scope
+    note: null
+  PGS002955:
+    decision: in_scope
+    note: null
+  PGS002956:
+    decision: in_scope
+    note: null
+  PGS002957:
+    decision: in_scope
+    note: null
+  PGS002958:
+    decision: in_scope
+    note: null
+  PGS002959:
+    decision: in_scope
+    note: null
+  PGS002960:
+    decision: in_scope
+    note: null
+  PGS002961:
+    decision: in_scope
+    note: null
+  PGS002962:
+    decision: in_scope
+    note: null
+  PGS002963:
+    decision: in_scope
+    note: null
+  PGS003338:
+    decision: in_scope
+    note: null
+  PGS003347:
+    decision: in_scope
+    note: null
+  PGS003534:
+    decision: in_scope
+    note: null
+  PGS003767:
+    decision: in_scope
+    note: null
+  PGS003768:
+    decision: in_scope
+    note: null
+  PGS003769:
+    decision: in_scope
+    note: null
+  PGS003770:
+    decision: in_scope
+    note: null
+  PGS003771:
+    decision: in_scope
+    note: broken deposit (near-constant weights), proposed quarantine
+  PGS003772:
+    decision: in_scope
+    note: null
+  PGS003773:
+    decision: in_scope
+    note: null
+  PGS003774:
+    decision: in_scope
+    note: null
+  PGS003775:
+    decision: in_scope
+    note: null
+  PGS003776:
+    decision: in_scope
+    note: broken deposit (near-constant weights), proposed quarantine
+  PGS003777:
+    decision: in_scope
+    note: null
+  PGS003778:
+    decision: in_scope
+    note: null
+  PGS003779:
+    decision: in_scope
+    note: null
+  PGS003780:
+    decision: in_scope
+    note: null
+  PGS003781:
+    decision: in_scope
+    note: broken deposit (near-constant weights), proposed quarantine
+  PGS003782:
+    decision: in_scope
+    note: null
+  PGS003783:
+    decision: in_scope
+    note: null
+  PGS003856:
+    decision: in_scope
+    note: null
+  PGS003875:
+    decision: in_scope
+    note: null
+  PGS003876:
+    decision: in_scope
+    note: null
+  PGS003877:
+    decision: in_scope
+    note: null
+  PGS003878:
+    decision: in_scope
+    note: null
+  PGS003879:
+    decision: in_scope
+    note: null
+  PGS003880:
+    decision: in_scope
+    note: null
+  PGS003986:
+    decision: in_scope
+    note: null
+  PGS004002:
+    decision: in_scope
+    note: null
+  PGS004028:
+    decision: in_scope
+    note: null
+  PGS004043:
+    decision: in_scope
+    note: null
+  PGS004056:
+    decision: in_scope
+    note: null
+  PGS004072:
+    decision: in_scope
+    note: null
+  PGS004086:
+    decision: in_scope
+    note: null
+  PGS004100:
+    decision: in_scope
+    note: null
+  PGS004110:
+    decision: in_scope
+    note: null
+  PGS004126:
+    decision: in_scope
+    note: null
+  PGS004140:
+    decision: in_scope
+    note: null
+  PGS004156:
+    decision: in_scope
+    note: null
+  PGS004622:
+    decision: in_scope
+    note: null
+  PGS004623:
+    decision: in_scope
+    note: null
+  PGS004624:
+    decision: in_scope
+    note: null
+  PGS004625:
+    decision: in_scope
+    note: null
+  PGS004626:
+    decision: in_scope
+    note: null
+  PGS004627:
+    decision: in_scope
+    note: null
+  PGS004628:
+    decision: in_scope
+    note: null
+  PGS004629:
+    decision: in_scope
+    note: null
+  PGS004630:
+    decision: in_scope
+    note: null
+  PGS004631:
+    decision: in_scope
+    note: null
+  PGS004632:
+    decision: in_scope
+    note: null
+  PGS004633:
+    decision: in_scope
+    note: null
+  PGS004634:
+    decision: in_scope
+    note: null
+  PGS004635:
+    decision: in_scope
+    note: null
+  PGS004636:
+    decision: in_scope
+    note: null
+  PGS004775:
+    decision: in_scope
+    note: null
+  PGS004776:
+    decision: in_scope
+    note: null
+  PGS004777:
+    decision: in_scope
+    note: null
+  PGS004778:
+    decision: in_scope
+    note: null
+  PGS004914:
+    decision: in_scope
+    note: null
+  PGS004932:
+    decision: in_scope
+    note: null
+summary: 'All 90 in-scope HDL cholesterol scores sit in one concept, lipids.hdl_cholesterol (axis higher HDL-C,
+  desirable). 85 read catalog-only as higher score = higher HDL-C, bootstrapped from the PGP000517 betas (CI excludes
+  the null) and 1000G correlation >= +0.32. Two deposits are inverted and recorded as distributed (higher = lower
+  HDL-C) with corrections: PGS000060 (MESA, same A2_weight defect as its LDL/TG/TC siblings) and PGS000825 (paper
+  says Q4 = higher HDL-C, file and supplement point the other way at GALNT2/ABCA1/HNF4A, r = -0.81 with consensus).
+  Three weighted-LDpred2 files from PGP000489 (PGS003771, PGS003776, PGS003781) have near-constant weights and are
+  proposed for quarantine. After alignment there are no negative correlations left inside the concept.'

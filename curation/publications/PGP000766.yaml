@@ -39,3 +39,156 @@ scores:
     status: agent_proposed
     notes: 240 Evangelou 2018 SBP variants (Methods table); weights standardized to SD. Evaluated on dCCB discontinuation
       in UK Biobank CCB users, not on SBP itself.
+  PGS005317:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (297 Evangelou 2018 variants, trait-increasing alleles)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: authors report that a higher DBP score is associated with lower discontinuation of dihydropyridine
+        CCB prescribing (HR 0.98 per SD)
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Introduction
+      quote: derived by summing the number of trait-increasing alleles they carry and weighting each variant’s contribution
+        according to its effect size
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: high SBP and DBP polygenic scores are associated with decreased the risk of discontinuation
+      confidence: medium
+    lead_variant_check:
+      status: mixed
+      note: Aligned to PGS002258 (GRS901_DBP from the same Evangelou 2018 GWAS), only 47% of 204 shared loci share
+        sign (weight r +0.18); vs PGS003963 58% of 67 shared loci (r +0.49)
+    review_reason: 'Possible partial allele misorientation: about half of the loci shared with the same-GWAS score
+      PGS002258 have the opposite sign, and the file barely correlates with other DBP scores in 1000G EUR (max r
+      0.10).'
+    corrections:
+    - kind: partial_allele_inconsistency
+      action: none
+      effect: Recorded only. Some lead loci are opposite to known effects; no sign flip repairs the file, so the
+        direction rests on the paper statement and stays in review.
+      paper_direction: null
+      evidence: 47% sign concordance over 204 loci shared with PGS002258 (same Evangelou 2018 DBP GWAS); 1000G EUR
+        r -0.11..+0.10 with the other 52 DBP scores
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Evangelou 2018 DBP variants (297) weighted by effect size (Table 1). Paper evaluates discontinuation
+      of dihydropyridine CCBs (HR DBP 0.98 per SD, 95% CI 0.96-0.99). SBP sibling PGS005321 shows the same partial-misorientation
+      pattern.
+  PGS005315:
+    cluster: anthropometry.lean_mass
+    phenotype: appendicular_lean_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: appendicular (arms and legs) lean mass
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: 'paper: higher body fat mass and lean mass polygenic scores were associated with higher incident heart
+        failure risk in dihydropyridine CCB users (HR per SD 1.12 fat mass, 1.06 lean mass)'
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Introduction
+      quote: derived by summing the number of trait-increasing alleles they carry and weighting each variant’s contribution
+        according to its effect size
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Appendicular lean mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 630 variants from ebi-a-GCST90000025 (IEU OpenGWAS appendicular lean mass), trait-increasing alleles.
+      Evaluated only on heart failure in CCB users, not on the measurement itself.
+  PGS005316:
+    cluster: anthropometry.adiposity
+    phenotype: fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body fat mass
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: 'paper: higher body fat mass and lean mass polygenic scores were associated with higher incident heart
+        failure risk in dihydropyridine CCB users (HR per SD 1.12 fat mass, 1.06 lean mass)'
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Introduction
+      quote: derived by summing the number of trait-increasing alleles they carry and weighting each variant’s contribution
+        according to its effect size
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body fat mass
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: We found that patients with higher genetically predicted body fat mass were more likely to have HF,
+        CHD, CKD, and to discontinue treatment
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weights include rs56094641-G (FTO) and rs6567160-C (MC4R), the usual BMI-raising alleles, both positive;
+        not checked against GWAS Catalog here
+    review_reason: null
+    status: agent_proposed
+    notes: 403 variants from UKB-b-19393 (IEU OpenGWAS body fat mass), trait-increasing alleles. Evaluated only
+      on heart failure in CCB users, not on the measurement itself. 1000G EUR r = +0.42 with PGS001149 (PGP000244,
+      same phenotype).
+  PGS005320:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lipoprotein(a) concentration (36 LPA variants from Burgess 2018)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Higher genetically predicted Lp(a) raises incident heart failure risk in dCCB users (catalog HR 1.09
+        [1.04, 1.14]).
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Introduction
+      quote: derived by summing the number of trait-increasing alleles they carry and weighting each variant’s contribution
+        according to its effect size
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: 'our results show that genetically predicted lipoprotein A increased risk of HF (HR 1.09: 95% CI 1.04–1.14)
+        and CHD (HR 1.11: 95% CI 1.08–1.14) in dCCB patients'
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top variants have no rsID in the harmonized file; allele-aligned overlap with other Lp(a) scores is
+        small and mixed (3 agree / 3 disagree vs PGS000689), but 1000G EUR r=+0.83 with anchor PGS000667
+    review_reason: null
+    status: agent_proposed
+    notes: 'Lp(a) polygenic score in a dCCB pharmacogenetics paper (Methods table: "Lipoprotein A Burgess 2018 [36]
+      36"). Evaluated on heart failure, a different concept.'
+paper:
+  pmid: '38632276'
+  doi: 10.1038/s41397-024-00333-2
+  title: Polygenic scores for cardiovascular risk factors improve estimation of clinical outcomes in CCB treatment
+    compared to pharmacogenetic variants alone.

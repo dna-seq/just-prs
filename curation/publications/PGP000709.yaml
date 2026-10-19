@@ -1,0 +1,33 @@
+pgp_id: PGP000709
+scores:
+  PGS005159:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.58 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.99 with PGS005171.
+paper:
+  pmid: '38016806'
+  doi: 10.1136/heartjnl-2023-323333
+  title: Interaction of genetic risk and lifestyle on the incidence of atrial fibrillation.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

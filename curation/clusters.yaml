@@ -66,6 +66,66 @@ domains:
             aliases:
             - insulin secretion
             - beta cell function
+      glycemia:
+        label: Blood sugar (glycemia)
+        axis: higher blood sugar
+        valence: undesirable
+        valence_basis: Higher glycemia is the direction of diabetes and its complications.
+        status: agent_proposed
+        aliases:
+        - blood sugar
+        - blood glucose
+        - sugar levels
+        - low blood sugar
+        - long-term blood sugar
+        phenotypes:
+          hba1c:
+            label: Glycated haemoglobin (HbA1c)
+            sign: 1
+            aliases:
+            - A1c
+            - average blood sugar over three months
+            - glycated hemoglobin
+          fasting_glucose:
+            label: Fasting blood glucose
+            sign: 1
+            aliases:
+            - fasting blood sugar
+            - FPG
+            - morning blood sugar
+            - glucose level
+          random_glucose:
+            label: Non-fasting (random) blood glucose
+            sign: 1
+            aliases:
+            - non-fasting glucose
+            - random blood sugar
+            - serum glucose
+      gout:
+        label: Gout
+        axis: higher risk of gout
+        valence: undesirable
+        valence_basis: Gout is a painful inflammatory arthritis caused by urate crystal deposition.
+        status: agent_proposed
+        aliases:
+        - gouty arthritis
+        - hyperuricemia
+        - high uric acid
+        - urate crystals
+        phenotypes:
+          gout:
+            label: Gout (diagnosis or incident gout)
+            sign: 1
+            aliases:
+            - incident gout
+            - gout attack
+          serum_urate:
+            label: Serum or plasma urate (uric acid) level
+            sign: 1
+            aliases:
+            - uric acid
+            - serum uric acid
+            - blood urate
   cognition:
     label: Cognition
     concepts:
@@ -171,6 +231,26 @@ domains:
           red_hair:
             label: Red natural hair (UKB 1747 = 2)
             sign: 1
+      male_pattern_baldness:
+        label: Male pattern baldness
+        axis: more balding
+        valence: neutral
+        valence_basis: Appearance trait with no health ranking; many men would rather keep their hair,
+          but balding itself is not a disease.
+        status: agent_proposed
+        aliases:
+        - hair loss
+        - androgenetic alopecia
+        - going bald
+        - receding hairline
+        - keeping my hair
+        phenotypes:
+          balding_pattern:
+            label: Hair/balding pattern in men (UKB 2395 pattern 1-4 treated as a scale)
+            sign: 1
+          balding_pattern_1:
+            label: Balding pattern 1 in men (UKB 2395 = 1)
+            sign: -1
   lifestyle:
     label: Lifestyle and behavior
     concepts:
@@ -205,6 +285,45 @@ domains:
           time_outdoors_winter:
             label: Hours per day spent outdoors in winter (UKB 1060)
             sign: 1
+      coffee_consumption:
+        label: Coffee consumption
+        axis: more coffee drinking
+        valence: neutral
+        valence_basis: Habitual coffee intake is a dietary preference; moderate intake is not considered
+          harmful for most adults and caffeine tolerance varies.
+        status: agent_proposed
+        aliases:
+        - coffee intake
+        - caffeine intake
+        - cups of coffee per day
+        - coffee drinker
+        - non coffee drinker
+        phenotypes:
+          coffee_intake:
+            label: Cups of coffee per day (UKB 1498, decaffeinated included)
+            sign: 1
+          coffee_drunk_yesterday:
+            label: Drank any coffee yesterday (UKB 100240, 24-hour diet recall; yes = case)
+            sign: 1
+      coffee_type:
+        label: Type of coffee usually drunk
+        axis: prefers ground (brewed) coffee over instant coffee
+        valence: neutral
+        valence_basis: Coffee type is a taste and habit preference with no clear health ranking.
+        status: agent_proposed
+        aliases:
+        - instant coffee
+        - ground coffee
+        - espresso or filter coffee
+        - coffee preference
+        phenotypes:
+          ground_coffee:
+            label: Usually drinks ground coffee incl. espresso and filter (UKB 1508 answer 3 vs other
+              answers)
+            sign: 1
+          instant_coffee:
+            label: Usually drinks instant coffee (UKB 1508 answer 2 vs other answers)
+            sign: -1
   substance_use:
     label: Substance use
     concepts:
@@ -330,6 +449,29 @@ domains:
             sign: -1
           ease_getting_up:
             label: Ease of getting up in the morning
+            sign: 1
+      sleep_duration:
+        label: Sleep duration (hours of sleep)
+        axis: longer habitual sleep
+        valence: context_dependent
+        valence_basis: U-shaped; both short (<7 h) and long (>9 h) sleep are associated with worse health,
+          so neither end is simply good.
+        status: agent_proposed
+        aliases:
+        - hours of sleep
+        - how long I sleep
+        - short sleeper
+        - long sleeper
+        - sleep length
+        phenotypes:
+          sleep_duration:
+            label: Self-reported habitual sleep duration (hours per day)
+            sign: 1
+          short_sleep:
+            label: Short sleep (dichotomized, e.g. <=6 h)
+            sign: -1
+          long_sleep:
+            label: Long sleep (dichotomized, e.g. >=9 h)
             sign: 1
   kidney:
     label: Kidney
@@ -548,6 +690,43 @@ domains:
             sign: 1
             aliases:
             - diagnosed high cholesterol
+      hdl_cholesterol:
+        label: HDL cholesterol
+        axis: higher HDL cholesterol
+        valence: desirable
+        valence_basis: Higher HDL cholesterol is associated with lower coronary disease risk and is read
+          as the favourable direction on a lipid panel, although raising HDL by drugs has not proven protective
+          and very high levels are not clearly better. A separate concept from LDL and total cholesterol
+          because it is its own lab value with the opposite desirable direction.
+        status: agent_proposed
+        aliases:
+        - good cholesterol
+        - HDL
+        - HDL-C
+        - low HDL
+        - high-density lipoprotein
+        phenotypes:
+          hdl_cholesterol:
+            label: HDL cholesterol level (incl. log-transformed and statin-adjusted)
+            sign: 1
+      lipoprotein_a:
+        label: Lipoprotein(a)
+        axis: higher lipoprotein(a)
+        valence: undesirable
+        valence_basis: Higher Lp(a) is a causal, largely genetically fixed risk factor for coronary disease,
+          stroke and aortic stenosis. A separate concept from LDL cholesterol because it is its own lab
+          value, set mainly by the LPA gene, that standard lipid panels do not report.
+        status: agent_proposed
+        aliases:
+        - Lp(a)
+        - lipoprotein little a
+        - LPA
+        - high Lp(a)
+        - hyperlipoproteinemia(a)
+        phenotypes:
+          lipoprotein_a:
+            label: Lipoprotein(a) concentration (nmol/L or mg/dL, incl. log-transformed)
+            sign: 1
   cardiovascular:
     label: Heart and blood vessels
     concepts:
@@ -561,6 +740,7 @@ domains:
         - high blood pressure
         - hypertension
         - SBP
+        - DBP
         - low blood pressure
         - hypotension
         phenotypes:
@@ -573,6 +753,19 @@ domains:
           hypertension:
             label: Hypertension (diagnosis or treated high blood pressure)
             sign: 1
+            aliases:
+            - high blood pressure risk
+            - essential hypertension
+            - elevated blood pressure
+            - normal blood pressure
+          diastolic_blood_pressure:
+            label: Diastolic blood pressure (mmHg, incl. medication-adjusted and automated readings)
+            sign: 1
+            aliases:
+            - lower blood pressure number
+            - bottom blood pressure number
+            - DBP
+            - diastolic pressure
       coronary_artery_disease:
         label: Coronary artery disease and heart attack
         axis: higher risk of coronary artery disease
@@ -604,6 +797,96 @@ domains:
             - MI
             - STEMI
             - NSTEMI
+      atrial_fibrillation:
+        label: Atrial fibrillation and flutter
+        axis: higher risk of atrial fibrillation
+        valence: undesirable
+        valence_basis: Atrial fibrillation is an irregular heartbeat that raises the risk of stroke and
+          heart failure.
+        status: agent_proposed
+        aliases:
+        - AF
+        - AFib
+        - irregular heartbeat
+        - heart rhythm disorder
+        - arrhythmia
+        phenotypes:
+          atrial_fibrillation:
+            label: Atrial fibrillation (incl. combined AF/flutter codes ICD-10 I48, PheCode 427.21; incident
+              or prevalent)
+            sign: 1
+            aliases:
+            - AFib
+            - irregular heartbeat
+          atrial_flutter:
+            label: Atrial flutter
+            sign: 1
+            aliases:
+            - flutter
+          predicted_af_risk:
+            label: Model-predicted 5-year atrial fibrillation risk (ECG-AI or CHARGE-AF clinical score),
+              used as a GWAS trait
+            sign: 1
+            aliases:
+            - CHARGE-AF
+            - ECG-AI AF risk
+      heart_rate:
+        label: Resting heart rate (pulse)
+        axis: higher resting heart rate
+        valence: undesirable
+        valence_basis: A higher resting heart rate is linked to higher cardiovascular and all-cause mortality
+          in population studies.
+        status: agent_proposed
+        aliases:
+        - pulse
+        - resting pulse
+        - heartbeat speed
+        - slow heart rate
+        - bradycardia
+        phenotypes:
+          resting_heart_rate:
+            label: Resting heart rate / pulse rate (bpm; automated, manual, ECG or imaging readings, incl.
+              log-transformed)
+            sign: 1
+            aliases:
+            - beats per minute
+            - fast pulse
+      stroke:
+        label: Stroke (any, ischaemic, haemorrhagic)
+        axis: higher risk of stroke
+        valence: undesirable
+        valence_basis: A stroke (blocked or bleeding brain blood vessel) is a leading cause of death and
+          disability.
+        status: agent_proposed
+        aliases:
+        - brain attack
+        - cerebrovascular accident
+        - CVA
+        - brain bleed
+        - stroke risk
+        phenotypes:
+          any_stroke:
+            label: Any stroke (all stroke types pooled; incl. 'stroke excluding subarachnoid haemorrhage')
+            sign: 1
+            aliases:
+            - all stroke
+          ischemic_stroke:
+            label: Ischaemic stroke (incl. incident IS and IS in patients with atrial fibrillation)
+            sign: 1
+            aliases:
+            - ischaemic stroke
+            - cerebral infarction
+          intracerebral_hemorrhage:
+            label: Intracerebral haemorrhage (haemorrhagic stroke)
+            sign: 1
+            aliases:
+            - hemorrhagic stroke
+            - brain haemorrhage
+          cerebrovascular_disease:
+            label: Cerebrovascular disease (broad PheCode / ICD grouping incl. stroke)
+            sign: 1
+            aliases:
+            - cerebrovascular disorder
   anthropometry:
     label: Body size and shape
     concepts:
@@ -648,6 +931,8 @@ domains:
         - overweight
         - body fat
         - being thin
+        - body fat percentage
+        - fat mass
         phenotypes:
           body_mass_index:
             label: Body mass index (weight / height squared), continuous or in categories
@@ -671,3 +956,610 @@ domains:
             aliases:
             - childhood obesity
             - body size as a child
+          body_fat_percentage:
+            label: Whole-body fat percentage (bioimpedance)
+            sign: 1
+            aliases:
+            - percent body fat
+            - how much body fat
+          regional_fat_percentage:
+            label: Fat percentage of one body region (arm, leg or trunk; bioimpedance)
+            sign: 1
+            aliases:
+            - trunk fat percentage
+            - limb fat percentage
+          fat_mass:
+            label: Whole-body fat mass (kg)
+            sign: 1
+            aliases:
+            - body fat mass
+            - total body fat
+          regional_fat_mass:
+            label: Fat mass of one body region (arm, leg or trunk)
+            sign: 1
+            aliases:
+            - trunk fat
+            - arm fat
+            - leg fat
+          body_weight:
+            label: Body weight (kg), measured or by bioimpedance scale
+            sign: 1
+            aliases:
+            - how heavy
+            - weight in kg
+            - heavy
+            - light
+      lean_mass:
+        label: Lean (fat-free) body mass
+        axis: more lean (fat-free) mass
+        valence: context_dependent
+        valence_basis: More muscle protects against frailty and sarcopenia in later life, but genetically
+          higher fat-free mass largely tracks a bigger body overall, which carries its own risks (e.g.
+          heart failure).
+        status: agent_proposed
+        aliases:
+        - muscle mass
+        - lean mass
+        - body composition
+        - sarcopenia
+        - low muscle mass
+        phenotypes:
+          fat_free_mass:
+            label: Whole-body fat-free mass (bioimpedance)
+            sign: 1
+            aliases:
+            - lean body mass
+          regional_fat_free_mass:
+            label: Fat-free mass of one body region (arm, leg or trunk; bioimpedance)
+            sign: 1
+            aliases:
+            - arm muscle
+            - leg muscle
+          predicted_muscle_mass:
+            label: Impedance-predicted (muscle) mass of a leg or the trunk (UK Biobank bioimpedance output)
+            sign: 1
+          appendicular_lean_mass:
+            label: Appendicular lean mass (arms plus legs, mostly skeletal muscle)
+            sign: 1
+            aliases:
+            - limb muscle mass
+            - ALM
+          body_impedance:
+            label: Bioelectrical impedance of the whole body or a limb; lean tissue and body water conduct,
+              so higher impedance means less fat-free mass
+            sign: -1
+            aliases:
+            - bioimpedance
+            - body water
+  cancer:
+    label: Cancer
+    concepts:
+      prostate_cancer:
+        label: Prostate cancer
+        axis: higher risk of prostate cancer
+        valence: undesirable
+        valence_basis: Prostate cancer is a malignancy; higher risk is not wanted.
+        status: agent_proposed
+        aliases:
+        - PCa
+        - prostate tumour
+        - prostate cancer risk
+        - aggressive prostate cancer
+        - PSA screening
+        phenotypes:
+          prostate_cancer:
+            label: Prostate cancer (any, incl. age at diagnosis / incident risk)
+            sign: 1
+          aggressive_prostate_cancer:
+            label: Aggressive or clinically significant prostate cancer (high Gleason / grade group, metastatic)
+            sign: 1
+            aliases:
+            - clinically significant prostate cancer
+            - metastatic prostate cancer
+            - high-grade prostate cancer
+          family_history_prostate_cancer:
+            label: Family history of prostate cancer (father or brother affected; proxy for own risk)
+            sign: 1
+      breast_cancer:
+        label: Breast cancer
+        axis: higher risk of breast cancer
+        valence: undesirable
+        valence_basis: Breast cancer is a malignant disease; higher risk is the outcome people want to
+          avoid.
+        status: agent_proposed
+        aliases:
+        - breast tumor
+        - breast tumour
+        - mammary cancer
+        - BRCA-like risk
+        - breast cancer risk
+        phenotypes:
+          breast_cancer:
+            label: Breast cancer (overall, invasive and/or in situ)
+            sign: 1
+            aliases:
+            - breast carcinoma
+            - female breast cancer
+          er_positive_breast_cancer:
+            label: Estrogen-receptor-positive breast cancer
+            sign: 1
+            aliases:
+            - ER+ breast cancer
+            - hormone receptor positive breast cancer
+          er_negative_breast_cancer:
+            label: Estrogen-receptor-negative breast cancer
+            sign: 1
+            aliases:
+            - ER- breast cancer
+            - hormone receptor negative breast cancer
+          triple_negative_breast_cancer:
+            label: Triple-negative breast cancer (ER-, PR-, HER2-)
+            sign: 1
+            aliases:
+            - TNBC
+            - basal-like breast cancer
+          luminal_a_like_breast_cancer:
+            label: Luminal A-like breast cancer (intrinsic-like subtype)
+            sign: 1
+          luminal_b_her2neg_like_breast_cancer:
+            label: Luminal B/HER2-negative-like breast cancer (intrinsic-like subtype)
+            sign: 1
+          luminal_b_like_breast_cancer:
+            label: Luminal B-like (HER2-positive) breast cancer (intrinsic-like subtype)
+            sign: 1
+          her2_enriched_like_breast_cancer:
+            label: HER2-enriched-like breast cancer (intrinsic-like subtype)
+            sign: 1
+            aliases:
+            - HER2-positive breast cancer
+          breast_cancer_family_history:
+            label: Family history of breast cancer (proxy phenotype for own risk)
+            sign: 1
+            aliases:
+            - mother or sister with breast cancer
+      breast_cancer_aggressiveness:
+        label: Breast cancer aggressiveness (among women with breast cancer)
+        axis: more aggressive breast cancer and worse prognosis
+        valence: undesirable
+        valence_basis: More aggressive tumours recur more often and shorten survival after diagnosis.
+        status: agent_proposed
+        aliases:
+        - breast cancer prognosis
+        - breast cancer survival
+        - breast cancer recurrence
+        - tumour aggressiveness
+        - less aggressive breast cancer
+        phenotypes:
+          ror_p_recurrence_score:
+            label: Tumour risk-of-recurrence score weighted on proliferation (PAM50 ROR-P), case-only
+            sign: 1
+          tnbc_vs_luminal_subtype:
+            label: Triple-negative rather than luminal subtype, case-case
+            sign: 1
+            aliases:
+            - TNBC versus luminal
+          breast_cancer_specific_mortality:
+            label: Death from breast cancer among patients
+            sign: 1
+      melanoma:
+        label: Melanoma
+        axis: higher risk of melanoma
+        valence: undesirable
+        valence_basis: Melanoma is a malignant skin cancer; higher risk is not wanted.
+        status: agent_proposed
+        aliases:
+        - melanoma risk
+        - mole cancer
+        - cutaneous melanoma
+        - malignant melanoma of skin
+        phenotypes:
+          melanoma:
+            label: Melanoma (cutaneous or any; prevalent, incident, familial or second primary)
+            sign: 1
+            aliases:
+            - skin melanoma
+            - invasive melanoma
+      colorectal_cancer:
+        label: Colorectal cancer
+        axis: higher risk of colorectal cancer
+        valence: undesirable
+        valence_basis: Colorectal cancer is a malignancy; higher risk is not wanted.
+        status: agent_proposed
+        aliases:
+        - bowel cancer
+        - CRC
+        - colon cancer risk
+        - colorectal polyps
+        - early-onset colorectal cancer
+        phenotypes:
+          colorectal_cancer:
+            label: Colorectal cancer (any site, incident or prevalent, incl. early/late onset)
+            sign: 1
+          colon_cancer:
+            label: Colon cancer (subsite-specific)
+            sign: 1
+            aliases:
+            - cancer of the colon
+          rectal_cancer:
+            label: Rectal cancer (malignant neoplasm of rectum, rectosigmoid junction and anus)
+            sign: 1
+            aliases:
+            - cancer of the rectum
+          colorectal_neoplasia:
+            label: Colorectal adenoma or advanced neoplasia (benign precursor lesions, ICD-10 D12)
+            sign: 1
+            aliases:
+            - colorectal adenoma
+            - colon polyps
+            - benign neoplasm of colon
+      thyroid_cancer:
+        label: Thyroid cancer
+        axis: higher risk of thyroid cancer
+        valence: undesirable
+        valence_basis: Thyroid cancer is a malignancy; higher risk is not wanted.
+        status: agent_proposed
+        aliases:
+        - thyroid cancer risk
+        - papillary thyroid cancer
+        - differentiated thyroid cancer
+        - thyroid carcinoma
+        phenotypes:
+          thyroid_cancer:
+            label: Thyroid cancer (prevalent, incident, or subsequent after childhood cancer), cases vs
+              cancer-free controls
+            sign: 1
+          thyroid_cancer_vs_benign_nodule:
+            label: Thyroid cancer versus benign nodular goiter (case-case comparison among people with
+              thyroid nodules)
+            sign: 1
+            aliases:
+            - malignant vs benign thyroid nodule
+            - is my thyroid nodule cancer
+      lung_cancer:
+        label: Lung cancer
+        axis: higher risk of lung cancer
+        valence: undesirable
+        valence_basis: Lung cancer is a malignancy with poor survival; higher risk is not wanted.
+        status: agent_proposed
+        aliases:
+        - lung cancer risk
+        - bronchial cancer
+        - NSCLC
+        - lung tumour
+        - cancer of the lung in non-smokers
+        phenotypes:
+          lung_cancer:
+            label: Lung cancer, any histology (lung and bronchus, ICD-10 C34; prevalent or incident; incl.
+              never-smoker or smoker strata)
+            sign: 1
+          lung_adenocarcinoma:
+            label: Lung adenocarcinoma (histological subtype)
+            sign: 1
+            aliases:
+            - adenocarcinoma of the lung
+          lung_squamous_cell_carcinoma:
+            label: Lung squamous cell carcinoma (histological subtype)
+            sign: 1
+            aliases:
+            - squamous cell lung cancer
+          family_history_lung_cancer:
+            label: Family history of lung cancer (parent or sibling affected; proxy for own risk)
+            sign: 1
+            aliases:
+            - parent with lung cancer
+  neurology:
+    label: Brain and nervous system
+    concepts:
+      alzheimers_disease:
+        label: Alzheimer's disease
+        axis: higher risk of Alzheimer's disease
+        valence: undesirable
+        valence_basis: Alzheimer's disease is a progressive, disabling neurodegenerative disease.
+        status: agent_proposed
+        aliases:
+        - Alzheimer's
+        - late-onset Alzheimer's
+        - AD risk
+        - memory loss disease
+        - protection from Alzheimer's
+        phenotypes:
+          alzheimers_disease:
+            label: Alzheimer's disease (clinical, algorithmic or registry diagnosis, incl. late-onset
+              AD)
+            sign: 1
+            aliases:
+            - LOAD
+            - Alzheimer dementia
+          family_history_alzheimers:
+            label: Parent or sibling with Alzheimer's disease/dementia (proxy for own risk)
+            sign: 1
+            aliases:
+            - family history of Alzheimer's
+            - parental Alzheimer's
+      dementia:
+        label: Dementia (all causes)
+        axis: higher risk of dementia
+        valence: undesirable
+        valence_basis: Dementia is a loss of cognitive function that impairs independent living.
+        status: agent_proposed
+        aliases:
+        - dementia risk
+        - cognitive decline
+        - senility
+        - staying mentally sharp
+        phenotypes:
+          all_cause_dementia:
+            label: Dementia from any cause
+            sign: 1
+          vascular_dementia:
+            label: Vascular dementia
+            sign: 1
+          unspecified_dementia:
+            label: Unspecified dementia (ICD-10 F03)
+            sign: 1
+  nutrition:
+    label: Nutrients and vitamins
+    concepts:
+      vitamin_d:
+        label: Vitamin D level
+        axis: higher vitamin D level
+        valence: desirable
+        valence_basis: Low circulating 25-hydroxyvitamin D (deficiency) is the clinically relevant state;
+          within the usual range higher levels are what people aim for.
+        status: agent_proposed
+        aliases:
+        - vitamin D status
+        - serum 25(OH)D
+        - low vitamin D
+        - vitamin D deficiency risk
+        - calcidiol
+        phenotypes:
+          serum_25ohd:
+            label: Serum 25-hydroxyvitamin D concentration
+            sign: 1
+            aliases:
+            - blood vitamin D
+            - 25OHD
+          vitamin_d_deficiency:
+            label: Vitamin D deficiency or insufficiency (low serum 25OHD)
+            sign: -1
+            aliases:
+            - vitamin D insufficiency
+      vitamin_d_intake:
+        label: Dietary vitamin D intake
+        axis: higher reported dietary vitamin D intake
+        valence: neutral
+        valence_basis: A 24-hour recall intake estimate reflects food choices, not vitamin D status; it
+          is uncorrelated with serum-level scores.
+        status: agent_proposed
+        aliases:
+        - vitamin D in diet
+        - vitamin D from food
+        - dietary vitamin D
+        phenotypes:
+          dietary_vitamin_d_intake:
+            label: Vitamin D intake estimated from 24-hour dietary recall (UK Biobank field 100021)
+            sign: 1
+  immune:
+    label: Immune and inflammatory
+    concepts:
+      rheumatoid_arthritis:
+        label: Rheumatoid arthritis
+        axis: higher risk of rheumatoid arthritis
+        valence: undesirable
+        valence_basis: Rheumatoid arthritis is a chronic autoimmune joint disease causing pain, joint
+          damage and disability.
+        status: agent_proposed
+        aliases:
+        - RA
+        - inflammatory arthritis
+        - autoimmune arthritis
+        - joint inflammation
+        phenotypes:
+          rheumatoid_arthritis:
+            label: Rheumatoid arthritis (any serotype)
+            sign: 1
+          seropositive_rheumatoid_arthritis:
+            label: Seropositive (ACPA/CCP- or RF-positive) rheumatoid arthritis
+            sign: 1
+            aliases:
+            - ACPA-positive RA
+            - CCP-positive rheumatoid arthritis
+          seronegative_rheumatoid_arthritis:
+            label: Seronegative (ACPA/CCP-negative) rheumatoid arthritis
+            sign: 1
+            aliases:
+            - ACPA-negative RA
+            - CCP-negative rheumatoid arthritis
+      c_reactive_protein:
+        label: C-reactive protein and systemic inflammation
+        axis: higher C-reactive protein (more inflammation)
+        valence: undesirable
+        valence_basis: Chronically raised CRP marks low-grade systemic inflammation, which tracks cardiovascular
+          and metabolic risk.
+        status: agent_proposed
+        aliases:
+        - CRP
+        - hs-CRP
+        - inflammation
+        - inflammation marker
+        - low inflammation
+        phenotypes:
+          c_reactive_protein:
+            label: Circulating C-reactive protein level (serum or plasma; includes CRP protein measured
+              on aptamer arrays)
+            sign: 1
+            aliases:
+            - serum CRP
+            - high-sensitivity CRP
+          infla_score:
+            label: INFLA-score, a composite low-grade inflammation index built from CRP, white cell count,
+              platelets and granulocyte-to-lymphocyte ratio
+            sign: 1
+            aliases:
+            - inflammation score
+            - low-grade inflammation index
+      psoriasis:
+        label: Psoriasis and psoriatic arthritis
+        axis: higher risk of psoriasis
+        valence: undesirable
+        valence_basis: Psoriasis is a chronic inflammatory skin disease; psoriatic arthritis adds joint
+          damage.
+        status: agent_proposed
+        aliases:
+        - psoriatic disease
+        - plaque psoriasis
+        - PsA
+        - scaly skin disease
+        phenotypes:
+          psoriasis:
+            label: Psoriasis (case status, incident or time-to-event)
+            sign: 1
+          psoriatic_arthritis:
+            label: Psoriatic arthritis (vs population or other-arthritis controls)
+            sign: 1
+            aliases:
+            - psoriatic arthropathy
+          psoriatic_arthritis_vs_psoriasis_only:
+            label: Psoriatic arthritis rather than skin-only psoriasis, among psoriasis patients
+            sign: 1
+            aliases:
+            - joint involvement in psoriasis
+  blood:
+    label: Blood cells
+    concepts:
+      reticulocyte_count:
+        label: Reticulocyte count
+        axis: higher reticulocyte count
+        valence: neutral
+        valence_basis: Reticulocytes are young red blood cells; in healthy people the count varies within
+          a normal range and neither end is better. Very high values signal blood loss or hemolysis and
+          very low values poor red-cell production, but the polygenic range reflects normal variation.
+          Absolute counts, the percentage of red cells and the high-light-scatter (more immature) subset
+          share the same axis.
+        status: agent_proposed
+        aliases:
+        - reticulocytes
+        - young red blood cells
+        - immature red blood cells
+        - retic count
+        - red cell production
+        phenotypes:
+          reticulocyte_count:
+            label: Absolute reticulocyte count
+            sign: 1
+          reticulocyte_percentage:
+            label: Reticulocytes as a percentage (fraction) of red cells
+            sign: 1
+          hlsr_count:
+            label: High light scatter reticulocyte count
+            sign: 1
+            aliases:
+            - HLSR count
+            - high light scatter reticulocytes
+          hlsr_percentage:
+            label: High light scatter reticulocytes as a percentage of red cells
+            sign: 1
+            aliases:
+            - HLSR percentage
+      hemoglobin:
+        label: Hemoglobin concentration
+        axis: higher hemoglobin concentration
+        valence: context_dependent
+        valence_basis: Both low hemoglobin (anemia) and high hemoglobin (polycythemia, erythrocytosis)
+          are unwanted; within the normal range neither direction is better.
+        status: agent_proposed
+        aliases:
+        - haemoglobin
+        - hemoglobin level
+        - anemia
+        - low hemoglobin
+        - polycythemia
+        phenotypes:
+          hemoglobin_concentration:
+            label: Blood hemoglobin concentration
+            sign: 1
+            aliases:
+            - Hb
+            - HGB
+            - blood haemoglobin level
+      platelet_count:
+        label: Platelet count
+        axis: higher platelet count
+        valence: context_dependent
+        valence_basis: Both low counts (bleeding, thrombocytopenia) and high counts (thrombosis, thrombocytosis)
+          are unhealthy; within the normal range neither direction is better.
+        status: agent_proposed
+        aliases:
+        - platelets
+        - thrombocytes
+        - PLT
+        - low platelets
+        - high platelets
+        phenotypes:
+          platelet_count:
+            label: Platelet count in blood (raw or log-transformed)
+            sign: 1
+            aliases:
+            - blood platelet count
+            - platelet level
+          gestational_thrombocytopenia:
+            label: Gestational thrombocytopenia (platelet count below 150 x 10^9/L in the second or third
+              trimester)
+            sign: -1
+            aliases:
+            - low platelets in pregnancy
+            - pregnancy thrombocytopenia
+  musculoskeletal:
+    label: Bones, joints and muscles
+    concepts:
+      bone_density:
+        label: Bone mineral density and osteoporosis
+        axis: denser, stronger bones
+        valence: desirable
+        valence_basis: Higher bone mineral density means lower risk of osteoporosis and fragility fractures.
+        status: agent_proposed
+        aliases:
+        - bone density
+        - BMD
+        - brittle bones
+        - bone strength
+        - osteoporosis risk
+        phenotypes:
+          bone_mineral_density:
+            label: Bone mineral density measured by DXA or unspecified site (femoral neck, lumbar spine,
+              total body)
+            sign: 1
+            aliases:
+            - DXA bone density
+            - femoral neck BMD
+          heel_bone_mineral_density:
+            label: Heel estimated bone mineral density (eBMD) or its T-score from quantitative ultrasound,
+              either or both heels
+            sign: 1
+            aliases:
+            - eBMD
+            - heel BMD
+            - bone density T-score
+          heel_speed_of_sound:
+            label: Speed of sound through the heel (quantitative ultrasound)
+            sign: 1
+            aliases:
+            - heel ultrasound SOS
+          heel_broadband_ultrasound_attenuation:
+            label: Heel broadband ultrasound attenuation (quantitative ultrasound)
+            sign: 1
+            aliases:
+            - heel BUA
+          osteoporosis:
+            label: Osteoporosis diagnosis (with or without pathological fracture, ICD-10 M80/M81 or self-report)
+            sign: -1
+            aliases:
+            - thin bones
+            - bone loss
+          fragility_fracture:
+            label: Osteoporotic or fragility fracture (hip, vertebral, wrist, any)
+            sign: -1
+            aliases:
+            - broken bones
+            - hip fracture

@@ -1,0 +1,33 @@
+pgp_id: PGP000515
+scores:
+  PGS003979:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.63 [1.6, 1.67] on Colorectal cancer.
+paper:
+  pmid: '38172535'
+  doi: 10.1038/s41416-023-02536-z
+  title: Genome-wide polygenic risk scores for colorectal cancer have implications for risk-based screening
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

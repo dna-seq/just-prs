@@ -1,0 +1,35 @@
+pgp_id: PGP000190
+scores:
+  PGS000801:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: colorectal_neoplasia
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.17 [1.12, 1.21] on Conventional adeonma.
+paper:
+  pmid: '31038671'
+  doi: 10.1093/ije/dyz096
+  title: 'Colorectal cancer susceptibility variants and risk of conventional adenomas and serrated polyps: results
+    from three cohort studies.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

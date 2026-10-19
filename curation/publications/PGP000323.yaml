@@ -1,0 +1,36 @@
+pgp_id: PGP000323
+scores:
+  PGS002293:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of incident psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs34536443 (TYK2) C, the protective P1104A allele, has weight -0.68
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 62-SNP psoriasis PRS. Corroborated by catalog HR 4.625 [2.92, 7.348] for incident psoriasis (high vs
+      low PRS); anchor of the trait scan.
+paper:
+  pmid: '35427684'
+  doi: 10.1016/j.jaad.2022.04.006
+  title: 'Associations of combined lifestyle and genetic risks with incident psoriasis: A prospective cohort study
+    among UK Biobank participants of European ancestry.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

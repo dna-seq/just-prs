@@ -1,0 +1,57 @@
+slug: heart-rate
+query: heart rate
+match:
+  terms:
+  - average heart rate
+  - heart rate
+  - heart rate variability
+  - pulse rate
+  - resting heart rate
+  efo_ids: []
+  exclude: []
+anchor: PGS001233
+status: needs_review
+concepts:
+- cardiovascular.heart_rate
+scores:
+  PGS000300:
+    decision: in_scope
+    note: null
+  PGS001233:
+    decision: in_scope
+    note: null
+  PGS001375:
+    decision: in_scope
+    note: null
+  PGS001523:
+    decision: in_scope
+    note: null
+  PGS001524:
+    decision: in_scope
+    note: null
+  PGS001975:
+    decision: in_scope
+    note: null
+  PGS002193:
+    decision: in_scope
+    note: null
+  PGS003472:
+    decision: in_scope
+    note: suspected inverted deposit (sleep-apnoea paper, LDpred2 on den Hoed 2013); recorded as distributed, in
+      review
+  PGS003550:
+    decision: in_scope
+    note: null
+  PGS004327:
+    decision: in_scope
+    note: null
+  PGS004370:
+    decision: in_scope
+    note: null
+summary: 'All 11 scores measure resting heart rate / pulse rate (UKB fields 102, 4194, 95, 22426, a youth GRS and
+  an HCHS/SOL score); no heart-rate-variability or exercise-response scores were found. New concept cardiovascular.heart_rate
+  with one phenotype, resting_heart_rate (+). Ten scores mean higher score = faster resting pulse (4 read via the
+  Tanigawa snpnet template, 1 via Ding et al. methods, 5 catalog-only corroborated by 1000G r=+0.33..+0.77). PGS003472
+  (Zhang 2022, HCHS/SOL) anti-correlates with all ten (r=-0.24..-0.40) and its top weights at CCDC141 rs17362588,
+  GJA1 and MYH6 are opposite to the source GWAS: recorded as distributed (higher = slower pulse) with a deposit_inverted
+  correction and sent to review.'

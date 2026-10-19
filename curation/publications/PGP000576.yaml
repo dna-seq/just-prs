@@ -23,6 +23,30 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR r=+0.37 with PGS000018 (metaGRS CAD, HR 1.71 [1.68, 1.73]).
+  PGS004597:
+    cluster: cardiovascular.stroke
+    phenotype: ischemic_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of ischaemic stroke
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Ischemic stroke
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; PRS32_IS; no directional metric (evaluated in breast-cancer survivors); corroborated by 1000G EUR r=+0.91
+      with PGS004322 (HR 1.26 [1.17, 1.35]).
 paper:
   pmid: '36839222'
   doi: 10.3390/nu15040864

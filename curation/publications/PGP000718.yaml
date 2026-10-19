@@ -1,0 +1,27 @@
+pgp_id: PGP000718
+scores:
+  PGS005170:
+    cluster: neurology.dementia
+    phenotype: all_cause_dementia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of dementia (any cause)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: All-cause dementia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.28 [1.09, 1.51] against 'Incident all-cause dementia'; 1000G EUR r=+0.24 with
+      PGS004092 (OR 1.48977 [1.46572, 1.51421] vs 'AD'). APOE region variants present in the file.

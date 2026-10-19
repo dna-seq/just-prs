@@ -1,0 +1,88 @@
+pgp_id: PGP000612
+scores:
+  PGS004865:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 16.2 [8.1, 32.5] on Breast cancer among BRAC1 carriers younger than 40 years; 1000G
+      EUR r=+1.00 with PGS004866 (OR 15.04 [6.06, 37.34] on Breast cancer among BRAC1 carriers younger than 40 years).
+      Evaluated in BRCA1 mutation carriers.
+  PGS004866:
+    cluster: cancer.breast_cancer
+    phenotype: er_positive_breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of estrogen-receptor-positive breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: breast_cancer
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: ER-positive breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 15.04 [6.06, 37.34] on Breast cancer among BRAC1 carriers younger than 40 years;
+      1000G EUR r=+1.00 with PGS004865 (OR 16.2 [8.1, 32.5] on Breast cancer among BRAC1 carriers younger than 40
+      years). Evaluated in BRCA1 mutation carriers.
+  PGS004867:
+    cluster: cancer.breast_cancer
+    phenotype: er_negative_breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of estrogen-receptor-negative breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: breast_cancer
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: ER-negative breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 61.05 [25.31, 147.28] on Breast cancer among BRAC1 carriers younger than 40 years;
+      1000G EUR r=+0.80 with PGS000003 (OR 1.45 [1.4, 1.49] on ER-negative breast cancer). Evaluated in BRCA1 mutation
+      carriers.
+paper:
+  pmid: '34101481'
+  doi: 10.1200/jco.20.01992
+  title: Risk of Breast Cancer Among Carriers of Pathogenic Variants in Breast Cancer Predisposition Genes Varies
+    by Polygenic Risk Score.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

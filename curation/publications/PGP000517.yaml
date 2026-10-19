@@ -1426,6 +1426,2149 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by BETA 0.287742 (CI 0.283432-0.292053) against 'Body Mass Index'; 1000G EUR correlation
       with anchor PGS000320 r=+0.85.
+  PGS003985:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.01802 [1.98114, 2.05558] on Prostate cancer; 1000G EUR r=+0.94 with already-annotated
+      PGS000584.
+  PGS004001:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.03616 [1.99875, 2.07427] on Prostate cancer; 1000G EUR r=+0.91 with already-annotated
+      PGS000583.
+  PGS004027:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.07696 [2.03867, 2.11597] on Prostate cancer; 1000G EUR r=+0.87 with already-annotated
+      PGS004001.
+  PGS004042:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.11238 [2.07329, 2.15221] on Prostate cancer; 1000G EUR r=+0.95 with already-annotated
+      PGS004027.
+  PGS004055:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.08323 [2.04485, 2.12233] on Prostate cancer; 1000G EUR r=+0.91 with already-annotated
+      PGS000583.
+  PGS004071:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.07288 [2.03494, 2.11152] on Prostate cancer; 1000G EUR r=+0.97 with already-annotated
+      PGS004055.
+  PGS004085:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.05454 [2.01692, 2.09287] on Prostate cancer; 1000G EUR r=+0.96 with already-annotated
+      PGS000584.
+  PGS004099:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.0553 [2.01767, 2.09363] on Prostate cancer; 1000G EUR r=+0.97 with already-annotated
+      PGS004085.
+  PGS004109:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.7257 [1.69479, 1.75718] on Prostate cancer; 1000G EUR r=+0.80 with already-annotated
+      PGS000581.
+  PGS004125:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.82864 [1.79559, 1.8623] on Prostate cancer; 1000G EUR r=+0.84 with already-annotated
+      PGS004109.
+  PGS004139:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.10912 [2.07031, 2.14865] on Prostate cancer; 1000G EUR r=+0.95 with already-annotated
+      PGS004042.
+  PGS004155:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.16613 [2.12588, 2.20714] on Prostate cancer; 1000G EUR r=+0.95 with already-annotated
+      PGS004042.
+  PGS003983:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.71525 [1.6871, 1.74387] on Breast cancer; 1000G EUR r=+0.94 with PGS000507 (OR
+      1.772 [1.659, 1.891] on Breast cancer [female]).
+  PGS003999:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.7112 [1.68318, 1.73969] on Breast cancer; 1000G EUR r=+0.93 with PGS004153 (OR
+      1.79574 [1.76612, 1.82587] on Breast cancer).
+  PGS004025:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.77035 [1.74117, 1.80002] on Breast cancer; 1000G EUR r=+0.98 with PGS004040 (OR
+      1.77072 [1.74154, 1.80038] on Breast cancer).
+  PGS004040:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.77072 [1.74154, 1.80038] on Breast cancer; 1000G EUR r=+0.98 with PGS004025 (OR
+      1.77035 [1.74117, 1.80002] on Breast cancer).
+  PGS004053:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.72899 [1.70061, 1.75785] on Breast cancer; 1000G EUR r=+0.94 with PGS004153 (OR
+      1.79574 [1.76612, 1.82587] on Breast cancer).
+  PGS004069:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.7432 [1.71451, 1.77238] on Breast cancer; 1000G EUR r=+0.96 with PGS004153 (OR
+      1.79574 [1.76612, 1.82587] on Breast cancer).
+  PGS004083:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.73797 [1.70946, 1.76696] on Breast cancer; 1000G EUR r=+0.97 with PGS000507 (OR
+      1.772 [1.659, 1.891] on Breast cancer [female]).
+  PGS004107:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.5159 [1.49148, 1.54071] on Breast cancer; 1000G EUR r=+0.84 with PGS000505 (OR
+      1.584 [1.488, 1.686] on Breast cancer [female]).
+  PGS004123:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.57309 [1.54754, 1.59906] on Breast cancer; 1000G EUR r=+0.82 with PGS003999 (OR
+      1.7112 [1.68318, 1.73969] on Breast cancer).
+  PGS004137:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.66993 [1.64184, 1.69851] on Breast cancer; 1000G EUR r=+0.87 with PGS004153 (OR
+      1.79574 [1.76612, 1.82587] on Breast cancer).
+  PGS004153:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.79574 [1.76612, 1.82587] on Breast cancer; 1000G EUR r=+0.97 with PGS004040 (OR
+      1.77072 [1.74154, 1.80038] on Breast cancer).
+  PGS003986:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 5 agree, 2 disagree; rs4846914
+        G +3.31e-05; rs12678919 G +0.000119; rs1883025 T -0.071; rs1532085 A +9.09e-05; rs2271293 A -6.4e-05; rs1800961
+        T -0.16; rs6065906 C -0.0617'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.310397 [0.303776, 0.317017] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS004002:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 6 agree, 0 disagree; rs4846914
+        A +0.00333; rs1883025 T -0.0126; rs1532085 A +0.0228; rs2271293 A +0.00151; rs1800961 T -0.0297; rs6065906
+        C -0.0133'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.309517 [0.302902, 0.316132] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS004028:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 6 agree, 1 disagree; rs4846914
+        A +0.000453; rs12678919 G -0.000114; rs1883025 T -0.0311; rs1532085 G -0.0147; rs2271293 A +0.000296; rs1800961
+        T -0.114; rs6065906 C -0.0409'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.293752 [0.287115, 0.300389] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS004043:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 7 agree, 0 disagree; rs4846914
+        A +0.00394; rs12678919 G +9.06e-05; rs1883025 T -0.0131; rs1532085 G -0.0194; rs2271293 A +0.00433; rs1800961
+        T -0.0766; rs6065906 C -0.0199'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.325067 [0.318492, 0.331643] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS004056:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 7 agree, 0 disagree; rs4846914
+        G -0.000568; rs12678919 G +0.000137; rs1883025 T -0.000157; rs1532085 A +0.011; rs2271293 A +0.0322; rs1800961
+        T -0.0455; rs6065906 C -0.0498'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.303118 [0.29649, 0.309746] against high-density lipoprotein cholesterol
+      (CI excludes the null).
+  PGS004072:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 7 agree, 0 disagree; rs4846914
+        G -0.000118; rs12678919 G +0.00153; rs1883025 T -6.7e-05; rs1532085 A +0.0166; rs2271293 A +0.00109; rs1800961
+        T -0.0753; rs6065906 C -0.0616'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.313083 [0.306474, 0.319692] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS004086:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 7 agree, 0 disagree; rs4846914
+        A +0.00811; rs12678919 G +0.000399; rs1883025 T -0.0165; rs1532085 A +0.0229; rs2271293 A +0.00399; rs1800961
+        T -0.084; rs6065906 C -0.0218'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.314597 [0.307998, 0.321197] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS004100:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 7 agree, 0 disagree; rs4846914
+        A +0.000187; rs12678919 G +0.000878; rs1883025 T -0.0192; rs1532085 A +0.0228; rs2271293 A +0.00971; rs1800961
+        T -0.0822; rs6065906 C -0.0205'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.317085 [0.310498, 0.323672] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS004110:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 3 agree, 0 disagree; rs1883025
+        C +0.0633; rs1800961 C +0.126; rs6065906 T +0.0565'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.227841 [0.221041, 0.234642] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS004126:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 3 agree, 0 disagree; rs1883025
+        C +0.0633; rs1800961 C +0.126; rs6065906 T +0.0565'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.240599 [0.233829, 0.247369] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS004140:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 5 agree, 2 disagree; rs4846914
+        G -7e-06; rs12678919 A +0.000537; rs1883025 C +0.00762; rs1532085 A +0.00342; rs2271293 G +1.8e-05; rs1800961
+        C +0.123; rs6065906 T +0.0568'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.318808 [0.312208, 0.325408] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS004156:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 5 agree, 2 disagree; rs4846914
+        A +0.00113; rs12678919 G -0.000355; rs1883025 T -0.0058; rs1532085 A +0.00757; rs2271293 A -0.00122; rs1800961
+        T -0.0465; rs6065906 C -0.0156'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 0.340979 [0.334438, 0.347521] against high-density lipoprotein
+      cholesterol (CI excludes the null).
+  PGS003992:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7412 T (APOE e2, protective) carries a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.33446 [1.31203, 1.35726] against 'AD'; 1000G EUR r=+0.75 with PGS004092 (OR 1.48977
+      [1.46572, 1.51421] vs 'AD'). APOE region variants present in the file.
+  PGS004008:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7412 T (APOE e2, protective) carries a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.48397 [1.46157, 1.50672] against 'AD'; 1000G EUR r=+0.89 with PGS004034 (OR 1.5321
+      [1.50892, 1.55564] vs 'AD'). APOE region variants present in the file.
+  PGS004034:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.5321 [1.50892, 1.55564] against 'AD'; 1000G EUR r=+0.90 with PGS004146 (OR 1.52213
+      [1.49865, 1.54597] vs 'AD'). APOE region variants present in the file.
+  PGS004062:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7412 T (APOE e2, protective) carries a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.48022 [1.45673, 1.50408] against 'AD'; 1000G EUR r=+0.89 with PGS004092 (OR 1.48977
+      [1.46572, 1.51421] vs 'AD'). APOE region variants present in the file.
+  PGS004092:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7412 T (APOE e2, protective) carries a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.48977 [1.46572, 1.51421] against 'AD'; 1000G EUR r=+0.89 with PGS004062 (OR 1.48022
+      [1.45673, 1.50408] vs 'AD'). APOE region variants present in the file.
+  PGS004116:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7412 T (APOE e2, protective) carries a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.2393 [1.21795, 1.26102] against 'AD'; 1000G EUR r=+0.71 with PGS003992 (OR 1.33446
+      [1.31203, 1.35726] vs 'AD'). APOE region variants present in the file.
+  PGS004146:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.52213 [1.49865, 1.54597] against 'AD'; 1000G EUR r=+0.90 with PGS004034 (OR 1.5321
+      [1.50892, 1.55564] vs 'AD'). APOE region variants present in the file.
+  PGS003987:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.180309 [0.173935, 0.186682] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.88 with PGS004044.
+  PGS004003:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.185158 [0.178777, 0.19154] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.88 with PGS004044.
+  PGS004029:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.135291 [0.12882, 0.141762] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.67 with PGS004141.
+  PGS004044:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.191782 [0.185408, 0.198155] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.93 with PGS004157.
+  PGS004057:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.189605 [0.183241, 0.19597] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.98 with PGS004073.
+  PGS004073:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.191383 [0.185023, 0.197742] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.98 with PGS004057.
+  PGS004087:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.176977 [0.170588, 0.183366] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.90 with PGS004044.
+  PGS004111:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.134942 [0.128491, 0.141393] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.76 with PGS003987.
+  PGS004127:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.146186 [0.139759, 0.152612] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.76 with PGS004003.
+  PGS004141:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.184078 [0.177693, 0.190464] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.88 with PGS004157.
+  PGS004157:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.207575 [0.20123, 0.21392] against 'Haemoglobin A1C' (per-SD HbA1c, CI excludes
+      0); 1000G EUR r=+0.93 with PGS004044.
+  PGS003990:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.59 (CI 1.56-1.63) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004006:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.58 (CI 1.54-1.61) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004018:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.63 (CI 1.60-1.67) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004032:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.53 (CI 1.50-1.57) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004047:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.66 (CI 1.62-1.69) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004060:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.61 (CI 1.57-1.64) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004076:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.64 (CI 1.60-1.67) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004090:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.57 (CI 1.54-1.61) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004114:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.42 (CI 1.39-1.45) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004130:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.50 (CI 1.47-1.53) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004144:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.40 (CI 1.37-1.42) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS004160:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.68 (CI 1.64-1.71) against 'Gout'; 1000G EUR correlation with anchor PGS004871
+      positive (r>=+0.25).
+  PGS003994:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.508 [1.478, 1.540] against 'Seropositive RA'; 1000G EUR r=+0.39 with anchor PGS004873.
+  PGS004010:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.497 [1.466, 1.529] against 'Seropositive RA'; 1000G EUR r=+0.43 with anchor PGS004873.
+  PGS004021:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.610 [1.577, 1.644] against 'Seropositive RA'; 1000G EUR r=+0.54 with anchor PGS004873.
+  PGS004049:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.640 [1.606, 1.674] against 'Seropositive RA'; 1000G EUR r=+0.52 with anchor PGS004873.
+  PGS004064:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.677 [1.643, 1.711] against 'Seropositive RA'; 1000G EUR r=+0.57 with anchor PGS004873.
+  PGS004079:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.617 [1.584, 1.651] against 'Seropositive RA'; 1000G EUR r=+0.55 with anchor PGS004873.
+  PGS004094:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.648 [1.614, 1.683] against 'Seropositive RA'; 1000G EUR r=+0.49 with anchor PGS004873.
+  PGS004103:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.434 [1.404, 1.463] against 'Seropositive RA'; 1000G EUR r=+0.47 with anchor PGS004873.
+  PGS004118:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.403 [1.375, 1.431] against 'Seropositive RA'; 1000G EUR r=+0.35 with anchor PGS004873.
+  PGS004133:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.436 [1.407, 1.465] against 'Seropositive RA'; 1000G EUR r=+0.36 with anchor PGS004873.
+  PGS004148:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.629 [1.596, 1.662] against 'Seropositive RA'; 1000G EUR r=+0.35 with anchor PGS004873.
+  PGS004163:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: seropositive_rheumatoid_arthritis
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.754 [1.718, 1.790] against 'Seropositive RA'; 1000G EUR r=+0.59 with anchor PGS004873.
+  PGS003984:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; dbslmm.auto score from MEGASTROKE GCST005838; corroborated by OR 1.153 [1.139, 1.168] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.38 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004000:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; lassosum.auto score from MEGASTROKE GCST005838; corroborated by OR 1.120 [1.106, 1.134] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.35 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004015:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; lassosum.CV score from MEGASTROKE GCST005838; corroborated by OR 1.143 [1.128, 1.157] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.23 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004026:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; ldpred2.auto score from MEGASTROKE GCST005838; corroborated by OR 1.162 [1.147, 1.177] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.23 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004041:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; ldpred2.CV score from MEGASTROKE GCST005838; corroborated by OR 1.163 [1.149, 1.178] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.30 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004054:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; megaprs.auto score from MEGASTROKE GCST005838; corroborated by OR 1.170 [1.155, 1.185] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.28 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004070:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; megaprs.CV score from MEGASTROKE GCST005838; corroborated by OR 1.172 [1.158, 1.187] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.27 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004084:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; prscs.auto score from MEGASTROKE GCST005838; corroborated by OR 1.154 [1.139, 1.168] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.22 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004098:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; prscs.CV score from MEGASTROKE GCST005838; corroborated by OR 1.153 [1.139, 1.168] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.23 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004108:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; pt_clump.auto score from MEGASTROKE GCST005838; corroborated by OR 1.066 [1.053, 1.079] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.43 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004124:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; pt_clump_nested.CV score from MEGASTROKE GCST005838; corroborated by OR 1.101 [1.087, 1.115] on stroke
+      excluding subarachnoid haemorrhage; 1000G EUR r=+0.14 with anchor PGS004322 and positive with the other PGP000517
+      stroke scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004138:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; sbayesr.auto score from MEGASTROKE GCST005838; corroborated by OR 1.144 [1.130, 1.158] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.22 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS004154:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; UKBB_EnsPGS score from MEGASTROKE GCST005838; corroborated by OR 1.173 [1.159, 1.188] on stroke excluding
+      subarachnoid haemorrhage; 1000G EUR r=+0.30 with anchor PGS004322 and positive with the other PGP000517 stroke
+      scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
+      PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
 paper:
   pmid: '38908374'
   doi: 10.1016/j.ajhg.2024.06.003

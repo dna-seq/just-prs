@@ -1,0 +1,83 @@
+pgp_id: PGP000621
+scores:
+  PGS004893:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.34 [1.27, 1.42] on Breast cancer; 1000G EUR r=+0.95 with PGS004894 (OR 1.49 [1.39,
+      1.6] on Estrogen receptor positive breast cancer).
+  PGS004894:
+    cluster: cancer.breast_cancer
+    phenotype: er_positive_breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of estrogen-receptor-positive breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Estrogen receptor positive breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.49 [1.39, 1.6] on Estrogen receptor positive breast cancer; 1000G EUR r=+0.95
+      with PGS004893 (OR 1.34 [1.27, 1.42] on Breast cancer).
+  PGS004895:
+    cluster: cancer.breast_cancer
+    phenotype: er_negative_breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of estrogen-receptor-negative breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Estrogen receptor negative breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.31 [1.21, 1.43] on Estrogen receptor negative breast cancer; 1000G EUR r=+0.79
+      with PGS000346 (OR 1.41 [1.36, 1.46] on ER-negative breast cancer).
+paper:
+  pmid: '35554533'
+  doi: 10.1093/hmg/ddac102
+  title: 'Polygenic risk scores for prediction of breast cancer risk in women of African ancestry: a cross-ancestry
+    approach.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

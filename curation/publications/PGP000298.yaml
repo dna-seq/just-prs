@@ -1,0 +1,46 @@
+pgp_id: PGP000298
+scores:
+  PGS002268:
+    cluster: cancer.prostate_cancer
+    strata: {}
+    review_reason: null
+    status: agent_proposed
+    phenotype: aggressive_prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of clinically significant prostate cancer (Gleason score >=7 vs healthy controls)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: full_text
+      locator: Abstract > Materials and Methods
+      quote: Total 2,702 PCa samples and 7,485 controls were used to discover csPCa susceptible single nucleotide
+        polymorphisms (SNPs). Males with biopsy-proven or post-radical prostatectomy Gleason score 7 or higher were
+        included for analysis.
+      confidence: high
+    - source: full_text
+      locator: Materials and Methods > Statistical analysis
+      quote: 'Based on the association results, we obtained odds ratio (OR) of PCa-associated SNPs on the risk of
+        PCa development. PRS was calculated as log(OR)-weighted sum of the number of risk alleles as following:'
+      confidence: high
+    - source: full_text
+      locator: Results > risk groups (Fig. 2)
+      quote: High PRS and very-high PRS group showed 3.80-fold and 5.93-fold increased risk, respectively, for PCa,
+        compared to the moderate PRS group (the reference group) (Fig. 2C). The very-high PRS group had a 4.92-fold
+        increased risk compared to the remaining population.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: 4/4 lead variants match GWAS Catalog risk direction (rs4242384 C+, rs72725879 C-, rs11263763 G-, rs10896449
+        G+)
+    notes: Korean csPCa (GS>=7, grade group >=2) PRS, 29 SNPs; catalog labels the evaluation 'Grade 3 or above'.
+paper:
+  pmid: '34983122'
+  doi: 10.4111/icu.20210305
+  title: Prediction of clinically significant prostate cancer using polygenic risk models in Asians.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

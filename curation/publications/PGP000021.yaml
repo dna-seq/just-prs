@@ -20,3 +20,7 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.90 with catalog-annotated PGS002251 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.18.
+paper:
+  pmid: '29212779'
+  doi: 10.2337/db17-1156
+  title: Longitudinal Analysis of Genetic Susceptibility and BMI Throughout Adult Life.

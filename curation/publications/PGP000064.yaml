@@ -1,0 +1,293 @@
+pgp_id: PGP000064
+scores:
+  PGS000127:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c level (NGSP %) via erythrocytic, non-glycemic variants
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: Erythrocytic HbA1c-raising alleles raise HbA1c without raising glucose; the paper reports lower incident
+        T2D risk (-5% per allele) at equal HbA1c.
+    strata:
+      ancestry: European
+    provenance:
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: Genetic risk scores of erythrocytic variants and glycemic variants (GS-E and GS-G, respectively) were
+        calculated as detailed in S1 Analysis Plans (Investigate the Effect of Glycemic and Erythrocytic Hemoglobin
+        A1c (HbA1c) Genetic Variants on Diabetes Prediction), as standard in the field, by summing the number of
+        ancestry-specific HbA1c-raising alleles at each variant (0, 1, 2, or expected number of alleles based on
+        the probability of each genotype), multiplied by their ancestry-specific β coefficients for HbA1c from the
+        genome-wide association study (GWAS) meta-analysis multiplied by the number of variants and divided by the
+        sum of β coefficients [31].
+      confidence: high
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: This means the contribution of each associated variant to the trait, in a given individual, is influenced
+        by the number of “risk alleles” (or in this case HbA1c-raising alleles) and the effect of the variant on
+        the trait (increase in HbA1c estimated from the meta-analysis).
+      confidence: high
+    - source: full_text
+      locator: Discussion
+      quote: For an equivalent HbA1c, individuals carrying more erythrocytic HbA1c-raising alleles, or fewer HbA1c-lowering
+        alleles, had lower incident T2D risk (−5% per allele), implying that for the same HbA1c level those individuals
+        with the greater number of erythrocytic HbA1c- raising alleles have artificially higher HbA1c values that
+        do not reflect ambient glycemia.
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Erythrocytic partition (GS-E) of the Wheeler 2017 HbA1c variants, European-ancestry weights. A higher
+      score means higher HbA1c via red-cell biology, NOT higher blood glucose: the paper finds these alleles give
+      ''artificially higher HbA1c values that do not reflect ambient glycemia'' and no higher T2D risk. Direction
+      on HbA1c is certain; the glycemia-axis reading is a proxy only.'
+  PGS000128:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c level (NGSP %) via erythrocytic, non-glycemic variants
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: Erythrocytic HbA1c-raising alleles raise HbA1c without raising glucose; the paper reports lower incident
+        T2D risk (-5% per allele) at equal HbA1c.
+    strata:
+      ancestry: African
+    provenance:
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: Genetic risk scores of erythrocytic variants and glycemic variants (GS-E and GS-G, respectively) were
+        calculated as detailed in S1 Analysis Plans (Investigate the Effect of Glycemic and Erythrocytic Hemoglobin
+        A1c (HbA1c) Genetic Variants on Diabetes Prediction), as standard in the field, by summing the number of
+        ancestry-specific HbA1c-raising alleles at each variant (0, 1, 2, or expected number of alleles based on
+        the probability of each genotype), multiplied by their ancestry-specific β coefficients for HbA1c from the
+        genome-wide association study (GWAS) meta-analysis multiplied by the number of variants and divided by the
+        sum of β coefficients [31].
+      confidence: high
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: This means the contribution of each associated variant to the trait, in a given individual, is influenced
+        by the number of “risk alleles” (or in this case HbA1c-raising alleles) and the effect of the variant on
+        the trait (increase in HbA1c estimated from the meta-analysis).
+      confidence: high
+    - source: full_text
+      locator: Discussion
+      quote: For an equivalent HbA1c, individuals carrying more erythrocytic HbA1c-raising alleles, or fewer HbA1c-lowering
+        alleles, had lower incident T2D risk (−5% per allele), implying that for the same HbA1c level those individuals
+        with the greater number of erythrocytic HbA1c- raising alleles have artificially higher HbA1c values that
+        do not reflect ambient glycemia.
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Erythrocytic partition (GS-E) of the Wheeler 2017 HbA1c variants, African-ancestry weights. A higher
+      score means higher HbA1c via red-cell biology, NOT higher blood glucose: the paper finds these alleles give
+      ''artificially higher HbA1c values that do not reflect ambient glycemia'' and no higher T2D risk. Direction
+      on HbA1c is certain; the glycemia-axis reading is a proxy only.'
+  PGS000129:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c level (NGSP %) via erythrocytic, non-glycemic variants
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: Erythrocytic HbA1c-raising alleles raise HbA1c without raising glucose; the paper reports lower incident
+        T2D risk (-5% per allele) at equal HbA1c.
+    strata:
+      ancestry: East Asian
+    provenance:
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: Genetic risk scores of erythrocytic variants and glycemic variants (GS-E and GS-G, respectively) were
+        calculated as detailed in S1 Analysis Plans (Investigate the Effect of Glycemic and Erythrocytic Hemoglobin
+        A1c (HbA1c) Genetic Variants on Diabetes Prediction), as standard in the field, by summing the number of
+        ancestry-specific HbA1c-raising alleles at each variant (0, 1, 2, or expected number of alleles based on
+        the probability of each genotype), multiplied by their ancestry-specific β coefficients for HbA1c from the
+        genome-wide association study (GWAS) meta-analysis multiplied by the number of variants and divided by the
+        sum of β coefficients [31].
+      confidence: high
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: This means the contribution of each associated variant to the trait, in a given individual, is influenced
+        by the number of “risk alleles” (or in this case HbA1c-raising alleles) and the effect of the variant on
+        the trait (increase in HbA1c estimated from the meta-analysis).
+      confidence: high
+    - source: full_text
+      locator: Discussion
+      quote: For an equivalent HbA1c, individuals carrying more erythrocytic HbA1c-raising alleles, or fewer HbA1c-lowering
+        alleles, had lower incident T2D risk (−5% per allele), implying that for the same HbA1c level those individuals
+        with the greater number of erythrocytic HbA1c- raising alleles have artificially higher HbA1c values that
+        do not reflect ambient glycemia.
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Erythrocytic partition (GS-E) of the Wheeler 2017 HbA1c variants, East Asian-ancestry weights. A higher
+      score means higher HbA1c via red-cell biology, NOT higher blood glucose: the paper finds these alleles give
+      ''artificially higher HbA1c values that do not reflect ambient glycemia'' and no higher T2D risk. Direction
+      on HbA1c is certain; the glycemia-axis reading is a proxy only.'
+  PGS000130:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c level (NGSP %) via glycemic variants
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: 'Glycemic HbA1c-raising alleles raise glucose, so GS-G is expected to raise incident T2D risk (paper:
+        OR 1.05 per allele overall).'
+    strata:
+      ancestry: European
+    provenance:
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: Genetic risk scores of erythrocytic variants and glycemic variants (GS-E and GS-G, respectively) were
+        calculated as detailed in S1 Analysis Plans (Investigate the Effect of Glycemic and Erythrocytic Hemoglobin
+        A1c (HbA1c) Genetic Variants on Diabetes Prediction), as standard in the field, by summing the number of
+        ancestry-specific HbA1c-raising alleles at each variant (0, 1, 2, or expected number of alleles based on
+        the probability of each genotype), multiplied by their ancestry-specific β coefficients for HbA1c from the
+        genome-wide association study (GWAS) meta-analysis multiplied by the number of variants and divided by the
+        sum of β coefficients [31].
+      confidence: high
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: This means the contribution of each associated variant to the trait, in a given individual, is influenced
+        by the number of “risk alleles” (or in this case HbA1c-raising alleles) and the effect of the variant on
+        the trait (increase in HbA1c estimated from the meta-analysis).
+      confidence: high
+    - source: full_text
+      locator: Methods > variant classification
+      quote: That is, evidence of being associated with any of the glycemic traits or a reduction in the effect
+        of the variant on HbA1c after repeated association analysis in a model additionally adjusting for fasting/2hrGlu,
+        suggested the observed association with HbA1c was being driven through an association with fasting/2hrGlu.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Glycemic partition (GS-G) of the Wheeler 2017 HbA1c variants, European-ancestry weights. Weights are
+      ancestry-specific HbA1c-raising betas (NGSP %), so a higher score means higher HbA1c through glycemia. OR
+      in the catalog is per HbA1c-raising allele for incident T2D; the paper notes no association in African Americans.
+  PGS000131:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c level (NGSP %) via glycemic variants
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: 'Glycemic HbA1c-raising alleles raise glucose, so GS-G is expected to raise incident T2D risk (paper:
+        OR 1.05 per allele overall).'
+    strata:
+      ancestry: African
+    provenance:
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: Genetic risk scores of erythrocytic variants and glycemic variants (GS-E and GS-G, respectively) were
+        calculated as detailed in S1 Analysis Plans (Investigate the Effect of Glycemic and Erythrocytic Hemoglobin
+        A1c (HbA1c) Genetic Variants on Diabetes Prediction), as standard in the field, by summing the number of
+        ancestry-specific HbA1c-raising alleles at each variant (0, 1, 2, or expected number of alleles based on
+        the probability of each genotype), multiplied by their ancestry-specific β coefficients for HbA1c from the
+        genome-wide association study (GWAS) meta-analysis multiplied by the number of variants and divided by the
+        sum of β coefficients [31].
+      confidence: high
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: This means the contribution of each associated variant to the trait, in a given individual, is influenced
+        by the number of “risk alleles” (or in this case HbA1c-raising alleles) and the effect of the variant on
+        the trait (increase in HbA1c estimated from the meta-analysis).
+      confidence: high
+    - source: full_text
+      locator: Methods > variant classification
+      quote: That is, evidence of being associated with any of the glycemic traits or a reduction in the effect
+        of the variant on HbA1c after repeated association analysis in a model additionally adjusting for fasting/2hrGlu,
+        suggested the observed association with HbA1c was being driven through an association with fasting/2hrGlu.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Glycemic partition (GS-G) of the Wheeler 2017 HbA1c variants, African-ancestry weights. Weights are ancestry-specific
+      HbA1c-raising betas (NGSP %), so a higher score means higher HbA1c through glycemia. OR in the catalog is
+      per HbA1c-raising allele for incident T2D; the paper notes no association in African Americans.
+  PGS000132:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c level (NGSP %) via glycemic variants
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: 'Glycemic HbA1c-raising alleles raise glucose, so GS-G is expected to raise incident T2D risk (paper:
+        OR 1.05 per allele overall).'
+    strata:
+      ancestry: East Asian
+    provenance:
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: Genetic risk scores of erythrocytic variants and glycemic variants (GS-E and GS-G, respectively) were
+        calculated as detailed in S1 Analysis Plans (Investigate the Effect of Glycemic and Erythrocytic Hemoglobin
+        A1c (HbA1c) Genetic Variants on Diabetes Prediction), as standard in the field, by summing the number of
+        ancestry-specific HbA1c-raising alleles at each variant (0, 1, 2, or expected number of alleles based on
+        the probability of each genotype), multiplied by their ancestry-specific β coefficients for HbA1c from the
+        genome-wide association study (GWAS) meta-analysis multiplied by the number of variants and divided by the
+        sum of β coefficients [31].
+      confidence: high
+    - source: full_text
+      locator: Methods > Calculation of genetic risk scores
+      quote: This means the contribution of each associated variant to the trait, in a given individual, is influenced
+        by the number of “risk alleles” (or in this case HbA1c-raising alleles) and the effect of the variant on
+        the trait (increase in HbA1c estimated from the meta-analysis).
+      confidence: high
+    - source: full_text
+      locator: Methods > variant classification
+      quote: That is, evidence of being associated with any of the glycemic traits or a reduction in the effect
+        of the variant on HbA1c after repeated association analysis in a model additionally adjusting for fasting/2hrGlu,
+        suggested the observed association with HbA1c was being driven through an association with fasting/2hrGlu.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Glycemic partition (GS-G) of the Wheeler 2017 HbA1c variants, East Asian-ancestry weights. Weights are
+      ancestry-specific HbA1c-raising betas (NGSP %), so a higher score means higher HbA1c through glycemia. OR
+      in the catalog is per HbA1c-raising allele for incident T2D; the paper notes no association in African Americans.
+paper:
+  pmid: '28898252'
+  doi: 10.1371/journal.pmed.1002383
+  title: 'Impact of common genetic determinants of Hemoglobin A1c on type 2 diabetes risk and diagnosis in ancestrally
+    diverse populations: A transethnic genome-wide meta-analysis.'
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

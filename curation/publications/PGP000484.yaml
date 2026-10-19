@@ -1,0 +1,34 @@
+pgp_id: PGP000484
+scores:
+  PGS003761:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.60 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+1.00 with PGS004920.
+paper:
+  pmid: '36882748'
+  doi: 10.1186/s12916-023-02798-7
+  title: 'Associations of risk factor burden and genetic predisposition with the 10-year risk of atrial fibrillation:
+    observations from a large prospective study of 348,904 participants.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

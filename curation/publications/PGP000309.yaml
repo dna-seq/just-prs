@@ -1,0 +1,28 @@
+pgp_id: PGP000309
+scores:
+  PGS002280:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: excluded
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.076 [1.064, 1.088] against 'Conversion to Alzheimer disease'; 1000G EUR r=+0.66
+      with PGS000898 (OR 1.3 [1.18, 1.44] vs 'Alzheimer's disease (clinically confirmed)'). no APOE-region variant
+      (chr19:44.4-45.4 Mb, GRCh38) in the file.

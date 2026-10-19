@@ -1,0 +1,70 @@
+pgp_id: PGP000111
+scores:
+  PGS000342:
+    cluster: immune.psoriasis
+    phenotype: psoriatic_arthritis_vs_psoriasis_only
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood that a psoriasis patient has psoriatic arthritis rather than skin-only psoriasis
+      coding: cases = confirmed PsA, controls = psoriasis only (PsO), within a psoriasis cohort
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods
+      quote: The hypothesis of this approach is that a higher cGRS or wGRS favors PsA, while a lower cGRS or wGRS
+        favors PsO.
+      confidence: high
+    - source: abstract
+      locator: Abstract > Objective
+      quote: Use genetic markers to develop and evaluate a PsA genetic risk score (GRS) for its ability to discriminate
+        between psoriasis (PsO) only and PsO with PsA among a psoriatic cohort with full genome-wide genotype data.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: HLA-C*06:02 (-3.85) and HLA-B*44:02 (-1.67) favor PsO per the paper; HLA-B*27:05, B*39:01, B*08:01 (positive)
+        favor PsA
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 11-locus weighted GRS for PsA vs PsO (AUROC 0.562). Not a psoriasis-risk score; near-zero 1000G correlation
+      with psoriasis-risk scores (min -0.14 vs PGS002710) is expected because HLA-C*06:02 carries a negative weight.
+  PGS000343:
+    cluster: immune.psoriasis
+    phenotype: psoriatic_arthritis_vs_psoriasis_only
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood that a psoriasis patient has psoriatic arthritis rather than skin-only psoriasis (HLA alleles
+        only)
+      coding: cases = confirmed PsA, controls = psoriasis only (PsO), within a psoriasis cohort
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Discussion
+      quote: a higher GRS favors PsA while a lower score favors PsO
+      confidence: high
+    - source: abstract
+      locator: Abstract > Methods
+      quote: Additional analyses included only human leukocyte antigen (HLA) risk alleles.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: Same 5 HLA alleles and signs as PGS000342 (HLA-only subset)
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: HLA-only subset (5 classical HLA alleles) of the PsA-vs-PsO wGRS (AUROC 0.569). Not scorable from SNP
+      genotypes without HLA imputation, so no 1000G correlation.
+paper:
+  pmid: '32462110'
+  doi: 10.1177/2475530320910814
+  title: Evaluation of a Genetic Risk Score for Diagnosis of Psoriatic Arthritis.
+evidence_read:
+  abstract: true
+  full_text: pmc_html
+  supplement: []

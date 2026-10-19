@@ -1,0 +1,168 @@
+pgp_id: PGP000563
+scores:
+  PGS004582:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count during the first trimester of pregnancy (rank-transformed)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: gestational_thrombocytopenia
+    strata:
+      pregnancy_trimester: first
+      sex: female
+    provenance:
+    - source: full_text
+      locator: Methods > PRS
+      quote: to construct PRSs for platelet counts of the 5 periods during pregnancy and GT.
+      confidence: medium
+    - source: supplement
+      locator: Supplemental Methods > PRS (mmc1.pdf, line 208; text in supplement/mmc1_raw.txt)
+      quote: and third trimesters during pregnancy (base GWAS data) to obtain the effect size of association
+      confidence: medium
+    - source: full_text
+      locator: Methods > GWAS
+      quote: Moreover, all quantitative phenotypes were rank-based transformed to ensure adherence to a normal distribution.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count during the first trimester
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: ARHGEF3 rs1354034-T carries a negative weight, as in every European platelet score here (C raises platelets)
+    review_reason: null
+    status: agent_proposed
+    notes: PRSice-2 C+T on the authors' own trimester GWAS betas. Trained in pregnant Chinese women (NIPT low-pass
+      sequencing), so 1000G EUR correlation with general platelet scores is near zero (r~+0.05); top weights sit
+      in pericentromeric chr10/chr2 regions. C statistics in the paper are for predicting GT, where a higher platelet
+      PRS should mean lower risk.
+  PGS004583:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count during the second trimester of pregnancy (rank-transformed)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: gestational_thrombocytopenia
+    strata:
+      pregnancy_trimester: second
+      sex: female
+    provenance:
+    - source: full_text
+      locator: Methods > PRS
+      quote: to construct PRSs for platelet counts of the 5 periods during pregnancy and GT.
+      confidence: medium
+    - source: supplement
+      locator: Supplemental Methods > PRS (mmc1.pdf, line 208; text in supplement/mmc1_raw.txt)
+      quote: and third trimesters during pregnancy (base GWAS data) to obtain the effect size of association
+      confidence: medium
+    - source: full_text
+      locator: Methods > GWAS
+      quote: Moreover, all quantitative phenotypes were rank-based transformed to ensure adherence to a normal distribution.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count during the second trimester
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: ARHGEF3 rs1354034-T carries a negative weight, as in every European platelet score here (C raises platelets)
+    review_reason: null
+    status: agent_proposed
+    notes: PRSice-2 C+T on the authors' own trimester GWAS betas. Trained in pregnant Chinese women (NIPT low-pass
+      sequencing), so 1000G EUR correlation with general platelet scores is near zero (r~+0.05); top weights sit
+      in pericentromeric chr10/chr2 regions. C statistics in the paper are for predicting GT, where a higher platelet
+      PRS should mean lower risk.
+  PGS004584:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count during the third trimester of pregnancy (rank-transformed)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: gestational_thrombocytopenia
+    strata:
+      pregnancy_trimester: third
+      sex: female
+    provenance:
+    - source: full_text
+      locator: Methods > PRS
+      quote: to construct PRSs for platelet counts of the 5 periods during pregnancy and GT.
+      confidence: medium
+    - source: supplement
+      locator: Supplemental Methods > PRS (mmc1.pdf, line 208; text in supplement/mmc1_raw.txt)
+      quote: and third trimesters during pregnancy (base GWAS data) to obtain the effect size of association
+      confidence: medium
+    - source: full_text
+      locator: Methods > GWAS
+      quote: Moreover, all quantitative phenotypes were rank-based transformed to ensure adherence to a normal distribution.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count during the third trimester
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: PEAR1 rs12041331-A weight +0.259 matches the paper's T3 beta of -0.259 for the G allele; ARHGEF3 rs1354034-T
+        carries a negative weight, as in every European platelet score here (C raises platelets)
+    review_reason: null
+    status: agent_proposed
+    notes: PRSice-2 C+T on the authors' own trimester GWAS betas; weights equal the published T3 betas. Trained
+      in pregnant Chinese women (NIPT low-pass sequencing), so 1000G EUR correlation with general platelet scores
+      is near zero (r~+0.05); top weights sit in pericentromeric chr10/chr2 regions. C statistics in the paper are
+      for predicting GT, where a higher platelet PRS should mean lower risk.
+  PGS004585:
+    cluster: blood.platelet_count
+    phenotype: gestational_thrombocytopenia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gestational thrombocytopenia (any platelet count < 150 x 10^9/L in trimester 2 or 3)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata:
+      sex: female
+    provenance:
+    - source: full_text
+      locator: Methods > PRS
+      quote: to construct PRSs for platelet counts of the 5 periods during pregnancy and GT.
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definition
+      quote: GT was defined as having at least 1 platelet count
+      confidence: high
+    - source: full_text
+      locator: Results > GWAS of GT
+      quote: The rs12048392-C allele and rs12566888-G allele were associated with an increased risk of GT and severe
+        GT.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: PEAR1 rs12048392-T weight -0.550, i.e. the GT risk allele C carries +0.55 = ln(OR 1.72) from the paper;
+        ARHGEF3 rs1354034-T (platelet-lowering) weight +0.228
+    review_reason: Paper never states what a higher GT PRS means; direction inferred from weights matching the published
+      GT log-OR at PEAR1.
+    status: agent_proposed
+    notes: 'PRSice-2 on the authors'' GT GWAS (11 138 cases, 85 294 controls, Chinese NIPT). Weights behave as log-OR
+      for GT: higher score = more GT risk = lower platelets (phenotype sign -1). 1000G EUR r=-0.30 with the T1 platelet
+      score, consistent after alignment.'
+paper:
+  pmid: '38064665'
+  doi: null
+  title: Genetic Basis of Altered Platelet Counts and Gestational Thrombocytopenia in Pregnancy.
+evidence_read:
+  abstract: true
+  full_text: europepmc PMC11033587
+  supplement:
+  - mmc1.pdf supplemental Methods (PRS)

@@ -1,0 +1,36 @@
+slug: sleep-duration
+query: sleep duration
+match:
+  terms:
+  - hours of sleep
+  - long sleep
+  - short sleep
+  - sleep duration
+  efo_ids: []
+  exclude: []
+anchor: PGS001150
+status: resolved
+concepts:
+- sleep.sleep_duration
+scores:
+  PGS001150:
+    decision: in_scope
+    note: 'UKB 1160 hours of sleep (snpnet, Tanigawa); higher = longer sleep'
+  PGS001978:
+    decision: in_scope
+    note: 'UKB 1160 log hours (PLR, Prive); higher = longer sleep'
+  PGS002196:
+    decision: in_scope
+    note: 'UKB 1160 log hours (LDpred2, Prive); higher = longer sleep'
+  PGS003480:
+    decision: in_scope
+    note: 'HCHS/SOL LDpred2 from Dashti 2019; file anti-correlates with every other sleep-duration score (suspected sign flip), left unannotated'
+  PGS003764:
+    decision: in_scope
+    note: 'Scammell 2023 78-SNP multi-ancestry score; catalog-only, betas on sleep duration positive'
+summary: 'All five scores are continuous sleep-duration scores (hours per day), mapped to the new concept sleep.sleep_duration
+  (axis longer sleep, valence context_dependent because short and long sleep are both unhealthy). Four agree: higher
+  = longer sleep (PGS001150, PGS001978, PGS002196 from UKB field 1160; PGS003764 catalog-only with positive betas).
+  PGS003480 (HCHS/SOL, LDpred2 on Dashti 2019) points the other way: r = -0.87 with PGS002196 and the PAX8 longer-sleep
+  allele rs1823125-G has a negative weight. The paper never states the orientation, so it is left unannotated as a
+  suspected sign-flipped deposit for a human to confirm.'

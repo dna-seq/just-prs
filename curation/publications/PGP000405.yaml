@@ -141,6 +141,149 @@ scores:
       basis: catalog metric is for 'Fasting plasma glucose', which higher T2D genetic liability also raises
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.63 with already-annotated PGS005355.
+  PGS003338:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: no reference HDL lead SNP (CETP, LIPC, LPL, ABCA1, LIPG, GALNT2, HNF4A, LCAT, PLTP, APOA5) in the file
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.43 with catalog-annotated HDL score PGS004100 (PGP000517, beta CI excluding
+      the null).
+  PGS003347:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 1 agree, 0 disagree; rs1800961
+        C +0.145'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.45 with catalog-annotated HDL score PGS004100 (PGP000517, beta CI excluding
+      the null).
+  PGS003337:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.38 (median +0.34) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS003346:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.38 (median +0.34) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS003336:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting plasma glucose level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Fasting plasma glucose
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Common-variant GRS (CVGRS) for fasting plasma glucose from
+      the Korean (KoGES/KBN) East Asian GWAS; PGS Catalog weights are per-allele effects on the reported trait.
+      Corroborated by 1000G EUR r = +0.34 with PGS000305 and +0.38 with PGS000306 (both read, higher = higher fasting
+      glucose), plus catalog beta +0.204 against FPG and OR 1.46 for type 2 diabetes in East Asians (no CI reported).
+  PGS003345:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting plasma glucose level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Fasting plasma glucose
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Common plus rare/low-frequency variant GRS (ALLGRS) for fasting
+      plasma glucose from the Korean East Asian GWAS; PGS Catalog weights are per-allele effects on the reported
+      trait. Corroborated by 1000G EUR r = +1.00 with PGS003336 (rare variants absent in 1000G), +0.34 with PGS000305
+      and +0.38 with PGS000306 (both read), plus catalog beta +0.207 against FPG in East Asians (no CI reported).
 paper:
   pmid: '36333282'
   doi: 10.1038/s41467-022-34163-2

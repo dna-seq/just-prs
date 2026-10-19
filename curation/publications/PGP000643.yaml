@@ -1,0 +1,34 @@
+pgp_id: PGP000643
+scores:
+  PGS004912:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_neoplasia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal advanced neoplasia
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal neoplasm
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.34 [1.28, 1.4] on Colorectal advanced neoplasm.
+paper:
+  pmid: '38872215'
+  doi: 10.1186/s13073-024-01355-y
+  title: Developing an optimal stratification model for colorectal cancer screening and reducing racial disparities
+    in multi-center population-based studies.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

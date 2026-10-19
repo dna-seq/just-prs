@@ -1,0 +1,36 @@
+pgp_id: PGP000073
+scores:
+  PGS000150:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: colorectal_neoplasia
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.81 with catalog-annotated PGS000801 (catalog metric here: no directional metric on non-advanced
+      adenoma (colorectal)).'
+paper:
+  pmid: '29574091'
+  doi: 10.1053/j.gastro.2018.03.030
+  title: Genetic Risk Score Is Associated With Prevalence of Advanced Neoplasms in a Colorectal Cancer Screening
+    Population.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

@@ -1,0 +1,35 @@
+pgp_id: PGP000541
+scores:
+  PGS004240:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.95 with catalog-annotated PGS000370 (catalog metric here: no directional metric on Colorectal
+      cancer).'
+paper:
+  pmid: '37087737'
+  doi: 10.1002/ijc.34544
+  title: 'Saturated fatty acid intake, genetic risk and colorectal cancer incidence: A large-scale prospective cohort
+    study.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

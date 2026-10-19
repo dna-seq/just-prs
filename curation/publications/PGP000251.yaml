@@ -1,0 +1,26 @@
+pgp_id: PGP000251
+scores:
+  PGS001354:
+    cluster: cancer.thyroid_cancer
+    phenotype: thyroid_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of thyroid cancer (evaluated as subsequent thyroid cancer in childhood cancer survivors)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.81 with anchor PGS000087 (CC_Thyroid, OR 1.55 [1.44, 1.67]). Evaluated for subsequent
+      thyroid cancer in childhood cancer survivors; weights are GWAS thyroid cancer effects.

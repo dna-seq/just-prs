@@ -1,0 +1,180 @@
+slug: diastolic-blood-pressure
+query: diastolic blood pressure
+match:
+  terms:
+  - DBP
+  - diastolic blood pressure
+  efo_ids: []
+  exclude: []
+anchor: PGS004232
+status: resolved
+concepts:
+- cardiovascular.blood_pressure
+scores:
+  PGS000302:
+    decision: in_scope
+    note: null
+  PGS000912:
+    decision: in_scope
+    note: null
+  PGS001133:
+    decision: in_scope
+    note: null
+  PGS001900:
+    decision: in_scope
+    note: null
+  PGS002114:
+    decision: in_scope
+    note: null
+  PGS002239:
+    decision: in_scope
+    note: in scope; evaluated on apparent treatment-resistant hypertension
+  PGS002258:
+    decision: in_scope
+    note: in scope; catalog metric is on liver-related outcome
+  PGS002322:
+    decision: in_scope
+    note: null
+  PGS002362:
+    decision: in_scope
+    note: null
+  PGS002394:
+    decision: in_scope
+    note: null
+  PGS002443:
+    decision: in_scope
+    note: null
+  PGS002492:
+    decision: in_scope
+    note: null
+  PGS002541:
+    decision: in_scope
+    note: null
+  PGS002590:
+    decision: in_scope
+    note: null
+  PGS002639:
+    decision: in_scope
+    note: null
+  PGS002688:
+    decision: in_scope
+    note: null
+  PGS002889:
+    decision: in_scope
+    note: null
+  PGS002890:
+    decision: in_scope
+    note: null
+  PGS002891:
+    decision: in_scope
+    note: null
+  PGS002892:
+    decision: in_scope
+    note: null
+  PGS002893:
+    decision: in_scope
+    note: null
+  PGS002894:
+    decision: in_scope
+    note: null
+  PGS002895:
+    decision: in_scope
+    note: null
+  PGS002896:
+    decision: in_scope
+    note: null
+  PGS002897:
+    decision: in_scope
+    note: null
+  PGS002898:
+    decision: in_scope
+    note: null
+  PGS002899:
+    decision: in_scope
+    note: null
+  PGS002900:
+    decision: in_scope
+    note: null
+  PGS002901:
+    decision: in_scope
+    note: null
+  PGS002902:
+    decision: in_scope
+    note: null
+  PGS002903:
+    decision: in_scope
+    note: null
+  PGS002904:
+    decision: in_scope
+    note: null
+  PGS002905:
+    decision: in_scope
+    note: null
+  PGS002906:
+    decision: in_scope
+    note: null
+  PGS002907:
+    decision: in_scope
+    note: null
+  PGS002908:
+    decision: in_scope
+    note: null
+  PGS003463:
+    decision: in_scope
+    note: in scope; catalog metric is on respiratory event index
+  PGS003498:
+    decision: in_scope
+    note: null
+  PGS003883:
+    decision: in_scope
+    note: null
+  PGS003961:
+    decision: in_scope
+    note: null
+  PGS003962:
+    decision: in_scope
+    note: null
+  PGS003963:
+    decision: in_scope
+    note: null
+  PGS003964:
+    decision: in_scope
+    note: null
+  PGS004232:
+    decision: in_scope
+    note: in scope; evaluated in stroke survivors
+  PGS004233:
+    decision: in_scope
+    note: null
+  PGS004371:
+    decision: in_scope
+    note: null
+  PGS004604:
+    decision: in_scope
+    note: null
+  PGS004755:
+    decision: in_scope
+    note: null
+  PGS004756:
+    decision: in_scope
+    note: null
+  PGS004757:
+    decision: in_scope
+    note: null
+  PGS004758:
+    decision: in_scope
+    note: null
+  PGS005317:
+    decision: in_scope
+    note: 'in scope: DBP score (Evangelou 2018 variants); evaluated only on dCCB discontinuation'
+  PGS005351:
+    decision: in_scope
+    note: null
+summary: 'All 53 diastolic blood pressure scores (19 papers) are in scope and filed under cardiovascular.blood_pressure
+  / diastolic_blood_pressure (new phenotype, sign +1): a higher score means higher diastolic blood pressure.
+  51 are catalog-only, anchored on two scores with DBP betas whose CI excludes the null (PGS003964, PGS005351)
+  and chained by 1000G EUR r >= 0.2; PGS003961 (African component) and PGS005317 reuse quotes from previously
+  read full texts. No negative correlations and no inverted deposits (PGP000512 has no DBP scores). PGS005317
+  goes to review: about half its loci are opposite to the same-GWAS score PGS002258 (partial allele inconsistency
+  recorded). Low-correlation scores (BBJ, DBSLMM, AFR) were checked locally and their strongest loci agree
+  with consensus.'

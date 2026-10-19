@@ -1,0 +1,54 @@
+pgp_id: PGP000567
+scores:
+  PGS004588:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: excluded
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.85 [1.05, 3.32] against 'Alzheimer's disease dementia'; 1000G EUR r=+0.39 with
+      PGS004589 (OR 2.09 [1.09, 4.04] vs 'Alzheimer's disease dementia'). no APOE-region variant (chr19:44.4-45.4
+      Mb, GRCh38) in the file.
+  PGS004589:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: excluded
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.09 [1.09, 4.04] against 'Alzheimer's disease dementia'; 1000G EUR r=+0.64 with
+      PGS000053 (OR 1.29 [1.21, 1.37] vs 'Familial late-onset Alzheimer's disease (LOAD)'). no APOE-region variant
+      (chr19:44.4-45.4 Mb, GRCh38) in the file.

@@ -1749,3 +1749,2116 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.34 with catalog-annotated PGS001228 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.17.
+  PGS001263:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_flutter
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial flutter
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial flutter
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.66 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.78 with PGS001841.
+  PGS001339:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation or flutter
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation and flutter (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.66 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.79 with PGS001841.
+  PGS001340:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.62 with anchor PGS000035 (HR 1.34 [1.31, 1.37] incident AF), r=+0.76 with PGS001841.
+  PGS001291:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.69 with already-annotated PGS000742.
+  PGS001292:
+    cluster: cancer.prostate_cancer
+    phenotype: family_history_prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a family history of prostate cancer (affected father or brother)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Family history of prostate cancer
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.72 with already-annotated PGS001291. UKB family-history field (illness
+      of father/siblings); snpnet binomial model on case status per the paper template.
+  PGS001336:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.75 with PGS000479 (OR 1.438 [1.354, 1.528] on Breast cancer [female]).
+  PGS001337:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer_family_history
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a family history of breast cancer (proxy for own breast cancer risk)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Family history of breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.72 with PGS000472 (OR 1.343 [1.266, 1.426] on Breast cancer [female]).
+  PGS000957:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of essential (primary) hypertension diagnosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Essential (primary hypertension) (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score GBE_HC932; PGS Catalog weights are per-allele effects
+      on the reported trait. Corroborated by 1000G EUR r = +0.62 with PGS004934. Tanigawa snpnet time-to-event model
+      (GBE HC932); higher score = earlier/higher hazard of diagnosis.
+  PGS000958:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Essential hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). Score GBE_HC273; PGS Catalog weights are per-allele effects
+      on the reported trait. Corroborated by 1000G EUR r = +0.59 with PGS004934. GBE HC273 essential hypertension;
+      snpnet binomial model (paper template: higher score = more likely case).'
+  PGS001320:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). Score GBE_HC215; PGS Catalog weights are per-allele effects
+      on the reported trait. Corroborated by 1000G EUR r = +0.70 with PGS002998. GBE HC215; snpnet binomial model
+      (paper template: higher score = more likely case).'
+  PGS001324:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: 'likelihood of reporting a family history of high blood pressure (UKB FH1065: father/mother/sibling)'
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Family history of high blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). Score GBE_FH1065; PGS Catalog weights are per-allele effects
+      on the reported trait. Corroborated by 1000G EUR r = +0.53 with PGS002998. Proxy phenotype: family history,
+      not own diagnosis; snpnet binomial model (case = reports affected relative).'
+  PGS001133:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic BP (AR)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.78 with PGS004755 (DBP score annotated here). Score name GBE_INI4079.
+  PGS001304:
+    cluster: cancer.melanoma
+    phenotype: melanoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of melanoma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Melanoma (malignant)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by no directional metric (AUROC only, on Malignant melanoma); 1000G EUR r=+0.65 with anchor
+      PGS000079 (annotated here, OR 1.44 on melanoma). Paper has a template (snpnet binomial model on case status,
+      higher = more likely case).
+  PGS000929:
+    cluster: neurology.dementia
+    phenotype: all_cause_dementia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of dementia (any cause)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: All-cause dementia (algorithmically-defined)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.81 with PGS000334 (HR 1.93 [1.73,
+      2.15] vs 'Incident Alzheimer's disease'). APOE region variants present in the file.
+  PGS000945:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Dementia in Alzheimer's disease (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.76 with PGS000334 (HR 1.93 [1.73,
+      2.15] vs 'Incident Alzheimer's disease'). APOE region variants present in the file.
+  PGS000946:
+    cluster: neurology.dementia
+    phenotype: unspecified_dementia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of unspecified dementia
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Unspecified dementia (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.79 with PGS000334 (HR 1.93 [1.73,
+      2.15] vs 'Incident Alzheimer's disease'). APOE region variants present in the file.
+  PGS001179:
+    cluster: neurology.dementia
+    phenotype: vascular_dementia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of vascular dementia
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Vascular dementia (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.77 with PGS000334 (HR 1.93 [1.73,
+      2.15] vs 'Incident Alzheimer's disease'). APOE region variants present in the file.
+  PGS001347:
+    cluster: neurology.alzheimers_disease
+    phenotype: family_history_alzheimers
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of reporting a parent or sibling with Alzheimer's disease/dementia
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Family history of Alzheimer's/dementia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.83 with PGS000334 (HR 1.93 [1.73,
+      2.15] vs 'Incident Alzheimer's disease'). APOE region variants present in the file.
+  PGS001348:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease (algorithmically-defined)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.78 with PGS000334 (HR 1.93 [1.73,
+      2.15] vs 'Incident Alzheimer's disease'). APOE region variants present in the file.
+  PGS001349:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template). 1000G EUR r=+0.80 with PGS000334 (HR 1.93 [1.73,
+      2.15] vs 'Incident Alzheimer's disease'). APOE region variants present in the file.
+  PGS001248:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.82 with HR-corroborated PGS000711; catalog evaluation AUROC only.
+  PGS001249:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout (time-to-event) | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 with HR-corroborated PGS000711; catalog evaluation C-index only.
+  PGS001309:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other rheumatoid arthritis (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.31 with anchor PGS004873. 'Other rheumatoid arthritis' is the ICD-10
+      M06 grouping (includes seronegative RA); scored as general RA risk.
+  PGS001310:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; snpnet binomial model on case status (see paper template); corroborated by 1000G EUR r=+0.34 with anchor
+      PGS004873.
+  PGS001311:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: seropositive_rheumatoid_arthritis
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of seropositive rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Seropositive rheumatoid arthritis (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; only 3 variants; corroborated by 1000G EUR r=+0.26 with anchor PGS004873.
+  PGS001289:
+    cluster: cancer.thyroid_cancer
+    phenotype: thyroid_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of thyroid cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.40 with anchor PGS000087 (CC_Thyroid, OR 1.55 [1.44, 1.67]).
+  PGS000988:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte percentage of red cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte percentage
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score GBE_INI30290. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.72 with already-annotated same-phenotype seed PGS000095
+      (PGP000051).
+  PGS000989:
+    cluster: blood.reticulocyte_count
+    phenotype: reticulocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: reticulocyte percentage of red cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Reticulocyte percentage
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score GBE_INI30240. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.65 with already-annotated same-phenotype seed PGS000112
+      (PGP000051).
+  PGS001406:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score GBE_INI30300. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.75 with already-annotated same-phenotype seed PGS000094
+      (PGP000051).
+  PGS001528:
+    cluster: blood.reticulocyte_count
+    phenotype: reticulocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score GBE_INI30250. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.64 with already-annotated same-phenotype seed PGS000111
+      (PGP000051).
+  PGS001400:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Haemoglobin concentration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.53 with PGS004968 (PGP000679 hemoglobin score, catalog beta CI excludes
+      the null). 1000G EUR r with all other in-scope hemoglobin scores is positive (min +0.16). snpnet (GBE INI30020,
+      UKB field 30020); weight_type NR.
+  PGS001287:
+    cluster: immune.psoriasis
+    phenotype: psoriatic_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriatic arthropathy (UKB case status)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - &id009
+      source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriatic arthropathy | psoriatic arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; snpnet binomial model on UKB case status (paper template). 1000G EUR r=+0.60 with PGS001871 and +0.56
+      with PGS001312 (psoriasis); AUROC only.
+  PGS001312:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis (UKB case status)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id009
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; snpnet binomial model on UKB case status (paper template). 1000G EUR r=+0.35 with HR-corroborated anchor
+      PGS002293; AUROC only.
+  PGS001313:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk (hazard) of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id009
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis (time-to-event) | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; snpnet model on the UKB time-to-event psoriasis phenotype (GBE HC1159). 1000G EUR r=+0.45 with anchor
+      PGS002293 and +0.78 with PGS001312.
+  PGS001238:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: 'UKB 30080: platelet count, 10^9 cells/L'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: SH2B3 rs3184504 C allele weight negative (T raises platelets)
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the median UKB platelet count (paper template); anchor read score for this
+      trait.
+  PGS001233:
+    cluster: cardiovascular.heart_rate
+    phenotype: resting_heart_rate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: resting pulse rate, automated reading (beats per minute)
+      coding: 'UKB 102: integer, bpm (median over visits)'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heart rate (AR)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian model on the median raw value, so higher score = higher pulse rate (template rule). UKB
+      field 102 is Pulse rate, automated reading. Anchor of the heart-rate trait scan.
+  PGS001375:
+    cluster: cardiovascular.heart_rate
+    phenotype: resting_heart_rate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: average heart rate (beats per minute)
+      coding: 'UKB 22426: bpm'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Average heart rate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian model (template rule); UKB field 22426. 243 variants. 1000G EUR r=+0.33 with PGS001233.
+  PGS001523:
+    cluster: cardiovascular.heart_rate
+    phenotype: resting_heart_rate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: pulse rate (beats per minute)
+      coding: 'UKB 4194: bpm (arterial stiffness device)'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Pulse rate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian model (template rule); UKB field 4194. 1000G EUR r=+0.67 with PGS001233.
+  PGS001524:
+    cluster: cardiovascular.heart_rate
+    phenotype: resting_heart_rate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: pulse rate measured during blood-pressure measurement (beats per minute)
+      coding: 'UKB 95: bpm (manual reading)'
+    polarity: 1
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Pulse rate (during blood-pressure measurement)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian model (template rule); UKB field 95. 1000G EUR r=+0.40 with PGS001233.
+  PGS001037:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density T-score (UKB 78)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD) T-score, automated
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'snpnet Gaussian model on the quantitative trait (paper template: higher score = higher value). 1000G
+      EUR r=+0.80 with anchor PGS002315 (heel BMD T-score).'
+  PGS001038:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left heel bone mineral density T-score (UKB 4106)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left heel bone mineral density (BMD) T-score, automated
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model, left heel. 1000G EUR r=+0.74 with anchor PGS002315 (heel BMD T-score).
+  PGS001039:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right heel bone mineral density T-score (UKB 4125)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right heel bone mineral density (BMD) T-score, automated
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model, right heel. 1000G EUR r=+0.77 with anchor PGS002315 (heel BMD T-score).
+  PGS001402:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density, g/cm2 (UKB 3148)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model. 1000G EUR r=+0.80 with anchor PGS002315 (heel BMD T-score).
+  PGS001403:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left heel bone mineral density (UKB 4105)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD) (L)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model, left heel. 1000G EUR r=+0.74 with anchor PGS002315 (heel BMD T-score).
+  PGS001404:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right heel bone mineral density (UKB 4124)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD) (R)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model, right heel. 1000G EUR r=+0.77 with anchor PGS002315 (heel BMD T-score).
+  PGS001529:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_speed_of_sound
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: speed of sound through the heel, m/s (UKB 3146)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Speed of sound through heel
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model. 1000G EUR r=+0.79 with anchor PGS002315 (heel BMD T-score).
+  PGS001530:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_speed_of_sound
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: speed of sound through the left heel (UKB 4103)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Speed of sound through heel (L)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model, left heel. 1000G EUR r=+0.74 with anchor PGS002315 (heel BMD T-score).
+  PGS001531:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_speed_of_sound
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: speed of sound through the right heel (UKB 4122)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Speed of sound through heel (R)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model, right heel. 1000G EUR r=+0.76 with anchor PGS002315 (heel BMD T-score).
+  PGS001273:
+    cluster: musculoskeletal.bone_density
+    phenotype: osteoporosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of osteoporosis (UKB curated case status)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Osteoporosis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'snpnet binomial model on case status (paper template: higher score = more likely case). 1000G EUR r=+0.27
+      with PGS002768 (osteoporosis, OR 1.31 [1.25, 1.38]) and r=-0.24 with the BMD anchor.'
+  PGS001274:
+    cluster: musculoskeletal.bone_density
+    phenotype: osteoporosis
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of osteoporosis without pathological fracture (time to event)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Osteoporosis without pathological fracture (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only: time-to-event outcome, not covered by the paper''s Gaussian/binomial template. PGS Catalog
+      weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.78 with PGS001273 (osteoporosis,
+      same paper) and r=+0.29 with PGS002768 (OR 1.31 [1.25, 1.38]).'
+  PGS001101:
+    cluster: anthropometry.adiposity
+    phenotype: body_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body fat percentage (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body fat percentage
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.71 with PGS003509 (PGP000457, same phenotype).
+  PGS001102:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat percentage of the arm (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body fat percentage (left arm)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.84 with PGS003918 (PGP000502, same phenotype).
+  PGS001103:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat percentage of the leg (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body fat percentage (left leg)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.82 with PGS003912 (PGP000502, same phenotype).
+  PGS001104:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat percentage of the leg (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body fat percentage (right leg)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.83 with PGS003909 (PGP000502, same phenotype).
+  PGS001105:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat percentage of the trunk (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body fat percentage (trunk fat)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.83 with PGS003921 (PGP000502, same phenotype).
+  PGS001106:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat percentage of the arm (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm fat percentage (R)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.83 with PGS003915 (PGP000502, same phenotype).
+  PGS001144:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat mass of the arm (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm fat mass (L)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.84 with PGS003916 (PGP000502, same phenotype).
+  PGS001145:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat mass of the arm (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm fat mass (R)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.84 with PGS003916 (PGP000502, same phenotype).
+  PGS001146:
+    cluster: anthropometry.lean_mass
+    phenotype: regional_fat_free_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat-free mass of the arm (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm fat-free mass (R)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.86 with PGS003917 (PGP000502, same phenotype).
+  PGS001147:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat mass of the leg (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg fat mass (R)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.84 with PGS003913 (PGP000502, same phenotype).
+  PGS001148:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat mass of the trunk (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Trunk fat mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.85 with PGS003922 (PGP000502, same phenotype).
+  PGS001149:
+    cluster: anthropometry.adiposity
+    phenotype: fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body fat mass (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body fat mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.70 with PGS003532 (PGP000457, same phenotype).
+  PGS001154:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the arm (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Impedance (left arm)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.69 with PGS003540 (PGP000457, same phenotype). Higher impedance
+      means less lean tissue and body water, so polarity is -1 on the lean-mass axis.
+  PGS001155:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the leg (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Impedance (left leg)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.67 with PGS003540 (PGP000457, same phenotype). Higher impedance
+      means less lean tissue and body water, so polarity is -1 on the lean-mass axis.
+  PGS001156:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the arm (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Impedance (right arm)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.68 with PGS003540 (PGP000457, same phenotype). Higher impedance
+      means less lean tissue and body water, so polarity is -1 on the lean-mass axis.
+  PGS001157:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the leg (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Impedance (right leg)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.65 with PGS003540 (PGP000457, same phenotype). Higher impedance
+      means less lean tissue and body water, so polarity is -1 on the lean-mass axis.
+  PGS001158:
+    cluster: anthropometry.lean_mass
+    phenotype: predicted_muscle_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: impedance-predicted mass of the leg (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left leg mass (predicted)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value.
+  PGS001159:
+    cluster: anthropometry.lean_mass
+    phenotype: predicted_muscle_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: impedance-predicted mass of the leg (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right leg mass (predicted)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value.
+  PGS001160:
+    cluster: anthropometry.lean_mass
+    phenotype: predicted_muscle_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: impedance-predicted mass of the trunk (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Trunk mass (predicted)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value.
+  PGS001161:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the whole body (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body impedance
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.75 with PGS003540 (PGP000457, same phenotype). Higher impedance
+      means less lean tissue and body water, so polarity is -1 on the lean-mass axis.
+  PGS001166:
+    cluster: anthropometry.lean_mass
+    phenotype: regional_fat_free_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat-free mass of the leg (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg fat-free mass (L)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.87 with PGS003914 (PGP000502, same phenotype).
+  PGS001167:
+    cluster: anthropometry.lean_mass
+    phenotype: regional_fat_free_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat-free mass of the leg (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg fat-free mass (R)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank bioimpedance measurement (paper template), so higher score
+      = higher measured value. 1000G EUR r = +0.87 with PGS003911 (PGP000502, same phenotype).
+  PGS001150:
+    cluster: sleep.sleep_duration
+    phenotype: sleep_duration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: self-reported sleep duration (hours per day)
+      coding: 'UKB 1160: integer hours per 24 h, median of non-NA visits'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Sleep duration
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs1823125-G (PAX8; GWAS Catalog 3.14 unit increase in sleep duration, Gottlieb 2015) carries the largest
+        positive weight (+0.034)
+    status: agent_proposed
+    notes: snpnet Gaussian regression on GBE INI1160 (UKB field 1160). Higher PGS001150 = longer habitual sleep.
+      1000G EUR r=+0.56/+0.53 with the Prive sleep scores and +0.37 with PGS003764.
+  PGS001392:
+    cluster: cancer.lung_cancer
+    phenotype: family_history_lung_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of reporting a parent or sibling with lung cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Family history of lung cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet binomial model on case status (paper template); family-history phenotype (GBE_FH1001) is a proxy
+      for inherited lung-cancer liability, not the participant's own diagnosis. 1000G EUR r=+0.3 with PGS000721/PGS000740.
+  PGS001230:
+    cluster: anthropometry.adiposity
+    phenotype: body_weight
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body weight (kg)
+      coding: 'UKB 21002: weight in kg, median of non-NA visits'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body weight
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: FTO rs1421085 C (BMI-raising) +0.94; MC4R rs2229616 T (V103I, protective) -0.90; TMEM18 region rs62106258
+        and SEC16B rs543874 G (+0.59) consistent with known BMI loci
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on UKB field 21002 (paper template), so higher score = heavier. 1000G EUR
+      r = +0.87 with PGS003898 and +0.64 with PGS004410 (same phenotype).
+  PGS001126:
+    cluster: lifestyle.coffee_consumption
+    phenotype: coffee_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: cups of coffee drunk per day
+      coding: 'UKB 1498: integer cups/day incl. decaffeinated; -10 less than one, -1 do not know, -3 prefer not
+        to answer (how GBE handled -10 is not stated); median of non-NA visits'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 1498
+      quote: How many cups of coffee do you drink each DAY?
+      confidence: high
+    - source: full_text
+      locator: UK Biobank coding 100373
+      quote: Less than one
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs4410790-C (AHR) and rs2472297-T (CYP1A1/CYP1A2), the canonical coffee-raising alleles, carry the two
+        largest positive weights (+0.113, +0.112)
+    status: agent_proposed
+    notes: snpnet Gaussian regression on GBE INI1498. Higher PGS001126 = more cups of coffee per day. 1000G EUR
+      r=+0.48 with PGS001123 (drank coffee yesterday).
+  PGS001123:
+    cluster: lifestyle.coffee_consumption
+    phenotype: coffee_drunk_yesterday
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having drunk any coffee on the recalled day (24-hour diet recall)
+      coding: 'UKB 100240 (coding 100010): 0 No, 1 Yes; case = Yes in at least one recall'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 100240
+      quote: Did you drink any coffee yesterday?
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs4410790-C (AHR) and rs2472297-T (CYP1A1/CYP1A2) carry the two largest positive weights (+0.049, +0.032)
+    status: agent_proposed
+    notes: GBE BIN100240; catalog evaluation has 22,541 cases vs 6,503 controls, consistent with coffee drinkers
+      being cases. Higher PGS001123 = more likely a coffee drinker. 1000G EUR r=+0.48 with PGS001126.
+  PGS001124:
+    cluster: lifestyle.coffee_type
+    phenotype: ground_coffee
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of usually drinking ground coffee (espresso, filter etc.) rather than another coffee type
+      coding: 'UKB 1508 (coding 100397): 1 decaffeinated, 2 instant, 3 ground (incl. espresso, filter), 4 other;
+        -1/-3 missing; asked only of coffee drinkers (UKB 1498). Case = answer 3 (GBE BIN_FC30001508)'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 1508
+      quote: What type of coffee do you usually drink?
+      confidence: high
+    - source: full_text
+      locator: UK Biobank coding 100397
+      quote: Ground coffee (include espresso, filter etc)
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs2472297-T and rs4410790-C (more coffee) carry positive weights, as expected for caffeinated brewed
+        coffee; rs990871-T is +0.028 here and -0.021 in the instant-coffee score
+    status: agent_proposed
+    notes: One-hot binary trait (field 1508 answer 3); the answer-to-FC mapping is inferred from the PGS Catalog
+      label matching the UKB coding, the paper does not describe FC encoding. Controls are coffee drinkers of other
+      types (decaf, instant, other). 1000G EUR r=-0.30 with PGS001125 (instant coffee, a mutually exclusive answer),
+      not a sign error.
+  PGS001125:
+    cluster: lifestyle.coffee_type
+    phenotype: instant_coffee
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of usually drinking instant coffee rather than another coffee type
+      coding: 'UKB 1508 (coding 100397): 1 decaffeinated, 2 instant, 3 ground (incl. espresso, filter), 4 other;
+        -1/-3 missing; asked only of coffee drinkers (UKB 1498). Case = answer 2 (GBE BIN_FC20001508)'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 1508
+      quote: What type of coffee do you usually drink?
+      confidence: high
+    - source: full_text
+      locator: UK Biobank coding 100397
+      quote: Instant coffee
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: no canonical instant-coffee loci; rs990871-T carries -0.021 here and +0.028 in the ground-coffee score,
+        consistent with mutually exclusive answers
+    status: agent_proposed
+    notes: One-hot binary trait (field 1508 answer 2); the answer-to-FC mapping is inferred from the PGS Catalog
+      label matching the UKB coding. Higher PGS001125 = more likely an instant-coffee drinker, which sits on the
+      low (instant) end of the coffee_type axis. 1000G EUR r=-0.30 with PGS001124 (ground coffee), expected for
+      opposite answers; r~0 with the intake scores.

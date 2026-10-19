@@ -1,0 +1,87 @@
+pgp_id: PGP000033
+scores:
+  PGS000045:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.14 [1.11, 1.17] on Breast cancer in BRCA1 mutation carriers; 1000G EUR r=+0.98
+      with PGS000046 (HR 1.11 [1.08, 1.15] on Breast cancer in BRCA1 mutation carriers). Evaluated in BRCA1 mutation
+      carriers.
+  PGS000046:
+    cluster: cancer.breast_cancer
+    phenotype: er_positive_breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of estrogen-receptor-positive breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: breast_cancer
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Estrogen receptor [ER]-positive breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.11 [1.08, 1.15] on Breast cancer in BRCA1 mutation carriers; 1000G EUR r=+0.98
+      with PGS000045 (HR 1.14 [1.11, 1.17] on Breast cancer in BRCA1 mutation carriers). Evaluated in BRCA1 mutation
+      carriers.
+  PGS000047:
+    cluster: cancer.breast_cancer
+    phenotype: er_negative_breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of estrogen-receptor-negative breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: breast_cancer
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Estrogen receptor [ER]-negative breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.27 [1.23, 1.31] on Breast cancer in BRCA1 mutation carriers; 1000G EUR r=+0.62
+      with PGS000003 (OR 1.45 [1.4, 1.49] on ER-negative breast cancer). Evaluated in BRCA1 mutation carriers.
+paper:
+  pmid: '28376175'
+  doi: 10.1093/jnci/djw302
+  title: Evaluation of Polygenic Risk Scores for Breast and Ovarian Cancer Risk Prediction in BRCA1 and BRCA2 Mutation
+    Carriers.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

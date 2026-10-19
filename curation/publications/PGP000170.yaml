@@ -1,0 +1,34 @@
+pgp_id: PGP000170
+scores:
+  PGS000765:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+1.00 with catalog-annotated PGS000734 (catalog metric here: no directional metric on Colorectal
+      cancer with pathogenic variant carriers).'
+paper:
+  pmid: '30510241'
+  doi: 10.1038/s41588-018-0286-6
+  title: Discovery of common and rare genetic risk variants for colorectal cancer.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

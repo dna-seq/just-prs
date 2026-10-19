@@ -1,0 +1,57 @@
+pgp_id: PGP000191
+scores:
+  PGS000802:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer (Chinese case-control)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract
+      quote: The individuals carrying the highest quartile of risk score revealed over 2-fold risks of CRC (ranging
+        from 2.12 to 2.90) compared with those who presented the lowest quartile of risk score.
+      confidence: medium
+    lead_variant_check:
+      status: mixed
+      note: '13 lead SNPs vs GWAS Catalog CRC risk allele: 3 agree, 10 opposite'
+    review_reason: Deposited file has most lead alleles opposite to the CRC risk allele (partial inversion); as-distributed
+      direction is unreliable.
+    corrections:
+    - kind: partial_allele_inconsistency
+      action: quarantine
+      effect: 'Mixed allele coding: no single sign makes the file match the paper; users should not get a percentile
+        from it until PGS Catalog fixes the file.'
+      evidence: 10/13 lead SNPs opposite the GWAS Catalog CRC risk allele, 3/13 agree; 1000G EUR r=-0.20 to -0.27
+        with 7 other CRC scores
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper AUC 0.59-0.61 and quartile ORs describe the authors score, not this file.
+      evidence: allele inconsistency above
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'Paper direction (higher = more CRC) recorded, but the deposited file is internally inconsistent: of
+      13 lead SNPs checked against GWAS Catalog CRC risk alleles, 3 match (rs10411210, rs6983267, rs16969681) and
+      10 are the opposite allele with positive weight (rs6061231, rs647161, rs6469656, rs4813802, rs3802842, rs10795668,
+      rs1321311, rs10936599, rs704017, rs10774214). In 1000G EUR it anti-correlates with 7 CRC scores (r=-0.20 to
+      -0.27, e.g. PGS000801 -0.27, PGS000055 -0.24). Full text not open access, so the paper allele table could
+      not be checked.'
+paper:
+  pmid: '33545268'
+  doi: 10.1016/j.ygeno.2021.01.025
+  title: 'Performance of common genetic variants in risk prediction for colorectal cancer in Chinese: A two-stage
+    and multicenter study.'
+evidence_read:
+  abstract: true
+  full_text: null
+  supplement: []

@@ -92,6 +92,200 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by OR 1.89 [1.85, 1.94] against 'Type 2 diabetes'.
+  PGS002756:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.87 [1.79, 1.96] on Atrial fibrillation; 1000G EUR r=+0.60 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.93 with PGS005292.
+  PGS002765:
+    cluster: cardiovascular.blood_pressure
+    phenotype: systolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: systolic blood pressure (SBP-GWAS weights, used as the hypertension PRS)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: hypertension
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score SBP_prscs; PGS Catalog weights are per-allele effects
+      on the reported trait. Corroborated by OR 1.57 [1.51, 1.62] (CI excludes 1) against hypertension; 1000G EUR
+      r = +0.63 with PGS002998. Score name says the weights come from a systolic blood pressure GWAS (PRS-CS); the
+      catalog reports and evaluates it as hypertension. Both phenotypes have sign +1, so polarity is the same either
+      way.
+  PGS002753:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7412 T (APOE e2, protective) carries a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.64 [1.5, 1.79] against 'Alzheimer's disease'; 1000G EUR r=+0.77 with PGS004092
+      (OR 1.48977 [1.46572, 1.51421] vs 'AD'). APOE region variants present in the file.
+  PGS002758:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.61 [1.46, 1.77] on Colorectal cancer.
+  PGS002762:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.69 (CI 1.60-1.78) against 'Gout'; 1000G EUR r=+0.37 with anchor PGS004871. Score
+      name Urate_prscs suggests a urate-GWAS-derived score, but the reported trait and evaluation are gout.
+  PGS002769:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: seropositive_rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of seropositive rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Seropositive rheumatoid arthritis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.72 [1.61, 1.83] against 'Seropositive rheumatoid arthritis'; 1000G EUR r=+0.50
+      with anchor PGS004873.
+  PGS002768:
+    cluster: musculoskeletal.bone_density
+    phenotype: osteoporosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of osteoporosis
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Osteoporosis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.31 [1.25, 1.38] against ''Osteoporosis''. Strong 1000G EUR anti-correlation with
+      BMD scores (r=-0.88 vs PGS002315, -0.77 vs PGS001402) is expected: osteoporosis has sign -1 in this concept.'
+  PGS002770:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: stroke disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; FinnGen PRS-CS stroke score; corroborated by OR 1.15 [1.08, 1.22] on stroke; 1000G EUR r=+0.38 with
+      PGS012551 and +0.36 with PGS000911. Its only 1000G EUR anti-correlation inside the stroke concept is with
+      PGS005156 (PRS-CSx EAS+EUR, PGP000704), which anti-correlates with every stroke score and is recorded as an
+      inverted deposit.
 paper:
   pmid: '36347255'
   doi: 10.1016/j.ajhg.2022.10.009

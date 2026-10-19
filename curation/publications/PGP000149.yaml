@@ -1,0 +1,41 @@
+pgp_id: PGP000149
+scores:
+  PGS000741:
+    cluster: cancer.prostate_cancer
+    strata: {}
+    review_reason: null
+    status: agent_proposed
+    phenotype: prostate_cancer
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of prostate cancer diagnosis (earlier age at diagnosis of any and aggressive prostate cancer)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: full_text
+      locator: Results > PHS association with any prostate cancer in OncoArray
+      quote: Comparing the 80th and 20th percentiles of genetic risk, men with high PHS had an HR of 5.32 [4.99–5.70]
+        for any prostate cancer.
+      confidence: high
+    - source: full_text
+      locator: Results > PHS association with aggressive prostate cancer
+      quote: Comparing the 80th and 20th percentiles of genetic risk, men with high PHS had an HR of 5.88 [5.46–6.33]
+        for aggressive prostate cancer; within each genetic ancestry group, men with high PHS had HRs of 5.62 [5.23–6.05],
+        5.16 [4.79–5.55], and 2.43 [2.26-2.61] for men of European, Asian, and African ancestry, respectively.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs77541621 A (+) is the GWAS risk allele; rs17632542 G (-) is protective (risk allele T); rs16860513,
+        rs117576373 not in GWAS Catalog
+    notes: PHS2 (Cox log-HR weights re-fit in PHS1 development data); evaluated for age at diagnosis in European,
+      Asian and African ancestry men.
+paper:
+  pmid: '33623038'
+  doi: 10.1038/s41467-021-21287-0
+  title: Polygenic hazard score is associated with prostate cancer in multi-ethnic populations.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

@@ -84,3 +84,8 @@ evidence_read:
   abstract: true
   full_text: europepmc
   supplement: []
+paper:
+  pmid: '38671457'
+  doi: 10.1186/s13073-024-01337-0
+  title: 'Polygenic scores for longitudinal prediction of incident type 2 diabetes in an ancestrally and medically
+    diverse primary care physician network: a patient cohort study.'

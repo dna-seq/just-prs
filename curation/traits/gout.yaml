@@ -1,0 +1,126 @@
+slug: gout
+query: gout
+match:
+  terms:
+  - gout
+  - gouty arthritis
+  - hyperuricemia
+  - serum urate
+  - uric acid
+  efo_ids: []
+  exclude: []
+anchor: PGS004871
+status: resolved
+concepts:
+- endocrine.gout
+scores:
+  PGS000126:
+    decision: in_scope
+    note: 'phenotype serum_urate: serum urate GRS (evaluated on prevalent gout)'
+  PGS000199:
+    decision: in_scope
+    note: null
+  PGS000711:
+    decision: in_scope
+    note: null
+  PGS000755:
+    decision: in_scope
+    note: 'phenotype serum_urate: serum uric acid PRS'
+  PGS001248:
+    decision: in_scope
+    note: null
+  PGS001249:
+    decision: in_scope
+    note: null
+  PGS001789:
+    decision: in_scope
+    note: null
+  PGS001822:
+    decision: in_scope
+    note: null
+  PGS002030:
+    decision: in_scope
+    note: null
+  PGS002290:
+    decision: in_scope
+    note: 'phenotype serum_urate: plasma uric acid GRS'
+  PGS002307:
+    decision: in_scope
+    note: null
+  PGS002762:
+    decision: in_scope
+    note: null
+  PGS003329:
+    decision: in_scope
+    note: null
+  PGS003990:
+    decision: in_scope
+    note: null
+  PGS004006:
+    decision: in_scope
+    note: null
+  PGS004018:
+    decision: in_scope
+    note: null
+  PGS004032:
+    decision: in_scope
+    note: null
+  PGS004047:
+    decision: in_scope
+    note: null
+  PGS004060:
+    decision: in_scope
+    note: null
+  PGS004076:
+    decision: in_scope
+    note: null
+  PGS004090:
+    decision: in_scope
+    note: null
+  PGS004114:
+    decision: in_scope
+    note: null
+  PGS004130:
+    decision: in_scope
+    note: null
+  PGS004144:
+    decision: in_scope
+    note: null
+  PGS004160:
+    decision: in_scope
+    note: null
+  PGS004222:
+    decision: in_scope
+    note: null
+  PGS004265:
+    decision: in_scope
+    note: null
+  PGS004266:
+    decision: in_scope
+    note: null
+  PGS004267:
+    decision: in_scope
+    note: null
+  PGS004268:
+    decision: in_scope
+    note: null
+  PGS004269:
+    decision: in_scope
+    note: null
+  PGS004767:
+    decision: in_scope
+    note: null
+  PGS004768:
+    decision: in_scope
+    note: null
+  PGS004871:
+    decision: in_scope
+    note: null
+  PGS004931:
+    decision: in_scope
+    note: null
+summary: All 35 scores are in scope under one new concept, endocrine.gout (higher risk of gout, undesirable). 32 are gout
+  risk scores and 3 are serum/plasma urate scores (phenotype serum_urate, sign +1). Every pairwise 1000G EUR correlation is
+  positive (min +0.05), so there is no direction split. The 32 gout scores are catalog-only annotations corroborated by OR/HR
+  or correlation with an OR/HR-backed score; the urate scores were read (two full texts state urate-raising alleles; PGS002290
+  abstract only plus correlation). For every score a higher percentile means more urate and higher gout risk.

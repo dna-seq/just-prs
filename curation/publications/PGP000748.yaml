@@ -1,0 +1,144 @@
+pgp_id: PGP000748
+scores:
+  PGS005258:
+    cluster: cancer.thyroid_cancer
+    phenotype: thyroid_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of thyroid cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results, PRS section (Fig. 3b)
+      quote: in the top decile had 10.7 times the odds of developing ThC than those in the first decile
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'P+T score of 84 genome-wide significant variants (mixed-ancestry GWAS), matching the paper''s PRS_ThC
+      versus All. Catalog OR 1.02 has no stated unit (likely per raw score unit; AUROC 0.686). 1000G EUR r=+0.50
+      with anchor PGS000087. Published version: Nature Genetics (PMID 41644669).'
+  PGS005259:
+    cluster: cancer.thyroid_cancer
+    phenotype: thyroid_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of thyroid cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results, PRS section (Fig. 3b)
+      quote: in the top decile had 10.7 times the odds of developing ThC than those in the first decile
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Published version: Nature Genetics (PMID 41644669, PMC12900643). The quote describes PRS_ThC versus
+      All; the PRS-CS (phi=1e-4) versions are not described in the text, but share its GWAS and direction. 1000G
+      EUR r=+0.43 with anchor PGS000087.'
+  PGS005260:
+    cluster: cancer.thyroid_cancer
+    phenotype: thyroid_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of thyroid cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results, PRS section (Fig. 3b)
+      quote: in the top decile had 10.7 times the odds of developing ThC than those in the first decile
+      confidence: medium
+    - source: full_text
+      locator: Results, PRS section
+      quote: PRS analyses in the European population showed results similar to those from the mixed-ancestry GWAS
+        meta-analysis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Published version: Nature Genetics (PMID 41644669, PMC12900643). The quote describes PRS_ThC versus
+      All; the PRS-CS (phi=1e-4) versions are not described in the text, but share its GWAS and direction. 1000G
+      EUR r=+0.42 with anchor PGS000087. European-ancestry GWAS version.'
+  PGS005273:
+    cluster: cancer.thyroid_cancer
+    phenotype: thyroid_cancer_vs_benign_nodule
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood that a thyroid nodule is malignant (thyroid cancer rather than benign nodular goiter)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results, PRS section (Fig. 3b)
+      quote: in the top decile had 7.8 times the odds of being malignant than in individuals with PRS
+      confidence: medium
+    - source: full_text
+      locator: Methods, GWAS
+      quote: focusing on the common clinical task of determining malignancy in thyroid nodules
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: The paper's PRS_ThC versus BNG is the difference PRS_ThC-vs-All minus PRS_BNG-vs-All; a case-only ThC-vs-BNG
+      GWAS also exists. Which one the PRS-CS file uses is not stated, but both mean higher = nodule more likely
+      malignant. 1000G EUR r=+0.31 with anchor PGS000087.
+  PGS005274:
+    cluster: cancer.thyroid_cancer
+    phenotype: thyroid_cancer_vs_benign_nodule
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood that a thyroid nodule is malignant (thyroid cancer rather than benign nodular goiter)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results, PRS section (Fig. 3b)
+      quote: in the top decile had 7.8 times the odds of being malignant than in individuals with PRS
+      confidence: medium
+    - source: full_text
+      locator: Results, PRS section
+      quote: PRS analyses in the European population showed results similar to those from the mixed-ancestry GWAS
+        meta-analysis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: European-ancestry version of PGS005273. Construction (difference score vs case-only GWAS) not stated
+      for the PRS-CS file; either way higher = nodule more likely malignant. 1000G EUR r=+0.27 with anchor PGS000087.
+paper:
+  pmid: '41644669'
+  doi: 10.1101/2025.05.15.25327513
+  title: Global multi-ancestry genetic study elucidates genes and biological pathways associated with thyroid cancer
+    and benign thyroid diseases
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

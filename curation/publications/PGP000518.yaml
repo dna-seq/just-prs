@@ -1,0 +1,68 @@
+pgp_id: PGP000518
+scores:
+  PGS004165:
+    cluster: cancer.lung_cancer
+    phenotype: lung_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of lung cancer in never-smoking women
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      smoking: never
+      sex: female
+    provenance:
+    - source: abstract
+      locator: Abstract
+      quote: we derived a polygenic risk score including 21 variants (PRS-21) for lung cancer in never-smoking women.
+      confidence: high
+    - source: abstract
+      locator: Abstract
+      quote: PRS-21 had a hazard ratio (HR) per SD of 1.29 (95% CI = 1.18-1.41) in the prospective cohort.
+      confidence: high
+    - source: abstract
+      locator: Abstract
+      quote: 'Compared with participants who had a low genetic risk, those with an intermediate (HR = 1.32, 95%
+        CI: 1.00-1.72) and high (HR = 2.09, 95% CI: 1.56-2.80) genetic risk had a significantly higher risk of incident
+        lung cancer.'
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: TERT/CLPTM1L rs7726159 A weight +0.152; GWAS Catalog (this paper) risk allele A, OR 1.42.
+    review_reason: null
+    status: agent_proposed
+    notes: PRS-21 from an East Asian never-smoking-women GWAS meta-analysis (8595 cases, 8275 controls); evaluated
+      in an independent Chinese prospective cohort (n=55,266; CKB per catalog). East Asian ancestry; strata from
+      the title/abstract.
+  PGS004164:
+    cluster: cancer.lung_cancer
+    phenotype: lung_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of lung cancer in never-smoking women
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      smoking: never
+      sex: female
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung cancer in never smokers
+      confidence: medium
+    - source: abstract
+      locator: Abstract
+      quote: we derived a polygenic risk score including 21 variants (PRS-21) for lung cancer in never-smoking women.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: TERT/CLPTM1L rs7726159 A weight +0.35; GWAS Catalog (this paper) risk allele A, OR 1.42.
+    review_reason: null
+    status: agent_proposed
+    notes: PRS16 (genome-wide significant SNPs, p<5e-7, from the East Asian never-smoker GWAS GCST90277434) is not
+      described in the abstract (paper not open access). Direction from log(OR) weights, catalog HR 1.28 [1.17,
+      1.40] per SD in never smokers, the rs7726159 lead-variant agreement and 1000G EUR r=+0.9 with PRS-21 (PGS004165).

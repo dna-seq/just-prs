@@ -1,0 +1,35 @@
+slug: coffee-consumption
+query: coffee consumption
+match:
+  terms:
+  - caffeine
+  - coffee consumption
+  - coffee intake
+  - cups of coffee
+  efo_ids: []
+  exclude: []
+anchor: PGS001126
+status: resolved
+concepts:
+- lifestyle.coffee_consumption
+- lifestyle.coffee_type
+scores:
+  PGS001123:
+    decision: in_scope
+    note: Drank any coffee yesterday (UKB 100240, 24-h recall)
+  PGS001124:
+    decision: in_scope
+    note: Coffee type = ground (UKB 1508 answer 3) among coffee drinkers
+  PGS001125:
+    decision: in_scope
+    note: Coffee type = instant (UKB 1508 answer 2) among coffee drinkers
+  PGS001126:
+    decision: in_scope
+    note: Cups of coffee per day (UKB 1498)
+summary: All four coffee scores come from one UK Biobank paper (Tanigawa 2022, PGP000244) and were annotated from
+  the paper-wide snpnet rule plus UK Biobank question wording. PGS001126 (cups per day) and PGS001123 (drank coffee
+  yesterday) sit on a new 'more coffee drinking' concept; both put the canonical coffee-raising alleles rs4410790-C
+  (AHR) and rs2472297-T (CYP1A2) at the top with positive weights and correlate +0.48. PGS001124 (usually ground
+  coffee) and PGS001125 (usually instant coffee) are one-hot answers to UKB 1508, asked only of coffee drinkers;
+  they form a separate 'coffee type' concept (ground = +, instant = -). Their r = -0.30 is expected for mutually
+  exclusive answers, not a sign flip; after alignment it is +0.30. No lookups were needed.

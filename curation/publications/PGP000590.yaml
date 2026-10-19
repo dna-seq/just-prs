@@ -1,0 +1,46 @@
+pgp_id: PGP000590
+scores:
+  PGS004611:
+    cluster: cancer.breast_cancer_aggressiveness
+    phenotype: ror_p_recurrence_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: tumour ROR-P risk-of-recurrence score among breast cancer cases (more aggressive tumours)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: breast_cancer_specific_mortality
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Discussion
+      quote: We used associations between breast cancer susceptibility SNPs and tumor gene expression to construct
+        a case-only PRS for ROR-P.
+      confidence: high
+    - source: full_text
+      locator: Results > Association of ROR-P PRS with breast cancer-specific survival
+      quote: We expected higher ROR-P PRS to be associated with more aggressive cancers and thus shorter breast
+        cancer-specific survival.
+      confidence: high
+    - source: full_text
+      locator: Abstract
+      quote: In meta-analysis of these cohorts, higher ROR-P PRS was associated with worse survival, HR per SD =
+        1.13
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: case-only score; GWAS Catalog risk alleles would not test its direction
+    review_reason: null
+    status: agent_proposed
+    notes: 'Not a breast cancer risk (incidence) score: trained case-only on tumour ROR-P. Anti-correlates weakly
+      (r down to -0.30) with overall-risk scores in 1000G EUR, consistent with the paper noting the overall-risk
+      PRS associates with better survival. Separate concept from cancer.breast_cancer.'
+paper:
+  pmid: '37188791'
+  doi: 10.1038/s41698-023-00382-z
+  title: Development and testing of a polygenic risk score for breast cancer aggressiveness.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

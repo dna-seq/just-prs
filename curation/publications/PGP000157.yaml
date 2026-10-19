@@ -1,0 +1,61 @@
+pgp_id: PGP000157
+scores:
+  PGS000752:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: lipoprotein(a) concentration (nmol/L), as the file is distributed
+      coding: UKB Lp(a) in nmol/L; no transformation stated
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Research letter, Methods paragraph (PMC author manuscript)
+      quote: Using 11,446 variants within 2 megabases of the
+      confidence: high
+    - source: full_text
+      locator: Results, Figure 1A
+      quote: with median concentrations ranging from 5.2 nmol/L in the lowest percentile to 175.2 nmol/L in the
+        highest percentile
+      confidence: high
+    lead_variant_check:
+      status: disagree
+      note: rs3798220 opposite (T raises in file; GWAS Catalog C raises); rs10455872 agrees (G raises) but small
+        weight; 24/26 overlapping LPA-region variants opposite vs PGS000689/PGS004201
+    review_reason: 'Suspected inverted deposit: paper says higher PGS = higher Lp(a), but most LPA-region weights
+      point the other way and the file anti-correlates (r -0.59 to -0.81) with every other Lp(a) score; recorded
+      as distributed (higher = lower Lp(a)).'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction describes the file as distributed (decreases Lp(a)); the paper says a higher score means
+        higher Lp(a).
+      paper_direction: increases
+      evidence: 'Paper: higher PGS percentile = higher Lp(a). File: 24-26 of ~28 allele-aligned LPA-region top-300
+        variants carry the opposite sign to PGS000689/PGS004201; rs3798220 T (Lp(a)-lowering) has weight +0.0146
+        (opposite); rs10455872 A -0.0132 agrees but is a small weight; 1000G EUR r = -0.59 to -0.81 with all 13
+        other Lp(a) scores (-0.66 with anchor PGS000667).'
+      recorded: '2026-10-19'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's r = 0.50-0.52 and percentile results describe the authors' score, not the deposited file.
+      evidence: Deposited file anti-correlates with all other Lp(a) scores in 1000G EUR.
+      recorded: '2026-10-19'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: LDpred (rho = 0.03) on UKB Lp(a) GWAS, 11,446 variants within 2 Mb of LPA. rs10455872 agrees, so the
+      swap may not be perfectly whole-file; a human should confirm before reporting upstream.
+paper:
+  pmid: '33522245'
+  doi: 10.1161/circgen.120.003182
+  title: Genetic Predictor to Identify Individuals With High Lipoprotein(a) Concentrations.
+evidence_read:
+  abstract: false
+  full_text: PMC author manuscript (fulltext_pmc.html)
+  supplement: []

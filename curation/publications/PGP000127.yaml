@@ -1,0 +1,47 @@
+pgp_id: PGP000127
+scores:
+  PGS000667:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lipoprotein(a) concentration (GRS expressed as predicted Lp(a) in nmol/L)
+      coding: GRS converted from mg/dL to nmol/L by multiplying by 2.15; GRS >= 120 considered elevated
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog HRs are for incident ASCVD, CAD, MI, stroke, PAD and CV mortality per 120 nmol/L of GRS; higher
+        Lp(a) raises these risks.
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods, LPA Genetic Risk Score
+      quote: composed of 43 single-nucleotide variants that were conditionally and significantly associated with
+        lipoprotein(a) levels
+      confidence: high
+    - source: abstract
+      locator: Abstract, Results
+      quote: explained approximately 60% of the variation in measured lipoprotein(a) for White/European individuals
+      confidence: medium
+    - source: full_text
+      locator: Results (incident ASCVD outcomes)
+      quote: GRS was associated with increased risk of incident peripheral arterial disease
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: 'no rsIDs in harmonized file; allele-aligned overlap with PGS000689/PGS004201 (which carry rs10455872
+        G and rs3798220 C as Lp(a)-raising): 6/0 and 7/0 agree'
+    review_reason: null
+    status: agent_proposed
+    notes: Anchor score for this trait (trait-scan anchor). Weights are external per-allele Lp(a) effects (eTable
+      1, not fetched); a higher GRS = higher predicted Lp(a) and higher ASCVD hazard.
+paper:
+  pmid: '33021622'
+  doi: 10.1001/jamacardio.2020.5398
+  title: Clinical Utility of Lipoprotein(a) and LPA Genetic Risk Score in Risk Prediction of Incident Atherosclerotic
+    Cardiovascular Disease.
+evidence_read:
+  abstract: true
+  full_text: europepmc PMC7539232
+  supplement: []

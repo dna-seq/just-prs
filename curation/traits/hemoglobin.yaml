@@ -1,0 +1,188 @@
+slug: hemoglobin
+query: hemoglobin
+match:
+  terms:
+  - anemia
+  - haemoglobin
+  - hemoglobin
+  - hemoglobin concentration
+  - hemoglobin level
+  efo_ids: []
+  exclude: []
+anchor: PGS000100
+status: resolved
+concepts:
+- blood.hemoglobin
+scores:
+  PGS000093:
+    decision: in_scope
+    note: null
+  PGS000099:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS000100:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS000168:
+    decision: in_scope
+    note: null
+  PGS000174:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS000175:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS001218:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS001219:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS001305:
+    decision: out_of_scope
+    note: vitamin B12 deficiency anaemia is a disease endpoint with its own ontology term, not hemoglobin
+      level
+  PGS001352:
+    decision: out_of_scope
+    note: HbA1c is a glycemia marker (endocrine.glycemia), not blood hemoglobin concentration
+  PGS001400:
+    decision: in_scope
+    note: null
+  PGS001926:
+    decision: in_scope
+    note: null
+  PGS001953:
+    decision: out_of_scope
+    note: HbA1c is a glycemia marker (endocrine.glycemia), not blood hemoglobin concentration
+  PGS001989:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS002142:
+    decision: in_scope
+    note: null
+  PGS002171:
+    decision: out_of_scope
+    note: HbA1c is a glycemia marker (endocrine.glycemia), not blood hemoglobin concentration
+  PGS002206:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS002339:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS002371:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS002411:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS002460:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS002509:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS002558:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS002607:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS002656:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS002705:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS003425:
+    decision: in_scope
+    note: null
+  PGS003468:
+    decision: in_scope
+    note: null
+  PGS003512:
+    decision: in_scope
+    note: null
+  PGS003533:
+    decision: out_of_scope
+    note: HbA1c is a glycemia marker (endocrine.glycemia), not blood hemoglobin concentration
+  PGS003560:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS003926:
+    decision: in_scope
+    note: null
+  PGS003929:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS003930:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS004337:
+    decision: out_of_scope
+    note: HbA1c is a glycemia marker (endocrine.glycemia), not blood hemoglobin concentration
+  PGS004347:
+    decision: in_scope
+    note: null
+  PGS004350:
+    decision: out_of_scope
+    note: red cell index (MCH/MCHC), a separate trait from blood hemoglobin concentration
+  PGS004769:
+    decision: in_scope
+    note: null
+  PGS004770:
+    decision: in_scope
+    note: null
+  PGS004956:
+    decision: in_scope
+    note: null
+  PGS004957:
+    decision: in_scope
+    note: null
+  PGS004958:
+    decision: in_scope
+    note: null
+  PGS004959:
+    decision: in_scope
+    note: null
+  PGS004960:
+    decision: in_scope
+    note: null
+  PGS004961:
+    decision: in_scope
+    note: null
+  PGS004962:
+    decision: in_scope
+    note: null
+  PGS004963:
+    decision: in_scope
+    note: null
+  PGS004964:
+    decision: in_scope
+    note: null
+  PGS004965:
+    decision: in_scope
+    note: null
+  PGS004966:
+    decision: in_scope
+    note: null
+  PGS004967:
+    decision: in_scope
+    note: null
+  PGS004968:
+    decision: in_scope
+    note: null
+  PGS005178:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL): predicts trait variability, not the level; direction of level not defined'
+  PGS005185:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL): predicts trait variability, not the level; direction of level not defined'
+  PGS005186:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL): predicts trait variability, not the level; direction of level not defined'
+summary: '25 hemoglobin-concentration scores from 12 papers map to blood.hemoglobin (higher score = higher
+  blood hemoglobin). All were annotated catalog-only: PGP000679 scores carry a positive beta on hemoglobin
+  with CI excluding the null, and every other score correlates positively (r 0.45-0.69 max) with them
+  in 1000G EUR; no negative pairs among in-scope scores. MCH/MCHC red-cell indices, HbA1c, vitamin B12
+  deficiency anaemia and variance (vQTL) scores are out of scope. Valence is context dependent: both anaemia
+  and polycythemia are unwanted.'

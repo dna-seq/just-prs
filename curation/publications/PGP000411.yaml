@@ -4,3 +4,7 @@ scores:
     score_effect: null
     unannotated_reason: 'Lookup pending: title says ''polygenic score for reduced kidney function''; 1000G EUR r=-0.76
       with eGFR scores and HR 1.12 for kidney failure suggest higher score = lower eGFR.'
+paper:
+  pmid: '36481179'
+  doi: 10.1016/j.kint.2022.11.013
+  title: A Polygenic Score for Reduced Kidney Function and Adverse Outcomes in a Chronic Kidney Disease Cohort.

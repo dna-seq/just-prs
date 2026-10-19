@@ -1,0 +1,130 @@
+slug: c-reactive-protein
+query: C-reactive protein
+match:
+  terms:
+  - C-reactive protein
+  - CRP
+  - hs-CRP
+  - serum CRP
+  efo_ids: []
+  exclude: []
+anchor: PGS002888
+status: resolved
+concepts:
+- immune.c_reactive_protein
+scores:
+  PGS000314:
+    decision: in_scope
+    note: null
+  PGS000675:
+    decision: in_scope
+    note: null
+  PGS001946:
+    decision: in_scope
+    note: null
+  PGS002164:
+    decision: in_scope
+    note: null
+  PGS002860:
+    decision: in_scope
+    note: null
+  PGS002861:
+    decision: in_scope
+    note: null
+  PGS002862:
+    decision: in_scope
+    note: null
+  PGS002863:
+    decision: in_scope
+    note: null
+  PGS002864:
+    decision: in_scope
+    note: null
+  PGS002865:
+    decision: in_scope
+    note: null
+  PGS002866:
+    decision: in_scope
+    note: null
+  PGS002867:
+    decision: in_scope
+    note: null
+  PGS002868:
+    decision: in_scope
+    note: null
+  PGS002869:
+    decision: in_scope
+    note: null
+  PGS002870:
+    decision: in_scope
+    note: null
+  PGS002871:
+    decision: in_scope
+    note: null
+  PGS002872:
+    decision: in_scope
+    note: null
+  PGS002873:
+    decision: in_scope
+    note: null
+  PGS002874:
+    decision: in_scope
+    note: null
+  PGS002875:
+    decision: in_scope
+    note: null
+  PGS002876:
+    decision: in_scope
+    note: null
+  PGS002877:
+    decision: in_scope
+    note: null
+  PGS002878:
+    decision: in_scope
+    note: null
+  PGS002879:
+    decision: in_scope
+    note: null
+  PGS002880:
+    decision: in_scope
+    note: null
+  PGS002881:
+    decision: in_scope
+    note: null
+  PGS002882:
+    decision: in_scope
+    note: null
+  PGS002883:
+    decision: in_scope
+    note: null
+  PGS002884:
+    decision: in_scope
+    note: null
+  PGS002885:
+    decision: in_scope
+    note: null
+  PGS002886:
+    decision: in_scope
+    note: null
+  PGS002887:
+    decision: in_scope
+    note: null
+  PGS002888:
+    decision: in_scope
+    note: null
+  PGS003527:
+    decision: in_scope
+    note: null
+  PGS004335:
+    decision: in_scope
+    note: null
+  PGS005251:
+    decision: in_scope
+    note: INFLA-score composite (CRP, WBC, platelets, NLR); separate phenotype infla_score in the same concept
+summary: 'All 36 scores are in scope under immune.c_reactive_protein; 35 measure circulating CRP and one (PGS005251)
+  the INFLA-score composite. 34 are annotated as higher score = higher CRP / more inflammation: 6 catalog-only biobank
+  scores, 27 ExPRSweb scores from the paper''s construction rule, and the iPRS from its full text. Two ExPRSweb
+  files (PGS002882, PGS002887) carry degenerate near-zero weights and are left unannotated with a proposed quarantine.
+  The ExPRSweb scores built from the small UKHLS CRP GWAS (PGS002860-2863, PGS002879-2883) are uncorrelated with
+  the rest and three have negative MGI betas, so they sit in review; the INTERVAL CRP-protein DBSLMM/PRS-CS scores
+  (PGS002877/2878/2888) are also nearly uncorrelated with the main CRP scores. No sign flips.'

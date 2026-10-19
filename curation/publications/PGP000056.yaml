@@ -1,0 +1,84 @@
+pgp_id: PGP000056
+scores:
+  PGS000121:
+    cluster: musculoskeletal.bone_density
+    phenotype: bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: femoral neck bone mineral density (score counts BMD-lowering risk alleles)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract
+      quote: A weighted polygenic risk score (genetic risk score [GRS]) was created as a function of the number
+        of risk alleles and their BMD-associated regression coefficients for each SNP.
+      confidence: high
+    - source: abstract
+      locator: Abstract
+      quote: Individuals with greater GRS had lower femoral neck BMD (p < 0.01), but the variation in GRS accounted
+        for less than 2% of total variance in BMD.
+      confidence: high
+    - source: abstract
+      locator: Abstract
+      quote: Each unit increase in GRS was associated with a hazard ratio of 1.20 (95% CI, 1.04 to 1.38) for fracture,
+        and this association was independent of age, prior fracture, fall, and in a subset of 33 SNPs, independent
+        of femoral neck BMD.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs1038304-G (ESR1 region, weight +1) is BMD-decreasing in GWAS Catalog; rs7595929-C and rs12198173-G
+        have no directional BMD record; rs4315567 not found
+    review_reason: null
+    status: agent_proposed
+    notes: 'Risk-allele GRS of 62 BMD SNPs (Dubbo cohort, 557 men and 902 women): a higher score means LOWER BMD
+      and higher fracture risk. Catalog beta -0.019 vs femoral neck BMD and HR 1.20 [1.04, 1.38] for total fracture
+      agree. Anti-correlates with other BMD scores in 1000G (r=-0.25 vs anchor) by design, not a deposit error.'
+  PGS000122:
+    cluster: musculoskeletal.bone_density
+    phenotype: bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: femoral neck bone mineral density (33-SNP random-forest subset of BMD-lowering risk alleles)
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      phenotype: fragility_fracture
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract
+      quote: A weighted polygenic risk score (genetic risk score [GRS]) was created as a function of the number
+        of risk alleles and their BMD-associated regression coefficients for each SNP.
+      confidence: high
+    - source: abstract
+      locator: Abstract
+      quote: Individuals with greater GRS had lower femoral neck BMD (p < 0.01), but the variation in GRS accounted
+        for less than 2% of total variance in BMD.
+      confidence: high
+    - source: abstract
+      locator: Abstract
+      quote: Each unit increase in GRS was associated with a hazard ratio of 1.20 (95% CI, 1.04 to 1.38) for fracture,
+        and this association was independent of age, prior fracture, fall, and in a subset of 33 SNPs, independent
+        of femoral neck BMD.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs1038304-G (ESR1 region, weight +1) is BMD-decreasing in GWAS Catalog; rs7595929-C and rs12198173-G
+        have no directional BMD record; rs4315567 not found
+    review_reason: null
+    status: agent_proposed
+    notes: 33-SNP random-forest subset of the 62-SNP risk-allele GRS; higher = lower BMD, higher fracture risk (HR
+      1.26 [1.06, 1.5] total fracture). r=+0.84 with PGS000121, r=-0.23 vs anchor by design.
+paper:
+  pmid: '27649491'
+  doi: 10.1002/jbmr.2998
+  title: Prediction of Bone Mineral Density and Fragility Fracture by Genetic Profiling.
+evidence_read:
+  abstract: true
+  full_text: null
+  supplement: []

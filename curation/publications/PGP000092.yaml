@@ -145,6 +145,215 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.66 with catalog-annotated PGS005114 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.35.
+  PGS000309:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 7 agree, 0 disagree; rs4846914
+        A +0.049; rs1883025 T -0.067; rs964184 C +0.11; rs1532085 G -0.096; rs3764261 A +0.24; rs7241918 T +0.077;
+        rs1800961 T -0.14'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.70 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS000302:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.69 with PGS003883 (DBP score annotated here). Score name GRS962_DBP.
+      Flagged canary_collapsed_percentile in catalog_scoring_flags (a scale/coverage issue, not a direction issue).
+  PGS000304:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.76 (median +0.62) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS000314:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 2 of 2 present agree (rs429358, rs1260326)'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.64 with PGS002868 (ExPRSweb PRS-CS on UKB field 30710 CRP, annotated
+      from the ExPRSweb full text).
+  PGS000305:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting glucose level (mmol/l) in adolescents without diabetes
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GRS Analysis
+      quote: For all traits except ALT, significant increases of trait levels were found in individuals at the top
+        wGRS decile compared with those at the bottom decile
+      confidence: high
+    - source: supplement
+      locator: s001 Supplementary Methods, statistical analyses
+      quote: weighted by the corresponding effect sizes from the literature.
+      confidence: medium
+    - source: supplement
+      locator: s002 Table 3 footnote
+      quote: FG (mmol/l), FGadjBMI (mmol/l)
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: 'Paper SNP table: rs560887 C, rs10830963 G, rs4607517 A all direction 1 with positive beta (MAGIC, PMID
+        20081858); these are the known FG-raising alleles. GWAS Catalog not queried.'
+    review_reason: null
+    status: agent_proposed
+    notes: '31-SNP weighted GRS (MAGIC 2010 FG loci, betas corrected for sample overlap) in the TRAILS youth cohort.
+      Weights are positive literature betas of the risk allele; higher GRS = higher fasting glucose. Corroborated
+      by 1000G EUR r = +0.48 with PGS001350 and +0.72 with PGS002950. Result: 0.25 (0.15, 0.36) mmol/l higher FG
+      in the top vs bottom wGRS decile, R2 3.67% (s002 Table 3).'
+  PGS000306:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: BMI-adjusted fasting glucose level (mmol/l) in adolescents without diabetes
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GRS Analysis
+      quote: For all traits except ALT, significant increases of trait levels were found in individuals at the top
+        wGRS decile compared with those at the bottom decile
+      confidence: high
+    - source: supplement
+      locator: s001 Supplementary Methods, statistical analyses
+      quote: weighted by the corresponding effect sizes from the literature.
+      confidence: medium
+    - source: supplement
+      locator: s002 Table 1, row FGadjBMI
+      quote: Sex, age, BMI
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: '19-SNP weighted GRS for fasting glucose adjusted for BMI (BMI as covariate in the source GWAS and in
+      the TRAILS regression). Same construction as PGS000305; higher GRS = higher BMI-adjusted fasting glucose.
+      Corroborated by 1000G EUR r = +0.48 with PGS000305 and +0.38 with PGS003336. Result: R2 0.95% for FGadjBMI
+      (s002 Table 3).'
+  PGS000300:
+    cluster: cardiovascular.heart_rate
+    phenotype: resting_heart_rate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: resting heart rate (beats per minute)
+      coding: null
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heart rate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). 80-SNP GRS with beta weights; PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.40 with PGS001233 (read, same phenotype).
+  PGS000313:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lipoprotein(a) concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lipoprotein A
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'no rsIDs in harmonized file; allele-aligned overlap: 3/1 vs PGS000689, 3/0 vs PGS004201'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.81 with read anchor PGS000667. Evaluated on Lp(a) in mg/l in youth.
 paper:
   pmid: '32527150'
   doi: 10.1161/circgen.119.002775

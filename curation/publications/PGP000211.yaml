@@ -444,3 +444,55 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.88 with catalog-annotated PGS004104 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.16.
+  PGS000845:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 4 agree, 0 disagree; rs4846914
+        A +0.0479; rs1800961 C +0.127; rs1883025 C +0.0698; rs964184 C +0.106'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.80 with catalog-annotated HDL score PGS004110 (PGP000517, beta CI excluding
+      the null). Catalog OR is for 'Moderate Age-Related Diabetes' with a CI including the null; not used as evidence.
+  PGS000838:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting glucose level
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog ORs are for diabetes subtypes (SIDD, MOD, MARD) against controls; a glucose-raising genetic
+        load should raise diabetes risk.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Fasting glucose
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: Top weight rs10830963 C = -0.079 (MTNR1B), i.e. G increases the score; G is the well-known FG-raising
+        allele (not checked against GWAS Catalog here).
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation. Fasting-glucose GRS used by Aly et al. to compare novel diabetes subtypes; PGS
+      Catalog weights are per-allele effects on the reported trait. The catalog metrics are diabetes-subtype ORs,
+      not glucose (e.g. OR 1.33 [1.26, 1.41] for MARD, 1.33 [1.24, 1.42] for SIDD), consistent with the direction.
+      Corroborated by 1000G EUR r = +0.42 with PGS000305 and +0.31 with PGS001350 (both read).

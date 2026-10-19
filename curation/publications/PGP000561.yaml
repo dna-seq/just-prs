@@ -770,3 +770,1489 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.36 with catalog-annotated PGS004447 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.09.
+  PGS004440:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.38 with PGS005313.
+  PGS004461:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation or flutter
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: I48 (Atrial fibrillation and flutter)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.39 with PGS005313.
+  PGS004510:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.33 with PGS005313.
+  PGS004531:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation or flutter
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: I48 (Atrial fibrillation and flutter)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.33 with PGS002756.
+  PGS004441:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.48 with PGS000477 (OR 1.338 [1.259, 1.421] on Breast cancer [female]).
+  PGS004511:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.47 with PGS000477 (OR 1.338 [1.259, 1.421] on Breast cancer [female]).
+  PGS004455:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score disease.Hypertension.score; PGS Catalog weights are per-allele
+      effects on the reported trait. Corroborated by 1000G EUR r = +0.65 with PGS002998. Jung 2024 disease PRS (catalog
+      OR per SD without CI, >1).
+  PGS004456:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: I10 (Essential (primary) hypertension)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score disease.I10.score; PGS Catalog weights are per-allele
+      effects on the reported trait. Corroborated by 1000G EUR r = +0.55 with PGS002998. Jung 2024 disease PRS (catalog
+      OR per SD without CI, >1).
+  PGS004525:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score meta.Hypertension.score; PGS Catalog weights are per-allele
+      effects on the reported trait. Corroborated by 1000G EUR r = +0.67 with PGS002998. Jung 2024 disease PRS (catalog
+      OR per SD without CI, >1).
+  PGS004526:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: I10 (Essential (primary) hypertension)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score meta.I10.score; PGS Catalog weights are per-allele effects
+      on the reported trait. Corroborated by 1000G EUR r = +0.61 with PGS002998. Jung 2024 disease PRS (catalog
+      OR per SD without CI, >1).
+  PGS004371:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure, automated reading
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.72 with PGS002898 (DBP score annotated here). Score name X4079.score.
+  PGS004445:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_neoplasia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of benign neoplasm of colon, rectum, anus and anal canal (ICD-10 D12)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > Estimation of disease PRS in PRS set
+      quote: To estimate the disease PRS, we first conducted GWASs on 247 diseases using the GWAS set (n = 174,488)
+        with a logistic regression model adjusted for age, sex, PC1–10, and the genotyping array.
+      confidence: medium
+    - source: full_text
+      locator: Results > top 10% vs remaining 90%
+      quote: For disease PRSs, those in the top 10% PRS had an average 1.56-fold higher risk of disease compared
+        to those in the remaining 90% PRS.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2 disease PRS from a UKB logistic GWAS with the disease coded 1/0, so weights are per-allele effects
+      on D12 risk; catalog OR 1.198 per SD (no CI). The D12-specific OR is only in the supplement (not read). 1000G
+      EUR r=+0.95 with PGS004515; weak (~+0.1) with CRC scores, as expected for a benign-lesion endpoint.
+  PGS004515:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_neoplasia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of benign neoplasm of colon, rectum, anus and anal canal (ICD-10 D12)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > top 10% vs remaining 90%
+      quote: For RFDiseasemetaPRSs, the top 10% had an average 1.76-fold higher risk.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: D12 (Benign neoplasm of colon, rectum, anus and anal canal)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Meta PRS: elastic-net combination of the D12 disease PRS and risk-factor PRSs fitted on the disease
+      outcome; catalog OR 1.208 per SD (no CI); 1000G EUR r=+0.95 with PGS004445.'
+  PGS004337:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Glycated haemoglobin (mmol/mol)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.40 (median +0.36) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS004344:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Vitamin D (nmol/L)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.43 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1).
+  PGS004335:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein (mg/L)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 3 of 3 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.70 with PGS002868 (ExPRSweb PRS-CS on UKB field 30710 CRP, annotated
+      from the ExPRSweb full text).
+  PGS004363:
+    cluster: blood.reticulocyte_count
+    phenotype: reticulocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: reticulocyte percentage of red cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Reticulocyte percentage
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score X30240.score. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.53 with already-annotated same-phenotype seed PGS000112
+      (PGP000051).
+  PGS004364:
+    cluster: blood.reticulocyte_count
+    phenotype: reticulocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score X30250.score. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.52 with already-annotated same-phenotype seed PGS000111
+      (PGP000051).
+  PGS004368:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte percentage of red cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte percentage
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score X30290.score. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.51 with already-annotated same-phenotype seed PGS000095
+      (PGP000051).
+  PGS004369:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score X30300.score. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.50 with already-annotated same-phenotype seed PGS000094
+      (PGP000051).
+  PGS004347:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Haemoglobin concentration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.45 with PGS004968 (PGP000679 hemoglobin score, catalog beta CI excludes
+      the null). 1000G EUR r with all other in-scope hemoglobin scores is positive (min +0.15).
+  PGS004352:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: SH2B3 rs3184504 (12:111446804) T allele, the known platelet-raising missense allele, carries a positive
+        weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.58 with PGS001238 (read), same phenotype. Risk-factor PRS (LDpred2)
+      on UKB field 30080.
+  PGS004327:
+    cluster: cardiovascular.heart_rate
+    phenotype: resting_heart_rate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: pulse rate (beats per minute)
+      coding: 'UKB 4194: bpm'
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Pulse rate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Risk-factor PRS (LDpred2 on GWAS of UKB field 4194); PGS Catalog
+      weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.40 with PGS001233.
+  PGS004370:
+    cluster: cardiovascular.heart_rate
+    phenotype: resting_heart_rate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: pulse rate, automated reading (beats per minute)
+      coding: 'UKB 102: bpm'
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Pulse rate, automated reading
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs17362588 A (2:178856319) carries a positive top weight; GWAS Catalog GCST001969 (den Hoed 2013) A
+        = 0.736 unit increase in heart rate
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Risk-factor PRS (LDpred2 on GWAS of UKB field 102); PGS Catalog
+      weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.53 with PGS001233.
+  PGS004411:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density T-score (UKB 78)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD) T-score, automated
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait (score name X<field>.score);
+      evaluated only against diseases. 1000G EUR r=+0.53 with PGS001402 (heel BMD, annotated); top variants all
+      in the WNT16/CPED1 locus (chr7:121.3M).
+  PGS004415:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density (UKB 3148)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait (score name X<field>.score);
+      evaluated only against diseases. 1000G EUR r=+0.53 with PGS001402 (heel BMD, annotated); top variants all
+      in the WNT16/CPED1 locus (chr7:121.3M).
+  PGS004419:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left heel bone mineral density (UKB 4105)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD) (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait (score name X<field>.score);
+      evaluated only against diseases. 1000G EUR r=+0.36 with PGS001402 (heel BMD, annotated); top variants all
+      in the WNT16/CPED1 locus (chr7:121.3M).
+  PGS004420:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left heel bone mineral density T-score (UKB 4106)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD) T-score, automated (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait (score name X<field>.score);
+      evaluated only against diseases. 1000G EUR r=+0.36 with PGS001402 (heel BMD, annotated); top variants all
+      in the WNT16/CPED1 locus (chr7:121.3M).
+  PGS004424:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right heel bone mineral density (UKB 4124)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD) (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait (score name X<field>.score);
+      evaluated only against diseases. 1000G EUR r=+0.35 with PGS001402 (heel BMD, annotated); top variants all
+      in the WNT16/CPED1 locus (chr7:121.3M).
+  PGS004425:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right heel bone mineral density T-score (UKB 4125)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel bone mineral density (BMD) T-score, automated (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait (score name X<field>.score);
+      evaluated only against diseases. 1000G EUR r=+0.35 with PGS001402 (heel BMD, annotated); top variants all
+      in the WNT16/CPED1 locus (chr7:121.3M).
+  PGS004490:
+    cluster: musculoskeletal.bone_density
+    phenotype: osteoporosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of osteoporosis without pathological fracture (ICD-10 M81)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: M81 (Osteoporosis without pathological fracture)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Disease PRS (disease.M81.score). Catalog OR per SD 1.18 (no CI) against M81. 1000G EUR r=+0.58 with PGS004560
+      (M81 meta score), +0.87 with PGS004495, +0.18 with PGS002768 (OR 1.31 [1.25, 1.38]); only weakly correlated
+      with other osteoporosis scores (r=+0.11 with PGS001273).
+  PGS004495:
+    cluster: musculoskeletal.bone_density
+    phenotype: osteoporosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of osteoporosis
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Osteoporosis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Disease PRS (disease.osteoporosis.score). Catalog OR per SD 1.20 (no CI) against osteoporosis. 1000G
+      EUR r=+0.61 with PGS004565, +0.27 with PGS002095, +0.19 with PGS002768 (OR 1.31 [1.25, 1.38]).
+  PGS004560:
+    cluster: musculoskeletal.bone_density
+    phenotype: osteoporosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of osteoporosis without pathological fracture (ICD-10 M81)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: M81 (Osteoporosis without pathological fracture)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Meta PRS combining the disease PRS with risk-factor PRS (meta.M81.score). Catalog OR per SD 1.32 (no
+      CI) against M81. 1000G EUR r=+0.64 with PGS002768 (OR 1.31 [1.25, 1.38]), +0.24 with PGS001274, -0.49 with
+      heel BMD PGS001402 (expected: risk-factor PRS such as heel BMD enter with the sign that raises disease risk).'
+  PGS004565:
+    cluster: musculoskeletal.bone_density
+    phenotype: osteoporosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of osteoporosis
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Osteoporosis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Meta PRS (meta.osteoporosis.score). Catalog OR per SD 1.33 (no CI) against osteoporosis. 1000G EUR r=+0.64
+      with PGS002768, +0.26 with PGS001274, -0.49 with heel BMD PGS001402.
+  PGS004374:
+    cluster: anthropometry.adiposity
+    phenotype: body_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body fat percentage (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Body fat percentage
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.76 with PGS003509 (PGP000457, same phenotype).
+  PGS004375:
+    cluster: anthropometry.adiposity
+    phenotype: fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body fat mass (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body fat mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.74 with PGS003532 (PGP000457, same phenotype).
+  PGS004376:
+    cluster: anthropometry.lean_mass
+    phenotype: fat_free_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body fat-free mass (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body fat-free mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.71 with PGS003531 (PGP000457, same phenotype).
+  PGS004380:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the whole body (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Impedance of whole body
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.70 with PGS003540 (PGP000457, same phenotype). Higher impedance means less lean tissue and body water,
+      so polarity is -1 on the lean-mass axis.
+  PGS004381:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the leg (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Impedance of leg (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.63 with PGS003540 (PGP000457, same phenotype). Higher impedance means less lean tissue and body water,
+      so polarity is -1 on the lean-mass axis.
+  PGS004382:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the leg (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Impedance of leg (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.65 with PGS003540 (PGP000457, same phenotype). Higher impedance means less lean tissue and body water,
+      so polarity is -1 on the lean-mass axis.
+  PGS004383:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the arm (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Impedance of arm (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.62 with PGS003540 (PGP000457, same phenotype). Higher impedance means less lean tissue and body water,
+      so polarity is -1 on the lean-mass axis.
+  PGS004384:
+    cluster: anthropometry.lean_mass
+    phenotype: body_impedance
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bioelectrical impedance of the arm (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Impedance of arm (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.64 with PGS003540 (PGP000457, same phenotype). Higher impedance means less lean tissue and body water,
+      so polarity is -1 on the lean-mass axis.
+  PGS004385:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat percentage of the leg (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg fat percentage (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.64 with PGS001104 (PGP000244, same phenotype).
+  PGS004386:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat mass of the leg (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg fat mass (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.63 with PGS001147 (PGP000244, same phenotype).
+  PGS004387:
+    cluster: anthropometry.lean_mass
+    phenotype: regional_fat_free_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat-free mass of the leg (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg fat-free mass (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.63 with PGS001167 (PGP000244, same phenotype).
+  PGS004389:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat percentage of the leg (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg fat percentage (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.63 with PGS001103 (PGP000244, same phenotype).
+  PGS004390:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat mass of the leg (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg fat mass (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.62 with PGS001147 (PGP000244, same phenotype).
+  PGS004391:
+    cluster: anthropometry.lean_mass
+    phenotype: regional_fat_free_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat-free mass of the leg (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg fat-free mass (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.63 with PGS001167 (PGP000244, same phenotype).
+  PGS004393:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat percentage of the arm (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm fat percentage (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.61 with PGS001102 (PGP000244, same phenotype).
+  PGS004394:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat mass of the arm (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm fat mass (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.61 with PGS001147 (PGP000244, same phenotype).
+  PGS004395:
+    cluster: anthropometry.lean_mass
+    phenotype: regional_fat_free_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat-free mass of the arm (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm fat-free mass (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.60 with PGS001146 (PGP000244, same phenotype).
+  PGS004397:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat percentage of the arm (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm fat percentage (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.61 with PGS001102 (PGP000244, same phenotype).
+  PGS004398:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat mass of the arm (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm fat mass (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.61 with PGS001147 (PGP000244, same phenotype).
+  PGS004399:
+    cluster: anthropometry.lean_mass
+    phenotype: regional_fat_free_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat-free mass of the arm (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm fat-free mass (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.60 with PGS001146 (PGP000244, same phenotype).
+  PGS004401:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat percentage of the trunk (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Trunk fat percentage
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.61 with PGS001105 (PGP000244, same phenotype).
+  PGS004402:
+    cluster: anthropometry.adiposity
+    phenotype: regional_fat_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat mass of the trunk (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Trunk fat mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.62 with PGS001148 (PGP000244, same phenotype).
+  PGS004403:
+    cluster: anthropometry.lean_mass
+    phenotype: regional_fat_free_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fat-free mass of the trunk (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Trunk fat-free mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.57 with PGS001146 (PGP000244, same phenotype).
+  PGS004442:
+    cluster: cancer.lung_cancer
+    phenotype: lung_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of malignant neoplasm of bronchus and lung (ICD-10 C34)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > Estimation of disease PRS in PRS set
+      quote: To estimate the disease PRS, we first conducted GWASs on 247 diseases using the GWAS set (n = 174,488)
+        with a logistic regression model adjusted for age, sex, PC1–10, and the genotyping array.
+      confidence: medium
+    - source: full_text
+      locator: Results > top 10% vs remaining 90%
+      quote: For disease PRSs, those in the top 10% PRS had an average 1.56-fold higher risk of disease compared
+        to those in the remaining 90% PRS.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C34 (Malignant neoplasm of bronchus and lung)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2 disease PRS (disease.C34.score) from a UKB logistic GWAS with C34 coded 1/0; catalog OR 1.168
+      per SD (no CI). 1000G EUR r=+0.4 with PGS000388/PGS000393 (OR-corroborated genome-wide lung scores).
+  PGS004512:
+    cluster: cancer.lung_cancer
+    phenotype: lung_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of malignant neoplasm of bronchus and lung (ICD-10 C34)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > top 10% vs remaining 90%
+      quote: For RFDiseasemetaPRSs, the top 10% had an average 1.76-fold higher risk.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C34 (Malignant neoplasm of bronchus and lung)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Meta PRS (meta.C34.score): elastic-net combination of the C34 disease PRS and risk-factor PRSs fitted
+      on the disease outcome; catalog OR 1.316 per SD (no CI). 1000G EUR r=+0.6 with PGS004442, +0.2-0.3 with PGS000388/0395.'
+  PGS004410:
+    cluster: anthropometry.adiposity
+    phenotype: body_weight
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: body weight (kg, UKB 21002)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > Association analysis between RFPRSs and diseases
+      quote: All RFPRSs significantly correlated with their respective risk factors
+      confidence: medium
+    - source: full_text
+      locator: Methods > Estimation of RFPRS and disease PRS
+      quote: we constructed individual PRSs as the sum of the weighted risk effect sizes of the SNPs in the PRS
+        set
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'GWAS Catalog v2: FTO rs17817288 A lowers BMI (G +0.0025 here), FTO rs8057044 A raises BMI (A +0.0024
+        here), GNAT2 rs17024393 C raises BMI/weight (C +0.0022 here)'
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred2-inf risk-factor PRS from the authors' own UKB GWAS of field 21002; Supplementary Table 4 gives
+      r = 0.28 with measured weight. 1000G EUR r = +0.64 with PGS001230/PGS003898; r = -0.996 with PGS004373 (inverted
+      deposit of the same trait).
+  PGS004373:
+    cluster: anthropometry.adiposity
+    phenotype: body_weight
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: 'body weight (kg, UKB 23098 bioimpedance weight) AS DISTRIBUTED (allele-inverted: higher score = lighter)'
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > Association analysis between RFPRSs and diseases
+      quote: All RFPRSs significantly correlated with their respective risk factors
+      confidence: medium
+    - source: full_text
+      locator: Methods > Estimation of RFPRS and disease PRS
+      quote: we constructed individual PRSs as the sum of the weighted risk effect sizes of the SNPs in the PRS
+        set
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: 'All three canonical loci opposite: FTO rs17817288 G -0.0025 (G raises BMI), FTO rs8057044 A -0.0023
+        (A raises BMI), GNAT2 rs17024393 C -0.0022 (C raises BMI/weight); PGS004410 has the mirror signs'
+    review_reason: Suspected inverted deposit; direction recorded as the file is distributed, opposite to the paper.
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (higher score = lower body weight); the paper
+        says higher = increases weight. Weights are not modified.
+      paper_direction: increases
+      evidence: 'Paper: RFPRS for 23098 weight correlates +0.29 with measured weight (Supp Table 4) and PRS = sum
+        of trait-associated allele effects. File: FTO rs17817288 G, FTO rs8057044 A and GNAT2 rs17024393 C (all
+        BMI-raising per GWAS Catalog) carry negative weights. 1000G EUR r = -0.996 with PGS004410 (same paper, UKB
+        21002 weight) and -0.64 with Tanigawa weight scores PGS001230/PGS003898.'
+      recorded: '2026-10-19'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's correlation (r = 0.29) describes the authors' own score, not this inverted file.
+      evidence: Deposited file is the negation of the authors' score (see deposit_inverted).
+      recorded: '2026-10-19'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: LDpred2-inf risk-factor PRS on UKB field 23098 (weight from the bioimpedance scale). As distributed,
+      a high percentile means a genetically LIGHTER body weight. Report to PGS Catalog.

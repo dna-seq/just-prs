@@ -1,0 +1,42 @@
+pgp_id: PGP000285
+scores:
+  PGS002259:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of stroke (any type, first-ever fatal or nonfatal, ICD-10 I60-I69)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS construction
+      quote: We employed the elastic-net logistic regression with 10-fold cross-validation using the R package “glmnet”
+        to model the associations between the 14 optimal PRS and stroke and further to generate the metaPRS.
+      confidence: high
+    - source: full_text
+      locator: Methods > Outcome ascertainment
+      quote: We defined incident stroke as a confirmed diagnosis of first-ever fatal or nonfatal stroke event during
+        follow-up (I60–I69).
+      confidence: high
+    - source: abstract
+      locator: Abstract > Results
+      quote: Individuals with high polygenic risk had an about 2-fold higher risk of incident stroke compared with
+        those with low polygenic risk (hazard ratio [HR] 1.99, 95% confidence interval [CI] 1.66-2.38), with the
+        lifetime risk of stroke being 25.2% (95% CI 22.5%-27.7%) and 13.6% (95% CI 11.6%-15.5%), respectively.
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Elastic-net logistic metaPRS of 14 component PRSs (stroke, BP, T2D, lipids, obesity, AF, CAD) fitted
+      on stroke case status (ischaemic + haemorrhagic); HR 1.28 per SD for all incident stroke in China-PAR (1.29
+      IS, 1.30 haemorrhagic). East Asian score; 1000G EUR r=+0.17 with anchor, +0.28 with PGS002725.
+evidence_read:
+  abstract: true
+  full_text: pmc_html
+  supplement: []

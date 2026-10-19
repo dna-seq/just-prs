@@ -1,0 +1,54 @@
+pgp_id: PGP000780
+scores:
+  PGS005397:
+    cluster: cancer.lung_cancer
+    phenotype: lung_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: risk of lung cancer (file as distributed; the paper's PRS increases risk)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata:
+      smoking: ever
+    provenance:
+    - source: full_text
+      locator: Results (Cox models)
+      quote: 'each SD increase in the PRS was associated with an 18% increased risk of lung cancer incidence (HR
+        per SD=1.18, 95% CI: 1.11–1.26;'
+      confidence: high
+    - source: full_text
+      locator: Methods > Polygenic risk score construction
+      quote: The PRS was calculated as a weighted sum of risk alleles, and standardized within each cohort.
+      confidence: high
+    lead_variant_check:
+      status: disagree
+      note: 15q25 CHRNA5 risk alleles negative (rs16969968 A -0.257, GWAS Catalog risk A; rs1051730 A -0.256; rs951266
+        A -0.256); 5p15 CLPTM1L rs401681 T +0.136 and rs31489 A +0.136 (C is the reported risk allele at both);
+        19q13 rs11879413 T +0.147 vs -0.029 in PGS004860.
+    review_reason: 'Suspected inverted deposit: 15q25, 5p15 CLPTM1L and 19q13 lead loci opposite to known risk alleles;
+      r=-0.5 with PGS004860 (same GWAS, same method), +0.8 with inverted PGS004691.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction describes the file as distributed (higher = lower lung-cancer risk); the paper says higher
+        = increases.
+      paper_direction: increases
+      evidence: Opposite at 15q25 (rs16969968 A, rs1051730, rs951266, rs8034191 C negative), 5p15 CLPTM1L (rs401681
+        T, rs31489 A positive) and 19q13 (rs11879413 T positive vs negative in PGS004860); 1000G EUR r=-0.5 with
+        PGS004860 built from the same GWAS by the same group, r=+0.8 with inverted PGS004691.
+      recorded: '2026-10-19'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's HR/C-index describe the authors' (correctly oriented) score, not the deposited file.
+      evidence: Same as deposit_inverted.
+      recorded: '2026-10-19'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: LDpred2-auto genome-wide PRS from the same ILCCO GWAS (GCST004748, 29,266 cases / 56,450 controls) as
+      the authors' PGS004860, yet r=-0.5 with it. Paper evaluated in ever-smoker screening cohorts (UKB_PLCO, SYNERGIQC;
+      HR 1.22 [1.02, 1.46] per SD in SYNERGIQC). Deposited file behaves as the negated score.

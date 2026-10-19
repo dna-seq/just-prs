@@ -2735,6 +2735,1879 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.95 with catalog-annotated PGS002313 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.43.
+  PGS002329:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 8 agree, 0 disagree; rs4846914
+        G -0.00561; rs12678919 A -0.000202; rs1883025 C +0.00838; rs1532085 A +0.00643; rs3764261 C -0.0231; rs2271293
+        G -0.000108; rs1800961 C +0.0371; rs6065906 T +0.00892'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.71 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS002366:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 8 agree, 0 disagree; rs4846914
+        A +0.000198; rs12678919 G +0.00135; rs1883025 T -0.0294; rs1532085 G -0.0243; rs3764261 A +0.0583; rs2271293
+        A +5.75e-05; rs1800961 T -0.0288; rs6065906 C -0.000552'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.34 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS002401:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 2 agree, 0 disagree; rs964184
+        G -0.115; rs1800961 C +0.15'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.75 with catalog-annotated HDL score PGS004110 (PGP000517, beta CI excluding
+      the null).
+  PGS002450:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 2 agree, 0 disagree; rs964184
+        G -0.115; rs1800961 C +0.15'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.70 with catalog-annotated HDL score PGS004110 (PGP000517, beta CI excluding
+      the null).
+  PGS002499:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 2 agree, 0 disagree; rs964184
+        G -0.115; rs1800961 C +0.15'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.54 with catalog-annotated HDL score PGS004110 (PGP000517, beta CI excluding
+      the null).
+  PGS002548:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 2 agree, 0 disagree; rs964184
+        G -0.115; rs1800961 C +0.15'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.78 with catalog-annotated HDL score PGS004110 (PGP000517, beta CI excluding
+      the null).
+  PGS002597:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 2 agree, 0 disagree; rs964184
+        G -0.115; rs1800961 C +0.15'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.79 with catalog-annotated HDL score PGS004110 (PGP000517, beta CI excluding
+      the null).
+  PGS002646:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 6 agree, 0 disagree; rs4846914
+        G -0.00345; rs964184 G -0.122; rs3764261 C -3.71e-05; rs2271293 G -3.06e-06; rs1800961 C +0.151; rs6065906
+        T +6.98e-06'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.72 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS002695:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 8 agree, 0 disagree; rs4846914
+        G -0.0112; rs12678919 A -2.3e-05; rs1883025 C +0.012; rs1532085 A +0.00367; rs3764261 C -0.0433; rs2271293
+        G -8e-05; rs1800961 C +0.0491; rs6065906 T +0.00685'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.72 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS002335:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score disease_HYPERTENSION_DIAGNOSED.BOLT-LMM; PGS Catalog
+      weights are per-allele effects on the reported trait. Corroborated by 1000G EUR r = +0.91 with PGS002998.
+      Weissbrod UKB HYPERTENSION_DIAGNOSED.
+  PGS002407:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score disease_HYPERTENSION_DIAGNOSED.P+T.0.0001; PGS Catalog
+      weights are per-allele effects on the reported trait. Corroborated by 1000G EUR r = +0.70 with PGS002296.
+      Weissbrod UKB HYPERTENSION_DIAGNOSED.
+  PGS002456:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score disease_HYPERTENSION_DIAGNOSED.P+T.0.001; PGS Catalog
+      weights are per-allele effects on the reported trait. Corroborated by 1000G EUR r = +0.59 with PGS002296.
+      Weissbrod UKB HYPERTENSION_DIAGNOSED.
+  PGS002505:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score disease_HYPERTENSION_DIAGNOSED.P+T.0.01; PGS Catalog
+      weights are per-allele effects on the reported trait. Corroborated by 1000G EUR r = +0.44 with PGS002998.
+      Weissbrod UKB HYPERTENSION_DIAGNOSED.
+  PGS002554:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score disease_HYPERTENSION_DIAGNOSED.P+T.1e-06; PGS Catalog
+      weights are per-allele effects on the reported trait. Corroborated by 1000G EUR r = +0.66 with PGS002296.
+      Weissbrod UKB HYPERTENSION_DIAGNOSED.
+  PGS002603:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score disease_HYPERTENSION_DIAGNOSED.P+T.5e-08; PGS Catalog
+      weights are per-allele effects on the reported trait. Corroborated by 1000G EUR r = +0.62 with PGS002296.
+      Weissbrod UKB HYPERTENSION_DIAGNOSED.
+  PGS002652:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score disease_HYPERTENSION_DIAGNOSED.PolyFun-pred; PGS Catalog
+      weights are per-allele effects on the reported trait. Corroborated by 1000G EUR r = +0.74 with PGS002998.
+      Weissbrod UKB HYPERTENSION_DIAGNOSED.
+  PGS002701:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score disease_HYPERTENSION_DIAGNOSED.SBayesR; PGS Catalog weights
+      are per-allele effects on the reported trait. Corroborated by 1000G EUR r = +0.87 with PGS002998. Weissbrod
+      UKB HYPERTENSION_DIAGNOSED.
+  PGS002688:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.94 with PGS002322 (DBP score annotated here). Score name bp_DIASTOLICadjMEDz.SBayesR.
+  PGS002492:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.83 with PGS002443 (DBP score annotated here). Score name bp_DIASTOLICadjMEDz.P+T.0.01.
+      Flagged canary_collapsed_percentile in catalog_scoring_flags (a scale/coverage issue, not a direction issue).
+  PGS002590:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.97 with PGS002541 (DBP score annotated here). Score name bp_DIASTOLICadjMEDz.P+T.5e-08.
+      Flagged canary_collapsed_percentile in catalog_scoring_flags (a scale/coverage issue, not a direction issue).
+  PGS002639:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS004755 (DBP score annotated here). Score name bp_DIASTOLICadjMEDz.PolyFun-pred.
+      Flagged canary_collapsed_percentile in catalog_scoring_flags (a scale/coverage issue, not a direction issue).
+  PGS002394:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.73 with PGS002639 (DBP score annotated here). Score name bp_DIASTOLICadjMEDz.P+T.0.0001.
+      Flagged canary_collapsed_percentile in catalog_scoring_flags (a scale/coverage issue, not a direction issue).
+  PGS002362:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: Aligned to PGS003963 (DBP_EUR), 73% of its top-1000 loci share sign (weight r +0.26); low 1000G EUR
+        r expected for a BBJ-trained score
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.30 with PGS003962 (DBP score annotated here). Score name bp_DIASTOLICadjMEDz.BOLT-LMM-BBJ.
+  PGS002322:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS004755 (DBP score annotated here). Score name bp_DIASTOLICadjMEDz.BOLT-LMM.
+  PGS002443:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.92 with PGS002394 (DBP score annotated here). Score name bp_DIASTOLICadjMEDz.P+T.0.001.
+      Flagged canary_collapsed_percentile in catalog_scoring_flags (a scale/coverage issue, not a direction issue).
+  PGS002541:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.93 with PGS002394 (DBP score annotated here). Score name bp_DIASTOLICadjMEDz.P+T.1e-06.
+      Flagged canary_collapsed_percentile in catalog_scoring_flags (a scale/coverage issue, not a direction issue).
+  PGS002331:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.66 (median +0.58) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS002403:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.54 (median +0.50) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS002452:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.43 (median +0.39) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS002501:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.30 (median +0.27) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS002550:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.65 (median +0.61) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS002599:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.65 (median +0.62) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS002648:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.59 (median +0.54) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS002697:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.63 (median +0.58) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS002367:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Direction taken from the catalog convention only; 1000G EUR corroboration is weak (r~+0.1) for
+      this BBJ-trained score.
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). BOLT-LMM trained in Biobank Japan (name suffix -BBJ); PGS Catalog
+      weights are per-allele effects on HbA1c. Correlation with European-trained HbA1c scores is positive but weak
+      (max r=+0.13, median +0.11), as expected for an East Asian-trained score scored on 1000G EUR; below the +0.2
+      corroboration bar.
+  PGS002355:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.82 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1).
+  PGS002427:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.65 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1).
+  PGS002476:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.55 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1).
+  PGS002525:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.39 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1).
+  PGS002574:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.64 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1).
+  PGS002623:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.63 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1).
+  PGS002672:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.78 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1).
+  PGS002721:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.82 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1).
+  PGS002333:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score blood_HIGH_LIGHT_SCATTER_RETICULOCYTE_COUNT.BOLT-LMM.
+      PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.81 with already-annotated
+      same-phenotype seed PGS000094 (PGP000051).
+  PGS002405:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score blood_HIGH_LIGHT_SCATTER_RETICULOCYTE_COUNT.P+T.0.0001.
+      PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.66 with already-annotated
+      same-phenotype seed PGS000094 (PGP000051).
+  PGS002454:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score blood_HIGH_LIGHT_SCATTER_RETICULOCYTE_COUNT.P+T.0.001.
+      PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.64 with already-annotated
+      same-phenotype seed PGS000094 (PGP000051).
+  PGS002503:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score blood_HIGH_LIGHT_SCATTER_RETICULOCYTE_COUNT.P+T.0.01.
+      PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.47 with already-annotated
+      same-phenotype seed PGS000094 (PGP000051).
+  PGS002552:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score blood_HIGH_LIGHT_SCATTER_RETICULOCYTE_COUNT.P+T.1e-06.
+      PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.62 with already-annotated
+      same-phenotype seed PGS000094 (PGP000051).
+  PGS002601:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score blood_HIGH_LIGHT_SCATTER_RETICULOCYTE_COUNT.P+T.5e-08.
+      PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.61 with already-annotated
+      same-phenotype seed PGS000094 (PGP000051).
+  PGS002650:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score blood_HIGH_LIGHT_SCATTER_RETICULOCYTE_COUNT.PolyFun-pred.
+      PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.78 with already-annotated
+      same-phenotype seed PGS000094 (PGP000051).
+  PGS002699:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: High light scatter reticulocyte count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read), score blood_HIGH_LIGHT_SCATTER_RETICULOCYTE_COUNT.SBayesR.
+      PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.78 with already-annotated
+      same-phenotype seed PGS000094 (PGP000051).
+  PGS002344:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; BOLT-LMM. 1000G EUR r=+0.38 with anchor PGS002293.
+  PGS002661:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; PolyFun-pred. 1000G EUR r=+0.31 with anchor PGS002293.
+  PGS002710:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; SBayesR. 1000G EUR r=+0.32 with anchor PGS002293.
+  PGS002514:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; P+T p<0.01. 1000G EUR r=+0.27 with PGS002661 and +0.20 with PGS005309 (OR 1.49 severe psoriasis); anchor
+      r=-0.02 (near zero, not negative: the sparse P+T scores share little with the HLA-heavy anchor).'
+  PGS002465:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; P+T p<0.001. 1000G EUR r=+0.89 with PGS002514 and +0.19 with PGS002661; anchor r=-0.01 (near zero).
+      No negative correlation with any psoriasis score.
+  PGS002416:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; P+T p<1e-4. 1000G EUR r=+0.86 with PGS002465 and +0.67 with PGS002514; anchor r=-0.02 (near zero).
+      No correlation below -0.02 with any psoriasis score.
+  PGS002563:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; P+T p<1e-6. 1000G EUR r=+0.68 with PGS002416, +0.78 with PGS002612, +0.15 with PGS001312; anchor r=+0.08.
+  PGS002612:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; P+T p<5e-8. 1000G EUR r=+0.78 with PGS002563, +0.44 with PGS002416, +0.16 with PGS004317; anchor r=+0.13.
+  PGS002343:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs3184504 not in file
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.85 with PGS001238 (read), same phenotype. BOLT-LMM.
+  PGS002415:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs3184504 not in file
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.76 with PGS001238 (read), same phenotype. P+T 1e-4.
+  PGS002464:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs3184504 not in file
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.75 with PGS001238 (read), same phenotype. P+T 1e-3.
+  PGS002513:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs3184504 not in file
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.67 with PGS001238 (read), same phenotype. P+T 0.01.
+  PGS002562:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs3184504 not in file
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.74 with PGS001238 (read), same phenotype. P+T 1e-6.
+  PGS002611:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs3184504 not in file
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.72 with PGS001238 (read), same phenotype. P+T 5e-8.
+  PGS002660:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: SH2B3 rs3184504 (12:111446804) T allele, the known platelet-raising missense allele, carries a positive
+        weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.81 with PGS001238 (read), same phenotype. PolyFun-pred.
+  PGS002709:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: rs3184504 not in file
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.83 with PGS001238 (read), same phenotype. SBayesR.
+  PGS002373:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count, BOLT-LMM trained on Biobank Japan
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: rs3184504 not in file
+    review_reason: Direction taken from the catalog convention only; 1000G EUR corroboration is weak (r~+0.2) for
+      this BBJ-trained score.
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). BOLT-LMM trained in Biobank Japan (name suffix -BBJ); PGS Catalog
+      weights are per-allele effects on platelet count. Correlation with European-trained platelet scores is positive
+      but weak (max r=+0.22 with PGS004812, +0.17 with PGS001238), as expected for an East Asian-trained score on
+      1000G EUR.
+  PGS002314:
+    score_effect: null
+    unannotated_reason: No reachable source (Supplementary Table S3, full text, Loh 2018 supplement, Price-lab UKBB
+      pages) defines how body_BALDING1 was coded from UKB 2395 (binary pattern 1 vs rest, or other), so the direction
+      cannot be quoted. Name and r = -0.85 with Privé/Ding less_hair scores suggest higher = less balding, but that
+      is not recorded.
+    status: agent_proposed
+  PGS002386:
+    score_effect: null
+    unannotated_reason: No reachable source (Supplementary Table S3, full text, Loh 2018 supplement, Price-lab UKBB
+      pages) defines how body_BALDING1 was coded from UKB 2395 (binary pattern 1 vs rest, or other), so the direction
+      cannot be quoted. Name and r = -0.85 with Privé/Ding less_hair scores suggest higher = less balding, but that
+      is not recorded.
+    status: agent_proposed
+  PGS002435:
+    score_effect: null
+    unannotated_reason: No reachable source (Supplementary Table S3, full text, Loh 2018 supplement, Price-lab UKBB
+      pages) defines how body_BALDING1 was coded from UKB 2395 (binary pattern 1 vs rest, or other), so the direction
+      cannot be quoted. Name and r = -0.85 with Privé/Ding less_hair scores suggest higher = less balding, but that
+      is not recorded.
+    status: agent_proposed
+  PGS002484:
+    score_effect: null
+    unannotated_reason: No reachable source (Supplementary Table S3, full text, Loh 2018 supplement, Price-lab UKBB
+      pages) defines how body_BALDING1 was coded from UKB 2395 (binary pattern 1 vs rest, or other), so the direction
+      cannot be quoted. Name and r = -0.85 with Privé/Ding less_hair scores suggest higher = less balding, but that
+      is not recorded.
+    status: agent_proposed
+  PGS002533:
+    score_effect: null
+    unannotated_reason: No reachable source (Supplementary Table S3, full text, Loh 2018 supplement, Price-lab UKBB
+      pages) defines how body_BALDING1 was coded from UKB 2395 (binary pattern 1 vs rest, or other), so the direction
+      cannot be quoted. Name and r = -0.85 with Privé/Ding less_hair scores suggest higher = less balding, but that
+      is not recorded.
+    status: agent_proposed
+  PGS002582:
+    score_effect: null
+    unannotated_reason: No reachable source (Supplementary Table S3, full text, Loh 2018 supplement, Price-lab UKBB
+      pages) defines how body_BALDING1 was coded from UKB 2395 (binary pattern 1 vs rest, or other), so the direction
+      cannot be quoted. Name and r = -0.85 with Privé/Ding less_hair scores suggest higher = less balding, but that
+      is not recorded.
+    status: agent_proposed
+  PGS002631:
+    score_effect: null
+    unannotated_reason: No reachable source (Supplementary Table S3, full text, Loh 2018 supplement, Price-lab UKBB
+      pages) defines how body_BALDING1 was coded from UKB 2395 (binary pattern 1 vs rest, or other), so the direction
+      cannot be quoted. Name and r = -0.85 with Privé/Ding less_hair scores suggest higher = less balding, but that
+      is not recorded.
+    status: agent_proposed
+  PGS002680:
+    score_effect: null
+    unannotated_reason: No reachable source (Supplementary Table S3, full text, Loh 2018 supplement, Price-lab UKBB
+      pages) defines how body_BALDING1 was coded from UKB 2395 (binary pattern 1 vs rest, or other), so the direction
+      cannot be quoted. Name and r = -0.85 with Privé/Ding less_hair scores suggest higher = less balding, but that
+      is not recorded.
+    status: agent_proposed
+  PGS002315:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density T-score (UKB heel eBMD T-score, z-scored)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: bmd_HEEL_TSCOREz.BOLT-LMM
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read for this trait). Catalog reports 'Bone mineral density (BMD)', but the score
+      name bmd_HEEL_TSCOREz places it on the UKB heel eBMD T-score, so phenotype heel_bone_mineral_density. PGS
+      Catalog weights are per-allele effects on the trait; 1000G EUR r=+0.80 with PGS001402 (heel BMD, annotated).
+  PGS002387:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density T-score (UKB heel eBMD T-score, z-scored)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: bmd_HEEL_TSCOREz.P+T.0.0001
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read for this trait). Catalog reports 'Bone mineral density (BMD)', but the score
+      name bmd_HEEL_TSCOREz places it on the UKB heel eBMD T-score, so phenotype heel_bone_mineral_density. PGS
+      Catalog weights are per-allele effects on the trait; 1000G EUR r=+0.74 with PGS001402 (heel BMD, annotated).
+  PGS002436:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density T-score (UKB heel eBMD T-score, z-scored)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: bmd_HEEL_TSCOREz.P+T.0.001
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read for this trait). Catalog reports 'Bone mineral density (BMD)', but the score
+      name bmd_HEEL_TSCOREz places it on the UKB heel eBMD T-score, so phenotype heel_bone_mineral_density. PGS
+      Catalog weights are per-allele effects on the trait; 1000G EUR r=+0.69 with PGS001402 (heel BMD, annotated).
+  PGS002485:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density T-score (UKB heel eBMD T-score, z-scored)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: bmd_HEEL_TSCOREz.P+T.0.01
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read for this trait). Catalog reports 'Bone mineral density (BMD)', but the score
+      name bmd_HEEL_TSCOREz places it on the UKB heel eBMD T-score, so phenotype heel_bone_mineral_density. PGS
+      Catalog weights are per-allele effects on the trait; 1000G EUR r=+0.62 with PGS001402 (heel BMD, annotated).
+  PGS002534:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density T-score (UKB heel eBMD T-score, z-scored)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: bmd_HEEL_TSCOREz.P+T.1e-06
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read for this trait). Catalog reports 'Bone mineral density (BMD)', but the score
+      name bmd_HEEL_TSCOREz places it on the UKB heel eBMD T-score, so phenotype heel_bone_mineral_density. PGS
+      Catalog weights are per-allele effects on the trait; 1000G EUR r=+0.75 with PGS001402 (heel BMD, annotated).
+  PGS002583:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density T-score (UKB heel eBMD T-score, z-scored)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: bmd_HEEL_TSCOREz.P+T.5e-08
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read for this trait). Catalog reports 'Bone mineral density (BMD)', but the score
+      name bmd_HEEL_TSCOREz places it on the UKB heel eBMD T-score, so phenotype heel_bone_mineral_density. PGS
+      Catalog weights are per-allele effects on the trait; 1000G EUR r=+0.75 with PGS001402 (heel BMD, annotated).
+  PGS002632:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density T-score (UKB heel eBMD T-score, z-scored)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: bmd_HEEL_TSCOREz.PolyFun-pred
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read for this trait). Catalog reports 'Bone mineral density (BMD)', but the score
+      name bmd_HEEL_TSCOREz places it on the UKB heel eBMD T-score, so phenotype heel_bone_mineral_density. PGS
+      Catalog weights are per-allele effects on the trait; 1000G EUR r=+0.78 with PGS001402 (heel BMD, annotated).
+  PGS002681:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_bone_mineral_density
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel bone mineral density T-score (UKB heel eBMD T-score, z-scored)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: bmd_HEEL_TSCOREz.SBayesR
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read for this trait). Catalog reports 'Bone mineral density (BMD)', but the score
+      name bmd_HEEL_TSCOREz places it on the UKB heel eBMD T-score, so phenotype heel_bone_mineral_density. PGS
+      Catalog weights are per-allele effects on the trait; 1000G EUR r=+0.82 with PGS001402 (heel BMD, annotated).
 paper:
   pmid: '35393596'
   doi: 10.1038/s41588-022-01036-9

@@ -1,0 +1,38 @@
+pgp_id: PGP000480
+scores:
+  PGS003760:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of early-onset colorectal cancer (diagnosis before age 50)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > SNP inclusion criteria
+      quote: with odds ratio (OR) > 1 in EOCRC risks associations or beta < 0 in CRC onset age-related association
+      confidence: high
+    - source: full_text
+      locator: Results (Fig. 3A/B)
+      quote: 'quartile had a 3.8-fold risk than the lowest (OR = 3.79; 95% CI: 3.21–4.47)'
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Weights are log(OR) of risk alleles (all 49 positive). Loci are described as EOCRC-specific, which explains
+      the weak 1000G EUR correlation (max r=+0.14) with general CRC scores; 4 of the top 5 variants sit near the
+      MHC on chr6.
+paper:
+  pmid: '36869385'
+  doi: 10.1186/s13073-023-01163-w
+  title: Identification of specific susceptibility loci for the early-onset colorectal cancer.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

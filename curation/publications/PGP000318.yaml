@@ -1,0 +1,38 @@
+pgp_id: PGP000318
+scores:
+  PGS002290:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: plasma uric acid level
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: abstract
+      locator: Abstract, Methods
+      quote: A weighted genetic risk score (wGRS) was calculated based on 10 single nucleotide polymorphism (SNPs)
+        identified in genome-wide association studies of UA in East Asians
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Uric acid level | uric acid measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weights ABCG2 rs4148155 G and SLC2A9 rs7679724 T positive; not checked against GWAS Catalog
+    status: agent_proposed
+    notes: Abstract only (not open access). Direction from PGS Catalog convention (beta weights from UA GWAS) corroborated
+      by 1000G EUR r=+0.42 with PGS000755 (read, SUA-raising alleles) and r=+0.51 with OR-corroborated gout score
+      PGS004090. Paper also reports OR 1.12 (1.01-1.24) for rapid kidney function decline (outcome outside this
+      concept).
+paper:
+  pmid: '35363857'
+  doi: 10.1210/clinem/dgac192
+  title: Genetic risk score for plasma uric acid levels is associated with early rapid kidney function decline in
+    type 2 diabetes.
+evidence_read:
+  abstract: true
+  full_text: null
+  supplement: []

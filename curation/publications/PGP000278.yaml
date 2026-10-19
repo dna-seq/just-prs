@@ -20,3 +20,7 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by BETA 0.83 (CI 0.76-0.9) against 'Body mass index'; 1000G EUR correlation with anchor
       PGS000320 r=+0.20.
+paper:
+  pmid: '35016652'
+  doi: 10.1186/s12916-021-02198-9
+  title: Interaction of obesity polygenic score with lifestyle risk factors in an electronic health record biobank.

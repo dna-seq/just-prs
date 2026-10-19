@@ -1,0 +1,250 @@
+slug: colorectal-cancer
+query: colorectal cancer
+match:
+  terms:
+  - bowel cancer
+  - colon cancer
+  - colorectal
+  - colorectal cancer
+  - rectal cancer
+  efo_ids: []
+  exclude: []
+anchor: PGS003979
+status: resolved
+concepts:
+- cancer.colorectal_cancer
+scores:
+  PGS000055:
+    decision: in_scope
+    note: null
+  PGS000074:
+    decision: in_scope
+    note: null
+  PGS000146:
+    decision: in_scope
+    note: null
+  PGS000147:
+    decision: in_scope
+    note: null
+  PGS000148:
+    decision: in_scope
+    note: null
+  PGS000149:
+    decision: in_scope
+    note: null
+  PGS000150:
+    decision: in_scope
+    note: null
+  PGS000151:
+    decision: in_scope
+    note: null
+  PGS000154:
+    decision: in_scope
+    note: null
+  PGS000367:
+    decision: in_scope
+    note: null
+  PGS000368:
+    decision: in_scope
+    note: null
+  PGS000369:
+    decision: in_scope
+    note: null
+  PGS000370:
+    decision: in_scope
+    note: null
+  PGS000371:
+    decision: in_scope
+    note: null
+  PGS000372:
+    decision: in_scope
+    note: null
+  PGS000373:
+    decision: in_scope
+    note: null
+  PGS000374:
+    decision: in_scope
+    note: null
+  PGS000375:
+    decision: in_scope
+    note: null
+  PGS000376:
+    decision: in_scope
+    note: null
+  PGS000377:
+    decision: in_scope
+    note: null
+  PGS000378:
+    decision: in_scope
+    note: null
+  PGS000379:
+    decision: in_scope
+    note: null
+  PGS000380:
+    decision: in_scope
+    note: null
+  PGS000381:
+    decision: in_scope
+    note: null
+  PGS000382:
+    decision: in_scope
+    note: null
+  PGS000383:
+    decision: in_scope
+    note: null
+  PGS000384:
+    decision: in_scope
+    note: null
+  PGS000720:
+    decision: in_scope
+    note: null
+  PGS000734:
+    decision: in_scope
+    note: null
+  PGS000765:
+    decision: in_scope
+    note: null
+  PGS000785:
+    decision: in_scope
+    note: null
+  PGS000801:
+    decision: in_scope
+    note: null
+  PGS000802:
+    decision: in_scope
+    note: null
+  PGS001776:
+    decision: in_scope
+    note: null
+  PGS001802:
+    decision: in_scope
+    note: null
+  PGS002013:
+    decision: in_scope
+    note: null
+  PGS002252:
+    decision: in_scope
+    note: null
+  PGS002265:
+    decision: in_scope
+    note: null
+  PGS002742:
+    decision: in_scope
+    note: null
+  PGS002743:
+    decision: in_scope
+    note: null
+  PGS002744:
+    decision: in_scope
+    note: null
+  PGS002758:
+    decision: in_scope
+    note: null
+  PGS003386:
+    decision: in_scope
+    note: null
+  PGS003395:
+    decision: in_scope
+    note: null
+  PGS003431:
+    decision: in_scope
+    note: null
+  PGS003432:
+    decision: in_scope
+    note: null
+  PGS003433:
+    decision: in_scope
+    note: null
+  PGS003434:
+    decision: in_scope
+    note: null
+  PGS003435:
+    decision: in_scope
+    note: null
+  PGS003436:
+    decision: in_scope
+    note: null
+  PGS003439:
+    decision: in_scope
+    note: null
+  PGS003739:
+    decision: in_scope
+    note: null
+  PGS003760:
+    decision: in_scope
+    note: null
+  PGS003850:
+    decision: in_scope
+    note: null
+  PGS003851:
+    decision: in_scope
+    note: null
+  PGS003852:
+    decision: in_scope
+    note: null
+  PGS003979:
+    decision: in_scope
+    note: null
+  PGS004240:
+    decision: in_scope
+    note: null
+  PGS004243:
+    decision: in_scope
+    note: null
+  PGS004300:
+    decision: in_scope
+    note: null
+  PGS004301:
+    decision: in_scope
+    note: null
+  PGS004302:
+    decision: in_scope
+    note: null
+  PGS004303:
+    decision: in_scope
+    note: null
+  PGS004304:
+    decision: in_scope
+    note: null
+  PGS004445:
+    decision: in_scope
+    note: null
+  PGS004515:
+    decision: in_scope
+    note: null
+  PGS004580:
+    decision: in_scope
+    note: null
+  PGS004586:
+    decision: out_of_scope
+    note: prognostic score (overall survival among CRC patients, HR 1.8-1.99), not CRC risk
+  PGS004689:
+    decision: in_scope
+    note: null
+  PGS004880:
+    decision: in_scope
+    note: null
+  PGS004904:
+    decision: in_scope
+    note: null
+  PGS004912:
+    decision: in_scope
+    note: null
+  PGS004945:
+    decision: in_scope
+    note: null
+  PGS005162:
+    decision: in_scope
+    note: null
+  PGS005275:
+    decision: in_scope
+    note: null
+  PGS005402:
+    decision: in_scope
+    note: null
+summary: '75 in-scope scores in one concept (colorectal cancer, higher = more risk): 63 all-site CRC, 7 colon, 2
+  rectal, 3 adenoma/benign neoplasia (D12, advanced neoplasm). 70 were annotated from the catalog (OR/HR above 1
+  or r>=+0.2 with an annotated score); 4 papers were read. PGS000802 (Chinese CRC_19) has 10 of 13 lead alleles
+  opposite the CRC risk allele and anti-correlates with 7 CRC scores; recorded with the paper direction plus a partial_allele_inconsistency/quarantine
+  correction, in review. PGS000151 stays unannotated (abstract only, no direction statement, mixed alleles). PGS004586
+  is a CRC survival score and is out of scope.'

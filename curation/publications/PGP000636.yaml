@@ -1,0 +1,34 @@
+pgp_id: PGP000636
+scores:
+  PGS004904:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 2.29 [1.98, 2.64] on Incident and prevelant early-onset colorectal cancer.
+paper:
+  pmid: '37504220'
+  doi: 10.1002/ijc.34648
+  title: Association between antibiotic use during early life and early-onset colorectal cancer risk overall and
+    according to polygenic risk and FUT2 genotypes.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

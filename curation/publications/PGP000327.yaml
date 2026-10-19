@@ -1,0 +1,44 @@
+pgp_id: PGP000327
+scores:
+  PGS002297:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lipoprotein(a) concentration (likelihood of hyper-Lp(a))
+      coding: Weights are the 48 joint-model SNP effects from the Mack et al. Lp(a) GWAS (isoform-adjusted meta-analysis);
+        units not stated (GWAS effects reported in mg/dL)
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Supplemental Methods, Genetic risk score calculations and ancestry estimation
+      quote: the effects of the 48 genome-wide significant SNPs
+      confidence: medium
+    - source: supplement
+      locator: Supplemental Methods, Genetic risk score calculations and ancestry estimation
+      quote: This score indicates the individual’s likelihood of
+      confidence: medium
+    - source: full_text
+      locator: Results, GRS for Lp(a)
+      quote: All pedigree members with high Lp(a) presented GRS values close to or above the 95th percentile
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: 'no rsIDs in harmonized file; allele-aligned overlap: 4/0 agree vs PGS000689, 3/0 vs PGS004201'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog weight_type NR. Evaluated in a 22-member pedigree (GRS explained 58.1% of inverse-normal Lp(a)).
+      1000G EUR r=+0.77 with anchor PGS000667.
+paper:
+  pmid: '35133173'
+  doi: 10.1161/circgen.121.003489
+  title: Genome-Wide Characterization of a Highly Penetrant Form of Hyperlipoprotein(a)emia Associated With Genetically
+    Elevated Cardiovascular Risk.
+evidence_read:
+  abstract: true
+  full_text: europepmc PMC9018215
+  supplement:
+  - s001 Supplemental Methods

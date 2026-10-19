@@ -1,0 +1,155 @@
+slug: vitamin-d
+query: vitamin D
+match:
+  terms:
+  - 25(OH)D
+  - 25-hydroxyvitamin D
+  - serum vitamin D
+  - vitamin D
+  - vitamin D deficiency
+  efo_ids: []
+  exclude: []
+anchor: PGS003203
+status: resolved
+concepts:
+- nutrition.vitamin_d
+- nutrition.vitamin_d_intake
+scores:
+  PGS000702:
+    decision: in_scope
+    note: null
+  PGS000882:
+    decision: in_scope
+    note: null
+  PGS001982:
+    decision: in_scope
+    note: null
+  PGS002200:
+    decision: in_scope
+    note: null
+  PGS002355:
+    decision: in_scope
+    note: null
+  PGS002427:
+    decision: in_scope
+    note: null
+  PGS002476:
+    decision: in_scope
+    note: null
+  PGS002525:
+    decision: in_scope
+    note: null
+  PGS002574:
+    decision: in_scope
+    note: null
+  PGS002623:
+    decision: in_scope
+    note: null
+  PGS002672:
+    decision: in_scope
+    note: null
+  PGS002721:
+    decision: in_scope
+    note: null
+  PGS003174:
+    decision: in_scope
+    note: dietary vitamin D intake (UKB 100021), separate concept
+  PGS003175:
+    decision: in_scope
+    note: dietary vitamin D intake (UKB 100021), separate concept
+  PGS003176:
+    decision: in_scope
+    note: dietary vitamin D intake (UKB 100021), separate concept
+  PGS003177:
+    decision: in_scope
+    note: dietary vitamin D intake (UKB 100021), separate concept
+  PGS003178:
+    decision: in_scope
+    note: dietary vitamin D intake (UKB 100021), separate concept
+  PGS003179:
+    decision: in_scope
+    note: dietary vitamin D intake (UKB 100021), separate concept
+  PGS003180:
+    decision: in_scope
+    note: dietary vitamin D intake (UKB 100021), separate concept
+  PGS003181:
+    decision: in_scope
+    note: dietary vitamin D intake (UKB 100021), separate concept
+  PGS003182:
+    decision: in_scope
+    note: dietary vitamin D intake (UKB 100021), separate concept
+  PGS003183:
+    decision: in_scope
+    note: dietary vitamin D intake (UKB 100021), separate concept
+  PGS003184:
+    decision: in_scope
+    note: null
+  PGS003185:
+    decision: in_scope
+    note: null
+  PGS003186:
+    decision: in_scope
+    note: null
+  PGS003187:
+    decision: in_scope
+    note: null
+  PGS003188:
+    decision: in_scope
+    note: null
+  PGS003189:
+    decision: in_scope
+    note: null
+  PGS003190:
+    decision: in_scope
+    note: null
+  PGS003191:
+    decision: in_scope
+    note: null
+  PGS003192:
+    decision: in_scope
+    note: null
+  PGS003193:
+    decision: in_scope
+    note: null
+  PGS003194:
+    decision: in_scope
+    note: null
+  PGS003195:
+    decision: in_scope
+    note: null
+  PGS003196:
+    decision: in_scope
+    note: null
+  PGS003197:
+    decision: in_scope
+    note: null
+  PGS003198:
+    decision: in_scope
+    note: null
+  PGS003199:
+    decision: in_scope
+    note: null
+  PGS003200:
+    decision: in_scope
+    note: null
+  PGS003201:
+    decision: in_scope
+    note: null
+  PGS003202:
+    decision: in_scope
+    note: null
+  PGS003203:
+    decision: in_scope
+    note: null
+  PGS003554:
+    decision: in_scope
+    note: null
+  PGS004344:
+    decision: in_scope
+    note: null
+summary: 44 "vitamin D" scores from 7 papers. 34 are serum 25-hydroxyvitamin D scores (nutrition.vitamin_d); 32
+  are annotated "higher score = higher vitamin D level", mostly catalog-only, anchored on PGS000702 (OR 0.09 per
+  unit against deficiency) and PGS000882 (developer betas on 25OHD). Ten ExPRSweb scores built on UK Biobank field
+  100021 are dietary vitamin D intake from a 24-hour recall, not serum level, and go to a separate concept (nutrition.vitamin_d_intake);
+  four are annotated, six are near-null and left unannotated. Two ExPRSweb DBSLMM serum scores (PGS003187, PGS003202)
+  are near-null with negative evaluation betas and stay unannotated. No aligned-correlation conflicts.

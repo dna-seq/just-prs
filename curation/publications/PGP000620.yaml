@@ -1,0 +1,103 @@
+pgp_id: PGP000620
+scores:
+  PGS004890:
+    cluster: cancer.breast_cancer_aggressiveness
+    phenotype: tnbc_vs_luminal_subtype
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: probability that a breast cancer is triple-negative rather than luminal (case-case)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract
+      quote: Subtype-informative polygenic risk scores (PRS) were derived, and patients with a high subtype-informative
+        PRS had an up to two-fold increased risk of being diagnosed with TNBC instead of luminal cancers.
+      confidence: high
+    - source: abstract
+      locator: Abstract
+      quote: The CC-GWAS PRS was also associated with overall survival and disease-specific survival among patients
+        with breast cancer.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: case-case score; case-control GWAS risk alleles would not test its direction
+    review_reason: null
+    status: agent_proposed
+    notes: Case-case (TNBC vs luminal) subtype score; never evaluated against cancer-free controls, so it says nothing
+      about whether breast cancer occurs. Near-zero correlation with the overall-risk scores in 1000G EUR.
+  PGS004891:
+    cluster: cancer.breast_cancer
+    phenotype: triple_negative_breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of triple-negative breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Table 2 footnotes
+      quote: constructed based on 25 genome-wide significant SNPs
+      confidence: medium
+    - source: full_text
+      locator: Methods > PRS
+      quote: risk SNPs identified from a traditional case-control GWAS of TNBC
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triple negative breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Weights from a case-control GWAS of TNBC (Zhang et al.), so per-allele effects on TNBC risk; this paper
+      used it only as a comparator in the TNBC-vs-luminal analysis. 1000G EUR r=+0.66 to +0.67 with PGS000517/PGS000518
+      (UKB breast cancer, OR CI > 1).
+  PGS004892:
+    cluster: cancer.breast_cancer
+    phenotype: triple_negative_breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of triple-negative breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Table 2 footnotes
+      quote: constructed based on 41 SNPs with suggestive significance
+      confidence: medium
+    - source: full_text
+      locator: Table 2 footnotes
+      quote: from traditional case-control GWAS of TNBC.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Triple negative breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Weights from a case-control GWAS of TNBC (Zhang et al.), so per-allele effects on TNBC risk; this paper
+      used it only as a comparator in the TNBC-vs-luminal analysis. 1000G EUR r=+0.66 to +0.67 with PGS000517/PGS000518
+      (UKB breast cancer, OR CI > 1).
+paper:
+  pmid: '38832928'
+  doi: 10.1158/0008-5472.can-23-3854
+  title: Case-Case Genome-Wide Analyses Identify Subtype-Informative Variants that Confer Risk for Breast Cancer.
+evidence_read:
+  abstract: true
+  full_text: pmc_html
+  supplement: []

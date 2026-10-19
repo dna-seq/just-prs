@@ -1,0 +1,36 @@
+pgp_id: PGP000070
+scores:
+  PGS000147:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: colon_cancer
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.53 with catalog-annotated PGS003436 (catalog metric here: no directional metric on Colon
+      cancer).'
+paper:
+  pmid: '28233817'
+  doi: 10.1038/srep43263
+  title: 'Risk Model for Colorectal Cancer in Spanish Population Using Environmental and Genetic Factors: Results
+    from the MCC-Spain study.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

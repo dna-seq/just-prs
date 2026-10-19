@@ -1,0 +1,164 @@
+pgp_id: PGP000503
+scores:
+  PGS003953:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: evaluated on mild cognitive impairment, a prodromal stage of Alzheimer's disease
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.51 with PGS003992 (OR 1.33446 [1.31203, 1.35726] vs 'AD'). APOE region variants present
+      in the file.
+  PGS003954:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: evaluated on mild cognitive impairment, a prodromal stage of Alzheimer's disease
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7412 T (APOE e2, protective) carries a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.64 with PGS000334 (HR 1.93 [1.73, 2.15] vs 'Incident Alzheimer's disease'). APOE region
+      variants present in the file.
+  PGS003955:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: evaluated on mild cognitive impairment, a prodromal stage of Alzheimer's disease
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7412 T (APOE e2, protective) carries a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.75 with PGS004146 (OR 1.52213 [1.49865, 1.54597] vs 'AD'). APOE region variants present
+      in the file.
+  PGS003956:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: evaluated on mild cognitive impairment, a prodromal stage of Alzheimer's disease
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.48 with PGS000334 (HR 1.93 [1.73, 2.15] vs 'Incident Alzheimer's disease'). APOE region
+      variants present in the file.
+  PGS003957:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: evaluated on mild cognitive impairment, a prodromal stage of Alzheimer's disease
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7412 T (APOE e2, protective) carries a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.54 with PGS004092 (OR 1.48977 [1.46572, 1.51421] vs 'AD'). APOE region variants present
+      in the file.
+  PGS003958:
+    cluster: neurology.alzheimers_disease
+    phenotype: alzheimers_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Alzheimer's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: evaluated on mild cognitive impairment, a prodromal stage of Alzheimer's disease
+    strata:
+      apoe_region: included
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alzheimer's disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7412 T (APOE e2, protective) carries a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.76 with PGS004146 (OR 1.52213 [1.49865, 1.54597] vs 'AD'). APOE region variants present
+      in the file.

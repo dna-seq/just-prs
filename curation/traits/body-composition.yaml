@@ -1,0 +1,271 @@
+slug: body-composition
+query: body composition
+match:
+  terms:
+  - body composition
+  - body fat percentage
+  - fat mass
+  - fat-free mass
+  - impedance
+  - lean mass
+  efo_ids: []
+  exclude: []
+anchor: PGS003901
+status: resolved
+concepts:
+- anthropometry.adiposity
+- anthropometry.lean_mass
+scores:
+  PGS001101:
+    decision: in_scope
+    note: null
+  PGS001102:
+    decision: in_scope
+    note: null
+  PGS001103:
+    decision: in_scope
+    note: null
+  PGS001104:
+    decision: in_scope
+    note: null
+  PGS001105:
+    decision: in_scope
+    note: null
+  PGS001106:
+    decision: in_scope
+    note: null
+  PGS001144:
+    decision: in_scope
+    note: null
+  PGS001145:
+    decision: in_scope
+    note: null
+  PGS001146:
+    decision: in_scope
+    note: null
+  PGS001147:
+    decision: in_scope
+    note: null
+  PGS001148:
+    decision: in_scope
+    note: null
+  PGS001149:
+    decision: in_scope
+    note: null
+  PGS001154:
+    decision: in_scope
+    note: null
+  PGS001155:
+    decision: in_scope
+    note: null
+  PGS001156:
+    decision: in_scope
+    note: null
+  PGS001157:
+    decision: in_scope
+    note: null
+  PGS001158:
+    decision: in_scope
+    note: null
+  PGS001159:
+    decision: in_scope
+    note: null
+  PGS001160:
+    decision: in_scope
+    note: null
+  PGS001161:
+    decision: in_scope
+    note: null
+  PGS001166:
+    decision: in_scope
+    note: null
+  PGS001167:
+    decision: in_scope
+    note: null
+  PGS001917:
+    decision: in_scope
+    note: null
+  PGS001950:
+    decision: in_scope
+    note: null
+  PGS001951:
+    decision: in_scope
+    note: null
+  PGS001961:
+    decision: in_scope
+    note: null
+  PGS002133:
+    decision: in_scope
+    note: null
+  PGS002168:
+    decision: in_scope
+    note: null
+  PGS002169:
+    decision: in_scope
+    note: null
+  PGS002179:
+    decision: in_scope
+    note: null
+  PGS003509:
+    decision: in_scope
+    note: null
+  PGS003531:
+    decision: in_scope
+    note: null
+  PGS003532:
+    decision: in_scope
+    note: null
+  PGS003540:
+    decision: in_scope
+    note: null
+  PGS003899:
+    decision: in_scope
+    note: null
+  PGS003900:
+    decision: in_scope
+    note: null
+  PGS003901:
+    decision: in_scope
+    note: null
+  PGS003904:
+    decision: in_scope
+    note: null
+  PGS003905:
+    decision: in_scope
+    note: null
+  PGS003906:
+    decision: in_scope
+    note: null
+  PGS003907:
+    decision: in_scope
+    note: null
+  PGS003908:
+    decision: in_scope
+    note: null
+  PGS003909:
+    decision: in_scope
+    note: null
+  PGS003910:
+    decision: in_scope
+    note: null
+  PGS003911:
+    decision: in_scope
+    note: null
+  PGS003912:
+    decision: in_scope
+    note: null
+  PGS003913:
+    decision: in_scope
+    note: null
+  PGS003914:
+    decision: in_scope
+    note: null
+  PGS003915:
+    decision: in_scope
+    note: null
+  PGS003916:
+    decision: in_scope
+    note: null
+  PGS003917:
+    decision: in_scope
+    note: null
+  PGS003918:
+    decision: in_scope
+    note: null
+  PGS003919:
+    decision: in_scope
+    note: null
+  PGS003920:
+    decision: in_scope
+    note: null
+  PGS003921:
+    decision: in_scope
+    note: null
+  PGS003922:
+    decision: in_scope
+    note: null
+  PGS003923:
+    decision: in_scope
+    note: null
+  PGS004374:
+    decision: in_scope
+    note: null
+  PGS004375:
+    decision: in_scope
+    note: null
+  PGS004376:
+    decision: in_scope
+    note: null
+  PGS004380:
+    decision: in_scope
+    note: null
+  PGS004381:
+    decision: in_scope
+    note: null
+  PGS004382:
+    decision: in_scope
+    note: null
+  PGS004383:
+    decision: in_scope
+    note: null
+  PGS004384:
+    decision: in_scope
+    note: null
+  PGS004385:
+    decision: in_scope
+    note: null
+  PGS004386:
+    decision: in_scope
+    note: null
+  PGS004387:
+    decision: in_scope
+    note: null
+  PGS004389:
+    decision: in_scope
+    note: null
+  PGS004390:
+    decision: in_scope
+    note: null
+  PGS004391:
+    decision: in_scope
+    note: null
+  PGS004393:
+    decision: in_scope
+    note: null
+  PGS004394:
+    decision: in_scope
+    note: null
+  PGS004395:
+    decision: in_scope
+    note: null
+  PGS004397:
+    decision: in_scope
+    note: null
+  PGS004398:
+    decision: in_scope
+    note: null
+  PGS004399:
+    decision: in_scope
+    note: null
+  PGS004401:
+    decision: in_scope
+    note: null
+  PGS004402:
+    decision: in_scope
+    note: null
+  PGS004403:
+    decision: in_scope
+    note: null
+  PGS005315:
+    decision: in_scope
+    note: null
+  PGS005316:
+    decision: in_scope
+    note: null
+summary: 82 UK Biobank bioimpedance scores from 6 papers, all in scope and annotated without paper lookups.
+  Fat percentage and fat mass (whole body and arm/leg/trunk) join anthropometry.adiposity with sign +1.
+  Fat-free mass, impedance-predicted mass and appendicular lean mass form a new concept anthropometry.lean_mass
+  (+1); bioelectrical impedance sits in it with sign -1, because higher impedance means less lean tissue
+  and water. Every score is higher score = higher measured value; the 36 negative 1000G pairs are all
+  impedance vs mass scores and vanish after alignment (0 conflicts). PGS004380-4384 carry a wrong catalog
+  ontology label (Abnormality of the skeletal system) but are impedance scores.

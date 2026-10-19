@@ -196,6 +196,76 @@ scores:
       (APOE, LDLR, SORT1, APOB, ABCG8, HMGCR) and correlates about -0.6 to -0.73 with the other TC scores in 1000G
       EUR (min r=-0.73 with PGS004680). As scored from the catalog file a higher value means LOWER genetic TC; the
       positive catalog beta reflects the authors' own computation. Candidate for a catalog erratum/quarantine.
+  PGS000060:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: HDL cholesterol level (as the deposited weights are oriented)
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      phenotype: hdl_cholesterol
+    provenance:
+    - source: full_text
+      locator: Supporting information, S4 Table legend
+      quote: Weights used to calculate genetic risk scores based on the allelic count/allelic dosage of A2 alleles.
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s006.csv header
+      quote: rs#,Trait,A1,A2,A2_weight
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s006.csv, rs3764261 HDL row
+      quote: rs3764261,HDL,A,C,0.2316
+      confidence: medium
+    - source: supplement
+      locator: pone.0126361.s004.csv, HDL Caucasian row (HDL_GRS_estimate = 8.39)
+      quote: HDL,Cau,7.34E-24,0.043,8.39,2.76E-06
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: '9 of 9 reference HDL SNPs inverted (HDL-raising allele weighted negative or HDL-lowering allele weighted
+        positive): rs3764261 C (CETP, HDL-lowering) +0.2316; rs1532085 G (LIPC, lowering) +0.1028; rs12678919 G
+        (LPL, raising) -0.1682; rs1883025 C (ABCA1, raising) -0.0638; rs7241918 G (LIPG, lowering) +0.093; rs4846914
+        G (GALNT2, lowering) +0.0448; rs964184 G (APOA5, lowering) +0.1039; rs1800961 C (HNF4A, raising) -0.1293;
+        rs6065906 C (PLTP, lowering) +0.0582'
+    review_reason: 'Suspected inverted deposit: the A2_weight column is oriented opposite to established HDL effects;
+      the paper intends higher GRS = higher HDL.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (decreases HDL cholesterol level); the paper says
+        higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: '9 of 9 reference HDL SNPs inverted (HDL-raising allele weighted negative or HDL-lowering allele
+        weighted positive): rs3764261 C (CETP, HDL-lowering) +0.2316; rs1532085 G (LIPC, lowering) +0.1028; rs12678919
+        G (LPL, raising) -0.1682; rs1883025 C (ABCA1, raising) -0.0638; rs7241918 G (LIPG, lowering) +0.093; rs4846914
+        G (GALNT2, lowering) +0.0448; rs964184 G (APOA5, lowering) +0.1039; rs1800961 C (HNF4A, raising) -0.1293;
+        rs6065906 C (PLTP, lowering) +0.0582 | s004.csv HDL_GRS_estimate +8.39 (Caucasians), positive in all four
+        groups | 1000G EUR r=-0.68 with anchor PGS004635, -0.47 max with PGP000517 HDL scores'
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Same defect as PGS000061 (LDL), PGS000062 (TC) and PGS000063 (TG) from this paper. The paper intends
+      a higher HDL GRS = higher HDL (pone.0126361.s004.csv HDL_GRS_estimate +8.39 in Caucasians, positive in all
+      four groups), but the deposited weights follow the A2_weight column, which is oriented opposite to established
+      HDL effects at every reference locus, and the file correlates about -0.68 with the consensus HDL anchor PGS004635
+      (min r=-0.83 with PGS004914) in 1000G EUR. As scored from the PGS Catalog file, a higher value means LOWER
+      genetic HDL-C. The positive catalog beta (8.39) reflects the authors' computation, not this file; the metric_sign
+      WARN is expected. Candidate for a catalog erratum/quarantine.
 paper:
   pmid: '25951326'
   doi: 10.1371/journal.pone.0126361

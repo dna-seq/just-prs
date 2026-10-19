@@ -1,0 +1,207 @@
+slug: atrial-fibrillation
+query: atrial fibrillation
+match:
+  terms:
+  - arrhythmia
+  - atrial fibrillation
+  - atrial flutter
+  efo_ids: []
+  exclude: []
+anchor: PGS000035
+status: resolved
+concepts:
+- cardiovascular.atrial_fibrillation
+scores:
+  PGS000016:
+    decision: in_scope
+    note: null
+  PGS000035:
+    decision: in_scope
+    note: null
+  PGS000331:
+    decision: in_scope
+    note: null
+  PGS000338:
+    decision: in_scope
+    note: null
+  PGS000727:
+    decision: in_scope
+    note: null
+  PGS001263:
+    decision: in_scope
+    note: null
+  PGS001339:
+    decision: in_scope
+    note: null
+  PGS001340:
+    decision: in_scope
+    note: null
+  PGS001356:
+    decision: in_scope
+    note: null
+  PGS001841:
+    decision: in_scope
+    note: null
+  PGS002050:
+    decision: in_scope
+    note: null
+  PGS002756:
+    decision: in_scope
+    note: null
+  PGS002773:
+    decision: in_scope
+    note: null
+  PGS002774:
+    decision: in_scope
+    note: null
+  PGS002814:
+    decision: in_scope
+    note: null
+  PGS003461:
+    decision: in_scope
+    note: null
+  PGS003761:
+    decision: in_scope
+    note: null
+  PGS004186:
+    decision: in_scope
+    note: null
+  PGS004187:
+    decision: in_scope
+    note: null
+  PGS004188:
+    decision: in_scope
+    note: null
+  PGS004189:
+    decision: in_scope
+    note: null
+  PGS004190:
+    decision: in_scope
+    note: null
+  PGS004290:
+    decision: in_scope
+    note: null
+  PGS004291:
+    decision: in_scope
+    note: null
+  PGS004292:
+    decision: in_scope
+    note: null
+  PGS004293:
+    decision: in_scope
+    note: null
+  PGS004294:
+    decision: in_scope
+    note: null
+  PGS004440:
+    decision: in_scope
+    note: null
+  PGS004461:
+    decision: in_scope
+    note: null
+  PGS004510:
+    decision: in_scope
+    note: null
+  PGS004531:
+    decision: in_scope
+    note: null
+  PGS004612:
+    decision: in_scope
+    note: PRS of a model-predicted 5-year AF risk (ECG-AI / CHARGE-AF); phenotype predicted_af_risk
+  PGS004613:
+    decision: in_scope
+    note: PRS of a model-predicted 5-year AF risk (ECG-AI / CHARGE-AF); phenotype predicted_af_risk
+  PGS004705:
+    decision: in_scope
+    note: null
+  PGS004706:
+    decision: in_scope
+    note: null
+  PGS004878:
+    decision: in_scope
+    note: null
+  PGS004905:
+    decision: in_scope
+    note: null
+  PGS004920:
+    decision: in_scope
+    note: null
+  PGS004929:
+    decision: in_scope
+    note: null
+  PGS005060:
+    decision: in_scope
+    note: null
+  PGS005061:
+    decision: in_scope
+    note: null
+  PGS005062:
+    decision: in_scope
+    note: null
+  PGS005063:
+    decision: in_scope
+    note: null
+  PGS005064:
+    decision: in_scope
+    note: null
+  PGS005065:
+    decision: in_scope
+    note: null
+  PGS005066:
+    decision: in_scope
+    note: null
+  PGS005067:
+    decision: in_scope
+    note: null
+  PGS005068:
+    decision: in_scope
+    note: null
+  PGS005069:
+    decision: in_scope
+    note: null
+  PGS005070:
+    decision: in_scope
+    note: null
+  PGS005071:
+    decision: in_scope
+    note: null
+  PGS005072:
+    decision: in_scope
+    note: null
+  PGS005159:
+    decision: in_scope
+    note: null
+  PGS005168:
+    decision: in_scope
+    note: null
+  PGS005171:
+    decision: in_scope
+    note: null
+  PGS005287:
+    decision: in_scope
+    note: null
+  PGS005288:
+    decision: in_scope
+    note: null
+  PGS005289:
+    decision: in_scope
+    note: null
+  PGS005290:
+    decision: in_scope
+    note: null
+  PGS005291:
+    decision: in_scope
+    note: null
+  PGS005292:
+    decision: in_scope
+    note: null
+  PGS005313:
+    decision: in_scope
+    note: null
+summary: 'All 62 atrial fibrillation scores point the same way: a higher score means a higher risk of
+  atrial fibrillation (or flutter). 60 were annotated from the catalog, corroborated by HR/OR above 1
+  or 1000G correlation with the anchor PGS000035; no score correlates negatively with another. Two scores
+  from PGP000591 were read: they are PRSs of model-predicted 5-year AF risk (ECG-AI and the CHARGE-AF
+  clinical score), and a higher value predicts more incident AF (HR 1.07 and 1.12 per SD). The CHARGE-AF
+  score mostly captures clinical risk factors such as body size and correlates only weakly with the AF-diagnosis
+  scores.'

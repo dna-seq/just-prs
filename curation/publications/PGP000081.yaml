@@ -1,0 +1,130 @@
+pgp_id: PGP000081
+scores:
+  PGS000199:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.54 with OR-corroborated PGS004114 (anchor r=+0.18); catalog evaluation
+      is AUROC only (gout diagnosis in patients with arthritis).
+  PGS000194:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: seropositive_rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of CCP-positive (ACPA-positive) rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Materials and Methods > Genetic probability model
+      quote: The resulting ORs refer to a relative increase in population-based odds of getting that disease. Our
+        genetic probability model, G-PROB, uses these logORs to create a weighted genetic risk score
+      confidence: high
+    - source: full_text
+      locator: Materials and Methods > HLA variant selection (before 'Optimizing G-PROB in pseudo-prospective setting
+        III')
+      quote: Because the HLA risk differs between CCP + and CCP − RA, we created a separate genetic risk score for
+        CCP + and CCP − RA using their specific HLA ORs
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis (CCP-negative)
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: G-PROB per-disease weighted genetic risk score (sum of risk alleles x GWAS logOR, shrunk) for CCP+ RA;
+      the deposited file is the raw per-disease GRS, not the normalized G-probability. The catalog reported trait
+      'CCP-negative' contradicts the score name G-PROB_Rapos and EFO 'ACPA-positive rheumatoid arthritis'; the paper
+      builds separate CCP+ and CCP- scores, so this is treated as a catalog mislabel and assigned to seropositive
+      RA. Catalog lists 114 variants vs 93 in the paper (not reconciled). AUROC 0.69 is for pooled multi-disease
+      G-probability discrimination, not CCP+ RA vs controls. 1000G EUR r=+0.45 with PGS004118.
+  PGS000195:
+    cluster: immune.rheumatoid_arthritis
+    phenotype: seronegative_rheumatoid_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of CCP-negative (ACPA-negative) rheumatoid arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Materials and Methods > Genetic probability model
+      quote: The resulting ORs refer to a relative increase in population-based odds of getting that disease. Our
+        genetic probability model, G-PROB, uses these logORs to create a weighted genetic risk score
+      confidence: high
+    - source: full_text
+      locator: Materials and Methods > HLA variant selection (before 'Optimizing G-PROB in pseudo-prospective setting
+        III')
+      quote: Because the HLA risk differs between CCP + and CCP − RA, we created a separate genetic risk score for
+        CCP + and CCP − RA using their specific HLA ORs
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Rheumatoid arthritis (CCP-negative)
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: G-PROB per-disease weighted genetic risk score (sum of risk alleles x GWAS logOR, shrunk) for CCP- RA
+      (RAneg); raw per-disease GRS, not the normalized G-probability. AUROC 0.69 is for pooled multi-disease G-probability
+      discrimination. 1000G EUR r=1.00 with PGS000194 (shared non-HLA variants dominate in EUR) and +0.45 with PGS004118.
+  PGS000198:
+    cluster: immune.psoriasis
+    phenotype: psoriatic_arthritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriatic arthritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriatic arthritis | psoriatic arthritis
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: HLA-C*06:02 weight +1.01 (psoriasis risk allele); TYK2 rs34536443 C (protective P1104A allele) weight
+        -0.65
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; G-PROB PsA component. Corroborated by 1000G EUR r=+0.48 with PGS001312 (UKB psoriasis) and +0.45 with
+      PGS005308 (OR 1.25 for severe psoriasis); anchor r=+0.26. Catalog evaluation is AUROC only (PsA diagnosis
+      among arthritis patients).
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []
+paper:
+  pmid: '32461333'
+  doi: 10.1126/scitranslmed.aay1548
+  title: Using genetics to prioritize diagnoses for rheumatology outpatients with inflammatory arthritis.

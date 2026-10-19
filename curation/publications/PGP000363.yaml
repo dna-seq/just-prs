@@ -28,3 +28,7 @@ scores:
     notes: 'GRSrare: 10th vs 1st decile ORs for overweight/obesity in childhood cancer survivors. Near-zero 1000G
       correlation with other BMI scores (r=+0.01 with anchor) is expected for a 14-variant rare-variant score. Raw
       sources fetched by the curator directly.'
+paper:
+  pmid: '35879615'
+  doi: 10.1038/s41591-022-01902-3
+  title: Genetic risk score enhances the risk prediction of severe obesity in adult survivors of childhood cancer.

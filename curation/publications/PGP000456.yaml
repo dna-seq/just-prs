@@ -79,6 +79,146 @@ scores:
       trait; corroborated by 1000G EUR correlation r=+0.82 with catalog-annotated PGS000910 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.59. Catalog beta -0.002 is for respiratory
       event index (sleep apnea), another concept; not directional evidence here.
+  PGS003463:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.92 with PGS003963 (DBP score annotated here). Score name LDPred2_DBP.
+      Catalog metric 'BETA 0.02' is on another outcome (Respiratory event index) and carries no direction for DBP.
+  PGS003471:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: HbA1c measurement
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 (median +0.71) with the PGP000517 HbA1c scores (BETA CI excludes
+      0). Evaluated in the paper only against obstructive sleep apnoea / respiratory event index (BETA 0.023), not
+      HbA1c; other scores from this paper (FEV1/FVC) had orientation problems, but this file correlates positively
+      with the HbA1c consensus.
+  PGS003468:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.62 with PGS004968 (PGP000679 hemoglobin score, catalog beta CI excludes
+      the null). 1000G EUR r with all other in-scope hemoglobin scores is positive (min +0.12). Catalog beta (-0.012)
+      is for a sleep-apnoea respiratory event index, not hemoglobin; not used.
+  PGS003472:
+    cluster: cardiovascular.heart_rate
+    phenotype: resting_heart_rate
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: resting heart rate (beats per minute), as the file is distributed
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog betas are for the respiratory event index and OSA (sleep apnoea), another concept; they describe
+        the authors' score, not this file.
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > PRS association with their intended phenotypes
+      quote: All PRSs of correlated traits were associated with their corresponding phenotypes (Supplementary Figure
+        3).
+      confidence: low
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heart rate
+      confidence: low
+    lead_variant_check:
+      status: disagree
+      note: rs17362588 A (2:178856319) weight -0.245, but the source GWAS GCST001969 says A = 0.736 unit increase
+        in heart rate; GJA1 positions 6:121406612 A, 6:121435182 C, 6:121789200 G and MYH6 14:23397504 G all carry
+        negative weights where the UKB pulse-rate scores carry positive ones
+    review_reason: Suspected inverted deposit; direction recorded as distributed (higher score = lower heart rate),
+      inferred from lead loci and 1000G anti-correlation, not from a stated sign.
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction describes the file as distributed (higher = lower heart rate); the paper's PRS is a heart-rate
+        PRS validated against its own phenotype.
+      paper_direction: increases
+      evidence: 5/5 canonical heart-rate lead loci opposite to the source GWAS / consensus (CCDC141 rs17362588,
+        three GJA1 positions, MYH6); 1000G EUR r = -0.24 to -0.40 with all 10 other heart-rate scores, which correlate
+        +0.33 to +0.77 with each other. Same paper's FEV1/FVC score PGS003465 shows the same pattern.
+      recorded: 2026-10-19
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: Catalog REI/OSA betas (0.019, 0.032) describe the authors' oriented score, not the deposited file.
+      evidence: Lead-variant signs opposite to the source GWAS.
+      recorded: 2026-10-19
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: LDpred2-auto on den Hoed 2013 heart-rate GWAS (GCST001969) in HCHS/SOL; paper gives no explicit sign
+      in text (Supplementary Figure 3 is image-only). Suspected sign flip vs every other heart-rate score.
+  PGS003480:
+    score_effect: null
+    unannotated_reason: 'Suspected sign-flipped deposit, not recorded: the paper (Dashti 2019 hours GWAS, LDpred2-auto,
+      Supplementary Note 2) never states the orientation, and its only reported associations (REI/OSA, Supplementary
+      Tables 4-5) are null. The file looks like SHORTER sleep: rs1823125-G (longer-sleep allele, Gottlieb 2015)
+      has weight -0.0014, and 1000G EUR r = -0.87 with PGS002196, -0.76 with PGS001978, -0.53 with PGS001150, -0.39
+      with PGS003764. Only one canonical locus could be checked (rs13107325 and rs12209200 not usable), so the deposit_inverted
+      bar (>=2 opposite canonical loci) is not met.'
+    status: agent_proposed
+    notes: Same paper's PGS003465 (FEV1/FVC) shows the same pattern of weights pointing opposite to the catalog
+      convention.
 paper:
   pmid: '36174398'
   doi: 10.1016/j.ebiom.2022.104288

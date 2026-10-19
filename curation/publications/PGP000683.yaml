@@ -5,3 +5,7 @@ scores:
     unannotated_reason: 'not read: lookup budget reached. Suspected opposite direction: 1000G EUR r=-0.26 with the
       PGP000517 CKD scores and +0.26 with eGFR scores, although the catalog OR 1.41 [1.14,1.76] for CKD stage 3+
       (African American cohort) points toward risk.'
+paper:
+  pmid: '39073889'
+  doi: 10.1681/asn.0000000000000437
+  title: Single-Ancestry versus Multi-Ancestry Polygenic Risk Scores for CKD in Black American Populations.

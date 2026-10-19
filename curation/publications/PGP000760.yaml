@@ -1,0 +1,158 @@
+pgp_id: PGP000760
+scores:
+  PGS005307:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs13203895 (HLA-C) T +1.06; TYK2 rs34536443 G (risk allele) +0.65
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Genome-wide-significant psoriasis PRS (GWS). Catalog OR 1.44 [1.36, 1.51] for severe psoriasis; 1000G
+      EUR r=+0.61 with anchor.
+  PGS005308:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis (non-HLA loci only)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; GWS PRS without HLA. Catalog OR 1.25 [1.18, 1.31] for severe psoriasis; 1000G EUR r=+0.61 with anchor.
+  PGS005309:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Genome-wide PRS (Full). Catalog OR 1.49 [1.41, 1.57] for severe psoriasis; 1000G EUR r=+0.42 with anchor.
+  PGS005310:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis (non-HLA loci only)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Genome-wide PRS without HLA. Catalog OR 1.38 [1.31, 1.45] for severe psoriasis; 1000G EUR r=+0.38 with
+      anchor.
+  PGS005311:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Variant subset of the Full PRS (r=+1.00 with PGS005309, OR 1.49 severe psoriasis); anchor r=+0.43.
+      Catalog AUROC only.
+  PGS005312:
+    cluster: immune.psoriasis
+    phenotype: psoriasis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of psoriasis (non-HLA loci only)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Psoriasis | psoriasis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Variant subset of the Full-noHLA PRS (r=+1.00 with PGS005310, OR 1.38 severe psoriasis); anchor r=+0.39.
+      Catalog AUROC only.
+paper:
+  pmid: '41408349'
+  doi: 10.1186/s13073-025-01561-2
+  title: Genetic liability to psoriasis predicts severe disease outcomes.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

@@ -1,0 +1,154 @@
+pgp_id: PGP000075
+scores:
+  PGS000160:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.71 with already-annotated PGS000795.
+  PGS000153:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.69 with PGS004865 (OR 16.2 [8.1, 32.5] on Breast cancer among BRAC1 carriers younger
+      than 40 years). Weights are deposited as odds ratios (not log-odds); direction still follows the risk allele.
+  PGS000157:
+    cluster: cancer.melanoma
+    phenotype: melanoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of melanoma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name | scores.trait_reported
+      quote: cGRS_Melanoma | Melanoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by no directional metric (AUROC only, on Melanoma); 1000G EUR r=+0.55 with anchor PGS000079
+      (annotated here, OR 1.44 on melanoma).
+  PGS000154:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.49 with catalog-annotated PGS000785 (catalog metric here: no directional metric on Colorectal
+      cancer).'
+  PGS000162:
+    cluster: cancer.thyroid_cancer
+    phenotype: thyroid_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of thyroid cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.47 with anchor PGS000087 (CC_Thyroid, OR 1.55 [1.44, 1.67]). Weight type "Odds Ratio
+      over expected risk" (cGRS of 6 variants); direction corroborated only by correlation.
+  PGS000156:
+    cluster: cancer.lung_cancer
+    phenotype: lung_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of lung cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 6-variant cGRS, no directional metric; corroborated by 1000G EUR r=+0.4 to +0.5 with PGS000740 / PGS000880
+      (HR 1.20 [1.15, 1.26]).
+paper:
+  pmid: '30968590'
+  doi: 10.1002/cam4.2143
+  title: Systematic evaluation of cancer-specific genetic risk score for 11 types of cancer in The Cancer Genome
+    Atlas and Electronic Medical Records and Genomics cohorts.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

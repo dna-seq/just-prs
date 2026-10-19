@@ -1,0 +1,34 @@
+pgp_id: PGP000761
+scores:
+  PGS005313:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: atrial_fibrillation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atrial fibrillation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Atrial fibrillation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.82 [1.79, 1.85] on atrial fibrillation; 1000G EUR r=+0.62 with anchor PGS000035
+      (HR 1.34 [1.31, 1.37] incident AF), r=+0.89 with PGS005072.
+paper:
+  pmid: '40645996'
+  doi: 10.1038/s41467-025-61720-2
+  title: Cross-population GWAS and proteomics improve risk prediction and reveal mechanisms in atrial fibrillation.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

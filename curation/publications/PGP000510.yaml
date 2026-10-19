@@ -101,6 +101,109 @@ scores:
     notes: 'SBP_AFR: African-ancestry component (MVP or COGENT GWAS) of the Kurniansyah 2023 PRSsum (PGS003968).
       No catalog evaluation. Low 1000G EUR correlation (max r 0.18) with other SBP scores is expected for an African-ancestry-trained
       component, and no correlation is negative.'
+  PGS003963:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.98 with PGS005351 (DBP score annotated here). Score name DBP_EUR.
+  PGS003962:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.43 with PGS003964 (DBP score annotated here). Score name DBP_EAS.
+  PGS003964:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog metric BETA 2.41 [2.31, 2.5] on 'Diastolic blood pressure' (CI excludes the
+      null). Score name DBP_weightedPRSsum. Flagged canary_collapsed_percentile in catalog_scoring_flags (a scale/coverage
+      issue, not a direction issue).
+  PGS003961:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg, +10 mmHg if on antihypertensives)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata:
+      ancestry: African component
+    provenance:
+    - source: full_text
+      locator: Fig. 4 / Fig. 5 legends
+      quote: betas in units of mmHg per 1 SD increase in the PRS, standardized according to TOPMed
+      confidence: medium
+    - source: full_text
+      locator: Methods, study phenotypes
+      quote: SBP and DBP values were raised by 15 mmHg and 10 mmHg, respectively, in individuals using antihypertensive
+        medications
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: Aligned to PGS002258 (Evangelou GRS901_DBP), 63% of shared loci share sign (weight r +0.46, 243 loci);
+        vs PGS003963 63% of top-1000 loci agree (r +0.28)
+    review_reason: null
+    status: agent_proposed
+    notes: 'DBP_AFR: African-ancestry component of the Kurniansyah 2023 PRSsum (PGS003964). No catalog evaluation.
+      Low 1000G EUR correlation (max r 0.18) with other DBP scores is expected for an African-ancestry-trained component,
+      and no correlation is negative. Flagged canary_collapsed_percentile in catalog_scoring_flags (scale issue,
+      not direction).'
 paper:
   pmid: '37268629'
   doi: 10.1038/s41467-023-38990-9

@@ -1,0 +1,87 @@
+pgp_id: PGP000591
+scores:
+  PGS004612:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: predicted_af_risk
+    measurement_kind: composite
+    score_effect:
+      direction: increases
+      target: predicted 5-year risk of atrial fibrillation (ECG-AI)
+      coding: GWAS trait = rank-based inverse normal transformed predicted 5-year AF risk
+    polarity: 1
+    evaluation_outcome:
+      phenotype: atrial_fibrillation
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Abstract, Methods (PMC author manuscript)
+      quote: genome-wide association study (GWAS) of the predicted AF risk
+      confidence: high
+    - source: full_text
+      locator: Figure 2 legend
+      quote: 5-year AF risk estimates were rank-based inverse normal transformed prior to analysis
+      confidence: high
+    - source: full_text
+      locator: Results, Polygenic risk scores
+      quote: Each one standard deviation (SD) increase in the PRS of rank-based inverse normal transformed (R-INT)
+        ECG-AI risk
+      confidence: high
+    - source: full_text
+      locator: Results, Polygenic risk scores
+      quote: were significantly associated with 5-year incident AF
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: Top-weight rsIDs have no AF association in GWAS Catalog; not compared.
+    review_reason: null
+    status: agent_proposed
+    notes: PRS of ECG-AI (deep learning on 12-lead ECG)-predicted 5-year AF risk (PRS-CS, UK Biobank). Higher score
+      = higher predicted risk; HR 1.07 [1.04, 1.09] per SD for 5-year incident AF. Weakly correlated with AF-diagnosis
+      PRSs in 1000G EUR (max r=+0.14), not negatively.
+  PGS004613:
+    cluster: cardiovascular.atrial_fibrillation
+    phenotype: predicted_af_risk
+    measurement_kind: composite
+    score_effect:
+      direction: increases
+      target: predicted 5-year risk of atrial fibrillation (CHARGE-AF clinical score)
+      coding: GWAS trait = rank-based inverse normal transformed predicted 5-year AF risk
+    polarity: 1
+    evaluation_outcome:
+      phenotype: atrial_fibrillation
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Abstract, Methods (PMC author manuscript)
+      quote: genome-wide association study (GWAS) of the predicted AF risk
+      confidence: high
+    - source: full_text
+      locator: Figure 2 legend
+      quote: 5-year AF risk estimates were rank-based inverse normal transformed prior to analysis
+      confidence: high
+    - source: full_text
+      locator: Results, Polygenic risk scores
+      quote: Each one standard deviation (SD) increase in the PRS of rank-based inverse normal transformed (R-INT)
+        ECG-AI risk
+      confidence: high
+    - source: full_text
+      locator: Results, Polygenic risk scores
+      quote: were significantly associated with 5-year incident AF
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: Top-weight rsIDs have no AF association in GWAS Catalog; not compared.
+    review_reason: null
+    status: agent_proposed
+    notes: PRS of CHARGE-AF clinical risk model-predicted 5-year AF risk (PRS-CS, UK Biobank). Higher score = higher
+      predicted risk; HR 1.12 [1.09, 1.14] per SD for 5-year incident AF. CHARGE-AF loci mostly track body size
+      and other clinical inputs, so the score correlates weakly with AF-diagnosis PRSs (max r=+0.21 in 1000G EUR);
+      it is a risk-factor score, not an AF-specific one.
+paper:
+  pmid: '37278238'
+  doi: 10.1161/circgen.122.003808
+  title: Genetic Susceptibility to Atrial Fibrillation Identified via Deep Learning of 12-Lead Electrocardiograms.
+evidence_read:
+  abstract: true
+  full_text: pmc_author_manuscript
+  supplement: []

@@ -1,0 +1,35 @@
+pgp_id: PGP000063
+scores:
+  PGS000126:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level (mg/dl)
+    polarity: 1
+    evaluation_outcome:
+      phenotype: gout
+    provenance:
+    - source: full_text
+      locator: Methods, genetic risk score
+      quote: sum of the imputed dosage of the allele associated with higher urate levels
+      confidence: high
+    - source: full_text
+      locator: Results, GRS and gout in UK Biobank
+      quote: Across categories of the GRS, gout prevalence increased from 0.1% to 12.9%
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: GRS of 114 urate-raising alleles weighted by their effect on serum urate; catalog AUROC is for prevalent
+      gout in UKB Europeans (sex a covariate, not a stratum).
+paper:
+  pmid: '31578528'
+  doi: 10.1038/s41588-019-0504-x
+  title: Target genes, variants, tissues and transcriptional pathways influencing human serum urate levels.
+evidence_read:
+  abstract: true
+  full_text: pmc_html
+  supplement: []

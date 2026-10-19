@@ -5823,6 +5823,3416 @@ scores:
     unannotated_reason: Catalog OR 0.96 for thinness (CI includes the null) and no 1000G correlation >= 0.2 with
       any other thinness score; direction unconfirmed and the paper (PGP000393) does not define the thinness case
       group. Lookup agent unavailable.
+  PGS002954:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 4 agree, 2 disagree; rs12678919
+        G -0.00144; rs1883025 T -0.0137; rs3764261 A -0.0146; rs2271293 A +0.00185; rs1800961 T -0.0303; rs6065906
+        C -0.00805'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.53 with catalog-annotated HDL score PGS004086 (PGP000517, beta CI excluding
+      the null).
+  PGS002955:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 2 agree, 0 disagree; rs964184
+        C +0.108; rs1800961 T -0.135'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.56 with catalog-annotated HDL score PGS004126 (PGP000517, beta CI excluding
+      the null).
+  PGS002956:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 2 agree, 0 disagree; rs964184
+        C +0.108; rs1800961 T -0.135'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.54 with catalog-annotated HDL score PGS004126 (PGP000517, beta CI excluding
+      the null).
+  PGS002957:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 3 agree, 1 disagree; rs3764261
+        A +0.000299; rs2271293 A -3.45e-06; rs1800961 T +0; rs12678919 G +0.000111; rs1883025 T -8.44e-07'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.57 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS002958:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 5 agree, 3 disagree; rs4846914
+        A +0.00965; rs12678919 G -0.000116; rs1883025 T -0.0128; rs1532085 G +0.0228; rs3764261 A -0.00785; rs2271293
+        A +0.000157; rs1800961 T -0.0624; rs6065906 C -0.0135'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.64 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS002959:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 4 agree, 2 disagree; rs12678919
+        G -0.00136; rs1883025 T -0.0141; rs3764261 A -0.0156; rs2271293 A +0.00187; rs1800961 T -0.0289; rs6065906
+        C -0.00848'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.53 with catalog-annotated HDL score PGS004086 (PGP000517, beta CI excluding
+      the null).
+  PGS002960:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 2 agree, 0 disagree; rs964184
+        C +0.0391; rs1800961 T -0.0495'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.54 with catalog-annotated HDL score PGS004126 (PGP000517, beta CI excluding
+      the null).
+  PGS002961:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 2 agree, 0 disagree; rs964184
+        C +0.0391; rs1800961 T -0.0495'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.51 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS002962:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 3 agree, 1 disagree; rs3764261
+        A +0.000415; rs2271293 A -8.15e-06; rs1800961 T +0; rs12678919 G +4.82e-05; rs1883025 T -7.29e-07'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.56 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS002963:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 5 agree, 3 disagree; rs4846914
+        A +0.0103; rs12678919 G -0.00306; rs1883025 T -0.0137; rs1532085 G +0.0212; rs3764261 A -0.00907; rs2271293
+        A +0.00235; rs1800961 T -0.0608; rs6065906 C -0.0146'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.65 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS002994:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - &id005
+      source: full_text
+      locator: Methods > PRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_20002-1065_LASSOSUM_MGI_20211120;
+      PGS Catalog weights are per-allele effects on the reported trait. Corroborated by OR 1.638 [1.587, 1.691]
+      (CI excludes 1) against hypertension; 1000G EUR r = +0.82 with PGS002998. ExPRSweb score built on the UKB
+      self-reported non-cancer illness 20002 code 1065 (hypertension); weights are the exposure GWAS effect sizes
+      (paper Methods), so higher score = more hypertension by construction.
+  PGS002995:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_20002-1065_PT_MGI_20211120; PGS
+      Catalog weights are per-allele effects on the reported trait. Corroborated by OR 1.556 [1.507, 1.607] (CI
+      excludes 1) against hypertension; 1000G EUR r = +0.99 with PGS002996. ExPRSweb score built on the UKB self-reported
+      non-cancer illness 20002 code 1065 (hypertension); weights are the exposure GWAS effect sizes (paper Methods),
+      so higher score = more hypertension by construction.
+  PGS002996:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_20002-1065_PLINK_MGI_20211120;
+      PGS Catalog weights are per-allele effects on the reported trait. Corroborated by OR 1.55 [1.501, 1.6] (CI
+      excludes 1) against hypertension; 1000G EUR r = +0.99 with PGS002995. ExPRSweb score built on the UKB self-reported
+      non-cancer illness 20002 code 1065 (hypertension); weights are the exposure GWAS effect sizes (paper Methods),
+      so higher score = more hypertension by construction.
+  PGS002997:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_20002-1065_DBSLMM_MGI_20211120;
+      PGS Catalog weights are per-allele effects on the reported trait. Corroborated by OR 1.338 [1.299, 1.379]
+      (CI excludes 1) against hypertension; 1000G EUR r = +0.61 with PGS002994. ExPRSweb score built on the UKB
+      self-reported non-cancer illness 20002 code 1065 (hypertension); weights are the exposure GWAS effect sizes
+      (paper Methods), so higher score = more hypertension by construction.
+  PGS002998:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_20002-1065_PRSCS_MGI_20211120;
+      PGS Catalog weights are per-allele effects on the reported trait. Corroborated by OR 1.67 [1.617, 1.725] (CI
+      excludes 1) against hypertension; 1000G EUR r = +0.82 with PGS002994. ExPRSweb score built on the UKB self-reported
+      non-cancer illness 20002 code 1065 (hypertension); weights are the exposure GWAS effect sizes (paper Methods),
+      so higher score = more hypertension by construction.
+  PGS002999:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_20002-1072_LASSOSUM_MGI_20211120;
+      PGS Catalog weights are per-allele effects on the reported trait. Corroborated by OR 1.036 [1.006, 1.067]
+      (CI excludes 1) against hypertension; 1000G EUR r = +0.10 with PGS002765. ExPRSweb score built on the UKB
+      self-reported non-cancer illness 20002 code 1072 (essential hypertension); weights are the exposure GWAS effect
+      sizes (paper Methods), so higher score = more hypertension by construction. Weak but significant OR; this
+      group is nearly uncorrelated (|r| < 0.2) with the consensus hypertension scores in 1000G EUR, correlating
+      only within its own GWAS group.
+  PGS003000:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_20002-1072_PT_MGI_20211120; PGS
+      Catalog weights are per-allele effects on the reported trait. Corroborated by OR 1.034 [1.004, 1.065] (CI
+      excludes 1) against hypertension; 1000G EUR r = +0.09 with PGS002765. ExPRSweb score built on the UKB self-reported
+      non-cancer illness 20002 code 1072 (essential hypertension); weights are the exposure GWAS effect sizes (paper
+      Methods), so higher score = more hypertension by construction. Weak but significant OR; this group is nearly
+      uncorrelated (|r| < 0.2) with the consensus hypertension scores in 1000G EUR, correlating only within its
+      own GWAS group.
+  PGS003001:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_20002-1072_PLINK_MGI_20211120;
+      PGS Catalog weights are per-allele effects on the reported trait. Corroborated by OR 1.032 [1.002, 1.063]
+      (CI excludes 1) against hypertension; 1000G EUR r = +0.09 with PGS002765. ExPRSweb score built on the UKB
+      self-reported non-cancer illness 20002 code 1072 (essential hypertension); weights are the exposure GWAS effect
+      sizes (paper Methods), so higher score = more hypertension by construction. Weak but significant OR; this
+      group is nearly uncorrelated (|r| < 0.2) with the consensus hypertension scores in 1000G EUR, correlating
+      only within its own GWAS group.
+  PGS003002:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own evaluation is null (OR CI includes 1) and 1000G EUR r < 0.2 with every peer; direction
+      holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_20002-1072_DBSLMM_MGI_20211120. ExPRSweb score built on the UKB self-reported
+      non-cancer illness 20002 code 1072 (essential hypertension); weights are the exposure GWAS effect sizes (paper
+      Methods), so higher score = more hypertension by construction. Evaluation in paper: OR 1.003 [0.974, 1.033];
+      best 1000G EUR r with an OR-corroborated hypertension score = +0.06 (PGS002778).'
+  PGS003003:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_20002-1072_PRSCS_MGI_20211120;
+      PGS Catalog weights are per-allele effects on the reported trait. Corroborated by OR 1.059 [1.029, 1.09] (CI
+      excludes 1) against hypertension; 1000G EUR r = +0.13 with PGS002998. ExPRSweb score built on the UKB self-reported
+      non-cancer illness 20002 code 1072 (essential hypertension); weights are the exposure GWAS effect sizes (paper
+      Methods), so higher score = more hypertension by construction. Weak but significant OR; this group is nearly
+      uncorrelated (|r| < 0.2) with the consensus hypertension scores in 1000G EUR, correlating only within its
+      own GWAS group.
+  PGS003004:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-FG_LASSOSUM_MGI_20211120. ExPRSweb score built on the FinnGen
+      R4 FG_HYPERTENSION GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more
+      hypertension by construction. Evaluation in paper: OR 0.983 [0.955, 1.012]; best 1000G EUR r with an OR-corroborated
+      hypertension score = +0.00 (PGS004934).'
+  PGS003005:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-FG_PT_MGI_20211120. ExPRSweb score built on the FinnGen R4 FG_HYPERTENSION
+      GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension by construction.
+      Evaluation in paper: OR 1.016 [0.986, 1.046]; best 1000G EUR r with an OR-corroborated hypertension score
+      = +0.10 (PGS002765).'
+  PGS003006:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-FG_PLINK_MGI_20211120. ExPRSweb score built on the FinnGen R4
+      FG_HYPERTENSION GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 0.987 [0.959, 1.017]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.02 (PGS002765).'
+  PGS003007:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-FG_DBSLMM_MGI_20211120. ExPRSweb score built on the FinnGen R4
+      FG_HYPERTENSION GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.015 [0.986, 1.045]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.06 (PGS002765).'
+  PGS003008:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-FG_PRSCS_MGI_20211120. ExPRSweb score built on the FinnGen R4
+      FG_HYPERTENSION GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 0.988 [0.959, 1.017]; best 1000G EUR r with an OR-corroborated hypertension
+      score = -0.02 (PGS002296).'
+  PGS003009:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-I9_LASSOSUM_MGI_20211120. ExPRSweb score built on the FinnGen
+      R4 I9_HYPTENS GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 0.99 [0.961, 1.019]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.01 (PGS004934).'
+  PGS003010:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-I9_PT_MGI_20211120. ExPRSweb score built on the FinnGen R4 I9_HYPTENS
+      GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension by construction.
+      Evaluation in paper: OR 1.023 [0.993, 1.053]; best 1000G EUR r with an OR-corroborated hypertension score
+      = +0.12 (PGS002765).'
+  PGS003011:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-I9_PLINK_MGI_20211120. ExPRSweb score built on the FinnGen R4
+      I9_HYPTENS GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.023 [0.993, 1.054]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.05 (PGS002765).'
+  PGS003012:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-I9_DBSLMM_MGI_20211120. ExPRSweb score built on the FinnGen R4
+      I9_HYPTENS GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.019 [0.99, 1.05]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.05 (PGS002765).'
+  PGS003013:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-I9_PRSCS_MGI_20211120. ExPRSweb score built on the FinnGen R4
+      I9_HYPTENS GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 0.991 [0.962, 1.02]; best 1000G EUR r with an OR-corroborated hypertension
+      score = -0.00 (PGS004934).'
+  PGS003014:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_I10_LASSOSUM_MGI_20211120; PGS
+      Catalog weights are per-allele effects on the reported trait. Corroborated by OR 1.065 [1.035, 1.097] (CI
+      excludes 1) against hypertension; 1000G EUR r = +0.08 with PGS002778. ExPRSweb score built on the ICD-10 I10
+      essential hypertension GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score =
+      more hypertension by construction. Weak but significant OR; this group is nearly uncorrelated (|r| < 0.2)
+      with the consensus hypertension scores in 1000G EUR, correlating only within its own GWAS group.
+  PGS003015:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_I10_PT_MGI_20211120; PGS Catalog
+      weights are per-allele effects on the reported trait. Corroborated by OR 1.07 [1.039, 1.102] (CI excludes
+      1) against hypertension; 1000G EUR r = +0.10 with PGS002296. ExPRSweb score built on the ICD-10 I10 essential
+      hypertension GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Weak but significant OR; this group is nearly uncorrelated (|r| < 0.2) with the consensus
+      hypertension scores in 1000G EUR, correlating only within its own GWAS group.
+  PGS003016:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_I10_PLINK_MGI_20211120; PGS Catalog
+      weights are per-allele effects on the reported trait. Corroborated by OR 1.066 [1.035, 1.098] (CI excludes
+      1) against hypertension; 1000G EUR r = +0.10 with PGS002296. ExPRSweb score built on the ICD-10 I10 essential
+      hypertension GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Weak but significant OR; this group is nearly uncorrelated (|r| < 0.2) with the consensus
+      hypertension scores in 1000G EUR, correlating only within its own GWAS group.
+  PGS003017:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own evaluation is null (OR CI includes 1) and 1000G EUR r < 0.2 with every peer; direction
+      holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_I10_DBSLMM_MGI_20211120. ExPRSweb score built on the ICD-10 I10 essential
+      hypertension GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.006 [0.977, 1.036]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.07 (PGS002296).'
+  PGS003018:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score ExPRSweb_Hypertension_I10_PRSCS_MGI_20211120; PGS Catalog
+      weights are per-allele effects on the reported trait. Corroborated by OR 1.07 [1.038, 1.102] (CI excludes
+      1) against hypertension; 1000G EUR r = +0.12 with PGS002296. ExPRSweb score built on the ICD-10 I10 essential
+      hypertension GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Weak but significant OR; this group is nearly uncorrelated (|r| < 0.2) with the consensus
+      hypertension scores in 1000G EUR, correlating only within its own GWAS group.
+  PGS003019:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-FG_LASSOSUM_UKB_20211120. ExPRSweb score built on the FinnGen
+      R4 FG_HYPERTENSION GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more
+      hypertension by construction. Evaluation in paper: OR 1.016 [1.004, 1.027]; best 1000G EUR r with an OR-corroborated
+      hypertension score = -0.01 (PGS002777).'
+  PGS003020:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-FG_PT_UKB_20211120. ExPRSweb score built on the FinnGen R4 FG_HYPERTENSION
+      GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension by construction.
+      Evaluation in paper: OR 0.992 [0.98, 1.003]; best 1000G EUR r with an OR-corroborated hypertension score =
+      +0.03 (PGS002765).'
+  PGS003021:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-FG_PLINK_UKB_20211120. ExPRSweb score built on the FinnGen R4
+      FG_HYPERTENSION GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.01 [0.999, 1.022]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.03 (PGS002765).'
+  PGS003022:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-FG_DBSLMM_UKB_20211120. ExPRSweb score built on the FinnGen R4
+      FG_HYPERTENSION GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.002 [0.99, 1.013]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.06 (PGS002998).'
+  PGS003023:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-FG_PRSCS_UKB_20211120. ExPRSweb score built on the FinnGen R4
+      FG_HYPERTENSION GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.012 [1.001, 1.024]; best 1000G EUR r with an OR-corroborated hypertension
+      score = -0.02 (PGS004934).'
+  PGS003024:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-I9_LASSOSUM_UKB_20211120. ExPRSweb score built on the FinnGen
+      R4 I9_HYPTENS GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.01 [0.998, 1.022]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.04 (PGS002777).'
+  PGS003025:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-I9_PT_UKB_20211120. ExPRSweb score built on the FinnGen R4 I9_HYPTENS
+      GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension by construction.
+      Evaluation in paper: OR 0.991 [0.98, 1.002]; best 1000G EUR r with an OR-corroborated hypertension score =
+      +0.04 (PGS002765).'
+  PGS003026:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-I9_PLINK_UKB_20211120. ExPRSweb score built on the FinnGen R4
+      I9_HYPTENS GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.006 [0.994, 1.018]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.04 (PGS002765).'
+  PGS003027:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-I9_DBSLMM_UKB_20211120. ExPRSweb score built on the FinnGen R4
+      I9_HYPTENS GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.0 [0.989, 1.011]; best 1000G EUR r with an OR-corroborated hypertension
+      score = +0.03 (PGS002998).'
+  PGS003028:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Paper's own MGI/UKB evaluation is null (OR ~1.0) and the score is uncorrelated (|r| < 0.15) with
+      the consensus hypertension scores in 1000G EUR; direction holds by construction only.
+    corrections: []
+    status: agent_proposed
+    notes: 'Score ExPRSweb_Hypertension_finngen-R4-I9_PRSCS_UKB_20211120. ExPRSweb score built on the FinnGen R4
+      I9_HYPTENS GWAS; weights are the exposure GWAS effect sizes (paper Methods), so higher score = more hypertension
+      by construction. Evaluation in paper: OR 1.009 [0.997, 1.021]; best 1000G EUR r with an OR-corroborated hypertension
+      score = -0.01 (PGS004934).'
+  PGS002890:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 with PGS002889 (DBP score annotated here). Score name ExPRSweb_DBP_4079-irnt_PT_MGI_20211120.
+  PGS002898:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.98 with PGS002893 (DBP score annotated here). Score name ExPRSweb_DBP_4079-raw_PRSCS_MGI_20211120.
+  PGS002891:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.90 with PGS002896 (DBP score annotated here). Score name ExPRSweb_DBP_4079-irnt_PLINK_MGI_20211120.
+  PGS002901:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.71 with PGS002900 (DBP score annotated here). Score name ExPRSweb_DBP_94-irnt_PLINK_MGI_20211120.
+  PGS002896:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.86 with PGS002895 (DBP score annotated here). Score name ExPRSweb_DBP_4079-raw_PLINK_MGI_20211120.
+  PGS002892:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.94 with PGS002897 (DBP score annotated here). Score name ExPRSweb_DBP_4079-irnt_DBSLMM_MGI_20211120.
+  PGS002907:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: Aligned to PGS003963, 79% of its top-1000 loci share sign (weight r +0.05); near-zero genome-wide r
+        reflects DBSLMM noise weights
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.53 with PGS002902 (DBP score annotated here). Score name ExPRSweb_DBP_94-raw_DBSLMM_MGI_20211120.
+  PGS002900:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.63 with PGS002899 (DBP score annotated here). Score name ExPRSweb_DBP_94-irnt_PT_MGI_20211120.
+  PGS002899:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.99 with PGS002904 (DBP score annotated here). Score name ExPRSweb_DBP_94-irnt_LASSOSUM_MGI_20211120.
+  PGS002902:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: Aligned to PGS003963, 79% of its top-1000 loci share sign (weight r +0.05); near-zero genome-wide r
+        reflects DBSLMM noise weights
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.40 with PGS002903 (DBP score annotated here). Score name ExPRSweb_DBP_94-irnt_DBSLMM_MGI_20211120.
+  PGS002897:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.75 with PGS002898 (DBP score annotated here). Score name ExPRSweb_DBP_4079-raw_DBSLMM_MGI_20211120.
+  PGS002894:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.86 with PGS000912 (DBP score annotated here). Score name ExPRSweb_DBP_4079-raw_LASSOSUM_MGI_20211120.
+  PGS002906:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.92 with PGS002901 (DBP score annotated here). Score name ExPRSweb_DBP_94-raw_PLINK_MGI_20211120.
+  PGS002908:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.37 with PGS000912 (DBP score annotated here). Score name ExPRSweb_DBP_94-raw_PRSCS_MGI_20211120.
+  PGS002893:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.81 with PGS003498 (DBP score annotated here). Score name ExPRSweb_DBP_4079-irnt_PRSCS_MGI_20211120.
+  PGS002903:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: Aligned to PGS003963, 73% of its top-1000 loci share sign (weight r +0.24)
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.94 with PGS002908 (DBP score annotated here). Score name ExPRSweb_DBP_94-irnt_PRSCS_MGI_20211120.
+  PGS002904:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 with PGS002903 (DBP score annotated here). Score name ExPRSweb_DBP_94-raw_LASSOSUM_MGI_20211120.
+  PGS002905:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.93 with PGS002900 (DBP score annotated here). Score name ExPRSweb_DBP_94-raw_PT_MGI_20211120.
+  PGS002889:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.99 with PGS002894 (DBP score annotated here). Score name ExPRSweb_DBP_4079-irnt_LASSOSUM_MGI_20211120.
+  PGS002895:
+    cluster: cardiovascular.blood_pressure
+    phenotype: diastolic_blood_pressure
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: diastolic blood pressure (mmHg)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diastolic blood pressure
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.92 with PGS002890 (DBP score annotated here). Score name ExPRSweb_DBP_4079-raw_PT_MGI_20211120.
+  PGS003184:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.67 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.37 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_29343764-GCST005367_LASSOSUM_MGI_20211120) built on the Jiang 2018 SUNLIGHT 25OHD GWAS
+      (GCST005367).
+  PGS003185:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.65 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.11 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_29343764-GCST005367_PT_MGI_20211120) built on the Jiang 2018 SUNLIGHT 25OHD GWAS (GCST005367).
+  PGS003186:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.65 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.09 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_29343764-GCST005367_PLINK_MGI_20211120) built on the Jiang 2018 SUNLIGHT 25OHD GWAS (GCST005367).
+  PGS003188:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: GC rs2282679 (chr4:71742666 GRCh38) minor G allele, known to lower 25OHD, carries a negative weight;
+        CYP2R1-region variant carries a sizeable weight. Other loci not checked.
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.44 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.15 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_29343764-GCST005367_PRSCS_MGI_20211120) built on the Jiang 2018 SUNLIGHT 25OHD GWAS (GCST005367).
+  PGS003189:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.70 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.5 (no CI) against Vitamin D. ExPRSweb score
+      (ExPRSweb_VitD_30890-irnt_LASSOSUM_MGI_20211120) built on UK Biobank field 30890 (serum vitamin D) GWAS.
+  PGS003190:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.66 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.44 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_30890-irnt_PT_MGI_20211120) built on UK Biobank field 30890 (serum vitamin D) GWAS.
+  PGS003191:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.65 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.47 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_30890-irnt_PLINK_MGI_20211120) built on UK Biobank field 30890 (serum vitamin D) GWAS.
+  PGS003192:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.22 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 0.523 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_30890-irnt_DBSLMM_MGI_20211120) built on UK Biobank field 30890 (serum vitamin D) GWAS.
+  PGS003193:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.76 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.48 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_30890-irnt_PRSCS_MGI_20211120) built on UK Biobank field 30890 (serum vitamin D) GWAS.
+  PGS003194:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.69 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.4 (no CI) against Vitamin D. ExPRSweb score
+      (ExPRSweb_VitD_30890-raw_LASSOSUM_MGI_20211120) built on UK Biobank field 30890 (serum vitamin D) GWAS.
+  PGS003195:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.64 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.49 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_30890-raw_PT_MGI_20211120) built on UK Biobank field 30890 (serum vitamin D) GWAS.
+  PGS003196:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.64 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.52 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_30890-raw_PLINK_MGI_20211120) built on UK Biobank field 30890 (serum vitamin D) GWAS.
+  PGS003197:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.41 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.17 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_30890-raw_DBSLMM_MGI_20211120) built on UK Biobank field 30890 (serum vitamin D) GWAS.
+  PGS003198:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.75 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 1.49 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_30890-raw_PRSCS_MGI_20211120) built on UK Biobank field 30890 (serum vitamin D) GWAS.
+  PGS003199:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.67 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 3.4 (no CI) against Vitamin D. ExPRSweb score
+      (ExPRSweb_VitD_29343764-GCST005367_LASSOSUM_UKB_20211120) built on the Jiang 2018 SUNLIGHT 25OHD GWAS (GCST005367).
+  PGS003200:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.64 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 3.26 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_29343764-GCST005367_PT_UKB_20211120) built on the Jiang 2018 SUNLIGHT 25OHD GWAS (GCST005367).
+  PGS003201:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.63 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 3.24 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_29343764-GCST005367_PLINK_UKB_20211120) built on the Jiang 2018 SUNLIGHT 25OHD GWAS (GCST005367).
+  PGS003203:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: vitamin D level
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: GC rs2282679 (chr4:71742666 GRCh38) minor G allele, known to lower 25OHD, carries a negative weight;
+        CYP2R1-region variant carries a sizeable weight. Other loci not checked.
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects on
+      the reported trait (serum vitamin D). Corroborated by 1000G EUR r = +0.45 with PGS000702 (annotated, serum
+      vitamin D; OR vs deficiency CI excludes 1). Catalog reports beta 3.32 (no CI) against Vitamin D. ExPRSweb
+      score (ExPRSweb_VitD_29343764-GCST005367_PRSCS_UKB_20211120) built on the Jiang 2018 SUNLIGHT 25OHD GWAS (GCST005367).
+  PGS003187:
+    score_effect: null
+    unannotated_reason: 'Near-null ExPRSweb DBSLMM score on the GCST005367 GWAS (MGI): evaluation beta -0.0179 (no
+      CI) and 1000G EUR r = +0.01 with PGS000702, +0.12 with PGS003203; no corroboration for a direction.'
+  PGS003202:
+    score_effect: null
+    unannotated_reason: 'Near-null or partly sign-inconsistent ExPRSweb DBSLMM score on the GCST005367 GWAS (UKB):
+      evaluation beta -0.347 (no CI) where sister scores on the same GWAS give +3.2 to +3.4; 1000G EUR r = -0.12
+      with PGS000702; its top variant chr11:71456403 (DHCR7/NADSYN1) T allele weights -0.095 while the P+T score
+      PGS003200 gives the same allele +0.036. Not enough for an inverted-deposit call (one canonical locus, weak
+      anti-correlation).'
+  PGS003178:
+    cluster: nutrition.vitamin_d_intake
+    phenotype: dietary_vitamin_d_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: dietary vitamin D intake from 24-hour recall (UKB field 100021, ug/day, supplements excluded)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - &id006
+      source: supplement
+      locator: ukb_field_100021.html > Description (UK Biobank showcase field 100021)
+      quote: Estimated intake, based on food and beverage consumption yesterday, excluding any supplements.
+      confidence: high
+    - &id007
+      source: full_text
+      locator: Introduction
+      quote: weighted by the effect sizes obtained from an external GWAS
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'ExPRSweb score on the MGI GWAS of UKB field 100021 (100021-irnt PRS-CS): dietary vitamin D intake, not
+      serum 25OHD (reported trait "Vitamin D" is ambiguous; 1000G EUR r with serum scores is about 0). Weights are
+      GWAS effect sizes on the intake measure, so higher = more reported intake. Anchor for the intake group (read:
+      UKB showcase + ExPRSweb Introduction); 1000G EUR r = +0.78 with PGS003183. Catalog beta 0.114 (no CI) per
+      SD in MGI.'
+  PGS003174:
+    cluster: nutrition.vitamin_d_intake
+    phenotype: dietary_vitamin_d_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: dietary vitamin D intake from 24-hour recall (UKB field 100021, ug/day, supplements excluded)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id006
+    - *id007
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'ExPRSweb score on the MGI GWAS of UKB field 100021 (100021-irnt LASSOSUM): dietary vitamin D intake,
+      not serum 25OHD (reported trait "Vitamin D" is ambiguous; 1000G EUR r with serum scores is about 0). Weights
+      are GWAS effect sizes on the intake measure, so higher = more reported intake. 1000G EUR r = +0.45 with PGS003178.
+      Catalog beta 0.0744 (no CI) per SD in MGI.'
+  PGS003179:
+    cluster: nutrition.vitamin_d_intake
+    phenotype: dietary_vitamin_d_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: dietary vitamin D intake from 24-hour recall (UKB field 100021, ug/day, supplements excluded)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id006
+    - *id007
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'ExPRSweb score on the MGI GWAS of UKB field 100021 (100021-raw LASSOSUM): dietary vitamin D intake,
+      not serum 25OHD (reported trait "Vitamin D" is ambiguous; 1000G EUR r with serum scores is about 0). Weights
+      are GWAS effect sizes on the intake measure, so higher = more reported intake. 1000G EUR r = +0.51 with PGS003178.
+      Catalog beta 0.171 (no CI) per SD in MGI.'
+  PGS003183:
+    cluster: nutrition.vitamin_d_intake
+    phenotype: dietary_vitamin_d_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: dietary vitamin D intake from 24-hour recall (UKB field 100021, ug/day, supplements excluded)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - *id006
+    - *id007
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'ExPRSweb score on the MGI GWAS of UKB field 100021 (100021-raw PRS-CS): dietary vitamin D intake, not
+      serum 25OHD (reported trait "Vitamin D" is ambiguous; 1000G EUR r with serum scores is about 0). Weights are
+      GWAS effect sizes on the intake measure, so higher = more reported intake. 1000G EUR r = +0.78 with PGS003178.
+      Catalog beta 0.124 (no CI) per SD in MGI.'
+  PGS003175:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb 100021-irnt P+T score on UKB field 100021 (dietary vitamin D
+      intake, very low heritability); 1000G EUR r < 0.2 with every annotated intake score (PGS003174/3178/3179/3183)
+      and evaluation beta 0.164 has no CI.'
+  PGS003176:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb 100021-irnt PLINK clumping score on UKB field 100021 (dietary
+      vitamin D intake, very low heritability); 1000G EUR r < 0.2 with every annotated intake score (PGS003174/3178/3179/3183)
+      and evaluation beta 0.163 has no CI.'
+  PGS003177:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb 100021-irnt DBSLMM score on UKB field 100021 (dietary vitamin
+      D intake, very low heritability); 1000G EUR r < 0.2 with every annotated intake score (PGS003174/3178/3179/3183)
+      and evaluation beta 0.126 has no CI.'
+  PGS003180:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb 100021-raw P+T score on UKB field 100021 (dietary vitamin D
+      intake, very low heritability); 1000G EUR r < 0.2 with every annotated intake score (PGS003174/3178/3179/3183)
+      and evaluation beta 0.156 has no CI.'
+  PGS003181:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb 100021-raw PLINK clumping score on UKB field 100021 (dietary
+      vitamin D intake, very low heritability); 1000G EUR r < 0.2 with every annotated intake score (PGS003174/3178/3179/3183)
+      and evaluation beta -0.091 has no CI.'
+  PGS003182:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb 100021-raw DBSLMM score on UKB field 100021 (dietary vitamin
+      D intake, very low heritability); 1000G EUR r < 0.2 with every annotated intake score (PGS003174/3178/3179/3183)
+      and evaluation beta -0.0108 has no CI.'
+  PGS002860:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 1 of 1 present agrees (rs4420638)'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb LASSOSUM score built in MGI from the UKHLS CRP GWAS (PMID 28887542, GCST004941; small discovery
+      sample). The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed.
+      Catalog beta 0.00477 per SD against C-reactive protein (MGI evaluation). Scores from this discovery GWAS are
+      uncorrelated with the main CRP scores in 1000G EUR (r -0.1..+0.05) and barely predict CRP.
+  PGS002861:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): none of the reference CRP loci are in the file; top weights sit at non-canonical
+        loci (13:59.07M, 2:7.0M)'
+    review_reason: 'Catalog evaluation contradicts the construction direction: beta -0.0128 against CRP in MGI (n=5147);
+      weak discovery GWAS, 1000G r≈0 with the main CRP scores.'
+    status: agent_proposed
+    notes: ExPRSweb PT score built in MGI from the UKHLS CRP GWAS (PMID 28887542, GCST004941; small discovery sample).
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta -0.0128 per SD against C-reactive protein (MGI evaluation). Scores from this discovery GWAS are uncorrelated
+      with the main CRP scores in 1000G EUR (r -0.1..+0.05) and barely predict CRP.
+  PGS002862:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): none of the reference CRP loci are in the file; top weights sit at non-canonical
+        loci (13:59.07M, 2:7.0M)'
+    review_reason: 'Catalog evaluation contradicts the construction direction: beta -0.0105 against CRP in MGI (n=5147);
+      weak discovery GWAS, 1000G r≈0 with the main CRP scores.'
+    status: agent_proposed
+    notes: ExPRSweb PLINK score built in MGI from the UKHLS CRP GWAS (PMID 28887542, GCST004941; small discovery
+      sample). The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed.
+      Catalog beta -0.0105 per SD against C-reactive protein (MGI evaluation). Scores from this discovery GWAS are
+      uncorrelated with the main CRP scores in 1000G EUR (r -0.1..+0.05) and barely predict CRP.
+  PGS002863:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: mixed
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 2 agree (rs1205, rs4420638), 3 disagree (rs7412, rs4129267, rs1260326)'
+    review_reason: Catalog evaluation contradicts the construction direction (beta -0.0096 in MGI) and reference
+      CRP loci are mixed; 1000G r≈0 with the main CRP scores.
+    status: agent_proposed
+    notes: ExPRSweb PRSCS score built in MGI from the UKHLS CRP GWAS (PMID 28887542, GCST004941; small discovery
+      sample). The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed.
+      Catalog beta -0.00958 per SD against C-reactive protein (MGI evaluation). Scores from this discovery GWAS
+      are uncorrelated with the main CRP scores in 1000G EUR (r -0.1..+0.05) and barely predict CRP.
+  PGS002864:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 1 of 1 present agrees (rs7412)'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb LASSOSUM score built in MGI from UK Biobank field 30710 (C-reactive protein), inverse-normal
+      transformed. The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed.
+      Catalog beta 0.101 per SD against C-reactive protein (MGI evaluation).
+  PGS002865:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 1 of 1 present agrees (rs1260326)'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PT score built in MGI from UK Biobank field 30710 (C-reactive protein), inverse-normal transformed.
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.105 per SD against C-reactive protein (MGI evaluation).
+  PGS002866:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 1 of 1 present agrees (rs1260326)'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PLINK score built in MGI from UK Biobank field 30710 (C-reactive protein), inverse-normal transformed.
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.112 per SD against C-reactive protein (MGI evaluation).
+  PGS002867:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 6 agree, 1 disagree (rs1260326)'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb DBSLMM score built in MGI from UK Biobank field 30710 (C-reactive protein), inverse-normal transformed.
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.102 per SD against C-reactive protein (MGI evaluation).
+  PGS002868:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 4 agree, 1 disagree (rs1205)'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PRSCS score built in MGI from UK Biobank field 30710 (C-reactive protein), inverse-normal transformed.
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.124 per SD against C-reactive protein (MGI evaluation).
+  PGS002869:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 6 of 6 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb LASSOSUM score built in MGI from UK Biobank field 30710 (C-reactive protein), raw mg/L. The
+      paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.097 per SD against C-reactive protein (MGI evaluation).
+  PGS002870:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 2 of 2 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PT score built in MGI from UK Biobank field 30710 (C-reactive protein), raw mg/L. The paper
+      builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog beta
+      0.0763 per SD against C-reactive protein (MGI evaluation).
+  PGS002871:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 2 of 2 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PLINK score built in MGI from UK Biobank field 30710 (C-reactive protein), raw mg/L. The paper
+      builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog beta
+      0.0791 per SD against C-reactive protein (MGI evaluation).
+  PGS002872:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: mixed
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 1 agrees (APOE rs429358/rs7412), 5 disagree (rs1205, rs4420638, rs2228145,
+        rs4129267, rs1260326); the dominant CRP-locus weight (1:159714024 A, -0.33) matches the other 30710 scores'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb DBSLMM score built in MGI from UK Biobank field 30710 (C-reactive protein), raw mg/L. The paper
+      builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog beta
+      0.0685 per SD against C-reactive protein (MGI evaluation).
+  PGS002873:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 5 of 5 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PRSCS score built in MGI from UK Biobank field 30710 (C-reactive protein), raw mg/L. The paper
+      builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog beta
+      0.106 per SD against C-reactive protein (MGI evaluation).
+  PGS002874:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 5 of 5 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb LASSOSUM score built in MGI from the INTERVAL SomaScan plasma CRP protein pQTL GWAS (MR-Base
+      prot-a-670). The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed.
+      Catalog beta 0.0485 per SD against C-reactive protein (MGI evaluation).
+  PGS002875:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 1 of 1 present agrees (rs4420638)'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PT score built in MGI from the INTERVAL SomaScan plasma CRP protein pQTL GWAS (MR-Base prot-a-670).
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.0525 per SD against C-reactive protein (MGI evaluation).
+  PGS002876:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 1 of 1 present agrees (rs4420638)'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PLINK score built in MGI from the INTERVAL SomaScan plasma CRP protein pQTL GWAS (MR-Base prot-a-670).
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.0525 per SD against C-reactive protein (MGI evaluation).
+  PGS002877:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 1 of 1 present agrees (rs4420638)'
+    review_reason: 'Direction rests on the construction rule only: 1000G r≈0 with every other CRP score and a near-null
+      MGI beta (0.0197); median |weight| 2e-6.'
+    status: agent_proposed
+    notes: ExPRSweb DBSLMM score built in MGI from the INTERVAL SomaScan plasma CRP protein pQTL GWAS (MR-Base prot-a-670).
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.0197 per SD against C-reactive protein (MGI evaluation). 1000G EUR r with the main CRP scores is low
+      (≤0.13); correlated with its PRS-CS sibling only.
+  PGS002878:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 5 of 5 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PRSCS score built in MGI from the INTERVAL SomaScan plasma CRP protein pQTL GWAS (MR-Base prot-a-670).
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.0082 per SD against C-reactive protein (MGI evaluation). 1000G EUR r with the main CRP scores is low
+      (≤0.13); correlated with its PRS-CS sibling only.
+  PGS002879:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 1 of 1 present agrees (rs4420638); 720,436 of 721,243 weights are zero'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb LASSOSUM score built in UKB from the UKHLS CRP GWAS (PMID 28887542, GCST004941; small discovery
+      sample). The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed.
+      Catalog beta 0.0157 per SD against C-reactive protein (UKB evaluation). Scores from this discovery GWAS are
+      uncorrelated with the main CRP scores in 1000G EUR (r -0.1..+0.05) and barely predict CRP.
+  PGS002880:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 2-variant score (7:99477415, 19:47857434); no reference CRP locus'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PT score built in UKB from the UKHLS CRP GWAS (PMID 28887542, GCST004941; small discovery sample).
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.0274 per SD against C-reactive protein (UKB evaluation). Scores from this discovery GWAS are uncorrelated
+      with the main CRP scores in 1000G EUR (r -0.1..+0.05) and barely predict CRP.
+  PGS002881:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 2-variant score (7:99477415, 19:47857434); no reference CRP locus'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PLINK score built in UKB from the UKHLS CRP GWAS (PMID 28887542, GCST004941; small discovery
+      sample). The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed.
+      Catalog beta 0.0209 per SD against C-reactive protein (UKB evaluation). Scores from this discovery GWAS are
+      uncorrelated with the main CRP scores in 1000G EUR (r -0.1..+0.05) and barely predict CRP.
+  PGS002883:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: mixed
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 3 agree (rs1205, rs7412, rs4420638), 2 disagree (rs4129267, rs1260326)'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PRSCS score built in UKB from the UKHLS CRP GWAS (PMID 28887542, GCST004941; small discovery
+      sample). The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed.
+      Catalog beta 0.00422 per SD against C-reactive protein (UKB evaluation). Scores from this discovery GWAS are
+      uncorrelated with the main CRP scores in 1000G EUR (r -0.1..+0.05) and barely predict CRP.
+  PGS002884:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 5 of 5 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb LASSOSUM score built in UKB from the INTERVAL SomaScan plasma CRP protein pQTL GWAS (MR-Base
+      prot-a-670). The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed.
+      Catalog beta 0.456 per SD against C-reactive protein (UKB evaluation).
+  PGS002885:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): none of the 7 reference SNPs present; 5-variant score whose CRP-locus,
+        APOE-region, LEPR, HNF1A weights mirror PGS002875'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PT score built in UKB from the INTERVAL SomaScan plasma CRP protein pQTL GWAS (MR-Base prot-a-670).
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.458 per SD against C-reactive protein (UKB evaluation).
+  PGS002886:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): none of the 7 reference SNPs present; 5-variant score identical in loci
+        to PGS002885'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PLINK score built in UKB from the INTERVAL SomaScan plasma CRP protein pQTL GWAS (MR-Base prot-a-670).
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.458 per SD against C-reactive protein (UKB evaluation).
+  PGS002888:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > ExPRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 5 of 5 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: ExPRSweb PRSCS score built in UKB from the INTERVAL SomaScan plasma CRP protein pQTL GWAS (MR-Base prot-a-670).
+      The paper builds each PRS from external GWAS effect sizes, so higher score = higher CRP as distributed. Catalog
+      beta 0.0997 per SD against C-reactive protein (UKB evaluation). 1000G EUR r with the main CRP scores is low
+      (≤0.13); correlated with its PRS-CS sibling only.
+  PGS002882:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    score_effect: null
+    unannotated_reason: 'Deposited scoring file is degenerate: 746 variants, 542 weights exactly zero, largest |weight|
+      5.7e-7, no reference CRP locus; catalog beta -0.0111 in UKB and 1000G r≈0 with every CRP score. The score
+      does not measure CRP. Recommend quarantine.'
+    corrections:
+    - kind: broken_weights
+      action: quarantine
+      effect: 'Proposed quarantine: the deposited weights are degenerate, so any percentile from this file is meaningless.
+        Not yet added to catalog_scoring_flags.'
+      paper_direction: null
+      evidence: 746 variants, 542 weights exactly zero, largest |weight| 5.7e-7, no reference CRP locus; catalog
+        beta -0.0111 in UKB and 1000G r≈0 with every CRP score.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: ExPRSweb score; construction rule would make higher = higher CRP, but the file carries almost no signal.
+  PGS002887:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    score_effect: null
+    unannotated_reason: 'Deposited scoring file is degenerate: 444,857 DBSLMM weights all below 4.3e-5 in magnitude
+      (median 1.8e-6), the CRP-locus variant has weight 0; catalog beta 0.0064 in UKB and 1000G r≤0.13 with every
+      CRP score. The score does not measure CRP. Recommend quarantine.'
+    corrections:
+    - kind: broken_weights
+      action: quarantine
+      effect: 'Proposed quarantine: the deposited weights are degenerate, so any percentile from this file is meaningless.
+        Not yet added to catalog_scoring_flags.'
+      paper_direction: null
+      evidence: 444,857 DBSLMM weights all below 4.3e-5 in magnitude (median 1.8e-6), the CRP-locus variant has
+        weight 0; catalog beta 0.0064 in UKB and 1000G r≤0.13 with every CRP score.
+      recorded: '2026-09-27'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: ExPRSweb score; construction rule would make higher = higher CRP, but the file carries almost no signal.
+  PGS002929:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting glucose level (MAGIC fasting glucose GWAS effect sizes)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Fasting plasma glucose
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation. ExPRSweb LASSOSUM score (MGI cohort) on the MAGIC fasting glucose GWAS; weights
+      are the GWAS effect sizes (paper template), so higher score = higher fasting glucose. Corroborated by 1000G
+      EUR r = +0.26 with PGS000305, +0.20 with PGS001350, +0.75 with PGS002933 (PGS000305 and PGS001350 read) and
+      catalog evaluation beta +0.864 (MGI, n=286, no CI).
+  PGS002930:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting glucose level (MAGIC fasting glucose GWAS effect sizes)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Fasting plasma glucose
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation. ExPRSweb P+T score (MGI cohort) on the MAGIC fasting glucose GWAS; weights are
+      the GWAS effect sizes (paper template), so higher score = higher fasting glucose. Corroborated by 1000G EUR
+      r = +0.49 with PGS000305, +0.26 with PGS001350 (PGS000305 and PGS001350 read) and catalog evaluation beta
+      +1.6 (MGI, n=286, no CI).
+  PGS002931:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting glucose level (MAGIC fasting glucose GWAS effect sizes)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Fasting plasma glucose
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation. ExPRSweb C+T (PLINK) score (MGI cohort) on the MAGIC fasting glucose GWAS; weights
+      are the GWAS effect sizes (paper template), so higher score = higher fasting glucose. Corroborated by 1000G
+      EUR r = +0.48 with PGS000305, +0.26 with PGS001350 (PGS000305 and PGS001350 read) and catalog evaluation beta
+      +1.71 (MGI, n=286, no CI).
+  PGS002933:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting glucose level (MAGIC fasting glucose GWAS effect sizes)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Fasting plasma glucose
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation. ExPRSweb PRS-CS score (MGI cohort) on the MAGIC fasting glucose GWAS; weights
+      are the GWAS effect sizes (paper template), so higher score = higher fasting glucose. Corroborated by 1000G
+      EUR r = +0.39 with PGS000305, +0.23 with PGS001350, +0.95 with PGS002953 (PGS000305 and PGS001350 read) and
+      catalog evaluation beta +1.15 (MGI, n=286, no CI).
+  PGS002949:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting glucose level (MAGIC fasting glucose GWAS effect sizes)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: random_glucose
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: ExPRSweb_Glucose_MAGIC-FastingGlucose_LASSOSUM_UKB_20211120
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation. ExPRSweb LASSOSUM score (UKB cohort) on the MAGIC fasting glucose GWAS; weights
+      are the GWAS effect sizes (paper template), so higher score = higher fasting glucose. Evaluated in UK Biobank
+      serum glucose, which is non-fasting (catalog label "Glucose"). Corroborated by 1000G EUR r = +0.65 with PGS000305,
+      +0.39 with PGS001350 (PGS000305 and PGS001350 read) and catalog evaluation beta +0.084 (UKB, n=173,111, no
+      CI).
+  PGS002950:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting glucose level (MAGIC fasting glucose GWAS effect sizes)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: random_glucose
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: ExPRSweb_Glucose_MAGIC-FastingGlucose_PT_UKB_20211120
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation. ExPRSweb P+T score (UKB cohort) on the MAGIC fasting glucose GWAS; weights are
+      the GWAS effect sizes (paper template), so higher score = higher fasting glucose. Evaluated in UK Biobank
+      serum glucose, which is non-fasting (catalog label "Glucose"). Corroborated by 1000G EUR r = +0.72 with PGS000305,
+      +0.44 with PGS001350 (PGS000305 and PGS001350 read) and catalog evaluation beta +0.081 (UKB, n=173,111, no
+      CI).
+  PGS002951:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting glucose level (MAGIC fasting glucose GWAS effect sizes)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: random_glucose
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: ExPRSweb_Glucose_MAGIC-FastingGlucose_PLINK_UKB_20211120
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation. ExPRSweb C+T (PLINK) score (UKB cohort) on the MAGIC fasting glucose GWAS; weights
+      are the GWAS effect sizes (paper template), so higher score = higher fasting glucose. Evaluated in UK Biobank
+      serum glucose, which is non-fasting (catalog label "Glucose"). Corroborated by 1000G EUR r = +0.72 with PGS000305,
+      +0.44 with PGS001350 (PGS000305 and PGS001350 read) and catalog evaluation beta +0.081 (UKB, n=173,111, no
+      CI).
+  PGS002953:
+    cluster: endocrine.glycemia
+    phenotype: fasting_glucose
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: fasting glucose level (MAGIC fasting glucose GWAS effect sizes)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: random_glucose
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: ExPRSweb_Glucose_MAGIC-FastingGlucose_PRSCS_UKB_20211120
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation. ExPRSweb PRS-CS score (UKB cohort) on the MAGIC fasting glucose GWAS; weights
+      are the GWAS effect sizes (paper template), so higher score = higher fasting glucose. Evaluated in UK Biobank
+      serum glucose, which is non-fasting (catalog label "Glucose"). Corroborated by 1000G EUR r = +0.39 with PGS000305,
+      +0.23 with PGS001350 (PGS000305 and PGS001350 read) and catalog evaluation beta +0.082 (UKB, n=173,111, no
+      CI).
+  PGS002924:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb LASSOSUM score (MGI) built on the "FGovertime-corrected" fasting
+      glucose GWAS. It is uncorrelated with every MAGIC-based and published fasting-glucose score in 1000G EUR (|r|
+      < 0.1 vs PGS000305, PGS001350, PGS002953) and its catalog evaluation beta -0.0308 (n=286, no CI) carries no
+      usable sign, so the deposited weights cannot be trusted for a direction.'
+  PGS002925:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb P+T score (MGI) built on the "FGovertime-corrected" fasting
+      glucose GWAS. It is uncorrelated with every MAGIC-based and published fasting-glucose score in 1000G EUR (|r|
+      < 0.1 vs PGS000305, PGS001350, PGS002953) and its catalog evaluation beta -0.531 (n=286, no CI) carries no
+      usable sign, so the deposited weights cannot be trusted for a direction.'
+  PGS002926:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb C+T (PLINK) score (MGI) built on the "FGovertime-corrected"
+      fasting glucose GWAS. It is uncorrelated with every MAGIC-based and published fasting-glucose score in 1000G
+      EUR (|r| < 0.1 vs PGS000305, PGS001350, PGS002953) and its catalog evaluation beta +0.294 (n=286, no CI) carries
+      no usable sign, so the deposited weights cannot be trusted for a direction.'
+  PGS002927:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb DBSLMM score (MGI) built on the "FGovertime-corrected" fasting
+      glucose GWAS. It is uncorrelated with every MAGIC-based and published fasting-glucose score in 1000G EUR (|r|
+      < 0.1 vs PGS000305, PGS001350, PGS002953) and its catalog evaluation beta -0.263 (n=286, no CI) carries no
+      usable sign, so the deposited weights cannot be trusted for a direction.'
+  PGS002928:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb PRS-CS score (MGI) built on the "FGovertime-corrected" fasting
+      glucose GWAS. It is uncorrelated with every MAGIC-based and published fasting-glucose score in 1000G EUR (|r|
+      < 0.1 vs PGS000305, PGS001350, PGS002953) and its catalog evaluation beta -0.564 (n=286, no CI) carries no
+      usable sign, so the deposited weights cannot be trusted for a direction.'
+  PGS002944:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb LASSOSUM score (UKB) built on the "FGovertime-corrected" fasting
+      glucose GWAS. It is uncorrelated with every MAGIC-based and published fasting-glucose score in 1000G EUR (|r|
+      < 0.1 vs PGS000305, PGS001350, PGS002953) and its catalog evaluation beta -0.00088 (n=173,111, no CI, near
+      zero) carries no usable sign, so the deposited weights cannot be trusted for a direction.'
+  PGS002945:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb P+T score (UKB) built on the "FGovertime-corrected" fasting
+      glucose GWAS. It is uncorrelated with every MAGIC-based and published fasting-glucose score in 1000G EUR (|r|
+      < 0.1 vs PGS000305, PGS001350, PGS002953) and its catalog evaluation beta +0.00046 (n=173,111, no CI, near
+      zero) carries no usable sign, so the deposited weights cannot be trusted for a direction.'
+  PGS002946:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb C+T (PLINK) score (UKB) built on the "FGovertime-corrected"
+      fasting glucose GWAS. It is uncorrelated with every MAGIC-based and published fasting-glucose score in 1000G
+      EUR (|r| < 0.1 vs PGS000305, PGS001350, PGS002953) and its catalog evaluation beta -0.00035 (n=173,111, no
+      CI, near zero) carries no usable sign, so the deposited weights cannot be trusted for a direction.'
+  PGS002947:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb DBSLMM score (UKB) built on the "FGovertime-corrected" fasting
+      glucose GWAS. It is uncorrelated with every MAGIC-based and published fasting-glucose score in 1000G EUR (|r|
+      < 0.1 vs PGS000305, PGS001350, PGS002953) and its catalog evaluation beta +0.0045 (n=173,111, no CI, near
+      zero) carries no usable sign, so the deposited weights cannot be trusted for a direction.'
+  PGS002948:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb PRS-CS score (UKB) built on the "FGovertime-corrected" fasting
+      glucose GWAS. It is uncorrelated with every MAGIC-based and published fasting-glucose score in 1000G EUR (|r|
+      < 0.1 vs PGS000305, PGS001350, PGS002953) and its catalog evaluation beta -0.0013 (n=173,111, no CI, near
+      zero) carries no usable sign, so the deposited weights cannot be trusted for a direction.'
+  PGS002932:
+    score_effect: null
+    unannotated_reason: 'No corroboration: ExPRSweb DBSLMM score (MGI) on the MAGIC fasting glucose GWAS, but near-null
+      in 1000G EUR (r <= +0.14 with any fasting-glucose score; r = +0.04 with PGS000305, +0.00 with PGS001350) and
+      its catalog evaluation beta -0.414 (n=286, no CI) points the other way, so the weights cannot be trusted for
+      a direction.'
+  PGS002952:
+    score_effect: null
+    unannotated_reason: 'Suspected mis-deposit: named MAGIC-FastingGlucose DBSLMM (UKB) but it has the same 1,501
+      variants as PGS002947 (FGovertime-corrected DBSLMM UKB) and correlates r = +1.00 with it in 1000G EUR, while
+      being uncorrelated with the MAGIC-based and published fasting-glucose scores (r = -0.01 with PGS000305 and
+      PGS001350); catalog evaluation beta +0.0045 (n=173,111) is near zero. No trustworthy direction.'
 paper:
   pmid: '36152628'
   doi: 10.1016/j.ajhg.2022.09.001

@@ -235,6 +235,185 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.79 with catalog-annotated PGS003887 (same concept, same
       phenotype sign); 1000G EUR correlation with anchor PGS000320 r=+0.59.
+  PGS005144:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score Hypertension (PRS-CS; EAS); PGS Catalog weights are per-allele
+      effects on the reported trait. Corroborated by 1000G EUR r = +0.31 with PGS002765. Jung 2025 EAS hypertension
+      PRS (catalog beta > 0 without CI).
+  PGS005153:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score Hypertension (CT-SLEB; EAS+EUR); PGS Catalog weights
+      are per-allele effects on the reported trait. Corroborated by 1000G EUR r = +0.87 with PGS002765. Jung 2025
+      EAS hypertension PRS (catalog beta > 0 without CI).
+  PGS005146:
+    cluster: musculoskeletal.bone_density
+    phenotype: osteoporosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of osteoporosis (self-reported diagnosis, medication or treatment; Korean HEXA)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Disease selections
+      quote: 'For osteoporosis in HEXA, cases were selected based on these criteria: diagnosis of osteoporosis,
+        taking medication for osteoporosis, or receiving treatment for osteoporosis.'
+      confidence: high
+    - source: full_text
+      locator: Table 2/3 footnote
+      quote: 'b perSD OR: Odds ratio per 1 SD PRS.'
+      confidence: high
+    - source: full_text
+      locator: Table 4
+      quote: Osteoporosis PRS-CS 1.09 [1.05–1.14]
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: GWAS Catalog returned no associations for the top variants (EAS-trained, small weights)
+    review_reason: Paper OR per SD > 1 for osteoporosis, but in 1000G EUR the score anti-correlates weakly with
+      European osteoporosis scores (r about -0.15) and correlates positively with heel BMD; lead variants unverifiable.
+    status: agent_proposed
+    notes: 'PRS-CS on Biobank Japan osteoporosis GWAS (EAS). Catalog ''BETA'' 1.09 is the per-SD OR 1.09 [1.05,
+      1.14] from Table 2. 1000G EUR r=-0.15 with PGS004810, -0.11 with PGS002768, -0.04 with PGS001273, +0.13 with
+      heel BMD PGS001402: weak and opposite to the European osteoporosis scores; could be poor EAS-to-EUR portability
+      rather than a flipped file. Not called an inverted deposit (no opposite canonical loci shown).'
+  PGS005155:
+    cluster: musculoskeletal.bone_density
+    phenotype: osteoporosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of osteoporosis (self-reported diagnosis, medication or treatment; Korean HEXA)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Disease selections
+      quote: 'For osteoporosis in HEXA, cases were selected based on these criteria: diagnosis of osteoporosis,
+        taking medication for osteoporosis, or receiving treatment for osteoporosis.'
+      confidence: high
+    - source: full_text
+      locator: Table 2/3 footnote
+      quote: 'b perSD OR: Odds ratio per 1 SD PRS.'
+      confidence: high
+    - source: full_text
+      locator: Table 4
+      quote: PRS-CSx 1.14 [1.10–1.19]
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: GWAS Catalog returned no associations for the top variants (EAS-trained, small weights)
+    review_reason: Paper OR per SD > 1 for osteoporosis, but in 1000G EUR the score anti-correlates weakly with
+      European osteoporosis scores (r about -0.15) and correlates positively with heel BMD; lead variants unverifiable.
+    status: agent_proposed
+    notes: PRS-CSx on BBJ (EAS) plus GCST90044600 (EUR) osteoporosis GWAS. Catalog 'BETA' 1.14 is the per-SD OR
+      1.14 [1.10, 1.19] from Table 3. 1000G EUR r=-0.17 with PGS004810, -0.14 with PGS002768, +0.18 with heel BMD
+      PGS001402, +0.74 with PGS005146. The EUR GWAS input makes the negative EUR correlation more surprising; worth
+      checking the deposited allele orientation.
+  PGS005156:
+    cluster: cardiovascular.stroke
+    phenotype: any_stroke
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: risk of stroke, as the deposited scoring file behaves (suspected inverted effect alleles)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Disease selections
+      quote: 'For asthma, cataract, cholelithiasis, colon polyp, and stroke, cases were chosen if they met any of
+        these criteria: a diagnosis of each respective disease, taking medication for the same, or undergoing treatment
+        for it.'
+      confidence: low
+    - source: full_text
+      locator: Methods > Statistical analysis
+      quote: The perSD OR was derived using this logistic regression.
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: 'Relative to the recorded ''decreases'': deposited weights rs12445022-A -0.0168 and rs9521686-T +0.0100;
+        GWAS Catalog reports A (ZCCHC14, small-vessel stroke, Mishra 2022 / Traylor) and C (COL4A1/2, ischaemic
+        stroke, Ishigaki 2020 BBJ) as the stroke-raising alleles, so both canonical loci carry weight against risk.
+        All 7 variants shared with the top-40 of PGS001793/PGS001798 (rs12445022, rs880315, rs'
+    review_reason: 'Suspected inverted deposit: paper reports perSD OR 1.18 [1.09-1.27] for stroke PRS-CSx, but
+      the file''s canonical stroke risk alleles carry negative weights and it anti-correlates with every other stroke
+      score; direction recorded as the file behaves.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (higher score = lower stroke risk); the paper
+        says higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: 'Relative to the recorded ''decreases'': deposited weights rs12445022-A -0.0168 and rs9521686-T
+        +0.0100; GWAS Catalog reports A (ZCCHC14, small-vessel stroke, Mishra 2022 / Traylor) and C (COL4A1/2, ischaemic
+        stroke, Ishigaki 2020 BBJ) as the stroke-raising alleles, so both canonical loci carry weight against risk.
+        All 7 variants shared with the top-40 of PGS001793/PGS001798 (rs12445022, rs880315, rs4766566, rs3790604,
+        rs9112, rs11045241, rs7317784) have the opposite sign; 1000G EUR r=-0.47/-0.46 with PGS001793/PGS001798,
+        -0.43 with PGS004942, median r=-0.20 against all 35 other stroke-cluster scores.'
+      recorded: '2026-10-19'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's perSD OR (catalog BETA 1.18) describes the authors' own score, not this inverted file,
+        so it must not raise its quality tier.
+      paper_direction: null
+      evidence: Metric reported for the non-inverted score; the deposited file behaves as its negation.
+      recorded: '2026-10-19'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Same pattern as this paper's asthma PRS-CS/PRS-CSx deposits (PGS005141/PGS005148, recorded as inverted).
+      Scoring file has only rsID/effect_allele/effect_weight, so the effect allele was probably mislabelled at deposit.
+      As computed from the PGS Catalog file, a higher PGS005156 means LOWER stroke risk.
 paper:
   pmid: '40045046'
   doi: 10.1038/s42003-025-07767-9

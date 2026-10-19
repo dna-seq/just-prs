@@ -228,7 +228,176 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by HR 1.49 [1.47, 1.51] against 'Type 2 diabetes'.
+  PGS000686:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol [mmol/L]
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 5 agree, 0 disagree; rs4846914
+        A +0.000394; rs964184 C +0.0283; rs3764261 A +0.00992; rs1800961 T -0.0271; rs1883025 T -0.00354'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.69 with catalog-annotated HDL score PGS004156 (PGP000517, beta CI excluding
+      the null).
+  PGS000706:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of hypertension
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypertension
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Score HC215; PGS Catalog weights are per-allele effects on
+      the reported trait. Corroborated by 1000G EUR r = +0.67 with PGS002998. UKB hypertension (HC215) used as a
+      disease outcome in the biomarker paper.
+  PGS000685:
+    cluster: endocrine.glycemia
+    phenotype: hba1c
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HbA1c (glycated haemoglobin) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HbA1c [mmol/mol]
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.62 (median +0.58) with the PGP000517 HbA1c scores (BETA CI excludes
+      0).
+  PGS000702:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: vitamin_d_deficiency
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Vitamin D [nmol/L]
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read for this trait); PGS Catalog weights are per-allele effects
+      on the reported trait (serum vitamin D). Corroborated by OR 0.0935 [0.042, 0.207] against vitamin D deficiency
+      (and OR 0.0832 [0.026, 0.265] against insufficiency and deficiency): CI excludes 1, higher score = less deficiency.
+      1000G EUR r = +0.80 to +0.82 with other serum vitamin D scores.'
+  PGS000711:
+    cluster: endocrine.gout
+    phenotype: gout
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gout
+    polarity: 1
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Gout | gout
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.58 (CI 1.51-1.65) against 'Gout'; 1000G EUR r=+0.22 with anchor PGS004871.
+  PGS000675:
+    cluster: immune.c_reactive_protein
+    phenotype: c_reactive_protein
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating C-reactive protein level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: C-reactive protein [mg/L]
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference CRP-raising alleles (rs1205 C, APOE rs429358 T / rs7412 T, rs4420638 A, IL6R rs2228145 A
+        / rs4129267 C, GCKR rs1260326 T): 5 of 5 present agree'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.80 with PGS002868 (ExPRSweb PRS-CS on UKB field 30710 CRP, annotated
+      from the ExPRSweb full text).
+  PGS000689:
+    cluster: lipids.lipoprotein_a
+    phenotype: lipoprotein_a
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lipoprotein(a) concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lipoprotein A [nmol/L]
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs10455872 G weight +1.73 and rs3798220 C +0.26, both Lp(a)-raising alleles in the literature
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.88 with read anchor PGS000667. snpnet on UKB Lp(a) (nmol/L).
 paper:
   pmid: '33462484'
   doi: 10.1038/s41588-020-00757-z
   title: Genetics of 35 blood and urine biomarkers in the UK Biobank.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

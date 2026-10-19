@@ -1,0 +1,132 @@
+pgp_id: PGP000596
+scores:
+  PGS004694:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.89 with already-annotated PGS004139.
+  PGS004688:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.93 with PGS004153 (OR 1.79574 [1.76612, 1.82587] on Breast cancer).
+  PGS004689:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.49 with catalog-annotated PGS004912 (catalog metric here: no directional metric on Colorectal
+      cancer).'
+  PGS004691:
+    cluster: cancer.lung_cancer
+    phenotype: lung_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: risk of lung cancer (file as distributed; the paper's PRS increases risk)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results (combined model)
+      quote: Polygenic risk score was found to be a statistically significant predictor for all cancer types after
+        adjusting for the effects of clinical factors, except for ovarian cancer, and the hazard ratios ranged from
+        1.17 (kidney cancer) to 1.95 (prostate cancer)
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lung cancer
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: CHRNA5/15q25 risk alleles carry negative weights (rs16969968 A -0.023, GWAS Catalog risk A beta +0.219;
+        rs1051730 A(=T) -0.026, risk T; rs951266 A, rs2036527 A, rs9788721 C all negative); 19q13 CYP2A6 rs11879413
+        T +0.023 vs -0.029 in the verified PGS004860.
+    review_reason: 'Suspected inverted deposit: 15q25 and 19q13 lead loci opposite to known risk alleles; r=-0.69
+      with PGS004860, -0.4 to -0.5 with the lung-cancer consensus.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction describes the file as distributed (higher = lower lung-cancer risk); the paper says higher
+        = increases.
+      paper_direction: increases
+      evidence: 15q25 CHRNA5 risk alleles (rs16969968 A, rs1051730 A/T, rs951266 A, rs2036527 A) all negative; 19q13
+        rs11879413 T opposite to PGS004860; 1000G EUR r=-0.69 with PGS004860 and -0.4 to -0.54 with 12 consensus
+        lung-cancer scores; r=+0.8 with PGS005397 (same pattern).
+      recorded: '2026-10-19'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's HR/AUROC describe the authors' (correctly oriented) score, not the deposited file.
+      evidence: Same as deposit_inverted.
+      recorded: '2026-10-19'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: LDpred2 PRS from non-UKB public GWAS, tuned in UKB. The paper gives all non-ovarian PRS HRs > 1 (lung
+      HR only in Supplementary Figure 4, not read), so its score increases risk; the deposited file behaves as the
+      negated score.
+paper:
+  pmid: '38366150'
+  doi: 10.1093/jncics/pkae008
+  title: Using clinical and genetic risk factors for risk prediction of 8 cancers in the UK Biobank.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

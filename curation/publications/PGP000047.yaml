@@ -1,0 +1,45 @@
+pgp_id: PGP000047
+scores:
+  PGS000067:
+    cluster: cancer.prostate_cancer
+    strata: {}
+    review_reason: null
+    status: agent_proposed
+    phenotype: prostate_cancer
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of developing prostate cancer (earlier age at onset); validated for aggressive disease
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: aggressive_prostate_cancer
+    provenance:
+    - source: full_text
+      locator: Results > development
+      quote: The 54 parameter estimates (for the hazard of developing PCa) were combined with individual genotype
+        to generate the polygenic hazard score.
+      confidence: high
+    - source: full_text
+      locator: Discussion
+      quote: The polygenic hazard score is based on hazard ratios and is therefore an estimate of relative risk.
+      confidence: high
+    - source: full_text
+      locator: Methods > Polygenic hazard score
+      quote: The polygenic hazard score was developed previously as a parsimonious survival analysis model to predict
+        the time to event outcome (in this case, age of onset of PCa).
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: GWAS Catalog returned no associations for rs10051795, rs232964, rs3861106, rs16860513
+    notes: 'Polygenic hazard score (PHS1): Cox log-HR weights trained on age at onset of any PCa; HR >98th vs 30-70th
+      centile 2.9 for aggressive PCa in ProtecT. 1000G EUR r=+0.16 with anchor PGS002796, +0.24 with PHS166 (PGS000742).'
+paper:
+  pmid: '29321194'
+  doi: 10.1136/bmj.j5757
+  title: 'Polygenic hazard score to guide screening for aggressive prostate cancer: development and validation in
+    large scale cohorts.'
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

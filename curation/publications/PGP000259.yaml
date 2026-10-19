@@ -1,0 +1,35 @@
+pgp_id: PGP000259
+scores:
+  PGS001778:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of breast cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.66 [1.25, 2.19] on Breast cancer; 1000G EUR r=+0.74 with PGS000479 (OR 1.438 [1.354,
+      1.528] on Breast cancer [female]).
+paper:
+  pmid: '34572793'
+  doi: 10.3390/cancers13184568
+  title: Combination of a 15-SNP Polygenic Risk Score and Classical Risk Factors for the Prediction of Breast Cancer
+    Risk in Cypriot Women.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

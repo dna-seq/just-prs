@@ -1,0 +1,160 @@
+slug: bone-mineral-density
+query: bone mineral density
+match:
+  terms:
+  - BMD
+  - bone density
+  - bone mineral density
+  - bone tissue density
+  - eBMD
+  - heel bone mineral density
+  - osteoporosis
+  efo_ids: []
+  exclude: []
+anchor: PGS002315
+status: needs_review
+concepts:
+- musculoskeletal.bone_density
+scores:
+  PGS000121:
+    decision: in_scope
+    note: null
+  PGS000122:
+    decision: in_scope
+    note: null
+  PGS000657:
+    decision: in_scope
+    note: null
+  PGS001037:
+    decision: in_scope
+    note: null
+  PGS001038:
+    decision: in_scope
+    note: null
+  PGS001039:
+    decision: in_scope
+    note: null
+  PGS001273:
+    decision: in_scope
+    note: null
+  PGS001274:
+    decision: in_scope
+    note: null
+  PGS001402:
+    decision: in_scope
+    note: null
+  PGS001403:
+    decision: in_scope
+    note: null
+  PGS001404:
+    decision: in_scope
+    note: null
+  PGS001529:
+    decision: in_scope
+    note: null
+  PGS001530:
+    decision: in_scope
+    note: null
+  PGS001531:
+    decision: in_scope
+    note: null
+  PGS001883:
+    decision: in_scope
+    note: null
+  PGS001955:
+    decision: in_scope
+    note: null
+  PGS001956:
+    decision: in_scope
+    note: null
+  PGS002095:
+    decision: in_scope
+    note: null
+  PGS002173:
+    decision: in_scope
+    note: null
+  PGS002174:
+    decision: in_scope
+    note: null
+  PGS002315:
+    decision: in_scope
+    note: null
+  PGS002387:
+    decision: in_scope
+    note: null
+  PGS002436:
+    decision: in_scope
+    note: null
+  PGS002485:
+    decision: in_scope
+    note: null
+  PGS002534:
+    decision: in_scope
+    note: null
+  PGS002583:
+    decision: in_scope
+    note: null
+  PGS002632:
+    decision: in_scope
+    note: null
+  PGS002681:
+    decision: in_scope
+    note: null
+  PGS002768:
+    decision: in_scope
+    note: null
+  PGS003535:
+    decision: in_scope
+    note: null
+  PGS004411:
+    decision: in_scope
+    note: null
+  PGS004415:
+    decision: in_scope
+    note: null
+  PGS004419:
+    decision: in_scope
+    note: null
+  PGS004420:
+    decision: in_scope
+    note: null
+  PGS004424:
+    decision: in_scope
+    note: null
+  PGS004425:
+    decision: in_scope
+    note: null
+  PGS004490:
+    decision: in_scope
+    note: null
+  PGS004495:
+    decision: in_scope
+    note: null
+  PGS004560:
+    decision: in_scope
+    note: null
+  PGS004565:
+    decision: in_scope
+    note: null
+  PGS004809:
+    decision: in_scope
+    note: null
+  PGS004810:
+    decision: in_scope
+    note: null
+  PGS005146:
+    decision: in_scope
+    note: null
+  PGS005155:
+    decision: in_scope
+    note: null
+  PGS005206:
+    decision: in_scope
+    note: null
+summary: 'All 45 scores sit in one concept, musculoskeletal.bone_density (axis: denser, stronger bones; desirable). Density
+  measures (DXA BMD, heel eBMD/T-score, heel SOS, heel BUA) have sign +1 and osteoporosis (incl. ICD-10 M81 and time-to-event)
+  has sign -1. 45/45 annotated: PGS000121/PGS000122 are risk-allele GRS where a higher score means LOWER BMD (polarity
+  -1, by design); every other density score increases its measure and every osteoporosis score increases risk. Two East
+  Asian osteoporosis scores (PGS005146, PGS005155) have a paper-stated OR>1 but correlate weakly negatively with European
+  osteoporosis scores in 1000G EUR, so they are held for review. gSOS (PGS000657) is read from the paper but shows ~0
+  correlation with every peer in 1000G, likely due to rare large-weight variants.'

@@ -1,0 +1,115 @@
+slug: psoriasis
+query: psoriasis
+match:
+  terms:
+  - plaque psoriasis
+  - psoriasis
+  - psoriatic arthritis
+  - psoriatic disease
+  efo_ids: []
+  exclude: []
+anchor: PGS002293
+status: resolved
+concepts:
+- immune.psoriasis
+scores:
+  PGS000198:
+    decision: in_scope
+    note: null
+  PGS000342:
+    decision: in_scope
+    note: PsA vs skin-only psoriasis discrimination score (separate phenotype)
+  PGS000343:
+    decision: in_scope
+    note: HLA-only PsA vs skin-only psoriasis score (separate phenotype)
+  PGS001287:
+    decision: in_scope
+    note: null
+  PGS001312:
+    decision: in_scope
+    note: null
+  PGS001313:
+    decision: in_scope
+    note: null
+  PGS001871:
+    decision: in_scope
+    note: null
+  PGS002083:
+    decision: in_scope
+    note: null
+  PGS002293:
+    decision: in_scope
+    note: null
+  PGS002344:
+    decision: in_scope
+    note: null
+  PGS002416:
+    decision: in_scope
+    note: null
+  PGS002465:
+    decision: in_scope
+    note: null
+  PGS002514:
+    decision: in_scope
+    note: null
+  PGS002563:
+    decision: in_scope
+    note: null
+  PGS002612:
+    decision: in_scope
+    note: null
+  PGS002661:
+    decision: in_scope
+    note: null
+  PGS002710:
+    decision: in_scope
+    note: null
+  PGS004260:
+    decision: in_scope
+    note: null
+  PGS004261:
+    decision: in_scope
+    note: null
+  PGS004262:
+    decision: in_scope
+    note: null
+  PGS004263:
+    decision: in_scope
+    note: null
+  PGS004264:
+    decision: in_scope
+    note: null
+  PGS004315:
+    decision: in_scope
+    note: null
+  PGS004316:
+    decision: in_scope
+    note: null
+  PGS004317:
+    decision: in_scope
+    note: null
+  PGS005307:
+    decision: in_scope
+    note: null
+  PGS005308:
+    decision: in_scope
+    note: null
+  PGS005309:
+    decision: in_scope
+    note: null
+  PGS005310:
+    decision: in_scope
+    note: null
+  PGS005311:
+    decision: in_scope
+    note: null
+  PGS005312:
+    decision: in_scope
+    note: null
+summary: 'All 31 psoriasis scores sit in one concept, immune.psoriasis (higher risk of psoriasis, undesirable). 27 are psoriasis-risk
+  scores and 2 are psoriatic-arthritis risk scores; for all of them a higher score means higher risk. Two Smith 2020 scores
+  (PGS000342, PGS000343) are different: they discriminate psoriatic arthritis from skin-only psoriasis among patients, so
+  a higher score means joint involvement is more likely, not that psoriasis is more likely (HLA-C*06:02 has a negative weight).
+  No negative correlations inside the concept; the sparse P+T scores from Weissbrod 2022 correlate near zero with the HLA-heavy
+  anchor but positively with each other and with PolyFun-pred. Only one paper was read; the rest are catalog-only with OR/HR
+  or 1000G correlation corroboration.'

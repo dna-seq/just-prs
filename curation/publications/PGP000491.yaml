@@ -1,0 +1,34 @@
+pgp_id: PGP000491
+scores:
+  PGS003850:
+    cluster: cancer.colorectal_cancer
+    phenotype: colorectal_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of colorectal cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Colorectal cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; 1000G EUR r=+0.76 with catalog-annotated PGS004904 (catalog metric here: OR 1.62 on Colorectal cancer).'
+paper:
+  pmid: '36539618'
+  doi: 10.1038/s41588-022-01222-9
+  title: Deciphering colorectal cancer genetics through multi-omic analysis of 100,204 cases and 154,587 controls
+    of European and east Asian ancestries.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

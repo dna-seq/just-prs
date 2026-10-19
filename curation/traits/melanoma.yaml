@@ -1,0 +1,258 @@
+slug: melanoma
+query: melanoma
+match:
+  terms:
+  - cutaneous melanoma
+  - malignant melanoma
+  - melanoma
+  - melanoma of skin
+  - skin cancer
+  efo_ids: []
+  exclude: []
+anchor: PGS000079
+status: resolved
+concepts:
+- cancer.melanoma
+scores:
+  PGS000079:
+    decision: in_scope
+    note: null
+  PGS000118:
+    decision: in_scope
+    note: null
+  PGS000157:
+    decision: in_scope
+    note: null
+  PGS000339:
+    decision: in_scope
+    note: null
+  PGS000398:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS000399:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS000400:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS000401:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS000402:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS000403:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS000404:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS000405:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS000406:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS000407:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS000408:
+    decision: in_scope
+    note: null
+  PGS000409:
+    decision: in_scope
+    note: null
+  PGS000410:
+    decision: in_scope
+    note: null
+  PGS000411:
+    decision: in_scope
+    note: null
+  PGS000412:
+    decision: in_scope
+    note: null
+  PGS000413:
+    decision: in_scope
+    note: null
+  PGS000414:
+    decision: in_scope
+    note: null
+  PGS000415:
+    decision: in_scope
+    note: null
+  PGS000416:
+    decision: in_scope
+    note: null
+  PGS000417:
+    decision: in_scope
+    note: null
+  PGS000418:
+    decision: in_scope
+    note: null
+  PGS000419:
+    decision: in_scope
+    note: null
+  PGS000420:
+    decision: in_scope
+    note: null
+  PGS000421:
+    decision: in_scope
+    note: null
+  PGS000422:
+    decision: in_scope
+    note: null
+  PGS000423:
+    decision: in_scope
+    note: null
+  PGS000424:
+    decision: in_scope
+    note: null
+  PGS000425:
+    decision: in_scope
+    note: null
+  PGS000426:
+    decision: in_scope
+    note: null
+  PGS000427:
+    decision: in_scope
+    note: null
+  PGS000428:
+    decision: in_scope
+    note: null
+  PGS000429:
+    decision: in_scope
+    note: null
+  PGS000430:
+    decision: in_scope
+    note: null
+  PGS000431:
+    decision: in_scope
+    note: null
+  PGS000432:
+    decision: in_scope
+    note: null
+  PGS000433:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000434:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000435:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000436:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000437:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000438:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000439:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000440:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000441:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000442:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000443:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000444:
+    decision: out_of_scope
+    note: non-melanoma skin cancer (UKB other non-epithelial skin cancer, ICD-10 C44), not melanoma
+  PGS000732:
+    decision: in_scope
+    note: null
+  PGS000743:
+    decision: in_scope
+    note: null
+  PGS000744:
+    decision: in_scope
+    note: null
+  PGS000745:
+    decision: in_scope
+    note: null
+  PGS000766:
+    decision: in_scope
+    note: null
+  PGS000790:
+    decision: in_scope
+    note: null
+  PGS000813:
+    decision: in_scope
+    note: null
+  PGS001040:
+    decision: out_of_scope
+    note: non-melanoma skin cancer, not melanoma
+  PGS001041:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS001304:
+    decision: in_scope
+    note: null
+  PGS001803:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS002014:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS002246:
+    decision: in_scope
+    note: null
+  PGS002247:
+    decision: in_scope
+    note: null
+  PGS002253:
+    decision: in_scope
+    note: null
+  PGS002301:
+    decision: in_scope
+    note: null
+  PGS003382:
+    decision: in_scope
+    note: null
+  PGS003412:
+    decision: in_scope
+    note: null
+  PGS003430:
+    decision: in_scope
+    note: null
+  PGS003745:
+    decision: in_scope
+    note: null
+  PGS004247:
+    decision: in_scope
+    note: null
+  PGS004795:
+    decision: in_scope
+    note: null
+  PGS004796:
+    decision: in_scope
+    note: null
+  PGS004833:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS004834:
+    decision: out_of_scope
+    note: generic skin cancer (melanoma and keratinocyte cancers pooled); belongs to a skin-cancer concept, not melanoma
+  PGS004886:
+    decision: in_scope
+    note: null
+  PGS004953:
+    decision: in_scope
+    note: null
+  PGS005208:
+    decision: in_scope
+    note: null
+summary: 'All 51 melanoma scores sit in one concept, cancer.melanoma: a higher score means higher melanoma risk. Every
+  one was annotated from the catalog (plain "Melanoma" trait, OR/HR above 1 or positive 1000G correlation with the anchor);
+  no paper needed reading. No negative correlations inside the concept. PGS000118 (MEL29) lists the MC1R rs1805007 non-risk
+  allele as effect allele, recorded as partial_allele_inconsistency and sent to review. 28 generic skin-cancer and non-melanoma
+  skin-cancer scores are out of scope and need their own concept.'

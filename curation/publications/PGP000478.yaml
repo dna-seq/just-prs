@@ -1,0 +1,68 @@
+pgp_id: PGP000478
+scores:
+  PGS003758:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: time_to_event
+    score_effect: &id001
+      direction: increases
+      target: risk of incident breast cancer (Japanese females)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: &id002
+      sex: female
+    provenance:
+    - source: abstract
+      locator: Abstract > Results
+      quote: age-adjusted hazard ratio for breast cancer in females with the highest PRS quintile compared with
+        those in the lowest PRS quintile was 2.47 (95% confidence intervals, 1.64-3.70)
+      confidence: medium
+    - source: abstract
+      locator: Abstract > Results
+      quote: The PRS constructed using Japanese-ancestry GWAS demonstrated better predictive performance for breast
+        cancer in Japanese females than that using European-ancestry GWAS
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Built from Japanese-ancestry GWAS (GCST90013695, beta weights, P+T 46,861 variants); abstract only (paper
+      not open access). The quintile HR belongs to the best-performing PRS, which the abstract identifies as the
+      Japanese-GWAS score. Near-zero 1000G EUR correlation (max r=+0.12) with European-derived breast cancer scores,
+      plausibly from the East Asian P+T variant set, not a sign flip.
+  PGS003759:
+    cluster: cancer.breast_cancer
+    phenotype: breast_cancer
+    measurement_kind: time_to_event
+    score_effect: *id001
+    polarity: 1
+    evaluation_outcome: null
+    strata: *id002
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Breast cancer
+      confidence: medium
+    - source: abstract
+      locator: Abstract > Conclusion
+      quote: demonstrated the usefulness of the PRS for breast cancer risk stratification
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Built from European-ancestry GWAS (GCST004988, beta weights, P+T 17,252 variants); only a C-statistic
+      (0.586) is reported. Direction per catalog convention, corroborated by 1000G EUR r=+0.64 with PGS000015 and
+      r=+0.60 with PGS004123 (OR 1.57 [1.55, 1.60] on breast cancer).
+paper:
+  pmid: '36538246'
+  doi: 10.1007/s10549-022-06843-6
+  title: 'Development and validation of genome-wide polygenic risk scores for predicting breast cancer incidence
+    in Japanese females: a population-based case-cohort study.'
+evidence_read:
+  abstract: true
+  full_text: null
+  supplement: []

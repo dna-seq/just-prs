@@ -1,0 +1,51 @@
+pgp_id: PGP000120
+scores:
+  PGS000657:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_speed_of_sound
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: genetically predicted heel speed of sound (gSOS, SD units)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: fragility_fracture
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk scores using LASSO
+      quote: Using the UK Biobank Training Set, we fitted 6 LASSO models
+      confidence: high
+    - source: full_text
+      locator: Methods > Polygenic risk scores using LASSO
+      quote: We refer to this final predictor as gSOS, in which SOS is predicted only from genotype.
+      confidence: high
+    - source: full_text
+      locator: Methods > screening strategy (Fig 3)
+      quote: This is because individuals with a high SOS are likely to have a high BMD and are thus less likely
+        to be recommended for an intervention.
+      confidence: high
+    - source: full_text
+      locator: Results
+      quote: gSOS was strongly correlated with measured SOS (r2 = 23.2%, 95% CI 22.7% to 23.7%).
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs781142826-C and rs181832503-G carry negative weights; GWAS Catalog reports the other alleles (T, A)
+        raise heel BMD
+    review_reason: null
+    status: agent_proposed
+    notes: 'LASSO predictor of standardized heel SOS (UK Biobank): higher gSOS = higher predicted SOS/BMD and lower
+      fracture risk; catalog ORs per SD ~0.70 for major osteoporotic and ~0.75 for hip fracture agree. 1000G EUR
+      correlation with every other score in this concept is ~0 (|r|<0.1), probably because the large-weight variants
+      are rare and poorly represented in 1000G; leading loci match PGS005206 signs.'
+paper:
+  pmid: '32614825'
+  doi: 10.1371/journal.pmed.1003152
+  title: 'Development of a polygenic risk score to improve screening for fracture risk: A genetic risk prediction
+    study.'
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

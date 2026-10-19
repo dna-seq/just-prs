@@ -1,0 +1,36 @@
+pgp_id: PGP000034
+scores:
+  PGS000049:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of prostate cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: aggressive_prostate_cancer
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.67 [1.37, 2.04] on High prostate cancer aggressiveness (Gleason score ≥ 7); 1000G
+      EUR r=+0.69 with already-annotated PGS000030.
+paper:
+  pmid: '28448241'
+  doi: 10.1200/JCO.2016.69.4935
+  title: Prediction of Breast and Prostate Cancer Risks in Male BRCA1 and BRCA2 Mutation Carriers Using Polygenic
+    Risk Scores.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

@@ -1,0 +1,46 @@
+pgp_id: PGP000228
+scores:
+  PGS000882:
+    cluster: nutrition.vitamin_d
+    phenotype: serum_25ohd
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum 25-hydroxyvitamin D concentration (rank-inverse-normal transformed in the GWAS)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: vitamin_d_deficiency
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: 25-hydroxyvitamin D
+      confidence: medium
+    - source: full_text
+      locator: Results (GWAS phenotype)
+      quote: Subsequent analyses use 25OHD after rank-based inverse-normal transformation (RINT), unless otherwise
+        stated.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'SBayesR weights from the authors'' own 25OHD GWAS (417,580 UKB Europeans). The paper reports PRS prediction
+      only as variance explained and never states the sign in words; direction follows the PGS Catalog convention
+      and is corroborated by the developers'' catalog betas on 25OHD (PPM002526 beta 0.269, se 0.02; PPM002527 beta
+      0.24, se 0.024; CI excludes 0), 1000G EUR r = +0.81 with PGS000702, and a positive correlation with 25OHD
+      in Lebanese (PGP000600 Fig. 4: R = 0.2033). The catalog best-performance OR 0.82 [0.78, 0.86] (PPM021729,
+      PGP000665 Table 1; UKB OR 0.60) is per SD for a vitamin D level dichotomized at 30 nmol/L; the paper prints
+      "Vitamin D > 30 nmol/L", but OR < 1 only fits cases = low vitamin D, so the ">" looks like a typo and the
+      metric is read as against deficiency. A third-party OR 1.6 [1.3, 13.7] for deficiency (PPM020900, PGP000600,
+      194 people, 41,736 of 1,094,650 variants) has no stated comparison and an implausible CI; ignored.'
+paper:
+  pmid: '32242144'
+  doi: 10.1038/s41467-020-15421-7
+  title: Genome-wide association study identifies 143 loci associated with 25 hydroxyvitamin D concentration.
+evidence_read:
+  abstract: true
+  full_text: europepmc (PMC7118120)
+  supplement: []

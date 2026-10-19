@@ -1,0 +1,34 @@
+pgp_id: PGP000161
+scores:
+  PGS000755:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum uric acid level (mg/dL)
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: full_text
+      locator: Methods, polygenic risk score
+      quote: based on the β estimates for SUA-raising alleles for 14 common
+      confidence: high
+    - source: full_text
+      locator: Discussion
+      quote: SUA levels increased by 0.21–0.28 per 1 standard deviation
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Korean cohorts; catalog betas 0.211/0.237 are mg/dL SUA per SD of the standardised PRS.
+paper:
+  pmid: '32514006'
+  doi: 10.1038/s41598-020-66064-z
+  title: Polygenic analysis of the effect of common and low-frequency genetic variants on serum uric acid levels
+    in Korean individuals.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

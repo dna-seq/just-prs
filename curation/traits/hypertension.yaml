@@ -1,0 +1,246 @@
+slug: hypertension
+query: hypertension
+match:
+  terms:
+  - essential hypertension
+  - high blood pressure
+  - hypertension
+  - hypertensive disorder
+  - incident hypertension
+  efo_ids: []
+  exclude: []
+anchor: PGS003028
+status: resolved
+concepts:
+- cardiovascular.blood_pressure
+scores:
+  PGS000706:
+    decision: in_scope
+    note: null
+  PGS000935:
+    decision: out_of_scope
+    note: 'age at diagnosis of high blood pressure among UKB cases (field 2966): onset timing, not hypertension liability;
+      near-zero 1000G correlation with every hypertension score'
+  PGS000957:
+    decision: in_scope
+    note: null
+  PGS000958:
+    decision: in_scope
+    note: null
+  PGS001320:
+    decision: in_scope
+    note: null
+  PGS001324:
+    decision: in_scope
+    note: family history of high blood pressure (proxy phenotype), kept under hypertension
+  PGS001838:
+    decision: in_scope
+    note: null
+  PGS002047:
+    decision: in_scope
+    note: null
+  PGS002296:
+    decision: in_scope
+    note: null
+  PGS002335:
+    decision: in_scope
+    note: null
+  PGS002407:
+    decision: in_scope
+    note: null
+  PGS002456:
+    decision: in_scope
+    note: null
+  PGS002505:
+    decision: in_scope
+    note: null
+  PGS002554:
+    decision: in_scope
+    note: null
+  PGS002603:
+    decision: in_scope
+    note: null
+  PGS002652:
+    decision: in_scope
+    note: null
+  PGS002701:
+    decision: in_scope
+    note: null
+  PGS002765:
+    decision: in_scope
+    note: SBP-GWAS weights reported as the hypertension PRS; recorded as systolic_blood_pressure evaluated on hypertension
+  PGS002777:
+    decision: in_scope
+    note: null
+  PGS002778:
+    decision: in_scope
+    note: null
+  PGS002994:
+    decision: in_scope
+    note: null
+  PGS002995:
+    decision: in_scope
+    note: null
+  PGS002996:
+    decision: in_scope
+    note: null
+  PGS002997:
+    decision: in_scope
+    note: null
+  PGS002998:
+    decision: in_scope
+    note: null
+  PGS002999:
+    decision: in_scope
+    note: null
+  PGS003000:
+    decision: in_scope
+    note: null
+  PGS003001:
+    decision: in_scope
+    note: null
+  PGS003002:
+    decision: in_scope
+    note: null
+  PGS003003:
+    decision: in_scope
+    note: null
+  PGS003004:
+    decision: in_scope
+    note: null
+  PGS003005:
+    decision: in_scope
+    note: null
+  PGS003006:
+    decision: in_scope
+    note: null
+  PGS003007:
+    decision: in_scope
+    note: null
+  PGS003008:
+    decision: in_scope
+    note: null
+  PGS003009:
+    decision: in_scope
+    note: null
+  PGS003010:
+    decision: in_scope
+    note: null
+  PGS003011:
+    decision: in_scope
+    note: null
+  PGS003012:
+    decision: in_scope
+    note: null
+  PGS003013:
+    decision: in_scope
+    note: null
+  PGS003014:
+    decision: in_scope
+    note: null
+  PGS003015:
+    decision: in_scope
+    note: null
+  PGS003016:
+    decision: in_scope
+    note: null
+  PGS003017:
+    decision: in_scope
+    note: null
+  PGS003018:
+    decision: in_scope
+    note: null
+  PGS003019:
+    decision: in_scope
+    note: null
+  PGS003020:
+    decision: in_scope
+    note: null
+  PGS003021:
+    decision: in_scope
+    note: null
+  PGS003022:
+    decision: in_scope
+    note: null
+  PGS003023:
+    decision: in_scope
+    note: null
+  PGS003024:
+    decision: in_scope
+    note: null
+  PGS003025:
+    decision: in_scope
+    note: null
+  PGS003026:
+    decision: in_scope
+    note: null
+  PGS003027:
+    decision: in_scope
+    note: null
+  PGS003028:
+    decision: in_scope
+    note: null
+  PGS003587:
+    decision: out_of_scope
+    note: gestational hypertension (pregnancy-specific hypertensive disorder, evaluated on pre-eclampsia); belongs to a pregnancy-disorder
+      concept, not chronic hypertension
+  PGS004191:
+    decision: in_scope
+    note: null
+  PGS004192:
+    decision: in_scope
+    note: null
+  PGS004193:
+    decision: in_scope
+    note: null
+  PGS004194:
+    decision: in_scope
+    note: null
+  PGS004195:
+    decision: in_scope
+    note: null
+  PGS004234:
+    decision: in_scope
+    note: null
+  PGS004236:
+    decision: in_scope
+    note: null
+  PGS004455:
+    decision: in_scope
+    note: null
+  PGS004456:
+    decision: in_scope
+    note: null
+  PGS004525:
+    decision: in_scope
+    note: null
+  PGS004526:
+    decision: in_scope
+    note: null
+  PGS004785:
+    decision: in_scope
+    note: null
+  PGS004786:
+    decision: in_scope
+    note: null
+  PGS004787:
+    decision: in_scope
+    note: null
+  PGS004788:
+    decision: in_scope
+    note: null
+  PGS004934:
+    decision: in_scope
+    note: null
+  PGS005144:
+    decision: in_scope
+    note: null
+  PGS005153:
+    decision: in_scope
+    note: null
+summary: 72 of 74 scores are in scope under cardiovascular.blood_pressure (hypertension, one SBP-weighted score); all 72 are
+  annotated as higher score = more hypertension. 42 form one strongly positively correlated block in 1000G EUR; 50 are resolved
+  (catalog-only except PGS004236, read in full text). The ExPRSweb (PGP000393) scores built on FinnGen R4 GWAS (20) plus two
+  DBSLMM scores are null in the paper's own evaluation and uncorrelated with the block, so they go to review; the UKB 20002-1072
+  and I10 ExPRSweb groups are weak but significant and also sit apart from the block. No negative correlations or suspected
+  inverted deposits. Age at diagnosis (PGS000935) and gestational hypertension (PGS003587) are out of scope.

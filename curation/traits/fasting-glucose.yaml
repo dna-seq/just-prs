@@ -1,0 +1,99 @@
+slug: fasting-glucose
+query: fasting glucose / blood glucose
+match:
+  terms:
+  - blood glucose
+  - blood sugar
+  - fasting glucose
+  - fasting plasma glucose
+  - glucose level
+  efo_ids: []
+  exclude: []
+anchor: PGS002953
+status: resolved
+concepts:
+- endocrine.glycemia
+scores:
+  PGS000305:
+    decision: in_scope
+    note: null
+  PGS000306:
+    decision: in_scope
+    note: null
+  PGS000838:
+    decision: in_scope
+    note: null
+  PGS001350:
+    decision: in_scope
+    note: null
+  PGS002924:
+    decision: in_scope
+    note: null
+  PGS002925:
+    decision: in_scope
+    note: null
+  PGS002926:
+    decision: in_scope
+    note: null
+  PGS002927:
+    decision: in_scope
+    note: null
+  PGS002928:
+    decision: in_scope
+    note: null
+  PGS002929:
+    decision: in_scope
+    note: null
+  PGS002930:
+    decision: in_scope
+    note: null
+  PGS002931:
+    decision: in_scope
+    note: null
+  PGS002932:
+    decision: in_scope
+    note: null
+  PGS002933:
+    decision: in_scope
+    note: null
+  PGS002944:
+    decision: in_scope
+    note: null
+  PGS002945:
+    decision: in_scope
+    note: null
+  PGS002946:
+    decision: in_scope
+    note: null
+  PGS002947:
+    decision: in_scope
+    note: null
+  PGS002948:
+    decision: in_scope
+    note: null
+  PGS002949:
+    decision: in_scope
+    note: null
+  PGS002950:
+    decision: in_scope
+    note: null
+  PGS002951:
+    decision: in_scope
+    note: null
+  PGS002952:
+    decision: in_scope
+    note: null
+  PGS002953:
+    decision: in_scope
+    note: null
+  PGS003336:
+    decision: in_scope
+    note: null
+  PGS003345:
+    decision: in_scope
+    note: null
+summary: |
+  All 26 "blood glucose amount" scores are fasting-glucose scores in endocrine.glycemia; a higher score means higher fasting glucose.
+  14 are annotated: PGS000305/PGS000306 (TRAILS GRS, read), PGS001350 (MAGIC PRS-CS, read), and 11 catalog-only scores anchored to them by 1000G correlation (Aly subtype GRS, Korean FPG GRS, and the MAGIC-based ExPRSweb scores).
+  12 ExPRSweb scores are left unannotated: the ten built on the "FGovertime-corrected" GWAS and the MAGIC DBSLMM MGI score carry no signal (|r| < 0.15 with every other score), and PGS002952 is a duplicate of PGS002947 despite its MAGIC name.
+  No negative same-concept correlations and no inverted deposits were found.

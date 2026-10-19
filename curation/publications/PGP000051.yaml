@@ -1,0 +1,155 @@
+pgp_id: PGP000051
+scores:
+  PGS000094:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocyte count (covariate-adjusted)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance: &id001
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: no rsIDs in the file; top loci chr20:4176425, chr6:139520516 (HBS1L-MYB), chr5:52.79M, chr1:158.67M
+        (SPTA1) carry the same signs as the independently derived Vuckovic 2020 scores (PGP000078)
+    status: agent_proposed
+    notes: Elastic net fitted to the adjusted trait level (UK Biobank), so weights are per-allele effects on the
+      level; higher score = higher value. The paper does not restate the direction in words. 1000G EUR r = +0.66
+      to +0.91 with all other in-scope reticulocyte scores.
+  PGS000095:
+    cluster: blood.reticulocyte_count
+    phenotype: hlsr_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: high light scatter reticulocytes as a percentage of red cells (covariate-adjusted)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance: *id001
+    lead_variant_check:
+      status: not_run
+      note: no rsIDs in the file; top loci chr20:4176425, chr6:139520516 (HBS1L-MYB), chr5:52.79M, chr1:158.67M
+        (SPTA1) carry the same signs as the independently derived Vuckovic 2020 scores (PGP000078)
+    status: agent_proposed
+    notes: Elastic net fitted to the adjusted trait level (UK Biobank), so weights are per-allele effects on the
+      level; higher score = higher value. The paper does not restate the direction in words. 1000G EUR r = +0.66
+      to +0.91 with all other in-scope reticulocyte scores.
+  PGS000111:
+    cluster: blood.reticulocyte_count
+    phenotype: reticulocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: reticulocyte count (covariate-adjusted)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance: *id001
+    lead_variant_check:
+      status: not_run
+      note: no rsIDs in the file; top loci chr20:4176425, chr6:139520516 (HBS1L-MYB), chr5:52.79M, chr1:158.67M
+        (SPTA1) carry the same signs as the independently derived Vuckovic 2020 scores (PGP000078)
+    status: agent_proposed
+    notes: Elastic net fitted to the adjusted trait level (UK Biobank), so weights are per-allele effects on the
+      level; higher score = higher value. The paper does not restate the direction in words. 1000G EUR r = +0.66
+      to +0.91 with all other in-scope reticulocyte scores.
+  PGS000112:
+    cluster: blood.reticulocyte_count
+    phenotype: reticulocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: reticulocyte fraction of red cells (covariate-adjusted)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance: *id001
+    lead_variant_check:
+      status: not_run
+      note: no rsIDs in the file; top loci chr20:4176425, chr6:139520516 (HBS1L-MYB), chr5:52.79M, chr1:158.67M
+        (SPTA1) carry the same signs as the independently derived Vuckovic 2020 scores (PGP000078)
+    status: agent_proposed
+    notes: Elastic net fitted to the adjusted trait level (UK Biobank), so weights are per-allele effects on the
+      level; higher score = higher value. The paper does not restate the direction in words. 1000G EUR r = +0.66
+      to +0.91 with all other in-scope reticulocyte scores.
+  PGS000093:
+    cluster: blood.hemoglobin
+    phenotype: hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hemoglobin concentration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.56 with PGS004968 (PGP000679 hemoglobin score, catalog beta CI excludes
+      the null). 1000G EUR r with all other in-scope hemoglobin scores is positive (min +0.16).
+  PGS000109:
+    cluster: blood.platelet_count
+    phenotype: platelet_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: SH2B3 rs3184504 (12:111446804) T allele, the known platelet-raising missense allele, carries a positive
+        weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.83 with PGS001238 (read), same phenotype. Machine-learning (elastic
+      net) optimized score for the INTERVAL/UKB platelet count.
+paper:
+  pmid: '35072137'
+  doi: 10.1016/j.xgen.2021.100086
+  title: Machine learning optimized polygenic scores for blood cell traits identify sex-specific trajectories and
+    genetic correlations with disease
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

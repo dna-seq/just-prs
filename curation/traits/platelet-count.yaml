@@ -1,0 +1,105 @@
+slug: platelet-count
+query: platelet count
+match:
+  terms:
+  - platelet count
+  - platelets
+  - thrombocyte count
+  - thrombocytopenia
+  efo_ids: []
+  exclude: []
+anchor: PGS000109
+status: resolved
+concepts:
+- blood.platelet_count
+scores:
+  PGS000109:
+    decision: in_scope
+    note: null
+  PGS000186:
+    decision: in_scope
+    note: null
+  PGS001238:
+    decision: in_scope
+    note: null
+  PGS001973:
+    decision: in_scope
+    note: null
+  PGS002191:
+    decision: in_scope
+    note: null
+  PGS002343:
+    decision: in_scope
+    note: null
+  PGS002373:
+    decision: in_scope
+    note: null
+  PGS002415:
+    decision: in_scope
+    note: null
+  PGS002464:
+    decision: in_scope
+    note: null
+  PGS002513:
+    decision: in_scope
+    note: null
+  PGS002562:
+    decision: in_scope
+    note: null
+  PGS002611:
+    decision: in_scope
+    note: null
+  PGS002660:
+    decision: in_scope
+    note: null
+  PGS002709:
+    decision: in_scope
+    note: null
+  PGS003546:
+    decision: in_scope
+    note: null
+  PGS003932:
+    decision: in_scope
+    note: null
+  PGS004352:
+    decision: in_scope
+    note: null
+  PGS004582:
+    decision: in_scope
+    note: null
+  PGS004583:
+    decision: in_scope
+    note: null
+  PGS004584:
+    decision: in_scope
+    note: null
+  PGS004585:
+    decision: in_scope
+    note: null
+  PGS004811:
+    decision: in_scope
+    note: null
+  PGS004812:
+    decision: in_scope
+    note: null
+  PGS004813:
+    decision: in_scope
+    note: null
+  PGS004814:
+    decision: in_scope
+    note: null
+  PGS005193:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL): predicts between-person variability of platelet count, not its level; no place on the
+      higher-platelet-count axis'
+  PGS005251:
+    decision: out_of_scope
+    note: INFLA-score composite inflammation index (already curated under immune.c_reactive_protein); platelets are only
+      one component
+summary: 'All 25 in-scope scores sit in blood.platelet_count (new Blood cells domain). 24 predict platelet count itself
+  (higher score = more platelets), including three pregnancy-trimester scores stratified by trimester; one predicts gestational
+  thrombocytopenia (higher score = more risk = fewer platelets, phenotype sign -1). Two anchors were read from cached
+  full text, the Chinese pregnancy paper was read by one lookup, and the rest are catalog-only with 1000G EUR r >= +0.58
+  and the SH2B3 rs3184504-T platelet-raising allele weighted positively. Two scores go to review: the Biobank Japan BOLT-LMM
+  score (weak EUR corroboration) and the GT score (direction inferred from weights matching the published PEAR1 log-OR).
+  Variance and INFLA scores are out of scope.'

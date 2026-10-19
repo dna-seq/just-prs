@@ -1,0 +1,119 @@
+slug: thyroid-cancer
+query: thyroid cancer
+match:
+  terms:
+  - carcenoma
+  - differentiated thyroid cancer
+  - papillary thyroid
+  - thyroid cancer
+  - thyroid carcinoma
+  efo_ids:
+  - MONDO_0015075
+  exclude: []
+anchor: PGS000087
+status: resolved
+concepts:
+- cancer.thyroid_cancer
+scores:
+  PGS000087:
+    decision: in_scope
+    note: null
+  PGS000162:
+    decision: in_scope
+    note: null
+  PGS000207:
+    decision: in_scope
+    note: null
+  PGS000208:
+    decision: in_scope
+    note: null
+  PGS000209:
+    decision: in_scope
+    note: null
+  PGS000626:
+    decision: in_scope
+    note: null
+  PGS000627:
+    decision: in_scope
+    note: null
+  PGS000628:
+    decision: in_scope
+    note: null
+  PGS000629:
+    decision: in_scope
+    note: null
+  PGS000630:
+    decision: in_scope
+    note: null
+  PGS000631:
+    decision: in_scope
+    note: null
+  PGS000632:
+    decision: in_scope
+    note: null
+  PGS000633:
+    decision: in_scope
+    note: null
+  PGS000634:
+    decision: in_scope
+    note: null
+  PGS000635:
+    decision: in_scope
+    note: null
+  PGS000636:
+    decision: in_scope
+    note: null
+  PGS000797:
+    decision: in_scope
+    note: null
+  PGS001289:
+    decision: in_scope
+    note: null
+  PGS001354:
+    decision: in_scope
+    note: null
+  PGS001794:
+    decision: in_scope
+    note: 'canary_collapsed_percentile flag: direction fine, percentiles unusable'
+  PGS001799:
+    decision: in_scope
+    note: 'canary_collapsed_percentile flag: direction fine, percentiles unusable'
+  PGS001809:
+    decision: in_scope
+    note: null
+  PGS002018:
+    decision: in_scope
+    note: null
+  PGS003437:
+    decision: in_scope
+    note: null
+  PGS003746:
+    decision: in_scope
+    note: null
+  PGS004954:
+    decision: in_scope
+    note: null
+  PGS005210:
+    decision: in_scope
+    note: null
+  PGS005258:
+    decision: in_scope
+    note: null
+  PGS005259:
+    decision: in_scope
+    note: null
+  PGS005260:
+    decision: in_scope
+    note: null
+  PGS005273:
+    decision: in_scope
+    note: 'thyroid cancer vs benign nodular goiter: own phenotype in the same concept'
+  PGS005274:
+    decision: in_scope
+    note: 'thyroid cancer vs benign nodular goiter: own phenotype in the same concept'
+summary: 'All 32 thyroid cancer scores (14 papers) point the same way: a higher score means higher thyroid
+  cancer risk. 27 were annotated from the catalog alone (plain ''Thyroid cancer'' trait, ORs/HRs above
+  1 with CIs excluding 1, or positive 1000G correlation with the CC_Thyroid anchor); the one 2025 multi-ancestry
+  paper (PGP000748) was read. Two of its scores rank thyroid nodules as malignant vs benign goiter and
+  sit in their own phenotype. No negative correlations, no suspected inverted deposits. PGS001794/PGS001799
+  carry a canary collapsed-percentile flag, so their percentiles should not be shown.'

@@ -1,0 +1,306 @@
+slug: prostate-cancer
+query: prostate cancer
+match:
+  terms:
+  - aggressive prostate cancer
+  - metastatic prostate cancer
+  - prostate cancer
+  - prostate carcinoma
+  efo_ids: []
+  exclude: []
+anchor: PGS002796
+status: resolved
+concepts:
+- cancer.prostate_cancer
+scores:
+  PGS000030:
+    decision: in_scope
+    note: null
+  PGS000044:
+    decision: in_scope
+    note: null
+  PGS000049:
+    decision: in_scope
+    note: null
+  PGS000067:
+    decision: in_scope
+    note: null
+  PGS000084:
+    decision: in_scope
+    note: null
+  PGS000160:
+    decision: in_scope
+    note: null
+  PGS000333:
+    decision: in_scope
+    note: null
+  PGS000348:
+    decision: in_scope
+    note: null
+  PGS000565:
+    decision: in_scope
+    note: null
+  PGS000566:
+    decision: in_scope
+    note: null
+  PGS000567:
+    decision: in_scope
+    note: null
+  PGS000568:
+    decision: in_scope
+    note: null
+  PGS000569:
+    decision: in_scope
+    note: null
+  PGS000570:
+    decision: in_scope
+    note: null
+  PGS000571:
+    decision: in_scope
+    note: null
+  PGS000572:
+    decision: in_scope
+    note: null
+  PGS000573:
+    decision: in_scope
+    note: null
+  PGS000574:
+    decision: in_scope
+    note: null
+  PGS000575:
+    decision: in_scope
+    note: null
+  PGS000576:
+    decision: in_scope
+    note: null
+  PGS000577:
+    decision: in_scope
+    note: null
+  PGS000578:
+    decision: in_scope
+    note: null
+  PGS000579:
+    decision: in_scope
+    note: null
+  PGS000580:
+    decision: in_scope
+    note: null
+  PGS000581:
+    decision: in_scope
+    note: null
+  PGS000582:
+    decision: in_scope
+    note: null
+  PGS000583:
+    decision: in_scope
+    note: null
+  PGS000584:
+    decision: in_scope
+    note: null
+  PGS000585:
+    decision: in_scope
+    note: null
+  PGS000586:
+    decision: in_scope
+    note: null
+  PGS000587:
+    decision: in_scope
+    note: null
+  PGS000588:
+    decision: in_scope
+    note: null
+  PGS000589:
+    decision: in_scope
+    note: null
+  PGS000590:
+    decision: in_scope
+    note: null
+  PGS000591:
+    decision: in_scope
+    note: null
+  PGS000592:
+    decision: in_scope
+    note: null
+  PGS000662:
+    decision: in_scope
+    note: null
+  PGS000714:
+    decision: in_scope
+    note: null
+  PGS000719:
+    decision: in_scope
+    note: null
+  PGS000733:
+    decision: in_scope
+    note: null
+  PGS000741:
+    decision: in_scope
+    note: null
+  PGS000742:
+    decision: in_scope
+    note: null
+  PGS000751:
+    decision: in_scope
+    note: null
+  PGS000795:
+    decision: in_scope
+    note: null
+  PGS000878:
+    decision: in_scope
+    note: null
+  PGS000881:
+    decision: in_scope
+    note: null
+  PGS001291:
+    decision: in_scope
+    note: null
+  PGS001292:
+    decision: in_scope
+    note: family history of prostate cancer (UKB), proxy phenotype
+  PGS001805:
+    decision: in_scope
+    note: null
+  PGS002016:
+    decision: in_scope
+    note: null
+  PGS002240:
+    decision: in_scope
+    note: null
+  PGS002241:
+    decision: in_scope
+    note: null
+  PGS002268:
+    decision: in_scope
+    note: null
+  PGS002791:
+    decision: in_scope
+    note: null
+  PGS002792:
+    decision: in_scope
+    note: null
+  PGS002793:
+    decision: in_scope
+    note: null
+  PGS002796:
+    decision: in_scope
+    note: null
+  PGS002797:
+    decision: in_scope
+    note: null
+  PGS002798:
+    decision: in_scope
+    note: null
+  PGS002799:
+    decision: in_scope
+    note: null
+  PGS003331:
+    decision: in_scope
+    note: null
+  PGS003415:
+    decision: in_scope
+    note: null
+  PGS003418:
+    decision: in_scope
+    note: null
+  PGS003419:
+    decision: in_scope
+    note: null
+  PGS003460:
+    decision: in_scope
+    note: null
+  PGS003743:
+    decision: in_scope
+    note: null
+  PGS003765:
+    decision: in_scope
+    note: null
+  PGS003766:
+    decision: in_scope
+    note: null
+  PGS003985:
+    decision: in_scope
+    note: null
+  PGS004001:
+    decision: in_scope
+    note: null
+  PGS004027:
+    decision: in_scope
+    note: null
+  PGS004042:
+    decision: in_scope
+    note: null
+  PGS004055:
+    decision: in_scope
+    note: null
+  PGS004071:
+    decision: in_scope
+    note: null
+  PGS004085:
+    decision: in_scope
+    note: null
+  PGS004099:
+    decision: in_scope
+    note: null
+  PGS004109:
+    decision: in_scope
+    note: null
+  PGS004125:
+    decision: in_scope
+    note: null
+  PGS004139:
+    decision: in_scope
+    note: null
+  PGS004155:
+    decision: in_scope
+    note: null
+  PGS004251:
+    decision: in_scope
+    note: null
+  PGS004581:
+    decision: in_scope
+    note: null
+  PGS004599:
+    decision: in_scope
+    note: null
+  PGS004601:
+    decision: in_scope
+    note: null
+  PGS004694:
+    decision: in_scope
+    note: null
+  PGS004815:
+    decision: in_scope
+    note: null
+  PGS004816:
+    decision: in_scope
+    note: null
+  PGS004872:
+    decision: in_scope
+    note: null
+  PGS005167:
+    decision: in_scope
+    note: null
+  PGS005205:
+    decision: in_scope
+    note: null
+  PGS005237:
+    decision: in_scope
+    note: null
+  PGS005238:
+    decision: in_scope
+    note: null
+  PGS005239:
+    decision: in_scope
+    note: null
+  PGS005240:
+    decision: in_scope
+    note: null
+  PGS005241:
+    decision: in_scope
+    note: null
+summary: 'All 95 scores are prostate cancer risk scores; every pair correlates non-negatively in 1000G EUR (min
+  r -0.19) and all directional metrics are OR/HR > 1. Higher score = higher risk of prostate cancer for every score.
+  90 were annotated catalog-only (OR/HR CI excluding null or r>=0.2 with an annotated score); 5 were read: PHS1/PHS2
+  polygenic hazard scores (log-HR, higher = earlier diagnosis), PRState Eur/Trans (African-ancestry target), and
+  a Korean clinically significant (Gleason>=7) score placed under aggressive_prostate_cancer. PGS001292 is a UKB
+  family-history proxy. No sign flips or inverted deposits found.'

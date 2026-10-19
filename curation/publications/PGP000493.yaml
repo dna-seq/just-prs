@@ -61,6 +61,30 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR correlation r=+0.57 with already-annotated PGS003825. Evaluated on the estimated
       annual change of total cholesterol, not level.
+  PGS003856:
+    cluster: lipids.hdl_cholesterol
+    phenotype: hdl_cholesterol
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: HDL cholesterol level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: HDL cholesterol
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'reference HDL lead SNPs (HDL-raising allele sign expected positive): 2 agree, 0 disagree; rs1532085
+        G -0.113; rs1883025 T -0.108'
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.65 with catalog-annotated HDL score PGS004002 (PGP000517, beta CI excluding
+      the null). Catalog evaluation is 'Estimated annual change of HDL cholesterol'; the score itself predicts HDL-C
+      level.
 paper:
   pmid: '36988954'
   doi: 10.1001/jamanetworkopen.2023.5565

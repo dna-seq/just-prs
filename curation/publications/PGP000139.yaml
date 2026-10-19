@@ -1,0 +1,34 @@
+pgp_id: PGP000139
+scores:
+  PGS000733:
+    cluster: cancer.prostate_cancer
+    phenotype: prostate_cancer
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of prostate cancer (earlier age at diagnosis)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Prostate cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.36 with already-annotated PGS004109. Polygenic hazard score (log HR
+      weights); C-index on age at diagnosis carries no direction.
+paper:
+  pmid: '32930425'
+  doi: 10.1002/ijc.33282
+  title: African-specific improvement of a polygenic hazard score for age at diagnosis of prostate cancer.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

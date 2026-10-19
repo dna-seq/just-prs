@@ -33,8 +33,9 @@ def faq_panel() -> rx.Component:
             rx.text(
                 "This app helps you explore polygenic risk scores from the PGS Catalog "
                 "against a genome file. The main workflows are intentionally simple: "
-                "pick individual PRS models, or start from a trait and compute all "
-                "associated models together.",
+                "pick individual PRS models, start from a trait and compute the "
+                "associated models together, or open Curated to see what a higher "
+                "score means.",
                 size="3",
                 color="gray",
                 max_width="900px",
@@ -57,13 +58,20 @@ def faq_panel() -> rx.Component:
                 size="1",
             ),
             rx.callout(
+                "Use Curated to read what a higher score means, whether a person "
+                "has confirmed that reading, and the quote it came from.",
+                icon="badge-check",
+                color_scheme="orange",
+                size="1",
+            ),
+            rx.callout(
                 "The technical metadata and scoring-file browsers are developer tools, "
                 "so they are no longer shown in the main app.",
                 icon="wrench",
                 color_scheme="gray",
                 size="1",
             ),
-            columns={"initial": "1", "md": "3"},
+            columns={"initial": "1", "md": "2"},
             gap="3",
             width="100%",
         ),

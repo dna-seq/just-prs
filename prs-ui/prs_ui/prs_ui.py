@@ -10,6 +10,7 @@ from rich.markup import escape
 
 from prs_ui.grid_style import data_grid_scroll_css
 from prs_ui.pages.compute import by_prs_panel, by_trait_panel, shared_genotype_source
+from prs_ui.pages.curation import curation_panel
 from prs_ui.pages.faq import faq_panel
 from prs_ui.state import AppState, ComputeGridState, TraitBrowserState
 
@@ -100,7 +101,7 @@ def index() -> rx.Component:
                     rx.text(
                         "Compute and interpret polygenic risk scores from your genome "
                         "using PGS Catalog models. Upload a VCF once, then explore by "
-                        "specific PRS or by trait.",
+                        "specific PRS, by trait, or by curated direction.",
                         size="2",
                         color="gray",
                         max_width="760px",
@@ -145,6 +146,17 @@ def index() -> rx.Component:
                     ),
                     rx.tabs.trigger(
                         _tab_label(
+                            "badge-check",
+                            "Curated",
+                            "Browse scores whose direction was read from the paper: "
+                            "what a higher score means, review status, and the quote.",
+                        ),
+                        value="curated",
+                        padding="10px 20px",
+                        cursor="pointer",
+                    ),
+                    rx.tabs.trigger(
+                        _tab_label(
                             "circle-help",
                             "FAQ",
                             "Learn what PRS results mean, how to use the app, and what "
@@ -163,6 +175,10 @@ def index() -> rx.Component:
                 rx.tabs.content(
                     rx.box(by_prs_panel(), padding_top="12px"),
                     value="prs",
+                ),
+                rx.tabs.content(
+                    rx.box(curation_panel(), padding_top="12px"),
+                    value="curated",
                 ),
                 rx.tabs.content(
                     rx.box(faq_panel(), padding_top="12px"),

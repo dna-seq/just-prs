@@ -210,8 +210,11 @@ reader, then to human review.
 - **Trait summary** (`just_prs.trait_summary`, the single home for aggregation): a new grouping mode
   by cluster; percentiles are aligned to the cluster axis before the median, and each flipped model
   is labeled (e.g. "mortality score, shown as longevity").
-- **UI / reports / prompts**: "higher percentile means …" text on every row, green/red from the
-  cluster valence only (neutral traits stay uncolored), and an "unreviewed" marker on `agent_proposed` rows.
+- **UI browse tab**: the Curated tab compiles `curation/` and shows resolved scores, the review
+  queue, and clusters, with "higher score means …", an unreviewed / human-verified marker, and the
+  provenance quote. Computed By PRS / By Trait rows do not yet color from valence or flip percentiles.
+- **UI / reports / prompts** (still planned on scored rows): "higher percentile means …" text on every
+  result row, green/red from the cluster valence only (neutral traits stay uncolored).
 - **Retire the regex default**: `trait_contexts.high_percentile_means` is derived from the
   annotations, or left `null` when a score is not annotated, never hardcoded.
 

@@ -6,6 +6,7 @@ State hierarchy:
 - GenomicGridState(LazyFrameGridMixin, AppState): normalized VCF genomic data grid
 - ComputeGridState(PRSComputeStateMixin, LazyFrameGridMixin, AppState): standalone compute page
 - TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState): trait-based browser
+- CurationGridState(LazyFrameGridMixin, AppState): curated direction, review queue, clusters
 
 The reusable ``PRSComputeStateMixin`` lives in ``prs_ui.mixin`` so that
 consumer apps can import it without registering these demo-only states.
@@ -21,6 +22,7 @@ import reflex as rx
 from reflex_mui_datagrid import LazyFrameGridMixin
 from reflex_mui_datagrid.lazyframe_grid import _get_cache, apply_filter_model
 
+from just_prs.curation import CurationBuildError
 from just_prs.ftp import (
     download_metadata_sheet,
     stream_scoring_file,
@@ -34,6 +36,17 @@ from just_prs.viz import (
     SUPERPOP_LABELS,
 )
 
+from prs_ui.curation_browser import (
+    CURATION_STATUSES,
+    CURATION_VIEWS,
+    CurationBrowserData,
+    cluster_column_overrides,
+    compile_curation_browser,
+    find_curation_root,
+    prepare_cluster_display,
+    prepare_score_display,
+    score_column_overrides,
+)
 from prs_ui.mixin import (
     PRSComputeStateMixin,
     SHEET_LABELS,
@@ -93,8 +106,16 @@ class AppState(rx.State):
     def set_genome_build(self, value: str) -> None:
         self.genome_build = value
 
-    def set_active_tab(self, value: str) -> None:
+    async def set_active_tab(self, value: str) -> Any:
+        """Switch tabs, compiling curation YAML the first time Curated opens."""
         self.active_tab = value
+        if value != "curated":
+            return
+        curation = await self.get_state(CurationGridState)
+        if curation.curation_loaded or curation.curation_loading:
+            return
+        for event in curation.load_curation():
+            yield event
 
     def set_compute_mode(self, value: str | list[str]) -> None:
         """Switch the Compute PRS workbench between 'prs' and 'trait' selection."""
@@ -957,6 +978,164 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
 
         if self.prs_results:
             self.build_trait_summary()
+
+
+_CURATION_BROWSER: dict[str, CurationBrowserData] = {}
+
+
+class CurationGridState(LazyFrameGridMixin, AppState):
+    """Browse compiled curation: resolved scores, the review queue, and clusters.
+
+    The grid is filled from ``curation/`` via ``compile_curation_browser``. It does
+    not join those columns into By PRS or By Trait results. Selected PGS IDs can
+    be handed to ``ComputeGridState`` for scoring.
+    """
+
+    curation_view: str = "scores"
+    curation_status: str = "all"
+    curation_loaded: bool = False
+    curation_loading: bool = False
+    curation_error: str = ""
+    curation_message: str = ""
+    curation_selected_ids: list[str] = []
+    n_verified: int = 0
+    n_unreviewed: int = 0
+    n_review: int = 0
+
+    def load_curation(self) -> Any:
+        """Compile ``curation/`` and show the current view."""
+        if self.curation_loading:
+            return
+        self.curation_loading = True
+        self.curation_message = "Reading curation files..."
+        self.curation_error = ""
+        yield
+        root = find_curation_root(_workspace_root())
+        if root is None:
+            self.curation_loading = False
+            self.curation_error = (
+                "No curation directory found. Expected curation/clusters.yaml in the workspace."
+            )
+            self.curation_message = "Curation files were not found."
+            return
+        try:
+            data = compile_curation_browser(root)
+        except CurationBuildError as exc:
+            self.curation_loading = False
+            self.curation_error = str(exc)
+            self.curation_message = "Curation files did not compile."
+            return
+        _CURATION_BROWSER["data"] = data
+        self.n_verified = data.n_verified
+        self.n_unreviewed = data.n_unreviewed
+        self.n_review = data.n_review
+        self.curation_loaded = True
+        self.curation_message = f"Compiled from {data.source}"
+        yield from self._show_curation_view()
+        self.curation_loading = False
+
+    def set_curation_view(self, view: str) -> Any:
+        """Switch among resolved scores, the review queue, and clusters."""
+        if view not in CURATION_VIEWS or view == self.curation_view:
+            return
+        self.curation_view = view
+        yield from self._show_curation_view()
+
+    def set_curation_status(self, status: str) -> Any:
+        """Filter score rows by review status. Ignored on the cluster view."""
+        if status not in CURATION_STATUSES or status == self.curation_status:
+            return
+        self.curation_status = status
+        if self.curation_view == "clusters":
+            return
+        yield from self._show_curation_view()
+
+    def _show_curation_view(self) -> Any:
+        data = _CURATION_BROWSER.get("data")
+        if data is None:
+            return
+        if self.curation_view == "clusters":
+            frame = prepare_cluster_display(data.tables.clusters)
+            overrides = cluster_column_overrides()
+        else:
+            source = data.tables.annotations if self.curation_view == "scores" else data.tables.review
+            frame = prepare_score_display(source, self.curation_status)
+            overrides = score_column_overrides(self.curation_view)
+        yield from self.set_lazyframe(
+            frame.lazy(),
+            chunk_size=500,
+            eager_value_options_row_limit=5000,
+            column_overrides=overrides,
+        )
+        self._sync_curation_selection()
+
+    def _sync_curation_selection(self) -> None:
+        if self.curation_view == "clusters":
+            self.lf_grid_row_selection_model = {"type": "include", "ids": []}  # type: ignore[assignment]
+            return
+        self.lf_grid_row_selection_model = loaded_grid_selection_model(  # type: ignore[assignment]
+            self.lf_grid_rows, self.curation_selected_ids, "pgs_id"
+        )
+
+    def _filtered_curation_ids(self) -> list[str]:
+        cache_id = self._lf_grid_cache_id
+        if not cache_id:
+            return []
+        cache = _get_cache(cache_id)
+        schema = cache.schema
+        if cache.lf is None or schema is None or "pgs_id" not in schema.names():
+            return []
+        lf = cache.lf
+        if self._lf_grid_filter and self._lf_grid_filter.get("items"):
+            lf = apply_filter_model(lf, self._lf_grid_filter, schema)
+        return [str(pgs_id) for pgs_id in lf.select("pgs_id").collect()["pgs_id"].to_list()]
+
+    def handle_lf_grid_row_selection(self, model: dict) -> None:
+        """Keep ``curation_selected_ids`` across sort, filter, and scroll."""
+        if self.curation_view == "clusters":
+            return
+        if model.get("type", "include") == "exclude" and not model.get("ids", []):
+            loaded = self._filtered_curation_ids()
+            self.curation_selected_ids = list(dict.fromkeys([*self.curation_selected_ids, *loaded]))
+        else:
+            self.curation_selected_ids = merge_loaded_grid_selection(
+                self.lf_grid_rows, self.curation_selected_ids, model, "pgs_id"
+            )
+        self._sync_curation_selection()
+        self.curation_message = f"Selected {len(self.curation_selected_ids)} curated scores"
+
+    def handle_lf_grid_sort(self, sort_model: list) -> Any:
+        yield from LazyFrameGridMixin.handle_lf_grid_sort(self, sort_model)
+        self._sync_curation_selection()
+
+    def handle_lf_grid_filter(self, filter_model: dict) -> Any:
+        yield from LazyFrameGridMixin.handle_lf_grid_filter(self, filter_model)
+        self._sync_curation_selection()
+
+    def clear_lf_grid_filters(self) -> Any:
+        yield from LazyFrameGridMixin.clear_lf_grid_filters(self)
+        self._sync_curation_selection()
+
+    def handle_lf_grid_scroll_end(self, params: dict) -> Any:
+        yield from LazyFrameGridMixin.handle_lf_grid_scroll_end(self, params)
+        self._sync_curation_selection()
+
+    def clear_curation_selection(self) -> None:
+        self.curation_selected_ids = []
+        self._sync_curation_selection()
+        self.curation_message = ""
+
+    async def use_selected_in_prs(self) -> None:
+        """Copy the selected curated PGS IDs onto the By PRS tab."""
+        ids = [str(pgs_id) for pgs_id in self.curation_selected_ids]
+        if not ids or self.curation_view == "clusters":
+            self.curation_message = "Select curated scores first."
+            return
+        compute = await self.get_state(ComputeGridState)
+        compute.selected_pgs_ids = ids
+        compute._sync_loaded_grid_selection(ids)
+        self.active_tab = "prs"
+        self.status_message = f"Selected {len(ids)} curated score(s) on By PRS."
 
 
 # App wiring: register the consumer states fed by the VCF genotype source.

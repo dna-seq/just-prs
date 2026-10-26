@@ -1992,6 +1992,14 @@ domains:
             aliases:
             - low platelets in pregnancy
             - pregnancy thrombocytopenia
+          plateletcrit:
+            label: Plateletcrit (percentage of blood volume taken up by platelets, about platelet count
+              times mean platelet volume)
+            sign: 1
+            aliases:
+            - PCT
+            - platelet crit
+            - thrombocrit
       red_cell_count:
         label: Red blood cell count and hematocrit
         axis: more red blood cells (higher count and packed-cell volume)
@@ -2153,6 +2161,57 @@ domains:
             aliases:
             - monocyte percent
             - monocyte %
+      platelet_size:
+        label: Platelet size (mean platelet volume and platelet distribution width)
+        axis: larger, more size-varied platelets
+        valence: neutral
+        valence_basis: Mean platelet volume and the spread of platelet sizes vary within a normal range
+          in healthy people; neither end is better in itself. Genetically they run opposite to platelet
+          count, which is why they form their own concept.
+        status: agent_proposed
+        aliases:
+        - platelet volume
+        - MPV
+        - PDW
+        - large platelets
+        - small platelets
+        phenotypes:
+          mean_platelet_volume:
+            label: Mean platelet (thrombocyte) volume
+            sign: 1
+            aliases:
+            - mean platelet size
+            - MPV level
+          platelet_distribution_width:
+            label: Platelet distribution width (spread of platelet sizes)
+            sign: 1
+            aliases:
+            - platelet size variation
+            - PDW level
+      platelet_variability:
+        label: Person-level variability of platelet measures (variance polygenic scores)
+        axis: more variable platelet measures around the population mean
+        valence: neutral
+        valence_basis: These scores predict how far a person's value tends to lie from the average in
+          either direction, not whether it is higher or lower; that is neither good nor bad in itself.
+        status: agent_proposed
+        aliases:
+        - platelet variance score
+        - vPGS platelets
+        - platelet trait variance
+        phenotypes:
+          platelet_count_variability:
+            label: Variability of platelet count around the mean (vQTL-based vPGS)
+            sign: 1
+          mean_platelet_volume_variability:
+            label: Variability of mean platelet volume around the mean (vQTL-based vPGS)
+            sign: 1
+          plateletcrit_variability:
+            label: Variability of plateletcrit around the mean (vQTL-based vPGS)
+            sign: 1
+          platelet_distribution_width_variability:
+            label: Variability of platelet distribution width around the mean (vQTL-based vPGS)
+            sign: 1
   musculoskeletal:
     label: Bones, joints and muscles
     concepts:

@@ -1100,3 +1100,92 @@ scores:
     notes: Catalog-only annotation (paper not read), score cont-decay-neutrophil_perc. PGS Catalog weights are per-allele
       effects on the reported trait; corroborated by 1000G EUR r=+0.77 with already-annotated same-phenotype seed
       PGS000106 (PGP000051).
+  PGS003548:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet (thrombocyte) volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own plink2 GWAS of the phenotype (paper template), so the sign follows the
+      phenotype. 1000G EUR r=+0.87 with PGS001200; min r with other in-scope mean platelet volume scores +0.62.
+      Genetically anti-correlated with platelet count (r about -0.4 to -0.6), as expected biologically, hence a
+      separate concept.
+  PGS003549:
+    cluster: blood.platelet_size
+    phenotype: platelet_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet distribution width
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own plink2 GWAS of the phenotype (paper template), so the sign follows the
+      phenotype. 1000G EUR r=+0.87 with PGS001079; min r with other in-scope platelet distribution width scores
+      +0.57. Genetically anti-correlated with platelet count (r about -0.4 to -0.6), as expected biologically, hence
+      a separate concept.
+  PGS003547:
+    cluster: blood.platelet_count
+    phenotype: plateletcrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: plateletcrit (share of blood volume taken up by platelets)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet crit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own plink2 GWAS of the phenotype (paper template), so the sign follows the
+      phenotype. 1000G EUR r=+0.79 with PGS001517; min r with other in-scope plateletcrit (share of blood volume
+      taken up by platelets) scores +0.58.

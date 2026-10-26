@@ -3650,6 +3650,154 @@ scores:
     notes: Catalog-only annotation (paper not read), score portability-ldpred2_neutrophil_perc. PGS Catalog weights
       are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.76 with already-annotated same-phenotype
       seed PGS000106 (PGP000051).
+  PGS001971:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet (thrombocyte) volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.89 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.62. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002189:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet (thrombocyte) volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.61. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS001972:
+    cluster: blood.platelet_size
+    phenotype: platelet_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet distribution width
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS001079 (read), same phenotype; min r with other in-scope
+      platelet distribution width scores +0.58. Genetically anti-correlated with platelet count (r about -0.4 to
+      -0.6), as expected biologically, hence a separate concept.
+  PGS002190:
+    cluster: blood.platelet_size
+    phenotype: platelet_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet distribution width
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.86 with PGS001079 (read), same phenotype; min r with other in-scope
+      platelet distribution width scores +0.57. Genetically anti-correlated with platelet count (r about -0.4 to
+      -0.6), as expected biologically, hence a separate concept.
+  PGS001970:
+    cluster: blood.platelet_count
+    phenotype: plateletcrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: plateletcrit (share of blood volume taken up by platelets)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet crit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.80 with PGS001517 (read), same phenotype; min r with other in-scope
+      plateletcrit (share of blood volume taken up by platelets) scores +0.57.
+  PGS002188:
+    cluster: blood.platelet_count
+    phenotype: plateletcrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: plateletcrit (share of blood volume taken up by platelets)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet crit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.78 with PGS001517 (read), same phenotype; min r with other in-scope
+      plateletcrit (share of blood volume taken up by platelets) scores +0.58.
 template:
   rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
     PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged

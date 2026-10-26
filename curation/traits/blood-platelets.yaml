@@ -1,0 +1,212 @@
+slug: blood-platelets
+query: platelet traits
+match:
+  terms:
+  - mean platelet volume
+  - platelet count
+  - platelet crit
+  - platelet distribution width
+  - plateletcrit
+  efo_ids:
+  - EFO_0004309
+  - EFO_0007984
+  - EFO_0007985
+  - OBA_0003277
+  exclude: []
+anchor: PGS000104
+status: resolved
+concepts:
+- blood.platelet_count
+- blood.platelet_size
+- blood.platelet_variability
+scores:
+  PGS000104:
+    decision: in_scope
+    note: null
+  PGS000107:
+    decision: in_scope
+    note: null
+  PGS000108:
+    decision: in_scope
+    note: null
+  PGS000109:
+    decision: in_scope
+    note: null
+  PGS000179:
+    decision: in_scope
+    note: null
+  PGS000184:
+    decision: in_scope
+    note: null
+  PGS000185:
+    decision: in_scope
+    note: null
+  PGS000186:
+    decision: in_scope
+    note: null
+  PGS001079:
+    decision: in_scope
+    note: null
+  PGS001200:
+    decision: in_scope
+    note: null
+  PGS001238:
+    decision: in_scope
+    note: null
+  PGS001517:
+    decision: in_scope
+    note: null
+  PGS001970:
+    decision: in_scope
+    note: null
+  PGS001971:
+    decision: in_scope
+    note: null
+  PGS001972:
+    decision: in_scope
+    note: null
+  PGS001973:
+    decision: in_scope
+    note: null
+  PGS002188:
+    decision: in_scope
+    note: null
+  PGS002189:
+    decision: in_scope
+    note: null
+  PGS002190:
+    decision: in_scope
+    note: null
+  PGS002191:
+    decision: in_scope
+    note: null
+  PGS002340:
+    decision: in_scope
+    note: null
+  PGS002343:
+    decision: in_scope
+    note: null
+  PGS002373:
+    decision: in_scope
+    note: null
+  PGS002412:
+    decision: in_scope
+    note: null
+  PGS002415:
+    decision: in_scope
+    note: null
+  PGS002461:
+    decision: in_scope
+    note: null
+  PGS002464:
+    decision: in_scope
+    note: null
+  PGS002510:
+    decision: in_scope
+    note: null
+  PGS002513:
+    decision: in_scope
+    note: null
+  PGS002559:
+    decision: in_scope
+    note: null
+  PGS002562:
+    decision: in_scope
+    note: null
+  PGS002608:
+    decision: in_scope
+    note: null
+  PGS002611:
+    decision: in_scope
+    note: null
+  PGS002657:
+    decision: in_scope
+    note: null
+  PGS002660:
+    decision: in_scope
+    note: null
+  PGS002706:
+    decision: in_scope
+    note: null
+  PGS002709:
+    decision: in_scope
+    note: null
+  PGS003546:
+    decision: in_scope
+    note: null
+  PGS003547:
+    decision: in_scope
+    note: null
+  PGS003548:
+    decision: in_scope
+    note: null
+  PGS003549:
+    decision: in_scope
+    note: null
+  PGS003932:
+    decision: in_scope
+    note: null
+  PGS003933:
+    decision: in_scope
+    note: null
+  PGS003934:
+    decision: in_scope
+    note: null
+  PGS003935:
+    decision: in_scope
+    note: null
+  PGS004352:
+    decision: in_scope
+    note: null
+  PGS004353:
+    decision: in_scope
+    note: null
+  PGS004354:
+    decision: in_scope
+    note: null
+  PGS004355:
+    decision: in_scope
+    note: null
+  PGS004582:
+    decision: in_scope
+    note: platelet count in pregnancy trimesters; already curated under blood.platelet_count, reused
+  PGS004583:
+    decision: in_scope
+    note: platelet count in pregnancy trimesters; already curated under blood.platelet_count, reused
+  PGS004584:
+    decision: in_scope
+    note: platelet count in pregnancy trimesters; already curated under blood.platelet_count, reused
+  PGS004811:
+    decision: in_scope
+    note: null
+  PGS004812:
+    decision: in_scope
+    note: null
+  PGS004813:
+    decision: in_scope
+    note: null
+  PGS004814:
+    decision: in_scope
+    note: null
+  PGS005173:
+    decision: in_scope
+    note: null
+  PGS005188:
+    decision: in_scope
+    note: null
+  PGS005193:
+    decision: in_scope
+    note: null
+  PGS005194:
+    decision: in_scope
+    note: null
+  PGS005251:
+    decision: out_of_scope
+    note: INFLA-score composite inflammation index; belongs to immune.c_reactive_protein (already curated)
+summary: '60 platelet scores sorted into three blood concepts. Platelet count (24 scores, reused) now
+  also holds plateletcrit (8), which correlates +0.4 to +0.75 with count scores. Mean platelet volume
+  (16) and platelet distribution width (8) form a new platelet_size concept, because genetically they
+  run opposite to count (r about -0.4 to -0.6). This matches the known biology and is not a sign flip.
+  Four Xiang 2025 variance scores (vPGS) form platelet_variability: a higher score means a more variable
+  value, not a higher one. Direction for level scores comes from the paper methods (PGP000051, 078, 244,
+  457) or catalog-only with r >= +0.5 to the read anchor. No aligned-correlation conflicts.'

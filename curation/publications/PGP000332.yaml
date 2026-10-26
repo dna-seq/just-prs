@@ -5954,6 +5954,206 @@ scores:
     notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.SBayesR. PGS Catalog weights are per-allele
       effects on the reported trait; corroborated by 1000G EUR r=+0.75 with already-annotated same-phenotype seed
       PGS000113 (PGP000051).
+  PGS002340:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.89 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.63. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002412:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.78 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.62. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002461:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.63. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002510:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.69 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.59. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002559:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.60. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002608:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.59. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002657:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.53. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002706:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.88 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.63. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
 paper:
   pmid: '35393596'
   doi: 10.1038/s41588-022-01036-9

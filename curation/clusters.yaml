@@ -327,6 +327,258 @@ domains:
           instant_coffee:
             label: Usually drinks instant coffee (UKB 1508 answer 2 vs other answers)
             sign: -1
+      meat_intake:
+        label: Meat intake
+        axis: eats meat more often
+        valence: context_dependent
+        valence_basis: Meat is a normal protein source, but frequent red and processed meat is linked
+          to colorectal cancer and heart disease; the score measures a habit, not harm.
+        status: agent_proposed
+        aliases:
+        - red meat consumption
+        - how often I eat meat
+        - meat eater
+        - vegetarian tendency
+        phenotypes:
+          beef_intake:
+            label: Beef intake frequency (UKB 1369, never ... once or more daily)
+            sign: 1
+          poultry_intake:
+            label: Poultry intake frequency (UKB 1359, never ... once or more daily)
+            sign: 1
+          processed_meat_intake:
+            label: Processed meat intake frequency (UKB 1349, never ... once or more daily)
+            sign: 1
+      fish_intake:
+        label: Fish intake
+        axis: eats oily fish more often
+        valence: neutral
+        valence_basis: A dietary habit; the score predicts reported intake, not omega-3 status or health.
+        status: agent_proposed
+        aliases:
+        - oily fish consumption
+        - salmon and mackerel
+        - fish eater
+        - seafood intake
+        phenotypes:
+          oily_fish_intake:
+            label: Oily fish intake frequency (UKB 1329, never ... once or more daily)
+            sign: 1
+      fruit_vegetable_intake:
+        label: Fruit and vegetable intake
+        axis: eats more fruit and vegetables
+        valence: neutral
+        valence_basis: A reported eating habit; the paper does not link the score to a health outcome.
+        status: agent_proposed
+        aliases:
+        - fruit consumption
+        - vegetable consumption
+        - five a day
+        - plant food intake
+        phenotypes:
+          fresh_fruit_intake:
+            label: Pieces of fresh fruit per day (UKB 1309)
+            sign: 1
+          dried_fruit_intake:
+            label: Pieces of dried fruit per day (UKB 1319)
+            sign: 1
+          cooked_vegetable_intake:
+            label: Tablespoons of cooked vegetables per day (UKB 1289)
+            sign: 1
+      dairy_intake:
+        label: Cheese and dairy intake
+        axis: eats cheese more often
+        valence: neutral
+        valence_basis: A dietary habit with no clear health ranking.
+        status: agent_proposed
+        aliases:
+        - cheese consumption
+        - dairy consumption
+        - how often I eat cheese
+        phenotypes:
+          cheese_intake:
+            label: Cheese intake frequency (UKB 1408, never ... once or more daily)
+            sign: 1
+      milk_type:
+        label: Type of milk used
+        axis: uses skimmed milk
+        valence: neutral
+        valence_basis: Milk type is a taste and habit choice.
+        status: agent_proposed
+        aliases:
+        - skimmed milk
+        - low fat milk
+        - milk preference
+        phenotypes:
+          skimmed_milk:
+            label: Usually uses skimmed milk (UKB 1418 answer 3 vs any other answer)
+            sign: 1
+      carbohydrate_intake:
+        label: Bread, cereal and carbohydrate intake
+        axis: eats more carbohydrate-rich food
+        valence: neutral
+        valence_basis: Carbohydrate intake is a dietary pattern; neither more nor less is good for everyone.
+        status: agent_proposed
+        aliases:
+        - carbs
+        - starchy food
+        - bread consumption
+        - breakfast cereal
+        - carbohydrate preference
+        phenotypes:
+          bread_intake:
+            label: Slices of bread per week (UKB 1438)
+            sign: 1
+          cereal_intake:
+            label: Bowls of breakfast cereal per week (UKB 1458)
+            sign: 1
+          relative_carbohydrate_intake:
+            label: Relative carbohydrate intake (share of energy from carbohydrate; Merino 2022 GWAS loci)
+            sign: 1
+      cereal_type:
+        label: Type of breakfast cereal
+        axis: prefers biscuit-type cereal (e.g. Weetabix) over cornflake-type cereal
+        valence: neutral
+        valence_basis: A taste preference among cereal eaters.
+        status: agent_proposed
+        aliases:
+        - Weetabix
+        - cornflakes
+        - cereal preference
+        phenotypes:
+          biscuit_cereal:
+            label: Usually eats biscuit cereal such as Weetabix (UKB 1468 answer 2 vs other cereal types)
+            sign: 1
+          other_cereal:
+            label: Usually eats other cereal such as Cornflakes or Frosties (UKB 1468 answer 5 vs other
+              cereal types)
+            sign: -1
+      salt_added:
+        label: Salt added to food
+        axis: adds salt to food more often
+        valence: context_dependent
+        valence_basis: High salt intake raises blood pressure in many people, but the score measures a
+          table habit, not total salt intake.
+        status: agent_proposed
+        aliases:
+        - salting food
+        - salt use
+        - salty food
+        phenotypes:
+          salt_added_to_food:
+            label: Adds salt to food (UKB 1478, never/rarely ... always)
+            sign: 1
+      tea_consumption:
+        label: Tea consumption
+        axis: drinks more tea
+        valence: neutral
+        valence_basis: Habitual tea drinking is a beverage preference without a clear health ranking.
+        status: agent_proposed
+        aliases:
+        - tea intake
+        - cups of tea per day
+        - tea drinker
+        phenotypes:
+          tea_intake:
+            label: Cups of tea per day (UKB 1488)
+            sign: 1
+      water_intake:
+        label: Water intake
+        axis: drinks more water
+        valence: neutral
+        valence_basis: Water intake depends on thirst, climate and other drinks; more is not better for
+          everyone.
+        status: agent_proposed
+        aliases:
+        - glasses of water per day
+        - hydration
+        - drinking water
+        - thirst
+        phenotypes:
+          water_intake:
+            label: Glasses of water per day (UKB 1528)
+            sign: 1
+      food_avoidance:
+        label: Never eating a food group
+        axis: avoids a food group entirely
+        valence: context_dependent
+        valence_basis: Avoiding wheat or sugar is often a response to coeliac disease or diabetes, but
+          it can also be a choice.
+        status: agent_proposed
+        aliases:
+        - sugar free diet
+        - gluten free diet
+        - never eat wheat
+        - never eat sugar
+        phenotypes:
+          never_eat_sugar:
+            label: Never eats sugar or foods/drinks containing sugar (UKB 6144 answer 4)
+            sign: 1
+          never_eat_wheat:
+            label: Never eats wheat products (UKB 6144 answer 3)
+            sign: 1
+      supplement_use:
+        label: Dietary supplement use
+        axis: takes the supplement
+        valence: neutral
+        valence_basis: Supplement use reflects habits and health concerns, not a health outcome.
+        status: agent_proposed
+        aliases:
+        - vitamins
+        - supplements
+        - glucosamine
+        - folic acid
+        phenotypes:
+          glucosamine_use:
+            label: Takes glucosamine (UKB 6179 answer 2)
+            sign: 1
+          folic_acid_supplement_use:
+            label: Takes folic acid / vitamin B9 supplement (UKB 6155 answer 6)
+            sign: 1
+      diet_variation:
+        label: Variation in diet
+        axis: diet varies more from week to week
+        valence: neutral
+        valence_basis: A description of eating routine, not of diet quality.
+        status: agent_proposed
+        aliases:
+        - varied diet
+        - eating routine
+        - same food every week
+        phenotypes:
+          variation_in_diet:
+            label: Diet varies week to week (UKB 1548, 1 never/rarely, 2 sometimes, 3 often)
+            sign: 1
+      portion_size:
+        label: Portion size
+        axis: eats larger portions
+        valence: neutral
+        valence_basis: Self-rated portion size relative to others; context (body size, activity) decides
+          whether it matters.
+        status: agent_proposed
+        aliases:
+        - big eater
+        - meal size
+        - how much I eat
+        phenotypes:
+          portion_size:
+            label: Self-rated portion size in 24-hour recall (UKB 100010, smaller / average / larger)
+            sign: 1
+      dietary_change:
+        label: Diet changed because of illness
+        axis: changed diet because of illness
+        valence: context_dependent
+        valence_basis: Reflects having had an illness that needed a diet change (for example diabetes);
+          the change itself may be beneficial.
+        status: agent_proposed
+        aliases:
+        - diet change for health reasons
+        - medical diet
+        - changed eating habits
+        phenotypes:
+          dietary_change_due_to_illness:
+            label: Major dietary change in the last 5 years because of illness (UKB 1538 answer 1)
+            sign: 1
   substance_use:
     label: Substance use
     concepts:

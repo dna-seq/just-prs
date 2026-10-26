@@ -12847,3 +12847,768 @@ scores:
       note: catalog-only template annotation
     status: agent_proposed
     notes: 'Catalog-only: UKB brain MRI IDP, snpnet Gaussian template (higher score = higher value of the measurement).'
+  PGS000978:
+    cluster: lifestyle.carbohydrate_intake
+    phenotype: bread_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: slices of bread eaten per week
+      coding: 'UKB 1438: integer slices/week; -10 less than one, -1 do not know, -3 prefer not to answer (GBE handling
+        of -10 not stated); median of non-NA visits'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1438 (ukb_field_1438.html)
+      quote: Units of measurement are slices/week.
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on GBE INI1438. Higher PGS000978 = more bread.
+  PGS000994:
+    cluster: lifestyle.tea_consumption
+    phenotype: tea_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: cups of tea drunk per day
+      coding: 'UKB 1488: integer cups/day; -10 less than one, -1 do not know, -3 prefer not to answer (GBE handling
+        of -10 not stated); median of non-NA visits'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1488 (ukb_field_1488.html)
+      quote: Units of measurement are cups/day.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs2472297-T (CYP1A1/CYP1A2; lower caffeine levels, higher coffee liking) +0.13 and rs4410790-C (AHR;
+        higher weekly coffee intake) +0.10, the canonical caffeine-intake alleles, carry the two largest weights
+    status: agent_proposed
+    notes: snpnet Gaussian regression on GBE INI1488. Higher PGS000994 = more tea. 1000G EUR r=+0.40 with PGS001123
+      and +0.31 with PGS001126 (coffee), -0.24 with PGS001069 (water).
+  PGS001057:
+    cluster: lifestyle.carbohydrate_intake
+    phenotype: cereal_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: bowls of breakfast cereal eaten per week
+      coding: 'UKB 1458: integer bowls/week; -10 less than one, -1 do not know, -3 prefer not to answer (GBE handling
+        of -10 not stated); median of non-NA visits'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1458 (ukb_field_1458.html)
+      quote: Cereal intake
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on GBE INI1458 (units bowls/week per the showcase). Higher PGS001057 = more
+      cereal.
+  PGS001061:
+    cluster: lifestyle.fruit_vegetable_intake
+    phenotype: cooked_vegetable_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: tablespoons of cooked vegetables eaten per day
+      coding: 'UKB 1289: integer tablespoons/day; -10 less than one, -1 do not know, -3 prefer not to answer (GBE
+        handling of -10 not stated); median of non-NA visits'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1289 (ukb_field_1289.html)
+      quote: Cooked vegetable intake
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on GBE INI1289. Higher PGS001061 = more cooked vegetables.
+  PGS001062:
+    cluster: lifestyle.fruit_vegetable_intake
+    phenotype: fresh_fruit_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: pieces of fresh fruit eaten per day
+      coding: 'UKB 1309: integer pieces/day; -10 less than one, -1 do not know, -3 prefer not to answer (GBE handling
+        of -10 not stated); median of non-NA visits'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1309 (ukb_field_1309.html)
+      quote: Fresh fruit intake
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on GBE INI1309. Higher PGS001062 = more fresh fruit.
+  PGS001389:
+    cluster: lifestyle.fruit_vegetable_intake
+    phenotype: dried_fruit_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: pieces of dried fruit eaten per day
+      coding: 'UKB 1319: integer pieces/day; -10 less than one, -1 do not know, -3 prefer not to answer (GBE handling
+        of -10 not stated); median of non-NA visits'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1319 (ukb_field_1319.html)
+      quote: Dried fruit intake
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on GBE INI1319. Higher PGS001389 = more dried fruit.
+  PGS001069:
+    cluster: lifestyle.water_intake
+    phenotype: water_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: glasses of water drunk per day
+      coding: 'UKB 1528: integer glasses/day; -10 less than one, -1 do not know, -3 prefer not to answer (GBE handling
+        of -10 not stated); median of non-NA visits'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1528 (ukb_field_1528.html)
+      quote: Water intake
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs2472297-T (caffeine/coffee-raising allele) carries the largest weight, negative (-0.069), as in the
+        Privé water scores PGS002011/PGS002230 (coffee and water intake trade off)
+    status: agent_proposed
+    notes: snpnet Gaussian regression on GBE INI1528. Higher PGS001069 = more water. 1000G EUR r=+0.51 with PGS002011
+      and PGS002230 (Privé, raw field 1528).
+  PGS001068:
+    cluster: lifestyle.diet_variation
+    phenotype: variation_in_diet
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: how often the diet varies from week to week
+      coding: 'UKB 1548 (coding 100401): 1 never/rarely, 2 sometimes, 3 often; -1/-3 missing. GBE INI1548 uses the
+        raw code as a number'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1548 (ukb_field_1548.html)
+      quote: Variation in diet
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100401 (ukb_coding_100401.html)
+      quote: 1 Never/rarely 2 Sometimes 3 Often
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: The raw codes already run toward more variation; how GBE treated -1/-3 is not stated. Higher PGS001068
+      = more week-to-week variation in diet.
+  PGS001518:
+    cluster: lifestyle.portion_size
+    phenotype: portion_size
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: self-rated portion size compared with others (24-hour recall)
+      coding: 'UKB 100010 (coding 100014): 5 smaller, 10 average, 15 larger. GBE INI100010 uses the raw code as
+        a number'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 100010 (ukb_field_100010.html)
+      quote: Portion size
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100014 (ukb_coding_100014.html)
+      quote: 5 Smaller 10 Average 15 Larger
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Online 24-hour diet recall subset (~210k). Higher PGS001518 = larger portions.
+  PGS000993:
+    cluster: lifestyle.fish_intake
+    phenotype: oily_fish_intake
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: how often oily fish is eaten
+      coding: 'UKB 1329 (coding 100377): 0 never, 1 less than once a week, 2 once a week, 3 2-4 times a week, 4
+        5-6 times a week, 5 once or more daily; -1/-3 missing. GBE QT_FC version; raw order assumed kept'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1329 (ukb_field_1329.html)
+      quote: Oily fish intake
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100377 (ukb_coding_100377.html)
+      quote: Once or more daily
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: GBE QT_FC recoding of the categorical field is undocumented; direction assumes the raw UKB order
+      (higher = more often) is kept
+    status: agent_proposed
+    notes: Higher PGS000993 = oily fish more often (if the GBE recoding keeps the raw order).
+  PGS001056:
+    cluster: lifestyle.meat_intake
+    phenotype: beef_intake
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: how often beef is eaten
+      coding: 'UKB 1369 (coding 100377): 0 never, 1 less than once a week, 2 once a week, 3 2-4 times a week, 4
+        5-6 times a week, 5 once or more daily; -1/-3 missing. GBE QT_FC version; raw order assumed kept'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1369 (ukb_field_1369.html)
+      quote: Beef intake
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100377 (ukb_coding_100377.html)
+      quote: Once or more daily
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: GBE QT_FC recoding of the categorical field is undocumented; direction assumes the raw UKB order
+      (higher = more often) is kept
+    status: agent_proposed
+    notes: Higher PGS001056 = beef more often (if the GBE recoding keeps the raw order).
+  PGS001060:
+    cluster: lifestyle.dairy_intake
+    phenotype: cheese_intake
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: how often cheese is eaten
+      coding: 'UKB 1408 (coding 100377): 0 never, 1 less than once a week, 2 once a week, 3 2-4 times a week, 4
+        5-6 times a week, 5 once or more daily; -1/-3 missing. GBE QT_FC version; raw order assumed kept'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1408 (ukb_field_1408.html)
+      quote: Cheese intake
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100377 (ukb_coding_100377.html)
+      quote: Once or more daily
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: GBE QT_FC recoding of the categorical field is undocumented; direction assumes the raw UKB order
+      (higher = more often) is kept
+    status: agent_proposed
+    notes: Higher PGS001060 = cheese more often (if the GBE recoding keeps the raw order). rs13107325 (weight -0.012)
+      has no diet hit in the GWAS Catalog.
+  PGS001066:
+    cluster: lifestyle.meat_intake
+    phenotype: poultry_intake
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: how often poultry is eaten
+      coding: 'UKB 1359 (coding 100377): 0 never, 1 less than once a week, 2 once a week, 3 2-4 times a week, 4
+        5-6 times a week, 5 once or more daily; -1/-3 missing. GBE QT_FC version; raw order assumed kept'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1359 (ukb_field_1359.html)
+      quote: Poultry intake
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100377 (ukb_coding_100377.html)
+      quote: Once or more daily
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: GBE QT_FC recoding of the categorical field is undocumented; direction assumes the raw UKB order
+      (higher = more often) is kept
+    status: agent_proposed
+    notes: Higher PGS001066 = poultry more often (if the GBE recoding keeps the raw order). rs16969968 (CHRNA5,
+      weight -0.006) has only smoking hits.
+  PGS001067:
+    cluster: lifestyle.meat_intake
+    phenotype: processed_meat_intake
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: how often processed meat is eaten
+      coding: 'UKB 1349 (coding 100377): 0 never, 1 less than once a week, 2 once a week, 3 2-4 times a week, 4
+        5-6 times a week, 5 once or more daily; -1/-3 missing. GBE QT_FC version; raw order assumed kept'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1349 (ukb_field_1349.html)
+      quote: Processed meat intake
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100377 (ukb_coding_100377.html)
+      quote: Once or more daily
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: GBE QT_FC recoding of the categorical field is undocumented; direction assumes the raw UKB order
+      (higher = more often) is kept
+    status: agent_proposed
+    notes: Higher PGS001067 = processed meat more often (if the GBE recoding keeps the raw order).
+  PGS001034:
+    cluster: lifestyle.salt_added
+    phenotype: salt_added_to_food
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: how often salt is added to food
+      coding: 'UKB 1478 (coding 100394): 1 never/rarely, 2 sometimes, 3 usually, 4 always; -3 missing. GBE QT_FC
+        version; raw order assumed kept'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1478 (ukb_field_1478.html)
+      quote: Salt added to food
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100394 (ukb_coding_100394.html)
+      quote: 1 Never/rarely 2 Sometimes 3 Usually 4 Always
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: GBE QT_FC recoding of the categorical field is undocumented; direction assumes the raw UKB order
+      (higher = more often) is kept
+    status: agent_proposed
+    notes: Higher PGS001034 = adds salt more often (if the GBE recoding keeps the raw order).
+  PGS000991:
+    cluster: lifestyle.food_avoidance
+    phenotype: never_eat_sugar
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of never eating sugar or foods/drinks containing sugar
+      coding: 'UKB 6144 (coding 100385): multiple choice; case = answer 4 "Sugar or foods/drinks containing sugar"
+        (GBE BIN_FC4006144)'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 6144 (ukb_field_6144.html)
+      quote: Never eat eggs, dairy, wheat, sugar
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100385 (ukb_coding_100385.html)
+      quote: Sugar or foods/drinks containing sugar
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: TCF7L2 rs7903146-T (type 2 diabetes risk allele; C lowers T2D PheCodes in the GWAS Catalog) carries
+        a positive weight (+0.022), as expected if people with diabetes avoid sugar
+    status: agent_proposed
+    notes: 'One-hot binary trait; the answer-to-FC mapping is inferred from the PGS Catalog label matching the UKB
+      coding (same pattern as the coffee-type and tanning scores), the paper does not describe FC encoding. Catalog
+      evaluation: 13,687 cases vs 53,584 controls, AUROC 0.61. Higher PGS000991 = more likely to avoid sugar.'
+  PGS001065:
+    cluster: lifestyle.food_avoidance
+    phenotype: never_eat_wheat
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of never eating wheat products
+      coding: 'UKB 6144 (coding 100385): multiple choice; case = answer 3 "Wheat products" (GBE BIN_FC3006144)'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 6144 (ukb_field_6144.html)
+      quote: Never eat eggs, dairy, wheat, sugar
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100385 (ukb_coding_100385.html)
+      quote: Wheat products
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: five variants, all in the MHC; HLA-DQ rs9273529-T (+0.069) and an unnamed HLA allele (+0.17) carry the
+        largest weights, consistent with coeliac disease driving wheat avoidance; not checked against the GWAS Catalog
+    status: agent_proposed
+    notes: 'One-hot binary trait; the answer-to-FC mapping is inferred from the PGS Catalog label matching the UKB
+      coding (same pattern as the coffee-type and tanning scores), the paper does not describe FC encoding. Catalog
+      evaluation: 1,955 cases vs 65,316 controls, AUROC 0.58. Higher PGS001065 = more likely to avoid wheat. 1000G
+      EUR r=-0.34 with PGS001045 (another 5-variant MHC score).'
+  PGS001044:
+    cluster: lifestyle.supplement_use
+    phenotype: glucosamine_use
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of taking glucosamine
+      coding: 'UKB 6179 (coding 100630): multiple choice; case = answer 2 "Glucosamine" (GBE BIN_FC2006179); -7
+        none of the above'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 6179 (ukb_field_6179.html)
+      quote: Categorical (multiple)
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100630 (ukb_coding_100630.html)
+      quote: Glucosamine
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'One-hot binary trait; the answer-to-FC mapping is inferred from the PGS Catalog label matching the UKB
+      coding (same pattern as the coffee-type and tanning scores), the paper does not describe FC encoding. Catalog
+      evaluation: 13,703 cases vs 53,614 controls, AUROC 0.62. Higher PGS001044 = more likely to take glucosamine.'
+  PGS001045:
+    cluster: lifestyle.supplement_use
+    phenotype: folic_acid_supplement_use
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of taking a folic acid (vitamin B9) supplement
+      coding: 'UKB 6155 (coding 100629): multiple choice; case = answer 6 "Folic acid or Folate (Vit B9)" (GBE BIN_FC6006155);
+        -7 none of the above'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 6155 (ukb_field_6155.html)
+      quote: Categorical (multiple)
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100629 (ukb_coding_100629.html)
+      quote: Folic acid or Folate (Vit B9)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'One-hot binary trait; the answer-to-FC mapping is inferred from the PGS Catalog label matching the UKB
+      coding (same pattern as the coffee-type and tanning scores), the paper does not describe FC encoding. Catalog
+      evaluation "Vitamin B9 vs no supplement": 1,485 cases vs 47,177 controls, AUROC 0.59. Only 5 variants (MHC
+      region). Higher PGS001045 = more likely to take folic acid.'
+  PGS001058:
+    cluster: lifestyle.cereal_type
+    phenotype: biscuit_cereal
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of usually eating biscuit cereal (e.g. Weetabix) rather than another cereal type
+      coding: 'UKB 1468 (coding 100393): 1 bran, 2 biscuit, 3 oat, 4 muesli, 5 other (e.g. Cornflakes, Frosties);
+        -1/-3 missing; asked of cereal eaters. Case = answer 2 (GBE BIN_FC20001468)'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1468 (ukb_field_1468.html)
+      quote: Cereal type
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100393 (ukb_coding_100393.html)
+      quote: Biscuit cereal (e.g. Weetabix)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'One-hot binary trait; the answer-to-FC mapping is inferred from the PGS Catalog label matching the UKB
+      coding (same pattern as the coffee-type and tanning scores), the paper does not describe FC encoding. Catalog
+      evaluation: 10,762 cases vs 46,079 controls. Higher PGS001058 = more likely a biscuit-cereal eater.'
+  PGS001059:
+    cluster: lifestyle.cereal_type
+    phenotype: other_cereal
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of usually eating other cereal (e.g. Cornflakes, Frosties) rather than bran, biscuit, oat
+        or muesli
+      coding: 'UKB 1468 (coding 100393): 1 bran, 2 biscuit, 3 oat, 4 muesli, 5 other (e.g. Cornflakes, Frosties);
+        -1/-3 missing; asked of cereal eaters. Case = answer 5 (GBE BIN_FC50001468)'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1468 (ukb_field_1468.html)
+      quote: Cereal type
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100393 (ukb_coding_100393.html)
+      quote: Other (e.g. Cornflakes, Frosties)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'One-hot binary trait; the answer-to-FC mapping is inferred from the PGS Catalog label matching the UKB
+      coding (same pattern as the coffee-type and tanning scores), the paper does not describe FC encoding. Catalog
+      evaluation: 11,307 cases vs 45,534 controls. Higher PGS001059 = more likely a cornflake-type cereal eater,
+      the low end of the cereal_type axis.'
+  PGS001064:
+    cluster: lifestyle.milk_type
+    phenotype: skimmed_milk
+    measurement_kind: onehot_category
+    score_effect:
+      direction: increases
+      target: likelihood of usually using skimmed milk rather than another milk type (or none)
+      coding: 'UKB 1418 (coding 100387): 1 full cream, 2 semi-skimmed, 3 skimmed, 4 soya, 5 other, 6 never/rarely
+        have milk; -1/-3 missing. Case = answer 3 (GBE BIN_FC30001418)'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1418 (ukb_field_1418.html)
+      quote: Milk type used
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100387 (ukb_coding_100387.html)
+      quote: 2 Semi-skimmed 3 Skimmed
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: FTO rs1421085-C (higher BMI) carries the largest weight (+0.024), plausible for people choosing low-fat
+        milk; not checked against the GWAS Catalog
+    status: agent_proposed
+    notes: 'One-hot binary trait; the answer-to-FC mapping is inferred from the PGS Catalog label matching the UKB
+      coding (same pattern as the coffee-type and tanning scores), the paper does not describe FC encoding. Catalog
+      evaluation: 14,461 cases vs 52,925 controls. Higher PGS001064 = more likely to use skimmed milk.'
+  PGS001063:
+    cluster: lifestyle.dietary_change
+    phenotype: dietary_change_due_to_illness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a major dietary change in the last 5 years because of illness
+      coding: 'UKB 1538 (coding 100400): 0 no, 1 yes because of illness, 2 yes because of other reasons; -3 missing.
+        Case = answer 1 (GBE BIN_FC10001538)'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions in the UK Biobank
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: supplement
+      locator: UKB showcase field 1538 (ukb_field_1538.html)
+      quote: Major dietary changes in the last 5 years
+      confidence: high
+    - source: supplement
+      locator: UKB coding 100400 (ukb_coding_100400.html)
+      quote: Yes, because of illness
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: TCF7L2 rs7903146-T (type 2 diabetes risk allele) carries the largest weight (+0.053), as expected if
+        diabetes prompts the diet change
+    status: agent_proposed
+    notes: 'One-hot binary trait; the answer-to-FC mapping is inferred from the PGS Catalog label matching the UKB
+      coding (same pattern as the coffee-type and tanning scores), the paper does not describe FC encoding. Catalog
+      evaluation: 7,422 cases vs 59,875 controls, AUROC 0.58. Higher PGS001063 = more likely to have changed diet
+      because of illness.'

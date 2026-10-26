@@ -1,0 +1,49 @@
+pgp_id: PGP000521
+scores:
+  PGS004221:
+    cluster: lifestyle.carbohydrate_intake
+    phenotype: relative_carbohydrate_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: genetically predicted relative carbohydrate intake (carbohydrate preference)
+      coding: 8 lead variants from the Merino 2022 dietary-intake GWAS (relative carbohydrate intake, PMID 34426670),
+        weighted by their effect sizes; score standardized to mean 0, SD 1
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Betas are extra cafeteria purchases (total, green-labelled) per SD of the score, which the paper reports
+        as positive for higher carbohydrate preference
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic scores
+      quote: Each variant was coded with the expected number of associated alleles and weighted by its relative
+        effect size on each phenotype.
+      confidence: high
+    - source: full_text
+      locator: Methods > Polygenic scores
+      quote: Polygenic scores for macronutrient preference were generated for each participant based on previously
+        identified genetic variants and effect sizes for carbohydrate, fat, and protein [14].
+      confidence: high
+    - source: abstract
+      locator: Abstract
+      quote: Each SD increase in the polygenic score for carbohydrate preference was associated with 2.3 additional
+        purchases/month
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs838133-A (FGF21) +0.21 and rs429358-T (APOE) -0.186 match the GWAS Catalog relative-carbohydrate-intake
+        betas (+0.21 and -0.186, PMID 34426670)
+    status: agent_proposed
+    notes: 'Higher PGS004221 = higher genetic preference for carbohydrate (larger share of energy from carbohydrate).
+      Evaluated only on workplace cafeteria purchases (n=397): +2.3 purchases/month and +1.9 green-labelled items
+      per SD.'
+paper:
+  pmid: '37217678'
+  doi: 10.1038/s41380-023-02107-x
+  title: Genetic predisposition to macronutrient preference and workplace food choices.
+evidence_read:
+  abstract: true
+  full_text: pmc
+  supplement: []

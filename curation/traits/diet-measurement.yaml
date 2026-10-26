@@ -1,0 +1,221 @@
+slug: diet-measurement
+query: diet measurement
+match:
+  terms:
+  - consumption
+  - diet
+  - food
+  - intake
+  efo_ids:
+  - EFO_0008111
+  exclude: []
+anchor: PGS001034
+status: resolved
+concepts:
+- lifestyle.meat_intake
+- lifestyle.fish_intake
+- lifestyle.fruit_vegetable_intake
+- lifestyle.dairy_intake
+- lifestyle.milk_type
+- lifestyle.carbohydrate_intake
+- lifestyle.cereal_type
+- lifestyle.salt_added
+- lifestyle.tea_consumption
+- lifestyle.water_intake
+- lifestyle.food_avoidance
+- lifestyle.supplement_use
+- lifestyle.diet_variation
+- lifestyle.portion_size
+- lifestyle.dietary_change
+scores:
+  PGS000203:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS000204:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS000978:
+    decision: in_scope
+    note: null
+  PGS000991:
+    decision: in_scope
+    note: null
+  PGS000993:
+    decision: in_scope
+    note: null
+  PGS000994:
+    decision: in_scope
+    note: null
+  PGS001034:
+    decision: in_scope
+    note: null
+  PGS001044:
+    decision: in_scope
+    note: null
+  PGS001045:
+    decision: in_scope
+    note: null
+  PGS001056:
+    decision: in_scope
+    note: null
+  PGS001057:
+    decision: in_scope
+    note: null
+  PGS001058:
+    decision: in_scope
+    note: null
+  PGS001059:
+    decision: in_scope
+    note: null
+  PGS001060:
+    decision: in_scope
+    note: null
+  PGS001061:
+    decision: in_scope
+    note: null
+  PGS001062:
+    decision: in_scope
+    note: null
+  PGS001063:
+    decision: in_scope
+    note: null
+  PGS001064:
+    decision: in_scope
+    note: null
+  PGS001065:
+    decision: in_scope
+    note: null
+  PGS001066:
+    decision: in_scope
+    note: null
+  PGS001067:
+    decision: in_scope
+    note: null
+  PGS001068:
+    decision: in_scope
+    note: null
+  PGS001069:
+    decision: in_scope
+    note: null
+  PGS001085:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS001086:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS001087:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS001088:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS001123:
+    decision: out_of_scope
+    note: curated under coffee-consumption
+  PGS001124:
+    decision: out_of_scope
+    note: curated under coffee-consumption
+  PGS001125:
+    decision: out_of_scope
+    note: curated under coffee-consumption
+  PGS001126:
+    decision: out_of_scope
+    note: curated under coffee-consumption
+  PGS001389:
+    decision: in_scope
+    note: null
+  PGS001394:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS001518:
+    decision: in_scope
+    note: null
+  PGS001934:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002011:
+    decision: in_scope
+    note: null
+  PGS002152:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002230:
+    decision: in_scope
+    note: null
+  PGS002752:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002825:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002826:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002827:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002828:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002829:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002830:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002831:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002832:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002833:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002834:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002835:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002836:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002837:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002838:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS002839:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS003373:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS003374:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS003375:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS003376:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS004221:
+    decision: in_scope
+    note: null
+  PGS005211:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+  PGS005216:
+    decision: out_of_scope
+    note: alcohol consumption is curated in its own run
+summary: 26 food and supplement intake scores, mostly UK Biobank questionnaire scores from Tanigawa 2022 (PGP000244),
+  sorted into 15 lifestyle diet concepts by food type; every score is annotated and none correlate the wrong way within
+  a concept. Higher score = eats or drinks that item more often, or more likely gives that answer (never eats sugar/wheat,
+  uses skimmed milk, takes glucosamine or folic acid, changed diet because of illness). PGS001059 (cornflake-type cereal)
+  sits on the low end of the cereal_type axis. The six GBE QT_FC frequency scores (oily fish, beef, poultry, processed
+  meat, cheese, salt) assume the raw UKB order is kept and carry a review_reason because GBE's recoding is undocumented.
+  Water scores from GBE and Privé agree (r=+0.51..0.89); PGS004221 (Merino 2023) is relative carbohydrate intake. Alcohol
+  and coffee scores are out of scope (own runs).

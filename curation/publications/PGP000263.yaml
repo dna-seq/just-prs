@@ -2910,6 +2910,62 @@ scores:
     notes: LDpred2-auto on the raw UKB 1200 code as a continuous trait (ukbb-quant-pheno). Higher = more frequent
       sleeplessness. 1000G EUR r=+0.85 between the two Prive insomnia scores and +0.51 to +0.87 with the ExPRSweb
       UKB-1200 scores.
+  PGS002011:
+    cluster: lifestyle.water_intake
+    phenotype: water_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: glasses of water drunk per day
+      coding: 'UKB 1528 used raw at baseline: integer glasses/day, ''less than one'' (-10) set to 0, other negatives
+        missing, values above 15 missing'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: authors' GitHub prepare-pheno-fields.R, 'Water intake (1528)' block
+      quote: y[y == -10] <- 0; y[y < 0] <- NA
+      confidence: high
+    - source: supplement
+      locator: authors' GitHub prepare-pheno-fields.R, 'Water intake (1528)' block
+      quote: saveRDS(y, "data/ukbb-quant-pheno/water_intake.rds")
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs2472297-T and rs4410790-C (caffeine/coffee-raising alleles) carry negative weights, matching GBE water
+        score PGS001069
+    status: agent_proposed
+    notes: Penalized regression (bigstatsr PLR) on the raw field 1528 value. Higher = more water. 1000G EUR r=+0.89
+      with PGS002230 and +0.51 with PGS001069.
+  PGS002230:
+    cluster: lifestyle.water_intake
+    phenotype: water_intake
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: glasses of water drunk per day
+      coding: 'UKB 1528 used raw at baseline: integer glasses/day, ''less than one'' (-10) set to 0, other negatives
+        missing, values above 15 missing'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: authors' GitHub prepare-pheno-fields.R, 'Water intake (1528)' block
+      quote: y[y == -10] <- 0; y[y < 0] <- NA
+      confidence: high
+    - source: supplement
+      locator: authors' GitHub prepare-pheno-fields.R, 'Water intake (1528)' block
+      quote: saveRDS(y, "data/ukbb-quant-pheno/water_intake.rds")
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs2472297-T and rs4410790-C (caffeine/coffee-raising alleles) carry negative weights, matching GBE water
+        score PGS001069
+    status: agent_proposed
+    notes: LDpred2 on the raw field 1528 value. Higher = more water. 1000G EUR r=+0.89 with PGS002011 and +0.51
+      with PGS001069.
 template:
   rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
     PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged

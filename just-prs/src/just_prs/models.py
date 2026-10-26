@@ -524,6 +524,25 @@ class EnrichedPRSResult(BaseModel):
     risk_estimates_by_method: dict[str, str] = Field(default_factory=dict)
     risk_estimate_methods: list[str] = Field(default_factory=list)
 
+    # Curated direction (just_prs.score_direction; null = not curated)
+    curation_status: str | None = Field(
+        None, description="resolved / in_review / no_direction; None when the score is not curated"
+    )
+    higher_percentile_means: str | None = Field(None, description="Curated: what a higher score means")
+    direction: str | None = Field(None, description="increases / decreases (the score's effect on its target)")
+    target: str | None = None
+    cluster: str | None = Field(None, description="Curated concept key, domain.concept")
+    concept_label: str | None = None
+    axis: str | None = None
+    valence: str | None = Field(None, description="desirable / undesirable / neutral / context_dependent")
+    phenotype: str | None = None
+    phenotype_label: str | None = None
+    phenotype_sign: int | None = None
+    polarity: int | None = Field(None, description="+1 when a higher score moves up the concept axis, -1 down")
+    annotation_status: str | None = Field(None, description="agent_proposed / human_verified")
+    curation_review_reason: str | None = None
+    correction_kinds: str | None = Field(None, description="Semicolon-joined correction kinds, e.g. deposit_inverted")
+
 
 class ArrayPRSResult(PRSResult):
     """PRS result from consumer genotyping array data with coverage and proxy metadata."""

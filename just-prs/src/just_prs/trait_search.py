@@ -43,7 +43,7 @@ def score_search_terms(
             "pgs_id",
             pl.col(column).cast(pl.Utf8).str.split("|").alias("term"),
             pl.lit(kind).alias("term_kind"),
-        ).explode("term")
+        ).explode("term", empty_as_null=True)
         for column, kind in CATALOG_TERM_COLUMNS
         if column in scores.columns
     ]

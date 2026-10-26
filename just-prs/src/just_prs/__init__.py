@@ -113,9 +113,16 @@ from just_prs.sample_scores import (
     match_score_profile,
     resolve_official_prs,
 )
+from just_prs.score_direction import (
+    SCORE_DIRECTION_COLUMNS,
+    CurationStatus,
+    direction_tone,
+    higher_score_means,
+)
 from just_prs.scoring import ensure_scoring_file, resolve_cache_dir
 from just_prs.trait_summary import (
     TraitSummaryStats,
+    axis_aligned_rows,
     best_of_label,
     summarize_heritability,
     summarize_trait_rows,

@@ -257,7 +257,11 @@ class TestPRSCatalog:
         df = lf.collect()
         assert "pgs_id" in df.columns
         assert "genome_build" in df.columns
-        assert df.height > 5000
+        # The canary quarantine hides flagged IDs; together they are the whole catalog.
+        everything = catalog.scores(include_excluded=True).collect()
+        assert everything.height > 5000
+        excluded = set(catalog.excluded_catalog_pgs_ids())
+        assert set(df["pgs_id"]) == set(everything["pgs_id"]) - excluded
 
     def test_scores_filter_by_build(self, catalog: PRSCatalog) -> None:
         # Default include_harmonized=True includes all builds

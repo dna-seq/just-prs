@@ -23,6 +23,7 @@ from just_prs.quality import rescale_quality_if_degenerate, resolve_quality_key
 from just_prs.trait_summary import (
     NO_MAPPED_H2,
     TraitSummaryStats,
+    axis_aligned_rows,
     best_of_label,
     format_heritability_risk_prompt,
     format_percentile_with_panel,
@@ -575,6 +576,12 @@ def plot_trait_scores(
         if sub.height == 0:
             raise ValueError(f"No distributions found for trait '{trait}' / {ancestry}")
 
+    # Curated axis (AGENTS.md rule 5): flip models that point the other way so dots,
+    # median and table share one direction; rows not counted are drawn faded.
+    if user_results:
+        user_results = axis_aligned_rows(user_results)
+    if multi_user_results:
+        multi_user_results = {name: axis_aligned_rows(rows) for name, rows in multi_user_results.items()}
     is_multi_sample = multi_user_results is not None and len(multi_user_results) > 1
     if multi_user_results and not user_results:
         first_label = next(iter(multi_user_results))
@@ -686,8 +693,10 @@ def plot_trait_scores(
             population_prevalence = ur.get("population_prevalence")
 
         reliable = True
+        not_counted = ""
         if pgs_id in user_lookup:
-            reliable = user_lookup[pgs_id].get("reliable", True)
+            not_counted = str(user_lookup[pgs_id].get("axis_not_counted") or "")
+            reliable = bool(user_lookup[pgs_id].get("reliable", True)) and not not_counted
 
         # Prefer the genotype-aware quality label carried on the scored result;
         # fall back to variant/AUROC only for reference-context models that the
@@ -723,6 +732,7 @@ def plot_trait_scores(
             "mean": mean,
             "std": std,
             "reliable": reliable,
+            "axis_not_counted": not_counted,
         })
 
     q_domain = list(QUALITY_COLORS.keys())
@@ -890,7 +900,8 @@ def plot_trait_scores(
                     ),
                     "z_score": z_user,
                     "percentile": pct_user,
-                    "reliable": ur.get("reliable", True),
+                    "reliable": bool(ur.get("reliable", True)) and not ur.get("axis_not_counted"),
+                    "axis_not_counted": str(ur.get("axis_not_counted") or ""),
                     "sample": s_label,
                 })
         user_marks = multi_marks
@@ -934,7 +945,11 @@ def plot_trait_scores(
 
         for um in user_marks:
             um["short_id"] = um["pgs_id"].replace("PGS00", "").replace("PGS0", "").replace("PGS", "")
-            um["reliability"] = "reliable" if um.get("reliable", True) else "low coverage"
+            um["reliability"] = (
+                f"not counted: {um['axis_not_counted']}"
+                if um.get("axis_not_counted")
+                else "reliable" if um.get("reliable", True) else "low coverage"
+            )
 
         reliable_marks = [m for m in user_marks if m.get("reliable", True)]
         unreliable_marks = [m for m in user_marks if not m.get("reliable", True)]
@@ -2154,6 +2169,9 @@ def _build_multi_sample_trait_prompt(
     for name in multi:
         lines.append(_sample_prompt_header(name, files.get(name)))
 
+    first_stats = next(iter(per_stats.values()), None)
+    if first_stats is not None:
+        lines.extend(["", f"Direction: {first_stats.direction_note}"])
     lines.extend(["", "== PER-SAMPLE SUMMARY =="])
     for name, stats in per_stats.items():
         bits = [name]
@@ -2293,7 +2311,7 @@ def _build_trait_prompt(
         for name, rows in multi_user_results.items():
             scored_rows = [
                 {**r, "percentile": percentile}
-                for r in rows
+                for r in axis_aligned_rows(rows)
                 if (percentile := _parse_float(r.get("percentile"))) is not None
             ]
             if scored_rows:
@@ -2310,7 +2328,7 @@ def _build_trait_prompt(
             )
     scored = [
         {**r, "percentile": percentile}
-        for r in user_results
+        for r in axis_aligned_rows(user_results)
         if (percentile := _parse_float(r.get("percentile"))) is not None
     ]
     if not scored:
@@ -2342,7 +2360,13 @@ def _build_trait_prompt(
         f"Models scored: {len(scored)} total"
         + (f", {len(usable)} usable (>=50% marker coverage)" if len(usable) != len(scored) else ""),
         f"Scope: {stats.scope_label}",
+        f"Direction: {stats.direction_note}",
     ]
+    if stats.not_counted:
+        lines.append(
+            "Listed but not counted: "
+            + "; ".join(f"{item['pgs_id']} ({item['reason']})" for item in stats.not_counted)
+        )
     if sample_name:
         lines.append(f"Genome/VCF input: {sample_name}")
     if high_q:
@@ -2761,7 +2785,7 @@ def trait_report_html(
     def _prepare(rows: list[dict]) -> list[dict]:
         prepared = [
             {**r, "percentile": percentile}
-            for r in rows
+            for r in axis_aligned_rows(rows)
             if (percentile := _parse_float(r.get("percentile"))) is not None
         ]
         # Stamp each model with the same canonical quality tier the chart uses so
@@ -3138,7 +3162,8 @@ def trait_report_html(
                         "p": r.get("percentile"),
                         "r": _parse_float(r.get("risk_ratio")),
                         "a": _parse_float(r.get("absolute_risk")),
-                        "u": bool(is_usable_model(r)),
+                        # Rows not counted on the curated axis never enter the live median.
+                        "u": bool(is_usable_model(r)) and not r.get("axis_not_counted"),
                     })
             models_payload.append({"pgs": pid, "cells": cell_payload})
             cells = [

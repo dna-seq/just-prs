@@ -9,6 +9,8 @@ Loading priority: local cleaned parquet -> HF pull -> raw FTP download + cleanup
 
 import logging
 import math
+import os
+import time
 from pathlib import Path
 
 import polars as pl
@@ -30,6 +32,7 @@ from just_prs.hf import (
     pull_chip_coverage,
     needs_pull,
     pull_cleaned_parquets,
+    pull_curation_tables,
     pull_reference_distributions,
     pull_reference_distributions_by_sex,
 )
@@ -60,6 +63,7 @@ from just_prs.sample_scores import (
     resolve_official_prs,
 )
 from just_prs.reference import reference_distribution_audit_issues
+from just_prs.score_direction import SCORE_DIRECTION_COLUMNS, score_direction_table
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
 logger = logging.getLogger(__name__)
@@ -77,6 +81,27 @@ DEV_ANCESTRY_FILE = "score_development_ancestry.parquet"
 _DEV_ANCESTRY_REQUIRED_COLUMNS = {"pgs_id", "dev_ancestry_broad", "dev_ancestry_distribution"}
 # Lean development-ancestry columns joined into the wide scores sheet.
 _DEV_ANCESTRY_SCORES_COLS = ["pgs_id", "dev_ancestry_broad", "dev_sample_size", "dev_is_multi_ancestry"]
+
+# Curated score directions (AGENTS.md "Consuming curated directions", rule 1).
+# PRS_CURATION_DIR reads a local `prs curation build` output instead of the HF copy;
+# PRS_CURATION_MAX_AGE_HOURS re-pulls an older HF copy (0 = once per catalog instance).
+CURATION_DIR_ENV = "PRS_CURATION_DIR"
+CURATION_MAX_AGE_ENV = "PRS_CURATION_MAX_AGE_HOURS"
+DEFAULT_CURATION_MAX_AGE_HOURS = 24.0
+# Written on every pull attempt, so an offline host waits a full max-age before retrying.
+_CURATION_PULL_STAMP = ".pulled_at"
+
+
+def _curation_max_age_hours() -> float:
+    raw = os.environ.get(CURATION_MAX_AGE_ENV, "").strip()
+    if not raw:
+        return DEFAULT_CURATION_MAX_AGE_HOURS
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        logger.warning("Ignoring %s=%r (not a number)", CURATION_MAX_AGE_ENV, raw)
+        return DEFAULT_CURATION_MAX_AGE_HOURS
+
 
 # Genome build each ancestry-panel model is built in (samples are lifted to it at inference).
 # The 1000G/HGDP models are GRCh38; the AADR Human Origins panel is GRCh37 (hg19).
@@ -168,6 +193,10 @@ class PRSCatalog:
         self._quality_lf: pl.LazyFrame | None = None
         self._chip_coverage_lf: pl.LazyFrame | None = None
         self._chip_coverage_loaded = False
+        self._score_directions_df: pl.DataFrame | None = None
+        self._score_directions_loaded = False
+        self._curation_checked = False
+        self._search_terms_df: pl.DataFrame | None = None
         self._catalog_flags_lf: pl.LazyFrame | None = None
         self._catalog_flags_loaded = False
         self._prevalence_lf: pl.LazyFrame | None = None
@@ -345,6 +374,112 @@ class PRSCatalog:
                     rename_map[src] = dst
         wide = wide.rename(rename_map)
         return wide.lazy()
+
+    @property
+    def curation_dir(self) -> Path:
+        """Where the curation tables are read: ``PRS_CURATION_DIR`` or ``<cache>/metadata/curation``."""
+        override = os.environ.get(CURATION_DIR_ENV, "").strip()
+        return Path(override).expanduser() if override else self.metadata_dir / "curation"
+
+    def _curation_pull_due(self, directory: Path) -> bool:
+        """Whether the HF copy must be (re-)pulled: unreadable/missing, or older than the max age."""
+        if needs_pull(directory / "score_annotations.parquet"):
+            return True
+        stamp = directory / _CURATION_PULL_STAMP
+        if not stamp.exists():
+            return True
+        age_hours = (time.time() - stamp.stat().st_mtime) / 3600.0
+        return age_hours >= _curation_max_age_hours()
+
+    def refresh_curation(self, force: bool = False) -> Path | None:
+        """Pull the published curation tables when due (or ``force``); return their directory.
+
+        A failed pull keeps the last good copy and is not retried until the max age has
+        passed again. With ``PRS_CURATION_DIR`` set nothing is pulled: the local build is
+        used as is. Returns None when no curation tables are available at all.
+        """
+        directory = self.curation_dir
+        due = force or (not self._curation_checked and self._curation_pull_due(directory))
+        self._curation_checked = True
+        if not os.environ.get(CURATION_DIR_ENV, "").strip() and due:
+            directory.mkdir(parents=True, exist_ok=True)
+            with start_action(action_type="prs_catalog:refresh_curation", directory=str(directory), force=force):
+                try:
+                    pull_curation_tables(directory)
+                except Exception as exc:  # offline / HF outage: the last good copy stays in use
+                    log_message(message_type="prs_catalog:curation_pull_failed", error=str(exc))
+                    logger.debug("Curation HF pull failed: %s", exc)
+                (directory / _CURATION_PULL_STAMP).touch()
+            self._score_directions_df = None
+            self._score_directions_loaded = False
+        if not (directory / "score_annotations.parquet").exists():
+            return None
+        return directory
+
+    def _read_curation_table(self, name: str) -> pl.DataFrame | None:
+        directory = self.refresh_curation()
+        if directory is None:
+            return None
+        path = directory / name
+        if not path.exists():
+            return None
+        try:
+            return pl.read_parquet(path)
+        except (pl.exceptions.ComputeError, OSError) as exc:
+            logger.warning("Unreadable curation table %s (%s); ignoring it.", path, exc)
+            return None
+
+    def score_directions(self) -> pl.DataFrame:
+        """Curated direction per PGS ID (``score_direction.SCORE_DIRECTION_COLUMNS`` + ``pgs_id``).
+
+        Resolved rows come from ``score_annotations.parquet``, ``in_review`` /
+        ``no_direction`` rows from ``curation_review.parquet``. Empty when no curation
+        is available, so every consumer degrades to "not curated".
+        """
+        if not self._score_directions_loaded:
+            self._score_directions_df = score_direction_table(
+                self._read_curation_table("score_annotations.parquet"),
+                self._read_curation_table("curation_review.parquet"),
+            )
+            self._score_directions_loaded = True
+        assert self._score_directions_df is not None
+        return self._score_directions_df
+
+    def score_direction(self, pgs_id: str) -> dict[str, object] | None:
+        """Curated direction of one score, or None when it is not curated."""
+        rows = self.score_directions().filter(pl.col("pgs_id") == pgs_id.upper())
+        return rows.row(0, named=True) if rows.height else None
+
+    def curation_tables(self) -> dict[str, pl.DataFrame]:
+        """Published curation tables keyed by short name: ``annotations``, ``review``, ``clusters``, ``search_terms``.
+
+        Missing tables are absent from the dict (e.g. offline before the first pull).
+        """
+        names = {
+            "annotations": "score_annotations.parquet",
+            "review": "curation_review.parquet",
+            "clusters": "trait_clusters.parquet",
+            "search_terms": "concept_search_terms.parquet",
+        }
+        tables: dict[str, pl.DataFrame] = {}
+        for key, filename in names.items():
+            frame = self._read_curation_table(filename)
+            if frame is not None:
+                tables[key] = frame
+        return tables
+
+    def curation_manifest(self) -> dict[str, object]:
+        """``curation_manifest.json`` of the tables in use (empty when unavailable)."""
+        import json
+
+        directory = self.refresh_curation()
+        path = directory / "curation_manifest.json" if directory is not None else None
+        if path is None or not path.exists():
+            return {}
+        try:
+            return json.loads(path.read_text())
+        except (ValueError, OSError):
+            return {}
 
     def _load_catalog_flags(self) -> pl.LazyFrame | None:
         """Load catalog scoring flags (canary-collapse exclusions), pulling from HF on miss."""
@@ -680,6 +815,10 @@ class PRSCatalog:
         self._catalog_flags_loaded = False
         self._chip_coverage_lf = None
         self._chip_coverage_loaded = False
+        self._score_directions_df = None
+        self._score_directions_loaded = False
+        self._curation_checked = False
+        self._search_terms_df = None
         for p in self.metadata_dir.glob("*.parquet"):
             p.unlink()
         raw_dir = self.raw_metadata_dir
@@ -740,6 +879,8 @@ class PRSCatalog:
                 [c for c in _DEV_ANCESTRY_SCORES_COLS if c in self._dev_ancestry_lf.collect_schema().names()]
             )
             lf = lf.join(dev_cols, on="pgs_id", how="left")
+        # Curated direction columns are always present (null = not curated) so consumers never branch on schema.
+        lf = lf.join(self.score_directions().lazy(), on="pgs_id", how="left")
         if not include_excluded:
             excluded = self.excluded_catalog_pgs_ids()
             if excluded:
@@ -827,8 +968,11 @@ class PRSCatalog:
     ) -> pl.LazyFrame:
         """Search scores by text query across pgs_id, name, trait_reported, and trait_efo.
 
-        Case-insensitive substring match. Returns cleaned scores LazyFrame
-        filtered to matching rows.
+        Case-insensitive substring match, plus the synonym-aware match of
+        :meth:`search_pgs_ids` (every word of the query among a score's names,
+        including the labels and aliases of its curated concept), so "night owl"
+        finds chronotype scores. Returns cleaned scores LazyFrame filtered to
+        matching rows.
 
         Args:
             query: Search term (case-insensitive substring match)
@@ -839,12 +983,41 @@ class PRSCatalog:
         term = query.strip().lower()
         if not term:
             return lf
-        return lf.filter(
+        matched = (
             pl.col("pgs_id").str.to_lowercase().str.contains(term, literal=True)
             | pl.col("name").str.to_lowercase().str.contains(term, literal=True)
             | pl.col("trait_reported").str.to_lowercase().str.contains(term, literal=True)
             | pl.col("trait_efo").str.to_lowercase().str.contains(term, literal=True)
         )
+        synonym_ids = self.search_pgs_ids(query)
+        if synonym_ids:
+            matched = matched | pl.col("pgs_id").is_in(sorted(synonym_ids))
+        return lf.filter(matched)
+
+    def search_terms(self) -> pl.DataFrame:
+        """Every searchable name of every score (``trait_search.score_search_terms``), cached.
+
+        Catalog names plus, for curated scores, all terms of their concept from
+        ``concept_search_terms.parquet``.
+        """
+        if self._search_terms_df is None:
+            from just_prs.trait_search import score_search_terms
+
+            scores = (
+                self._ensure_scores()
+                .select("pgs_id", "name", "trait_reported", "trait_efo", "trait_efo_id")
+                .collect()
+            )
+            concept_terms = self.curation_tables().get("search_terms")
+            score_concepts = self.score_directions().filter(pl.col("cluster").is_not_null()).select("pgs_id", "cluster")
+            self._search_terms_df = score_search_terms(scores, concept_terms, score_concepts)
+        return self._search_terms_df
+
+    def search_pgs_ids(self, query: str) -> set[str]:
+        """PGS IDs whose names (catalog + curated concept terms) contain every word of ``query``."""
+        from just_prs.trait_search import matching_pgs_ids
+
+        return matching_pgs_ids(self.search_terms(), query)
 
     def score_info_row(
         self, pgs_id: str, genome_build: str | None = None
@@ -874,6 +1047,8 @@ class PRSCatalog:
             if dev_rows.height:
                 dev = dev_rows.row(0, named=True)
                 row.update({k: v for k, v in dev.items() if k != "pgs_id"})
+        direction = self.score_direction(pgs_id) or {}
+        row.update({column: direction.get(column) for column in SCORE_DIRECTION_COLUMNS})
         return row
 
     @property

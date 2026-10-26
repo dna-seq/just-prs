@@ -3569,6 +3569,282 @@ scores:
       subarachnoid haemorrhage; 1000G EUR r=+0.30 with anchor PGS004322 and positive with the other PGP000517 stroke
       scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
       PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS003991:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: dbslmm.auto.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.253 [0.246, 0.259] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004007:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: lassosum.auto.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.260 [0.254, 0.267] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004019:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: lassosum.CV.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.273 [0.266, 0.279] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004033:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: ldpred2.auto.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.271 [0.265, 0.278] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004048:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: ldpred2.CV.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.288 [0.281, 0.294] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004061:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: megaprs.auto.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.267 [0.260, 0.273] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004077:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: megaprs.CV.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.279 [0.273, 0.285] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004091:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: prscs.auto.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.272 [0.265, 0.278] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004115:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: pt_clump.auto.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.197 [0.191, 0.204] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004131:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: pt_clump_nested.CV.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.222 [0.215, 0.229] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004145:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: sbayesr.auto.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.234 [0.228, 0.241] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
+  PGS004161:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: UKBB_EnsPGS.GCST008972.Urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by BETA 0.302 [0.296, 0.309] against Urate and 1000G EUR r>=+0.33 with the annotated urate
+      scores.
 paper:
   pmid: '38908374'
   doi: 10.1016/j.ajhg.2024.06.003

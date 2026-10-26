@@ -554,3 +554,25 @@ scores:
     unannotated_reason: Paper not open access and the abstract does not describe the CVD score; 1000G EUR r is ~0
       with all 100+ CAD/CVD scores and lead variants are mixed (LPA risk alleles rs186696265-T, rs55730499-T positive
       but PCSK9 protective rs11591147-T also +0.28), so the file direction cannot be confirmed.
+  PGS000861:
+    cluster: kidney.albuminuria
+    phenotype: uacr
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: urinary albumin-to-creatinine ratio
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Urine Albumin-to-Creatinine ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). UACR GRS; its catalog OR 0.97 (CI includes 1) is for a diabetes
+      subtype, not UACR. 1000G EUR r=+0.41 with PGS000972 and +0.78 with PGS000822.

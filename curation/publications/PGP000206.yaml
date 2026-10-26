@@ -1,0 +1,24 @@
+pgp_id: PGP000206
+scores:
+  PGS000822:
+    cluster: kidney.albuminuria
+    phenotype: uacr
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: urinary albumin-to-creatinine ratio
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Urinary albumin to creatinine ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Genetic risk score of UACR GWAS loci; weights are per-allele
+      effects on UACR. 1000G EUR r=+0.36 with PGS000972 and +0.78 with PGS000861.

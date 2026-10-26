@@ -71,6 +71,27 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; no directional metric (incident lung cancer AUROC only); corroborated by 1000G EUR r=+0.8 with PGS000740
       (OR 1.26 [1.20, 1.32]).
+  PGS000722:
+    cluster: cancer.kidney_cancer
+    phenotype: kidney_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of kidney cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Kidney cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). 1000G EUR r=+0.89 with PGS000076 (OR CI excludes 1).
 paper:
   pmid: '32596635'
   doi: 10.1093/jncics/pkaa021

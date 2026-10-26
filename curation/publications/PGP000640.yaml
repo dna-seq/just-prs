@@ -1,0 +1,23 @@
+pgp_id: PGP000640
+scores:
+  PGS004908:
+    cluster: cancer.kidney_cancer
+    phenotype: kidney_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of kidney cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Kidney cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Corroborated by OR 1.5 [1.43, 1.58] against kidney cancer.

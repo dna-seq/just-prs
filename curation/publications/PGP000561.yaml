@@ -3403,3 +3403,167 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read for this score). Disease PRS on the H26 code; catalog OR 1.12
       for H26 (no CI); 1000G EUR r=+0.28 with PGS002044 (Privé cataract).
+  PGS004343:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Urate (umol/L)
+      confidence: medium
+    - &id001
+      source: full_text
+      locator: Methods > Estimation of RFPRS and disease PRS
+      quote: we constructed individual PRSs as the sum of the weighted risk effect sizes of the SNPs in the PRS
+        set
+      confidence: medium
+    - &id002
+      source: full_text
+      locator: Results > Association analysis between RFPRSs and diseases
+      quote: All RFPRSs significantly correlated with their respective risk factors
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Risk-factor PRS (X30880 = UKB urate) built from GWAS effect sizes. 1000G EUR r=+0.35 (mean) with the
+      annotated urate scores.
+  PGS004331:
+    cluster: kidney.kidney_function
+    phenotype: blood_urea
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood urea level
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Urea (mmol/L)
+      confidence: medium
+    - *id001
+    - *id002
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'Risk-factor PRS (X30670 = UKB urea) from GWAS effect sizes; 1000G EUR r=+0.46 to +0.59 with the other
+      urea scores. Polarity -1: higher urea = lower filtration.'
+  PGS004493:
+    cluster: kidney.kidney_stones
+    phenotype: kidney_stones
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of calculus of kidney and ureter (ICD-10 N20)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: N20 (Calculus of kidney and ureter)
+      confidence: medium
+    - &id003
+      source: full_text
+      locator: Methods (disease definition)
+      quote: Disease cases were identified by matching the first three characteristics of ICD-10 codes.
+      confidence: medium
+    - &id004
+      source: full_text
+      locator: Results (risk stratification)
+      quote: For disease PRSs, those in the top 10% PRS had an average 1.56-fold higher risk of disease compared
+        to those in the remaining 90% PRS.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Disease PRS (disease.N20.score) trained on UK Biobank N20 case status; catalog OR 1.23 per SD (no CI).
+      r=+0.85 with PGS004563.
+  PGS004563:
+    cluster: kidney.kidney_stones
+    phenotype: kidney_stones
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of calculus of kidney and ureter (ICD-10 N20)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: N20 (Calculus of kidney and ureter)
+      confidence: medium
+    - *id003
+    - &id005
+      source: full_text
+      locator: Results (risk stratification)
+      quote: For RFDiseasemetaPRSs, the top 10% had an average 1.76-fold higher risk.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Risk-factor + disease meta-PRS (meta.N20.score); catalog OR 1.28 per SD (no CI). r=+0.85 with PGS004493.
+  PGS004491:
+    cluster: kidney.acute_kidney_injury
+    phenotype: acute_kidney_injury
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of acute renal failure (ICD-10 N17)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: N17 (Acute renal failure)
+      confidence: medium
+    - *id003
+    - *id004
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Disease PRS (disease.N17.score) trained on UK Biobank N17 case status; catalog OR 1.08 per SD (no CI).
+      r=+0.56 with PGS004561.
+  PGS004561:
+    cluster: kidney.acute_kidney_injury
+    phenotype: acute_kidney_injury
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of acute renal failure (ICD-10 N17)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: N17 (Acute renal failure)
+      confidence: medium
+    - *id003
+    - *id005
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Risk-factor + disease meta-PRS (meta.N17.score); catalog OR 1.15 per SD (no CI). r=+0.56 with PGS004491.

@@ -1,0 +1,47 @@
+pgp_id: PGP000623
+scores:
+  PGS004896:
+    cluster: kidney.albuminuria
+    phenotype: microalbuminuria
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of microalbuminuria
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Microalbuminuria
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Corroborated by OR 1.014 [1.001, 1.027] against Microalbuminuria.
+      Weakly correlated with the other albuminuria scores in 1000G EUR (r <= +0.12).
+  PGS004897:
+    cluster: kidney.albuminuria
+    phenotype: uacr
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: urinary albumin-to-creatinine ratio
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: microalbuminuria
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Urinary albumin-to-creatinine ratio
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Corroborated by OR 1.045 [1.003, 1.089] against Microalbuminuria
+      (same concept); 1000G EUR r=+0.18 with PGS000972.

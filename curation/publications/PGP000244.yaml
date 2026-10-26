@@ -16413,3 +16413,80 @@ scores:
     score_effect: null
     unannotated_reason: Axis angle in degrees (UKB 5113, 1-180) is circular; a higher value has no ordinal meaning,
       so no direction applies.
+  PGS000972:
+    cluster: kidney.albuminuria
+    phenotype: microalbuminuria
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of urine microalbumin > 40 mg/L
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Microalbumin [> 40 mg/L]
+      confidence: medium
+    - &id010
+      source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'snpnet binomial model on case status (microalbumin above 40 mg/L); paper-wide rule: higher score = more
+      likely case.'
+  PGS001107:
+    cluster: kidney.albuminuria
+    phenotype: microalbuminuria
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of UACR > 30 mg/g
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: UACR [> 30 mg/g]
+      confidence: medium
+    - *id010
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet binomial model on case status (UACR above 30 mg/g); 1000G EUR r=+0.57 with PGS000972.
+  PGS001250:
+    cluster: kidney.kidney_stones
+    phenotype: kidney_stones
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of calculus of kidney and ureter
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Calculus of kidney and ureter (time-to-event)
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Time-to-event snpnet score; the paper does not describe the TTE setup, so direction rests on the paper-wide
+      rule plus 1000G EUR r=+0.24 with PGS001864 and +0.20 with PGS002075.

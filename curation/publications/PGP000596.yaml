@@ -122,6 +122,28 @@ scores:
     notes: LDpred2 PRS from non-UKB public GWAS, tuned in UKB. The paper gives all non-ovarian PRS HRs > 1 (lung
       HR only in Supplementary Figure 4, not read), so its score increases risk; the deposited file behaves as the
       negated score.
+  PGS004690:
+    cluster: cancer.kidney_cancer
+    phenotype: kidney_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of kidney cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Kidney cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). 1000G EUR r=+0.31 with PGS000076 and +0.30 with PGS004908 (both
+      OR CIs exclude 1).
 paper:
   pmid: '38366150'
   doi: 10.1093/jncics/pkae008

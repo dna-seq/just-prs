@@ -5337,6 +5337,226 @@ scores:
     notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
       phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.92 with PGS003564 and -0.59 with the Clark
       refractive-error score PGS003860.
+  PGS002010:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read). Weights are per-allele effects on urate; 1000G EUR r=+0.45 (mean) with
+      the annotated urate scores PGS000126/PGS000755/PGS002290.
+  PGS002229:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_urate
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read). Weights are per-allele effects on urate; 1000G EUR r=+0.44 (mean) with
+      the annotated urate scores PGS000126/PGS000755/PGS002290.
+  PGS001980:
+    cluster: kidney.kidney_function
+    phenotype: blood_urea
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood urea level
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_log_urea
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read). Model on log urea; 1000G EUR r>=+0.58 with PGS003553 (Ding, read). Higher
+      urea = lower filtration, hence polarity -1.
+  PGS002198:
+    cluster: kidney.kidney_function
+    phenotype: blood_urea
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood urea level
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_log_urea
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read). Model on log urea; 1000G EUR r>=+0.58 with PGS003553 (Ding, read). Higher
+      urea = lower filtration, hence polarity -1.
+  PGS001944:
+    cluster: kidney.urine_creatinine
+    phenotype: urine_creatinine
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: creatinine concentration in urine
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Creatinine (enzymatic) in urine
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read). Model on log urine creatinine; 1000G EUR r>=+0.53 with PGS000679 (snpnet,
+      Methods quoted).
+  PGS002162:
+    cluster: kidney.urine_creatinine
+    phenotype: urine_creatinine
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: creatinine concentration in urine
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Creatinine (enzymatic) in urine
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read). Model on log urine creatinine; 1000G EUR r>=+0.53 with PGS000679 (snpnet,
+      Methods quoted).
+  PGS001967:
+    cluster: kidney.albuminuria
+    phenotype: urine_microalbumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: microalbumin concentration in urine
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Microalbumin in urine
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read). Model on log urine microalbumin; 1000G EUR r=+0.38 with PGS000972 (Tanigawa,
+      template).
+  PGS002185:
+    cluster: kidney.albuminuria
+    phenotype: urine_microalbumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: microalbumin concentration in urine
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Microalbumin in urine
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read). Model on log urine microalbumin; 1000G EUR r=+0.27 with PGS000972 (Tanigawa,
+      template).
+  PGS001864:
+    cluster: kidney.kidney_stones
+    phenotype: kidney_stones
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of urinary calculus (phecode 594)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Urinary calculus
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read). Model on phecode 594 case status; 1000G EUR r=+0.23 with PGS004493 (Jung,
+      read).
+  PGS002075:
+    cluster: kidney.kidney_stones
+    phenotype: kidney_stones
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of urinary calculus (phecode 594)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Urinary calculus
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only (paper not read). Model on phecode 594 case status; 1000G EUR r=+0.42 with PGS004493 (Jung,
+      read).
 template:
   rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
     PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged

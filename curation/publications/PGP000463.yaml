@@ -1,0 +1,80 @@
+pgp_id: PGP000463
+scores:
+  PGS003589:
+    cluster: kidney.cystatin_c_production
+    phenotype: cystatin_c_production
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: genetic predisposition to cystatin C production (non-GFR part of cystatin C)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cystatin C production
+      confidence: medium
+    - &id001
+      source: abstract
+      locator: Abstract
+      quote: Both CyC production and a polygenic score (PGS) capturing predisposition to CyC production were associated
+        with increased all-cause and cancer-specific mortality.
+      confidence: medium
+    - &id002
+      source: full_text
+      locator: Results
+      quote: Using conventional genome-wide association studies (GWASs) for eGFR-CyC/eGFR-creatinine followed by
+        structural equation modeling (SEM), we estimate single-nucleotide polymorphism (SNP)-level associations
+        with the latent trait of CyC production.
+      confidence: medium
+    - &id003
+      source: full_text
+      locator: Methods > Derivation and application of polygenic scores
+      quote: CyC-production polygenic scores (PGS) were derived using LDpred2
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs13040731-C and rs6083125-C lower serum cystatin C (GWAS Catalog, PMID 33462484) and carry negative
+        weights; rs16985619/rs1741630 have no catalog records
+    status: agent_proposed
+    notes: Latent trait from SEM (GWAS-by-subtraction of eGFR-cystatin C vs eGFR-creatinine), scored with LDpred2-auto;
+      Fig 1F shows the measured CyC residual rising with PGS decile. PGS003590 is the exome-wide version (HR 1.29
+      for worse PFS on immunotherapy). 1000G EUR r=+0.41 to +0.49 with annotated serum cystatin C scores.
+  PGS003590:
+    cluster: kidney.cystatin_c_production
+    phenotype: cystatin_c_production
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: genetic predisposition to cystatin C production (non-GFR part of cystatin C)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cystatin C production
+      confidence: medium
+    - *id001
+    - *id002
+    - *id003
+    lead_variant_check:
+      status: agree
+      note: rs13040731-C and rs6083125-C lower serum cystatin C (GWAS Catalog, PMID 33462484) and carry negative
+        weights; rs16985619/rs1741630 have no catalog records
+    status: agent_proposed
+    notes: Latent trait from SEM (GWAS-by-subtraction of eGFR-cystatin C vs eGFR-creatinine), scored with LDpred2-auto;
+      Fig 1F shows the measured CyC residual rising with PGS decile. PGS003590 is the exome-wide version (HR 1.29
+      for worse PFS on immunotherapy). 1000G EUR r=+0.41 to +0.49 with annotated serum cystatin C scores.
+paper:
+  pmid: '37601967'
+  doi: 10.1016/j.xgen.2023.100347
+  title: Cystatin C is glucocorticoid responsive, directs recruitment of Trem2+ macrophages, and predicts failure
+    of cancer immunotherapy.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

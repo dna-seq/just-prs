@@ -219,6 +219,21 @@ domains:
             sign: -1
             aliases:
             - thyrotropin
+      adrenal_insufficiency:
+        label: Adrenal insufficiency (Addison's disease)
+        axis: higher risk of adrenal insufficiency
+        valence: undesirable
+        valence_basis: Primary adrenal insufficiency is a life-threatening loss of cortisol production
+          that needs lifelong hormone replacement.
+        status: agent_proposed
+        aliases:
+        - Addison's disease
+        - adrenal failure
+        - low cortisol
+        phenotypes:
+          autoimmune_addisons_disease:
+            label: Autoimmune Addison's disease (autoimmune primary adrenal insufficiency)
+            sign: 1
   cognition:
     label: Cognition
     concepts:
@@ -907,6 +922,13 @@ domains:
           cystatin_c:
             label: Serum cystatin C (higher = lower filtration)
             sign: -1
+          blood_urea:
+            label: Blood urea / blood urea nitrogen (higher = lower filtration)
+            sign: -1
+            aliases:
+            - BUN
+            - serum urea
+            - blood urea nitrogen
       chronic_kidney_disease:
         label: Chronic kidney disease
         axis: higher risk of chronic kidney disease
@@ -924,6 +946,89 @@ domains:
             sign: 1
           kidney_failure:
             label: Kidney failure / end-stage kidney disease
+            sign: 1
+      albuminuria:
+        label: Albumin in urine (albuminuria)
+        axis: more albumin leaking into the urine
+        valence: undesirable
+        valence_basis: Urinary albumin is a marker of kidney (glomerular) damage and predicts kidney and
+          heart disease. Kept apart from kidney_function because it measures damage, not filtration rate.
+        status: agent_proposed
+        aliases:
+        - protein in urine
+        - proteinuria
+        - UACR
+        - leaky kidneys
+        phenotypes:
+          uacr:
+            label: Urinary albumin-to-creatinine ratio (UACR)
+            sign: 1
+          urine_microalbumin:
+            label: Microalbumin concentration in urine
+            sign: 1
+          microalbuminuria:
+            label: Microalbuminuria / raised UACR or urine albumin above a cut-off (case status)
+            sign: 1
+      urine_creatinine:
+        label: Creatinine in urine
+        axis: higher creatinine concentration in spot urine
+        valence: neutral
+        valence_basis: Spot-urine creatinine mostly reflects how concentrated the urine is and muscle
+          mass, not kidney health; it is used to normalise other urine measures.
+        status: agent_proposed
+        aliases:
+        - urine creatinine
+        - urinary creatinine
+        - urine concentration
+        phenotypes:
+          urine_creatinine:
+            label: Creatinine concentration in urine (UKB 30510)
+            sign: 1
+      kidney_stones:
+        label: Kidney stones
+        axis: higher risk of kidney or urinary stones
+        valence: undesirable
+        valence_basis: Kidney and ureter stones cause renal colic, obstruction and infection.
+        status: agent_proposed
+        aliases:
+        - nephrolithiasis
+        - urolithiasis
+        - renal calculi
+        - renal colic
+        phenotypes:
+          kidney_stones:
+            label: Calculus of kidney and ureter / urinary calculus (ICD-10 N20, phecode 594)
+            sign: 1
+      acute_kidney_injury:
+        label: Acute kidney injury
+        axis: higher risk of acute kidney injury
+        valence: undesirable
+        valence_basis: Acute kidney injury is a sudden loss of kidney function with high mortality.
+        status: agent_proposed
+        aliases:
+        - AKI
+        - acute renal failure
+        - sudden kidney failure
+        phenotypes:
+          acute_kidney_injury:
+            label: Acute renal failure (ICD-10 N17)
+            sign: 1
+      cystatin_c_production:
+        label: Cystatin C production (non-filtration part of cystatin C)
+        axis: higher cystatin C production beyond what kidney filtration explains
+        valence: undesirable
+        valence_basis: The source paper links higher genetically predicted cystatin C production with
+          higher all-cause and cancer mortality and worse response to cancer immunotherapy. Kept apart
+          from kidney_function because it is defined as the part of cystatin C that filtration does not
+          explain.
+        status: agent_proposed
+        aliases:
+        - cystatin C residual
+        - non-GFR cystatin C
+        - CyC production
+        phenotypes:
+          cystatin_c_production:
+            label: Latent cystatin C production (SEM / GWAS-by-subtraction on eGFR-cystatin C vs eGFR-creatinine)
             sign: 1
   respiratory:
     label: Respiratory
@@ -1162,6 +1267,21 @@ domains:
         phenotypes:
           lipoprotein_a:
             label: Lipoprotein(a) concentration (nmol/L or mg/dL, incl. log-transformed)
+            sign: 1
+      polyunsaturated_fatty_acids:
+        label: Polyunsaturated fatty acids in blood
+        axis: higher circulating polyunsaturated fatty acids
+        valence: neutral
+        valence_basis: A metabolite level that mixes omega-3 and omega-6 fatty acids; higher is not clearly
+          good or bad on its own.
+        status: agent_proposed
+        aliases:
+        - PUFA
+        - omega-3 and omega-6
+        - unsaturated fat in blood
+        phenotypes:
+          other_pufa:
+            label: Polyunsaturated fatty acids other than linoleic acid (18:2), NMR (MAGNETIC otPUFA)
             sign: 1
   cardiovascular:
     label: Heart and blood vessels
@@ -1765,6 +1885,21 @@ domains:
           cervical_cancer:
             label: Cervical cancer (invasive cancer of the cervix uteri, ICD-10 C53, sometimes with in-situ
               D06; prevalent or incident)
+            sign: 1
+      kidney_cancer:
+        label: Kidney cancer
+        axis: higher risk of kidney cancer
+        valence: undesirable
+        valence_basis: Kidney (renal cell) cancer is a malignancy; higher risk is not wanted.
+        status: agent_proposed
+        aliases:
+        - renal cancer
+        - renal cell carcinoma
+        - RCC
+        - kidney tumour
+        phenotypes:
+          kidney_cancer:
+            label: Kidney / renal cell cancer (ICD-10 C64, phecode 189.11; prevalent or incident)
             sign: 1
   neurology:
     label: Brain and nervous system

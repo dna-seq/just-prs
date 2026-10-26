@@ -1,0 +1,381 @@
+slug: kidney
+query: kidney function, urate and kidney disease
+match:
+  terms:
+  - kidney cancer
+  - kidney stones
+  - microalbuminuria
+  - urate
+  - uric acid
+  efo_ids:
+  - EFO_0004531
+  - EFO_0004617
+  - EFO_0007778
+  - EFO_0007934
+  - EFO_0010733
+  - EFO_0010967
+  - EFO_0011005
+  - HP_0012594
+  - MONDO_0002367
+  - MONDO_0002492
+  - MONDO_0005086
+  - MONDO_0005206
+  - MONDO_0007009
+  - MONDO_0008171
+  - MONDO_0015129
+  - MONDO_0024647
+  - OBA_2050065
+  exclude: []
+anchor: PGS000076
+status: resolved
+concepts:
+- kidney.kidney_function
+- kidney.albuminuria
+- kidney.urine_creatinine
+- kidney.kidney_stones
+- kidney.acute_kidney_injury
+- kidney.cystatin_c_production
+- endocrine.gout
+- cancer.kidney_cancer
+- lipids.polyunsaturated_fatty_acids
+- endocrine.adrenal_insufficiency
+scores:
+  PGS000076:
+    decision: in_scope
+    note: null
+  PGS000126:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS000161:
+    decision: in_scope
+    note: null
+  PGS000605:
+    decision: in_scope
+    note: null
+  PGS000606:
+    decision: in_scope
+    note: null
+  PGS000679:
+    decision: in_scope
+    note: null
+  PGS000680:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS000690:
+    decision: in_scope
+    note: null
+  PGS000700:
+    decision: in_scope
+    note: null
+  PGS000701:
+    decision: in_scope
+    note: null
+  PGS000722:
+    decision: in_scope
+    note: null
+  PGS000755:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS000787:
+    decision: in_scope
+    note: null
+  PGS000822:
+    decision: in_scope
+    note: null
+  PGS000861:
+    decision: in_scope
+    note: null
+  PGS000972:
+    decision: in_scope
+    note: null
+  PGS001107:
+    decision: in_scope
+    note: null
+  PGS001250:
+    decision: in_scope
+    note: null
+  PGS001864:
+    decision: in_scope
+    note: null
+  PGS001944:
+    decision: in_scope
+    note: null
+  PGS001947:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS001967:
+    decision: in_scope
+    note: null
+  PGS001980:
+    decision: in_scope
+    note: null
+  PGS002010:
+    decision: in_scope
+    note: null
+  PGS002075:
+    decision: in_scope
+    note: null
+  PGS002162:
+    decision: in_scope
+    note: null
+  PGS002165:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS002185:
+    decision: in_scope
+    note: null
+  PGS002198:
+    decision: in_scope
+    note: null
+  PGS002229:
+    decision: in_scope
+    note: null
+  PGS002290:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003039:
+    decision: in_scope
+    note: not a kidney trait; curated on its own terms as lipids.polyunsaturated_fatty_acids
+  PGS003040:
+    decision: in_scope
+    note: not a kidney trait; curated on its own terms as lipids.polyunsaturated_fatty_acids
+  PGS003041:
+    decision: in_scope
+    note: not a kidney trait; curated on its own terms as lipids.polyunsaturated_fatty_acids
+  PGS003042:
+    decision: in_scope
+    note: not a kidney trait; curated on its own terms as lipids.polyunsaturated_fatty_acids
+  PGS003043:
+    decision: in_scope
+    note: not a kidney trait; curated on its own terms as lipids.polyunsaturated_fatty_acids
+  PGS003279:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003280:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003281:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003282:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003283:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003284:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003285:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003286:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003287:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003288:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003289:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003290:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003291:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003292:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003293:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003294:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003295:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003296:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003297:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003298:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003299:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003300:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003301:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003302:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003303:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003304:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003305:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003306:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003307:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003308:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003309:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003310:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003311:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003312:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003313:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003314:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003315:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003316:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003317:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003318:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003528:
+    decision: in_scope
+    note: already annotated by an earlier run (cystatin C / eGFR / serum urate); reused unchanged
+  PGS003553:
+    decision: in_scope
+    note: null
+  PGS003572:
+    decision: in_scope
+    note: null
+  PGS003589:
+    decision: in_scope
+    note: null
+  PGS003590:
+    decision: in_scope
+    note: null
+  PGS003744:
+    decision: in_scope
+    note: null
+  PGS003991:
+    decision: in_scope
+    note: null
+  PGS004007:
+    decision: in_scope
+    note: null
+  PGS004019:
+    decision: in_scope
+    note: null
+  PGS004033:
+    decision: in_scope
+    note: null
+  PGS004048:
+    decision: in_scope
+    note: null
+  PGS004061:
+    decision: in_scope
+    note: null
+  PGS004077:
+    decision: in_scope
+    note: null
+  PGS004091:
+    decision: in_scope
+    note: null
+  PGS004115:
+    decision: in_scope
+    note: null
+  PGS004131:
+    decision: in_scope
+    note: null
+  PGS004145:
+    decision: in_scope
+    note: null
+  PGS004161:
+    decision: in_scope
+    note: null
+  PGS004239:
+    decision: in_scope
+    note: not a kidney trait; curated on its own terms as endocrine.adrenal_insufficiency
+  PGS004245:
+    decision: in_scope
+    note: null
+  PGS004331:
+    decision: in_scope
+    note: null
+  PGS004343:
+    decision: in_scope
+    note: null
+  PGS004491:
+    decision: in_scope
+    note: null
+  PGS004493:
+    decision: in_scope
+    note: null
+  PGS004561:
+    decision: in_scope
+    note: null
+  PGS004563:
+    decision: in_scope
+    note: null
+  PGS004690:
+    decision: in_scope
+    note: null
+  PGS004739:
+    decision: in_scope
+    note: null
+  PGS004740:
+    decision: in_scope
+    note: null
+  PGS004741:
+    decision: in_scope
+    note: null
+  PGS004742:
+    decision: in_scope
+    note: null
+  PGS004896:
+    decision: in_scope
+    note: null
+  PGS004897:
+    decision: in_scope
+    note: null
+  PGS004908:
+    decision: in_scope
+    note: null
+summary: 'All 63 uncurated kidney-group scores are decided: 62 annotated and 1 left unannotated (PGS003042,
+  degenerate DBSLMM PUFA file). Urate scores join endocrine.gout/serum_urate; urea joins kidney_function
+  as blood_urea with sign -1 (higher urea = lower filtration), next to eGFR (+1), serum creatinine and
+  cystatin C (-1). New kidney concepts: albuminuria, urine_creatinine (neutral), kidney_stones, acute_kidney_injury
+  and cystatin_c_production (Kleeman 2023, read by one lookup). Kidney cancer is cancer.kidney_cancer;
+  the PUFA scores (lipids.polyunsaturated_fatty_acids, other_pufa) go to review because the catalog BETA
+  against total PUFA is negative; Addison disease is endocrine.adrenal_insufficiency. Most annotations
+  are catalog-only or reuse paper-wide Methods quotes, backed by OR/HR/BETA CIs or 1000G r with already-annotated
+  scores.'

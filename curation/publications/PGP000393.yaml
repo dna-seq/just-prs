@@ -9568,6 +9568,130 @@ scores:
       effects (template rule). Higher = more frequent sleeplessness. Corroborated by catalog OR 1.101 [1.056, 1.147]
       vs the MGI insomnia PheCode (CI excludes 1) and 1000G EUR r = +0.73/+0.87 with the Prive UKB-1200 scores PGS001932/PGS002149
       (read).
+  PGS003039:
+    cluster: lipids.polyunsaturated_fatty_acids
+    phenotype: other_pufa
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PUFA other than linoleic acid (MAGNETIC NMR otPUFA)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: evaluated on UKB total PUFA (mostly linoleic acid), where FADS1 effects run opposite to otPUFA
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: ExPRSweb_PUFAs_MAGNETIC-otPUFA_LASSOSUM_UKB_20211120
+      confidence: medium
+    - &id008
+      source: full_text
+      locator: Methods > PRS construction
+      quote: is the log odds ratios retrieved from the external GWAS summary statistics for variant
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs174547-C (FADS1) weight -0.40 in PGS003040/PGS003041; other top loci are in the FADS cluster
+    review_reason: paper evaluation BETA against UKB PUFA is negative; direction rests on the method rule and FADS1
+      lead variant
+    status: agent_proposed
+    notes: Exposure PRS from the MAGNETIC NMR GWAS of otPUFA (PUFA other than 18:2); weights are that GWAS's effect
+      sizes. The FADS1 lead variant rs174547-C (chr11:61803311) carries a negative weight in the C+T scores, matching
+      its known lowering of long-chain non-linoleic PUFA. The catalog BETA (about -0.01 to -0.02) is against UKB
+      total PUFA, which is dominated by linoleic acid, on which FADS1 acts the other way.
+  PGS003040:
+    cluster: lipids.polyunsaturated_fatty_acids
+    phenotype: other_pufa
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PUFA other than linoleic acid (MAGNETIC NMR otPUFA)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: evaluated on UKB total PUFA (mostly linoleic acid), where FADS1 effects run opposite to otPUFA
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: ExPRSweb_PUFAs_MAGNETIC-otPUFA_PT_UKB_20211120
+      confidence: medium
+    - *id008
+    lead_variant_check:
+      status: agree
+      note: rs174547-C (FADS1) weight -0.40 in PGS003040/PGS003041; other top loci are in the FADS cluster
+    review_reason: paper evaluation BETA against UKB PUFA is negative; direction rests on the method rule and FADS1
+      lead variant
+    status: agent_proposed
+    notes: Exposure PRS from the MAGNETIC NMR GWAS of otPUFA (PUFA other than 18:2); weights are that GWAS's effect
+      sizes. The FADS1 lead variant rs174547-C (chr11:61803311) carries a negative weight in the C+T scores, matching
+      its known lowering of long-chain non-linoleic PUFA. The catalog BETA (about -0.01 to -0.02) is against UKB
+      total PUFA, which is dominated by linoleic acid, on which FADS1 acts the other way.
+  PGS003041:
+    cluster: lipids.polyunsaturated_fatty_acids
+    phenotype: other_pufa
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PUFA other than linoleic acid (MAGNETIC NMR otPUFA)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: evaluated on UKB total PUFA (mostly linoleic acid), where FADS1 effects run opposite to otPUFA
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: ExPRSweb_PUFAs_MAGNETIC-otPUFA_PLINK_UKB_20211120
+      confidence: medium
+    - *id008
+    lead_variant_check:
+      status: agree
+      note: rs174547-C (FADS1) weight -0.40 in PGS003040/PGS003041; other top loci are in the FADS cluster
+    review_reason: paper evaluation BETA against UKB PUFA is negative; direction rests on the method rule and FADS1
+      lead variant
+    status: agent_proposed
+    notes: Exposure PRS from the MAGNETIC NMR GWAS of otPUFA (PUFA other than 18:2); weights are that GWAS's effect
+      sizes. The FADS1 lead variant rs174547-C (chr11:61803311) carries a negative weight in the C+T scores, matching
+      its known lowering of long-chain non-linoleic PUFA. The catalog BETA (about -0.01 to -0.02) is against UKB
+      total PUFA, which is dominated by linoleic acid, on which FADS1 acts the other way.
+  PGS003043:
+    cluster: lipids.polyunsaturated_fatty_acids
+    phenotype: other_pufa
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PUFA other than linoleic acid (MAGNETIC NMR otPUFA)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: evaluated on UKB total PUFA (mostly linoleic acid), where FADS1 effects run opposite to otPUFA
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: ExPRSweb_PUFAs_MAGNETIC-otPUFA_PRSCS_UKB_20211120
+      confidence: medium
+    - *id008
+    lead_variant_check:
+      status: agree
+      note: rs174547-C (FADS1) weight -0.40 in PGS003040/PGS003041; other top loci are in the FADS cluster
+    review_reason: paper evaluation BETA against UKB PUFA is negative; direction rests on the method rule and FADS1
+      lead variant
+    status: agent_proposed
+    notes: Exposure PRS from the MAGNETIC NMR GWAS of otPUFA (PUFA other than 18:2); weights are that GWAS's effect
+      sizes. The FADS1 lead variant rs174547-C (chr11:61803311) carries a negative weight in the C+T scores, matching
+      its known lowering of long-chain non-linoleic PUFA. The catalog BETA (about -0.01 to -0.02) is against UKB
+      total PUFA, which is dominated by linoleic acid, on which FADS1 acts the other way.
+  PGS003042:
+    score_effect: null
+    unannotated_reason: 'DBSLMM file looks degenerate: top weights are ~1e-5 at one chr7 locus and it is uncorrelated
+      with the four other otPUFA scores in 1000G EUR (r ~ 0)'
 paper:
   pmid: '36152628'
   doi: 10.1016/j.ajhg.2022.09.001

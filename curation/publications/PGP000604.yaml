@@ -3303,6 +3303,105 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read); PGS Catalog weights are per-allele effects on the reported
       trait. PRSmix combination; 1000G EUR r=+0.90 with PGS002761.
+  PGS004739:
+    cluster: kidney.kidney_function
+    phenotype: blood_urea
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood urea level
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: BUN_PRSmix_eur
+      confidence: medium
+    - &id001
+      source: full_text
+      locator: Results > overview of PRSmix framework
+      quote: The final per-allele effect sizes are estimated as the weighted sum of the SNP effects across different
+        single scores.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'PRSmix/PRSmix+ for blood urea nitrogen (BUN); weights are a weighted sum of trait-aligned SNP effects.
+      1000G EUR r>=+0.51 with the other urea scores. Polarity -1: higher urea = lower filtration.'
+  PGS004740:
+    cluster: kidney.kidney_function
+    phenotype: blood_urea
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood urea level
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata:
+      ancestry: south_asian
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: BUN_PRSmix_sas
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'PRSmix/PRSmix+ for blood urea nitrogen (BUN); weights are a weighted sum of trait-aligned SNP effects.
+      1000G EUR r>=+0.51 with the other urea scores. Polarity -1: higher urea = lower filtration.'
+  PGS004741:
+    cluster: kidney.kidney_function
+    phenotype: blood_urea
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood urea level
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: BUN_PRSmixPlus_eur
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'PRSmix/PRSmix+ for blood urea nitrogen (BUN); weights are a weighted sum of trait-aligned SNP effects.
+      1000G EUR r>=+0.51 with the other urea scores. Polarity -1: higher urea = lower filtration.'
+  PGS004742:
+    cluster: kidney.kidney_function
+    phenotype: blood_urea
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood urea level
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata:
+      ancestry: south_asian
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: BUN_PRSmixPlus_sas
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: 'PRSmix/PRSmix+ for blood urea nitrogen (BUN); weights are a weighted sum of trait-aligned SNP effects.
+      1000G EUR r>=+0.51 with the other urea scores. Polarity -1: higher urea = lower filtration.'
 paper:
   pmid: '38508198'
   doi: 10.1016/j.xgen.2024.100523

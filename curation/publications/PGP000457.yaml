@@ -1442,3 +1442,54 @@ scores:
     status: agent_proposed
     notes: LDpred2-auto on the paper's own UKB GWAS of myopia diagnosis. 1000G EUR r=+0.92 with PGS002211 (Privé
       myopia) and -0.58 with PGS003860.
+  PGS003572:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: cont-decay-urate
+      confidence: medium
+    - &id001
+      source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of urate, so the sign follows the phenotype. 1000G EUR r=+0.44 (mean)
+      with the annotated urate scores.
+  PGS003553:
+    cluster: kidney.kidney_function
+    phenotype: blood_urea
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood urea level
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: cont-decay-log_urea
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of log urea, so the sign follows the phenotype. Higher urea = lower
+      filtration, hence polarity -1.

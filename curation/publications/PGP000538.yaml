@@ -1,0 +1,24 @@
+pgp_id: PGP000538
+scores:
+  PGS004239:
+    cluster: endocrine.adrenal_insufficiency
+    phenotype: autoimmune_addisons_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of autoimmune Addison's disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Autoimmune Addison's disease
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Corroborated by OR 6.4 [5.2, 8] against autoimmune Addison's
+      disease.

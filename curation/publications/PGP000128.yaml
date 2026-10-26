@@ -659,6 +659,102 @@ scores:
       HR 1.18 (1.11-1.27). The catalog HR 1.67 for this score comes from another publication (PGP000708, Ding 2024).
       Low 1000G EUR r (+0.07 to +0.15) with other cirrhosis scores because biomarker PRSs (GPT, bilirubin, GGT)
       dominate the weights.'
+  PGS000700:
+    cluster: endocrine.gout
+    phenotype: serum_urate
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum urate level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Urate [umol/L]
+      confidence: medium
+    - &id001
+      source: full_text
+      locator: Methods > Polygenic prediction within and across populations
+      quote: For each biomarker phenotype, we applied the R snpnet package for the log-transformed and covariate-adjusted
+        phenotypes and regression coefficients, BETAs
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on log urate, so weights point to higher urate. 1000G EUR r=+0.43 (mean) with
+      the annotated urate scores PGS000126/PGS000755/PGS002290.
+  PGS000701:
+    cluster: kidney.kidney_function
+    phenotype: blood_urea
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: blood urea level
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Urea [mmol/L]
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on log urea. Higher urea = lower filtration, hence polarity -1. 1000G EUR
+      r=+0.46 to +0.86 with the other urea scores.
+  PGS000679:
+    cluster: kidney.urine_creatinine
+    phenotype: urine_creatinine
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: creatinine concentration in urine
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Creatinine in urine [umol/L]
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on log urine creatinine; 1000G EUR r=+0.53 with the two Privé urine creatinine
+      scores.
+  PGS000690:
+    cluster: kidney.albuminuria
+    phenotype: urine_microalbumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: microalbumin concentration in urine
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Microalbumin in urine [mg/L]
+      confidence: medium
+    - *id001
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on log urine microalbumin; 1000G EUR r=+0.29 with PGS000972.
 paper:
   pmid: '33462484'
   doi: 10.1038/s41588-020-00757-z

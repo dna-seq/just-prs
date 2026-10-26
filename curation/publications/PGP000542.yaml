@@ -117,6 +117,27 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by HR 1.18 [1.08, 1.28] on lung cancer; 1000G EUR r=+0.9 with PGS000078.
+  PGS004245:
+    cluster: cancer.kidney_cancer
+    phenotype: kidney_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of kidney cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Kidney cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Corroborated by HR 1.22 [1.02, 1.45] against kidney cancer.
 paper:
   pmid: '37087533'
   doi: 10.1038/s41698-023-00377-w

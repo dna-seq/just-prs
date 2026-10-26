@@ -1999,6 +1999,306 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; PRSmixPlus (EUR) for depression; 1000G EUR r=+0.83 with PGS004759, r=+0.50 with PGS002759 (OR 1.26),
       r=+0.19 with anchor PGS004885.
+  PGS004771:
+    cluster: blood.red_cell_count
+    phenotype: hematocrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: hematocrit (percentage of blood volume taken by red cells)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hematocrit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.81 with PGS000092 (same phenotype, read seed paper PGP000051). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.60).
+  PGS004772:
+    cluster: blood.red_cell_count
+    phenotype: hematocrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: hematocrit (percentage of blood volume taken by red cells)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hematocrit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.83 with PGS001225 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.62).
+  PGS004773:
+    cluster: blood.red_cell_count
+    phenotype: hematocrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: hematocrit (percentage of blood volume taken by red cells)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hematocrit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.80 with PGS000092 (same phenotype, read seed paper PGP000051). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.60).
+  PGS004774:
+    cluster: blood.red_cell_count
+    phenotype: hematocrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: hematocrit (percentage of blood volume taken by red cells)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hematocrit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.83 with PGS001225 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.62).
+  PGS004821:
+    cluster: blood.red_cell_count
+    phenotype: red_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red blood cell (erythrocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red blood cell count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.85 with PGS000110 (same phenotype, read seed paper PGP000051). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.27).
+  PGS004822:
+    cluster: blood.red_cell_count
+    phenotype: red_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red blood cell (erythrocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red blood cell count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.86 with PGS000110 (same phenotype, read seed paper PGP000051). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.30).
+  PGS004823:
+    cluster: blood.red_cell_count
+    phenotype: red_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red blood cell (erythrocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red blood cell count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.83 with PGS000110 (same phenotype, read seed paper PGP000051). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.26).
+  PGS004824:
+    cluster: blood.red_cell_count
+    phenotype: red_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red blood cell (erythrocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red blood cell count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS000110 (same phenotype, read seed paper PGP000051). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.31).
+  PGS004825:
+    cluster: blood.red_cell_distribution_width
+    phenotype: red_cell_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red cell distribution width (variation in red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red cell distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.80 with PGS001152 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.55).
+  PGS004826:
+    cluster: blood.red_cell_distribution_width
+    phenotype: red_cell_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red cell distribution width (variation in red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red cell distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.79 with PGS001152 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.54).
+  PGS004827:
+    cluster: blood.red_cell_distribution_width
+    phenotype: red_cell_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red cell distribution width (variation in red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red cell distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.75 with PGS001152 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.53).
+  PGS004828:
+    cluster: blood.red_cell_distribution_width
+    phenotype: red_cell_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red cell distribution width (variation in red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red cell distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.79 with PGS001152 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.54).
 paper:
   pmid: '38508198'
   doi: 10.1016/j.xgen.2024.100523

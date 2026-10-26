@@ -789,6 +789,231 @@ scores:
     notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
       r = +1.00 with PGS003901 (fat-free mass, same paper) and +0.88 with PGS001002; not an inverted deposit (unlike
       PGS004373). Its only negative partner is the impedance score PGS003540 (r = -0.47), which is expected physiology.
+  PGS003925:
+    cluster: blood.red_cell_count
+    phenotype: red_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red blood cell (erythrocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red blood cell (erythrocyte) count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.88 with PGS001240 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.26).
+  PGS003927:
+    cluster: blood.red_cell_count
+    phenotype: hematocrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: hematocrit (percentage of blood volume taken by red cells)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hematocrit percentage
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.88 with PGS001225 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.57).
+  PGS003928:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular volume (average red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.90 with PGS001220 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.60).
+  PGS003929:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_hemoglobin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular hemoglobin (hemoglobin per red cell)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.89 with PGS001219 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.16).
+  PGS003930:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular hemoglobin concentration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.81 with PGS001218 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.62).
+  PGS003931:
+    cluster: blood.red_cell_distribution_width
+    phenotype: red_cell_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red cell distribution width (variation in red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red blood cell (erythrocyte) distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS001152 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.49).
+  PGS003948:
+    cluster: blood.red_cell_indices
+    phenotype: mean_reticulocyte_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean reticulocyte volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean reticulocyte volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.92 with PGS000987 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.57).
+  PGS003949:
+    cluster: blood.red_cell_indices
+    phenotype: mean_sphered_cell_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean sphered cell volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean sphered cell volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.68 with PGS000181 (same phenotype, read seed paper PGP000078). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.59).
+  PGS003950:
+    cluster: blood.reticulocyte_count
+    phenotype: immature_reticulocyte_fraction
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: immature reticulocyte fraction
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Immature reticulocyte fraction
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.89 with PGS001408 (same phenotype, read seed paper PGP000244). 1000G
+      EUR r with every other score of this phenotype is positive (min +0.53).
 paper:
   pmid: '37890495'
   doi: 10.1016/j.ajhg.2023.09.013

@@ -144,6 +144,357 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR r=+0.71 with PGS001238 (read); +0.76 with PGS000109, same phenotype. Built
       from the UKB+INTERVAL blood-trait GWAS.
+  PGS000167:
+    cluster: blood.red_cell_count
+    phenotype: hematocrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: hematocrit (percentage of blood volume taken by red cells)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: The polygenic scores (PGSs) were computed as weighted sums of genotypes, weighted by their effect size
+        on the phenotype (beta coefficient), using the PLINK score function.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: Positive effect alleles were included in order to get a positive contribution for each carried allele
+        and consequently a positive correlation with the phenotype.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Phenotype modeling and cohort level GWAS
+      quote: then inverse normalized for cohort level association analysis or GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hematocrit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Genome-wide significant variants weighted by UK Biobank/INTERVAL GWAS betas on the inverse-normalised
+      trait (Vuckovic 2020); the paper states effect alleles are aligned to give a positive correlation with the
+      phenotype. 1000G EUR r=+0.67 with PGS000092 (same phenotype, another seed paper).
+  PGS000171:
+    cluster: blood.reticulocyte_count
+    phenotype: immature_reticulocyte_fraction
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: immature reticulocyte fraction
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: The polygenic scores (PGSs) were computed as weighted sums of genotypes, weighted by their effect size
+        on the phenotype (beta coefficient), using the PLINK score function.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: Positive effect alleles were included in order to get a positive contribution for each carried allele
+        and consequently a positive correlation with the phenotype.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Phenotype modeling and cohort level GWAS
+      quote: then inverse normalized for cohort level association analysis or GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Immature fraction of reticulocytes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Genome-wide significant variants weighted by UK Biobank/INTERVAL GWAS betas on the inverse-normalised
+      trait (Vuckovic 2020); the paper states effect alleles are aligned to give a positive correlation with the
+      phenotype. 1000G EUR r=+0.74 with PGS000096 (same phenotype, another seed paper).
+  PGS000174:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_hemoglobin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular hemoglobin (hemoglobin per red cell)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: The polygenic scores (PGSs) were computed as weighted sums of genotypes, weighted by their effect size
+        on the phenotype (beta coefficient), using the PLINK score function.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: Positive effect alleles were included in order to get a positive contribution for each carried allele
+        and consequently a positive correlation with the phenotype.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Phenotype modeling and cohort level GWAS
+      quote: then inverse normalized for cohort level association analysis or GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Genome-wide significant variants weighted by UK Biobank/INTERVAL GWAS betas on the inverse-normalised
+      trait (Vuckovic 2020); the paper states effect alleles are aligned to give a positive correlation with the
+      phenotype. 1000G EUR r=+0.80 with PGS000099 (same phenotype, another seed paper).
+  PGS000175:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: The polygenic scores (PGSs) were computed as weighted sums of genotypes, weighted by their effect size
+        on the phenotype (beta coefficient), using the PLINK score function.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: Positive effect alleles were included in order to get a positive contribution for each carried allele
+        and consequently a positive correlation with the phenotype.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Phenotype modeling and cohort level GWAS
+      quote: then inverse normalized for cohort level association analysis or GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular hemoglobin concentration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Genome-wide significant variants weighted by UK Biobank/INTERVAL GWAS betas on the inverse-normalised
+      trait (Vuckovic 2020); the paper states effect alleles are aligned to give a positive correlation with the
+      phenotype. 1000G EUR r=+0.71 with PGS000100 (same phenotype, another seed paper).
+  PGS000176:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular volume (average red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: The polygenic scores (PGSs) were computed as weighted sums of genotypes, weighted by their effect size
+        on the phenotype (beta coefficient), using the PLINK score function.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: Positive effect alleles were included in order to get a positive contribution for each carried allele
+        and consequently a positive correlation with the phenotype.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Phenotype modeling and cohort level GWAS
+      quote: then inverse normalized for cohort level association analysis or GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Genome-wide significant variants weighted by UK Biobank/INTERVAL GWAS betas on the inverse-normalised
+      trait (Vuckovic 2020); the paper states effect alleles are aligned to give a positive correlation with the
+      phenotype. 1000G EUR r=+0.79 with PGS000101 (same phenotype, another seed paper).
+  PGS000180:
+    cluster: blood.red_cell_indices
+    phenotype: mean_reticulocyte_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean reticulocyte volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: The polygenic scores (PGSs) were computed as weighted sums of genotypes, weighted by their effect size
+        on the phenotype (beta coefficient), using the PLINK score function.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: Positive effect alleles were included in order to get a positive contribution for each carried allele
+        and consequently a positive correlation with the phenotype.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Phenotype modeling and cohort level GWAS
+      quote: then inverse normalized for cohort level association analysis or GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean reticulocyte volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Genome-wide significant variants weighted by UK Biobank/INTERVAL GWAS betas on the inverse-normalised
+      trait (Vuckovic 2020); the paper states effect alleles are aligned to give a positive correlation with the
+      phenotype. 1000G EUR r=+0.74 with PGS000987 (same phenotype, another seed paper).
+  PGS000181:
+    cluster: blood.red_cell_indices
+    phenotype: mean_sphered_cell_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean sphered cell volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: The polygenic scores (PGSs) were computed as weighted sums of genotypes, weighted by their effect size
+        on the phenotype (beta coefficient), using the PLINK score function.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: Positive effect alleles were included in order to get a positive contribution for each carried allele
+        and consequently a positive correlation with the phenotype.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Phenotype modeling and cohort level GWAS
+      quote: then inverse normalized for cohort level association analysis or GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean sphered corpuscular volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Genome-wide significant variants weighted by UK Biobank/INTERVAL GWAS betas on the inverse-normalised
+      trait (Vuckovic 2020); the paper states effect alleles are aligned to give a positive correlation with the
+      phenotype.
+  PGS000187:
+    cluster: blood.red_cell_count
+    phenotype: red_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red blood cell (erythrocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: The polygenic scores (PGSs) were computed as weighted sums of genotypes, weighted by their effect size
+        on the phenotype (beta coefficient), using the PLINK score function.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: Positive effect alleles were included in order to get a positive contribution for each carried allele
+        and consequently a positive correlation with the phenotype.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Phenotype modeling and cohort level GWAS
+      quote: then inverse normalized for cohort level association analysis or GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red blood cell count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Genome-wide significant variants weighted by UK Biobank/INTERVAL GWAS betas on the inverse-normalised
+      trait (Vuckovic 2020); the paper states effect alleles are aligned to give a positive correlation with the
+      phenotype. 1000G EUR r=+0.74 with PGS000110 (same phenotype, another seed paper).
+  PGS000188:
+    cluster: blood.red_cell_distribution_width
+    phenotype: red_cell_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red cell distribution width (variation in red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: The polygenic scores (PGSs) were computed as weighted sums of genotypes, weighted by their effect size
+        on the phenotype (beta coefficient), using the PLINK score function.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Polygenic scores
+      quote: Positive effect alleles were included in order to get a positive contribution for each carried allele
+        and consequently a positive correlation with the phenotype.
+      confidence: high
+    - source: full_text
+      locator: STAR Methods > Phenotype modeling and cohort level GWAS
+      quote: then inverse normalized for cohort level association analysis or GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red cell distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Genome-wide significant variants weighted by UK Biobank/INTERVAL GWAS betas on the inverse-normalised
+      trait (Vuckovic 2020); the paper states effect alleles are aligned to give a positive correlation with the
+      phenotype. 1000G EUR r=+0.71 with PGS001152 (same phenotype, another seed paper).
 paper:
   pmid: '32888494'
   doi: 10.1016/j.cell.2020.08.008

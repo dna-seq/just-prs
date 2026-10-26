@@ -1937,6 +1937,13 @@ domains:
             sign: 1
             aliases:
             - HLSR percentage
+          immature_reticulocyte_fraction:
+            label: Immature reticulocyte fraction (share of reticulocytes that are immature, high/medium
+              fluorescence)
+            sign: 1
+            aliases:
+            - IRF
+            - immature reticulocytes
       hemoglobin:
         label: Hemoglobin concentration
         axis: higher hemoglobin concentration
@@ -1985,6 +1992,92 @@ domains:
             aliases:
             - low platelets in pregnancy
             - pregnancy thrombocytopenia
+      red_cell_count:
+        label: Red blood cell count and hematocrit
+        axis: more red blood cells (higher count and packed-cell volume)
+        valence: context_dependent
+        valence_basis: Too few red cells (anemia) and too many (polycythemia, erythrocytosis) are both
+          unhealthy; within the normal range neither direction is better.
+        status: agent_proposed
+        aliases:
+        - red blood cells
+        - RBC
+        - erythrocytes
+        - packed cell volume
+        - low red blood cell count
+        phenotypes:
+          red_blood_cell_count:
+            label: Red blood cell (erythrocyte) count
+            sign: 1
+            aliases:
+            - RBC count
+            - erythrocyte count
+          hematocrit:
+            label: Hematocrit (percentage of blood volume made up of red cells)
+            sign: 1
+            aliases:
+            - HCT
+            - haematocrit
+            - PCV
+      red_cell_indices:
+        label: Red blood cell size and hemoglobin content (MCV, MCH, MCHC)
+        axis: larger, more hemoglobin-rich red cells
+        valence: context_dependent
+        valence_basis: Small, pale red cells (microcytosis, e.g. iron deficiency or thalassemia trait)
+          and large red cells (macrocytosis, e.g. low B12 or folate) both signal disease; within the normal
+          range neither direction is better.
+        status: agent_proposed
+        aliases:
+        - MCV
+        - MCH
+        - MCHC
+        - red cell size
+        - red blood cell indices
+        phenotypes:
+          mean_corpuscular_volume:
+            label: Mean corpuscular volume (average red cell volume, fL)
+            sign: 1
+            aliases:
+            - MCV
+            - red cell volume
+          mean_sphered_cell_volume:
+            label: Mean sphered cell volume (red cell volume measured after sphering)
+            sign: 1
+            aliases:
+            - MSCV
+          mean_reticulocyte_volume:
+            label: Mean reticulocyte volume (average volume of young red cells)
+            sign: 1
+            aliases:
+            - MRV
+          mean_corpuscular_hemoglobin:
+            label: Mean corpuscular hemoglobin (hemoglobin per red cell, pg)
+            sign: 1
+            aliases:
+            - MCH
+          mean_corpuscular_hemoglobin_concentration:
+            label: Mean corpuscular hemoglobin concentration (hemoglobin per volume of red cells)
+            sign: 1
+            aliases:
+            - MCHC
+      red_cell_distribution_width:
+        label: Red cell distribution width (variation in red cell size)
+        axis: more variable red cell size (higher RDW)
+        valence: neutral
+        valence_basis: A clearly raised RDW (anisocytosis) accompanies anemias and predicts poorer health,
+          but the polygenic score tracks variation inside the normal range, where neither end is better.
+        status: agent_proposed
+        aliases:
+        - RDW
+        - anisocytosis
+        - red cell size variation
+        - uneven red blood cell size
+        phenotypes:
+          red_cell_distribution_width:
+            label: Red cell distribution width (RDW, %)
+            sign: 1
+            aliases:
+            - RDW-CV
   musculoskeletal:
     label: Bones, joints and muscles
     concepts:

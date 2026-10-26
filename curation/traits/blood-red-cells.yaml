@@ -1,0 +1,553 @@
+slug: blood-red-cells
+query: red blood cell traits (counts, indices, reticulocytes)
+match:
+  terms:
+  - erythrocyte count
+  - haematocrit
+  - hematocrit
+  - mean corpuscular
+  - red blood cell count
+  - red cell distribution width
+  efo_ids:
+  - EFO_0004305
+  - EFO_0004348
+  - EFO_0004509
+  - EFO_0004527
+  - EFO_0004528
+  - EFO_0007986
+  - EFO_0009188
+  - EFO_0010701
+  - OBA_0002272
+  - OBA_0003460
+  exclude: []
+anchor: PGS000092
+status: resolved
+concepts:
+- blood.red_cell_count
+- blood.red_cell_indices
+- blood.red_cell_distribution_width
+- blood.reticulocyte_count
+- blood.hemoglobin
+scores:
+  PGS000092:
+    decision: in_scope
+    note: null
+  PGS000093:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS000094:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS000095:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_percentage); reused
+  PGS000096:
+    decision: in_scope
+    note: null
+  PGS000099:
+    decision: in_scope
+    note: null
+  PGS000100:
+    decision: in_scope
+    note: null
+  PGS000101:
+    decision: in_scope
+    note: null
+  PGS000110:
+    decision: in_scope
+    note: null
+  PGS000111:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_count); reused
+  PGS000112:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_percentage); reused
+  PGS000167:
+    decision: in_scope
+    note: null
+  PGS000168:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS000169:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS000170:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_percentage); reused
+  PGS000171:
+    decision: in_scope
+    note: null
+  PGS000174:
+    decision: in_scope
+    note: null
+  PGS000175:
+    decision: in_scope
+    note: null
+  PGS000176:
+    decision: in_scope
+    note: null
+  PGS000180:
+    decision: in_scope
+    note: null
+  PGS000181:
+    decision: in_scope
+    note: null
+  PGS000187:
+    decision: in_scope
+    note: null
+  PGS000188:
+    decision: in_scope
+    note: null
+  PGS000189:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_count); reused
+  PGS000190:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_percentage); reused
+  PGS000987:
+    decision: in_scope
+    note: null
+  PGS000988:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_percentage); reused
+  PGS000989:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_percentage); reused
+  PGS001152:
+    decision: in_scope
+    note: null
+  PGS001218:
+    decision: in_scope
+    note: null
+  PGS001219:
+    decision: in_scope
+    note: null
+  PGS001220:
+    decision: in_scope
+    note: null
+  PGS001225:
+    decision: in_scope
+    note: null
+  PGS001240:
+    decision: in_scope
+    note: null
+  PGS001400:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS001406:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS001408:
+    decision: in_scope
+    note: null
+  PGS001528:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_count); reused
+  PGS001908:
+    decision: in_scope
+    note: null
+  PGS001909:
+    decision: in_scope
+    note: null
+  PGS001925:
+    decision: in_scope
+    note: null
+  PGS001926:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS001930:
+    decision: in_scope
+    note: null
+  PGS001959:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS001976:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_count); reused
+  PGS001989:
+    decision: in_scope
+    note: null
+  PGS001990:
+    decision: in_scope
+    note: null
+  PGS002003:
+    decision: in_scope
+    note: null
+  PGS002122:
+    decision: in_scope
+    note: null
+  PGS002123:
+    decision: in_scope
+    note: null
+  PGS002141:
+    decision: in_scope
+    note: null
+  PGS002142:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS002147:
+    decision: in_scope
+    note: null
+  PGS002177:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS002194:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_count); reused
+  PGS002206:
+    decision: in_scope
+    note: null
+  PGS002207:
+    decision: in_scope
+    note: null
+  PGS002221:
+    decision: in_scope
+    note: null
+  PGS002333:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS002339:
+    decision: in_scope
+    note: null
+  PGS002345:
+    decision: in_scope
+    note: null
+  PGS002346:
+    decision: in_scope
+    note: null
+  PGS002371:
+    decision: in_scope
+    note: null
+  PGS002374:
+    decision: in_scope
+    note: null
+  PGS002405:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS002411:
+    decision: in_scope
+    note: null
+  PGS002417:
+    decision: in_scope
+    note: null
+  PGS002418:
+    decision: in_scope
+    note: null
+  PGS002454:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS002460:
+    decision: in_scope
+    note: null
+  PGS002466:
+    decision: in_scope
+    note: null
+  PGS002467:
+    decision: in_scope
+    note: null
+  PGS002503:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS002509:
+    decision: in_scope
+    note: null
+  PGS002515:
+    decision: in_scope
+    note: null
+  PGS002516:
+    decision: in_scope
+    note: null
+  PGS002552:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS002558:
+    decision: in_scope
+    note: null
+  PGS002564:
+    decision: in_scope
+    note: null
+  PGS002565:
+    decision: in_scope
+    note: null
+  PGS002601:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS002607:
+    decision: in_scope
+    note: null
+  PGS002613:
+    decision: in_scope
+    note: null
+  PGS002614:
+    decision: in_scope
+    note: null
+  PGS002650:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS002656:
+    decision: in_scope
+    note: null
+  PGS002662:
+    decision: in_scope
+    note: null
+  PGS002663:
+    decision: in_scope
+    note: null
+  PGS002699:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS002705:
+    decision: in_scope
+    note: null
+  PGS002711:
+    decision: in_scope
+    note: null
+  PGS002712:
+    decision: in_scope
+    note: null
+  PGS003425:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS003467:
+    decision: in_scope
+    note: null
+  PGS003468:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS003478:
+    decision: in_scope
+    note: null
+  PGS003502:
+    decision: in_scope
+    note: null
+  PGS003503:
+    decision: in_scope
+    note: null
+  PGS003511:
+    decision: in_scope
+    note: null
+  PGS003512:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS003515:
+    decision: in_scope
+    note: null
+  PGS003551:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_count); reused
+  PGS003560:
+    decision: in_scope
+    note: null
+  PGS003561:
+    decision: in_scope
+    note: null
+  PGS003567:
+    decision: in_scope
+    note: null
+  PGS003570:
+    decision: in_scope
+    note: null
+  PGS003925:
+    decision: in_scope
+    note: null
+  PGS003926:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS003927:
+    decision: in_scope
+    note: null
+  PGS003928:
+    decision: in_scope
+    note: null
+  PGS003929:
+    decision: in_scope
+    note: null
+  PGS003930:
+    decision: in_scope
+    note: null
+  PGS003931:
+    decision: in_scope
+    note: null
+  PGS003946:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_percentage); reused
+  PGS003947:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_count); reused
+  PGS003948:
+    decision: in_scope
+    note: null
+  PGS003949:
+    decision: in_scope
+    note: null
+  PGS003950:
+    decision: in_scope
+    note: null
+  PGS003951:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_percentage); reused
+  PGS003952:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS004346:
+    decision: in_scope
+    note: null
+  PGS004347:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004348:
+    decision: in_scope
+    note: null
+  PGS004349:
+    decision: in_scope
+    note: null
+  PGS004350:
+    decision: in_scope
+    note: null
+  PGS004351:
+    decision: in_scope
+    note: null
+  PGS004363:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_percentage); reused
+  PGS004364:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.reticulocyte_count); reused
+  PGS004365:
+    decision: in_scope
+    note: null
+  PGS004366:
+    decision: in_scope
+    note: null
+  PGS004367:
+    decision: in_scope
+    note: null
+  PGS004368:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_percentage); reused
+  PGS004369:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.reticulocyte_count.hlsr_count); reused
+  PGS004769:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004770:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004771:
+    decision: in_scope
+    note: null
+  PGS004772:
+    decision: in_scope
+    note: null
+  PGS004773:
+    decision: in_scope
+    note: null
+  PGS004774:
+    decision: in_scope
+    note: null
+  PGS004821:
+    decision: in_scope
+    note: null
+  PGS004822:
+    decision: in_scope
+    note: null
+  PGS004823:
+    decision: in_scope
+    note: null
+  PGS004824:
+    decision: in_scope
+    note: null
+  PGS004825:
+    decision: in_scope
+    note: null
+  PGS004826:
+    decision: in_scope
+    note: null
+  PGS004827:
+    decision: in_scope
+    note: null
+  PGS004828:
+    decision: in_scope
+    note: null
+  PGS004956:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004957:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004958:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004959:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004960:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004961:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004962:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004963:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004964:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004965:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004966:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004967:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS004968:
+    decision: in_scope
+    note: already annotated in an earlier batch (blood.hemoglobin.hemoglobin_concentration); reused
+  PGS005172:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+  PGS005176:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+  PGS005177:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+  PGS005178:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+  PGS005179:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+  PGS005180:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+  PGS005185:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+  PGS005186:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+  PGS005187:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+  PGS005195:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+  PGS005196:
+    decision: out_of_scope
+    note: 'variance PGS (vQTL-based, PGP000723): predicts dispersion of the trait, not its level'
+summary: '171 red-cell scores from 13 papers. 160 are in scope and all point the same way: a higher score
+  means a higher measured value. New concepts: blood.red_cell_count (red cell count, hematocrit), blood.red_cell_indices
+  (MCV, MSCV, mean reticulocyte volume, MCH, MCHC) and blood.red_cell_distribution_width (RDW); immature
+  reticulocyte fraction joins blood.reticulocyte_count, and the 58 hemoglobin and reticulocyte scores
+  curated earlier are reused. Seeds come from three papers already read (Xu 2022 elastic net, Vuckovic
+  2020 aligned GWAS betas, Tanigawa 2022 snpnet template); the other 79 are catalog-only, corroborated
+  by 1000G EUR r >= +0.2 with a seed of the same phenotype. One BBJ-trained MCH score (PGS002371, max
+  r +0.18) is in review. The 11 PGP000723 variance (vQTL) scores are out of scope. No lookups were needed
+  and no same-concept pair is anti-correlated after alignment.'

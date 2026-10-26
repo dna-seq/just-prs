@@ -14109,3 +14109,283 @@ scores:
     notes: snpnet Gaussian model on the median measured value (Tanigawa paper template). Catalog-only. Higher heel
       quantitative ultrasound index (QUI) means denser bone. 1000G EUR r=+0.75 with PGS001402 (heel BMD) and +0.75
       with PGS001529 (heel SOS).
+  PGS000987:
+    cluster: blood.red_cell_indices
+    phenotype: mean_reticulocyte_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean reticulocyte volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean reticulocyte volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'snpnet Gaussian model on the median raw value (Tanigawa 2022 template): higher score = higher measured
+      value. 1000G EUR r=+0.74 with PGS000180 (same phenotype, another seed paper).'
+  PGS001152:
+    cluster: blood.red_cell_distribution_width
+    phenotype: red_cell_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red cell distribution width (variation in red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red blood cell distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'snpnet Gaussian model on the median raw value (Tanigawa 2022 template): higher score = higher measured
+      value. 1000G EUR r=+0.71 with PGS000188 (same phenotype, another seed paper).'
+  PGS001218:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular hemoglobin concentration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'snpnet Gaussian model on the median raw value (Tanigawa 2022 template): higher score = higher measured
+      value. 1000G EUR r=+0.64 with PGS000100 (same phenotype, another seed paper).'
+  PGS001219:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_hemoglobin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular hemoglobin (hemoglobin per red cell)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'snpnet Gaussian model on the median raw value (Tanigawa 2022 template): higher score = higher measured
+      value. 1000G EUR r=+0.81 with PGS000099 (same phenotype, another seed paper).'
+  PGS001220:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular volume (average red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'snpnet Gaussian model on the median raw value (Tanigawa 2022 template): higher score = higher measured
+      value. 1000G EUR r=+0.82 with PGS000101 (same phenotype, another seed paper).'
+  PGS001225:
+    cluster: blood.red_cell_count
+    phenotype: hematocrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: hematocrit (percentage of blood volume taken by red cells)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Percentage of hematocrit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'snpnet Gaussian model on the median raw value (Tanigawa 2022 template): higher score = higher measured
+      value. 1000G EUR r=+0.72 with PGS000092 (same phenotype, another seed paper).'
+  PGS001240:
+    cluster: blood.red_cell_count
+    phenotype: red_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red blood cell (erythrocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red blood cell count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'snpnet Gaussian model on the median raw value (Tanigawa 2022 template): higher score = higher measured
+      value. 1000G EUR r=+0.79 with PGS000110 (same phenotype, another seed paper).'
+  PGS001408:
+    cluster: blood.reticulocyte_count
+    phenotype: immature_reticulocyte_fraction
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: immature reticulocyte fraction
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Immature reticulocyte fraction
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'snpnet Gaussian model on the median raw value (Tanigawa 2022 template): higher score = higher measured
+      value. 1000G EUR r=+0.76 with PGS000096 (same phenotype, another seed paper).'

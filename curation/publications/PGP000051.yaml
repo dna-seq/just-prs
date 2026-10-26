@@ -144,6 +144,240 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR r=+0.83 with PGS001238 (read), same phenotype. Machine-learning (elastic
       net) optimized score for the INTERVAL/UKB platelet count.
+  PGS000092:
+    cluster: blood.red_cell_count
+    phenotype: hematocrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: hematocrit (percentage of blood volume taken by red cells)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hematocrit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Elastic net fitted to the covariate-adjusted trait level in UK Biobank (Xu 2022), so weights are per-allele
+      effects on the level; higher score = higher value (same reading as the already-curated reticulocyte scores
+      of this paper). 1000G EUR r=+0.72 with PGS001225 (same phenotype, another seed paper).
+  PGS000096:
+    cluster: blood.reticulocyte_count
+    phenotype: immature_reticulocyte_fraction
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: immature reticulocyte fraction
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Immature fraction of reticulocytes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Elastic net fitted to the covariate-adjusted trait level in UK Biobank (Xu 2022), so weights are per-allele
+      effects on the level; higher score = higher value (same reading as the already-curated reticulocyte scores
+      of this paper). 1000G EUR r=+0.76 with PGS001408 (same phenotype, another seed paper).
+  PGS000099:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_hemoglobin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular hemoglobin (hemoglobin per red cell)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular hemoglobin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Elastic net fitted to the covariate-adjusted trait level in UK Biobank (Xu 2022), so weights are per-allele
+      effects on the level; higher score = higher value (same reading as the already-curated reticulocyte scores
+      of this paper). 1000G EUR r=+0.81 with PGS001219 (same phenotype, another seed paper).
+  PGS000100:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_hemoglobin_concentration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular hemoglobin concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular hemoglobin concentration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Elastic net fitted to the covariate-adjusted trait level in UK Biobank (Xu 2022), so weights are per-allele
+      effects on the level; higher score = higher value (same reading as the already-curated reticulocyte scores
+      of this paper). 1000G EUR r=+0.71 with PGS000175 (same phenotype, another seed paper).
+  PGS000101:
+    cluster: blood.red_cell_indices
+    phenotype: mean_corpuscular_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean corpuscular volume (average red cell size)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean corpuscular volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Elastic net fitted to the covariate-adjusted trait level in UK Biobank (Xu 2022), so weights are per-allele
+      effects on the level; higher score = higher value (same reading as the already-curated reticulocyte scores
+      of this paper). 1000G EUR r=+0.82 with PGS001220 (same phenotype, another seed paper).
+  PGS000110:
+    cluster: blood.red_cell_count
+    phenotype: red_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: red blood cell (erythrocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Red blood cell count
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not checked; direction rests on the method statement
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Elastic net fitted to the covariate-adjusted trait level in UK Biobank (Xu 2022), so weights are per-allele
+      effects on the level; higher score = higher value (same reading as the already-curated reticulocyte scores
+      of this paper). 1000G EUR r=+0.79 with PGS001240 (same phenotype, another seed paper).
 paper:
   pmid: '35072137'
   doi: 10.1016/j.xgen.2021.100086

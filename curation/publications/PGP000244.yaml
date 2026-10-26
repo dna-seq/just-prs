@@ -14389,3 +14389,123 @@ scores:
     status: agent_proposed
     notes: 'snpnet Gaussian model on the median raw value (Tanigawa 2022 template): higher score = higher measured
       value. 1000G EUR r=+0.76 with PGS000096 (same phenotype, another seed paper).'
+  PGS001077:
+    cluster: blood.neutrophil_count
+    phenotype: neutrophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neutrophil percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neutrophil percentage
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30200. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.73 with already-annotated same-phenotype seed PGS000106 (PGP000051).
+  PGS001078:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte percentage
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30190. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.77 with already-annotated same-phenotype seed PGS000103 (PGP000051).
+  PGS001163:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte count
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30130. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.74 with already-annotated same-phenotype seed PGS000102 (PGP000051).
+  PGS001173:
+    cluster: blood.neutrophil_count
+    phenotype: neutrophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neutrophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neutrophil count
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30140. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.75 with already-annotated same-phenotype seed PGS000105 (PGP000051).
+  PGS001239:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30000. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.69 with already-annotated same-phenotype seed PGS000113 (PGP000051).

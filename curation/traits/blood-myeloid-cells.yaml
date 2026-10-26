@@ -1,0 +1,267 @@
+slug: blood-myeloid-cells
+query: white blood cell count, neutrophils and monocytes
+match:
+  terms:
+  - leukocyte count
+  - monocyte count
+  - monocyte percentage
+  - neutrophil count
+  - neutrophil percentage
+  - white blood cell count
+  efo_ids:
+  - EFO_0004833
+  - EFO_0005091
+  - EFO_0007989
+  - EFO_0007990
+  - OBA_VT0000217
+  exclude: []
+anchor: PGS000113
+status: resolved
+concepts:
+- blood.white_cell_count
+- blood.neutrophil_count
+- blood.monocyte_count
+scores:
+  PGS000102:
+    decision: in_scope
+    note: null
+  PGS000103:
+    decision: in_scope
+    note: null
+  PGS000105:
+    decision: in_scope
+    note: null
+  PGS000106:
+    decision: in_scope
+    note: null
+  PGS000113:
+    decision: in_scope
+    note: null
+  PGS000177:
+    decision: in_scope
+    note: null
+  PGS000178:
+    decision: in_scope
+    note: null
+  PGS000182:
+    decision: in_scope
+    note: null
+  PGS000183:
+    decision: in_scope
+    note: null
+  PGS000191:
+    decision: in_scope
+    note: null
+  PGS001077:
+    decision: in_scope
+    note: null
+  PGS001078:
+    decision: in_scope
+    note: null
+  PGS001163:
+    decision: in_scope
+    note: null
+  PGS001173:
+    decision: in_scope
+    note: null
+  PGS001239:
+    decision: in_scope
+    note: null
+  PGS001962:
+    decision: in_scope
+    note: null
+  PGS001968:
+    decision: in_scope
+    note: null
+  PGS001969:
+    decision: in_scope
+    note: null
+  PGS001991:
+    decision: in_scope
+    note: null
+  PGS001997:
+    decision: in_scope
+    note: null
+  PGS002180:
+    decision: in_scope
+    note: null
+  PGS002186:
+    decision: in_scope
+    note: null
+  PGS002187:
+    decision: in_scope
+    note: null
+  PGS002208:
+    decision: in_scope
+    note: null
+  PGS002214:
+    decision: in_scope
+    note: null
+  PGS002341:
+    decision: in_scope
+    note: null
+  PGS002357:
+    decision: in_scope
+    note: null
+  PGS002372:
+    decision: in_scope
+    note: null
+  PGS002380:
+    decision: in_scope
+    note: null
+  PGS002413:
+    decision: in_scope
+    note: null
+  PGS002429:
+    decision: in_scope
+    note: null
+  PGS002462:
+    decision: in_scope
+    note: null
+  PGS002478:
+    decision: in_scope
+    note: null
+  PGS002511:
+    decision: in_scope
+    note: null
+  PGS002527:
+    decision: in_scope
+    note: null
+  PGS002560:
+    decision: in_scope
+    note: null
+  PGS002576:
+    decision: in_scope
+    note: null
+  PGS002609:
+    decision: in_scope
+    note: null
+  PGS002625:
+    decision: in_scope
+    note: null
+  PGS002658:
+    decision: in_scope
+    note: null
+  PGS002674:
+    decision: in_scope
+    note: null
+  PGS002707:
+    decision: in_scope
+    note: null
+  PGS002723:
+    decision: in_scope
+    note: null
+  PGS003483:
+    decision: in_scope
+    note: null
+  PGS003541:
+    decision: in_scope
+    note: null
+  PGS003544:
+    decision: in_scope
+    note: null
+  PGS003545:
+    decision: in_scope
+    note: null
+  PGS003562:
+    decision: in_scope
+    note: null
+  PGS003566:
+    decision: in_scope
+    note: null
+  PGS003924:
+    decision: in_scope
+    note: null
+  PGS003937:
+    decision: in_scope
+    note: null
+  PGS003938:
+    decision: in_scope
+    note: null
+  PGS003942:
+    decision: in_scope
+    note: null
+  PGS003943:
+    decision: in_scope
+    note: null
+  PGS004345:
+    decision: in_scope
+    note: null
+  PGS004357:
+    decision: in_scope
+    note: null
+  PGS004358:
+    decision: in_scope
+    note: null
+  PGS004360:
+    decision: in_scope
+    note: null
+  PGS004361:
+    decision: in_scope
+    note: null
+  PGS004801:
+    decision: in_scope
+    note: null
+  PGS004802:
+    decision: in_scope
+    note: null
+  PGS004803:
+    decision: in_scope
+    note: null
+  PGS004804:
+    decision: in_scope
+    note: null
+  PGS004805:
+    decision: in_scope
+    note: null
+  PGS004806:
+    decision: in_scope
+    note: null
+  PGS004807:
+    decision: in_scope
+    note: null
+  PGS004808:
+    decision: in_scope
+    note: null
+  PGS004855:
+    decision: in_scope
+    note: null
+  PGS004856:
+    decision: in_scope
+    note: null
+  PGS004857:
+    decision: in_scope
+    note: null
+  PGS004858:
+    decision: in_scope
+    note: null
+  PGS005189:
+    decision: out_of_scope
+    note: 'variance QTL score (PGP000723): predicts the variance of the white cell trait, not its level; kept out of scope
+      as in the red-cell run'
+  PGS005190:
+    decision: out_of_scope
+    note: 'variance QTL score (PGP000723): predicts the variance of the white cell trait, not its level; kept out of scope
+      as in the red-cell run'
+  PGS005191:
+    decision: out_of_scope
+    note: 'variance QTL score (PGP000723): predicts the variance of the white cell trait, not its level; kept out of scope
+      as in the red-cell run'
+  PGS005192:
+    decision: out_of_scope
+    note: 'variance QTL score (PGP000723): predicts the variance of the white cell trait, not its level; kept out of scope
+      as in the red-cell run'
+  PGS005197:
+    decision: out_of_scope
+    note: 'variance QTL score (PGP000723): predicts the variance of the white cell trait, not its level; kept out of scope
+      as in the red-cell run'
+  PGS005251:
+    decision: out_of_scope
+    note: INFLA-score composite inflammation index, already curated as immune.c_reactive_protein.infla_score
+summary: '71 white-cell scores from 10 papers sorted into three new blood concepts: blood.white_cell_count (22 scores), blood.neutrophil_count
+  (count 12 + percentage 8) and blood.monocyte_count (count 21 + percentage 8); for every score a higher value means more
+  of that cell type. Seeds are the read Xu 2022 elastic-net (PGP000051) and Vuckovic 2020 (PGP000078) scores; the rest are
+  catalog-only with 1000G EUR r >= +0.2 to a same-phenotype seed (most +0.5 to +0.87; the two Biobank Japan-trained Weissbrod
+  scores PGS002372 and PGS002380 sit at +0.21). No negative correlations inside a phenotype; monocyte and neutrophil percentages
+  anti-correlate with each other as expected for shares of one total. Five vQTL variance scores (PGP000723) and the INFLA
+  composite are out of scope. No lookups used.'

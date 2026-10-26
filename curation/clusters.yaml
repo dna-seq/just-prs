@@ -2078,6 +2078,81 @@ domains:
             sign: 1
             aliases:
             - RDW-CV
+      white_cell_count:
+        label: White blood cell (leukocyte) count
+        axis: higher white blood cell count
+        valence: context_dependent
+        valence_basis: A low count (leukopenia) means weaker defence against infection and a high count
+          (leukocytosis) accompanies inflammation, smoking and higher cardiovascular and all-cause risk;
+          within the normal range neither direction is better.
+        status: agent_proposed
+        aliases:
+        - white blood cells
+        - WBC
+        - leukocytes
+        - low white blood cell count
+        - high white blood cell count
+        phenotypes:
+          white_blood_cell_count:
+            label: Total white blood cell (leukocyte) count in blood (raw or log-transformed)
+            sign: 1
+            aliases:
+            - WBC count
+            - leukocyte count
+            - total white count
+      neutrophil_count:
+        label: Neutrophil count and percentage
+        axis: more neutrophils (higher absolute count or share of white cells)
+        valence: context_dependent
+        valence_basis: Few neutrophils (neutropenia) raise infection risk and many (neutrophilia) mark
+          inflammation; in healthy people both ends of the normal range are common (benign neutropenia
+          is frequent in people of African ancestry), so neither direction is better.
+        status: agent_proposed
+        aliases:
+        - neutrophils
+        - granulocytes
+        - neutropenia
+        - low neutrophils
+        - ANC
+        phenotypes:
+          neutrophil_count:
+            label: Absolute neutrophil count (raw or log-transformed)
+            sign: 1
+            aliases:
+            - absolute neutrophil count
+            - neutrophil level
+          neutrophil_percentage:
+            label: Neutrophils as a percentage of white blood cells
+            sign: 1
+            aliases:
+            - neutrophil percent
+            - neutrophil %
+      monocyte_count:
+        label: Monocyte count and percentage
+        axis: more monocytes (higher absolute count or share of white cells)
+        valence: neutral
+        valence_basis: Monocytes vary within a normal range in healthy people; a markedly raised count
+          (monocytosis) accompanies chronic inflammation or infection, but the polygenic range reflects
+          normal variation, where neither end is better.
+        status: agent_proposed
+        aliases:
+        - monocytes
+        - monocytosis
+        - high monocytes
+        - mono count
+        phenotypes:
+          monocyte_count:
+            label: Absolute monocyte count (raw or log-transformed)
+            sign: 1
+            aliases:
+            - absolute monocyte count
+            - monocyte level
+          monocyte_percentage:
+            label: Monocytes as a percentage of white blood cells
+            sign: 1
+            aliases:
+            - monocyte percent
+            - monocyte %
   musculoskeletal:
     label: Bones, joints and muscles
     concepts:

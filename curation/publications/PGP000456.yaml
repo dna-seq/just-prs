@@ -275,6 +275,30 @@ scores:
       deposits (FEV1/FVC, heart rate), but this file correlates positively with the seed scores of its phenotype,
       so it follows the catalog convention. Catalog beta is for a sleep-apnoea respiratory event index, not this
       trait; not used.
+  PGS003483:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score LDPred2_WBC. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.70 with already-annotated same-phenotype seed PGS000113
+      (PGP000051). Catalog beta is for a sleep-apnoea respiratory event index, not white cell count; not used.
 paper:
   pmid: '36174398'
   doi: 10.1016/j.ebiom.2022.104288

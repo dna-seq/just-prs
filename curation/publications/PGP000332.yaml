@@ -5520,6 +5520,440 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR r=+0.78 with PGS001152 (same phenotype, read seed paper PGP000244). 1000G
       EUR r with every other score of this phenotype is positive (min +0.52).
+  PGS002341:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_MONOCYTE_COUNT.BOLT-LMM. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.81 with already-annotated same-phenotype
+      seed PGS000102 (PGP000051).
+  PGS002357:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.BOLT-LMM. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.77 with already-annotated same-phenotype seed
+      PGS000113 (PGP000051).
+  PGS002372:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_MONOCYTE_COUNT.BOLT-LMM-BBJ. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.21 with already-annotated same-phenotype
+      seed PGS000177 (PGP000078). Weights from a Biobank Japan (East Asian) GWAS, which explains the weaker EUR
+      correlation with European-trained scores.
+  PGS002380:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.BOLT-LMM-BBJ. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.21 with already-annotated same-phenotype
+      seed PGS000113 (PGP000051). Weights from a Biobank Japan (East Asian) GWAS, which explains the weaker EUR
+      correlation with European-trained scores.
+  PGS002413:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_MONOCYTE_COUNT.P+T.0.0001. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.70 with already-annotated same-phenotype
+      seed PGS000102 (PGP000051).
+  PGS002429:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.P+T.0.0001. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.65 with already-annotated same-phenotype
+      seed PGS000113 (PGP000051).
+  PGS002462:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_MONOCYTE_COUNT.P+T.0.001. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.62 with already-annotated same-phenotype
+      seed PGS000102 (PGP000051).
+  PGS002478:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.P+T.0.001. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.64 with already-annotated same-phenotype
+      seed PGS000113 (PGP000051).
+  PGS002511:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_MONOCYTE_COUNT.P+T.0.01. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.49 with already-annotated same-phenotype
+      seed PGS000102 (PGP000051).
+  PGS002527:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.P+T.0.01. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.57 with already-annotated same-phenotype seed
+      PGS000113 (PGP000051).
+  PGS002560:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_MONOCYTE_COUNT.P+T.1e-06. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.71 with already-annotated same-phenotype
+      seed PGS000177 (PGP000078).
+  PGS002576:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.P+T.1e-06. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.60 with already-annotated same-phenotype
+      seed PGS000113 (PGP000051).
+  PGS002609:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_MONOCYTE_COUNT.P+T.5e-08. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.71 with already-annotated same-phenotype
+      seed PGS000177 (PGP000078).
+  PGS002625:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.P+T.5e-08. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.60 with already-annotated same-phenotype
+      seed PGS000191 (PGP000078).
+  PGS002658:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_MONOCYTE_COUNT.PolyFun-pred. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.83 with already-annotated same-phenotype
+      seed PGS000102 (PGP000051).
+  PGS002674:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.PolyFun-pred. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.74 with already-annotated same-phenotype
+      seed PGS000113 (PGP000051).
+  PGS002707:
+    cluster: blood.monocyte_count
+    phenotype: monocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: monocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Monocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_MONOCYTE_COUNT.SBayesR. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.80 with already-annotated same-phenotype
+      seed PGS000102 (PGP000051).
+  PGS002723:
+    cluster: blood.white_cell_count
+    phenotype: white_blood_cell_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: white blood cell (leukocyte) count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: White blood cell count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.SBayesR. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.75 with already-annotated same-phenotype seed
+      PGS000113 (PGP000051).
 paper:
   pmid: '35393596'
   doi: 10.1038/s41588-022-01036-9

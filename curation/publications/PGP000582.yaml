@@ -1,0 +1,58 @@
+pgp_id: PGP000582
+scores:
+  PGS004606:
+    cluster: eye.macular_degeneration
+    phenotype: age_related_macular_degeneration
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of age-related macular degeneration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Age-related macular degeneration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read); PGS Catalog weights are per-allele effects on the reported
+      trait. Corroborated by OR 1.76 [1.73, 1.78] for AMD.
+  PGS004607:
+    cluster: eye.macular_degeneration
+    phenotype: age_related_macular_degeneration
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of age-related macular degeneration (African-ancestry MVP GWAS)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Age-related macular degeneration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read); PGS Catalog weights are per-allele effects on the reported
+      trait. Corroborated by OR 1.48 [1.34, 1.63] for AMD. African-ancestry weights, so 1000G EUR correlations are
+      near zero.
+paper:
+  pmid: '39623103'
+  doi: 10.1038/s41588-024-01764-0
+  title: Genome-wide association analyses identify distinct genetic architectures for age-related macular degeneration
+    across ancestries.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

@@ -1,0 +1,34 @@
+pgp_id: PGP000670
+scores:
+  PGS004944:
+    cluster: eye.glaucoma
+    phenotype: primary_open_angle_glaucoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of primary open-angle glaucoma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Primary open-angle glaucoma
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: chr9:104933567 G and chr9:104933258 T (ABCA1) positive; consistent with PGS002761
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read); PGS Catalog weights are per-allele effects on the reported
+      trait. Corroborated by OR 1.46 [1.36, 1.58] for POAG and 1.74 for self-reported POAG; thinner RNFL/GCC with
+      higher score.
+paper:
+  pmid: '37589995'
+  doi: 10.1001/jamaophthalmol.2023.3645
+  title: Deep Ocular Phenotyping Across Primary Open-Angle Glaucoma Genetic Burden.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

@@ -4949,6 +4949,394 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; penalized regression on the phecode, case = other chronic nonalcoholic liver disease; 1000G EUR r=+0.42
       with PGS012549.
+  PGS001833:
+    cluster: eye.retinal_detachment
+    phenotype: retinal_detachment
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of retinal detachments and defects (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Retinal detachments and defects
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs12193446 G (LAMA2, less myopic) has a negative weight; myopia raises detachment risk
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.37 with PGS001137 (Tanigawa retinal
+      detachment).
+  PGS002040:
+    cluster: eye.retinal_detachment
+    phenotype: retinal_detachment
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of retinal detachments and defects (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Retinal detachments and defects
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.73 with PGS001833, +0.34 with PGS001137.
+  PGS001834:
+    cluster: eye.macular_degeneration
+    phenotype: age_related_macular_degeneration
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of senile macular degeneration (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Macular degeneration (senile) of retina NOS
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs10490924 T (ARMS2 A69S risk allele) carries the largest positive weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.78 with PGS004952 (AMD GRS, OR 1.41
+      for late AMD).
+  PGS002041:
+    cluster: eye.macular_degeneration
+    phenotype: age_related_macular_degeneration
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of senile macular degeneration (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Macular degeneration (senile) of retina NOS
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs10490924 T (ARMS2 risk allele) carries the largest positive weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.76 with PGS004952.
+  PGS001835:
+    cluster: eye.corneal_disease
+    phenotype: corneal_dystrophy
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of corneal dystrophy (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Corneal dystrophy
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs613872 T (TCF4 non-risk allele for Fuchs dystrophy) has a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.76 with PGS001029 (Tanigawa other
+      corneal disorders).
+  PGS002042:
+    cluster: eye.corneal_disease
+    phenotype: corneal_dystrophy
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of corneal dystrophy (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Corneal dystrophy
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs613872 T (TCF4 non-risk allele) has a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.86 with PGS001835.
+  PGS001836:
+    cluster: eye.glaucoma
+    phenotype: glaucoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of glaucoma (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Glaucoma | glaucoma
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs2472493 A (ABCA1) and rs12150284 T (GAS7) glaucoma non-risk alleles carry negative weights
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.50 with PGS002761 (glaucoma OR 1.68).
+  PGS002043:
+    cluster: eye.glaucoma
+    phenotype: glaucoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of glaucoma (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Glaucoma | glaucoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.53 with PGS002761 (glaucoma OR 1.68).
+  PGS001837:
+    cluster: eye.cataract
+    phenotype: cataract
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cataract (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Cataract | cataract
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.51 with PGS001302 (Tanigawa cataract).
+  PGS002044:
+    cluster: eye.cataract
+    phenotype: cataract
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cataract (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Cataract | cataract
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.90 with PGS001837, +0.51 with PGS001302.
+  PGS002045:
+    cluster: eye.eye_inflammation
+    phenotype: eye_inflammation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of inflammation of the eye (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Inflammation of the eye
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Direction rests on the code-wide binary rule only; no metric, correlation or canonical locus
+      corroborates it.
+    status: agent_proposed
+    notes: 'Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). No corroborating score: the Tanigawa iritis scores have
+      no 1000G correlation and the lead variants are not canonical.'
+  PGS001924:
+    cluster: eye.glasses_use
+    phenotype: wears_glasses
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of wearing glasses or contact lenses (UKB 2207)
+      coding: 'UKB 2207: yes = TRUE (y > 0), negative codes = NA'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Wears glasses or contact lenses
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Wears glasses block (github_prepare-pheno-fields.R)
+      quote: '# Wears glasses or contact lenses (2207)'
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Wears glasses block (github_prepare-pheno-fields.R)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/glasses.rds")
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.31 with PGS002140. Weak link to refraction
+      (r about +0.1 with myopia scores).
+  PGS002140:
+    cluster: eye.glasses_use
+    phenotype: wears_glasses
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of wearing glasses or contact lenses (UKB 2207)
+      coding: 'UKB 2207: yes = TRUE (y > 0), negative codes = NA'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Wears glasses or contact lenses
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Wears glasses block (github_prepare-pheno-fields.R)
+      quote: '# Wears glasses or contact lenses (2207)'
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Wears glasses block (github_prepare-pheno-fields.R)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/glasses.rds")
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.31 with PGS001924. Weak link to refraction
+      (r about +0.1 with myopia scores).
+  PGS001994:
+    cluster: eye.refractive_error
+    phenotype: myopia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a myopia diagnosis (UKB 20262)
+      coding: 'UKB 20262: yes = TRUE (y > 0), negative codes = NA'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Myopia diagnosis
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Myopia block (github_prepare-pheno-fields.R)
+      quote: '# Myopia diagnosis (20262)'
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Myopia block (github_prepare-pheno-fields.R)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/myopia.rds")
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs12193446 G (LAMA2; GWAS Catalog: myopia-decreasing, spherical-equivalent-increasing) carries the
+        largest negative weight'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.89 with PGS002211 and -0.57 with spherical
+      power PGS001099.
+  PGS002211:
+    cluster: eye.refractive_error
+    phenotype: myopia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a myopia diagnosis (UKB 20262)
+      coding: 'UKB 20262: yes = TRUE (y > 0), negative codes = NA'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Myopia diagnosis
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Myopia block (github_prepare-pheno-fields.R)
+      quote: '# Myopia diagnosis (20262)'
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Myopia block (github_prepare-pheno-fields.R)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/myopia.rds")
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs12193446 G (LAMA2; GWAS Catalog: myopia-decreasing, spherical-equivalent-increasing) carries the
+        largest negative weight'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.92 with PGS003564 and -0.59 with the Clark
+      refractive-error score PGS003860.
 template:
   rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
     PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged

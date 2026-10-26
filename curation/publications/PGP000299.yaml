@@ -1,0 +1,37 @@
+pgp_id: PGP000299
+scores:
+  PGS002269:
+    cluster: eye.macular_degeneration
+    phenotype: age_related_macular_degeneration
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of age-related macular degeneration (47-variant log-OR GRS)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: evaluated on photoreceptor layer thickness, which thins with AMD
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Age-related macular degeneration
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs121913059 T (CFH R1210C) and rs3750846 C (ARMS2 region) positive
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read); PGS Catalog weights are per-allele effects on the reported
+      trait. 1000G EUR r=+0.87 with PGS004952; beta -0.21 [-0.23, -0.19] for photoreceptor layer thickness (thinning
+      with higher AMD risk).
+paper:
+  pmid: '35149155'
+  doi: 10.1016/j.ophtha.2022.02.001
+  title: 'Photoreceptor Layer Thinning Is an Early Biomarker for Age-Related Macular Degeneration: Epidemiologic
+    and Genetic Evidence from UK Biobank OCT Data.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

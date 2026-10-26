@@ -1413,3 +1413,32 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.98 with PGS000697.
+  PGS003564:
+    cluster: eye.refractive_error
+    phenotype: myopia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a myopia diagnosis (UKB 20262)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Myopia diagnosis
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: chr6:129498893 G (rs12193446, LAMA2, myopia-decreasing in GWAS Catalog) carries the largest negative
+        weight
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own UKB GWAS of myopia diagnosis. 1000G EUR r=+0.92 with PGS002211 (Privé
+      myopia) and -0.58 with PGS003860.

@@ -1,0 +1,44 @@
+pgp_id: PGP000498
+scores:
+  PGS003860:
+    cluster: eye.refractive_error
+    phenotype: spherical_equivalent
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: spherical equivalent refractive error in dioptres (higher = more hyperopic, lower = more myopic)
+      coding: avSER in dioptres (autorefraction, averaged over both eyes)
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > Fig. 2 text
+      quote: When considering the full distribution of the PGS, ranging from negative (“low”) values indicating
+        genetic susceptibility to myopia and positive (“high”) values indicating genetic susceptibility to hyperopia,
+        individuals in the lowest 5%, 10% or 25% of the PGS distribution had a 6-fold–7-fold increased risk of HM6
+        compared to the remainder of the population (Fig. 2).
+      confidence: high
+    - source: full_text
+      locator: Results > Fig. 2 text
+      quote: By contrast, individuals in the highest 5%, 10% or 25% of the PGS distribution had a 4-fold–6-fold
+        increased risk of moderate hyperopia (MH) compared to the remainder of the population (Fig. 2).
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs12193446 G (LAMA2) +0.050; GWAS Catalog lists rs12193446-G as spherical-equivalent increasing and
+        myopia decreasing
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2 on an MTAG meta-analysis of SER GWAS (UKB, CREAM, GERA, UKB AOSW-inferred SER). 1000G EUR r=+0.58
+      with spherical power, -0.59 with myopia diagnosis. A HIGH percentile means a more hyperopic (long-sighted)
+      genetic tendency.
+paper:
+  pmid: '37055258'
+  doi: 10.1016/j.ebiom.2023.104551
+  title: A new polygenic score for refractive error improves detection of children at risk of high myopia but not
+    the prediction of those at risk of myopic macular degeneration.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

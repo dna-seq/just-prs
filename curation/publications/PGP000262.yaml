@@ -243,6 +243,52 @@ scores:
       allele; direction follows PRS-CS posterior effects on IPF risk and the DSP/TERT lead loci. 1000G EUR r is
       weak with the other IPF scores (+0.12 to +0.17) because the sparse scores are dominated by MUC5B rs35705950,
       which this file lacks; r = -0.10 with the inverted PGS005323.
+  PGS001792:
+    cluster: eye.glaucoma
+    phenotype: primary_open_angle_glaucoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of primary open-angle glaucoma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Primary open-angle glaucoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read); PGS Catalog weights are per-allele effects on the reported
+      trait. GBMI PRS-CS score; 1000G EUR r=+0.45 with PGS002761, +0.58 with PGS004944.
+  PGS001797:
+    cluster: eye.glaucoma
+    phenotype: primary_open_angle_glaucoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of primary open-angle glaucoma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Primary open-angle glaucoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read); PGS Catalog weights are per-allele effects on the reported
+      trait. GBMI PRS-CS score; 1000G EUR r=+0.50 with PGS002761, +0.59 with PGS004944.
 paper:
   pmid: '36777179'
   doi: 10.1016/j.xgen.2022.100241

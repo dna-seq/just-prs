@@ -5359,3 +5359,249 @@ domains:
           alcoholic_cirrhosis:
             label: Alcohol-related cirrhosis
             sign: 1
+  eye:
+    label: Eye
+    concepts:
+      glaucoma:
+        label: Glaucoma
+        axis: higher glaucoma risk
+        valence: undesirable
+        valence_basis: Glaucoma damages the optic nerve and causes irreversible vision loss.
+        status: agent_proposed
+        aliases:
+        - glaucoma risk
+        - POAG
+        - open-angle glaucoma
+        - optic nerve damage
+        phenotypes:
+          glaucoma:
+            label: Glaucoma (any type)
+            sign: 1
+          primary_open_angle_glaucoma:
+            label: Primary open-angle glaucoma
+            sign: 1
+      intraocular_pressure:
+        label: Intraocular pressure
+        axis: higher eye pressure
+        valence: undesirable
+        valence_basis: Raised intraocular pressure is the main modifiable risk factor for glaucoma.
+        status: agent_proposed
+        aliases:
+        - eye pressure
+        - IOP
+        - ocular hypertension
+        - high eye pressure
+        phenotypes:
+          intraocular_pressure:
+            label: Intraocular pressure (mmHg)
+            sign: 1
+          iop_goldmann_correlated:
+            label: Goldmann-correlated intraocular pressure (IOPg, mmHg)
+            sign: 1
+          iop_corneal_compensated:
+            label: Corneal-compensated intraocular pressure (IOPcc, mmHg)
+            sign: 1
+      cataract:
+        label: Cataract
+        axis: higher cataract risk
+        valence: undesirable
+        valence_basis: Cataract clouds the lens and impairs vision until surgery.
+        status: agent_proposed
+        aliases:
+        - cloudy lens
+        - lens opacity
+        - cataracts
+        phenotypes:
+          cataract:
+            label: Cataract
+            sign: 1
+      macular_degeneration:
+        label: Age-related macular degeneration
+        axis: higher macular degeneration risk
+        valence: undesirable
+        valence_basis: Macular degeneration destroys central vision in older age.
+        status: agent_proposed
+        aliases:
+        - AMD
+        - ARMD
+        - macular degeneration
+        - central vision loss
+        phenotypes:
+          age_related_macular_degeneration:
+            label: Age-related macular degeneration
+            sign: 1
+      refractive_error:
+        label: Short-sightedness and refractive error
+        axis: more short-sighted (myopic)
+        valence: context_dependent
+        valence_basis: Myopia (more negative refraction) and strong hyperopia (more positive refraction)
+          both need correction; the axis points toward myopia, which raises the risk of retinal detachment
+          and myopic maculopathy.
+        status: agent_proposed
+        aliases:
+        - short-sighted
+        - near-sighted
+        - nearsightedness
+        - long-sighted
+        - far-sighted
+        phenotypes:
+          myopia:
+            label: Myopia (short-sightedness) diagnosis
+            sign: 1
+          spherical_power:
+            label: Spherical power in dioptres (positive = hyperopic, negative = myopic)
+            sign: -1
+          spherical_equivalent:
+            label: Spherical equivalent refractive error in dioptres (positive = hyperopic)
+            sign: -1
+          age_started_glasses:
+            label: Age started wearing glasses or contact lenses (later start = less myopic)
+            sign: -1
+      glasses_use:
+        label: Wearing glasses or contact lenses
+        axis: wears glasses or contact lenses
+        valence: neutral
+        valence_basis: Wearing glasses reflects myopia, hyperopia or age-related presbyopia; it is a correction,
+          not a disease.
+        status: agent_proposed
+        aliases:
+        - wears glasses
+        - spectacles
+        - contact lenses
+        phenotypes:
+          wears_glasses:
+            label: Wears glasses or contact lenses
+            sign: 1
+      corneal_curvature:
+        label: Corneal curvature (keratometry)
+        axis: steeper cornea (higher corneal power)
+        valence: neutral
+        valence_basis: Corneal power varies normally between people; only extreme steepening (keratoconus)
+          is a disease.
+        status: agent_proposed
+        aliases:
+        - keratometry
+        - corneal power
+        - corneal steepness
+        - K reading
+        phenotypes:
+          keratometry_strong_meridian:
+            label: Keratometry strong meridian power (dioptres)
+            sign: 1
+          keratometry_weak_meridian:
+            label: Keratometry weak meridian power (dioptres)
+            sign: 1
+      astigmatism:
+        label: Corneal astigmatism
+        axis: more corneal astigmatism
+        valence: undesirable
+        valence_basis: Astigmatism blurs vision at all distances and needs correction.
+        status: agent_proposed
+        aliases:
+        - astigmatism
+        - cylinder
+        - irregular cornea
+        phenotypes:
+          cylindrical_power:
+            label: Keratometric cylindrical power in minus-cylinder dioptres (more negative = more astigmatism)
+            sign: -1
+      corneal_biomechanics:
+        label: Corneal biomechanics
+        axis: higher corneal hysteresis and resistance
+        valence: context_dependent
+        valence_basis: Low corneal hysteresis and resistance accompany glaucoma and keratoconus, but these
+          are measurements, not diseases.
+        status: agent_proposed
+        aliases:
+        - corneal hysteresis
+        - corneal stiffness
+        - corneal resistance factor
+        - ocular response analyzer
+        phenotypes:
+          corneal_hysteresis:
+            label: Corneal hysteresis (mmHg)
+            sign: 1
+          corneal_resistance_factor:
+            label: Corneal resistance factor (mmHg)
+            sign: 1
+      corneal_disease:
+        label: Corneal dystrophy and other corneal disorders
+        axis: higher corneal disease risk
+        valence: undesirable
+        valence_basis: Corneal dystrophies such as Fuchs dystrophy cloud the cornea and can need transplantation.
+        status: agent_proposed
+        aliases:
+        - Fuchs dystrophy
+        - corneal dystrophy
+        - cornea disease
+        phenotypes:
+          corneal_dystrophy:
+            label: Corneal dystrophy
+            sign: 1
+          other_corneal_disorders:
+            label: Other disorders of cornea (ICD-10 H18)
+            sign: 1
+      retinal_detachment:
+        label: Retinal detachment
+        axis: higher retinal detachment risk
+        valence: undesirable
+        valence_basis: Retinal detachment is an emergency that can cause permanent vision loss.
+        status: agent_proposed
+        aliases:
+        - detached retina
+        - retinal tear
+        - retinal break
+        phenotypes:
+          retinal_detachment:
+            label: Retinal detachment, breaks or defects
+            sign: 1
+      retinal_disorders:
+        label: Other retinal disorders
+        axis: higher retinal disorder risk
+        valence: undesirable
+        valence_basis: Retinal disorders threaten vision.
+        status: agent_proposed
+        aliases:
+        - retinopathy
+        - retina disease
+        phenotypes:
+          other_retinal_disorders:
+            label: Other retinal disorders (ICD-10 H35)
+            sign: 1
+          retinal_disorders_in_other_diseases:
+            label: Retinal disorders in diseases classified elsewhere (ICD-10 H36, mostly diabetic retinopathy)
+            sign: 1
+      diabetic_eye_disease:
+        label: Diabetic eye disease
+        axis: higher diabetic eye disease risk
+        valence: undesirable
+        valence_basis: Diabetic retinopathy is a leading cause of blindness in working-age adults.
+        status: agent_proposed
+        aliases:
+        - diabetic retinopathy
+        - diabetes eye damage
+        phenotypes:
+          diabetic_eye_disease:
+            label: Diabetic eye disease (self-reported)
+            sign: 1
+      eye_inflammation:
+        label: Eye inflammation (iritis, uveitis)
+        axis: higher eye inflammation risk
+        valence: undesirable
+        valence_basis: Iritis and uveitis are painful, recurrent and can damage vision.
+        status: agent_proposed
+        aliases:
+        - uveitis
+        - iritis
+        - anterior uveitis
+        - red painful eye
+        phenotypes:
+          iritis:
+            label: Iritis
+            sign: 1
+          iridocyclitis:
+            label: Iridocyclitis (anterior uveitis)
+            sign: 1
+          eye_inflammation:
+            label: Inflammation of the eye (phecode)
+            sign: 1

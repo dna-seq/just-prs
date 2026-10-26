@@ -3357,3 +3357,49 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.41 with PGS000669.
+  PGS004454:
+    cluster: eye.cataract
+    phenotype: cataract
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of other cataract (ICD-10 H26)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: H26 (Other cataract)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this score). Disease PRS on the H26 code; catalog OR 1.12
+      for H26 (no CI); 1000G EUR r=+0.29 with PGS002044 (Privé cataract).
+  PGS004524:
+    cluster: eye.cataract
+    phenotype: cataract
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of other cataract (ICD-10 H26)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: H26 (Other cataract)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read for this score). Disease PRS on the H26 code; catalog OR 1.12
+      for H26 (no CI); 1000G EUR r=+0.28 with PGS002044 (Privé cataract).

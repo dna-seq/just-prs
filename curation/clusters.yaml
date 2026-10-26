@@ -513,6 +513,27 @@ domains:
           long_sleep:
             label: Long sleep (dichotomized, e.g. >=9 h)
             sign: 1
+      insomnia:
+        label: Insomnia (trouble falling or staying asleep)
+        axis: more insomnia / sleeplessness
+        valence: undesirable
+        valence_basis: Frequent sleeplessness is a complaint people want to avoid and is linked to worse
+          mental and physical health.
+        status: agent_proposed
+        aliases:
+        - trouble sleeping
+        - sleeplessness
+        - can't sleep
+        - good sleeper
+        - difficulty falling asleep
+        phenotypes:
+          insomnia:
+            label: 'Insomnia (case/control: diagnosis or usually having trouble sleeping)'
+            sign: 1
+          sleeplessness_frequency:
+            label: 'How often one has trouble falling asleep or wakes at night (UKB 1200: never/rarely,
+              sometimes, usually)'
+            sign: 1
   kidney:
     label: Kidney
     concepts:

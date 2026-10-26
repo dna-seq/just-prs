@@ -2846,6 +2846,70 @@ scores:
     notes: LDpred2. prepare-pheno-fields.R reads field 2178-0.0, sets negative codes to NA and saves the raw value
       as poorer_health.rds, so higher = poorer self-rated health. 1000G EUR r=+0.88 with PGS002000; -0.61 with GBE
       PGS001008 (reversed phenotype, expected).
+  PGS001932:
+    cluster: sleep.insomnia
+    phenotype: sleeplessness_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: UKB field 1200 value (1 never/rarely, 2 sometimes, 3 usually), i.e. more frequent sleeplessness
+      coding: UKB 1200 (coding 100343), raw value used as a quantitative trait, negative codes (-3 prefer not to
+        answer) set to NA; saved as insomnia
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, lines 151-155 (github_prepare-pheno-fields.R.txt)
+      quote: Sleeplessness / insomnia (1200)
+      confidence: high
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, line 155
+      quote: data/ukbb-quant-pheno/insomnia.rds
+      confidence: high
+    - source: supplement
+      locator: UKB showcase coding 100343 (ukb_coding_100343.html)
+      quote: Never/rarely
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top variant rs11693221-T (MEIS1 region) weight +0.028; allele orientation vs insomnia GWAS not checked
+    status: agent_proposed
+    notes: Penalized regression (bigstatsr PLR) on the raw UKB 1200 code as a continuous trait (ukbb-quant-pheno).
+      Higher = more frequent sleeplessness. 1000G EUR r=+0.85 between the two Prive insomnia scores and +0.51 to
+      +0.87 with the ExPRSweb UKB-1200 scores.
+  PGS002149:
+    cluster: sleep.insomnia
+    phenotype: sleeplessness_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: UKB field 1200 value (1 never/rarely, 2 sometimes, 3 usually), i.e. more frequent sleeplessness
+      coding: UKB 1200 (coding 100343), raw value used as a quantitative trait, negative codes (-3 prefer not to
+        answer) set to NA; saved as insomnia
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, lines 151-155 (github_prepare-pheno-fields.R.txt)
+      quote: Sleeplessness / insomnia (1200)
+      confidence: high
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, line 155
+      quote: data/ukbb-quant-pheno/insomnia.rds
+      confidence: high
+    - source: supplement
+      locator: UKB showcase coding 100343 (ukb_coding_100343.html)
+      quote: Never/rarely
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top variant rs11693221-T (MEIS1 region) weight +0.016; allele orientation vs insomnia GWAS not checked
+    status: agent_proposed
+    notes: LDpred2-auto on the raw UKB 1200 code as a continuous trait (ukbb-quant-pheno). Higher = more frequent
+      sleeplessness. 1000G EUR r=+0.85 between the two Prive insomnia scores and +0.51 to +0.87 with the ExPRSweb
+      UKB-1200 scores.
 template:
   rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
     PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged

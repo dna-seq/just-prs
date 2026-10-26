@@ -9233,6 +9233,341 @@ scores:
       variants as PGS002947 (FGovertime-corrected DBSLMM UKB) and correlates r = +1.00 with it in 1000G EUR, while
       being uncorrelated with the MAGIC-based and published fasting-glucose scores (r = -0.01 with PGS000305 and
       PGS001350); catalog evaluation beta +0.0045 (n=173,111) is near zero. No trustworthy direction.'
+  PGS003319:
+    cluster: sleep.sleep_duration
+    phenotype: sleep_duration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: self-reported sleep duration (UKB field 1160 GWAS, Neale Lab)
+      coding: UKB 1160 hours of sleep per day
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: Catalog OR is against the MGI insomnia PheCode, not sleep duration; longer-sleep alleles are expected
+        to be weakly protective (observed OR < 1, CI includes 1).
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: pgscatalog_PGS003319.json > trait_additional
+      quote: Sleep duration; Binary
+      confidence: medium
+    - source: supplement
+      locator: pgscatalog_PGS003319.json > samples_variants[0].phenotyping_free
+      quote: Insomnia; 1160
+      confidence: medium
+    - source: supplement
+      locator: ukb_field_1160.html > Description
+      quote: Sleep duration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weights on chr2:113.3 Mb (PAX8 sleep-duration locus), positive; rsIDs not harmonized
+    status: agent_proposed
+    notes: Catalog reports "Insomnia", but the score is the ExPRSweb lassosum score trained on the Neale Lab UKB
+      1160 sleep-duration GWAS (name ExPRSweb_Insomnia_1160_*; trait_additional "Sleep duration"), used by ExPRSweb
+      as a proxy exposure for insomnia. Weights are the exposure-GWAS effect sizes (template rule), so higher =
+      longer sleep. Corroborated by 1000G EUR r = +0.30 to +0.44 with the annotated sleep-duration scores PGS001150/PGS001978/PGS002196/PGS003764,
+      and -0.1 to -0.4 with the insomnia scores. Catalog OR 0.978 [0.932, 1.028] vs MGI insomnia. The "Binary" in
+      trait_additional is the catalog's label; Neale 1160 is quantitative.
+  PGS003320:
+    cluster: sleep.sleep_duration
+    phenotype: sleep_duration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: self-reported sleep duration (UKB field 1160 GWAS, Neale Lab)
+      coding: UKB 1160 hours of sleep per day
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: Catalog OR is against the MGI insomnia PheCode, not sleep duration; longer-sleep alleles are expected
+        to be weakly protective (observed OR < 1, CI includes 1).
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: pgscatalog_PGS003319.json > trait_additional (same exposure GWAS as this score)
+      quote: Sleep duration; Binary
+      confidence: medium
+    - source: supplement
+      locator: pgscatalog_PGS003319.json > samples_variants[0].phenotyping_free
+      quote: Insomnia; 1160
+      confidence: medium
+    - source: supplement
+      locator: ukb_field_1160.html > Description
+      quote: Sleep duration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weights on chr2:113.3 Mb (PAX8 sleep-duration locus), positive; rsIDs not harmonized
+    status: agent_proposed
+    notes: Catalog reports "Insomnia", but the score is the ExPRSweb C+T (best-guess genotype) score trained on
+      the Neale Lab UKB 1160 sleep-duration GWAS (name ExPRSweb_Insomnia_1160_*; trait_additional "Sleep duration"),
+      used by ExPRSweb as a proxy exposure for insomnia. Weights are the exposure-GWAS effect sizes (template rule),
+      so higher = longer sleep. Corroborated by 1000G EUR r = +0.34 to +0.56 with the annotated sleep-duration scores
+      PGS001150/PGS001978/PGS002196/PGS003764, and -0.1 to -0.4 with the insomnia scores. Catalog OR 0.977 [0.937,
+      1.02] vs MGI insomnia. The "Binary" in trait_additional is the catalog's label; Neale 1160 is quantitative.
+  PGS003321:
+    cluster: sleep.sleep_duration
+    phenotype: sleep_duration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: self-reported sleep duration (UKB field 1160 GWAS, Neale Lab)
+      coding: UKB 1160 hours of sleep per day
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: Catalog OR is against the MGI insomnia PheCode, not sleep duration; longer-sleep alleles are expected
+        to be weakly protective (observed OR < 1, CI includes 1).
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: pgscatalog_PGS003319.json > trait_additional (same exposure GWAS as this score)
+      quote: Sleep duration; Binary
+      confidence: medium
+    - source: supplement
+      locator: pgscatalog_PGS003319.json > samples_variants[0].phenotyping_free
+      quote: Insomnia; 1160
+      confidence: medium
+    - source: supplement
+      locator: ukb_field_1160.html > Description
+      quote: Sleep duration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weights on chr2:113.3 Mb (PAX8 sleep-duration locus), positive; rsIDs not harmonized
+    status: agent_proposed
+    notes: Catalog reports "Insomnia", but the score is the ExPRSweb C+T (dosage) score trained on the Neale Lab
+      UKB 1160 sleep-duration GWAS (name ExPRSweb_Insomnia_1160_*; trait_additional "Sleep duration"), used by ExPRSweb
+      as a proxy exposure for insomnia. Weights are the exposure-GWAS effect sizes (template rule), so higher =
+      longer sleep. Corroborated by 1000G EUR r = +0.34 to +0.57 with the annotated sleep-duration scores PGS001150/PGS001978/PGS002196/PGS003764,
+      and -0.1 to -0.4 with the insomnia scores. Catalog OR 0.975 [0.934, 1.017] vs MGI insomnia. The "Binary" in
+      trait_additional is the catalog's label; Neale 1160 is quantitative.
+  PGS003322:
+    cluster: sleep.sleep_duration
+    phenotype: sleep_duration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: self-reported sleep duration (UKB field 1160 GWAS, Neale Lab)
+      coding: UKB 1160 hours of sleep per day
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: Catalog OR is against the MGI insomnia PheCode, not sleep duration; longer-sleep alleles are expected
+        to be weakly protective (observed OR < 1, CI includes 1).
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: pgscatalog_PGS003319.json > trait_additional (same exposure GWAS as this score)
+      quote: Sleep duration; Binary
+      confidence: medium
+    - source: supplement
+      locator: pgscatalog_PGS003319.json > samples_variants[0].phenotyping_free
+      quote: Insomnia; 1160
+      confidence: medium
+    - source: supplement
+      locator: ukb_field_1160.html > Description
+      quote: Sleep duration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weights on chr2:113.3 Mb (PAX8 sleep-duration locus), positive; rsIDs not harmonized
+    status: agent_proposed
+    notes: Catalog reports "Insomnia", but the score is the ExPRSweb DBSLMM score trained on the Neale Lab UKB 1160
+      sleep-duration GWAS (name ExPRSweb_Insomnia_1160_*; trait_additional "Sleep duration"), used by ExPRSweb as
+      a proxy exposure for insomnia. Weights are the exposure-GWAS effect sizes (template rule), so higher = longer
+      sleep. Corroborated by 1000G EUR r = +0.27 to +0.39 with the annotated sleep-duration scores PGS001150/PGS001978/PGS002196/PGS003764,
+      and -0.1 to -0.4 with the insomnia scores. Catalog OR 0.97 [0.931, 1.01] vs MGI insomnia. The "Binary" in
+      trait_additional is the catalog's label; Neale 1160 is quantitative.
+  PGS003323:
+    cluster: sleep.sleep_duration
+    phenotype: sleep_duration
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: self-reported sleep duration (UKB field 1160 GWAS, Neale Lab)
+      coding: UKB 1160 hours of sleep per day
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: Catalog OR is against the MGI insomnia PheCode, not sleep duration; longer-sleep alleles are expected
+        to be weakly protective (observed OR < 1, CI includes 1).
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: pgscatalog_PGS003319.json > trait_additional (same exposure GWAS as this score)
+      quote: Sleep duration; Binary
+      confidence: medium
+    - source: supplement
+      locator: pgscatalog_PGS003319.json > samples_variants[0].phenotyping_free
+      quote: Insomnia; 1160
+      confidence: medium
+    - source: supplement
+      locator: ukb_field_1160.html > Description
+      quote: Sleep duration
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weights on chr2:113.3 Mb (PAX8 sleep-duration locus), positive; rsIDs not harmonized
+    status: agent_proposed
+    notes: Catalog reports "Insomnia", but the score is the ExPRSweb PRS-CS score trained on the Neale Lab UKB 1160
+      sleep-duration GWAS (name ExPRSweb_Insomnia_1160_*; trait_additional "Sleep duration"), used by ExPRSweb as
+      a proxy exposure for insomnia. Weights are the exposure-GWAS effect sizes (template rule), so higher = longer
+      sleep. Corroborated by 1000G EUR r = +0.35 to +0.79 with the annotated sleep-duration scores PGS001150/PGS001978/PGS002196/PGS003764,
+      and -0.1 to -0.4 with the insomnia scores. Catalog OR 0.988 [0.947, 1.031] vs MGI insomnia. The "Binary" in
+      trait_additional is the catalog's label; Neale 1160 is quantitative.
+  PGS003324:
+    cluster: sleep.insomnia
+    phenotype: sleeplessness_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: frequency of sleeplessness / insomnia (UKB field 1200 GWAS, Neale Lab)
+      coding: 'UKB 1200 (coding 100343: 1 never/rarely, 2 sometimes, 3 usually); Neale Lab GWAS coding of this field
+        not read'
+    polarity: 1
+    evaluation_outcome:
+      phenotype: insomnia
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: pgscatalog_PGS003324.json > trait_additional
+      quote: Sleeplessness / insomnia; Binary
+      confidence: medium
+    - source: supplement
+      locator: pgscatalog_PGS003324.json > samples_variants[0].phenotyping_free
+      quote: Insomnia; 1200
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: top weight chr2:66,523,432 T (rs113851554, MEIS1; T is the insomnia-risk allele) positive
+    status: agent_proposed
+    notes: ExPRSweb lassosum score on the Neale Lab UKB 1200 "Sleeplessness / insomnia" GWAS; weights are the exposure-GWAS
+      effects (template rule). Higher = more frequent sleeplessness. Corroborated by catalog OR 1.026 [0.985, 1.069]
+      vs the MGI insomnia PheCode (CI includes 1) and 1000G EUR r = +0.51/+0.56 with the Prive UKB-1200 scores PGS001932/PGS002149
+      (read).
+  PGS003325:
+    cluster: sleep.insomnia
+    phenotype: sleeplessness_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: frequency of sleeplessness / insomnia (UKB field 1200 GWAS, Neale Lab)
+      coding: 'UKB 1200 (coding 100343: 1 never/rarely, 2 sometimes, 3 usually); Neale Lab GWAS coding of this field
+        not read'
+    polarity: 1
+    evaluation_outcome:
+      phenotype: insomnia
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: pgscatalog_PGS003324.json > trait_additional
+      quote: Sleeplessness / insomnia; Binary
+      confidence: medium
+    - source: supplement
+      locator: pgscatalog_PGS003324.json > samples_variants[0].phenotyping_free
+      quote: Insomnia; 1200
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: top weight chr2:66,523,432 T (rs113851554, MEIS1; T is the insomnia-risk allele) positive
+    status: agent_proposed
+    notes: ExPRSweb C+T (best-guess genotype) score on the Neale Lab UKB 1200 "Sleeplessness / insomnia" GWAS; weights
+      are the exposure-GWAS effects (template rule). Higher = more frequent sleeplessness. Corroborated by catalog
+      OR 1.092 [1.048, 1.137] vs the MGI insomnia PheCode (CI excludes 1) and 1000G EUR r = +0.53/+0.63 with the
+      Prive UKB-1200 scores PGS001932/PGS002149 (read).
+  PGS003326:
+    cluster: sleep.insomnia
+    phenotype: sleeplessness_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: frequency of sleeplessness / insomnia (UKB field 1200 GWAS, Neale Lab)
+      coding: 'UKB 1200 (coding 100343: 1 never/rarely, 2 sometimes, 3 usually); Neale Lab GWAS coding of this field
+        not read'
+    polarity: 1
+    evaluation_outcome:
+      phenotype: insomnia
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: pgscatalog_PGS003324.json > trait_additional
+      quote: Sleeplessness / insomnia; Binary
+      confidence: medium
+    - source: supplement
+      locator: pgscatalog_PGS003324.json > samples_variants[0].phenotyping_free
+      quote: Insomnia; 1200
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: top weight chr2:66,523,432 T (rs113851554, MEIS1; T is the insomnia-risk allele) positive
+    status: agent_proposed
+    notes: ExPRSweb C+T (dosage) score on the Neale Lab UKB 1200 "Sleeplessness / insomnia" GWAS; weights are the
+      exposure-GWAS effects (template rule). Higher = more frequent sleeplessness. Corroborated by catalog OR 1.085
+      [1.041, 1.131] vs the MGI insomnia PheCode (CI excludes 1) and 1000G EUR r = +0.54/+0.63 with the Prive UKB-1200
+      scores PGS001932/PGS002149 (read).
+  PGS003327:
+    cluster: sleep.insomnia
+    phenotype: sleeplessness_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: frequency of sleeplessness / insomnia (UKB field 1200 GWAS, Neale Lab)
+      coding: 'UKB 1200 (coding 100343: 1 never/rarely, 2 sometimes, 3 usually); Neale Lab GWAS coding of this field
+        not read'
+    polarity: 1
+    evaluation_outcome:
+      phenotype: insomnia
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: pgscatalog_PGS003324.json > trait_additional
+      quote: Sleeplessness / insomnia; Binary
+      confidence: medium
+    - source: supplement
+      locator: pgscatalog_PGS003324.json > samples_variants[0].phenotyping_free
+      quote: Insomnia; 1200
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: top weight chr2:66,523,432 T (rs113851554, MEIS1; T is the insomnia-risk allele) positive
+    status: agent_proposed
+    notes: ExPRSweb DBSLMM score on the Neale Lab UKB 1200 "Sleeplessness / insomnia" GWAS; weights are the exposure-GWAS
+      effects (template rule). Higher = more frequent sleeplessness. Corroborated by catalog OR 1.038 [0.997, 1.081]
+      vs the MGI insomnia PheCode (CI includes 1) and 1000G EUR r = +0.32/+0.43 with the Prive UKB-1200 scores PGS001932/PGS002149
+      (read).
+  PGS003328:
+    cluster: sleep.insomnia
+    phenotype: sleeplessness_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: frequency of sleeplessness / insomnia (UKB field 1200 GWAS, Neale Lab)
+      coding: 'UKB 1200 (coding 100343: 1 never/rarely, 2 sometimes, 3 usually); Neale Lab GWAS coding of this field
+        not read'
+    polarity: 1
+    evaluation_outcome:
+      phenotype: insomnia
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: pgscatalog_PGS003324.json > trait_additional
+      quote: Sleeplessness / insomnia; Binary
+      confidence: medium
+    - source: supplement
+      locator: pgscatalog_PGS003324.json > samples_variants[0].phenotyping_free
+      quote: Insomnia; 1200
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weight chr2:66,572,854 T (rs11693221, MEIS1 region) positive; allele orientation not checked
+    status: agent_proposed
+    notes: ExPRSweb PRS-CS score on the Neale Lab UKB 1200 "Sleeplessness / insomnia" GWAS; weights are the exposure-GWAS
+      effects (template rule). Higher = more frequent sleeplessness. Corroborated by catalog OR 1.101 [1.056, 1.147]
+      vs the MGI insomnia PheCode (CI excludes 1) and 1000G EUR r = +0.73/+0.87 with the Prive UKB-1200 scores PGS001932/PGS002149
+      (read).
 paper:
   pmid: '36152628'
   doi: 10.1016/j.ajhg.2022.09.001

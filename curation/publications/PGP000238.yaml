@@ -23,6 +23,41 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by OR 1.27 (CI 1.19-1.35) against 'Weight gain in Sertraline takers'; 1000G EUR correlation
       with anchor PGS000320 r=+0.64.
+  PGS000908:
+    cluster: sleep.insomnia
+    phenotype: insomnia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of insomnia (Jansen 2019 insomnia GWAS, SBayesR weights)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: insomnia
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: 'Methods > Polygenic risk scoring (sentence continues: "insomnia[32]", ref 32 = Jansen et al. 2019)'
+      quote: This study used publicly available GWAS results for depression
+      confidence: high
+    - source: full_text
+      locator: Methods > Polygenic risk scoring
+      quote: Genetic variant effect sizes were acquired from the GWAS data and used to calculate the predictive
+        genetic risk for the traits investigated.
+      confidence: medium
+    - source: full_text
+      locator: Results
+      quote: Insomnia PRS was associated with participants taking amitriptyline for insomnia (OR = 1.2 95%C.I. =
+        [1.1–1.3]).
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs113851554-T (MEIS1, the insomnia-risk allele in Hammerschlag 2017/Jansen 2019) weight +0.031; rs11693221-T
+        weight +0.049
+    status: agent_proposed
+    notes: Insomnia GWAS of Jansen et al. 2019 (ref 32, GCST007988), SBayesR. Evaluated against self-reported "trouble
+      sleeping" as an antidepressant side effect (sertraline OR 1.06, CI includes 1). 1000G EUR r=+0.55/+0.69 with
+      the Prive UKB-1200 scores.
 paper:
   pmid: '35602235'
   doi: 10.1038/s43856-021-00046-8

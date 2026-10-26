@@ -1,0 +1,92 @@
+slug: insomnia
+query: insomnia
+match:
+  terms:
+  - difficulty falling asleep
+  - insomnia
+  - sleep duration
+  - sleeplessness
+  - trouble sleeping
+  efo_ids:
+  - MONDO_0013600
+  exclude: []
+anchor: PGS003859
+status: resolved
+concepts:
+- sleep.insomnia
+- sleep.sleep_duration
+scores:
+  PGS000908:
+    decision: in_scope
+    note: insomnia / sleeplessness score; higher = more insomnia
+  PGS001932:
+    decision: in_scope
+    note: insomnia / sleeplessness score; higher = more insomnia
+  PGS002149:
+    decision: in_scope
+    note: insomnia / sleeplessness score; higher = more insomnia
+  PGS003319:
+    decision: in_scope
+    note: catalog label Insomnia, but trained on the UKB 1160 sleep-duration GWAS (ExPRSweb proxy); mapped to sleep.sleep_duration,
+      higher = longer sleep
+  PGS003320:
+    decision: in_scope
+    note: catalog label Insomnia, but trained on the UKB 1160 sleep-duration GWAS (ExPRSweb proxy); mapped to sleep.sleep_duration,
+      higher = longer sleep
+  PGS003321:
+    decision: in_scope
+    note: catalog label Insomnia, but trained on the UKB 1160 sleep-duration GWAS (ExPRSweb proxy); mapped to sleep.sleep_duration,
+      higher = longer sleep
+  PGS003322:
+    decision: in_scope
+    note: catalog label Insomnia, but trained on the UKB 1160 sleep-duration GWAS (ExPRSweb proxy); mapped to sleep.sleep_duration,
+      higher = longer sleep
+  PGS003323:
+    decision: in_scope
+    note: catalog label Insomnia, but trained on the UKB 1160 sleep-duration GWAS (ExPRSweb proxy); mapped to sleep.sleep_duration,
+      higher = longer sleep
+  PGS003324:
+    decision: in_scope
+    note: insomnia / sleeplessness score; higher = more insomnia
+  PGS003325:
+    decision: in_scope
+    note: insomnia / sleeplessness score; higher = more insomnia
+  PGS003326:
+    decision: in_scope
+    note: insomnia / sleeplessness score; higher = more insomnia
+  PGS003327:
+    decision: in_scope
+    note: insomnia / sleeplessness score; higher = more insomnia
+  PGS003328:
+    decision: in_scope
+    note: insomnia / sleeplessness score; higher = more insomnia
+  PGS003473:
+    decision: out_of_scope
+    note: belongs to ontology group "insomnia measurement" (EFO_0007876); HCHS/SOL LDpred2 file anti-correlates with
+      every insomnia score (r=-0.88 vs PGS002149), suspected sign-flipped deposit like PGS003480 from the same paper
+  PGS003859:
+    decision: out_of_scope
+    note: belongs to ontology group "insomnia measurement" (EFO_0007876); 129-SNP GRS (Gibson 2023), weakly correlated
+      (+0.05 to +0.12) with the insomnia scores
+  PGS001150:
+    decision: out_of_scope
+    note: pulled in by the sleep-duration term for correlations; belongs to trait sleep-duration (already curated)
+  PGS001978:
+    decision: out_of_scope
+    note: pulled in by the sleep-duration term for correlations; belongs to trait sleep-duration (already curated)
+  PGS002196:
+    decision: out_of_scope
+    note: pulled in by the sleep-duration term for correlations; belongs to trait sleep-duration (already curated)
+  PGS003480:
+    decision: out_of_scope
+    note: pulled in by the sleep-duration term for correlations; belongs to trait sleep-duration (already curated)
+  PGS003764:
+    decision: out_of_scope
+    note: pulled in by the sleep-duration term for correlations; belongs to trait sleep-duration (already curated)
+summary: 'Thirteen scores in the insomnia group. Eight are genuine insomnia scores mapped to the new concept sleep.insomnia
+  (higher = more insomnia): the two Prive scores on the raw UKB 1200 code (1 never/rarely ... 3 usually, read from the
+  authors'' code), Campos PGS000908 on the Jansen 2019 GWAS, and the five ExPRSweb *_1200_* scores (catalog-only, OR
+  > 1 vs MGI insomnia). The five ExPRSweb *_1160_* scores are labelled Insomnia in the catalog but were trained on the
+  UKB 1160 sleep-duration GWAS; they correlate positively with the sleep-duration scores, so they go to sleep.sleep_duration
+  (higher = longer sleep). That label mix-up explains all 9 negative pairs; no in-group sign flip. PGS003473 (other group)
+  looks sign-flipped and needs review there.'

@@ -757,10 +757,11 @@ def prs_results_table(
 
 
 def trait_group_by_control(state: type[rx.State]) -> rx.Component:
-    """Exclusive switch: group by mapped ontology (default) or reported phenotype."""
+    """Exclusive switch: group by curated concept (default), mapped ontology, or reported phenotype."""
     return rx.hstack(
         rx.text("Group by:", size="1", weight="medium", color="gray"),
         rx.segmented_control.root(
+            rx.segmented_control.item("Curated concept", value="concept"),
             rx.segmented_control.item("Mapped trait", value="ontology"),
             rx.segmented_control.item("Reported trait", value="reported"),
             value=state.trait_group_by,
@@ -770,10 +771,11 @@ def trait_group_by_control(state: type[rx.State]) -> rx.Component:
         rx.tooltip(
             rx.icon("info", size=14, color="gray"),
             content=(
-                "Mapped trait groups scores by the PGS Catalog ontology term "
-                "(default — fewer, broader groups). Reported trait splits by "
-                "the study's actual phenotype, so opposite bins like looking "
-                "'about your age' versus 'older than you are' are not averaged."
+                "Curated concept (default) groups scores by what they measure, with every "
+                "score's direction aligned: a mortality score and a longevity score land on "
+                "one lifespan axis instead of cancelling out. Scores without a curated concept "
+                "fall back to their mapped trait. Mapped trait groups by the PGS Catalog "
+                "ontology term; Reported trait by the study's own phenotype."
             ),
         ),
         spacing="2",

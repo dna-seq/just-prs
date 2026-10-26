@@ -15,11 +15,55 @@ from prs_ui.state import GenomicGridState, TraitBrowserState
 from reflex_mui_datagrid import lazyframe_grid, lazyframe_grid_stats_bar
 
 
+def trait_search_bar(state: type[rx.State] = TraitBrowserState) -> rx.Component:
+    """Synonym-aware trait search: "night owl" finds chronotype, "bad cholesterol" LDL.
+
+    ``state`` needs ``trait_query``, ``set_trait_query``, ``apply_trait_query`` and
+    ``clear_trait_query`` (``TraitBrowserState`` has them).
+    """
+    return rx.hstack(
+        rx.input(
+            placeholder="Search traits: any name, synonym, or PGS ID (e.g. night owl, bad cholesterol)...",
+            value=state.trait_query,
+            on_change=state.set_trait_query,
+            on_key_down=lambda key: rx.cond(key == "Enter", state.apply_trait_query(), rx.noop()),
+            size="2",
+            flex="1 1 280px",
+            min_width="240px",
+            disabled=~state.traits_loaded,
+        ),
+        rx.button(
+            rx.icon("search", size=14),
+            "Search",
+            on_click=state.apply_trait_query,
+            variant="outline",
+            size="2",
+            disabled=~state.traits_loaded,
+        ),
+        rx.button(
+            "Reset",
+            on_click=state.clear_trait_query,
+            variant="outline",
+            color_scheme="gray",
+            size="2",
+            disabled=(~state.traits_loaded) | (state.trait_query == ""),
+        ),
+        wrap="wrap",
+        spacing="2",
+        align="center",
+        width="100%",
+    )
+
+
 def trait_selector(
     state: type[rx.State] = TraitBrowserState,
     normalizing: object | None = None,
+    show_search: bool = True,
 ) -> rx.Component:
-    """Trait selection grid with Select/Clear buttons and selection badges."""
+    """Trait selection grid with search, Select/Clear buttons and selection badges.
+
+    Host apps that render their own trait search pass ``show_search=False``.
+    """
     is_normalizing = GenomicGridState.vcf_normalizing if normalizing is None else normalizing
     selection_ready = (state.prs_genotypes_path != "") & (is_normalizing == False)  # noqa: E712
     selection_disabled = ~selection_ready  # type: ignore[operator]
@@ -97,6 +141,7 @@ def trait_selector(
             width="100%",
         ),
         trait_group_by_control(state),
+        *([trait_search_bar(state)] if show_search else []),
         rx.cond(
             state.traits_loaded,
             rx.vstack(

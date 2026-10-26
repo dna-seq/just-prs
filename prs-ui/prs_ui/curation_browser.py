@@ -1,8 +1,10 @@
 """Display frames for the Curated tab.
 
-Compiles the reviewable YAML under ``curation/`` with ``just_prs.curation.build_tables``
-and projects the published columns into grid-ready frames. The tab reads this module;
-By PRS and By Trait do not.
+Inside a checkout with ``curation/`` the tab compiles the reviewable YAML with
+``just_prs.curation.build_tables`` (curators see unpublished edits). Everywhere else
+(pip/uvx installs, just-dna-lite) it shows the published tables ``PRSCatalog`` pulls
+from Hugging Face. Either way the same columns are projected into grid-ready frames.
+By PRS and By Trait read the curation through ``PRSCatalog``, not through this module.
 """
 
 from __future__ import annotations
@@ -14,6 +16,7 @@ from pathlib import Path
 import polars as pl
 
 from just_prs.curation import CurationTables, build_tables
+from just_prs.prs_catalog import PRSCatalog
 
 CURATION_VIEWS: tuple[str, ...] = ("scores", "review", "clusters")
 CURATION_STATUSES: tuple[str, ...] = ("all", "human_verified", "agent_proposed")
@@ -113,10 +116,25 @@ CLUSTER_DETAIL_LABELS: dict[str, str] = {
 
 @dataclass(frozen=True)
 class CurationBrowserData:
-    """Compiled curation tables plus the directory they were read from."""
+    """Curation tables plus where they came from (``local`` YAML or ``published`` HF tables)."""
 
     tables: CurationTables
     source: Path
+    origin: str = "local"
+
+    @property
+    def description(self) -> str:
+        """One line for the tab header: which tables are shown."""
+        if self.origin == "local":
+            return f"Compiled from {self.source}"
+        manifest = self.tables.manifest
+        built = str(manifest.get("built_at") or "unknown date")
+        commit = str(manifest.get("source_commit") or "")[:10]
+        return (
+            f"Published tables from just-dna-seq/pgs-catalog (built {built}"
+            + (f", source {commit}" if commit else "")
+            + f"), cached in {self.source}"
+        )
 
     @property
     def n_verified(self) -> int:
@@ -150,6 +168,30 @@ def compile_curation_browser(root: Path) -> CurationBrowserData:
         CurationBuildError: The YAML is inconsistent, so nothing is shown as curated.
     """
     return CurationBrowserData(tables=build_tables(root), source=root)
+
+
+def published_curation_browser(catalog: PRSCatalog) -> CurationBrowserData | None:
+    """The published curation tables from ``catalog`` (pulled from HF on demand).
+
+    Returns None when they are unavailable (offline before the first pull, or nothing
+    published yet).
+    """
+    tables = catalog.curation_tables()
+    if "annotations" not in tables:
+        return None
+    annotations = tables["annotations"]
+    empty = annotations.clear()
+    return CurationBrowserData(
+        tables=CurationTables(
+            annotations=annotations,
+            review=tables.get("review", empty.with_columns(pl.lit(None, dtype=pl.Utf8).alias("review_reason"))),
+            clusters=tables.get("clusters", pl.DataFrame()),
+            search_terms=tables.get("search_terms", pl.DataFrame()),
+            manifest=catalog.curation_manifest(),
+        ),
+        source=catalog.curation_dir,
+        origin="published",
+    )
 
 
 def prepare_score_display(frame: pl.DataFrame, status: str) -> pl.DataFrame:
@@ -413,6 +455,7 @@ __all__ = [
     "cluster_column_overrides",
     "compile_curation_browser",
     "find_curation_root",
+    "published_curation_browser",
     "prepare_cluster_display",
     "prepare_score_display",
     "score_column_overrides",

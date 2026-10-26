@@ -8,6 +8,7 @@ HTML and JSON export work out of the box.
 from __future__ import annotations
 
 import html
+from html import escape as _html_escape
 import logging
 import math
 import json
@@ -20,6 +21,7 @@ import altair as alt
 import polars as pl
 
 from just_prs.quality import rescale_quality_if_degenerate, resolve_quality_key
+from just_prs.score_direction import direction_detail, higher_score_means
 from just_prs.trait_summary import (
     NO_MAPPED_H2,
     TraitSummaryStats,
@@ -1941,6 +1943,9 @@ def build_prs_ai_prompt(
             lines.append(f"Genome/VCF input: {genome_file}")
         lines.extend(_source_link_prompt_lines([prompt_row], [pgs_id]))
         lines.append("")
+        lines.append(f"What a higher score means: {higher_score_means(prompt_row)}")
+        if prompt_row.get("curation_status"):
+            lines.append(f"Curation: {direction_detail(prompt_row)}")
         if pct:
             lines.append(f"Percentile: {pct} (method: {method})")
         if reference_audit_status in {"warning", "error"}:
@@ -3443,6 +3448,18 @@ def trait_report_html(
         ancestry_line = f"Ancestry: {SUPERPOP_LABELS.get(ancestry, ancestry)} ({ancestry})"
         subtitle_html = f'<div class="subtitle">{subtitle_prefix}{ancestry_line}</div>'
 
+    # What the percentiles mean: the curated axis (or that the direction is not curated).
+    direction_html = ""
+    if scored:
+        not_counted = (
+            " Not counted: "
+            + "; ".join(f"{item['pgs_id']} ({item['reason']})" for item in stats.not_counted)
+            + "."
+            if stats.not_counted
+            else ""
+        )
+        direction_html = f'<div class="direction-note">{_html_escape(stats.direction_note + not_counted)}</div>'
+
     # Link the title to the PGS Catalog trait page when every scored model
     # resolves to the same trait; with mixed traits the per-row links disambiguate.
     trait_urls = {u for r in scored if (u := _trait_url(r.get("trait_efo_id")))}
@@ -3474,6 +3491,7 @@ h1 a:hover {{ border-bottom-color: #666; }}
 .trait-cell a {{ color: #555; text-decoration: underline dotted; }}
 .trait-cell a:hover {{ color: #1565C0; }}
 .subtitle {{ color: #666; margin-bottom: 16px; font-size: 0.95em; }}
+.direction-note {{ color: #555; margin-bottom: 14px; font-size: 0.9em; }}
 .stats-grid {{ display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }}
 .stat-card {{ background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; min-width: 140px; flex: 1; }}
 .stat-label {{ font-size: 0.78em; color: #888; text-transform: uppercase; letter-spacing: 0.03em; }}
@@ -3519,6 +3537,7 @@ h1 a:hover {{ border-bottom-color: #666; }}
 <button type="button" class="dl-png-btn" onclick="window.__PRS_DOWNLOAD_PNG__()">Download PNG</button>
 </div>
 {subtitle_html}
+{direction_html}
 {ai_html}
 {stats_html}
 <div id="vis"></div>

@@ -12,7 +12,7 @@ from prs_ui.grid_style import data_grid_scroll_css
 from prs_ui.pages.compute import by_prs_panel, by_trait_panel, shared_genotype_source
 from prs_ui.pages.curation import curation_panel
 from prs_ui.pages.faq import faq_panel
-from prs_ui.state import AppState, ComputeGridState, TraitBrowserState
+from prs_ui.state import AppState, ComputeGridState, GenomicGridState, TraitBrowserState
 
 
 GITHUB_REPO_URL = "https://github.com/antonkulaga/just-prs"
@@ -203,7 +203,12 @@ app = rx.App(backend_exception_handler=_safe_backend_exception_handler)
 app.add_page(
     index,
     title="just-prs",
-    on_load=[ComputeGridState.initialize, TraitBrowserState.initialize_traits],
+    on_load=[
+        ComputeGridState.initialize,
+        TraitBrowserState.initialize_traits,
+        # `uv run preselect`: normalize PRS_UI_PRESELECT_VCF and feed both consumers (no-op otherwise).
+        GenomicGridState.initialize_source,
+    ],
 )
 
 

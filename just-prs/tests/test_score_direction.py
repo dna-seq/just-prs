@@ -258,3 +258,59 @@ def test_refresh_does_not_touch_cleaned_metadata(catalog: PRSCatalog, monkeypatc
     before = sorted(p.name for p in catalog.metadata_dir.glob("*.parquet"))
     catalog.refresh_curation(force=True)
     assert sorted(p.name for p in catalog.metadata_dir.glob("*.parquet")) == before
+
+
+def _anton_parquet() -> Path:
+    from just_prs.normalize import VcfFilterConfig, normalize_vcf
+    from just_prs.scoring import resolve_cache_dir
+
+    test_dir = resolve_cache_dir() / "test-data"
+    vcf = test_dir / "antonkulaga.vcf"
+    if not vcf.exists():
+        pytest.skip(f"anton VCF not cached at {vcf}")
+    out = test_dir / "antonkulaga_pass_normalized.parquet"
+    if not out.exists() or out.stat().st_mtime < vcf.stat().st_mtime:
+        normalize_vcf(vcf, out, config=VcfFilterConfig(pass_filters=["PASS", "."]))
+    return out
+
+
+def test_scored_genome_rows_carry_direction_and_align(catalog: PRSCatalog) -> None:
+    """Score one up- and one down-pointing model of one concept on Anton's genome, one at a time."""
+    from just_prs.enrich import enrich_prs_result
+
+    directions = catalog.score_directions()
+    cluster = _mixed_cluster(directions)
+    candidates = (
+        catalog.scores(genome_build="GRCh38")
+        .filter((pl.col("cluster") == cluster) & (pl.col("curation_status") == "resolved"))
+        .select("pgs_id", "polarity", "n_variants")
+        .collect()
+        .sort("n_variants", "pgs_id")
+    )
+    picked = [candidates.filter(pl.col("polarity") == sign).row(0, named=True)["pgs_id"] for sign in (1, -1)]
+    genotypes = pl.scan_parquet(_anton_parquet())
+    best_perf = catalog.best_performance().collect()
+    rows: list[dict] = []
+    for pgs_id in picked:  # sequential on purpose: never score genomes in parallel
+        result = catalog.compute_prs(_anton_parquet(), pgs_id, genome_build="GRCh38", genotypes_lf=genotypes)
+        enriched = enrich_prs_result(result, catalog, best_perf, genome_build="GRCh38")
+        expected = catalog.score_direction(pgs_id) or {}
+        assert {c: getattr(enriched, c) for c in SCORE_DIRECTION_COLUMNS} == {
+            c: expected.get(c) for c in SCORE_DIRECTION_COLUMNS
+        }
+        if enriched.percentile is not None:
+            tone = direction_tone(enriched.percentile, expected)
+            assert enriched.risk_level_color == {
+                "danger": "red", "warning": "orange", "good": "green", "neutral": "gray"
+            }[tone]
+            assert str(expected["higher_percentile_means"]) in enriched.risk_hint
+        rows.append({**enriched.model_dump(), "match_rate": 90.0})
+
+    with_pct = [r for r in rows if r["percentile"] is not None]
+    if len(with_pct) < 2:
+        pytest.skip("reference percentiles missing for the picked scores")
+    stats = summarize_trait_rows(rows, model_scope="all")
+    assert stats.axis_aligned and stats.curated_cluster == cluster
+    expected_axis = {r["pgs_id"]: axis_percentile(r["percentile"], r["polarity"]) for r in with_pct}
+    assert stats.pct_by_id == pytest.approx(expected_axis)
+    assert stats.flipped_ids == [picked[1]]

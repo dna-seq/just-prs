@@ -1,0 +1,354 @@
+slug: cardiovascular-disease
+query: cardiovascular disease
+match:
+  terms:
+  - aortic stenosis
+  - aortic valve stenosis
+  - cardiovascular disease
+  - heart disease
+  efo_ids:
+  - EFO_0000266
+  - MONDO_0004995
+  - MONDO_0005010
+  exclude: []
+anchor: PGS000018
+status: resolved
+concepts:
+- cardiovascular.cardiovascular_disease
+- cardiovascular.coronary_artery_disease
+- cardiovascular.aortic_stenosis
+- cardiovascular.blood_pressure
+scores:
+  PGS000010:
+    decision: in_scope
+    note: null
+  PGS000011:
+    decision: in_scope
+    note: null
+  PGS000012:
+    decision: in_scope
+    note: null
+  PGS000013:
+    decision: in_scope
+    note: null
+  PGS000018:
+    decision: in_scope
+    note: null
+  PGS000019:
+    decision: in_scope
+    note: null
+  PGS000057:
+    decision: in_scope
+    note: null
+  PGS000058:
+    decision: in_scope
+    note: null
+  PGS000059:
+    decision: in_scope
+    note: null
+  PGS000116:
+    decision: in_scope
+    note: null
+  PGS000117:
+    decision: in_scope
+    note: null
+  PGS000200:
+    decision: in_scope
+    note: null
+  PGS000296:
+    decision: in_scope
+    note: null
+  PGS000329:
+    decision: in_scope
+    note: null
+  PGS000337:
+    decision: in_scope
+    note: null
+  PGS000349:
+    decision: in_scope
+    note: null
+  PGS000746:
+    decision: in_scope
+    note: null
+  PGS000747:
+    decision: in_scope
+    note: null
+  PGS000748:
+    decision: in_scope
+    note: null
+  PGS000749:
+    decision: in_scope
+    note: null
+  PGS000798:
+    decision: in_scope
+    note: null
+  PGS000818:
+    decision: in_scope
+    note: null
+  PGS000863:
+    decision: in_scope
+    note: in scope but unannotated (not open access; direction unconfirmable)
+  PGS000899:
+    decision: in_scope
+    note: null
+  PGS000962:
+    decision: out_of_scope
+    note: Chronic ischaemic heart disease (Tanigawa TTE); own ischaemic heart disease group, not one of this run's
+      target groups
+  PGS001335:
+    decision: in_scope
+    note: UKB 6150 High BP = hypertension; mapped to cardiovascular.blood_pressure
+  PGS001355:
+    decision: in_scope
+    note: null
+  PGS001780:
+    decision: in_scope
+    note: null
+  PGS001840:
+    decision: out_of_scope
+    note: Pulmonary heart disease (Prive); own group, not CVD
+  PGS002049:
+    decision: out_of_scope
+    note: Pulmonary heart disease (Prive); own group, not CVD
+  PGS002244:
+    decision: in_scope
+    note: null
+  PGS002262:
+    decision: in_scope
+    note: null
+  PGS002267:
+    decision: out_of_scope
+    note: Ascending thoracic aortic diameter; own aortic measurement group
+  PGS002316:
+    decision: in_scope
+    note: null
+  PGS002361:
+    decision: in_scope
+    note: null
+  PGS002388:
+    decision: in_scope
+    note: null
+  PGS002437:
+    decision: in_scope
+    note: null
+  PGS002486:
+    decision: in_scope
+    note: null
+  PGS002535:
+    decision: in_scope
+    note: null
+  PGS002584:
+    decision: in_scope
+    note: null
+  PGS002633:
+    decision: in_scope
+    note: null
+  PGS002682:
+    decision: in_scope
+    note: null
+  PGS002775:
+    decision: in_scope
+    note: null
+  PGS002776:
+    decision: in_scope
+    note: null
+  PGS002809:
+    decision: in_scope
+    note: null
+  PGS003355:
+    decision: in_scope
+    note: null
+  PGS003356:
+    decision: in_scope
+    note: null
+  PGS003438:
+    decision: in_scope
+    note: null
+  PGS003446:
+    decision: in_scope
+    note: null
+  PGS003725:
+    decision: in_scope
+    note: null
+  PGS003726:
+    decision: in_scope
+    note: null
+  PGS003727:
+    decision: in_scope
+    note: null
+  PGS003866:
+    decision: in_scope
+    note: null
+  PGS004196:
+    decision: in_scope
+    note: null
+  PGS004197:
+    decision: in_scope
+    note: null
+  PGS004198:
+    decision: in_scope
+    note: null
+  PGS004199:
+    decision: in_scope
+    note: null
+  PGS004200:
+    decision: in_scope
+    note: null
+  PGS004237:
+    decision: in_scope
+    note: null
+  PGS004238:
+    decision: in_scope
+    note: null
+  PGS004305:
+    decision: in_scope
+    note: null
+  PGS004306:
+    decision: in_scope
+    note: null
+  PGS004307:
+    decision: in_scope
+    note: null
+  PGS004308:
+    decision: in_scope
+    note: null
+  PGS004309:
+    decision: in_scope
+    note: null
+  PGS004321:
+    decision: in_scope
+    note: null
+  PGS004443:
+    decision: in_scope
+    note: null
+  PGS004444:
+    decision: in_scope
+    note: Jung CVD = CAD+stroke+TIA (Supp Table 15); composite CVD concept
+  PGS004459:
+    decision: in_scope
+    note: null
+  PGS004513:
+    decision: in_scope
+    note: null
+  PGS004514:
+    decision: in_scope
+    note: Jung CVD = CAD+stroke+TIA (Supp Table 15); composite CVD concept
+  PGS004529:
+    decision: in_scope
+    note: null
+  PGS004595:
+    decision: in_scope
+    note: null
+  PGS004596:
+    decision: in_scope
+    note: null
+  PGS004696:
+    decision: in_scope
+    note: null
+  PGS004697:
+    decision: in_scope
+    note: null
+  PGS004698:
+    decision: in_scope
+    note: null
+  PGS004743:
+    decision: in_scope
+    note: null
+  PGS004744:
+    decision: in_scope
+    note: null
+  PGS004745:
+    decision: in_scope
+    note: null
+  PGS004746:
+    decision: in_scope
+    note: null
+  PGS004879:
+    decision: in_scope
+    note: null
+  PGS004888:
+    decision: in_scope
+    note: null
+  PGS004921:
+    decision: in_scope
+    note: null
+  PGS004925:
+    decision: in_scope
+    note: null
+  PGS004941:
+    decision: in_scope
+    note: null
+  PGS005091:
+    decision: in_scope
+    note: null
+  PGS005092:
+    decision: in_scope
+    note: null
+  PGS005093:
+    decision: in_scope
+    note: null
+  PGS005094:
+    decision: in_scope
+    note: null
+  PGS005112:
+    decision: in_scope
+    note: null
+  PGS005143:
+    decision: in_scope
+    note: null
+  PGS005152:
+    decision: in_scope
+    note: null
+  PGS005231:
+    decision: in_scope
+    note: null
+  PGS005236:
+    decision: in_scope
+    note: null
+  PGS005252:
+    decision: in_scope
+    note: null
+  PGS005253:
+    decision: in_scope
+    note: null
+  PGS005254:
+    decision: in_scope
+    note: null
+  PGS005255:
+    decision: out_of_scope
+    note: Mean pressure gradient (aortic valve measurement group, Kany 2025); own group
+  PGS005256:
+    decision: out_of_scope
+    note: Peak aortic velocity (aortic valve measurement group, Kany 2025); own group
+  PGS005293:
+    decision: in_scope
+    note: null
+  PGS005294:
+    decision: in_scope
+    note: null
+  PGS005295:
+    decision: in_scope
+    note: null
+  PGS005296:
+    decision: in_scope
+    note: null
+  PGS005297:
+    decision: in_scope
+    note: null
+  PGS005298:
+    decision: in_scope
+    note: null
+  PGS005322:
+    decision: in_scope
+    note: null
+  PGS012542:
+    decision: in_scope
+    note: null
+summary: 'Composite CVD scores (Weissbrod UKB series, Jung CVD, Sun CVD metaPRS, Cheng T2D-CVD wGRS, Elliott CVD)
+  go to a new concept cardiovascular.cardiovascular_disease; aortic stenosis scores to a new cardiovascular.aortic_stenosis;
+  "High BP" (Tanigawa) to blood_pressure.hypertension; the 81 already-curated CAD scores are reused. Three deposits
+  look allele-inverted and are recorded as distributed for review: PGS000117 (Elliott CVD, like its CAD sibling
+  PGS000116), PGS004888 (Mandla CAD, protective APOE/PCSK9/LDLR alleles up, r=-0.78 vs anchor) and PGS005252 (IAVGC
+  aortic stenosis, PCSK9/LDLR opposite, r=-0.65 vs PGS005254, which matches canonical loci). PGS000863 (Aly, 330-SNP
+  CVD GRS) stays unannotated: no open text, r~0 with every CAD score and mixed lead variants. PGS002361 (BBJ-trained)
+  is annotated low-confidence for review.'

@@ -80,6 +80,63 @@ scores:
     evaluation_outcome:
       expected_metric_sign: 1
       basis: The catalog metric was computed by the authors on their own non-inverted score, so it stays > null.
+  PGS004888:
+    cluster: cardiovascular.coronary_artery_disease
+    phenotype: coronary_artery_disease
+    measurement_kind: time_to_event
+    score_effect:
+      direction: decreases
+      target: 'risk of incident coronary artery disease, weights AS DISTRIBUTED (allele-inverted: higher score =
+        lower CAD risk; the authors'' PRS-CS score raised risk)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog HR 1.27 per SD (incident CAD) was computed by the authors on their own, non-inverted PGS, not
+        on the deposited file, so it stays > 1.
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PGS prediction of CKD and CAD
+      quote: Using the PRScs method, we constructed CKD and CAD PGS with the summary statistics from the CKD Gen
+        Consortium
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary artery diseae
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: APOE rs7412-T +0.022, PCSK9 rs11591147-T +0.022, LDLR rs6511720-T +0.019 (protective alleles positive);
+        LPA risk region allele negative.
+    review_reason: 'Suspected inverted deposit: >=3 canonical LDL/CAD loci opposite and 1000G r = -0.78 vs anchor,
+      while the paper''s CAD PGS raised risk.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (higher score = lower risk); the paper says higher
+        = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: 'GRCh38 lead loci: APOE rs7412-T (chr19:44908822) +0.0224, PCSK9 rs11591147-T (chr1:55039974) +0.0216,
+        LDLR rs6511720-T (chr19:11091630) +0.0187 - all LDL-lowering/CAD-protective alleles weighted up; LPA chr6:160395377-C
+        -0.0348 (risk C positive in PGS005254); 1000G EUR r = -0.78 vs anchor PGS000018, -0.90 vs PGS005298, +0.88
+        with inverted PGS004237; the same paper''s T2D score PGS004887 is also recorded inverted.'
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported for the non-inverted score; the deposited file behaves as its negation.
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: CAD gePGS (PRS-CS on Nelson 2017 / CARDIoGRAMplusC4D CAD GWAS). Catalog HR 1.27 [1.18, 1.36] per SD for
+      incident CAD (without diabetes) was computed on the authors' score. Recorded as distributed; report to PGS
+      Catalog with PGS004887.
 evidence_read:
   abstract: true
   full_text: europepmc

@@ -62,6 +62,63 @@ scores:
       allele positive at PHACTR1, 9p21 and LPA; in 1000G EUR it correlates negatively with every other CAD/MI score
       except PGS004237 (+0.72, also inverted). Neither the text nor the catalog record describes the allele coding.
       Recorded as distributed. Report to PGS Catalog.
+  PGS000117:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: time_to_event
+    score_effect:
+      direction: decreases
+      target: 'risk of incident cardiovascular disease, weights AS DISTRIBUTED (allele-inverted: higher score =
+        lower CVD risk; the authors'' PRS raised risk)'
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Study design
+      quote: In secondary analysis, CVD was examined (CAD as well as angina and stroke).
+      confidence: high
+    - source: full_text
+      locator: Methods > Outcomes
+      quote: This definition of CAD includes myocardial infarction and its related sequelae, whereas the CVD definition
+        additionally includes angina, nonhemorrhagic stroke, and transient ischemic attack.
+      confidence: high
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cardiovascular disease
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: rs4977574-A +0.0236, rs2891168-A +0.0238, rs10757278-A +0.0227 (9p21); GWAS risk alleles are G (rs4977574,
+        rs10757278), so risk alleles carry negative weights.
+    review_reason: 'Suspected inverted deposit: 9p21 lead variants opposite and 1000G r = -0.69 vs anchor; paper
+      describes a risk-increasing CVD PRS.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (higher score = lower risk); the paper says higher
+        = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: rs4977574-A +0.0236 and rs10757278-A +0.0227 at 9p21 (GWAS risk alleles are G at both, so the protective
+        allele is weighted up); same paper as PGS000116, already recorded as inverted; 1000G EUR r = -0.69 vs anchor
+        PGS000018 and -0.75 vs PGS001780, +0.80 with PGS000116 and +0.74 with PGS004237 (both inverted).
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported for the non-inverted score; the deposited file behaves as its negation.
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Lassosum PRS tuned for CVD (CAD + angina + stroke + TIA) from the same pipeline as PGS000116. Catalog
+      reports only C-statistics (no directional metric). Recorded as distributed; report to PGS Catalog together
+      with PGS000116.
 paper:
   pmid: '32068818'
   doi: 10.1001/jama.2019.22241

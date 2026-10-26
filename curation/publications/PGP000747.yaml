@@ -1,0 +1,44 @@
+pgp_id: PGP000747
+scores:
+  PGS005254:
+    cluster: cardiovascular.aortic_stenosis
+    phenotype: aortic_stenosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of aortic stenosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Discussion
+      quote: each s.d. increase in the MTAG-based aortic stenosis PGS conferred an HR of 1.64 for incident aortic
+        stenosis.
+      confidence: high
+    - source: full_text
+      locator: Methods > MTAG
+      quote: We used MTAG (v1.0.8) with its default settings in a four-way analysis that incorporated the REGENIE
+        summary statistics for mean gradient, peak velocity and AVA, as well as the aortic stenosis GWAS meta-analysis.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: LPA rs3798220-C +0.0469 (Lp(a)/CAD-raising per GWAS Catalog); PCSK9 rs11591147-T -0.0394 (G is AS risk,
+        OR 1.21-1.24).
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: MTAG-enhanced AS GWAS (UKB + FinnGen + MVP + prior), PRScs auto. Higher score = higher incident AS risk
+      (HR 1.64 per SD, All of Us). Anti-correlates (r = -0.65) with PGS005252, which is the inverted deposit; PGS005254
+      matches canonical loci and its sibling valve scores (r = +0.88).
+paper:
+  pmid: '41419685'
+  doi: 10.1038/s41588-025-02397-7
+  title: Multitrait analyses identify genetic variants associated with aortic valve function and aortic stenosis
+    risk.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement:
+  - Supplementary Table 1

@@ -2256,3 +2256,67 @@ scores:
     status: agent_proposed
     notes: LDpred2-inf risk-factor PRS on UKB field 23098 (weight from the bioimpedance scale). As distributed,
       a high percentile means a genetically LIGHTER body weight. Report to PGS Catalog.
+  PGS004444:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (CAD, stroke or TIA)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary vascular disease (CVD)
+      confidence: medium
+    - source: supplement
+      locator: supp_dl/MOESM1.txt, Supplementary Table 15 (Definition of the 27 major diseases), row Cardiovascular
+        disease
+      quote: G45,I20-I25,I63-I64
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation. Jung 2024 UKB disease PRS (disease.CVD.score); catalog label says "Coronary
+      vascular disease" but Supplementary Table 15 defines CVD as ICD-10 G45, I20-I25, I63-I64 plus self-reported
+      heart attack/angina/stroke/TIA (50,111 cases vs 47,174 for CAD), so it maps to composite CVD, not CAD. Corroborated
+      by OR 1.28 per SD (Supplementary Tables 6/7, p < 1e-180) and 1000G EUR r = +0.86 with PGS004459 and +0.73
+      with PGS004443 (CAD, same paper).
+  PGS004514:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (CAD, stroke or TIA)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Coronary vascular disease (CVD)
+      confidence: medium
+    - source: supplement
+      locator: supp_dl/MOESM1.txt, Supplementary Table 15 (Definition of the 27 major diseases), row Cardiovascular
+        disease
+      quote: G45,I20-I25,I63-I64
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation. Jung 2024 UKB RFDiseasemetaPRS (meta.CVD.score); catalog label says "Coronary
+      vascular disease" but Supplementary Table 15 defines CVD as ICD-10 G45, I20-I25, I63-I64 plus self-reported
+      heart attack/angina/stroke/TIA (50,111 cases vs 47,174 for CAD), so it maps to composite CVD, not CAD. Corroborated
+      by OR 1.34 per SD (Supplementary Tables 6/7, p < 1e-180) and 1000G EUR r = +0.91 with PGS004529 and +0.63
+      with PGS004443 (CAD, same paper).

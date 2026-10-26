@@ -4608,6 +4608,266 @@ scores:
     notes: Catalog-only (paper not read for this trait). Catalog reports 'Bone mineral density (BMD)', but the score
       name bmd_HEEL_TSCOREz places it on the UKB heel eBMD T-score, so phenotype heel_bone_mineral_density. PGS
       Catalog weights are per-allele effects on the trait; 1000G EUR r=+0.82 with PGS001402 (heel BMD, annotated).
+  PGS002316:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (UK Biobank disease_CARDIOVASCULAR)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cardiovascular disease
+      confidence: medium
+    - source: supplement
+      locator: weissbrod_MOESM4.S3.csv, row 'Cardiovascular disease'
+      quote: Cardiovascular disease,337488,0.139,0.0058,No,Yes
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: APOE rs7412 C (non-protective) +0.015, PCSK9 rs11591147-G +0.0135
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation. Weissbrod 2022 UKB trait disease_CARDIOVASCULAR, method BOLT-LMM; PGS Catalog
+      weights are per-allele effects on the reported trait. 1000G EUR r = +0.33 vs anchor PGS000018 (CAD); r = +0.95
+      vs PGS002682 (SBayesR).
+  PGS002361:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (UK Biobank disease_CARDIOVASCULAR)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cardiovascular disease
+      confidence: low
+    - source: supplement
+      locator: weissbrod_MOESM4.S3.csv, row 'Cardiovascular disease'
+      quote: Cardiovascular disease,337488,0.139,0.0058,No,Yes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Direction rests on catalog convention only; BBJ-trained score has no 1000G EUR corroboration.
+    corrections: []
+    status: agent_proposed
+    notes: 'Low confidence: BOLT-LMM trained on Biobank Japan (name suffix -BBJ); 1000G EUR r ~0 with every CVD/CAD
+      score (+0.03 vs anchor, -0.02 vs PGS002316), so nothing corroborates the conventional direction.'
+  PGS002388:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (UK Biobank disease_CARDIOVASCULAR)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cardiovascular disease
+      confidence: medium
+    - source: supplement
+      locator: weissbrod_MOESM4.S3.csv, row 'Cardiovascular disease'
+      quote: Cardiovascular disease,337488,0.139,0.0058,No,Yes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation. Weissbrod 2022 UKB trait disease_CARDIOVASCULAR, method P+T 1e-4; PGS Catalog
+      weights are per-allele effects on the reported trait. 1000G EUR r = +0.21 vs anchor PGS000018 (CAD); r = +0.53
+      vs PGS002682 (SBayesR).
+  PGS002437:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (UK Biobank disease_CARDIOVASCULAR)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cardiovascular disease
+      confidence: medium
+    - source: supplement
+      locator: weissbrod_MOESM4.S3.csv, row 'Cardiovascular disease'
+      quote: Cardiovascular disease,337488,0.139,0.0058,No,Yes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation. Weissbrod 2022 UKB trait disease_CARDIOVASCULAR, method P+T 1e-3; PGS Catalog
+      weights are per-allele effects on the reported trait. 1000G EUR r = +0.18 vs anchor PGS000018 (CAD); r = +0.50
+      vs PGS002682 (SBayesR).
+  PGS002486:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (UK Biobank disease_CARDIOVASCULAR)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cardiovascular disease
+      confidence: medium
+    - source: supplement
+      locator: weissbrod_MOESM4.S3.csv, row 'Cardiovascular disease'
+      quote: Cardiovascular disease,337488,0.139,0.0058,No,Yes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation. Weissbrod 2022 UKB trait disease_CARDIOVASCULAR, method P+T 1e-2; PGS Catalog
+      weights are per-allele effects on the reported trait. 1000G EUR r = +0.12 vs anchor PGS000018 (CAD); r = +0.42
+      vs PGS002682 (SBayesR).
+  PGS002535:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (UK Biobank disease_CARDIOVASCULAR)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cardiovascular disease
+      confidence: medium
+    - source: supplement
+      locator: weissbrod_MOESM4.S3.csv, row 'Cardiovascular disease'
+      quote: Cardiovascular disease,337488,0.139,0.0058,No,Yes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation. Weissbrod 2022 UKB trait disease_CARDIOVASCULAR, method P+T 1e-6; PGS Catalog
+      weights are per-allele effects on the reported trait. 1000G EUR r = +0.22 vs anchor PGS000018 (CAD); r = +0.44
+      vs PGS002682 (SBayesR).
+  PGS002584:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (UK Biobank disease_CARDIOVASCULAR)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cardiovascular disease
+      confidence: medium
+    - source: supplement
+      locator: weissbrod_MOESM4.S3.csv, row 'Cardiovascular disease'
+      quote: Cardiovascular disease,337488,0.139,0.0058,No,Yes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation. Weissbrod 2022 UKB trait disease_CARDIOVASCULAR, method P+T 5e-8; PGS Catalog
+      weights are per-allele effects on the reported trait. 1000G EUR r = +0.23 vs anchor PGS000018 (CAD); r = +0.39
+      vs PGS002682 (SBayesR).
+  PGS002633:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (UK Biobank disease_CARDIOVASCULAR)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cardiovascular disease
+      confidence: medium
+    - source: supplement
+      locator: weissbrod_MOESM4.S3.csv, row 'Cardiovascular disease'
+      quote: Cardiovascular disease,337488,0.139,0.0058,No,Yes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation. Weissbrod 2022 UKB trait disease_CARDIOVASCULAR, method PolyFun-pred; PGS Catalog
+      weights are per-allele effects on the reported trait. 1000G EUR r = +0.30 vs anchor PGS000018 (CAD); r = +0.76
+      vs PGS002682 (SBayesR).
+  PGS002682:
+    cluster: cardiovascular.cardiovascular_disease
+    phenotype: cardiovascular_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cardiovascular disease (UK Biobank disease_CARDIOVASCULAR)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cardiovascular disease
+      confidence: medium
+    - source: supplement
+      locator: weissbrod_MOESM4.S3.csv, row 'Cardiovascular disease'
+      quote: Cardiovascular disease,337488,0.139,0.0058,No,Yes
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation. Weissbrod 2022 UKB trait disease_CARDIOVASCULAR, method SBayesR; PGS Catalog
+      weights are per-allele effects on the reported trait. 1000G EUR r = +0.29 vs anchor PGS000018 (CAD); r = +0.95
+      vs PGS002316 (BOLT-LMM).
 paper:
   pmid: '35393596'
   doi: 10.1038/s41588-022-01036-9

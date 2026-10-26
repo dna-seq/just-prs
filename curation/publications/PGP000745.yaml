@@ -1,0 +1,72 @@
+pgp_id: PGP000745
+scores:
+  PGS005252:
+    cluster: cardiovascular.aortic_stenosis
+    phenotype: aortic_stenosis
+    measurement_kind: time_to_event
+    score_effect:
+      direction: decreases
+      target: 'risk of aortic stenosis, weights AS DISTRIBUTED (allele-inverted: higher score = lower AS risk; the
+        authors'' LDpred2 PRS raised risk)'
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog HR 1.92/1.80 and OR 1.43 were computed by the authors on their own PRS, not on the deposited
+        file, so they stay > 1.
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > AS PRS
+      quote: In all validation studies, the AS PRS outperformed the previously published PRS, with an overall twofold
+        improvement in association
+      confidence: high
+    - source: full_text
+      locator: Results > AS PRS
+      quote: there was a rising trajectory of risk with higher percentiles of the PRS.
+      confidence: high
+    - source: full_text
+      locator: Methods > study populations/phenotype
+      quote: A consistent AS phenotype was applied across all IAVGC studies
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: 'PCSK9 rs11591147-T +0.0805 (GWAS: G is AS risk, OR 1.24) and LDLR rs6511720-T +0.0229 (LDL-lowering)
+        carry positive weights; LPA-region alleles opposite to PGS005254.'
+    review_reason: 'Suspected inverted deposit: PCSK9 and LDLR lead alleles opposite, r = -0.65 vs PGS005254, paper
+      says higher PRS = higher AS risk.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (higher score = lower risk); the paper says higher
+        = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: PCSK9 rs11591147-T (chr1:55039974) +0.0805 although GWAS Catalog (this paper, PMID 41419686) lists
+        G as the AS risk allele (OR 1.24); LDLR rs6511720-T (chr19:11091630, LDL-lowering) +0.0229; chr6:160395377-C
+        (LPA region) -0.0668 and chr22:30196819-A -0.0551, both opposite to PGS005254; 1000G EUR r = -0.65 vs PGS005254
+        and -0.56 vs PGS005255/PGS005256.
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/HR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported for the non-inverted score; the deposited file behaves as its negation.
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: 'IAVGC multi-ancestry AS PRS (LDpred2, HapMap3). Paper: HR 1.92 per SD in UKB for incident AS. The deposited
+      file anti-correlates with the Kany 2025 AS score (PGS005254), whose lead variants match canonical risk alleles.
+      Recorded as distributed; report to PGS Catalog.'
+paper:
+  pmid: '41419686'
+  doi: 10.1038/s41588-025-02417-6
+  title: Genomic and transcriptomic analyses of aortic stenosis enhance therapeutic target discovery and disease
+    prediction.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

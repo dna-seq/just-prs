@@ -549,3 +549,8 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by catalog OR 0.82 [0.77, 0.86] for MARD and 0.76 [0.71, 0.82] for SIDD and by 1000G EUR
       r=+0.31 with PGS002277 (genetic beta cell function, read).
+  PGS000863:
+    score_effect: null
+    unannotated_reason: Paper not open access and the abstract does not describe the CVD score; 1000G EUR r is ~0
+      with all 100+ CAD/CVD scores and lead variants are mixed (LPA risk alleles rs186696265-T, rs55730499-T positive
+      but PCSK9 protective rs11591147-T also +0.28), so the file direction cannot be confirmed.

@@ -1227,6 +1227,47 @@ domains:
             sign: 1
             aliases:
             - cerebrovascular disorder
+      cardiovascular_disease:
+        label: Cardiovascular disease (composite of heart attack, coronary disease, angina and stroke)
+        axis: higher risk of cardiovascular disease
+        valence: undesirable
+        valence_basis: Composite cardiovascular disease (coronary events plus stroke/TIA) is the leading
+          cause of death; a separate concept from coronary artery disease and stroke because these scores
+          were trained on the pooled endpoint, which a person reads as "heart attack or stroke".
+        status: agent_proposed
+        aliases:
+        - heart disease
+        - CVD
+        - heart attack or stroke
+        - atherosclerotic cardiovascular disease
+        - cardiovascular risk
+        phenotypes:
+          cardiovascular_disease:
+            label: Cardiovascular disease (pooled CAD/MI, angina, ischaemic stroke and TIA; incl. CVD
+              in type 2 diabetes patients)
+            sign: 1
+            aliases:
+            - ASCVD
+            - cardiovascular events
+      aortic_stenosis:
+        label: Aortic valve stenosis
+        axis: higher risk of aortic stenosis
+        valence: undesirable
+        valence_basis: Aortic stenosis narrows the heart's outflow valve, causing heart failure and needing
+          valve replacement; a separate concept because it is a valve disease, not an artery disease.
+        status: agent_proposed
+        aliases:
+        - aortic valve stenosis
+        - calcific aortic valve disease
+        - narrowed heart valve
+        - aortic valve replacement
+        phenotypes:
+          aortic_stenosis:
+            label: Aortic stenosis (ICD-10 I35.0/I35.2/I06.0/I06.2, valve procedures; incident or prevalent)
+            sign: 1
+            aliases:
+            - AS
+            - CAVD
   anthropometry:
     label: Body size and shape
     concepts:

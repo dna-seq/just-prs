@@ -13780,3 +13780,39 @@ scores:
     status: agent_proposed
     notes: 'Template annotation (PGP000244 snpnet binomial model on case status: higher score = more likely case).
       Consistent with 1000G EUR r=+0.37 with PGS000073 (OR 1.22 [1.19, 1.25]). Metrics are AUROC only.'
+  PGS001335:
+    cluster: cardiovascular.blood_pressure
+    phenotype: hypertension
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of doctor-diagnosed high blood pressure (UKB field 6150 = High blood pressure)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Vascular/heart problems diagnosed by doctor High BP
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: FGF5 rs16998073-T (BP-raising) +0.0855; SH2B3 rs3184504-C (non-risk; T is BP-raising) -0.0592.
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'Catalog-only via the Tanigawa paper template (snpnet binomial model on case status; higher = more likely
+      case). Score GBE_BIN_FC4006150 (UKB 6150 vascular/heart problems, answer High blood pressure): hypertension,
+      not composite CVD. Lead variants agree.'

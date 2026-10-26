@@ -4,6 +4,7 @@ Every test reads the real tables from ``just-dna-seq/pgs-catalog`` ``data/metada
 ``PRSCatalog``; expected values are recomputed from those tables, never hardcoded.
 """
 
+import os
 import random
 import shutil
 import statistics
@@ -128,6 +129,16 @@ def test_curation_pull_honours_max_age(tmp_path: Path, monkeypatch: pytest.Monke
     time.sleep(0.05)
     PRSCatalog(cache_dir=tmp_path).refresh_curation()
     assert stamp.stat().st_mtime == pulled_at, "a fresh copy is not re-pulled"
+
+    # A long-running process re-checks once the max age (24 h) has passed since its last check.
+    day_ago = time.time() - 25 * 3600
+    os.utime(stamp, (day_ago, day_ago))
+    first.refresh_curation()
+    assert stamp.stat().st_mtime == day_ago, "checked less than a max age ago: no re-check"
+    first._curation_checked_at = day_ago
+    first.refresh_curation()
+    assert stamp.stat().st_mtime > day_ago + 3600
+    pulled_at = stamp.stat().st_mtime
 
     monkeypatch.setenv(CURATION_MAX_AGE_ENV, "0")
     again = PRSCatalog(cache_dir=tmp_path)

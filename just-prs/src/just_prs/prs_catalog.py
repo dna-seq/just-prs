@@ -195,7 +195,7 @@ class PRSCatalog:
         self._chip_coverage_loaded = False
         self._score_directions_df: pl.DataFrame | None = None
         self._score_directions_loaded = False
-        self._curation_checked = False
+        self._curation_checked_at: float | None = None
         self._search_terms_df: pl.DataFrame | None = None
         self._catalog_flags_lf: pl.LazyFrame | None = None
         self._catalog_flags_loaded = False
@@ -399,8 +399,16 @@ class PRSCatalog:
         used as is. Returns None when no curation tables are available at all.
         """
         directory = self.curation_dir
-        due = force or (not self._curation_checked and self._curation_pull_due(directory))
-        self._curation_checked = True
+        # Freshness is checked once per max-age period, so a long-running server picks up
+        # new curation without a restart (max age 0: once per catalog instance).
+        now = time.time()
+        max_age_hours = _curation_max_age_hours()
+        recheck = self._curation_checked_at is None or (
+            max_age_hours > 0 and now - self._curation_checked_at >= max_age_hours * 3600.0
+        )
+        if recheck:
+            self._curation_checked_at = now
+        due = force or (recheck and self._curation_pull_due(directory))
         if not os.environ.get(CURATION_DIR_ENV, "").strip() and due:
             directory.mkdir(parents=True, exist_ok=True)
             with start_action(action_type="prs_catalog:refresh_curation", directory=str(directory), force=force):
@@ -412,6 +420,7 @@ class PRSCatalog:
                 (directory / _CURATION_PULL_STAMP).touch()
             self._score_directions_df = None
             self._score_directions_loaded = False
+            self._search_terms_df = None
         if not (directory / "score_annotations.parquet").exists():
             return None
         return directory
@@ -817,7 +826,7 @@ class PRSCatalog:
         self._chip_coverage_loaded = False
         self._score_directions_df = None
         self._score_directions_loaded = False
-        self._curation_checked = False
+        self._curation_checked_at = None
         self._search_terms_df = None
         for p in self.metadata_dir.glob("*.parquet"):
             p.unlink()

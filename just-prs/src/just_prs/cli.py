@@ -20,6 +20,7 @@ from just_prs.models import PRSResult
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.prs import RestorationScope, compute_prs, compute_prs_batch
 from just_prs.prs_catalog import PRSCatalog
+from just_prs.score_direction import SCORE_DIRECTION_COLUMNS
 from just_prs.scoring import (
     DEFAULT_CACHE_DIR,
     download_scoring_file,
@@ -3551,6 +3552,16 @@ def _compute_trait_results(
 
     if failed:
         console.print(f"\n[yellow]{len(failed)}/{len(pgs_ids)} scores failed: {', '.join(failed)}[/yellow]")
+    # Curated direction from the current catalog (never from the result cache, which would
+    # freeze it): charts, reports and prompts align on the concept axis from these columns.
+    direction_cols = [c for c in SCORE_DIRECTION_COLUMNS if c in scores_df.columns]
+    if direction_cols:
+        directions = {
+            row["pgs_id"]: {c: row[c] for c in direction_cols}
+            for row in scores_df.select("pgs_id", *direction_cols).iter_rows(named=True)
+        }
+        for rd in result_dicts:
+            rd.update(directions.get(str(rd.get("pgs_id") or ""), {}))
     summary_parts = [f"[green]{len(result_dicts)}[/green] scores"]
     if cached_count:
         summary_parts.append(f"{cached_count} from cache")

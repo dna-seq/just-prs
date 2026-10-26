@@ -1,0 +1,74 @@
+pgp_id: PGP000201
+scores:
+  PGS000816:
+    cluster: hepatic.liver_enzymes
+    phenotype: alt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alanine aminotransferase (ALT) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alanine transaminase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; OR 1.72 (1.36-2.07) per score against serum ALT level in the catalog; 1000G EUR r=+0.56 with PGS000668.
+  PGS000815:
+    cluster: hepatic.liver_enzymes
+    phenotype: alp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alkaline phosphatase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alkaline phosphatase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; OR 1.88 (1.67-2.09) against serum ALP level in the catalog; 1000G EUR r=+0.49 with PGS000670.
+  PGS000817:
+    cluster: hepatic.liver_enzymes
+    phenotype: ggt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum gamma-glutamyl transferase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Gamma-glutamyl transferase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; BETA 1.43 (1.35-1.52) against serum GGT level in the catalog; 1000G EUR r=+0.67 with PGS000683.

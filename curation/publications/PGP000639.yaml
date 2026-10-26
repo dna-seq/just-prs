@@ -1,0 +1,61 @@
+pgp_id: PGP000639
+scores:
+  PGS004907:
+    cluster: endocrine.thyroid_function
+    phenotype: free_thyroxine
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: free thyroxine (FT4) concentration
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > PRSs
+      quote: The weighted PRS including FT4 SNPs was associated with FT4 concentrations (β = .12, SE = 0.01, P ≤
+        .001) (Table 4).
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs2235544-A (+, DIO1), rs113107469-T (+) raise FT4; rs4842131-T (-) lowers thyroxine (GWAS Catalog);
+        one conflicting rs2235544 entry
+    review_reason: null
+    status: agent_proposed
+    notes: Adult (Teumer 2018) weights applied to children (Generation R, ALSPAC, BLTS); outcome is inverse-normal
+      SD-score.
+  PGS004906:
+    cluster: endocrine.thyroid_function
+    phenotype: tsh_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: thyroid stimulating hormone (TSH) concentration
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > PRSs
+      quote: The weighted PRS including TSH SNPs was associated with TSH concentrations (β = .16, SE = 0.01, P ≤
+        .001) (Table 3).
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs334725-A (+) and rs10917469-A (+) raise TSH in GWAS Catalog; rs11732089 allele match unverified; rs2127387
+        has no TSH hit
+    review_reason: null
+    status: agent_proposed
+    notes: 'Adult (Teumer 2018) weights applied to children (Generation R, ALSPAC, BLTS); outcome is inverse-normal
+      SD-score. TSH runs opposite to thyroid hormone, so phenotype sign is -1: higher score = higher TSH = less
+      thyroid hormone activity (paper: higher TSH PRS associated with lower FT4).'
+paper:
+  pmid: '37530217'
+  doi: 10.1093/ejendo/lvad086
+  title: Genetic determinants of thyroid function in children.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

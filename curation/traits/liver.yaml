@@ -1,0 +1,290 @@
+slug: liver
+query: liver enzymes, bilirubin, albumin and liver disease
+match:
+  terms:
+  - alanine aminotransferase
+  - aspartate aminotransferase
+  - bilirubin
+  - cirrhosis
+  - fatty liver
+  - gamma-glutamyl
+  efo_ids:
+  - EFO_0004532
+  - EFO_0004533
+  - EFO_0004570
+  - EFO_0004736
+  - EFO_0008421
+  - EFO_0010821
+  - EFO_0010934
+  - MONDO_0005154
+  - MONDO_0005155
+  - MONDO_0006644
+  - MONDO_0013209
+  - MONDO_0024431
+  - MONDO_0037821
+  - OBA_2050062
+  - OBA_2050068
+  exclude: []
+anchor: PGS004621
+status: resolved
+concepts:
+- hepatic.liver_enzymes
+- hepatic.ast_alt_ratio
+- hepatic.serum_albumin
+- hepatic.bilirubin
+- hepatic.fatty_liver
+- hepatic.cirrhosis
+scores:
+  PGS000655:
+    decision: in_scope
+    note: null
+  PGS000656:
+    decision: in_scope
+    note: null
+  PGS000668:
+    decision: in_scope
+    note: null
+  PGS000669:
+    decision: in_scope
+    note: null
+  PGS000670:
+    decision: in_scope
+    note: null
+  PGS000673:
+    decision: in_scope
+    note: null
+  PGS000674:
+    decision: in_scope
+    note: null
+  PGS000681:
+    decision: in_scope
+    note: null
+  PGS000683:
+    decision: in_scope
+    note: null
+  PGS000697:
+    decision: in_scope
+    note: null
+  PGS000704:
+    decision: in_scope
+    note: null
+  PGS000726:
+    decision: in_scope
+    note: null
+  PGS000776:
+    decision: in_scope
+    note: null
+  PGS000815:
+    decision: in_scope
+    note: null
+  PGS000816:
+    decision: in_scope
+    note: null
+  PGS000817:
+    decision: in_scope
+    note: null
+  PGS000865:
+    decision: in_scope
+    note: null
+  PGS000866:
+    decision: in_scope
+    note: null
+  PGS000872:
+    decision: in_scope
+    note: null
+  PGS000924:
+    decision: in_scope
+    note: null
+  PGS001293:
+    decision: in_scope
+    note: null
+  PGS001777:
+    decision: in_scope
+    note: null
+  PGS001824:
+    decision: in_scope
+    note: null
+  PGS001860:
+    decision: in_scope
+    note: null
+  PGS001886:
+    decision: in_scope
+    note: null
+  PGS001939:
+    decision: in_scope
+    note: null
+  PGS001940:
+    decision: in_scope
+    note: null
+  PGS001941:
+    decision: in_scope
+    note: null
+  PGS001942:
+    decision: in_scope
+    note: null
+  PGS001964:
+    decision: in_scope
+    note: null
+  PGS002032:
+    decision: in_scope
+    note: null
+  PGS002071:
+    decision: in_scope
+    note: null
+  PGS002099:
+    decision: in_scope
+    note: null
+  PGS002157:
+    decision: in_scope
+    note: null
+  PGS002158:
+    decision: in_scope
+    note: null
+  PGS002159:
+    decision: in_scope
+    note: null
+  PGS002160:
+    decision: in_scope
+    note: null
+  PGS002182:
+    decision: in_scope
+    note: null
+  PGS002245:
+    decision: in_scope
+    note: null
+  PGS002282:
+    decision: in_scope
+    note: null
+  PGS002283:
+    decision: in_scope
+    note: null
+  PGS002732:
+    decision: in_scope
+    note: null
+  PGS003342:
+    decision: in_scope
+    note: null
+  PGS003343:
+    decision: in_scope
+    note: null
+  PGS003344:
+    decision: in_scope
+    note: null
+  PGS003351:
+    decision: in_scope
+    note: null
+  PGS003352:
+    decision: in_scope
+    note: null
+  PGS003521:
+    decision: in_scope
+    note: null
+  PGS003522:
+    decision: in_scope
+    note: null
+  PGS003523:
+    decision: in_scope
+    note: null
+  PGS003524:
+    decision: in_scope
+    note: null
+  PGS003543:
+    decision: in_scope
+    note: null
+  PGS004206:
+    decision: in_scope
+    note: null
+  PGS004207:
+    decision: in_scope
+    note: null
+  PGS004208:
+    decision: in_scope
+    note: null
+  PGS004209:
+    decision: in_scope
+    note: null
+  PGS004210:
+    decision: in_scope
+    note: null
+  PGS004328:
+    decision: in_scope
+    note: null
+  PGS004329:
+    decision: in_scope
+    note: null
+  PGS004330:
+    decision: in_scope
+    note: null
+  PGS004336:
+    decision: in_scope
+    note: null
+  PGS004621:
+    decision: in_scope
+    note: null
+  PGS004707:
+    decision: in_scope
+    note: null
+  PGS004708:
+    decision: in_scope
+    note: null
+  PGS004709:
+    decision: in_scope
+    note: null
+  PGS004710:
+    decision: in_scope
+    note: null
+  PGS004711:
+    decision: in_scope
+    note: null
+  PGS004712:
+    decision: in_scope
+    note: null
+  PGS004713:
+    decision: in_scope
+    note: null
+  PGS004714:
+    decision: in_scope
+    note: null
+  PGS004715:
+    decision: in_scope
+    note: null
+  PGS004716:
+    decision: in_scope
+    note: null
+  PGS004717:
+    decision: in_scope
+    note: null
+  PGS004718:
+    decision: in_scope
+    note: null
+  PGS004719:
+    decision: in_scope
+    note: null
+  PGS004720:
+    decision: in_scope
+    note: null
+  PGS004721:
+    decision: in_scope
+    note: null
+  PGS004722:
+    decision: in_scope
+    note: null
+  PGS004731:
+    decision: in_scope
+    note: null
+  PGS004732:
+    decision: in_scope
+    note: null
+  PGS004913:
+    decision: in_scope
+    note: null
+  PGS012549:
+    decision: in_scope
+    note: null
+summary: '82 liver scores in a new hepatic domain: liver enzymes (ALT, AST, GGT, ALP), AST/ALT ratio, serum albumin,
+  bilirubin (incl. Gilbert-type bilirubin disorders), fatty liver (MASLD, activity score, liver fat, chronic ALT elevation,
+  other chronic liver disease) and cirrhosis. All are annotated as higher score = higher level or higher risk; PGP000128,
+  PGP000594, PGP000645 and PGP000258 were read, the rest catalog-only with CI metrics or 1000G r >= +0.2 to read anchors
+  and canonical lead loci (UGT1A1, PNPLA3, TM6SF2, SERPINA1) agreeing. No within-phenotype negative pairs. Open: PGS001777
+  (Whitfield 3-SNP) counts the protective HSD17B13 rs6834314 G allele as risk, recorded as partial_allele_inconsistency
+  and sent to review; catalog metrics for PGS000704 (HR 1.67) and PGS004621 (OR 1.42) belong to other scores/papers.'

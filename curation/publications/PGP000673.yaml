@@ -1,0 +1,34 @@
+pgp_id: PGP000673
+scores:
+  PGS004952:
+    cluster: eye.macular_degeneration
+    phenotype: age_related_macular_degeneration
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of age-related macular degeneration (52-variant GRS)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Age-related macular degeneration
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs121913059 T (CFH R1210C, rare high-risk AMD variant) carries the largest positive weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read); PGS Catalog weights are per-allele effects on the reported
+      trait. Corroborated by ORs 1.08-1.41 (CIs exclude 1) for early to late AMD.
+paper:
+  pmid: '37721739'
+  doi: 10.1167/iovs.64.12.31
+  title: Genetic Risk Score Analysis Supports a Joint View of Two Classification Systems for Age-Related Macular
+    Degeneration.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

@@ -299,6 +299,54 @@ scores:
     notes: Catalog-only annotation (paper not read), score LDPred2_WBC. PGS Catalog weights are per-allele effects
       on the reported trait; corroborated by 1000G EUR r=+0.70 with already-annotated same-phenotype seed PGS000113
       (PGP000051). Catalog beta is for a sleep-apnoea respiratory event index, not white cell count; not used.
+  PGS003464:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score LDPred2_EOS. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.73 with already-annotated same-phenotype seed PGS000090
+      (PGP000051). Catalog beta is for a sleep-apnoea respiratory event index, not the cell count; not used.
+  PGS003475:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score LDPred2_LYM. PGS Catalog weights are per-allele effects
+      on the reported trait; corroborated by 1000G EUR r=+0.74 with already-annotated same-phenotype seed PGS000097
+      (PGP000051). Catalog beta is for a sleep-apnoea respiratory event index, not the cell count; not used.
 paper:
   pmid: '36174398'
   doi: 10.1016/j.ebiom.2022.104288

@@ -14509,3 +14509,1907 @@ scores:
     notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
       GBE_INI30000. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
       r=+0.69 with already-annotated same-phenotype seed PGS000113 (PGP000051).
+  PGS001200:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the median UK Biobank value (paper template); read anchor score for this
+      phenotype. min r with other in-scope mean platelet volume scores +0.61. Genetically anti-correlated with platelet
+      count (r about -0.4 to -0.6), as expected biologically, hence a separate concept.
+  PGS001079:
+    cluster: blood.platelet_size
+    phenotype: platelet_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet distribution width
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the median UK Biobank value (paper template); read anchor score for this
+      phenotype. min r with other in-scope platelet distribution width scores +0.54. Genetically anti-correlated
+      with platelet count (r about -0.4 to -0.6), as expected biologically, hence a separate concept.
+  PGS001517:
+    cluster: blood.platelet_count
+    phenotype: plateletcrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: plateletcrit (share of blood volume taken up by platelets)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet crit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the median UK Biobank value (paper template); read anchor score for this
+      phenotype. min r with other in-scope plateletcrit (share of blood volume taken up by platelets) scores +0.53.
+  PGS001076:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil percentage
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30210. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.78 with already-annotated same-phenotype seed PGS000091 (PGP000051).
+  PGS001172:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30150. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.77 with already-annotated same-phenotype seed PGS000090 (PGP000051).
+  PGS001199:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30120. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.58 with already-annotated same-phenotype seed PGS000097 (PGP000051).
+  PGS001377:
+    cluster: blood.basophil_count
+    phenotype: basophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: basophil percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Basophil percentage
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30220. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.61 with already-annotated same-phenotype seed PGS000089 (PGP000051).
+  PGS001378:
+    cluster: blood.basophil_count
+    phenotype: basophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: basophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Basophil count
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30160. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.62 with already-annotated same-phenotype seed PGS000163 (PGP000078).
+  PGS001414:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte %
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30180. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.74 with already-annotated same-phenotype seed PGS000098 (PGP000051).
+  PGS000965:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism/myxoedema
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.98 with PGS001181 (hypothyroidism).'
+  PGS001181:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism (time to diagnosis)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other hypothyroidism (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.98 with PGS000965 (hypothyroidism).'
+  PGS001042:
+    cluster: endocrine.hyperthyroidism
+    phenotype: hyperthyroidism
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of hyperthyroidism/thyrotoxicosis (time to diagnosis)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyrotoxicosis [hyperthyroidism] (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.92 with PGS001043 (hyperthyroidism).'
+  PGS001043:
+    cluster: endocrine.hyperthyroidism
+    phenotype: hyperthyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hyperthyroidism/thyrotoxicosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hyperthyroidism, thyrotoxicosis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.92 with PGS001042 (hyperthyroidism).'
+  PGS000928:
+    cluster: endocrine.goiter
+    phenotype: nontoxic_goiter
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of non-toxic (multinodular) goitre (time to diagnosis)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other non-toxic goitre (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.70 with PGS001814 (nontoxic_goiter).'
+  PGS001016:
+    cluster: psychiatric.neuroticism
+    phenotype: hurt_feelings
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of answering Yes to "are your feelings easily hurt?"
+      coding: 'UKB 1950 (coding 100349): 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Sensitivity / hurt feelings
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100349.html (UKB coding for the neuroticism yes/no items)
+      quote: Prefer not to answer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Snpnet binomial model on GBE BIN1950 (UKB 1950 yes/no item, coding 100349: 1 Yes, 0 No, -1/-3 missing);
+      case = Yes per the paper''s binary-trait rule (GBE page itself unreachable, HTTP 500). 1000G EUR r=+0.36 with
+      PGS001022, +0.30 with F41 PGS004521.'
+  PGS001017:
+    cluster: psychiatric.neuroticism
+    phenotype: suffers_from_nerves
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of answering Yes to "do you suffer from nerves?"
+      coding: 'UKB 2010 (coding 100349): 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Suffer from 'nerves'
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100349.html (UKB coding for the neuroticism yes/no items)
+      quote: Prefer not to answer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Snpnet binomial model on GBE BIN2010 (UKB 2010 yes/no item, coding 100349: 1 Yes, 0 No, -1/-3 missing);
+      case = Yes per the paper''s binary-trait rule (GBE page itself unreachable, HTTP 500). 1000G EUR r=+0.24 with
+      F41 PGS004521, +0.20 with PGS001021.'
+  PGS001021:
+    cluster: psychiatric.neuroticism
+    phenotype: worrier
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of answering Yes to "are you a worrier?"
+      coding: 'UKB 1980 (coding 100349): 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Feelings of worry or anxiety
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100349.html (UKB coding for the neuroticism yes/no items)
+      quote: Prefer not to answer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Snpnet binomial model on GBE BIN1980 (UKB 1980 yes/no item, coding 100349: 1 Yes, 0 No, -1/-3 missing);
+      case = Yes per the paper''s binary-trait rule (GBE page itself unreachable, HTTP 500). 1000G EUR r=+0.32 with
+      PGS001022, +0.29 with PGS001016.'
+  PGS001022:
+    cluster: psychiatric.neuroticism
+    phenotype: worry_after_embarrassment
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of answering Yes to worrying too long after an embarrassing experience
+      coding: 'UKB 2000 (coding 100349): 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Worry too long after an embarrassing experience
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100349.html (UKB coding for the neuroticism yes/no items)
+      quote: Prefer not to answer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Snpnet binomial model on GBE BIN2000 (UKB 2000 yes/no item, coding 100349: 1 Yes, 0 No, -1/-3 missing);
+      case = Yes per the paper''s binary-trait rule (GBE page itself unreachable, HTTP 500). 1000G EUR r=+0.36 with
+      PGS001016, +0.32 with PGS001021.'
+  PGS001091:
+    cluster: wellbeing.social_connection
+    phenotype: loneliness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of often feeling lonely (UKB 2020 Yes)
+      coding: 'UKB 2020 (coding 100349): 1 Yes, 0 No; case = Yes'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Loneliness
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100349.html (UKB coding for the neuroticism yes/no items)
+      quote: Prefer not to answer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Snpnet binomial model on GBE BIN2020 (UKB 2020 yes/no item, coding 100349: 1 Yes, 0 No, -1/-3 missing);
+      case = Yes per the paper''s binary-trait rule (GBE page itself unreachable, HTTP 500). 1000G EUR r=+0.31 with
+      PGS001396, +0.27 with PGS004760 (MDD).'
+  PGS001018:
+    cluster: wellbeing.social_connection
+    phenotype: weekly_social_activity
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of attending any group social or leisure activity weekly or more
+      coding: 'UKB 6160 (coding 100328), GBE BIN_FC10006160: case = reports the named activity'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: 'Attending social / leisure activities (attend any of the followings in once a week or more often:
+        sports club, gym, pub, social club, religious group, adult edication class, or other group activity)'
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Snpnet binomial model on GBE BIN_FC10006160 (UKB 6160 leisure/social activities, case = the named activity).
+      Case definition from the catalog trait_reported; GBE page unreachable. 1000G EUR r=+0.58 with PGS001019, +0.21
+      with PGS001020.
+  PGS001019:
+    cluster: wellbeing.social_connection
+    phenotype: gym_or_sports_club_attendance
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of regular attendance at a gym or sports club
+      coding: 'UKB 6160 (coding 100328), GBE BIN_FC20006160: case = reports the named activity'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Attending social / leisure activities (regular attendance at a gym or sports club)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Snpnet binomial model on GBE BIN_FC20006160 (UKB 6160 leisure/social activities, case = the named activity).
+      Case definition from the catalog trait_reported; GBE page unreachable. 1000G EUR r=+0.58 with PGS001018; r=-0.25
+      with MDD PGS004760.
+  PGS001020:
+    cluster: wellbeing.social_connection
+    phenotype: adult_education_attendance
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of regular attendance at an adult education class
+      coding: 'UKB 6160 (coding 100328), GBE BIN_FC50006160: case = reports the named activity'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Attending social / leisure activities (regular attendance at an adult education class)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Snpnet binomial model on GBE BIN_FC50006160 (UKB 6160 leisure/social activities, case = the named activity).
+      Case definition from the catalog trait_reported; GBE page unreachable. 1000G EUR r=+0.21 with PGS001018; r=-0.12
+      with PGS001396 (anhedonia).
+  PGS001080:
+    cluster: wellbeing.fatigue
+    phenotype: tiredness_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: frequency of tiredness or lethargy in the last 2 weeks
+      coding: 'UKB 2080 (coding 100484): 1 Not at all, 2 Several days, 3 More than half the days, 4 Nearly every
+        day; raw order assumed kept by GBE QT_FC'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: GBE_QT_FC1002080
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100484.html (UKB coding for 2050-2080)
+      quote: Nearly every day
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: GBE QT_FC value order undocumented; raw order inferred from correlations with depression scores
+      and one BMI locus
+    status: agent_proposed
+    notes: Snpnet Gaussian model on GBE QT_FC1002080; GBE does not document whether QT_FC keeps the raw order (GBE
+      page unreachable). Raw order (higher = more frequent) inferred from 1000G EUR r=+0.31 with PGS004760 and +0.24
+      with PGS003333 (MDD), +0.26 with PGS001091 (loneliness, Yes = case), and the BMI-raising rs34811474-G allele
+      raising the score.
+  PGS001396:
+    cluster: psychiatric.depression
+    phenotype: anhedonia_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: frequency of unenthusiasm or disinterest in the last 2 weeks
+      coding: 'UKB 2060 (coding 100484): 1 Not at all, 2 Several days, 3 More than half the days, 4 Nearly every
+        day; raw order assumed kept by GBE QT_FC'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: GBE_QT_FC1002060
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100484.html (UKB coding for 2050-2080)
+      quote: Nearly every day
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: GBE QT_FC value order undocumented; raw order inferred from correlations with depression scores
+      and one BMI locus
+    status: agent_proposed
+    notes: Snpnet Gaussian model on GBE QT_FC1002060; GBE does not document whether QT_FC keeps the raw order (GBE
+      page unreachable). Raw order (higher = more frequent) inferred from 1000G EUR r=+0.28 with PGS004760 and PGS003581
+      (MDD), +0.31 with PGS001091 (loneliness), and the BMI-raising rs34811474-G allele raising the score.
+  PGS001398:
+    score_effect: null
+    unannotated_reason: GBE QT_FC1004570 value order undocumented and GBE page unreachable; 1000G correlations (r=+0.11
+      to +0.15 with MDD and worry scores) suggest raw order (higher = less satisfied) but the top variant rs3737240
+      suggests the reverse; too weak to decide.
+  PGS000924:
+    cluster: hepatic.bilirubin
+    phenotype: bilirubin_metabolism_disorder
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of a disorder of porphyrin or bilirubin metabolism (mostly Gilbert syndrome)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Disorders of porphyrin and bilirubin metabolism (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: UGT1A1 rs6742078 T and rs887829 T positive
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Tanigawa 2022 paper-wide rule (case status); the time-to-event setup is not described in the paper. Dominated
+      by UGT1A1 (Gilbert) loci; 1000G EUR r=+0.92 with total bilirubin PGS000697.
+  PGS001293:
+    cluster: hepatic.fatty_liver
+    phenotype: chronic_liver_disease
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of other diseases of liver (ICD-10 K76, mostly fatty liver)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other diseases of liver (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: PNPLA3 rs738409 G and TM6SF2 rs58542926 T positive
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Tanigawa 2022 paper-wide rule (case status); time-to-event setup not described in the paper. ICD-10 K76
+      block (mostly fatty liver). 1000G EUR r=+0.50 with PGS012549, +0.85 with PGS000655.
+  PGS000941:
+    cluster: eye.eye_inflammation
+    phenotype: iridocyclitis
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of iridocyclitis (ICD-10 H20)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: low
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Iridocyclitis (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: HLA-B*27:05 carries the largest positive weight (+0.92); HLA-B27 is the canonical anterior-uveitis allele
+    review_reason: null
+    status: agent_proposed
+    notes: Time-to-event setup is not described in the paper; direction from the paper-wide rule.
+  PGS000966:
+    cluster: eye.eye_inflammation
+    phenotype: iritis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of iritis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Iritis | iritis
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: HLA-B*27:05 carries the largest positive weight (+0.78); HLA-B27 is the canonical anterior-uveitis allele
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet score; paper-wide rule (binomial on case status, higher = more likely case).
+  PGS000990:
+    cluster: eye.retinal_detachment
+    phenotype: retinal_detachment
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of retinal detachments and breaks (ICD-10 H33)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: low
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Retinal detachments and breaks (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Time-to-event setup is not described in the paper; direction from the paper-wide rule. 1000G EUR r=+0.81
+      with PGS001137 (retinal detachment).
+  PGS001013:
+    cluster: eye.macular_degeneration
+    phenotype: age_related_macular_degeneration
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of self-reported macular degeneration (UKB 6148)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Macular degeneration
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs10490924 T (ARMS2 A69S risk allele) carries the largest positive weight
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet score; paper-wide rule (binomial on case status, higher = more likely case). 1000G EUR
+      r=+0.56 with PGS004952 (AMD GRS).
+  PGS001028:
+    cluster: eye.diabetic_eye_disease
+    phenotype: diabetic_eye_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of self-reported diabetic eye disease (UKB 6148)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Diabetic eye disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs7903146 T (TCF7L2, T2D risk) and HLA-DQB1*03:02 (T1D risk) carry the largest positive weights
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet score; paper-wide rule (binomial on case status, higher = more likely case).
+  PGS001029:
+    cluster: eye.corneal_disease
+    phenotype: other_corneal_disorders
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of other disorders of cornea (ICD-10 H18)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: low
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other disorders of cornea (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs613872 T (TCF4, non-risk allele for Fuchs dystrophy) carries the largest negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Time-to-event setup is not described in the paper; direction from the paper-wide rule. 1000G EUR r=+0.76
+      with PGS001835 (corneal dystrophy).
+  PGS001099:
+    cluster: eye.refractive_error
+    phenotype: spherical_power
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: spherical power of the left eye in dioptres (more positive = more hyperopic)
+      coding: 'UKB 5085: dioptres, autorefraction'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5085 (ukb_field_5085.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs12193446 G (LAMA2) +0.37 here, and -0.27 in the Privé myopia score PGS001994; GWAS Catalog lists rs12193446-G
+        as spherical-equivalent increasing
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). 1000G EUR
+      r=-0.57 with myopia diagnosis scores and +0.58 with the Clark refractive-error score.
+  PGS001100:
+    cluster: eye.refractive_error
+    phenotype: spherical_power
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: spherical power of the right eye in dioptres (more positive = more hyperopic)
+      coding: 'UKB 5084: dioptres, autorefraction'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5084 (ukb_field_5084.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs12193446 G (LAMA2) +0.37 here, and -0.27 in the Privé myopia score PGS001994; GWAS Catalog lists rs12193446-G
+        as spherical-equivalent increasing
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). 1000G EUR
+      r=-0.57 with myopia diagnosis scores and +0.58 with the Clark refractive-error score.
+  PGS001137:
+    cluster: eye.retinal_detachment
+    phenotype: retinal_detachment
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of self-reported retinal detachment
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Retinal detachment
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet score; paper-wide rule (binomial on case status, higher = more likely case).
+  PGS001275:
+    cluster: eye.retinal_disorders
+    phenotype: other_retinal_disorders
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of other retinal disorders (ICD-10 H35)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: low
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other retinal disorders (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs10490924 T (ARMS2 AMD risk) carries the largest positive weight; H35 includes macular degeneration
+    review_reason: null
+    status: agent_proposed
+    notes: Time-to-event setup is not described in the paper; direction from the paper-wide rule. 1000G EUR r=+0.92
+      with PGS001013 (macular degeneration).
+  PGS001276:
+    cluster: eye.retinal_disorders
+    phenotype: retinal_disorders_in_other_diseases
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of retinal disorders in diseases classified elsewhere (ICD-10 H36)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: low
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Retinal disorders in diseases classified elsewhere (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: HLA-DRB1*04:01, rs9273363 A (T1D risk) and rs7903146 T (T2D risk) carry the largest positive weights
+    review_reason: null
+    status: agent_proposed
+    notes: Time-to-event setup is not described in the paper; direction from the paper-wide rule. Mostly diabetic
+      retinopathy; 1000G EUR r=+0.70 with PGS001028 (diabetic eye disease).
+  PGS001302:
+    cluster: eye.cataract
+    phenotype: cataract
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of cataract
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Cataract | cataract
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet score; paper-wide rule (binomial on case status, higher = more likely case).
+  PGS001303:
+    cluster: eye.cataract
+    phenotype: cataract
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of other cataract (ICD-10 H26)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: low
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other cataract (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Time-to-event setup is not described in the paper; direction from the paper-wide rule.
+  PGS001321:
+    cluster: eye.glaucoma
+    phenotype: glaucoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of glaucoma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eye problems/disorders (Glaucoma)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs4656461 A (TMCO1; G is the risk allele in the POAG GRS PGS000350) carries the largest negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet score; paper-wide rule (binomial on case status, higher = more likely case).
+  PGS001322:
+    cluster: eye.glaucoma
+    phenotype: glaucoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of glaucoma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Glaucoma | glaucoma
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs4656461 A (TMCO1; G is the risk allele in the POAG GRS PGS000350) carries the largest negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet score; paper-wide rule (binomial on case status, higher = more likely case).
+  PGS001323:
+    cluster: eye.glaucoma
+    phenotype: glaucoma
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of glaucoma (ICD-10 H40)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: low
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: low
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Glaucoma (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs4656461 A (TMCO1 non-risk allele) carries the largest negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Time-to-event setup is not described in the paper; direction from the paper-wide rule.
+  PGS001373:
+    cluster: eye.refractive_error
+    phenotype: age_started_glasses
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: age in years when the person first started wearing glasses or contact lenses
+      coding: 'UKB 2217: integer years; -1 do not know, -3 prefer not to answer'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 2217 (ukb_field_2217.html)
+      quote: What age did you first start to wear glasses or contact lenses?
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs12193446 G (LAMA2, less myopic) carries the largest positive weight (+0.90)
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). Later start
+      of spectacle wear goes with less myopia (Clark 2023 inferred refraction from it); 1000G EUR r=-0.40 with myopia
+      diagnosis scores, +0.44 with spherical power.
+  PGS001185:
+    cluster: eye.intraocular_pressure
+    phenotype: iop_goldmann_correlated
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: Goldmann-correlated intraocular pressure, right eye (mmHg)
+      coding: 'UKB 5255: mmHg'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5255 (ukb_field_5255.html)
+      quote: Units of measurement are mmHg.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs12150284 T (GAS7) and rs4656461 A (TMCO1), glaucoma non-risk alleles, carry negative weights
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). 1000G EUR
+      r=+0.28 with the POAG anchor PGS001792.
+  PGS001411:
+    cluster: eye.intraocular_pressure
+    phenotype: iop_goldmann_correlated
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: Goldmann-correlated intraocular pressure, left eye (mmHg)
+      coding: 'UKB 5263: mmHg'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5263 (ukb_field_5263.html)
+      quote: Units of measurement are mmHg.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs12150284 T (GAS7) and rs4656461 A (TMCO1), glaucoma non-risk alleles, carry negative weights
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). 1000G EUR
+      r=+0.28 with the POAG anchor PGS001792.
+  PGS001409:
+    cluster: eye.intraocular_pressure
+    phenotype: iop_corneal_compensated
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: corneal-compensated intraocular pressure, left eye (mmHg)
+      coding: 'UKB 5262: mmHg'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5262 (ukb_field_5262.html)
+      quote: Units of measurement are mmHg.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs12150284 T (GAS7) and rs4656461 A (TMCO1), glaucoma non-risk alleles, carry negative weights
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). 1000G EUR
+      r=+0.28 with the POAG anchor PGS001792.
+  PGS001410:
+    cluster: eye.intraocular_pressure
+    phenotype: iop_corneal_compensated
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: corneal-compensated intraocular pressure, right eye (mmHg)
+      coding: 'UKB 5254: mmHg'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5254 (ukb_field_5254.html)
+      quote: Units of measurement are mmHg.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs12150284 T (GAS7) and rs4656461 A (TMCO1), glaucoma non-risk alleles, carry negative weights
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). 1000G EUR
+      r=+0.28 with the POAG anchor PGS001792.
+  PGS001380:
+    cluster: eye.corneal_biomechanics
+    phenotype: corneal_hysteresis
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: corneal hysteresis of the left eye
+      coding: UKB 5264
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Corneal hysteresis (L)
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5264 (ukb_field_5264.html)
+      quote: a measure of viscuous damping in the cornea
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). Ocular Response
+      Analyzer measure; 1000G EUR r=+0.57 between eyes.
+  PGS001381:
+    cluster: eye.corneal_biomechanics
+    phenotype: corneal_hysteresis
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: corneal hysteresis of the right eye
+      coding: UKB 5256
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Corneal hysteresis (R)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). Ocular Response
+      Analyzer measure; 1000G EUR r=+0.57 between eyes.
+  PGS001382:
+    cluster: eye.corneal_biomechanics
+    phenotype: corneal_resistance_factor
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: corneal resistance factor of the left eye
+      coding: UKB 5265
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Corneal resistance factor (L)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). 1000G EUR
+      r=+0.81 with corneal hysteresis (L).
+  PGS001383:
+    cluster: eye.corneal_biomechanics
+    phenotype: corneal_resistance_factor
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: corneal resistance factor of the right eye
+      coding: UKB 5257
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Corneal resistance factor (R)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). 1000G EUR
+      r=+0.81 with corneal hysteresis (L).
+  PGS001359:
+    cluster: eye.corneal_curvature
+    phenotype: keratometry_strong_meridian
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: keratometry strong meridian corneal power at 3mm, left eye, in dioptres (higher = steeper cornea)
+      coding: 'UKB 5135: dioptres'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5135 (ukb_field_5135.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). The showcase
+      lists the meridian fields in diopters (median about 44 D), so higher = more corneal power; 1000G EUR r=+0.87
+      to +0.94 among the 8 meridian scores.
+  PGS001360:
+    cluster: eye.corneal_curvature
+    phenotype: keratometry_strong_meridian
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: keratometry strong meridian corneal power at 3mm, right eye, in dioptres (higher = steeper cornea)
+      coding: 'UKB 5132: dioptres'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5132 (ukb_field_5132.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). The showcase
+      lists the meridian fields in diopters (median about 44 D), so higher = more corneal power; 1000G EUR r=+0.87
+      to +0.94 among the 8 meridian scores.
+  PGS001362:
+    cluster: eye.corneal_curvature
+    phenotype: keratometry_weak_meridian
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: keratometry weak meridian corneal power at 3mm, left eye, in dioptres (higher = steeper cornea)
+      coding: 'UKB 5096: dioptres'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5096 (ukb_field_5096.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). The showcase
+      lists the meridian fields in diopters (median about 44 D), so higher = more corneal power; 1000G EUR r=+0.87
+      to +0.94 among the 8 meridian scores.
+  PGS001363:
+    cluster: eye.corneal_curvature
+    phenotype: keratometry_weak_meridian
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: keratometry weak meridian corneal power at 3mm, right eye, in dioptres (higher = steeper cornea)
+      coding: 'UKB 5099: dioptres'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5099 (ukb_field_5099.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). The showcase
+      lists the meridian fields in diopters (median about 44 D), so higher = more corneal power; 1000G EUR r=+0.87
+      to +0.94 among the 8 meridian scores.
+  PGS001365:
+    cluster: eye.corneal_curvature
+    phenotype: keratometry_strong_meridian
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: keratometry strong meridian corneal power at 6mm, left eye, in dioptres (higher = steeper cornea)
+      coding: 'UKB 5134: dioptres'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5134 (ukb_field_5134.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). The showcase
+      lists the meridian fields in diopters (median about 44 D), so higher = more corneal power; 1000G EUR r=+0.87
+      to +0.94 among the 8 meridian scores.
+  PGS001366:
+    cluster: eye.corneal_curvature
+    phenotype: keratometry_strong_meridian
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: keratometry strong meridian corneal power at 6mm, right eye, in dioptres (higher = steeper cornea)
+      coding: 'UKB 5133: dioptres'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5133 (ukb_field_5133.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). The showcase
+      lists the meridian fields in diopters (median about 44 D), so higher = more corneal power; 1000G EUR r=+0.87
+      to +0.94 among the 8 meridian scores.
+  PGS001367:
+    cluster: eye.corneal_curvature
+    phenotype: keratometry_weak_meridian
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: keratometry weak meridian corneal power at 6mm, left eye, in dioptres (higher = steeper cornea)
+      coding: 'UKB 5097: dioptres'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5097 (ukb_field_5097.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). The showcase
+      lists the meridian fields in diopters (median about 44 D), so higher = more corneal power; 1000G EUR r=+0.87
+      to +0.94 among the 8 meridian scores.
+  PGS001368:
+    cluster: eye.corneal_curvature
+    phenotype: keratometry_weak_meridian
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: keratometry weak meridian corneal power at 6mm, right eye, in dioptres (higher = steeper cornea)
+      coding: 'UKB 5098: dioptres'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5098 (ukb_field_5098.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). The showcase
+      lists the meridian fields in diopters (median about 44 D), so higher = more corneal power; 1000G EUR r=+0.87
+      to +0.94 among the 8 meridian scores.
+  PGS001358:
+    cluster: eye.astigmatism
+    phenotype: cylindrical_power
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: keratometric cylindrical power at 3mm, right eye, in dioptres (values 0 or negative; higher = less
+        astigmatism)
+      coding: 'UKB 5116: dioptres, recorded as 0 (none) or negative values (minus cylinder)'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: UK Biobank showcase field 5116 (ukb_field_5116.html)
+      quote: Units of measurement are diopters.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Minus-cylinder notation inferred from the showcase range (maximum 0, median -0.72), not stated
+      in words.
+    status: agent_proposed
+    notes: 'Tanigawa snpnet Gaussian score on the median measured value (higher score = higher value). Weak score:
+      1000G EUR |r| < 0.13 with every other eye score.'
+  PGS001361:
+    score_effect: null
+    unannotated_reason: Axis angle in degrees (UKB 5104, 1-180) is circular; a higher value has no ordinal meaning,
+      so no direction applies.
+  PGS001364:
+    score_effect: null
+    unannotated_reason: Axis angle in degrees (UKB 5113, 1-180) is circular; a higher value has no ordinal meaning,
+      so no direction applies.

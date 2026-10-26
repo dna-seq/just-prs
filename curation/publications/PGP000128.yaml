@@ -393,6 +393,272 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR r=+0.88 with read anchor PGS000667. snpnet on UKB Lp(a) (nmol/L).
+  PGS000668:
+    cluster: hepatic.liver_enzymes
+    phenotype: alt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alanine aminotransferase (ALT) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic prediction within and across populations
+      quote: For each biomarker phenotype, we applied the R snpnet package for the log-transformed and covariate-adjusted
+        phenotypes and regression coefficients, BETAs
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alanine aminotransferase [U/L]
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: PNPLA3 rs738409 G, TM6SF2 rs58542926 T and SERPINA1 Z rs28929474 T carry positive weights
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: snpnet lasso fit to the log-transformed, statin- and covariate-adjusted biomarker, so higher score =
+      higher measured level (log scale).
+  PGS000673:
+    cluster: hepatic.liver_enzymes
+    phenotype: ast_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum aspartate aminotransferase (AST) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic prediction within and across populations
+      quote: For each biomarker phenotype, we applied the R snpnet package for the log-transformed and covariate-adjusted
+        phenotypes and regression coefficients, BETAs
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Aspartate aminotransferase [U/L]
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: PNPLA3 rs738409 G and TM6SF2 rs58542926 T carry positive weights
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: snpnet lasso fit to the log-transformed, statin- and covariate-adjusted biomarker, so higher score =
+      higher measured level (log scale).
+  PGS000670:
+    cluster: hepatic.liver_enzymes
+    phenotype: alp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alkaline phosphatase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic prediction within and across populations
+      quote: For each biomarker phenotype, we applied the R snpnet package for the log-transformed and covariate-adjusted
+        phenotypes and regression coefficients, BETAs
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alkaline phosphatase [U/L]
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: snpnet lasso fit to the log-transformed, statin- and covariate-adjusted biomarker, so higher score =
+      higher measured level (log scale).
+  PGS000683:
+    cluster: hepatic.liver_enzymes
+    phenotype: ggt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum gamma-glutamyl transferase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic prediction within and across populations
+      quote: For each biomarker phenotype, we applied the R snpnet package for the log-transformed and covariate-adjusted
+        phenotypes and regression coefficients, BETAs
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Gamma-glutamyl transferase [U/L]
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: snpnet lasso fit to the log-transformed, statin- and covariate-adjusted biomarker, so higher score =
+      higher measured level (log scale).
+  PGS000669:
+    cluster: hepatic.serum_albumin
+    phenotype: serum_albumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum albumin level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic prediction within and across populations
+      quote: For each biomarker phenotype, we applied the R snpnet package for the log-transformed and covariate-adjusted
+        phenotypes and regression coefficients, BETAs
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Albumin [g/L]
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: snpnet lasso fit to the log-transformed, statin- and covariate-adjusted biomarker, so higher score =
+      higher measured level (log scale).
+  PGS000681:
+    cluster: hepatic.bilirubin
+    phenotype: direct_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: direct serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic prediction within and across populations
+      quote: For each biomarker phenotype, we applied the R snpnet package for the log-transformed and covariate-adjusted
+        phenotypes and regression coefficients, BETAs
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Direct bilirubin [umol/L]
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: UGT1A1 rs887829 T and rs6742078 T positive; SLCO1B1 rs11045819 A negative
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: snpnet lasso fit to the log-transformed, statin- and covariate-adjusted biomarker, so higher score =
+      higher measured level (log scale).
+  PGS000697:
+    cluster: hepatic.bilirubin
+    phenotype: total_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic prediction within and across populations
+      quote: For each biomarker phenotype, we applied the R snpnet package for the log-transformed and covariate-adjusted
+        phenotypes and regression coefficients, BETAs
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total bilirubin [umol/L]
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: UGT1A1 rs887829 T and rs6742078 T positive; SLCO1B1 rs11045819 A negative
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: snpnet lasso fit to the log-transformed, statin- and covariate-adjusted biomarker, so higher score =
+      higher measured level (log scale).
+  PGS000674:
+    cluster: hepatic.ast_alt_ratio
+    phenotype: ast_alt_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: AST to ALT ratio (log AST minus log ALT)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: we additionally defined the AST to ALT ratio as the difference of the (log-transformed) estimates for
+        aspartate aminotransferase and alanine aminotransferase
+      confidence: high
+    - source: full_text
+      locator: Methods > Polygenic prediction within and across populations
+      quote: For each biomarker phenotype, we applied the R snpnet package for the log-transformed and covariate-adjusted
+        phenotypes and regression coefficients, BETAs
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: GPT missense rs147998249 C (lowers measured ALT) positive; PNPLA3 rs738409 G (raises ALT more than AST)
+        negative, as expected for AST/ALT
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Ratio = log AST minus log ALT; higher score = relatively more AST than ALT. Anti-correlates with ALT
+      scores (1000G EUR r down to -0.70), as expected for a ratio with ALT in the denominator.
+  PGS000704:
+    cluster: hepatic.cirrhosis
+    phenotype: alcoholic_cirrhosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of alcohol-related cirrhosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > Multiple regression with PRSs
+      quote: we constructed multi-PRS models for traits by using multiple regression to predict the trait or disease
+        from a) its own PRS, b) the PRSs for each of the 35 biomarkers, and c) the covariates age, sex, and principal
+        components
+      confidence: medium
+    - source: full_text
+      locator: Results > Multiple regression with PRSs (FinnGen)
+      quote: alcoholic cirrhosis (HR = 0.97, p = 0.35 for snpnet PRS and HR = 1.18, p = 1.04 × 10
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: PNPLA3 rs738409 G and TM6SF2 rs58542926 T positive (multi-PRS also carries biomarker loci such as GPT)
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: 'Multi-PRS (HC171): disease snpnet PRS plus 35 biomarker PRSs regressed on alcoholic cirrhosis; FinnGen
+      HR 1.18 (1.11-1.27). The catalog HR 1.67 for this score comes from another publication (PGP000708, Ding 2024).
+      Low 1000G EUR r (+0.07 to +0.15) with other cirrhosis scores because biomarker PRSs (GPT, bilirubin, GGT)
+      dominate the weights.'
 paper:
   pmid: '33462484'
   doi: 10.1038/s41588-020-00757-z

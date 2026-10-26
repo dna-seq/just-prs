@@ -1,0 +1,191 @@
+pgp_id: PGP000723
+scores:
+  PGS005173:
+    cluster: blood.platelet_variability
+    phenotype: plateletcrit_variability
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: variation of plateletcrit around the population mean (vQTL-based variance score)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > vPGS
+      quote: As vPGS were trained to estimate SNP effects on trait variance, individuals with lower or higher vPGS
+        were expected to display less or more variation around the trait mean, respectively.
+      confidence: high
+    - source: full_text
+      locator: Methods > vPGS
+      quote: Therefore, individuals ranked in the top 5% of vPGS were called the genetically more variable group
+        and individuals ranked in the bottom 5% of vPGS were called the genetically less variable group.
+      confidence: high
+    - source: full_text
+      locator: Methods > vQTL (Levene)
+      quote: and the beta estimates were used to construct vPGSs described later
+      confidence: medium
+    - source: full_text
+      locator: Results
+      quote: The correlation of the effects of these vQTLs between the original and conditional analysis was 0.99
+        (Supplementary Fig. 4), consistent with vQTL effects being independent of those for mean trait
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Plateletcrit variance
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: weights are Levene vQTL betas; no level-direction loci to compare
+    review_reason: null
+    status: agent_proposed
+    notes: 'Variance PGS (vPGS): weights are OSCA Levene-test betas on the absolute deviation from the genotype-group
+      median of the covariate-adjusted trait; a higher score means a more variable trait value, not a higher or
+      lower level. The catalog beta (small, positive, no CI) is most likely the vPGS main effect in y=PGS+vPGS+PGS*vPGS
+      on trait level in INTERVAL and carries no direction for this phenotype. 1000G EUR r with level scores is about
+      0.'
+  PGS005188:
+    cluster: blood.platelet_variability
+    phenotype: mean_platelet_volume_variability
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: variation of mean platelet volume around the population mean (vQTL-based variance score)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > vPGS
+      quote: As vPGS were trained to estimate SNP effects on trait variance, individuals with lower or higher vPGS
+        were expected to display less or more variation around the trait mean, respectively.
+      confidence: high
+    - source: full_text
+      locator: Methods > vPGS
+      quote: Therefore, individuals ranked in the top 5% of vPGS were called the genetically more variable group
+        and individuals ranked in the bottom 5% of vPGS were called the genetically less variable group.
+      confidence: high
+    - source: full_text
+      locator: Methods > vQTL (Levene)
+      quote: and the beta estimates were used to construct vPGSs described later
+      confidence: medium
+    - source: full_text
+      locator: Results
+      quote: The correlation of the effects of these vQTLs between the original and conditional analysis was 0.99
+        (Supplementary Fig. 4), consistent with vQTL effects being independent of those for mean trait
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume variance
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: weights are Levene vQTL betas; no level-direction loci to compare
+    review_reason: null
+    status: agent_proposed
+    notes: 'Variance PGS (vPGS): weights are OSCA Levene-test betas on the absolute deviation from the genotype-group
+      median of the covariate-adjusted trait; a higher score means a more variable trait value, not a higher or
+      lower level. The catalog beta (small, positive, no CI) is most likely the vPGS main effect in y=PGS+vPGS+PGS*vPGS
+      on trait level in INTERVAL and carries no direction for this phenotype. 1000G EUR r with level scores is about
+      0.'
+  PGS005193:
+    cluster: blood.platelet_variability
+    phenotype: platelet_count_variability
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: variation of platelet count around the population mean (vQTL-based variance score)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > vPGS
+      quote: As vPGS were trained to estimate SNP effects on trait variance, individuals with lower or higher vPGS
+        were expected to display less or more variation around the trait mean, respectively.
+      confidence: high
+    - source: full_text
+      locator: Methods > vPGS
+      quote: Therefore, individuals ranked in the top 5% of vPGS were called the genetically more variable group
+        and individuals ranked in the bottom 5% of vPGS were called the genetically less variable group.
+      confidence: high
+    - source: full_text
+      locator: Methods > vQTL (Levene)
+      quote: and the beta estimates were used to construct vPGSs described later
+      confidence: medium
+    - source: full_text
+      locator: Results
+      quote: The correlation of the effects of these vQTLs between the original and conditional analysis was 0.99
+        (Supplementary Fig. 4), consistent with vQTL effects being independent of those for mean trait
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet count variance
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: weights are Levene vQTL betas; no level-direction loci to compare
+    review_reason: null
+    status: agent_proposed
+    notes: 'Variance PGS (vPGS): weights are OSCA Levene-test betas on the absolute deviation from the genotype-group
+      median of the covariate-adjusted trait; a higher score means a more variable trait value, not a higher or
+      lower level. The catalog beta (small, positive, no CI) is most likely the vPGS main effect in y=PGS+vPGS+PGS*vPGS
+      on trait level in INTERVAL and carries no direction for this phenotype. 1000G EUR r with level scores is about
+      0.'
+  PGS005194:
+    cluster: blood.platelet_variability
+    phenotype: platelet_distribution_width_variability
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: variation of platelet distribution width around the population mean (vQTL-based variance score)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > vPGS
+      quote: As vPGS were trained to estimate SNP effects on trait variance, individuals with lower or higher vPGS
+        were expected to display less or more variation around the trait mean, respectively.
+      confidence: high
+    - source: full_text
+      locator: Methods > vPGS
+      quote: Therefore, individuals ranked in the top 5% of vPGS were called the genetically more variable group
+        and individuals ranked in the bottom 5% of vPGS were called the genetically less variable group.
+      confidence: high
+    - source: full_text
+      locator: Methods > vQTL (Levene)
+      quote: and the beta estimates were used to construct vPGSs described later
+      confidence: medium
+    - source: full_text
+      locator: Results
+      quote: The correlation of the effects of these vQTLs between the original and conditional analysis was 0.99
+        (Supplementary Fig. 4), consistent with vQTL effects being independent of those for mean trait
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet distribution width variance
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: weights are Levene vQTL betas; no level-direction loci to compare
+    review_reason: null
+    status: agent_proposed
+    notes: 'Variance PGS (vPGS): weights are OSCA Levene-test betas on the absolute deviation from the genotype-group
+      median of the covariate-adjusted trait; a higher score means a more variable trait value, not a higher or
+      lower level. The catalog beta (small, positive, no CI) is most likely the vPGS main effect in y=PGS+vPGS+PGS*vPGS
+      on trait level in INTERVAL and carries no direction for this phenotype. 1000G EUR r with level scores is about
+      0.'
+paper:
+  pmid: '40335489'
+  doi: 10.1038/s41467-025-59525-4
+  title: Genome-wide analyses of variance in blood cell phenotypes provide new insights into complex trait biology
+    and prediction.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

@@ -1,0 +1,45 @@
+pgp_id: PGP000258
+scores:
+  PGS001777:
+    cluster: hepatic.cirrhosis
+    phenotype: alcoholic_cirrhosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of alcohol-related cirrhosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract > Methods
+      quote: Cases were participants with alcohol-related cirrhosis. Controls had a history of similar alcohol consumption
+        but no evidence of liver disease.
+      confidence: high
+    - source: abstract
+      locator: Abstract > Results
+      quote: The odds ratios (ORs) and (95% CIs) between the lowest (Q1) and highest (Q5) score quintiles of the
+        3-SNP score, based on independent allelic effect size estimates, were 5.99 (4.18-8.60) (GenomALC-1), 2.81
+        (2.03-3.89) (GenomALC-2), and 3.10 (2.32-4.14) (UK Biobank).
+      confidence: high
+    lead_variant_check:
+      status: mixed
+      note: PNPLA3 rs738409 G and rs10401969 C positive, but HSD17B13 rs6834314 G (ALT-lowering, protective allele)
+        also positive
+    review_reason: HSD17B13 rs6834314 weight is positive on G, the ALT-lowering protective allele; one of three
+      loci looks reversed in the deposit
+    corrections:
+    - kind: partial_allele_inconsistency
+      action: none
+      effect: 'Direction describes the file as distributed: the two larger loci (PNPLA3, TM6SF2) point to higher
+        risk; the HSD17B13 locus appears to count the protective G allele as risk.'
+      evidence: 'rs6834314 G +0.446 in the deposit; GWAS Catalog: rs6834314 A raises ALT/AST (Chambers 2011, Chen
+        2021); PGS000726 gives G a negative weight'
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Whitfield 3-SNP GRS (PNPLA3 rs738409, SUGP1-TM6SF2 rs10401969, HSD17B13 rs6834314); full text not open
+      access, so per-allele coding unverified. Catalog betas on cirrhosis all positive; 1000G EUR r=+0.74 with PGS000776,
+      +0.56 with PGS004913.

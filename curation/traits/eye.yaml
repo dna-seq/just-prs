@@ -1,0 +1,281 @@
+slug: eye
+query: eye diseases and eye measurements
+match:
+  terms:
+  - cataract
+  - glaucoma
+  - intraocular pressure
+  - macular degeneration
+  - myopia
+  - refractive error
+  efo_ids:
+  - EFO_0004695
+  - EFO_0004731
+  - EFO_0005752
+  - EFO_0007814
+  - EFO_0009486
+  - EFO_0010066
+  - EFO_0010067
+  - EFO_0010698
+  - HP_0000545
+  - HP_0001094
+  - MONDO_0000942
+  - MONDO_0003004
+  - MONDO_0005041
+  - MONDO_0005129
+  - MONDO_0005150
+  - MONDO_0005283
+  - MONDO_0005328
+  - MONDO_0005338
+  - MONDO_0006814
+  - MONDO_0008375
+  - MONDO_0018102
+  exclude: []
+anchor: PGS001792
+status: resolved
+concepts:
+- eye.glaucoma
+- eye.intraocular_pressure
+- eye.cataract
+- eye.macular_degeneration
+- eye.refractive_error
+- eye.glasses_use
+- eye.corneal_curvature
+- eye.astigmatism
+- eye.corneal_biomechanics
+- eye.corneal_disease
+- eye.retinal_detachment
+- eye.retinal_disorders
+- eye.diabetic_eye_disease
+- eye.eye_inflammation
+scores:
+  PGS000124:
+    decision: in_scope
+    note: null
+  PGS000137:
+    decision: in_scope
+    note: null
+  PGS000350:
+    decision: in_scope
+    note: null
+  PGS000764:
+    decision: in_scope
+    note: null
+  PGS000879:
+    decision: in_scope
+    note: null
+  PGS000941:
+    decision: in_scope
+    note: null
+  PGS000966:
+    decision: in_scope
+    note: null
+  PGS000990:
+    decision: in_scope
+    note: null
+  PGS001013:
+    decision: in_scope
+    note: null
+  PGS001028:
+    decision: in_scope
+    note: null
+  PGS001029:
+    decision: in_scope
+    note: null
+  PGS001099:
+    decision: in_scope
+    note: null
+  PGS001100:
+    decision: in_scope
+    note: null
+  PGS001137:
+    decision: in_scope
+    note: null
+  PGS001185:
+    decision: in_scope
+    note: null
+  PGS001275:
+    decision: in_scope
+    note: null
+  PGS001276:
+    decision: in_scope
+    note: null
+  PGS001302:
+    decision: in_scope
+    note: null
+  PGS001303:
+    decision: in_scope
+    note: null
+  PGS001321:
+    decision: in_scope
+    note: null
+  PGS001322:
+    decision: in_scope
+    note: null
+  PGS001323:
+    decision: in_scope
+    note: null
+  PGS001358:
+    decision: in_scope
+    note: null
+  PGS001359:
+    decision: in_scope
+    note: null
+  PGS001360:
+    decision: in_scope
+    note: null
+  PGS001361:
+    decision: in_scope
+    note: axis angle (circular); in scope but no direction applies
+  PGS001362:
+    decision: in_scope
+    note: null
+  PGS001363:
+    decision: in_scope
+    note: null
+  PGS001364:
+    decision: in_scope
+    note: axis angle (circular); in scope but no direction applies
+  PGS001365:
+    decision: in_scope
+    note: null
+  PGS001366:
+    decision: in_scope
+    note: null
+  PGS001367:
+    decision: in_scope
+    note: null
+  PGS001368:
+    decision: in_scope
+    note: null
+  PGS001373:
+    decision: in_scope
+    note: null
+  PGS001380:
+    decision: in_scope
+    note: null
+  PGS001381:
+    decision: in_scope
+    note: null
+  PGS001382:
+    decision: in_scope
+    note: null
+  PGS001383:
+    decision: in_scope
+    note: null
+  PGS001409:
+    decision: in_scope
+    note: null
+  PGS001410:
+    decision: in_scope
+    note: null
+  PGS001411:
+    decision: in_scope
+    note: null
+  PGS001792:
+    decision: in_scope
+    note: null
+  PGS001797:
+    decision: in_scope
+    note: null
+  PGS001833:
+    decision: in_scope
+    note: null
+  PGS001834:
+    decision: in_scope
+    note: null
+  PGS001835:
+    decision: in_scope
+    note: null
+  PGS001836:
+    decision: in_scope
+    note: null
+  PGS001837:
+    decision: in_scope
+    note: null
+  PGS001924:
+    decision: in_scope
+    note: 'wearing glasses: vision-correction proxy'
+  PGS001994:
+    decision: in_scope
+    note: null
+  PGS002040:
+    decision: in_scope
+    note: null
+  PGS002041:
+    decision: in_scope
+    note: null
+  PGS002042:
+    decision: in_scope
+    note: null
+  PGS002043:
+    decision: in_scope
+    note: null
+  PGS002044:
+    decision: in_scope
+    note: null
+  PGS002045:
+    decision: in_scope
+    note: null
+  PGS002140:
+    decision: in_scope
+    note: 'wearing glasses: vision-correction proxy'
+  PGS002211:
+    decision: in_scope
+    note: null
+  PGS002269:
+    decision: in_scope
+    note: null
+  PGS002741:
+    decision: in_scope
+    note: null
+  PGS002761:
+    decision: in_scope
+    note: null
+  PGS003413:
+    decision: in_scope
+    note: null
+  PGS003564:
+    decision: in_scope
+    note: null
+  PGS003860:
+    decision: in_scope
+    note: null
+  PGS004454:
+    decision: in_scope
+    note: null
+  PGS004524:
+    decision: in_scope
+    note: null
+  PGS004606:
+    decision: in_scope
+    note: null
+  PGS004607:
+    decision: in_scope
+    note: null
+  PGS004765:
+    decision: in_scope
+    note: null
+  PGS004766:
+    decision: in_scope
+    note: null
+  PGS004944:
+    decision: in_scope
+    note: null
+  PGS004952:
+    decision: in_scope
+    note: null
+  PGS005142:
+    decision: in_scope
+    note: null
+  PGS005149:
+    decision: in_scope
+    note: null
+summary: '74 eye scores in 14 concepts of a new eye domain; 72 annotated, 2 axis-angle scores left without direction
+  (circular measure). Disease scores (glaucoma, cataract, AMD, retinal detachment, corneal, uveitis, diabetic eye) are
+  higher = more risk, backed by ORs, 1000G correlations and canonical loci (TMCO1, MYOC, ARMS2, CFH, TCF4, HLA-B27).
+  Refractive axis points to myopia: myopia-diagnosis scores are +, while spherical power, Clark''s refractive-error PGS
+  (paper: high = hyperopia) and age-started-glasses are higher = less myopic (polarity -1); 1000G r about -0.58 between
+  the two groups confirms it. Keratometry meridians are in dioptres (higher = steeper cornea). Review: PGS001358 cylinder
+  notation inferred from range; PGS002045 eye inflammation has no corroboration; Tanigawa time-to-event scores rest on
+  the paper-wide rule.'

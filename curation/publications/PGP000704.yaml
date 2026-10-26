@@ -473,6 +473,74 @@ scores:
     notes: PRS-CSx (EAS+EUR) cholelithiasis score evaluated in Korean HEXA (1,784 cases). As computed from the PGS
       Catalog file, a higher score means LOWER gallstone risk. Anti-correlation is moderate (-0.33, EUR panel, cross-ancestry
       score), so a human should confirm; the sign evidence at shared loci is unanimous.
+  PGS005142:
+    cluster: eye.cataract
+    phenotype: cataract
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of self-reported cataract (diagnosis, medication or treatment)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Statistical analysis
+      quote: where logit (Disease) is the log odds of binary outcome variable disease (coded as 0 for control or
+        1 for case), range of age is from 40 to 69 and sex is coded as 0 or 1 for female or male. The perSD OR was
+        derived using this logistic regression.
+      confidence: medium
+    - source: full_text
+      locator: Table 2/3 legend, footnote b
+      quote: 'perSD OR: Odds ratio per 1 SD PRS.'
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Cataract | cataract
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'PRS-CS on Biobank Japan cataract GWAS; OR 1.08 per SD in Korean HEXA (Tables 2-4, CI 1.03/1.04-1.13).
+      The catalog files this OR as ''BETA''. East Asian score: 1000G EUR r -0.13 to +0.05 with the European cataract
+      scores.'
+  PGS005149:
+    cluster: eye.cataract
+    phenotype: cataract
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of self-reported cataract (diagnosis, medication or treatment)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Statistical analysis
+      quote: where logit (Disease) is the log odds of binary outcome variable disease (coded as 0 for control or
+        1 for case), range of age is from 40 to 69 and sex is coded as 0 or 1 for female or male. The perSD OR was
+        derived using this logistic regression.
+      confidence: medium
+    - source: full_text
+      locator: Table 2/3 legend, footnote b
+      quote: 'perSD OR: Odds ratio per 1 SD PRS.'
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Cataract | cataract
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'PRS-CSx on Biobank Japan + UKB cataract GWAS; OR 1.08 per SD in Korean HEXA (Tables 2-4, CI 1.03/1.04-1.13).
+      The catalog files this OR as ''BETA''. East Asian score: 1000G EUR r -0.13 to +0.05 with the European cataract
+      scores.'
 paper:
   pmid: '40045046'
   doi: 10.1038/s42003-025-07767-9

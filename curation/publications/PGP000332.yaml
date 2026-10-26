@@ -5954,6 +5954,1252 @@ scores:
     notes: Catalog-only annotation (paper not read), score blood_WHITE_COUNT.SBayesR. PGS Catalog weights are per-allele
       effects on the reported trait; corroborated by 1000G EUR r=+0.75 with already-annotated same-phenotype seed
       PGS000113 (PGP000051).
+  PGS002340:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.89 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.63. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002412:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.78 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.62. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002461:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.63. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002510:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.69 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.59. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002559:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.60. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002608:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.77 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.59. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002657:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.53. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002706:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.88 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.63. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002325:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.BOLT-LMM. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.81 with already-annotated same-phenotype
+      seed PGS000090 (PGP000051).
+  PGS002338:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.BOLT-LMM. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.79 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002364:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: agree
+      note: 'top 40 BBJ weights vs EUR BOLT-LMM PGS002325 at the same positions: 35 same sign, 4 opposite (no rsIDs
+        in file)'
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.BOLT-LMM-BBJ. PGS Catalog weights
+      are per-allele effects on the reported trait. Weights from a Biobank Japan (East Asian) GWAS, so 1000G EUR
+      correlation with European-trained scores is weak but positive (r=+0.14 with seed PGS000165; +0.21 with PGS004762);
+      the 40 largest BBJ weights carry the same sign as the EUR BOLT-LMM score PGS002325 at the same positions in
+      35 of 39 aligned cases.
+  PGS002370:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: mixed
+      note: 'top 40 BBJ weights vs EUR BOLT-LMM PGS002338: 26 same sign, 14 opposite; top 200: 115/200 same sign'
+    review_reason: Direction rests on weak positive EUR correlation (r<=0.21) and 58% lead-weight sign concordance
+      for an East Asian-trained score.
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.BOLT-LMM-BBJ. PGS Catalog weights
+      are per-allele effects on the reported trait. Weights from a Biobank Japan (East Asian) GWAS. 1000G EUR correlation
+      with European-trained lymphocyte scores is weak (r=+0.17 with seed PGS000172; best +0.21 with PGS003475),
+      and the 200 largest BBJ weights share sign with the EUR BOLT-LMM score PGS002338 in only 115 of 200 positions
+      (weight correlation +0.09). Positive throughout, so not a flip, but weakly corroborated.
+  PGS002397:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.P+T.0.0001. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.69 with already-annotated same-phenotype
+      seed PGS000165 (PGP000078).
+  PGS002410:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.P+T.0.0001. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.65 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002446:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.P+T.0.001. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.68 with already-annotated same-phenotype
+      seed PGS000090 (PGP000051).
+  PGS002459:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.P+T.0.001. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.64 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002495:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.P+T.0.01. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.59 with already-annotated same-phenotype
+      seed PGS000090 (PGP000051).
+  PGS002508:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.P+T.0.01. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.58 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002544:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.P+T.1e-06. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.67 with already-annotated same-phenotype
+      seed PGS000165 (PGP000078).
+  PGS002557:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.P+T.1e-06. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.64 with already-annotated same-phenotype
+      seed PGS000172 (PGP000078).
+  PGS002593:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.P+T.5e-08. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.66 with already-annotated same-phenotype
+      seed PGS000165 (PGP000078).
+  PGS002606:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.P+T.5e-08. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.62 with already-annotated same-phenotype
+      seed PGS000172 (PGP000078).
+  PGS002642:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.PolyFun-pred. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.80 with already-annotated same-phenotype
+      seed PGS000090 (PGP000051).
+  PGS002655:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.PolyFun-pred. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.77 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002691:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.SBayesR. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.79 with already-annotated same-phenotype
+      seed PGS000090 (PGP000051).
+  PGS002704:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.SBayesR. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.77 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002336:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS004789 (hypothyroidism).'
+  PGS002408:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.83 with PGS002457 (hypothyroidism).'
+  PGS002457:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.83 with PGS002408 (hypothyroidism).'
+  PGS002506:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.79 with PGS002457 (hypothyroidism).'
+  PGS002555:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.83 with PGS002604 (hypothyroidism).'
+  PGS002604:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.83 with PGS002555 (hypothyroidism).'
+  PGS002653:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.82 with PGS002702 (hypothyroidism).'
+  PGS002702:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS002336 (hypothyroidism).'
+  PGS002351:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS002717 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002423:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.85 with PGS002472 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002472:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.85 with PGS002423 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002521:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.84 with PGS002472 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002570:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.93 with PGS002619 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002619:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.93 with PGS002570 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002668:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.82 with PGS002717 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002717:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS002351 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002342:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neuroticism
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: mental_NEUROTICISM.BOLT-LMM
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Weissbrod 2022 UKB neuroticism score (BOLT-LMM). Corroborated by 1000G EUR r=+0.87 with PGS002213 (Privé
+      neuroticism, annotated from its coding script).
+  PGS002414:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neuroticism
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: mental_NEUROTICISM.P+T.0.0001
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Weissbrod 2022 UKB neuroticism score (P+T.0.0001). Corroborated by 1000G EUR r=+0.80 with PGS002463,
+      +0.38 with PGS002213 (Privé neuroticism, annotated from its coding script).
+  PGS002463:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neuroticism
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: mental_NEUROTICISM.P+T.0.001
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Weissbrod 2022 UKB neuroticism score (P+T.0.001). Corroborated by 1000G EUR r=+0.42 with PGS002213
+      (Privé neuroticism, annotated from its coding script).
+  PGS002512:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neuroticism
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: mental_NEUROTICISM.P+T.0.01
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Weissbrod 2022 UKB neuroticism score (P+T.0.01). Corroborated by 1000G EUR r=+0.43 with PGS002213 (Privé
+      neuroticism, annotated from its coding script).
+  PGS002561:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neuroticism
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: mental_NEUROTICISM.P+T.1e-06
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Weissbrod 2022 UKB neuroticism score (P+T.1e-06). Corroborated by 1000G EUR r=+0.30 with PGS001996,
+      +0.29 with PGS002213 (Privé neuroticism, annotated from its coding script).
+  PGS002610:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neuroticism
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: mental_NEUROTICISM.P+T.5e-08
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Weissbrod 2022 UKB neuroticism score (P+T.5e-08). Corroborated by 1000G EUR r=+0.25 with PGS001996,
+      +0.24 with PGS002213 (Privé neuroticism, annotated from its coding script).
+  PGS002659:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neuroticism
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: mental_NEUROTICISM.PolyFun-pred
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Weissbrod 2022 UKB neuroticism score (PolyFun-pred). Corroborated by 1000G EUR r=+0.76 with PGS002213
+      (Privé neuroticism, annotated from its coding script).
+  PGS002708:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neuroticism
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: mental_NEUROTICISM.SBayesR
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Weissbrod 2022 UKB neuroticism score (SBayesR). Corroborated by 1000G EUR r=+0.84 with PGS002213 (Privé
+      neuroticism, annotated from its coding script).
 paper:
   pmid: '35393596'
   doi: 10.1038/s41588-022-01036-9

@@ -3650,6 +3650,1693 @@ scores:
     notes: Catalog-only annotation (paper not read), score portability-ldpred2_neutrophil_perc. PGS Catalog weights
       are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.76 with already-annotated same-phenotype
       seed PGS000106 (PGP000051).
+  PGS001971:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet (thrombocyte) volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.89 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.62. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS002189:
+    cluster: blood.platelet_size
+    phenotype: mean_platelet_volume
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: mean platelet volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Mean platelet (thrombocyte) volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS001200 (read), same phenotype; min r with other in-scope
+      mean platelet volume scores +0.61. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
+      as expected biologically, hence a separate concept.
+  PGS001972:
+    cluster: blood.platelet_size
+    phenotype: platelet_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet distribution width
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.87 with PGS001079 (read), same phenotype; min r with other in-scope
+      platelet distribution width scores +0.58. Genetically anti-correlated with platelet count (r about -0.4 to
+      -0.6), as expected biologically, hence a separate concept.
+  PGS002190:
+    cluster: blood.platelet_size
+    phenotype: platelet_distribution_width
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: platelet distribution width
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet distribution width
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.86 with PGS001079 (read), same phenotype; min r with other in-scope
+      platelet distribution width scores +0.57. Genetically anti-correlated with platelet count (r about -0.4 to
+      -0.6), as expected biologically, hence a separate concept.
+  PGS001970:
+    cluster: blood.platelet_count
+    phenotype: plateletcrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: plateletcrit (share of blood volume taken up by platelets)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet crit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.80 with PGS001517 (read), same phenotype; min r with other in-scope
+      plateletcrit (share of blood volume taken up by platelets) scores +0.57.
+  PGS002188:
+    cluster: blood.platelet_count
+    phenotype: plateletcrit
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: plateletcrit (share of blood volume taken up by platelets)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Platelet crit
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: direction from paper method and same-phenotype 1000G correlation
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by 1000G EUR r=+0.78 with PGS001517 (read), same phenotype; min r with other in-scope
+      plateletcrit (share of blood volume taken up by platelets) scores +0.58.
+  PGS001949:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil percentage
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-PLR_log_eosinophil_perc. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.72 with already-annotated same-phenotype
+      seed PGS000166 (PGP000078). Trained on log-transformed values (monotonic, same direction).
+  PGS001965:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-PLR_log_lymphocyte. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.81 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051). Trained on log-transformed values (monotonic, same direction).
+  PGS001986:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte percentage
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-PLR_lymphocyte_perc. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.80 with already-annotated same-phenotype
+      seed PGS000098 (PGP000051).
+  PGS002167:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil percentage
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-ldpred2_log_eosinophil_perc. PGS Catalog
+      weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.68 with already-annotated
+      same-phenotype seed PGS000166 (PGP000078). Trained on log-transformed values (monotonic, same direction).
+  PGS002183:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-ldpred2_log_lymphocyte. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.79 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051). Trained on log-transformed values (monotonic, same direction).
+  PGS002203:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte percentage
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-ldpred2_lymphocyte_perc. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.77 with already-annotated same-phenotype
+      seed PGS000098 (PGP000051).
+  PGS001816:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.94 with PGS002024 (hypothyroidism).'
+  PGS002024:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.94 with PGS001816 (hypothyroidism).'
+  PGS001815:
+    cluster: endocrine.hyperthyroidism
+    phenotype: hyperthyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hyperthyroidism/thyrotoxicosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyrotoxicosis with or without goiter
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.82 with PGS002023 (hyperthyroidism).'
+  PGS002023:
+    cluster: endocrine.hyperthyroidism
+    phenotype: hyperthyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hyperthyroidism/thyrotoxicosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyrotoxicosis with or without goiter
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.82 with PGS001815 (hyperthyroidism).'
+  PGS001814:
+    cluster: endocrine.goiter
+    phenotype: nontoxic_goiter
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of non-toxic (multinodular) goitre
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Nontoxic multinodular goiter
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS002022 (nontoxic_goiter).'
+  PGS002022:
+    cluster: endocrine.goiter
+    phenotype: nontoxic_goiter
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of non-toxic (multinodular) goitre
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Nontoxic multinodular goiter
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS001814 (nontoxic_goiter).'
+  PGS001829:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of depression (UKB PheCode 296.2)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Depression
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_296.2
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Privé 2022 PLR score on UKB PheCode 296.2 (Depression, EHR/ICD-based case status), grouped with ICD-defined
+      depression as clinical MDD. 1000G EUR r=+0.63 between PGS001829 and PGS002036; PGS002036 r=+0.28 with PGS000138
+      and +0.29 with PGS000139 (lifetime MDD).
+  PGS002036:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of depression (UKB PheCode 296.2)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Depression
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_296.2
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Privé 2022 ldpred2 score on UKB PheCode 296.2 (Depression, EHR/ICD-based case status), grouped with
+      ICD-defined depression as clinical MDD. 1000G EUR r=+0.63 between PGS001829 and PGS002036; PGS002036 r=+0.28
+      with PGS000138 and +0.29 with PGS000139 (lifetime MDD).
+  PGS001898:
+    cluster: psychiatric.depression
+    phenotype: depressive_episode_ever
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having ever been depressed for a whole week (UKB 4598 yes)
+      coding: 'UKB 4598: 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_depressed_for_1w
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Ever depressed for a whole week (4598)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/depressed_for_1w.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 0)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé PLR binary score; script codes UKB 4598 as TRUE when the answer is Yes (1), negatives (do not know
+      / prefer not) missing. 1000G EUR r=+0.61 between the two Privé scores, +0.27 with PGS004759 (MDD).
+  PGS002111:
+    cluster: psychiatric.depression
+    phenotype: depressive_episode_ever
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having ever been depressed for a whole week (UKB 4598 yes)
+      coding: 'UKB 4598: 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_depressed_for_1w
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Ever depressed for a whole week (4598)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/depressed_for_1w.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 0)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; script codes UKB 4598 as TRUE when the answer is Yes (1), negatives (do not
+      know / prefer not) missing. 1000G EUR r=+0.61 between the two Privé scores, +0.27 with PGS004759 (MDD).
+  PGS001899:
+    cluster: psychiatric.depression
+    phenotype: recent_depressed_mood
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of feeling down, depressed or hopeless on several days or more in the last 2 weeks (UKB
+        20510)
+      coding: 'UKB 20510 (coding 504): 1 Not at all ... 4 Nearly every day; case = value > 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_depression_feelings
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Recent feelings of depression (20510)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/depression_feelings.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé PLR binary score; UKB 20510 (1 Not at all, 2 Several days, 3 More than half the days, 4 Nearly
+      every day) dichotomised as >1. 1000G EUR r=+0.44 between the two Privé scores; PGS002112 r=+0.24 with PGS000138
+      (MDD).
+  PGS002112:
+    cluster: psychiatric.depression
+    phenotype: recent_depressed_mood
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of feeling down, depressed or hopeless on several days or more in the last 2 weeks (UKB
+        20510)
+      coding: 'UKB 20510 (coding 504): 1 Not at all ... 4 Nearly every day; case = value > 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_depression_feelings
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Recent feelings of depression (20510)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/depression_feelings.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; UKB 20510 (1 Not at all, 2 Several days, 3 More than half the days, 4 Nearly
+      every day) dichotomised as >1. 1000G EUR r=+0.44 between the two Privé scores; PGS002112 r=+0.24 with PGS000138
+      (MDD).
+  PGS001920:
+    cluster: psychiatric.anxiety
+    phenotype: recent_foreboding
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of recent feelings of foreboding on several days or more in the last 2 weeks (UKB 20512)
+      coding: 'UKB 20512: 1 Not at all ... 4 Nearly every day; case = value > 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_foreboding_feelings
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Recent feelings of foreboding (20512)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/foreboding_feelings.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé PLR binary score; UKB 20512 dichotomised as >1 (several days or more). 1000G EUR r=+0.50 between
+      the two Privé scores; PGS002136 r=+0.29 with F41 anxiety PGS004521.
+  PGS002136:
+    cluster: psychiatric.anxiety
+    phenotype: recent_foreboding
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of recent feelings of foreboding on several days or more in the last 2 weeks (UKB 20512)
+      coding: 'UKB 20512: 1 Not at all ... 4 Nearly every day; case = value > 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_foreboding_feelings
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Recent feelings of foreboding (20512)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/foreboding_feelings.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; UKB 20512 dichotomised as >1 (several days or more). 1000G EUR r=+0.50 between
+      the two Privé scores; PGS002136 r=+0.29 with F41 anxiety PGS004521.
+  PGS001996:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score (UKB 20127)
+      coding: 'UKB 20127: 0-12, number of neuroticism items answered Yes; raw value used'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_neuroticism
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Neuroticism score (20127)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-quant-pheno/neuroticism.rds")
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé PLR continuous score on the raw UKB 20127 neuroticism score (count of yes answers to 12 items,
+      higher = more neurotic). 1000G EUR r=+0.91 between the two Privé scores, +0.87 to +0.93 with Weissbrod and
+      Ding neuroticism scores.
+  PGS002213:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score (UKB 20127)
+      coding: 'UKB 20127: 0-12, number of neuroticism items answered Yes; raw value used'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_neuroticism
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Neuroticism score (20127)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-quant-pheno/neuroticism.rds")
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 continuous score on the raw UKB 20127 neuroticism score (count of yes answers to 12 items,
+      higher = more neurotic). 1000G EUR r=+0.91 between the two Privé scores, +0.87 to +0.93 with Weissbrod and
+      Ding neuroticism scores.
+  PGS002098:
+    cluster: psychiatric.depression
+    phenotype: recent_appetite_disturbance
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of poor appetite or overeating on several days or more in the last 2 weeks (UKB 20511)
+      coding: 'UKB 20511: 1 Not at all ... 4 Nearly every day; case = value > 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_abnormal_appetite
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Recent poor appetite or overeating (20511)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/abnormal_appetite.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score on the PHQ-9 appetite item; filed under depression (a depressive symptom item)
+      rather than eating disorder, despite the catalog EFO term. 1000G EUR r=+0.40 with PGS002112 (recent depressed
+      mood), +0.37 with PGS004760 (MDD).
+  PGS002113:
+    cluster: psychiatric.depression
+    phenotype: trauma_related_depression
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of depression possibly related to a stressful or traumatic event (UKB 20447 yes)
+      coding: 'UKB 20447: 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_depression_stress_trauma
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Depression possibly related to stressful or traumatic event (20447)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/depression_stress_trauma.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 0)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; UKB 20447 is asked in the online mental health questionnaire, yes = case.
+      Weak 1000G EUR correlation with every other depression score (max |r| about 0.16), so it carries little shared
+      depression signal; direction rests on the coding script.
+  PGS002124:
+    cluster: substance_use.addiction_liability
+    phenotype: ever_addicted
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of ever having been addicted to any substance or behaviour (UKB 20401 yes)
+      coding: 'UKB 20401: 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_ever_addicted
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Ever addicted to any substance or behaviour (20401)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/ever_addicted.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 0)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; yes = case. 1000G EUR r=+0.21 with PGS002222 (self-harm thoughts), +0.16
+      with F41 anxiety.
+  PGS002222:
+    cluster: psychiatric.self_harm
+    phenotype: self_harm_thoughts
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having contemplated self-harm or recent thoughts of suicide or self-harm (UKB 20485
+        / 20513)
+      coding: UKB 20485 yes or UKB 20513 > 1 (several days or more) = case
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_self_harm_thoughts
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Ever contemplated self-harm (20485)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/self_harm_thoughts.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y1 < 0 & y2 < 0, NA, y1 > 0 | y2 > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; case = ever contemplated self-harm (20485 yes) or recent thoughts of suicide/self-harm
+      on several days or more (20513 > 1). 1000G EUR r=+0.34 with PGS002036 (depression), +0.31 with PGS004760 (MDD).
+  PGS001940:
+    cluster: hepatic.liver_enzymes
+    phenotype: alt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alanine aminotransferase (ALT) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alanine aminotransferase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.74 with PGS000668.
+  PGS002158:
+    cluster: hepatic.liver_enzymes
+    phenotype: alt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alanine aminotransferase (ALT) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alanine aminotransferase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.69 with PGS000668.
+  PGS001941:
+    cluster: hepatic.liver_enzymes
+    phenotype: ast_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum aspartate aminotransferase (AST) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Aspartate aminotransferase level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.74 with PGS000673.
+  PGS002159:
+    cluster: hepatic.liver_enzymes
+    phenotype: ast_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum aspartate aminotransferase (AST) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Aspartate aminotransferase level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.72 with PGS000673.
+  PGS001939:
+    cluster: hepatic.liver_enzymes
+    phenotype: alp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alkaline phosphatase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alkaline phosphatase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.88 with PGS000670.
+  PGS002157:
+    cluster: hepatic.liver_enzymes
+    phenotype: alp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alkaline phosphatase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alkaline phosphatase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.86 with PGS000670.
+  PGS001964:
+    cluster: hepatic.liver_enzymes
+    phenotype: ggt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum gamma-glutamyl transferase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Gamma-glutamyl transferase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.81 with PGS000683.
+  PGS002182:
+    cluster: hepatic.liver_enzymes
+    phenotype: ggt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum gamma-glutamyl transferase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Gamma-glutamyl transferase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.79 with PGS000683.
+  PGS001886:
+    cluster: hepatic.serum_albumin
+    phenotype: serum_albumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum albumin level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: serum albumin amount
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.72 with PGS000669.
+  PGS002099:
+    cluster: hepatic.serum_albumin
+    phenotype: serum_albumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum albumin level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: serum albumin amount
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.72 with PGS000669.
+  PGS001942:
+    cluster: hepatic.bilirubin
+    phenotype: total_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total bilirubin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.97 with PGS000697.
+  PGS002160:
+    cluster: hepatic.bilirubin
+    phenotype: total_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total bilirubin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.98 with PGS000697.
+  PGS001824:
+    cluster: hepatic.bilirubin
+    phenotype: bilirubin_metabolism_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of a bilirubin excretion/metabolism disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Disorders of bilirubin excretion
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: UGT1A1 rs887829 T and rs6742078 T positive
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; penalized regression on the phecode (case = disorder of bilirubin excretion, mostly Gilbert syndrome);
+      UGT1A1 lead alleles agree; 1000G EUR r=+0.95 with PGS000697. 1000G EUR r=+0.95 with total bilirubin PGS000697
+      (read).
+  PGS002032:
+    cluster: hepatic.bilirubin
+    phenotype: bilirubin_metabolism_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of a bilirubin excretion/metabolism disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Disorders of bilirubin excretion
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: top weights all in the UGT1A1 region and positive (rs887829-tagged haplotype)
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; penalized regression on the phecode (case = disorder of bilirubin excretion, mostly Gilbert syndrome);
+      UGT1A1 lead alleles agree; 1000G EUR r=+0.94 with PGS000697. 1000G EUR r=+0.94 with total bilirubin PGS000697
+      (read).
+  PGS001860:
+    cluster: hepatic.fatty_liver
+    phenotype: chronic_liver_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of other chronic non-alcoholic liver disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other chronic nonalcoholic liver disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: PNPLA3 rs4823173 A and rs10401969 C positive
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; penalized regression on the phecode, case = other chronic nonalcoholic liver disease; 1000G EUR r=+0.48
+      with PGS012549.
+  PGS002071:
+    cluster: hepatic.fatty_liver
+    phenotype: chronic_liver_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of other chronic non-alcoholic liver disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other chronic nonalcoholic liver disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs10401969 C and PNPLA3 rs4823173 A positive
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; penalized regression on the phecode, case = other chronic nonalcoholic liver disease; 1000G EUR r=+0.42
+      with PGS012549.
+  PGS001833:
+    cluster: eye.retinal_detachment
+    phenotype: retinal_detachment
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of retinal detachments and defects (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Retinal detachments and defects
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs12193446 G (LAMA2, less myopic) has a negative weight; myopia raises detachment risk
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.37 with PGS001137 (Tanigawa retinal
+      detachment).
+  PGS002040:
+    cluster: eye.retinal_detachment
+    phenotype: retinal_detachment
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of retinal detachments and defects (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Retinal detachments and defects
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.73 with PGS001833, +0.34 with PGS001137.
+  PGS001834:
+    cluster: eye.macular_degeneration
+    phenotype: age_related_macular_degeneration
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of senile macular degeneration (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Macular degeneration (senile) of retina NOS
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs10490924 T (ARMS2 A69S risk allele) carries the largest positive weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.78 with PGS004952 (AMD GRS, OR 1.41
+      for late AMD).
+  PGS002041:
+    cluster: eye.macular_degeneration
+    phenotype: age_related_macular_degeneration
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of senile macular degeneration (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Macular degeneration (senile) of retina NOS
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs10490924 T (ARMS2 risk allele) carries the largest positive weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.76 with PGS004952.
+  PGS001835:
+    cluster: eye.corneal_disease
+    phenotype: corneal_dystrophy
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of corneal dystrophy (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Corneal dystrophy
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs613872 T (TCF4 non-risk allele for Fuchs dystrophy) has a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.76 with PGS001029 (Tanigawa other
+      corneal disorders).
+  PGS002042:
+    cluster: eye.corneal_disease
+    phenotype: corneal_dystrophy
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of corneal dystrophy (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Corneal dystrophy
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs613872 T (TCF4 non-risk allele) has a negative weight
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.86 with PGS001835.
+  PGS001836:
+    cluster: eye.glaucoma
+    phenotype: glaucoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of glaucoma (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Glaucoma | glaucoma
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs2472493 A (ABCA1) and rs12150284 T (GAS7) glaucoma non-risk alleles carry negative weights
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.50 with PGS002761 (glaucoma OR 1.68).
+  PGS002043:
+    cluster: eye.glaucoma
+    phenotype: glaucoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of glaucoma (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Glaucoma | glaucoma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.53 with PGS002761 (glaucoma OR 1.68).
+  PGS001837:
+    cluster: eye.cataract
+    phenotype: cataract
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cataract (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Cataract | cataract
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.51 with PGS001302 (Tanigawa cataract).
+  PGS002044:
+    cluster: eye.cataract
+    phenotype: cataract
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cataract (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Cataract | cataract
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.90 with PGS001837, +0.51 with PGS001302.
+  PGS002045:
+    cluster: eye.eye_inflammation
+    phenotype: eye_inflammation
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of inflammation of the eye (phecode)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Inflammation of the eye
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: Direction rests on the code-wide binary rule only; no metric, correlation or canonical locus
+      corroborates it.
+    status: agent_proposed
+    notes: 'Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). No corroborating score: the Tanigawa iritis scores have
+      no 1000G correlation and the lead variants are not canonical.'
+  PGS001924:
+    cluster: eye.glasses_use
+    phenotype: wears_glasses
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of wearing glasses or contact lenses (UKB 2207)
+      coding: 'UKB 2207: yes = TRUE (y > 0), negative codes = NA'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Wears glasses or contact lenses
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Wears glasses block (github_prepare-pheno-fields.R)
+      quote: '# Wears glasses or contact lenses (2207)'
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Wears glasses block (github_prepare-pheno-fields.R)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/glasses.rds")
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.31 with PGS002140. Weak link to refraction
+      (r about +0.1 with myopia scores).
+  PGS002140:
+    cluster: eye.glasses_use
+    phenotype: wears_glasses
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of wearing glasses or contact lenses (UKB 2207)
+      coding: 'UKB 2207: yes = TRUE (y > 0), negative codes = NA'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Wears glasses or contact lenses
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Wears glasses block (github_prepare-pheno-fields.R)
+      quote: '# Wears glasses or contact lenses (2207)'
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Wears glasses block (github_prepare-pheno-fields.R)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/glasses.rds")
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.31 with PGS001924. Weak link to refraction
+      (r about +0.1 with myopia scores).
+  PGS001994:
+    cluster: eye.refractive_error
+    phenotype: myopia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a myopia diagnosis (UKB 20262)
+      coding: 'UKB 20262: yes = TRUE (y > 0), negative codes = NA'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Myopia diagnosis
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Myopia block (github_prepare-pheno-fields.R)
+      quote: '# Myopia diagnosis (20262)'
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Myopia block (github_prepare-pheno-fields.R)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/myopia.rds")
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs12193446 G (LAMA2; GWAS Catalog: myopia-decreasing, spherical-equivalent-increasing) carries the
+        largest negative weight'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS penalized regression on the UKB phecode/field;
+      binary phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.89 with PGS002211 and -0.57 with spherical
+      power PGS001099.
+  PGS002211:
+    cluster: eye.refractive_error
+    phenotype: myopia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a myopia diagnosis (UKB 20262)
+      coding: 'UKB 20262: yes = TRUE (y > 0), negative codes = NA'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Myopia diagnosis
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Myopia block (github_prepare-pheno-fields.R)
+      quote: '# Myopia diagnosis (20262)'
+      confidence: medium
+    - source: supplement
+      locator: GitHub privefl/UKBB-PGS code/prepare-pheno-fields.R, Myopia block (github_prepare-pheno-fields.R)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/myopia.rds")
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'rs12193446 G (LAMA2; GWAS Catalog: myopia-decreasing, spherical-equivalent-increasing) carries the
+        largest negative weight'
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (Methods not accessible). Privé UKBB-PGS LDpred2 on the UKB phecode/field; binary
+      phenotypes fitted with case = TRUE (GitHub code). 1000G EUR r=+0.92 with PGS003564 and -0.59 with the Clark
+      refractive-error score PGS003860.
 template:
   rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
     PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged

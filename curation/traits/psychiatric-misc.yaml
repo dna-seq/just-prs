@@ -1,0 +1,308 @@
+slug: psychiatric-misc
+query: depressive symptoms, neuroticism, anxiety, schizophrenia, bipolar and other psychiatric traits
+match:
+  terms:
+  - autism
+  - bipolar
+  - loneliness
+  - neuroticism
+  - schizophrenia
+  - worry
+  efo_ids:
+  - EFO_0004347
+  - EFO_0007006
+  - EFO_0007660
+  - EFO_0007704
+  - EFO_0007803
+  - EFO_0007865
+  - EFO_0007946
+  - EFO_0009589
+  - EFO_0009592
+  - EFO_0009597
+  - EFO_0009599
+  - EFO_0009725
+  - EFO_0009799
+  - EFO_0009820
+  - EFO_0009821
+  - EFO_0009863
+  - EFO_0009963
+  - EFO_0009964
+  - EFO_0010246
+  - EFO_0010703
+  - HP_0100716
+  - MONDO_0002009
+  - MONDO_0002050
+  - MONDO_0004985
+  - MONDO_0005090
+  - MONDO_0005258
+  - MONDO_0005451
+  - MONDO_0005618
+  exclude: []
+anchor: PGS004885
+status: resolved
+concepts:
+- psychiatric.depression
+- psychiatric.neuroticism
+- psychiatric.anxiety
+- psychiatric.schizophrenia
+- psychiatric.bipolar_disorder
+- psychiatric.autism
+- psychiatric.self_harm
+- substance_use.addiction_liability
+- wellbeing.fatigue
+- wellbeing.social_connection
+scores:
+  PGS000133:
+    decision: in_scope
+    note: null
+  PGS000134:
+    decision: in_scope
+    note: null
+  PGS000135:
+    decision: in_scope
+    note: null
+  PGS000136:
+    decision: in_scope
+    note: null
+  PGS000138:
+    decision: in_scope
+    note: null
+  PGS000139:
+    decision: in_scope
+    note: null
+  PGS000140:
+    decision: in_scope
+    note: null
+  PGS000141:
+    decision: in_scope
+    note: null
+  PGS000142:
+    decision: in_scope
+    note: null
+  PGS000143:
+    decision: in_scope
+    note: null
+  PGS000144:
+    decision: in_scope
+    note: null
+  PGS000145:
+    decision: in_scope
+    note: null
+  PGS000193:
+    decision: in_scope
+    note: null
+  PGS000327:
+    decision: in_scope
+    note: null
+  PGS000767:
+    decision: in_scope
+    note: null
+  PGS000907:
+    decision: in_scope
+    note: null
+  PGS001006:
+    decision: out_of_scope
+    note: weight change vs 1 year ago; anthropometry, not psychiatric (pulled in by term match)
+  PGS001016:
+    decision: in_scope
+    note: null
+  PGS001017:
+    decision: in_scope
+    note: null
+  PGS001018:
+    decision: in_scope
+    note: null
+  PGS001019:
+    decision: in_scope
+    note: null
+  PGS001020:
+    decision: in_scope
+    note: null
+  PGS001021:
+    decision: in_scope
+    note: null
+  PGS001022:
+    decision: in_scope
+    note: null
+  PGS001080:
+    decision: in_scope
+    note: null
+  PGS001091:
+    decision: in_scope
+    note: null
+  PGS001114:
+    decision: out_of_scope
+    note: ibuprofen use; medication use, not psychiatric
+  PGS001115:
+    decision: out_of_scope
+    note: paracetamol use; medication use, not psychiatric
+  PGS001396:
+    decision: in_scope
+    note: null
+  PGS001398:
+    decision: in_scope
+    note: null
+  PGS001829:
+    decision: in_scope
+    note: null
+  PGS001898:
+    decision: in_scope
+    note: null
+  PGS001899:
+    decision: in_scope
+    note: null
+  PGS001920:
+    decision: in_scope
+    note: null
+  PGS001996:
+    decision: in_scope
+    note: null
+  PGS002036:
+    decision: in_scope
+    note: null
+  PGS002098:
+    decision: in_scope
+    note: null
+  PGS002111:
+    decision: in_scope
+    note: null
+  PGS002112:
+    decision: in_scope
+    note: null
+  PGS002113:
+    decision: in_scope
+    note: null
+  PGS002124:
+    decision: in_scope
+    note: null
+  PGS002136:
+    decision: in_scope
+    note: null
+  PGS002213:
+    decision: in_scope
+    note: null
+  PGS002222:
+    decision: in_scope
+    note: null
+  PGS002254:
+    decision: out_of_scope
+    note: leisure-time physical activity; lifestyle, not psychiatric
+  PGS002342:
+    decision: in_scope
+    note: null
+  PGS002414:
+    decision: in_scope
+    note: null
+  PGS002463:
+    decision: in_scope
+    note: null
+  PGS002512:
+    decision: in_scope
+    note: null
+  PGS002561:
+    decision: in_scope
+    note: null
+  PGS002610:
+    decision: in_scope
+    note: null
+  PGS002659:
+    decision: in_scope
+    note: null
+  PGS002708:
+    decision: in_scope
+    note: null
+  PGS002759:
+    decision: in_scope
+    note: null
+  PGS002785:
+    decision: in_scope
+    note: null
+  PGS002786:
+    decision: in_scope
+    note: null
+  PGS002787:
+    decision: in_scope
+    note: null
+  PGS002788:
+    decision: in_scope
+    note: null
+  PGS002789:
+    decision: in_scope
+    note: null
+  PGS002790:
+    decision: in_scope
+    note: null
+  PGS003333:
+    decision: in_scope
+    note: null
+  PGS003442:
+    decision: in_scope
+    note: null
+  PGS003497:
+    decision: in_scope
+    note: null
+  PGS003565:
+    decision: in_scope
+    note: null
+  PGS003576:
+    decision: in_scope
+    note: null
+  PGS003577:
+    decision: in_scope
+    note: null
+  PGS003578:
+    decision: in_scope
+    note: null
+  PGS003579:
+    decision: in_scope
+    note: null
+  PGS003580:
+    decision: in_scope
+    note: null
+  PGS003581:
+    decision: in_scope
+    note: null
+  PGS003582:
+    decision: in_scope
+    note: null
+  PGS003583:
+    decision: in_scope
+    note: null
+  PGS003584:
+    decision: in_scope
+    note: null
+  PGS003585:
+    decision: in_scope
+    note: null
+  PGS004430:
+    decision: in_scope
+    note: null
+  PGS004451:
+    decision: in_scope
+    note: null
+  PGS004521:
+    decision: in_scope
+    note: null
+  PGS004591:
+    decision: in_scope
+    note: null
+  PGS004608:
+    decision: in_scope
+    note: null
+  PGS004759:
+    decision: in_scope
+    note: null
+  PGS004760:
+    decision: in_scope
+    note: null
+  PGS004885:
+    decision: in_scope
+    note: null
+summary: Folded about 30 small psychiatric and wellbeing groups. Depression variants got their own phenotypes under
+  psychiatric.depression (recurrent MDD, help-seeking, probable, self-reported, ever depressed for a week, recent
+  low mood, anhedonia, appetite, trauma-related); neuroticism (score and EPQ yes/no items), anxiety, schizophrenia,
+  bipolar (any/I/II), autism and self-harm thoughts are new psychiatric concepts; loneliness, friendships and social
+  activities went to wellbeing.social_connection and tiredness to wellbeing.fatigue. Privé items were read from
+  the authors' coding script (all yes/symptom = case); most others are catalog-only with 1000G correlation support.
+  Tanigawa tiredness/anhedonia frequency are annotated but flagged for review (GBE value order undocumented); friendship
+  satisfaction is left unannotated.

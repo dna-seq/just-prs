@@ -129,6 +129,96 @@ domains:
             - uric acid
             - serum uric acid
             - blood urate
+      hypothyroidism:
+        label: Hypothyroidism (underactive thyroid)
+        axis: higher risk of an underactive thyroid
+        valence: undesirable
+        valence_basis: Hypothyroidism is a chronic disease needing lifelong hormone replacement.
+        status: agent_proposed
+        aliases:
+        - underactive thyroid
+        - low thyroid
+        - Hashimoto
+        - levothyroxine
+        - myxoedema
+        phenotypes:
+          hypothyroidism:
+            label: Hypothyroidism (diagnosed, self-reported or time to diagnosis)
+            sign: 1
+          autoimmune_thyroiditis:
+            label: Lymphocytic (Hashimoto) thyroiditis, the autoimmune cause of hypothyroidism
+            sign: 1
+            aliases:
+            - Hashimoto's thyroiditis
+            - autoimmune thyroiditis
+          thyroid_medication_use:
+            label: Thyroid medication use (mostly levothyroxine replacement)
+            sign: 1
+            aliases:
+            - thyroxine tablets
+          thyroid_disorder_self_reported:
+            label: Any self-reported thyroid condition (UK Biobank; mostly hypothyroidism)
+            sign: 1
+            aliases:
+            - thyroid problem
+      hyperthyroidism:
+        label: Hyperthyroidism (overactive thyroid)
+        axis: higher risk of an overactive thyroid
+        valence: undesirable
+        valence_basis: Hyperthyroidism and Graves' disease cause heart, bone and eye complications.
+        status: agent_proposed
+        aliases:
+        - overactive thyroid
+        - Graves
+        - thyrotoxicosis
+        - toxic goitre
+        phenotypes:
+          hyperthyroidism:
+            label: Hyperthyroidism or thyrotoxicosis (with or without goitre)
+            sign: 1
+          graves_disease:
+            label: Graves' disease (autoimmune hyperthyroidism)
+            sign: 1
+            aliases:
+            - Basedow disease
+      goiter:
+        label: Goitre and thyroid nodules
+        axis: higher risk of an enlarged or nodular thyroid
+        valence: undesirable
+        valence_basis: Goitre and nodules need monitoring and sometimes surgery.
+        status: agent_proposed
+        aliases:
+        - goiter
+        - enlarged thyroid
+        - thyroid nodules
+        - multinodular goitre
+        phenotypes:
+          nontoxic_goiter:
+            label: Non-toxic (multinodular) goitre
+            sign: 1
+          benign_nodular_goiter:
+            label: Benign nodular goiter
+            sign: 1
+      thyroid_function:
+        label: Thyroid hormone levels (thyroid function)
+        axis: more thyroid hormone activity (higher free T4, lower TSH)
+        valence: context_dependent
+        valence_basis: Both too little and too much thyroid hormone are harmful; the normal range is best.
+        status: agent_proposed
+        aliases:
+        - thyroid function test
+        - TSH
+        - free T4
+        - thyroxine level
+        phenotypes:
+          free_thyroxine:
+            label: Free thyroxine (FT4) concentration
+            sign: 1
+          tsh_level:
+            label: Thyroid stimulating hormone (TSH) concentration; high TSH signals an underactive thyroid
+            sign: -1
+            aliases:
+            - thyrotropin
   cognition:
     label: Cognition
     concepts:
@@ -717,6 +807,12 @@ domains:
             label: Addiction risk factor (addiction-rf; genomic SEM common factor across OUD, PAU, problematic
               tobacco use and CUD)
             sign: 1
+          ever_addicted:
+            label: Ever addicted to any substance or behaviour (UKB 20401, yes vs no)
+            sign: 1
+            aliases:
+            - ever been addicted
+            - addiction history
   sleep:
     label: Sleep
     concepts:
@@ -1992,6 +2088,14 @@ domains:
             aliases:
             - low platelets in pregnancy
             - pregnancy thrombocytopenia
+          plateletcrit:
+            label: Plateletcrit (percentage of blood volume taken up by platelets, about platelet count
+              times mean platelet volume)
+            sign: 1
+            aliases:
+            - PCT
+            - platelet crit
+            - thrombocrit
       red_cell_count:
         label: Red blood cell count and hematocrit
         axis: more red blood cells (higher count and packed-cell volume)
@@ -2153,6 +2257,137 @@ domains:
             aliases:
             - monocyte percent
             - monocyte %
+      platelet_size:
+        label: Platelet size (mean platelet volume and platelet distribution width)
+        axis: larger, more size-varied platelets
+        valence: neutral
+        valence_basis: Mean platelet volume and the spread of platelet sizes vary within a normal range
+          in healthy people; neither end is better in itself. Genetically they run opposite to platelet
+          count, which is why they form their own concept.
+        status: agent_proposed
+        aliases:
+        - platelet volume
+        - MPV
+        - PDW
+        - large platelets
+        - small platelets
+        phenotypes:
+          mean_platelet_volume:
+            label: Mean platelet (thrombocyte) volume
+            sign: 1
+            aliases:
+            - mean platelet size
+            - MPV level
+          platelet_distribution_width:
+            label: Platelet distribution width (spread of platelet sizes)
+            sign: 1
+            aliases:
+            - platelet size variation
+            - PDW level
+      platelet_variability:
+        label: Person-level variability of platelet measures (variance polygenic scores)
+        axis: more variable platelet measures around the population mean
+        valence: neutral
+        valence_basis: These scores predict how far a person's value tends to lie from the average in
+          either direction, not whether it is higher or lower; that is neither good nor bad in itself.
+        status: agent_proposed
+        aliases:
+        - platelet variance score
+        - vPGS platelets
+        - platelet trait variance
+        phenotypes:
+          platelet_count_variability:
+            label: Variability of platelet count around the mean (vQTL-based vPGS)
+            sign: 1
+          mean_platelet_volume_variability:
+            label: Variability of mean platelet volume around the mean (vQTL-based vPGS)
+            sign: 1
+          plateletcrit_variability:
+            label: Variability of plateletcrit around the mean (vQTL-based vPGS)
+            sign: 1
+          platelet_distribution_width_variability:
+            label: Variability of platelet distribution width around the mean (vQTL-based vPGS)
+            sign: 1
+      lymphocyte_count:
+        label: Lymphocyte count and percentage
+        axis: more lymphocytes (higher absolute count or share of white cells)
+        valence: neutral
+        valence_basis: Lymphocytes vary within a normal range in healthy people; very low counts (lymphopenia)
+          accompany immune deficiency or illness and very high counts accompany infection or blood cancers,
+          but the polygenic range reflects normal variation, where neither end is better.
+        status: agent_proposed
+        aliases:
+        - lymphocytes
+        - lymphopenia
+        - low lymphocytes
+        - high lymphocytes
+        - lymph count
+        phenotypes:
+          lymphocyte_count:
+            label: Absolute lymphocyte count (raw or log-transformed)
+            sign: 1
+            aliases:
+            - absolute lymphocyte count
+            - lymphocyte level
+          lymphocyte_percentage:
+            label: Lymphocytes as a percentage of white blood cells
+            sign: 1
+            aliases:
+            - lymphocyte percent
+            - lymphocyte %
+      eosinophil_count:
+        label: Eosinophil count and percentage
+        axis: more eosinophils (higher absolute count or share of white cells)
+        valence: neutral
+        valence_basis: Eosinophils vary within a normal range in healthy people; raised counts (eosinophilia)
+          go with allergy, asthma and parasitic infection, but the polygenic range reflects normal variation,
+          where neither end is clearly better.
+        status: agent_proposed
+        aliases:
+        - eosinophils
+        - eosinophilia
+        - high eosinophils
+        - eos count
+        - allergy white cells
+        phenotypes:
+          eosinophil_count:
+            label: Absolute eosinophil count (raw or log-transformed)
+            sign: 1
+            aliases:
+            - absolute eosinophil count
+            - eosinophil level
+          eosinophil_percentage:
+            label: Eosinophils as a percentage of white blood cells
+            sign: 1
+            aliases:
+            - eosinophil percent
+            - eosinophil %
+      basophil_count:
+        label: Basophil count and percentage
+        axis: more basophils (higher absolute count or share of white cells)
+        valence: neutral
+        valence_basis: Basophils are the rarest white cells and vary within a narrow normal range in healthy
+          people; raised counts (basophilia) are uncommon and usually secondary, so neither end of the
+          polygenic range is better.
+        status: agent_proposed
+        aliases:
+        - basophils
+        - basophilia
+        - high basophils
+        - baso count
+        phenotypes:
+          basophil_count:
+            label: Absolute basophil count (raw or log-transformed)
+            sign: 1
+            aliases:
+            - absolute basophil count
+            - basophil level
+          basophil_percentage:
+            label: Basophils as a percentage of white blood cells
+            sign: 1
+            aliases:
+            - basophil percent
+            - basophil %
   musculoskeletal:
     label: Bones, joints and muscles
     concepts:
@@ -3544,6 +3779,57 @@ domains:
             aliases:
             - health dissatisfaction
             - happiness with own health
+      fatigue:
+        label: Tiredness and lethargy
+        axis: more frequent tiredness
+        valence: undesirable
+        valence_basis: Frequent tiredness or lethargy lowers quality of life and is a common depressive
+          symptom.
+        status: agent_proposed
+        aliases:
+        - tiredness
+        - fatigue
+        - lethargy
+        - low energy
+        - always tired
+        phenotypes:
+          tiredness_frequency:
+            label: Frequency of tiredness / lethargy in the last 2 weeks (UKB 2080, 1 not at all ... 4
+              nearly every day)
+            sign: 1
+      social_connection:
+        label: Social connection, loneliness and social activities
+        axis: more social connection
+        valence: desirable
+        valence_basis: Feeling connected, satisfied with friendships and taking part in group activities
+          is what people want; loneliness harms health.
+        status: agent_proposed
+        aliases:
+        - loneliness
+        - social isolation
+        - lonely
+        - friendships
+        - social life
+        phenotypes:
+          loneliness:
+            label: Often feels lonely (UKB 2020, yes vs no)
+            sign: -1
+            aliases:
+            - feeling lonely
+            - isolation
+          friendship_dissatisfaction:
+            label: Less satisfied with friendships (UKB 4570, 1 extremely happy ... 6 extremely unhappy)
+            sign: -1
+          weekly_social_activity:
+            label: Attends a sports club, gym, pub, social club, religious group, adult education class
+              or other group activity weekly or more (UKB 6160)
+            sign: 1
+          gym_or_sports_club_attendance:
+            label: Regular attendance at a gym or sports club (UKB 6160)
+            sign: 1
+          adult_education_attendance:
+            label: Regular attendance at an adult education class (UKB 6160)
+            sign: 1
   neuroimaging:
     label: Brain imaging measurements
     concepts:
@@ -4771,3 +5057,551 @@ domains:
             aliases:
             - major depression
             - unipolar depression
+          recurrent_major_depression:
+            label: Recurrent major depressive disorder (lifetime MDD with more than one episode)
+            sign: 1
+            aliases:
+            - recurrent depression
+          help_seeking_depression:
+            label: Help-seeking for nerves, anxiety, tension or depression (seen a GP or psychiatrist;
+              minimal phenotyping)
+            sign: 1
+            aliases:
+            - seen a doctor for depression
+            - broad depression
+          probable_depression:
+            label: Probable depression (low mood or anhedonia plus seen a GP or psychiatrist for nerves,
+              anxiety, tension or depression)
+            sign: 1
+          self_reported_depression:
+            label: Self-reported depression or depressive symptoms
+            sign: 1
+          depressive_episode_ever:
+            label: Ever depressed for a whole week (UKB 4598, yes vs no)
+            sign: 1
+            aliases:
+            - ever depressed
+          recent_depressed_mood:
+            label: Recent feelings of depression (UKB 20510 PHQ item, several days or more in the last
+              2 weeks)
+            sign: 1
+            aliases:
+            - feeling down
+            - low mood lately
+          anhedonia_frequency:
+            label: Frequency of unenthusiasm / disinterest in the last 2 weeks (UKB 2060, 1 not at all
+              ... 4 nearly every day)
+            sign: 1
+            aliases:
+            - anhedonia
+            - loss of interest
+          recent_appetite_disturbance:
+            label: Recent poor appetite or overeating (UKB 20511 PHQ item, several days or more in the
+              last 2 weeks)
+            sign: 1
+          trauma_related_depression:
+            label: Depression possibly related to a stressful or traumatic event (UKB 20447, yes vs no)
+            sign: 1
+      neuroticism:
+        label: Neuroticism (tendency toward negative emotions)
+        axis: higher neuroticism
+        valence: undesirable
+        valence_basis: High neuroticism means more frequent worry, anxiety and low mood and predicts depression
+          and anxiety disorders.
+        status: agent_proposed
+        aliases:
+        - emotional instability
+        - emotional stability
+        - moodiness
+        - nervousness
+        - worrying
+        phenotypes:
+          neuroticism_score:
+            label: Neuroticism score (UKB 20127, sum of 12 EPQ-R yes/no items)
+            sign: 1
+          hurt_feelings:
+            label: Feelings easily hurt (UKB 1950, yes vs no)
+            sign: 1
+            aliases:
+            - sensitive
+          suffers_from_nerves:
+            label: Suffers from 'nerves' (UKB 2010, yes vs no)
+            sign: 1
+          worrier:
+            label: Worrier / anxious feelings (UKB 1980, yes vs no)
+            sign: 1
+            aliases:
+            - worry a lot
+          worry_after_embarrassment:
+            label: Worries too long after an embarrassing experience (UKB 2000, yes vs no)
+            sign: 1
+      anxiety:
+        label: Anxiety
+        axis: more anxiety
+        valence: undesirable
+        valence_basis: Anxiety disorders and persistent foreboding are distressing and disabling.
+        status: agent_proposed
+        aliases:
+        - anxiety
+        - anxious
+        - generalized anxiety
+        - panic
+        phenotypes:
+          anxiety_disorder:
+            label: Anxiety disorder (ICD-10 F41 other anxiety disorders, case/control)
+            sign: 1
+          recent_foreboding:
+            label: Recent feelings of foreboding (UKB 20512, several days or more in the last 2 weeks)
+            sign: 1
+      schizophrenia:
+        label: Schizophrenia
+        axis: higher risk of schizophrenia
+        valence: undesirable
+        valence_basis: Schizophrenia is a severe, disabling psychotic disorder.
+        status: agent_proposed
+        aliases:
+        - psychosis
+        - psychotic disorder
+        - schizophrenic
+        phenotypes:
+          schizophrenia:
+            label: Schizophrenia (case/control)
+            sign: 1
+      bipolar_disorder:
+        label: Bipolar disorder
+        axis: higher risk of bipolar disorder
+        valence: undesirable
+        valence_basis: Bipolar disorder is a severe recurrent mood disorder.
+        status: agent_proposed
+        aliases:
+        - manic depression
+        - mania
+        - bipolar
+        phenotypes:
+          bipolar_disorder:
+            label: Bipolar disorder (any subtype, case/control)
+            sign: 1
+          bipolar_i_disorder:
+            label: Bipolar I disorder (case/control)
+            sign: 1
+          bipolar_ii_disorder:
+            label: Bipolar II disorder (case/control)
+            sign: 1
+      autism:
+        label: Autism spectrum disorder
+        axis: higher likelihood of autism spectrum disorder
+        valence: context_dependent
+        valence_basis: Autism is a neurodevelopmental condition; many autistic people do not regard it
+          as a disease, though it can bring substantial support needs.
+        status: agent_proposed
+        aliases:
+        - autism
+        - ASD
+        - Asperger
+        - autistic
+        phenotypes:
+          autism_spectrum_disorder:
+            label: Autism spectrum disorder (case/control)
+            sign: 1
+      self_harm:
+        label: Self-harm and suicidal thoughts
+        axis: more thoughts of self-harm or suicide
+        valence: undesirable
+        valence_basis: Thoughts of self-harm or suicide signal serious distress and risk.
+        status: agent_proposed
+        aliases:
+        - suicidal thoughts
+        - suicidal ideation
+        - self-harm
+        - self injury
+        phenotypes:
+          self_harm_thoughts:
+            label: Ever contemplated self-harm or recent thoughts of suicide or self-harm (UKB 20485 /
+              20513)
+            sign: 1
+  hepatic:
+    label: Liver
+    concepts:
+      liver_enzymes:
+        label: Liver enzyme levels
+        axis: higher measured liver enzyme level
+        valence: neutral
+        valence_basis: Within the normal range the blood level of a liver enzyme is not good or bad on
+          its own; only marked elevation signals liver injury.
+        status: agent_proposed
+        aliases:
+        - liver function test
+        - LFT
+        - liver enzymes
+        - transaminases
+        - elevated liver enzymes
+        phenotypes:
+          alt_level:
+            label: Serum alanine aminotransferase (ALT) level
+            sign: 1
+            aliases:
+            - ALT
+            - SGPT
+          ast_level:
+            label: Serum aspartate aminotransferase (AST) level
+            sign: 1
+            aliases:
+            - AST
+            - SGOT
+          ggt_level:
+            label: Serum gamma-glutamyl transferase (GGT) level
+            sign: 1
+            aliases:
+            - GGT
+            - gamma GT
+          alp_level:
+            label: Serum alkaline phosphatase (ALP) level
+            sign: 1
+            aliases:
+            - ALP
+            - alk phos
+      ast_alt_ratio:
+        label: AST to ALT ratio
+        axis: relatively more AST than ALT in blood
+        valence: neutral
+        valence_basis: The ratio is a diagnostic pattern (high in alcoholic or advanced liver disease,
+          low in fatty liver), not good or bad on its own.
+        status: agent_proposed
+        aliases:
+        - De Ritis ratio
+        - AST/ALT
+        - liver enzyme ratio
+        phenotypes:
+          ast_alt_ratio:
+            label: AST to ALT ratio (log AST minus log ALT; higher = relatively more AST)
+            sign: 1
+      serum_albumin:
+        label: Serum albumin
+        axis: higher serum albumin level
+        valence: neutral
+        valence_basis: Albumin within the normal range carries no clear benefit or harm; only low albumin
+          in liver or kidney disease is a warning sign.
+        status: agent_proposed
+        aliases:
+        - albumin
+        - blood albumin
+        - liver protein synthesis
+        phenotypes:
+          serum_albumin:
+            label: Serum albumin level
+            sign: 1
+      bilirubin:
+        label: Bilirubin
+        axis: higher blood bilirubin
+        valence: neutral
+        valence_basis: Mildly high bilirubin is mostly Gilbert syndrome, which is harmless; only very
+          high levels mean jaundice from disease.
+        status: agent_proposed
+        aliases:
+        - jaundice
+        - Gilbert syndrome
+        - yellow skin
+        - UGT1A1
+        phenotypes:
+          total_bilirubin:
+            label: Total serum bilirubin
+            sign: 1
+          direct_bilirubin:
+            label: Direct (conjugated) serum bilirubin
+            sign: 1
+          bilirubin_metabolism_disorder:
+            label: Disorder of bilirubin excretion or metabolism (mostly Gilbert syndrome)
+            sign: 1
+      fatty_liver:
+        label: Fatty liver disease
+        axis: more liver fat and higher risk of fatty liver disease
+        valence: undesirable
+        valence_basis: Liver fat accumulation (MASLD/NAFLD) can progress to inflammation, fibrosis and
+          cirrhosis.
+        status: agent_proposed
+        aliases:
+        - fatty liver
+        - NAFLD
+        - MASLD
+        - hepatic steatosis
+        - healthy liver
+        phenotypes:
+          masld:
+            label: Metabolic dysfunction-associated (non-alcoholic) fatty liver disease
+            sign: 1
+          masld_severity:
+            label: NAFLD activity score (histological severity)
+            sign: 1
+          liver_fat:
+            label: Hepatic fat content (MRI or biopsy)
+            sign: 1
+          chronic_alt_elevation:
+            label: Unexplained chronic ALT elevation (NAFLD proxy)
+            sign: 1
+          chronic_liver_disease:
+            label: Other chronic non-alcoholic liver disease (phecode / ICD-10 K76, mostly fatty liver)
+            sign: 1
+      cirrhosis:
+        label: Liver cirrhosis
+        axis: higher risk of liver cirrhosis
+        valence: undesirable
+        valence_basis: Cirrhosis is end-stage scarring of the liver.
+        status: agent_proposed
+        aliases:
+        - cirrhosis
+        - liver scarring
+        - liver fibrosis
+        - alcoholic liver disease
+        phenotypes:
+          cirrhosis:
+            label: Liver cirrhosis (all causes)
+            sign: 1
+          alcoholic_cirrhosis:
+            label: Alcohol-related cirrhosis
+            sign: 1
+  eye:
+    label: Eye
+    concepts:
+      glaucoma:
+        label: Glaucoma
+        axis: higher glaucoma risk
+        valence: undesirable
+        valence_basis: Glaucoma damages the optic nerve and causes irreversible vision loss.
+        status: agent_proposed
+        aliases:
+        - glaucoma risk
+        - POAG
+        - open-angle glaucoma
+        - optic nerve damage
+        phenotypes:
+          glaucoma:
+            label: Glaucoma (any type)
+            sign: 1
+          primary_open_angle_glaucoma:
+            label: Primary open-angle glaucoma
+            sign: 1
+      intraocular_pressure:
+        label: Intraocular pressure
+        axis: higher eye pressure
+        valence: undesirable
+        valence_basis: Raised intraocular pressure is the main modifiable risk factor for glaucoma.
+        status: agent_proposed
+        aliases:
+        - eye pressure
+        - IOP
+        - ocular hypertension
+        - high eye pressure
+        phenotypes:
+          intraocular_pressure:
+            label: Intraocular pressure (mmHg)
+            sign: 1
+          iop_goldmann_correlated:
+            label: Goldmann-correlated intraocular pressure (IOPg, mmHg)
+            sign: 1
+          iop_corneal_compensated:
+            label: Corneal-compensated intraocular pressure (IOPcc, mmHg)
+            sign: 1
+      cataract:
+        label: Cataract
+        axis: higher cataract risk
+        valence: undesirable
+        valence_basis: Cataract clouds the lens and impairs vision until surgery.
+        status: agent_proposed
+        aliases:
+        - cloudy lens
+        - lens opacity
+        - cataracts
+        phenotypes:
+          cataract:
+            label: Cataract
+            sign: 1
+      macular_degeneration:
+        label: Age-related macular degeneration
+        axis: higher macular degeneration risk
+        valence: undesirable
+        valence_basis: Macular degeneration destroys central vision in older age.
+        status: agent_proposed
+        aliases:
+        - AMD
+        - ARMD
+        - macular degeneration
+        - central vision loss
+        phenotypes:
+          age_related_macular_degeneration:
+            label: Age-related macular degeneration
+            sign: 1
+      refractive_error:
+        label: Short-sightedness and refractive error
+        axis: more short-sighted (myopic)
+        valence: context_dependent
+        valence_basis: Myopia (more negative refraction) and strong hyperopia (more positive refraction)
+          both need correction; the axis points toward myopia, which raises the risk of retinal detachment
+          and myopic maculopathy.
+        status: agent_proposed
+        aliases:
+        - short-sighted
+        - near-sighted
+        - nearsightedness
+        - long-sighted
+        - far-sighted
+        phenotypes:
+          myopia:
+            label: Myopia (short-sightedness) diagnosis
+            sign: 1
+          spherical_power:
+            label: Spherical power in dioptres (positive = hyperopic, negative = myopic)
+            sign: -1
+          spherical_equivalent:
+            label: Spherical equivalent refractive error in dioptres (positive = hyperopic)
+            sign: -1
+          age_started_glasses:
+            label: Age started wearing glasses or contact lenses (later start = less myopic)
+            sign: -1
+      glasses_use:
+        label: Wearing glasses or contact lenses
+        axis: wears glasses or contact lenses
+        valence: neutral
+        valence_basis: Wearing glasses reflects myopia, hyperopia or age-related presbyopia; it is a correction,
+          not a disease.
+        status: agent_proposed
+        aliases:
+        - wears glasses
+        - spectacles
+        - contact lenses
+        phenotypes:
+          wears_glasses:
+            label: Wears glasses or contact lenses
+            sign: 1
+      corneal_curvature:
+        label: Corneal curvature (keratometry)
+        axis: steeper cornea (higher corneal power)
+        valence: neutral
+        valence_basis: Corneal power varies normally between people; only extreme steepening (keratoconus)
+          is a disease.
+        status: agent_proposed
+        aliases:
+        - keratometry
+        - corneal power
+        - corneal steepness
+        - K reading
+        phenotypes:
+          keratometry_strong_meridian:
+            label: Keratometry strong meridian power (dioptres)
+            sign: 1
+          keratometry_weak_meridian:
+            label: Keratometry weak meridian power (dioptres)
+            sign: 1
+      astigmatism:
+        label: Corneal astigmatism
+        axis: more corneal astigmatism
+        valence: undesirable
+        valence_basis: Astigmatism blurs vision at all distances and needs correction.
+        status: agent_proposed
+        aliases:
+        - astigmatism
+        - cylinder
+        - irregular cornea
+        phenotypes:
+          cylindrical_power:
+            label: Keratometric cylindrical power in minus-cylinder dioptres (more negative = more astigmatism)
+            sign: -1
+      corneal_biomechanics:
+        label: Corneal biomechanics
+        axis: higher corneal hysteresis and resistance
+        valence: context_dependent
+        valence_basis: Low corneal hysteresis and resistance accompany glaucoma and keratoconus, but these
+          are measurements, not diseases.
+        status: agent_proposed
+        aliases:
+        - corneal hysteresis
+        - corneal stiffness
+        - corneal resistance factor
+        - ocular response analyzer
+        phenotypes:
+          corneal_hysteresis:
+            label: Corneal hysteresis (mmHg)
+            sign: 1
+          corneal_resistance_factor:
+            label: Corneal resistance factor (mmHg)
+            sign: 1
+      corneal_disease:
+        label: Corneal dystrophy and other corneal disorders
+        axis: higher corneal disease risk
+        valence: undesirable
+        valence_basis: Corneal dystrophies such as Fuchs dystrophy cloud the cornea and can need transplantation.
+        status: agent_proposed
+        aliases:
+        - Fuchs dystrophy
+        - corneal dystrophy
+        - cornea disease
+        phenotypes:
+          corneal_dystrophy:
+            label: Corneal dystrophy
+            sign: 1
+          other_corneal_disorders:
+            label: Other disorders of cornea (ICD-10 H18)
+            sign: 1
+      retinal_detachment:
+        label: Retinal detachment
+        axis: higher retinal detachment risk
+        valence: undesirable
+        valence_basis: Retinal detachment is an emergency that can cause permanent vision loss.
+        status: agent_proposed
+        aliases:
+        - detached retina
+        - retinal tear
+        - retinal break
+        phenotypes:
+          retinal_detachment:
+            label: Retinal detachment, breaks or defects
+            sign: 1
+      retinal_disorders:
+        label: Other retinal disorders
+        axis: higher retinal disorder risk
+        valence: undesirable
+        valence_basis: Retinal disorders threaten vision.
+        status: agent_proposed
+        aliases:
+        - retinopathy
+        - retina disease
+        phenotypes:
+          other_retinal_disorders:
+            label: Other retinal disorders (ICD-10 H35)
+            sign: 1
+          retinal_disorders_in_other_diseases:
+            label: Retinal disorders in diseases classified elsewhere (ICD-10 H36, mostly diabetic retinopathy)
+            sign: 1
+      diabetic_eye_disease:
+        label: Diabetic eye disease
+        axis: higher diabetic eye disease risk
+        valence: undesirable
+        valence_basis: Diabetic retinopathy is a leading cause of blindness in working-age adults.
+        status: agent_proposed
+        aliases:
+        - diabetic retinopathy
+        - diabetes eye damage
+        phenotypes:
+          diabetic_eye_disease:
+            label: Diabetic eye disease (self-reported)
+            sign: 1
+      eye_inflammation:
+        label: Eye inflammation (iritis, uveitis)
+        axis: higher eye inflammation risk
+        valence: undesirable
+        valence_basis: Iritis and uveitis are painful, recurrent and can damage vision.
+        status: agent_proposed
+        aliases:
+        - uveitis
+        - iritis
+        - anterior uveitis
+        - red painful eye
+        phenotypes:
+          iritis:
+            label: Iritis
+            sign: 1
+          iridocyclitis:
+            label: Iridocyclitis (anterior uveitis)
+            sign: 1
+          eye_inflammation:
+            label: Inflammation of the eye (phecode)
+            sign: 1

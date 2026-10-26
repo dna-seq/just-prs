@@ -310,6 +310,54 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by OR 1.26 (CI 1.22-1.30) for depression (FinnGen); 1000G EUR r=+0.90 with PGS002789,
       r=+0.28 with anchor PGS004885.
+  PGS002766:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: catalog OR 1.47 [1.43, 1.52] (Hypothyroidism); 1000G EUR r=+0.72 with
+      PGS004789 (hypothyroidism).'
+  PGS002761:
+    cluster: eye.glaucoma
+    phenotype: glaucoma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of glaucoma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported | trait_efo
+      quote: Glaucoma | glaucoma
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs2472493 A (ABCA1), rs7518099 T (TMCO1 region) and rs12150284 T (GAS7) carry negative weights, consistent
+        with the risk-raising alleles carrying positive ones
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read); PGS Catalog weights are per-allele effects on the reported
+      trait. Corroborated by OR 1.68 [1.59, 1.78] for glaucoma (FinnGen).
 paper:
   pmid: '36347255'
   doi: 10.1016/j.ajhg.2022.10.009

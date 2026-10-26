@@ -1,0 +1,3 @@
+cause,n_pgs,n_variants,net_delta,abs_delta,share_abs
+multiallelic_effect_or_other_is_a_later_alt,30,1184,0.03158180014733782,0.6780836211097762,0.9224952634200382
+third_allele_snv_just_prs_counts_the_called_copy,15,1008,0.04992339670597018,0.0569701488097183,0.07750473657996185

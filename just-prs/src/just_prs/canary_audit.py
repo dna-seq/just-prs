@@ -559,6 +559,8 @@ def score_canary_catalog(
                     panel=panel,
                     weight_mass_coverage=result.weight_mass_coverage,
                     user_match_rate=result.match_rate,
+                    karyotype=result.karyotype,
+                    x_coding=result.x_coding,
                 )
                 upsert_canary_score_rows(
                     cache_dir,

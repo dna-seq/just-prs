@@ -16,6 +16,7 @@ import polars as pl
 from eliot import log_message, start_action
 from pydantic import BaseModel, ConfigDict, Field
 
+from just_prs.karyotype import Karyotype, KaryotypeCall, XChromosomeCoding, resolve_karyotype
 from just_prs.memory import check_memory_pressure, scoring_join_chunk_size
 from just_prs.models import PRSResult
 from just_prs.prs import (
@@ -29,10 +30,11 @@ from just_prs.prs import (
     _DUCKDB_RESOLVED_DOSAGE_PRESENT_ONLY,
     _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY,
     _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY_MAF,
-    _DUCKDB_SCORING_RELATION,
     _DUCKDB_WEIGHTED_DOSAGE_ADDITIVE,
     _DUCKDB_WEIGHTED_DOSAGE_GENOBOOST,
     _assert_sample_build_matches,
+    _add_ploidy_columns,
+    _duckdb_matched_sql,
     _duckdb_scoring_relation,
     _duckdb_universe_sql,
     _normalize_genotype_columns,
@@ -178,7 +180,8 @@ def _attach_identity_columns(raw: pl.LazyFrame, norm: pl.LazyFrame) -> pl.DataFr
         extras.append(pl.col("rsID").cast(pl.Utf8).alias("rsid"))
     else:
         extras.append(pl.lit(None, dtype=pl.Utf8).alias("rsid"))
-    extra_df = raw.select(extras).collect()
+    # with_columns, not select: a literal-only select collapses to one row.
+    extra_df = raw.with_columns(extras).select("rsid").collect()
     norm_df = norm.collect()
     if extra_df.height != norm_df.height:
         raise ValueError(
@@ -192,7 +195,7 @@ def _attach_identity_columns(raw: pl.LazyFrame, norm: pl.LazyFrame) -> pl.DataFr
 
 
 def _status_sql(*, maf_fill: bool) -> str:
-    no_call = _DUCKDB_NO_CALL_SQL.replace("g.GT", "s.GT")
+    no_call = _DUCKDB_NO_CALL_SQL
     ref_known = _DUCKDB_REFERENCE_KNOWN_SQL
     if maf_fill:
         maf = (
@@ -202,7 +205,9 @@ def _status_sql(*, maf_fill: bool) -> str:
         return f"""
 CASE
     WHEN s.GT IS NOT NULL AND NOT ({no_call}) THEN 'observed'
+    WHEN s.GT IS NOT NULL AND s.ploidy_conflict THEN 'ploidy_conflict'
     WHEN s.GT IS NOT NULL THEN 'no_call'
+    WHEN s.allele_mismatch AND s.resolved_dosage IS NULL THEN 'allele_mismatch'
     WHEN {ref_known} THEN 'restored_hom_ref'
     WHEN {maf} THEN 'maf_filled'
     ELSE 'unscorable'
@@ -210,7 +215,9 @@ END"""
     return f"""
 CASE
     WHEN s.GT IS NOT NULL AND NOT ({no_call}) THEN 'observed'
+    WHEN s.GT IS NOT NULL AND s.ploidy_conflict THEN 'ploidy_conflict'
     WHEN s.GT IS NOT NULL THEN 'no_call'
+    WHEN s.allele_mismatch AND s.resolved_dosage IS NULL THEN 'allele_mismatch'
     WHEN {ref_known} THEN 'restored_hom_ref'
     ELSE 'unscorable'
 END"""
@@ -234,10 +241,9 @@ def _contribution_select_sql(
         WITH resolved AS (
             SELECT
                 s.*,
-                g.GT,
-                g.ref AS sample_ref,
-                g.alt AS sample_alt,
-                {resolved_dosage_sql} AS resolved_dosage
+                s.g_ref AS sample_ref,
+                s.g_alt AS sample_alt,
+                ({resolved_dosage_sql}) * s._dose_scale AS resolved_dosage
             {join_sql}
         )
         SELECT
@@ -422,6 +428,8 @@ def extract_prs_contributions(
     top_n: int | None = None,
     output: Path | str | None = None,
     sample_build: str | None = None,
+    sample_karyotype: Karyotype | KaryotypeCall | str | None = None,
+    x_coding: XChromosomeCoding | str = XChromosomeCoding.COPIES,
 ) -> PRSContributionResult:
     """Join a scoring file to a genome and keep one row per scoring variant.
 
@@ -434,6 +442,9 @@ def extract_prs_contributions(
     ``|contribution|`` *after* the genotype join. Neither changes
     ``compute_prs`` / ``compute_prs_duckdb``, which only return a
     scalar score plus match counts.
+
+    ``sample_karyotype`` / ``x_coding`` as in ``compute_prs``; a GT the
+    karyotype rules out gets status ``ploidy_conflict``.
     """
     with start_action(
         action_type="prs:extract_contributions",
@@ -475,6 +486,16 @@ def extract_prs_contributions(
         else:
             geno_mode_lf = read_genotypes(vcf_path)
             resolved_mode = _resolve_genotype_input_mode(genotype_input_mode, geno_mode_lf)
+
+        karyotype = resolve_karyotype(
+            sample_karyotype,
+            genotypes_lf=geno_mode_lf if genotypes_parquet is None else None,
+            genotypes_parquet=(
+                shared_tables.paths.get(str(genotype_table_key)) if shared_tables is not None else genotypes_parquet
+            ),
+            genome_build=genome_build,
+        )
+        scoring_df = _add_ploidy_columns(scoring_df.lazy(), karyotype, genome_build, x_coding).collect()
 
         ref_universe = _resolve_reference_universe(
             reference_universe=reference_universe,
@@ -519,22 +540,14 @@ def extract_prs_contributions(
             )
 
             if resolved_mode == GenotypeInputMode.VARIANT_ONLY:
-                join_sql = f"""
-                    FROM {_DUCKDB_SCORING_RELATION} s
-                    LEFT JOIN {geno_from} g
-                      ON g.chrom = s.chr_name_norm AND g.pos = s.chr_pos_norm
-                """
+                join_sql = _duckdb_matched_sql(geno_from, keep_absent=True)
                 resolved_dosage_sql = (
                     _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY_MAF
                     if do_maf_fill
                     else _DUCKDB_RESOLVED_DOSAGE_VARIANT_ONLY
                 )
             else:
-                join_sql = f"""
-                    FROM {geno_from} g
-                    JOIN {_DUCKDB_SCORING_RELATION} s
-                      ON g.chrom = s.chr_name_norm AND g.pos = s.chr_pos_norm
-                """
+                join_sql = _duckdb_matched_sql(geno_from, keep_absent=False)
                 resolved_dosage_sql = _DUCKDB_RESOLVED_DOSAGE_PRESENT_ONLY
 
             select_sql = _contribution_select_sql(

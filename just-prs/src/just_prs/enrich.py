@@ -125,6 +125,8 @@ def enrich_prs_result(
             result.pgs_id,
             ancestry=selected_ancestry,
             weight_mass_coverage=result.weight_mass_coverage,
+            karyotype=result.karyotype,
+            x_coding=result.x_coding,
         )
         pct_value = pr.percentile
         pct_method = pr.method
@@ -156,7 +158,9 @@ def enrich_prs_result(
     # --- Per-population percentiles ---
     all_pop_values: dict[str, float] = {}
     if compute_all_populations and percentile_allowed:
-        all_pop_values = _all_population_percentiles(catalog, result.score, result.pgs_id)
+        all_pop_values = _all_population_percentiles(
+            catalog, result.score, result.pgs_id, karyotype=result.karyotype, x_coding=result.x_coding
+        )
     all_pop_text = (
         ", ".join(f"{sp}: {pct:.1f}%" for sp, pct in sorted(all_pop_values.items()))
         if all_pop_values
@@ -347,11 +351,15 @@ def enrich_prs_result(
 # ---------------------------------------------------------------------------
 
 def _all_population_percentiles(
-    catalog: PRSCatalog, score: float, pgs_id: str
+    catalog: PRSCatalog,
+    score: float,
+    pgs_id: str,
+    karyotype: str | None = None,
+    x_coding: str | None = None,
 ) -> dict[str, float]:
     values: dict[str, float] = {}
     for sp in SUPERPOPULATIONS:
-        pct, method = catalog.percentile(score, pgs_id, ancestry=sp)
+        pct, method = catalog.percentile(score, pgs_id, ancestry=sp, karyotype=karyotype, x_coding=x_coding)
         if pct is not None and method == "reference_panel":
             values[sp] = round(pct, 1)
     return values

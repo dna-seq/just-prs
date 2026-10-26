@@ -222,6 +222,17 @@ class PercentileResult(BaseModel):
     caveat: str = Field(
         default="", description="Human-readable reliability caveat when reliable is False"
     )
+    reference_sex: str | None = Field(
+        default=None,
+        description=(
+            "Sex of the per-sex reference curve used ('male', 'female' or 'all'); None when the "
+            "legacy curve was used, which counts a man's X and Y and everyone's MT twice"
+        ),
+    )
+    reference_x_coding: str | None = Field(
+        default=None,
+        description="X coding of the per-sex reference curve used ('copies' or 'dosage_compensation')",
+    )
 
 
 class PRSResult(BaseModel):
@@ -247,6 +258,15 @@ class PRSResult(BaseModel):
     variants_no_call: int = Field(
         default=0,
         description="Scoring loci present in the genotype input but carrying a missing/no-call GT",
+    )
+    variants_allele_mismatch: int = Field(
+        default=0,
+        description=(
+            "Scoring loci whose position has genotype records but none for this variant "
+            "(e.g. an SNV row at a called indel sharing its anchor base). They are scored "
+            "as absent loci, so they are also counted in variants_assumed_hom_ref or "
+            "variants_unscorable_absent"
+        ),
     )
     variants_maf_filled: int = Field(
         default=0,
@@ -291,6 +311,52 @@ class PRSResult(BaseModel):
     has_allele_frequencies: bool = Field(
         default=False,
         description="Whether the scoring file contained allelefrequency_effect data",
+    )
+    karyotype: str | None = Field(
+        default=None,
+        description=(
+            "Sex-chromosome karyotype used for scoring (XX, XY, XXY, X0, unknown); "
+            "it sets how many copies non-PAR X, Y and MT have (just_prs.karyotype)"
+        ),
+    )
+    karyotype_source: str | None = Field(
+        default=None, description="'provided' by the caller or 'inferred' from the genotypes"
+    )
+    x_coding: str = Field(
+        default="copies",
+        description=(
+            "How a one-copy region is counted: 'copies' (0..1, a man has one X) or "
+            "'dosage_compensation' (0..2, PLINK2 --xchr-model 2 / 1000G pgen parity)"
+        ),
+    )
+    variants_ploidy_conflict: int = Field(
+        default=0,
+        description=(
+            "Present loci whose GT the karyotype rules out (a het on a man's non-PAR X/Y "
+            "or MT, any call on Y without a Y). Treated as no-calls, so also counted in "
+            "variants_no_call"
+        ),
+    )
+    variants_hemizygous: int = Field(
+        default=0,
+        description="Scored loci in a one- or zero-copy region (male non-PAR X/Y, MT, a woman's Y)",
+    )
+    reference_coding_mismatch: bool = Field(
+        default=False,
+        description=(
+            "True when x_coding is 'copies' and hemizygous loci were scored: the 1000G "
+            "reference distributions count a man's X twice (pgen stores it 0/2), so a "
+            "chrX/Y/MT-weighted percentile is biased until the reference is rescored"
+        ),
+    )
+    model_flags: list[str] = Field(
+        default_factory=list,
+        description=(
+            "ScoringModelFlag values for a scoring model that the additive sum only "
+            "approximates (dominant/recessive/interaction/diplotype/haplotype rows, "
+            "ratio-scale weights, ignored per-dosage weights). Empty for a plain "
+            "additive score. The score is still sum(effect_weight * dosage)"
+        ),
     )
     theoretical_mean: float | None = Field(
         default=None,

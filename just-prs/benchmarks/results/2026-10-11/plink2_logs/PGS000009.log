@@ -1,0 +1,28 @@
+PLINK v2.0.0-a.6.33LM 64-bit Intel (28 Feb 2026)
+Options in effect:
+  --out /tmp/tmpi4xkvla4/PGS000009
+  --pfile /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass
+  --score /tmp/tmpi4xkvla4/PGS000009_score_input.txt 1 2 3 header no-mean-imputation cols=scoresums
+  --threads 4
+
+Hostname: October
+Working directory: /data/sources/just-prs
+Start time: Sun Oct 11 06:57:33 2026
+
+Random number seed: 1791694653
+64241 MiB RAM detected, ~45882 available; reserving 32120 MiB for main
+workspace.
+Using up to 4 compute threads.
+1 sample (0 females, 0 males, 1 ambiguous; 1 founder) loaded from
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass.psam.
+4516566 variants loaded from
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass.pvar.
+Note: No phenotype data present.
+Warning: --score: 5947 entries in /tmp/tmpi4xkvla4/PGS000009_score_input.txt
+were skipped due to missing variant IDs.
+(Add the 'list-variants' modifier to see which variants were actually used for
+scoring.)
+--score: 1693 variants processed.
+--score: Results written to /tmp/tmpi4xkvla4/PGS000009.sscore .
+
+End time: Sun Oct 11 06:57:33 2026

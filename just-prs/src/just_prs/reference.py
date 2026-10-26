@@ -215,6 +215,7 @@ class BatchScoringResult(BaseModel):
     outcomes: list[ScoringOutcome]
     quality_df: pl.DataFrame
     distribution_issues_df: pl.DataFrame
+    distributions_by_sex_df: pl.DataFrame | None = None
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
@@ -251,7 +252,10 @@ def _find_reference_panel_file(
 ) -> Path:
     """Find a build-specific reference panel file without silently crossing builds."""
     tokens = tuple(token.lower() for token in _build_name_tokens(genome_build))
-    all_files = sorted(path for path in ref_dir.rglob(f"*{extension}") if path.is_file())
+    # "._name" files are macOS AppleDouble metadata copied off a Mac, not panel data.
+    all_files = sorted(
+        path for path in ref_dir.rglob(f"*{extension}") if path.is_file() and not path.name.startswith("._")
+    )
     matches = [path for path in all_files if any(token in path.name.lower() for token in tokens)]
     if matches:
         return matches[0]
@@ -526,11 +530,13 @@ def download_reference_fasta(
 def parse_psam(psam_path: Path) -> pl.DataFrame:
     """Parse a PLINK2 .psam file and return a DataFrame with sample population labels.
 
-    Expected columns: #IID (or IID), SuperPop (or SUP), Population (or POP).
+    Expected columns: #IID (or IID), SuperPop (or SUP), Population (or POP), and
+    optionally SEX (PLINK coding: 1 male, 2 female, anything else unknown).
     The '#' prefix on the first column header is stripped automatically.
 
     Returns:
-        DataFrame with columns: iid, superpop, population
+        DataFrame with columns: iid, superpop, population, sex
+        (``male`` / ``female`` / ``unknown``)
     """
     with start_action(action_type="reference:parse_psam", path=str(psam_path)):
         df = pl.read_csv(
@@ -544,7 +550,13 @@ def parse_psam(psam_path: Path) -> pl.DataFrame:
             if match:
                 col_map[match] = canonical
 
-        df = df.rename(col_map).select(["iid", "superpop", "population"])
+        sex_col = next((c for c in df.columns if c.upper() == "SEX"), None)
+        sex = (
+            pl.col(sex_col).replace_strict({"1": "male", "2": "female"}, default="unknown")
+            if sex_col
+            else pl.lit("unknown")
+        )
+        df = df.rename(col_map).select(["iid", "superpop", "population", sex.alias("sex")])
         log_message(
             message_type="reference:psam_loaded",
             n_samples=df.height,
@@ -747,10 +759,8 @@ def compute_reference_prs_plink2(
             ["iid", "score"]
         )
 
-        psam_files = list(ref_dir.rglob("*.psam"))
-        if not psam_files:
-            raise Plink2Error(f"[{pgs_id}] No .psam file found in {ref_dir}")
-        psam_df = parse_psam(psam_files[0])
+        # The scored pgen's own sample file: the panel directory holds both builds'.
+        psam_df = parse_psam(Path(pfile_prefix + ".psam"))
 
         joined = scores_df.join(psam_df, on="iid", how="inner").with_columns(
             pl.lit(pgs_id).alias("pgs_id")
@@ -778,73 +788,45 @@ def compute_reference_prs_plink2(
         return joined
 
 
-def _resolve_other_allele_col(df: pl.DataFrame) -> str | None:
-    """Find the column containing the non-effect allele, if available."""
-    if "other_allele" in df.columns:
-        return "other_allele"
-    if "hm_inferOtherAllele" in df.columns:
-        return "hm_inferOtherAllele"
-    if "reference_allele" in df.columns:
-        return "reference_allele"
-    return None
-
-
 def _prepare_plink2_score_input(
     scoring_file: Path,
     pgs_id: str,
     out_dir: Path,
 ) -> Path | None:
-    """Convert a PGS Catalog harmonized scoring file to the 3-column PLINK2 --score format.
+    """Convert a PGS Catalog scoring file to the 3-column PLINK2 --score format.
 
     PLINK2 --score expects: variant_id, effect_allele, effect_weight (tab-separated).
 
-    The PGS Catalog 1000G reference panel uses variant IDs in ``CHROM:POS:REF:ALT``
-    format (e.g. ``1:10397:C:A``).  Since the scoring file doesn't specify which
-    allele is REF vs ALT, we emit **both orderings** for each variant (e.g.
-    ``11:69516650:C:T`` and ``11:69516650:T:C``).  PLINK2 matches by string
-    equality, so exactly one ordering will match the .pvar ID and the other will
-    be counted as "missing" and silently skipped.
+    The pgen datasets here use ``CHROM:POS:REF:ALT`` variant IDs. The scoring
+    file does not say which allele is REF, so each variant is written in **both
+    orders** (``11:69516650:C:T`` and ``11:69516650:T:C``); PLINK2 matches the
+    one in the .pvar and skips the other with a warning.
 
-    When neither ``other_allele`` nor ``hm_inferOtherAllele`` is available, falls
-    back to the 2-part ``CHROM:POS`` format (which will only work with reference
-    panels that use that simpler scheme).
+    The other allele is the row's ``other_allele``, else every ``/``-separated
+    ``hm_inferOtherAllele`` candidate (the sample's ALT may be any of them, not
+    only the first), else ``reference_allele``. With none of these, the ID falls
+    back to ``CHROM:POS``, which only works with panels using that scheme.
 
-    Returns path to the prepared score input file, or None if parsing fails.
+    PLINK2 aborts when a (variant, allele) pair appears twice. Harmonized files
+    contain such pairs: two GRCh37 variants can lift over to the same GRCh38
+    variant (PGS000013/014/016/017). Their weights are summed into one line,
+    which is what just-prs computes when it scores both rows against the same
+    genotype.
+
+    Accepts a ``.txt.gz`` scoring file or its cached parquet.
+    Returns the path to the prepared score input file, or None if there is no data.
     """
-    import gzip
+    from just_prs.scoring import parse_scoring_file
 
-    open_fn = gzip.open if str(scoring_file).endswith(".gz") else open
-    with open_fn(scoring_file, "rt") as f:  # type: ignore[call-overload]
-        header_lines = []
-        data_lines = []
-        for line in f:
-            if line.startswith("#"):
-                header_lines.append(line)
-            else:
-                data_lines.append(line)
-
-    if not data_lines:
+    df = parse_scoring_file(Path(scoring_file)).collect()
+    df = df.rename({c: c.lstrip("#") for c in df.columns})
+    if df.height == 0:
         log_message(
             message_type="reference:score_no_data_lines",
             pgs_id=pgs_id,
             scoring_file=str(scoring_file),
         )
         return None
-
-    import io
-    raw = "".join(data_lines)
-    df = pl.read_csv(
-        io.StringIO(raw),
-        separator="\t",
-        infer_schema_length=10000,
-        schema_overrides={
-            "chr_name": pl.Utf8,
-            "chr_position": pl.Utf8,
-            "hm_chr": pl.Utf8,
-            "hm_pos": pl.Utf8,
-        },
-    )
-    df = df.rename({c: c.lstrip("#") for c in df.columns})
 
     chr_col = "hm_chr" if "hm_chr" in df.columns else "chr_name"
     pos_col = "hm_pos" if "hm_pos" in df.columns else "chr_position"
@@ -857,65 +839,68 @@ def _prepare_plink2_score_input(
         )
         return None
 
+    df = df.filter(
+        pl.col("effect_allele").is_not_null()
+        & pl.col("effect_weight").is_not_null()
+        & pl.col(chr_col).is_not_null()
+        & pl.col(pos_col).is_not_null()
+    )
     chrom_expr = pl.col(chr_col).cast(pl.Utf8).str.replace("(?i)^chr", "")
     pos_expr = pl.col(pos_col).cast(pl.Utf8)
+    effect = pl.col("effect_allele").cast(pl.Utf8)
 
-    other_col = _resolve_other_allele_col(df)
+    other: pl.Expr = pl.lit(None, dtype=pl.Utf8)
+    other_sources = [
+        c for c in ("reference_allele", "hm_inferOtherAllele", "other_allele") if c in df.columns
+    ]
+    for col in other_sources:
+        value = pl.col(col).cast(pl.Utf8)
+        other = pl.when(value.str.len_chars() > 0).then(value).otherwise(other)
 
-    if other_col is not None:
-        df = df.filter(
-            pl.col("effect_allele").is_not_null()
-            & pl.col("effect_weight").is_not_null()
-            & pl.col(chr_col).is_not_null()
-            & pl.col(pos_col).is_not_null()
-            & pl.col(other_col).is_not_null()
-            & (pl.col(other_col).cast(pl.Utf8).str.len_chars() > 0)
+    if other_sources:
+        df = (
+            df.with_columns(other.str.split("/").alias("_other"))
+            .filter(pl.col("_other").is_not_null())
+            .explode("_other", empty_as_null=True)
+            .filter((pl.col("_other").str.len_chars() > 0) & (pl.col("_other") != effect))
         )
-
-        other_clean = pl.col(other_col).cast(pl.Utf8).str.split("/").list.first()
-
-        id_fwd = (
-            chrom_expr + pl.lit(":") + pos_expr
-            + pl.lit(":") + other_clean
-            + pl.lit(":") + pl.col("effect_allele").cast(pl.Utf8)
+        prefix = chrom_expr + pl.lit(":") + pos_expr + pl.lit(":")
+        df_fwd = df.select(
+            (prefix + pl.col("_other") + pl.lit(":") + effect).alias("variant_id"),
+            effect.alias("effect_allele"),
+            pl.col("effect_weight").cast(pl.Float64),
         )
-        id_rev = (
-            chrom_expr + pl.lit(":") + pos_expr
-            + pl.lit(":") + pl.col("effect_allele").cast(pl.Utf8)
-            + pl.lit(":") + other_clean
+        df_rev = df.select(
+            (prefix + effect + pl.lit(":") + pl.col("_other")).alias("variant_id"),
+            effect.alias("effect_allele"),
+            pl.col("effect_weight").cast(pl.Float64),
         )
-
-        df_fwd = df.with_columns(id_fwd.alias("variant_id")).select(
-            ["variant_id", "effect_allele", "effect_weight"]
-        )
-        df_rev = df.with_columns(id_rev.alias("variant_id")).select(
-            ["variant_id", "effect_allele", "effect_weight"]
-        )
-        out_df = pl.concat([df_fwd, df_rev])
-
-        log_message(
-            message_type="reference:score_input_4part_ids",
-            pgs_id=pgs_id,
-            n_variants=df.height,
-            n_rows_with_both_orderings=out_df.height,
-            other_allele_source=other_col,
-        )
+        id_lines = pl.concat([df_fwd, df_rev])
+        message_type = "reference:score_input_4part_ids"
     else:
-        df = df.filter(
-            pl.col("effect_allele").is_not_null()
-            & pl.col("effect_weight").is_not_null()
-            & pl.col(chr_col).is_not_null()
-            & pl.col(pos_col).is_not_null()
-        ).with_columns(
-            (chrom_expr + pl.lit(":") + pos_expr).alias("variant_id")
+        id_lines = df.select(
+            (chrom_expr + pl.lit(":") + pos_expr).alias("variant_id"),
+            effect.alias("effect_allele"),
+            pl.col("effect_weight").cast(pl.Float64),
         )
-        out_df = df.select(["variant_id", "effect_allele", "effect_weight"])
+        message_type = "reference:score_input_2part_ids_fallback"
 
-        log_message(
-            message_type="reference:score_input_2part_ids_fallback",
-            pgs_id=pgs_id,
-            n_variants=out_df.height,
-        )
+    # A liftover duplicate emits an (id, allele) line a second time; sum it.
+    out_df = (
+        id_lines.group_by(["variant_id", "effect_allele"], maintain_order=True)
+        .agg(pl.col("effect_weight").sum(), pl.len().alias("_rows"))
+    )
+    n_merged = int(out_df.filter(pl.col("_rows") > 1).height)
+    out_df = out_df.drop("_rows")
+
+    log_message(
+        message_type=message_type,
+        pgs_id=pgs_id,
+        n_variants=df.height,
+        n_score_lines=out_df.height,
+        n_duplicate_pairs_summed=n_merged,
+        other_allele_sources=other_sources,
+    )
 
     score_input = out_dir / f"{pgs_id}_score_input.txt"
     out_df.write_csv(score_input, separator="\t", include_header=True)
@@ -1239,6 +1224,68 @@ def read_pgen_genotypes(
     return geno_buf[unsort_order]
 
 
+# PLINK2 panels split the pseudoautosomal ends of X into contigs PAR1 and PAR2 (both
+# pgsc_1000G_v1 builds do), while scoring files place those rows on X. Joining on the
+# raw contig left every PAR row unmatched; ``chrom`` itself keeps PAR1/PAR2, which is
+# how the scorer tells PAR (two copies in either sex) from non-PAR X.
+_PANEL_CHROM_AS_SCORING_SQL = "(CASE WHEN p.chrom IN ('PAR1', 'PAR2') THEN 'X' ELSE p.chrom END)"
+
+# Region codes for the reference scorer's per-row copy number.
+_REGION_DIPLOID, _REGION_X, _REGION_Y, _REGION_MT = 0, 1, 2, 3
+
+
+def _panel_region_codes(chrom: pl.Series) -> "np.ndarray[Any, np.dtype[np.int8]]":
+    """Region of each matched panel row: diploid (autosome or PAR), non-PAR X, Y or MT."""
+    return (
+        pl.select(
+            pl.when(chrom == "X").then(_REGION_X)
+            .when(chrom == "Y").then(_REGION_Y)
+            .when(chrom.is_in(["MT", "M"])).then(_REGION_MT)
+            .otherwise(_REGION_DIPLOID)
+            .cast(pl.Int8)
+        )
+        .to_series()
+        .to_numpy()
+    )
+
+
+def _one_copy_deltas(
+    geno: "np.ndarray[Any, np.dtype[np.int8]]",
+    contrib: "np.ndarray[Any, np.dtype[np.float32]]",
+    region: "np.ndarray[Any, np.dtype[np.int8]]",
+    male: "np.ndarray[Any, np.dtype[np.bool_]]",
+    female: "np.ndarray[Any, np.dtype[np.bool_]]",
+) -> tuple["np.ndarray[Any, np.dtype[np.float64]]", "np.ndarray[Any, np.dtype[np.float64]]"]:
+    """Per-sample change from the legacy sum under ``copies`` and ``dosage_compensation``.
+
+    ``geno`` and ``contrib`` hold only one-copy-capable rows (non-PAR X, Y, MT):
+    pgenlib's call (0/1/2, -9 missing; a haploid call reads as 0 or 2) and the legacy
+    contribution ``weight x dose`` with missing already 0. The legacy sum counted a
+    haploid call as two copies. The rules match the sample engines
+    (``just_prs.karyotype``): one copy halves the call and a het there is a no-call;
+    ``dosage_compensation`` keeps a man's X at 0..2 (hets still no-calls) and counts Y
+    and MT once, as PLINK2 does; a woman has no Y, so any Y call counts 0; a sample of
+    unknown sex keeps X and Y as written, MT once.
+    """
+    import numpy as np
+
+    het = geno == 1
+    once = np.where(het, np.float32(0.0), contrib * np.float32(0.5))
+    called_twice = np.where(het, np.float32(0.0), contrib)
+    male_row = male[np.newaxis, :]
+    female_row = female[np.newaxis, :]
+    is_x = (region == _REGION_X)[:, np.newaxis]
+    is_y = (region == _REGION_Y)[:, np.newaxis]
+
+    y_once = np.where(male_row, once, np.where(female_row, np.float32(0.0), contrib))
+    copies = np.where(is_x, np.where(male_row, once, contrib), np.where(is_y, y_once, once))
+    compensated = np.where(is_x, np.where(male_row, called_twice, contrib), np.where(is_y, y_once, once))
+    return (
+        (copies - contrib).sum(axis=0, dtype=np.float64),
+        (compensated - contrib).sum(axis=0, dtype=np.float64),
+    )
+
+
 class _ResolvedRefPanel:
     """Pre-resolved reference panel paths and shared data.
 
@@ -1249,7 +1296,7 @@ class _ResolvedRefPanel:
 
     __slots__ = (
         "pvar_variant_ct", "psam_df", "pgen_path",
-        "pvar_zst_path", "pvar_parquet_path",
+        "pvar_zst_path", "pvar_parquet_path", "_allele_offsets",
     )
 
     def __init__(self, ref_dir: Path, genome_build: str = "GRCh38") -> None:
@@ -1264,11 +1311,11 @@ class _ResolvedRefPanel:
                 parse_pvar(self.pvar_zst_path)
 
         self.pgen_path = _find_reference_panel_file(ref_dir, genome_build, ".pgen")
+        self._allele_offsets: Any = None
 
-        psam_files = list(ref_dir.rglob("*.psam"))
-        if not psam_files:
-            raise ReferencePanelError(f"No .psam file found in {ref_dir}")
-        self.psam_df = parse_psam(psam_files[0])
+        # By build: a panel directory holds the GRCh37 and GRCh38 sample files side by
+        # side, with different samples (2,504 vs 3,202 in pgsc_1000G_v1).
+        self.psam_df = parse_psam(_find_reference_panel_file(ref_dir, genome_build, ".psam"))
 
         _require_duckdb()
         import duckdb
@@ -1284,6 +1331,19 @@ class _ResolvedRefPanel:
             n_samples=self.psam_df.height,
             pvar_parquet=str(self.pvar_parquet_path),
         )
+
+    def allele_offsets(self) -> Any:
+        """pgenlib's ``allele_idx_offsets`` for the panel, built once per resolved panel.
+
+        A cumulative sum over every panel variant (75M for 1000G GRCh38, 573 MB):
+        rebuilding it per PGS ID cost about 1.4 s of a ~1.5 s warm score.
+        """
+        if self._allele_offsets is None:
+            offsets_cache = _allele_offsets_cache_path(self.pvar_zst_path)
+            if not offsets_cache.exists():
+                _build_allele_offsets_cache(self.pvar_zst_path)
+            self._allele_offsets = _load_allele_idx_offsets(offsets_cache, variant_ct=self.pvar_variant_ct)
+        return self._allele_offsets
 
     def match_scoring(
         self,
@@ -1379,7 +1439,7 @@ class _ResolvedRefPanel:
                         END AS effect_is_alt
                     FROM '{pvar}' p
                     INNER JOIN scoring s
-                        ON p.chrom = s.chr_name_norm AND p."POS" = s.chr_pos_norm
+                        ON {_PANEL_CHROM_AS_SCORING_SQL} = s.chr_name_norm AND p."POS" = s.chr_pos_norm
                     WHERE
                         (s.effect_allele = p."ALT" AND s.other_allele = p."REF")
                         OR (s.effect_allele = p."REF" AND s.other_allele = p."ALT")
@@ -1401,7 +1461,7 @@ class _ResolvedRefPanel:
                         END AS effect_is_alt
                     FROM '{pvar}' p
                     INNER JOIN scoring s
-                        ON p.chrom = s.chr_name_norm AND p."POS" = s.chr_pos_norm
+                        ON {_PANEL_CHROM_AS_SCORING_SQL} = s.chr_name_norm AND p."POS" = s.chr_pos_norm
                     WHERE s.effect_allele = p."ALT" OR s.effect_allele = p."REF"
                 """
 
@@ -1596,7 +1656,14 @@ def compute_reference_prs_polars(
             (loads pvar into memory — fine for single calls, wasteful for batches).
 
     Returns:
-        DataFrame with columns: iid, superpop, population, score, pgs_id
+        DataFrame with columns: iid, superpop, population, sex, pgs_id, the match
+        counts, and three scores. ``score`` is the legacy sum (pgenlib reads a haploid
+        call as 0/2, so a man's X and Y and everyone's MT count twice), kept so the
+        published ``{panel}_distributions.parquet`` stays reproducible.
+        ``score_copies`` counts copies (``XChromosomeCoding.COPIES``) and
+        ``score_dosage_compensation`` a man's non-PAR X 0..2 with Y and MT once
+        (``DOSAGE_COMPENSATION``); both are null for a per-dosage-weight score with
+        one-copy rows. PAR1/PAR2 rows are matched as X and count two copies.
     """
     import os
 
@@ -1662,7 +1729,14 @@ def compute_reference_prs_polars(
         else:
             weights = matched["effect_weight"].to_numpy().astype(np.float32)
         is_alt = matched["effect_is_alt"].to_numpy()
+        region = _panel_region_codes(matched["chrom"])
+        variants_matched_par = int(matched["chrom"].is_in(["PAR1", "PAR2"]).sum())
         del matched
+        variants_matched_one_copy = int((region != _REGION_DIPLOID).sum())
+        variants_matched_sex_linked = int(((region == _REGION_X) | (region == _REGION_Y)).sum())
+        sex = panel.psam_df["sex"].to_numpy()
+        male = sex == "male"
+        female = sex == "female"
 
         _require_pgenlib()
         import pgenlib
@@ -1670,6 +1744,8 @@ def compute_reference_prs_polars(
         sort_order = np.argsort(variant_indices)
         sorted_all = variant_indices[sort_order]
         is_alt_sorted = is_alt[sort_order]
+        region_sorted = region[sort_order]
+        del region
         if dosage_weight:
             w0_sorted = w0[sort_order]
             w1_sorted = w1[sort_order]
@@ -1680,12 +1756,11 @@ def compute_reference_prs_polars(
             del weights
         del is_alt, variant_indices
 
-        offsets_cache = _allele_offsets_cache_path(panel.pvar_zst_path)
-        if not offsets_cache.exists():
-            _build_allele_offsets_cache(panel.pvar_zst_path)
-        allele_offsets = _load_allele_idx_offsets(offsets_cache, variant_ct=panel.pvar_variant_ct)
+        allele_offsets = panel.allele_offsets()
 
         prs_sum = np.zeros(n_samples, dtype=np.float64)
+        delta_copies = np.zeros(n_samples, dtype=np.float64)
+        delta_compensated = np.zeros(n_samples, dtype=np.float64)
 
         geno_t0 = time.monotonic()
         with pgenlib.PgenReader(
@@ -1732,7 +1807,7 @@ def compute_reference_prs_polars(
                             ),
                         ),
                     )
-                    prs_sum += contrib.sum(axis=0)
+                    prs_sum += contrib.sum(axis=0, dtype=np.float64)
                     del geno_int, contrib, batch_w0, batch_w1, batch_w2
                 else:
                     batch_weights = weights_sorted[start:end]
@@ -1743,8 +1818,20 @@ def compute_reference_prs_polars(
                         geno_float[ref_effect_mask, :] = np.float32(2.0) - geno_float[ref_effect_mask, :]
                     geno_float[missing_mask] = 0.0
 
-                    prs_sum += (geno_float * batch_weights[:, np.newaxis]).sum(axis=0)
-                    del geno_float, batch_weights
+                    contrib = geno_float * batch_weights[:, np.newaxis]
+                    prs_sum += contrib.sum(axis=0, dtype=np.float64)
+                    one_copy_rows = region_sorted[start:end] != _REGION_DIPLOID
+                    if one_copy_rows.any():
+                        d_copies, d_compensated = _one_copy_deltas(
+                            geno_buf[one_copy_rows],
+                            contrib[one_copy_rows],
+                            region_sorted[start:end][one_copy_rows],
+                            male,
+                            female,
+                        )
+                        delta_copies += d_copies
+                        delta_compensated += d_compensated
+                    del geno_float, batch_weights, contrib, one_copy_rows
 
                 del geno_buf, missing_mask, batch_indices, batch_is_alt
                 start = end
@@ -1755,7 +1842,22 @@ def compute_reference_prs_polars(
             del sorted_all, is_alt_sorted, w0_sorted, w1_sorted, w2_sorted, allele_offsets
         else:
             del sorted_all, weights_sorted, is_alt_sorted, allele_offsets
+        del region_sorted
         prs_scores = prs_sum
+        if dosage_weight and variants_matched_one_copy > 0:
+            # A per-dosage weight (GenoBoost) has no defined value for one copy of a
+            # haploid locus, so the one-copy codings are left unscored rather than guessed.
+            scores_copies = np.full(n_samples, np.nan)
+            scores_compensated = np.full(n_samples, np.nan)
+            log_message(
+                message_type="reference:one_copy_codings_skipped",
+                pgs_id=pgs_id,
+                reason="per-dosage weights on one-copy rows",
+                variants_matched_one_copy=variants_matched_one_copy,
+            )
+        else:
+            scores_copies = prs_sum + delta_copies
+            scores_compensated = prs_sum + delta_compensated
         t_compute = time.monotonic() - t0
         log_message(
             message_type="reference:phase_pgen_read",
@@ -1775,16 +1877,26 @@ def compute_reference_prs_polars(
 
         t0 = time.monotonic()
         result = (
-            pl.DataFrame({"iid": panel.psam_df["iid"].to_list(), "score": prs_scores.tolist()})
+            pl.DataFrame({
+                "iid": panel.psam_df["iid"].to_list(),
+                "score": prs_scores,
+                "score_copies": scores_copies,
+                "score_dosage_compensation": scores_compensated,
+            })
+            .with_columns(pl.col("score_copies", "score_dosage_compensation").fill_nan(None))
             .join(panel.psam_df, on="iid", how="inner")
             .with_columns(
                 pl.lit(pgs_id).alias("pgs_id"),
                 pl.lit(variants_total).alias("variants_total"),
                 pl.lit(variants_matched).alias("variants_matched"),
                 pl.lit(variants_matched / variants_total if variants_total > 0 else None).alias("match_rate"),
+                pl.lit(variants_matched_one_copy).alias("variants_matched_one_copy"),
+                pl.lit(variants_matched_sex_linked).alias("variants_matched_sex_linked"),
+                pl.lit(variants_matched_par).alias("variants_matched_par"),
+                pl.lit(REFERENCE_SCORES_VERSION, dtype=pl.Int32).alias("scores_version"),
             )
         )
-        del prs_scores
+        del prs_scores, scores_copies, scores_compensated
         t_join = time.monotonic() - t0
         t_total = time.monotonic() - t_total_start
 
@@ -1808,7 +1920,84 @@ class _SinglePgsAgg(BaseModel):
     """Aggregated distribution + outcome for a single cached PGS ID."""
     df: pl.DataFrame
     outcome: ScoringOutcome
+    by_sex: pl.DataFrame
     model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
+SEX_AWARE_SCORE_COLUMNS = {"score_copies": "copies", "score_dosage_compensation": "dosage_compensation"}
+"""Per-sample score column -> the ``XChromosomeCoding`` value it was counted under."""
+
+DISTRIBUTIONS_BY_SEX_SCHEMA: dict[str, pl.DataType] = {
+    "pgs_id": pl.Utf8, "superpopulation": pl.Utf8, "sex": pl.Utf8, "x_coding": pl.Utf8,
+    "mean": pl.Float64, "std": pl.Float64, "n": pl.UInt32, "median": pl.Float64,
+    "p5": pl.Float64, "p25": pl.Float64, "p75": pl.Float64, "p95": pl.Float64,
+}
+
+
+def aggregate_sex_aware_distributions(scores: pl.DataFrame | pl.LazyFrame) -> pl.DataFrame:
+    """Per-superpopulation curves by X coding, and by sex where sex changes the score.
+
+    Reads the per-sample ``score_copies`` / ``score_dosage_compensation`` and ``sex``
+    columns of a reference score frame. Every score gets an ``all`` curve per coding.
+    A ``male`` and a ``female`` curve are added only when the score matched non-PAR X
+    or Y rows (``variants_matched_sex_linked > 0``): elsewhere the sexes score alike,
+    and a curve of half the samples (224 to 459 per sex and superpopulation in 1000G)
+    would only add sampling noise. A coding that is null for every sample (a
+    per-dosage-weight score with one-copy rows) yields no rows for that coding.
+    Samples of unknown sex count toward ``all`` only.
+    """
+    lf = scores.lazy()
+    sex_linked = lf.select(pl.col("variants_matched_sex_linked").max()).collect().item() or 0
+    lf = lf.unpivot(
+        index=["pgs_id", "superpop", "sex"],
+        on=list(SEX_AWARE_SCORE_COLUMNS),
+        variable_name="x_coding",
+        value_name="value",
+    ).with_columns(pl.col("x_coding").replace_strict(SEX_AWARE_SCORE_COLUMNS))
+    parts = [lf.with_columns(pl.lit("all").alias("sex"))]
+    if sex_linked > 0:
+        parts.append(lf.filter(pl.col("sex").is_in(["male", "female"])))
+    by_sex = pl.concat(parts)
+    return (
+        by_sex.filter(pl.col("value").is_not_null())
+        .group_by(["pgs_id", "superpop", "sex", "x_coding"])
+        .agg(
+            pl.col("value").mean().alias("mean"),
+            pl.col("value").std().alias("std"),
+            pl.len().cast(pl.UInt32).alias("n"),
+            pl.col("value").median().alias("median"),
+            pl.col("value").quantile(0.05).alias("p5"),
+            pl.col("value").quantile(0.25).alias("p25"),
+            pl.col("value").quantile(0.75).alias("p75"),
+            pl.col("value").quantile(0.95).alias("p95"),
+        )
+        .rename({"superpop": "superpopulation"})
+        .sort(["pgs_id", "superpopulation", "sex", "x_coding"])
+        .collect()
+        .cast(DISTRIBUTIONS_BY_SEX_SCHEMA)
+    )
+
+
+# Version of a per-PGS ``scores.parquet``. A cached file with an older version is
+# stale, not corrupt. 1: sex-aware columns and PAR matching (0.10.4). 2: genotype
+# chunks summed in float64, so a score no longer depends on where the chunks end.
+REFERENCE_SCORES_VERSION = 2
+
+
+def _cached_scores_current(parquet_path: Path) -> bool:
+    """Whether a cached per-PGS score parquet was written by the current scoring code.
+
+    A file without ``scores_version`` predates version 2; one without the sex-aware
+    columns predates version 1. An unreadable file answers True here so the
+    aggregator's corrupt-file path handles it.
+    """
+    try:
+        if "scores_version" not in pl.read_parquet_schema(parquet_path):
+            return False
+        version = pl.read_parquet(parquet_path, columns=["scores_version"], n_rows=1)["scores_version"]
+    except Exception:
+        return True
+    return version.len() > 0 and version[0] >= REFERENCE_SCORES_VERSION
 
 
 class _CorruptParquet(Exception):
@@ -1893,6 +2082,11 @@ def _aggregate_single_pgs(parquet_path: Path, pgs_id: str) -> _SinglePgsAgg | No
             ])
         stats_lf = lf.select(stat_exprs)
         dist, stats = pl.collect_all([agg_lf, stats_lf])
+        by_sex = (
+            aggregate_sex_aware_distributions(lf)
+            if {"sex", "variants_matched_sex_linked", *SEX_AWARE_SCORE_COLUMNS}.issubset(schema.names())
+            else pl.DataFrame(schema=DISTRIBUTIONS_BY_SEX_SCHEMA)
+        )
     except _CorruptParquet:
         raise
     except Exception as exc:
@@ -1903,6 +2097,7 @@ def _aggregate_single_pgs(parquet_path: Path, pgs_id: str) -> _SinglePgsAgg | No
     status = "zero_variance" if score_std is not None and score_std < 1e-10 else "ok"
     return _SinglePgsAgg(
         df=dist,
+        by_sex=by_sex,
         outcome=ScoringOutcome(
             pgs_id=pgs_id,
             status=status,
@@ -2485,6 +2680,7 @@ def compute_reference_prs_batch(
 
     outcomes: list[ScoringOutcome] = []
     dist_parts: list[pl.DataFrame] = []
+    by_sex_parts: list[pl.DataFrame] = []
     _DIST_FLUSH_EVERY = 200  # compact dist_parts every N IDs to release small frames
     total = len(pgs_ids)
     started_at = time.monotonic()
@@ -2558,6 +2754,14 @@ def compute_reference_prs_batch(
                         output_mtime=result_parquet.stat().st_mtime,
                     )
 
+                if not stale and not _cached_scores_current(result_parquet):
+                    stale = True
+                    log_message(
+                        message_type="reference:batch_cache_stale",
+                        pgs_id=pgs_id,
+                        reason=f"cached score predates scores_version {REFERENCE_SCORES_VERSION}",
+                    )
+
                 if not stale:
                     try:
                         dist = _aggregate_single_pgs(result_parquet, pgs_id)
@@ -2572,6 +2776,7 @@ def compute_reference_prs_batch(
                         dist = None
                     if dist is not None:
                         dist_parts.append(dist.df)
+                        by_sex_parts.append(dist.by_sex)
                         outcomes.append(dist.outcome)
                         n_processed += 1
                         n_ok += 1
@@ -2585,6 +2790,7 @@ def compute_reference_prs_batch(
                         _emit_progress(last_pgs_id=pgs_id, last_status="cached")
                         if len(dist_parts) >= _DIST_FLUSH_EVERY:
                             dist_parts = [pl.concat(dist_parts, how="diagonal_relaxed")]
+                            by_sex_parts = [pl.concat(by_sex_parts, how="vertical")]
                             gc.collect()
                         continue
 
@@ -2644,6 +2850,7 @@ def compute_reference_prs_batch(
 
             per_pgs_dist = aggregate_distributions(df)
             dist_parts.append(per_pgs_dist)
+            by_sex_parts.append(aggregate_sex_aware_distributions(df))
             del df
 
             # Reclaim eagerly after a large score instead of waiting for the
@@ -2692,6 +2899,7 @@ def compute_reference_prs_batch(
             # and RSS grows monotonically until OOM.
             if len(dist_parts) >= _DIST_FLUSH_EVERY:
                 dist_parts = [pl.concat(dist_parts, how="diagonal_relaxed")]
+                by_sex_parts = [pl.concat(by_sex_parts, how="vertical")]
                 gc.collect()
 
         quality_rows = [o.model_dump() for o in outcomes]
@@ -2712,6 +2920,11 @@ def compute_reference_prs_batch(
                 "p75": pl.Float64, "p95": pl.Float64,
             })
 
+        distributions_by_sex_df = (
+            pl.concat(by_sex_parts, how="vertical") if by_sex_parts
+            else pl.DataFrame(schema=DISTRIBUTIONS_BY_SEX_SCHEMA)
+        )
+
         distribution_issues_df = reference_distribution_audit_issues(
             distributions_df,
             quality_df,
@@ -2727,6 +2940,7 @@ def compute_reference_prs_batch(
             percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
         )
         distributions_df.write_parquet(percentiles_dir / f"{panel}_distributions.parquet")
+        distributions_by_sex_df.write_parquet(percentiles_dir / f"{panel}_distributions_by_sex.parquet")
 
         n_ok = sum(1 for o in outcomes if o.status == "ok")
         n_failed = sum(1 for o in outcomes if o.status == "failed")
@@ -2754,6 +2968,7 @@ def compute_reference_prs_batch(
             outcomes=outcomes,
             quality_df=quality_df,
             distribution_issues_df=distribution_issues_df,
+            distributions_by_sex_df=distributions_by_sex_df,
         )
 
 

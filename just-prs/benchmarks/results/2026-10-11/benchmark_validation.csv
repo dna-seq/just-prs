@@ -1,0 +1,4 @@
+engine_a,engine_b,n_pgs,pearson_r,max_abs_diff
+duckdb,plink2,100,0.99999996,0.04929999976629773
+duckdb,polars,100,1.0,5.684341886080802e-14
+plink2,polars,100,0.99999996,0.04929999976629773

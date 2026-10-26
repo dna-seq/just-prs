@@ -36,7 +36,8 @@ from just_prs.models import (
     ReferenceDistribution,
     classify_coverage_tier,
 )
-from just_prs.normalize import VcfFilterConfig, normalize_vcf
+from just_prs.karyotype import Karyotype, KaryotypeCall, XChromosomeCoding, infer_karyotype, infer_karyotype_from_file
+from just_prs.normalize import VcfFilterConfig, normalize_vcf, read_genotype_provenance
 from just_prs.prs import (
     GenotypeInputMode,
     PRSEngine,
@@ -68,6 +69,7 @@ from just_prs.reference import (
     ReferencePanelError,
     ScoringOutcome,
     aggregate_distributions,
+    aggregate_sex_aware_distributions,
     ancestry_percentile,
     compute_reference_prs_batch,
     compute_reference_prs_polars,

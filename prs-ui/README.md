@@ -58,7 +58,8 @@ def prs_page() -> rx.Component:
 | `prs_scores_selector(state)` | MUI DataGrid for score selection. Selection (checkboxes + Select/Clear) is **read-only and dimmed until genotypes are loaded**, with an "upload a VCF" callout |
 | `prs_compute_button(state)` | Compute button with disclaimer callout |
 | `prs_progress_section(state)` | Progress bar and status text during computation |
-| `prs_results_table(state)` | Results table with quality badges, interpretation cards, and CSV download |
+| `prs_results_table(state)` | Results table with quality badges, interpretation cards, and CSV download. Curated scores show "Higher score means …", a Direction badge, and valence colours (green favourable, red only alarming) |
+| `trait_selector(state, show_search=True)` | By Trait grid grouped by curated concept (default; ontology or reported trait selectable), with an "Also known as" column and a synonym-aware search bar (`trait_search_bar`) |
 
 The genotype source is **loosely coupled** to the PRS logic: a source pushes a normalized
 genotypes parquet into each consumer via the additive `load_genotypes(path)` hook, or
@@ -77,6 +78,15 @@ result/trait — no row click needed. Sources may also pass optional per-sample
 parquet) without touching `PRSComputeStateMixin`. VCF **normalization** (not upload) is the
 slow step; it is content-aware cached (a fresh normalized parquet is reused) and shown via an
 indeterminate progress bar.
+
+## Curated score directions
+
+Both consumers read the published direction curation through `PRSCatalog` (pulled from
+`just-dna-seq/pgs-catalog`, refreshed after `PRS_CURATION_MAX_AGE_HOURS`): every result row
+carries `higher_percentile_means`, `curation_status`, concept, axis, valence and polarity;
+trait summaries put opposite-direction scores on one concept axis and list scores still in
+curation review without counting them. The Curated tab shows the published tables when the
+app is not running inside a `curation/` checkout.
 
 ## State Mixin
 

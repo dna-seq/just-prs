@@ -72,6 +72,14 @@ Never used this repo? Start with the
   cohort; that call drives which reference curve the percentile sits on.
 - **Trait-first analysis** — pick a trait such as type 2 diabetes; compute all
   associated models and summarize agreement, outliers, and quality.
+- **Curated score direction** — for each curated score, what a higher score
+  means, which concept it belongs to, and whether that end is favourable. Results
+  say "higher score = more LDL cholesterol" and are coloured by that (green
+  favourable, red only alarming); trait summaries put mortality and longevity
+  scores on one lifespan axis instead of letting them cancel, and keep scores
+  still in curation review visible but uncounted. Curators work in
+  [`curation/`](curation/); the published tables come from Hugging Face
+  ([rules](docs/curation-rules.md)).
 - **PGS Catalog metadata** — search cleaned score, trait, performance,
   publication, prevalence, heritability, and scoring-file sheets.
 - **Fast data engine** — Polars and DuckDB scoring, zstd Parquet caches,
@@ -95,7 +103,10 @@ uv run ui    # http://localhost:3000
 Upload a VCF once (or drop several for a family comparison). The app detects
 build, normalizes to Parquet, and feeds both **Select by PRS** and **Select by
 Trait**. Ancestry is inferred after upload and used as the default reference
-population.
+population. Every result row says what a higher score means when its direction
+is curated; By Trait groups scores by curated concept and its search knows
+synonyms ("night owl" finds chronotype). The **Curated** tab browses the
+curation itself: resolved scores, the review queue, and concepts.
 
 <details>
 <summary>Workbench tabs and compute flow</summary>

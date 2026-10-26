@@ -1,0 +1,40 @@
+slug: cervical-carcinoma
+query: cervical cancer
+match:
+  terms:
+  - cancer of the cervix
+  - cervical cancer
+  - cervical carcinoma
+  - cervical squamous
+  efo_ids:
+  - MONDO_0005131
+  exclude: []
+anchor: PGS000073
+status: resolved
+concepts:
+- cancer.cervical_cancer
+scores:
+  PGS000073:
+    decision: in_scope
+    note: null
+  PGS000784:
+    decision: in_scope
+    note: null
+  PGS001299:
+    decision: in_scope
+    note: null
+  PGS003389:
+    decision: in_scope
+    note: null
+  PGS003428:
+    decision: in_scope
+    note: null
+  PGS005165:
+    decision: in_scope
+    note: null
+summary: 'Six cervical cancer scores, one concept (cancer.cervical_cancer), all trained on case-vs-control cervical
+  cancer. Five are annotated as higher = more risk (catalog-only or the PGP000244 template), backed by OR/HR above 1 and
+  positive 1000G correlations with PGS000073. PGS003428 (Koel 2023, LDpred) is the odd one out: the paper says
+  higher = more risk (HR 1.33 per SD), but the deposited file weights the protective allele at all 4 lead loci (PAX8,
+  CLPTM1L, HLA-DQA1, ORMDL3) and correlates -0.59 with PGS000073. It is recorded as distributed (higher = lower risk)
+  with deposit_inverted and discount_metrics corrections, and sits in review.'

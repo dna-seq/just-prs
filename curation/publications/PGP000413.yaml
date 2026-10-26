@@ -143,6 +143,30 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; score best_LUAD, no directional metric; corroborated at concept level by 1000G EUR r=+0.6 with PGS000740
       (lung cancer OR 1.26 [1.20, 1.32]); r~0 with the East Asian adenocarcinoma score PGS005169.
+  PGS003389:
+    cluster: cancer.cervical_cancer
+    phenotype: cervical_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cervical cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cervical cancer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; score best_CESC, no directional metric (AUROC 0.563 only); corroborated by 1000G EUR r=+0.34 with PGS000073
+      (OR 1.22 [1.19, 1.25]).
 paper:
   pmid: '36286845'
   doi: 10.1158/0008-5472.can-22-1492

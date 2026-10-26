@@ -1602,6 +1602,22 @@ domains:
           multiple_myeloma:
             label: Multiple myeloma (plasma cell myeloma)
             sign: 1
+      cervical_cancer:
+        label: Cervical cancer
+        axis: higher risk of cervical cancer
+        valence: undesirable
+        valence_basis: Cervical cancer is a malignancy; higher risk is not wanted.
+        status: agent_proposed
+        aliases:
+        - cervix cancer
+        - cancer of the cervix
+        - HPV-related cancer
+        - uterine cervix cancer
+        phenotypes:
+          cervical_cancer:
+            label: Cervical cancer (invasive cancer of the cervix uteri, ICD-10 C53, sometimes with in-situ
+              D06; prevalent or incident)
+            sign: 1
   neurology:
     label: Brain and nervous system
     concepts:

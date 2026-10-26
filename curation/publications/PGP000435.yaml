@@ -1,0 +1,77 @@
+pgp_id: PGP000435
+scores:
+  PGS003428:
+    cluster: cancer.cervical_cancer
+    phenotype: cervical_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: risk of cervical cancer (as the deposited weights are oriented)
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      phenotype: cervical_cancer
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > GRS validation (EstBB incident cases)
+      quote: In the validation set, the risk increased 1.33-fold per 1 standard deviation (SD) increase of risk
+        score
+      confidence: high
+    - source: full_text
+      locator: Results > GRS (top vs lowest 15%)
+      quote: For women in the top 15% risk group, the CC rate was 3.1 times (95% CI 1.7–5.6) as great as that for
+        the individuals in the lowest 15%.
+      confidence: high
+    - source: full_text
+      locator: Methods > GRS construction
+      quote: We constructed a GRS for CC based on the summary statistics of the meta-analysis including the data
+        from Rashkin et al. and FinnGen, with 7876 cases and 318 704 controls of EUR, leaving out EstBB 200 K dataset
+        as an independent target dataset (1094 CC cases and 131 314 female controls)
+      confidence: high
+    lead_variant_check:
+      status: disagree
+      note: 4/4 paper lead loci (PAX8, CLPTM1L, HLA-DQA1, ORMDL3) weighted toward the protective allele in the deposited
+        file
+    review_reason: 'Suspected inverted deposit: paper says higher GRS = higher risk, but the file''s lead loci are
+      all opposite and it anti-correlates (r=-0.59) with the other cervical cancer scores; recorded as distributed.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (decreases risk of cervical cancer as the deposited
+        weights are oriented); the paper says higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: '4 of 4 Table 2 lead loci (Koel 2023, EUR ORs) carry positive file weight on the protective allele:
+        rs4849177 C (PAX8, OR 0.87; chr2:113225007 GRCh38) +0.00113; rs27069 T (CLPTM1L, OR 0.88; chr5:1347013)
+        +0.00066; rs35508382 G (HLA-DQA1, OR 0.67; chr6:32625367) +0.00145; rs12603332 C (ORMDL3, OR 0.90; chr17:39926554,
+        file T -0.00039) . The file also opposes PGS000073/PGS000784 at rs3132954 (chr6:32343682) and correlates
+        r=-0.59 with PGS000073 in 1000G EUR (negative with all 5 other cervical cancer scores). The paper states
+        a higher GRS = higher risk (HR 1.33 per SD; top vs bottom 15% HR 3.1).'
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (HR 1.33 per SD, C-index 0.613) describe the authors' own score, not
+        this inverted file, so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics were reported in the paper for the non-inverted score; the deposited file behaves as its
+        negation.
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Koel et al. 2023 LDpred GRS (Ldpred_CC_170223). The paper intends higher GRS = higher cervical cancer
+      risk, but the deposited weights point the other way at every Table 2 lead locus (positions matched exactly
+      after GRCh37->GRCh38 liftover) and the file correlates negatively with all other cervical cancer PGS. As scored
+      from the PGS Catalog file, a higher value means LOWER genetic risk. The positive catalog HR (1.33) reflects
+      the authors' computation; the metric_sign WARN is expected. Candidate for a PGS Catalog erratum.
+paper:
+  pmid: '36929174'
+  doi: 10.1093/hmg/ddad043
+  title: GWAS meta-analyses clarify genetics of cervical phenotypes and inform risk stratification for cervical
+    cancer.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

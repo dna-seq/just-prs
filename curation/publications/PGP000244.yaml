@@ -13755,3 +13755,28 @@ scores:
     notes: 'Gaussian snpnet model on age at diagnosis: higher score = later diagnosis. Negative 1000G correlations
       with the risk scores (r=-0.30 vs PGS000810, -0.38 vs PGS001286) are expected for onset age vs risk, not a
       sign flip. r=+0.43 with PGS001283 (same onset-age concept).'
+  PGS001299:
+    cluster: cancer.cervical_cancer
+    phenotype: cervical_cancer
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of cervical cancer
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+        For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Template annotation (PGP000244 snpnet binomial model on case status: higher score = more likely case).
+      Consistent with 1000G EUR r=+0.37 with PGS000073 (OR 1.22 [1.19, 1.25]). Metrics are AUROC only.'

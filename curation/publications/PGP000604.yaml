@@ -1952,6 +1952,53 @@ scores:
     notes: 'PRSmix+: elastic-net mix of high-power PGSs across many traits (incl. walking pace, arthropathies, Lp(a))
       trained on the stroke outcome in All of Us (EUR). Weak 1000G EUR correlations (max r=+0.20 with PGS004942,
       +0.18 with PGS004154).'
+  PGS004759:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Depression
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; PRSmix (EUR) for depression; 1000G EUR r=+0.65 with PGS002759 (OR 1.26), r=+0.23 with anchor PGS004885.
+  PGS004760:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Depression
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; PRSmixPlus (EUR) for depression; 1000G EUR r=+0.83 with PGS004759, r=+0.50 with PGS002759 (OR 1.26),
+      r=+0.19 with anchor PGS004885.
 paper:
   pmid: '38508198'
   doi: 10.1016/j.xgen.2024.100523

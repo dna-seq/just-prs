@@ -1,0 +1,26 @@
+pgp_id: PGP000080
+scores:
+  PGS000193:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major depression
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Coleman 2020 UK Biobank clumped MDD score (p<0.001); catalog OR 1.179 for MDD (no CI deposited). 1000G
+      EUR r=+0.33 with PGS002759 (OR 1.26), r=+0.46 with PGS003333.

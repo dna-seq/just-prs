@@ -1,0 +1,262 @@
+pgp_id: PGP000461
+scores:
+  PGS003576:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major Depressive Disorder (Lifetime)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Dahl 2023 AutoImpAll score: PRS for lifetime MDD (UKB CIDI LifetimeMDD) from phenotype imputation or
+      MTAG with auxiliary depression-related phenotypes; target remains lifetime MDD. Evaluated on MDD in several
+      cohorts (no OR/HR deposited). 1000G EUR r=+0.94 with PGS003584; the Dahl block correlates +0.4 to +0.6 with
+      annotated PGS003333/PGS004759.'
+  PGS003577:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major Depressive Disorder (Lifetime)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Dahl 2023 AutoImpOnly score: PRS for lifetime MDD (UKB CIDI LifetimeMDD) from phenotype imputation
+      or MTAG with auxiliary depression-related phenotypes; target remains lifetime MDD. Evaluated on MDD in several
+      cohorts (no OR/HR deposited). 1000G EUR r=+0.87 with PGS003584; the Dahl block correlates +0.4 to +0.6 with
+      annotated PGS003333/PGS004759.'
+  PGS003578:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major Depressive Disorder (Lifetime)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Dahl 2023 MTAG.All score: PRS for lifetime MDD (UKB CIDI LifetimeMDD) from phenotype imputation or
+      MTAG with auxiliary depression-related phenotypes; target remains lifetime MDD. Evaluated on MDD in several
+      cohorts (no OR/HR deposited). 1000G EUR r=+0.92 with PGS003584; the Dahl block correlates +0.4 to +0.6 with
+      annotated PGS003333/PGS004759.'
+  PGS003579:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major Depressive Disorder (Lifetime)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Dahl 2023 MTAG.AllDep score: PRS for lifetime MDD (UKB CIDI LifetimeMDD) from phenotype imputation
+      or MTAG with auxiliary depression-related phenotypes; target remains lifetime MDD. Evaluated on MDD in several
+      cohorts (no OR/HR deposited). 1000G EUR r=+0.60 with PGS003333; the Dahl block correlates +0.4 to +0.6 with
+      annotated PGS003333/PGS004759.'
+  PGS003580:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major Depressive Disorder (Lifetime)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Dahl 2023 MTAG.AllDepEnvs score: PRS for lifetime MDD (UKB CIDI LifetimeMDD) from phenotype imputation
+      or MTAG with auxiliary depression-related phenotypes; target remains lifetime MDD. Evaluated on MDD in several
+      cohorts (no OR/HR deposited). 1000G EUR r=+0.91 with PGS003584; the Dahl block correlates +0.4 to +0.6 with
+      annotated PGS003333/PGS004759.'
+  PGS003581:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major Depressive Disorder (Lifetime)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Dahl 2023 MTAG.Envs score: PRS for lifetime MDD (UKB CIDI LifetimeMDD) from phenotype imputation or
+      MTAG with auxiliary depression-related phenotypes; target remains lifetime MDD. Evaluated on MDD in several
+      cohorts (no OR/HR deposited). 1000G EUR r=+0.83 with PGS003584; the Dahl block correlates +0.4 to +0.6 with
+      annotated PGS003333/PGS004759.'
+  PGS003582:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major Depressive Disorder (Lifetime)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Dahl 2023 MTAG.FamHist score: PRS for lifetime MDD (UKB CIDI LifetimeMDD) from phenotype imputation
+      or MTAG with auxiliary depression-related phenotypes; target remains lifetime MDD. Evaluated on MDD in several
+      cohorts (no OR/HR deposited). 1000G EUR r=+0.42 with PGS004759; the Dahl block correlates +0.4 to +0.6 with
+      annotated PGS003333/PGS004759.'
+  PGS003583:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major Depressive Disorder (Lifetime)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Dahl 2023 MTAG.GPpsy score: PRS for lifetime MDD (UKB CIDI LifetimeMDD) from phenotype imputation or
+      MTAG with auxiliary depression-related phenotypes; target remains lifetime MDD. Evaluated on MDD in several
+      cohorts (no OR/HR deposited). 1000G EUR r=+0.60 with PGS003333 and PGS004759; the Dahl block correlates +0.4
+      to +0.6 with annotated PGS003333/PGS004759.'
+  PGS003584:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major Depressive Disorder (Lifetime)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Dahl 2023 SoftImpAll score: PRS for lifetime MDD (UKB CIDI LifetimeMDD) from phenotype imputation or
+      MTAG with auxiliary depression-related phenotypes; target remains lifetime MDD. Evaluated on MDD in several
+      cohorts (no OR/HR deposited). 1000G EUR r=+0.51 with PGS004759; the Dahl block correlates +0.4 to +0.6 with
+      annotated PGS003333/PGS004759.'
+  PGS003585:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major Depressive Disorder (Lifetime)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Dahl 2023 SoftImpOnly score: PRS for lifetime MDD (UKB CIDI LifetimeMDD) from phenotype imputation
+      or MTAG with auxiliary depression-related phenotypes; target remains lifetime MDD. Evaluated on MDD in several
+      cohorts (no OR/HR deposited). 1000G EUR r=+0.49 with PGS004759; the Dahl block correlates +0.4 to +0.6 with
+      annotated PGS003333/PGS004759.'

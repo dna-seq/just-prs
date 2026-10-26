@@ -1,0 +1,125 @@
+slug: major-depressive-disorder
+query: major depression
+match:
+  terms:
+  - depression
+  - depressive disorder
+  - major depression
+  - major depressive disorder
+  efo_ids:
+  - MONDO_0002009
+  exclude: []
+anchor: PGS004885
+status: resolved
+concepts:
+- psychiatric.depression
+scores:
+  PGS000138:
+    decision: in_scope
+    note: null
+  PGS000139:
+    decision: out_of_scope
+    note: Cai 2020 recurrent MDD; belongs to ontology group "recurrent | major depressive disorder" (EFO_0010246|MONDO_0002009)
+  PGS000140:
+    decision: out_of_scope
+    note: Cai 2020 minimal-phenotyping help-seeking (GP) depression; group EFO_0009820|MONDO_0002050 (depressive disorder
+      / help-seeking)
+  PGS000141:
+    decision: out_of_scope
+    note: Cai 2020 minimal-phenotyping (seen psychiatrist); group EFO_0009821|MONDO_0002050
+  PGS000142:
+    decision: out_of_scope
+    note: Cai 2020 probable depression (minimal phenotyping); group EFO_0009820|EFO_0009821|MONDO_0002050
+  PGS000143:
+    decision: out_of_scope
+    note: Cai 2020 GP help-seeking without low mood; group EFO_0009820 (not MDD)
+  PGS000144:
+    decision: out_of_scope
+    note: Cai 2020 self-reported depression symptoms; group "depressive symptom measurement | self-reported trait"
+  PGS000145:
+    decision: in_scope
+    note: null
+  PGS000193:
+    decision: in_scope
+    note: null
+  PGS000767:
+    decision: out_of_scope
+    note: depression score evaluated on nucleus accumbens volume; group "depressive symptom measurement | major depressive
+      disorder" (EFO_0007006|MONDO_0002009)
+  PGS000907:
+    decision: in_scope
+    note: null
+  PGS001829:
+    decision: out_of_scope
+    note: Privé 2022 UKB depression; group "depressive disorder" (MONDO_0002050)
+  PGS001899:
+    decision: out_of_scope
+    note: recent feelings of depression (symptom measure); group "depressive symptom measurement" (EFO_0007006)
+  PGS002036:
+    decision: out_of_scope
+    note: Privé 2022 UKB depression; group "depressive disorder" (MONDO_0002050)
+  PGS002112:
+    decision: out_of_scope
+    note: recent feelings of depression (symptom measure); group "depressive symptom measurement" (EFO_0007006)
+  PGS002113:
+    decision: out_of_scope
+    note: depression related to stressful event; group "depressive episode measurement | trauma exposure measurement"
+  PGS002759:
+    decision: in_scope
+    note: null
+  PGS002789:
+    decision: in_scope
+    note: null
+  PGS003333:
+    decision: in_scope
+    note: null
+  PGS003442:
+    decision: in_scope
+    note: null
+  PGS003576:
+    decision: in_scope
+    note: null
+  PGS003577:
+    decision: in_scope
+    note: null
+  PGS003578:
+    decision: in_scope
+    note: null
+  PGS003579:
+    decision: in_scope
+    note: null
+  PGS003580:
+    decision: in_scope
+    note: null
+  PGS003581:
+    decision: in_scope
+    note: null
+  PGS003582:
+    decision: in_scope
+    note: null
+  PGS003583:
+    decision: in_scope
+    note: null
+  PGS003584:
+    decision: in_scope
+    note: null
+  PGS003585:
+    decision: in_scope
+    note: null
+  PGS004591:
+    decision: in_scope
+    note: null
+  PGS004759:
+    decision: in_scope
+    note: null
+  PGS004760:
+    decision: in_scope
+    note: null
+  PGS004885:
+    decision: in_scope
+    note: null
+summary: 'All 22 MONDO_0002009 scores are case/control major depressive disorder (lifetime CIDI, ICD-10, incident or GWAS-based)
+  and sit in one phenotype, psychiatric.depression / major_depressive_disorder: higher score = higher MDD risk. 20 are catalog-only,
+  corroborated by HR 1.24 (PGS004885), OR 1.26 (PGS002759) and a positively correlated 1000G block (no negative pairs). Two
+  few-SNP scores (PGS003442, 8 SNPs; PGS004591, 17 SNPs) were read and lead variants agree. Minimal-phenotyping, symptom,
+  recurrent and Privé depressive-disorder scores belong to other ontology groups and are out of scope here.'

@@ -1,0 +1,52 @@
+pgp_id: PGP000068
+scores:
+  PGS000138:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lifetime Major Depressive Disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Cai 2020 strictly defined lifetime MDD (UKB CIDI-based LifetimeMDD), not one of the minimal-phenotyping
+      (help-seeking) definitions. Evaluated on MDD status (AUROC 0.56). 1000G EUR r=+0.41 with PGS003584 and r=+0.40
+      with PGS003582 (Dahl lifetime-MDD scores, annotated here).
+  PGS000145:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Depression (ICD-10 defined)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Cai 2020 ICD-10 (hospital-record) depression definition, an EHR-based clinical MDD phenotype rather
+      than a minimal-phenotyping one. Evaluated on MDD status (AUROC 0.53). 1000G EUR r=+0.21 with PGS004759/PGS004760
+      and PGS003579; correlation support is weak, sparse score (21,510 variants).

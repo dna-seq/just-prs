@@ -58,6 +58,34 @@ scores:
     notes: Insomnia GWAS of Jansen et al. 2019 (ref 32, GCST007988), SBayesR. Evaluated against self-reported "trouble
       sleeping" as an antidepressant side effect (sertraline OR 1.06, CI includes 1). 1000G EUR r=+0.55/+0.69 with
       the Prive UKB-1200 scores.
+  PGS000907:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog evaluations are antidepressant side effects (e.g. headache in sertraline takers), not MDD;
+        a higher MDD PRS is expected to associate with more reported side effects, but most CIs include 1.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major depressive disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; MDD PRS used to predict antidepressant side effects; catalog ORs are for side effects (headache, dizziness,
+      ...) in antidepressant takers, mostly with CI including 1, so they do not inform direction. 1000G EUR r=+0.89
+      with PGS004759, r=+0.76 with PGS003333, r=+0.21 with anchor PGS004885.
 paper:
   pmid: '35602235'
   doi: 10.1038/s43856-021-00046-8

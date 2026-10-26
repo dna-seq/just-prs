@@ -1,0 +1,37 @@
+pgp_id: PGP000570
+scores:
+  PGS004591:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of incident major depressive disorder (17 Hyde 2016 loci)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: major_depressive_disorder
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS
+      quote: We calculated PRS by summing the product of the weighted risk estimate (the SNP's β coefficient from
+        reported MDD GWAS) and the number of risk alleles
+      confidence: high
+    - source: full_text
+      locator: Results
+      quote: 'We found a significant association of PRS with MDD in the multivariable-adjusted model (HR: 1.10,
+        95% CI: 1.07–1.12)'
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs10514299-T, rs12552-G (negative), rs11209948-T match Hyde 2016 (PMID 27479909) GWAS Catalog betas
+        in sign.
+    review_reason: null
+    status: agent_proposed
+    notes: 17-SNP Hyde 2016 score; ICD-10 incident MDD in UK Biobank. Low 1000G correlation with genome-wide scores
+      is expected for a 17-SNP score.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement: []

@@ -4580,3 +4580,26 @@ domains:
           gallstones:
             label: Gallstones / cholelithiasis (ICD-10 K80, diagnosis or treatment)
             sign: 1
+  psychiatric:
+    label: Psychiatric and mental health
+    concepts:
+      depression:
+        label: Depression (major depressive disorder)
+        axis: higher risk of major depression
+        valence: undesirable
+        valence_basis: Major depression is a disabling mood disorder; lower risk is the outcome people
+          want.
+        status: agent_proposed
+        aliases:
+        - depression
+        - clinical depression
+        - MDD
+        - low mood
+        - depressive disorder
+        phenotypes:
+          major_depressive_disorder:
+            label: Major depressive disorder (case/control; lifetime, diagnosed or incident)
+            sign: 1
+            aliases:
+            - major depression
+            - unipolar depression

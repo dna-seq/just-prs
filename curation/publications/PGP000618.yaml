@@ -269,6 +269,30 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; INTERVENE MegaPRS; corroborated by HR 1.24 [1.20, 1.28] on incident lung cancer; 1000G EUR r=+0.2 with
       PGS000740.
+  PGS004885:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Major depressive disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by HR 1.24 (CI 1.23-1.25) for incident MDD (UKB, n=412,090) and HR>1 with CI excluding
+      1 in six other biobanks; trait-scan anchor.
 paper:
   pmid: '38866767'
   doi: 10.1038/s41467-024-48938-2

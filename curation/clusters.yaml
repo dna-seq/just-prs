@@ -2021,6 +2021,7 @@ domains:
             sign: 1
             aliases:
             - heel ultrasound SOS
+            - heel SOS
           heel_broadband_ultrasound_attenuation:
             label: Heel broadband ultrasound attenuation (quantitative ultrasound)
             sign: 1
@@ -2038,6 +2039,14 @@ domains:
             aliases:
             - broken bones
             - hip fracture
+          heel_quantitative_ultrasound_index:
+            label: Heel quantitative ultrasound index (QUI, stiffness index combining speed of sound and
+              broadband ultrasound attenuation)
+            sign: 1
+            aliases:
+            - heel QUI
+            - stiffness index
+            - heel ultrasound bone score
   circulating_proteins:
     label: Circulating proteins
     concepts:

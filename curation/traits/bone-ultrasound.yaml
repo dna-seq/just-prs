@@ -1,0 +1,136 @@
+slug: bone-ultrasound
+query: heel bone ultrasound measurements
+match:
+  terms:
+  - broadband ultrasound attenuation
+  - heel bone
+  - quantitative ultrasound index
+  - speed of sound
+  efo_ids:
+  - EFO_0004514
+  exclude: []
+anchor: PGS000657
+status: resolved
+concepts:
+- musculoskeletal.bone_density
+scores:
+  PGS000657:
+    decision: in_scope
+    note: null
+  PGS000951:
+    decision: in_scope
+    note: null
+  PGS000952:
+    decision: in_scope
+    note: null
+  PGS000953:
+    decision: in_scope
+    note: null
+  PGS000954:
+    decision: in_scope
+    note: null
+  PGS000955:
+    decision: in_scope
+    note: null
+  PGS000956:
+    decision: in_scope
+    note: null
+  PGS001037:
+    decision: in_scope
+    note: null
+  PGS001038:
+    decision: in_scope
+    note: null
+  PGS001039:
+    decision: in_scope
+    note: null
+  PGS001402:
+    decision: in_scope
+    note: null
+  PGS001403:
+    decision: in_scope
+    note: null
+  PGS001404:
+    decision: in_scope
+    note: null
+  PGS001529:
+    decision: in_scope
+    note: null
+  PGS001530:
+    decision: in_scope
+    note: null
+  PGS001531:
+    decision: in_scope
+    note: null
+  PGS001955:
+    decision: in_scope
+    note: null
+  PGS001956:
+    decision: in_scope
+    note: null
+  PGS001957:
+    decision: in_scope
+    note: null
+  PGS002173:
+    decision: in_scope
+    note: null
+  PGS002174:
+    decision: in_scope
+    note: null
+  PGS002175:
+    decision: in_scope
+    note: null
+  PGS002768:
+    decision: out_of_scope
+    note: osteoporosis diagnosis, its own ontology group (already annotated in musculoskeletal.bone_density, sign -1)
+  PGS003535:
+    decision: in_scope
+    note: null
+  PGS003536:
+    decision: in_scope
+    note: null
+  PGS003537:
+    decision: in_scope
+    note: null
+  PGS004411:
+    decision: in_scope
+    note: null
+  PGS004413:
+    decision: in_scope
+    note: null
+  PGS004414:
+    decision: in_scope
+    note: null
+  PGS004415:
+    decision: in_scope
+    note: null
+  PGS004417:
+    decision: in_scope
+    note: null
+  PGS004418:
+    decision: in_scope
+    note: null
+  PGS004419:
+    decision: in_scope
+    note: null
+  PGS004420:
+    decision: in_scope
+    note: null
+  PGS004422:
+    decision: in_scope
+    note: null
+  PGS004423:
+    decision: in_scope
+    note: null
+  PGS004424:
+    decision: in_scope
+    note: null
+  PGS004425:
+    decision: in_scope
+    note: null
+summary: |
+  Heel quantitative ultrasound scores (BUA, QUI, speed of sound, heel eBMD and T-score) from UK Biobank papers
+  all sit under musculoskeletal.bone_density at sign +1: a higher score means a higher heel measurement, i.e. denser bone.
+  The 16 new scores were annotated catalog-only from the paper templates and 1000G EUR correlations of +0.27 to +1.00
+  with annotated heel BMD/BUA/SOS scores; a new phenotype heel_quantitative_ultrasound_index was added.
+  No same-concept anti-correlations; osteoporosis (PGS002768) correlates negatively as expected and is out of scope here.

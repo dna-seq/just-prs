@@ -732,3 +732,51 @@ scores:
     status: agent_proposed
     notes: LDpred2-auto on the paper's own UK Biobank GWAS of the measurement, so the sign follows the measured
       value. 1000G EUR r = +1.00 with PGS003531 (fat-free mass, same paper, annotated).
+  PGS003536:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_broadband_ultrasound_attenuation
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel broadband ultrasound attenuation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel Broadband ultrasound attenuation, direct entry
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of the phenotype, so the sign follows the measurement. Catalog-only.
+      Higher heel broadband ultrasound attenuation means denser bone. 1000G EUR r=+0.91 with PGS001956 and +0.96
+      with PGS002174 (BUA), +0.95 with PGS003535 (heel BMD).
+  PGS003537:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_speed_of_sound
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: speed of sound through the heel
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Speed of sound through heel
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own GWAS of the phenotype, so the sign follows the measurement. Catalog-only.
+      Higher speed of sound through the heel means denser bone. 1000G EUR r=+0.82 with PGS001529 (heel SOS) and
+      +0.98 with PGS003535 (heel BMD).

@@ -13935,3 +13935,177 @@ scores:
     status: agent_proposed
     notes: snpnet Gaussian regression on the UK Biobank measurement (paper template), so higher score = more predicted
       arm mass. 1000G EUR r = +0.83 with PGS003901 (whole-body fat-free mass, annotated).
+  PGS000951:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_broadband_ultrasound_attenuation
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel broadband ultrasound attenuation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel Broadband ultrasound attenuation, direct entry
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model on the median measured value (Tanigawa paper template). Catalog-only. Higher heel
+      broadband ultrasound attenuation means denser bone. 1000G EUR r=+0.95 with PGS001402 (heel BMD) and +0.82
+      with PGS001956 (BUA).
+  PGS000952:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_quantitative_ultrasound_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel quantitative ultrasound index (QUI)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel quantitative ultrasound index (QUI), direct entry
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model on the median measured value (Tanigawa paper template). Catalog-only. Higher heel
+      quantitative ultrasound index (QUI) means denser bone. 1000G EUR r=+1.00 with PGS001402 (heel BMD) and +0.99
+      with PGS001529 (heel SOS).
+  PGS000953:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_broadband_ultrasound_attenuation
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel broadband ultrasound attenuation (left heel)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left heel broadband ultrasound attenuation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model on the median measured value (Tanigawa paper template). Catalog-only. Higher heel
+      broadband ultrasound attenuation means denser bone. 1000G EUR r=+0.72 with PGS001402 (heel BMD) and +0.67
+      with PGS001956 (BUA).
+  PGS000954:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_quantitative_ultrasound_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel quantitative ultrasound index (QUI) (left heel)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left heel quantitative ultrasound index (QUI), direct entry
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model on the median measured value (Tanigawa paper template). Catalog-only. Higher heel
+      quantitative ultrasound index (QUI) means denser bone. 1000G EUR r=+0.74 with PGS001402 (heel BMD) and +0.74
+      with PGS001529 (heel SOS).
+  PGS000955:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_broadband_ultrasound_attenuation
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel broadband ultrasound attenuation (right heel)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right heel broadband ultrasound attenuation
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model on the median measured value (Tanigawa paper template). Catalog-only. Higher heel
+      broadband ultrasound attenuation means denser bone. 1000G EUR r=+0.72 with PGS001402 (heel BMD) and +0.69
+      with PGS001956 (BUA).
+  PGS000956:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_quantitative_ultrasound_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel quantitative ultrasound index (QUI) (right heel)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right heel quantitative ultrasound index (QUI), direct entry
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian model on the median measured value (Tanigawa paper template). Catalog-only. Higher heel
+      quantitative ultrasound index (QUI) means denser bone. 1000G EUR r=+0.75 with PGS001402 (heel BMD) and +0.75
+      with PGS001529 (heel SOS).

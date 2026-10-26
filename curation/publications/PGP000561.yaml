@@ -2516,3 +2516,148 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
       r = +0.98 with PGS004376 (whole-body fat-free mass, annotated).
+  PGS004413:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_broadband_ultrasound_attenuation
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel broadband ultrasound attenuation
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel Broadband ultrasound attenuation, direct entry
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait; evaluated only against
+      diseases. Catalog-only. Higher heel broadband ultrasound attenuation means denser bone. 1000G EUR r=+0.58
+      with PGS001956 (BUA) and +0.95 with PGS004415 (heel BMD, same paper).
+  PGS004414:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_quantitative_ultrasound_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel quantitative ultrasound index (QUI)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel quantitative ultrasound index (QUI), direct entry
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait; evaluated only against
+      diseases. Catalog-only. Higher heel quantitative ultrasound index (QUI) means denser bone. 1000G EUR r=+0.53
+      with PGS001402 (heel BMD) and +1.00 with PGS004415 (heel BMD, same paper).
+  PGS004417:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_broadband_ultrasound_attenuation
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel broadband ultrasound attenuation (left heel)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel broadband ultrasound attenuation (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait; evaluated only against
+      diseases. Catalog-only. Higher heel broadband ultrasound attenuation means denser bone. 1000G EUR r=+0.36
+      with PGS001956 (BUA) and +0.31 with PGS001402 (heel BMD); -0.46 with PGS002768 (osteoporosis, sign -1).
+  PGS004418:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_quantitative_ultrasound_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel quantitative ultrasound index (QUI) (left heel)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel quantitative ultrasound index (QUI), direct entry (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait; evaluated only against
+      diseases. Catalog-only. Higher heel quantitative ultrasound index (QUI) means denser bone. 1000G EUR r=+0.36
+      with PGS001402 (heel BMD) and +0.39 with PGS004415 (heel BMD, same paper).
+  PGS004422:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_broadband_ultrasound_attenuation
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel broadband ultrasound attenuation (right heel)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel broadband ultrasound attenuation (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait; evaluated only against
+      diseases. Catalog-only. Higher heel broadband ultrasound attenuation means denser bone. 1000G EUR r=+0.36
+      with PGS001956 (BUA) and +0.39 with PGS004415 (heel BMD, same paper); -0.49 with PGS002768 (osteoporosis,
+      sign -1).
+  PGS004423:
+    cluster: musculoskeletal.bone_density
+    phenotype: heel_quantitative_ultrasound_index
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: heel quantitative ultrasound index (QUI) (right heel)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Heel quantitative ultrasound index (QUI), direct entry (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor PRS built with LDpred2 on GWAS effect sizes for the quantitative trait; evaluated only against
+      diseases. Catalog-only. Higher heel quantitative ultrasound index (QUI) means denser bone. 1000G EUR r=+0.34
+      with PGS001402 (heel BMD) and +0.41 with PGS001956 (BUA).

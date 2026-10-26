@@ -1,0 +1,1106 @@
+slug: neuroimaging-measurement-brain-volume
+query: 'neuroimaging measurements (UK Biobank brain MRI IDPs: DTI FA/MD/ICVF/OD on skeleton tracts, grey/white matter
+  and subcortical volumes, T2star, etc.)'
+match:
+  terms: []
+  efo_ids:
+  - EFO_0004346
+  - EFO_0004830
+  - EFO_0005035
+  - EFO_0005420
+  - EFO_0005665
+  - EFO_0006516
+  - EFO_0006935
+  - EFO_0008320
+  - OBA_2050009
+  - OBA_2050016
+  - OBA_2050020
+  - OBA_2050021
+  exclude: []
+anchor: PGS001642
+status: resolved
+concepts:
+- neuroimaging.white_matter_fa
+- neuroimaging.white_matter_diffusivity
+- neuroimaging.white_matter_anisotropy_mode
+- neuroimaging.neurite_density
+- neuroimaging.neurite_orientation_dispersion
+- neuroimaging.free_water
+- neuroimaging.regional_grey_matter_volume
+- neuroimaging.subcortical_volume
+- neuroimaging.global_brain_volume
+- neuroimaging.ventricular_volume
+- neuroimaging.white_matter_hyperintensities
+- neuroimaging.brain_iron_t2star
+scores:
+  PGS001142:
+    decision: in_scope
+    note: null
+  PGS001143:
+    decision: in_scope
+    note: null
+  PGS001415:
+    decision: in_scope
+    note: null
+  PGS001416:
+    decision: in_scope
+    note: null
+  PGS001417:
+    decision: in_scope
+    note: null
+  PGS001418:
+    decision: in_scope
+    note: null
+  PGS001419:
+    decision: in_scope
+    note: null
+  PGS001420:
+    decision: in_scope
+    note: null
+  PGS001421:
+    decision: in_scope
+    note: null
+  PGS001422:
+    decision: in_scope
+    note: null
+  PGS001423:
+    decision: in_scope
+    note: null
+  PGS001424:
+    decision: in_scope
+    note: null
+  PGS001425:
+    decision: in_scope
+    note: null
+  PGS001426:
+    decision: in_scope
+    note: null
+  PGS001427:
+    decision: in_scope
+    note: null
+  PGS001428:
+    decision: in_scope
+    note: null
+  PGS001429:
+    decision: in_scope
+    note: null
+  PGS001430:
+    decision: in_scope
+    note: null
+  PGS001431:
+    decision: in_scope
+    note: null
+  PGS001432:
+    decision: in_scope
+    note: null
+  PGS001433:
+    decision: in_scope
+    note: null
+  PGS001434:
+    decision: in_scope
+    note: null
+  PGS001435:
+    decision: in_scope
+    note: null
+  PGS001436:
+    decision: in_scope
+    note: null
+  PGS001437:
+    decision: in_scope
+    note: null
+  PGS001438:
+    decision: in_scope
+    note: null
+  PGS001439:
+    decision: in_scope
+    note: null
+  PGS001440:
+    decision: in_scope
+    note: null
+  PGS001441:
+    decision: in_scope
+    note: null
+  PGS001442:
+    decision: in_scope
+    note: null
+  PGS001443:
+    decision: in_scope
+    note: null
+  PGS001444:
+    decision: in_scope
+    note: null
+  PGS001445:
+    decision: in_scope
+    note: null
+  PGS001446:
+    decision: in_scope
+    note: null
+  PGS001447:
+    decision: in_scope
+    note: null
+  PGS001448:
+    decision: in_scope
+    note: null
+  PGS001449:
+    decision: in_scope
+    note: null
+  PGS001450:
+    decision: in_scope
+    note: null
+  PGS001451:
+    decision: in_scope
+    note: null
+  PGS001452:
+    decision: in_scope
+    note: null
+  PGS001453:
+    decision: in_scope
+    note: null
+  PGS001454:
+    decision: in_scope
+    note: null
+  PGS001455:
+    decision: in_scope
+    note: null
+  PGS001456:
+    decision: in_scope
+    note: null
+  PGS001457:
+    decision: in_scope
+    note: null
+  PGS001458:
+    decision: in_scope
+    note: null
+  PGS001459:
+    decision: in_scope
+    note: null
+  PGS001460:
+    decision: in_scope
+    note: null
+  PGS001461:
+    decision: in_scope
+    note: null
+  PGS001462:
+    decision: in_scope
+    note: null
+  PGS001463:
+    decision: in_scope
+    note: null
+  PGS001464:
+    decision: in_scope
+    note: null
+  PGS001465:
+    decision: in_scope
+    note: null
+  PGS001466:
+    decision: in_scope
+    note: null
+  PGS001467:
+    decision: in_scope
+    note: null
+  PGS001468:
+    decision: in_scope
+    note: null
+  PGS001469:
+    decision: in_scope
+    note: null
+  PGS001470:
+    decision: in_scope
+    note: null
+  PGS001471:
+    decision: in_scope
+    note: null
+  PGS001472:
+    decision: in_scope
+    note: null
+  PGS001473:
+    decision: in_scope
+    note: null
+  PGS001474:
+    decision: in_scope
+    note: null
+  PGS001475:
+    decision: in_scope
+    note: null
+  PGS001476:
+    decision: in_scope
+    note: null
+  PGS001477:
+    decision: in_scope
+    note: null
+  PGS001478:
+    decision: in_scope
+    note: null
+  PGS001479:
+    decision: in_scope
+    note: null
+  PGS001480:
+    decision: in_scope
+    note: null
+  PGS001481:
+    decision: in_scope
+    note: null
+  PGS001482:
+    decision: in_scope
+    note: null
+  PGS001483:
+    decision: in_scope
+    note: null
+  PGS001484:
+    decision: in_scope
+    note: null
+  PGS001485:
+    decision: in_scope
+    note: null
+  PGS001486:
+    decision: in_scope
+    note: null
+  PGS001487:
+    decision: in_scope
+    note: null
+  PGS001488:
+    decision: in_scope
+    note: null
+  PGS001489:
+    decision: in_scope
+    note: null
+  PGS001490:
+    decision: in_scope
+    note: null
+  PGS001491:
+    decision: in_scope
+    note: null
+  PGS001492:
+    decision: in_scope
+    note: null
+  PGS001493:
+    decision: in_scope
+    note: null
+  PGS001494:
+    decision: in_scope
+    note: null
+  PGS001495:
+    decision: in_scope
+    note: null
+  PGS001496:
+    decision: in_scope
+    note: null
+  PGS001497:
+    decision: in_scope
+    note: null
+  PGS001498:
+    decision: in_scope
+    note: null
+  PGS001499:
+    decision: in_scope
+    note: null
+  PGS001500:
+    decision: in_scope
+    note: null
+  PGS001501:
+    decision: in_scope
+    note: null
+  PGS001502:
+    decision: in_scope
+    note: null
+  PGS001503:
+    decision: in_scope
+    note: null
+  PGS001504:
+    decision: in_scope
+    note: null
+  PGS001505:
+    decision: in_scope
+    note: null
+  PGS001506:
+    decision: in_scope
+    note: null
+  PGS001507:
+    decision: in_scope
+    note: null
+  PGS001508:
+    decision: in_scope
+    note: null
+  PGS001509:
+    decision: in_scope
+    note: null
+  PGS001510:
+    decision: in_scope
+    note: null
+  PGS001511:
+    decision: in_scope
+    note: null
+  PGS001512:
+    decision: in_scope
+    note: null
+  PGS001513:
+    decision: in_scope
+    note: null
+  PGS001534:
+    decision: in_scope
+    note: null
+  PGS001537:
+    decision: in_scope
+    note: null
+  PGS001538:
+    decision: in_scope
+    note: null
+  PGS001539:
+    decision: in_scope
+    note: null
+  PGS001540:
+    decision: in_scope
+    note: null
+  PGS001541:
+    decision: in_scope
+    note: null
+  PGS001542:
+    decision: in_scope
+    note: null
+  PGS001543:
+    decision: in_scope
+    note: null
+  PGS001544:
+    decision: in_scope
+    note: null
+  PGS001545:
+    decision: in_scope
+    note: null
+  PGS001546:
+    decision: in_scope
+    note: null
+  PGS001547:
+    decision: in_scope
+    note: null
+  PGS001548:
+    decision: in_scope
+    note: null
+  PGS001549:
+    decision: in_scope
+    note: null
+  PGS001550:
+    decision: in_scope
+    note: null
+  PGS001551:
+    decision: in_scope
+    note: null
+  PGS001552:
+    decision: in_scope
+    note: null
+  PGS001553:
+    decision: in_scope
+    note: null
+  PGS001554:
+    decision: in_scope
+    note: null
+  PGS001555:
+    decision: in_scope
+    note: null
+  PGS001556:
+    decision: in_scope
+    note: null
+  PGS001557:
+    decision: in_scope
+    note: null
+  PGS001558:
+    decision: in_scope
+    note: null
+  PGS001559:
+    decision: in_scope
+    note: null
+  PGS001560:
+    decision: in_scope
+    note: null
+  PGS001561:
+    decision: in_scope
+    note: null
+  PGS001562:
+    decision: in_scope
+    note: null
+  PGS001563:
+    decision: in_scope
+    note: null
+  PGS001564:
+    decision: in_scope
+    note: null
+  PGS001565:
+    decision: in_scope
+    note: null
+  PGS001566:
+    decision: in_scope
+    note: null
+  PGS001567:
+    decision: in_scope
+    note: null
+  PGS001568:
+    decision: in_scope
+    note: null
+  PGS001569:
+    decision: in_scope
+    note: null
+  PGS001570:
+    decision: in_scope
+    note: null
+  PGS001571:
+    decision: in_scope
+    note: null
+  PGS001572:
+    decision: in_scope
+    note: null
+  PGS001573:
+    decision: in_scope
+    note: null
+  PGS001574:
+    decision: in_scope
+    note: null
+  PGS001575:
+    decision: in_scope
+    note: null
+  PGS001576:
+    decision: in_scope
+    note: null
+  PGS001577:
+    decision: in_scope
+    note: null
+  PGS001578:
+    decision: in_scope
+    note: null
+  PGS001579:
+    decision: in_scope
+    note: null
+  PGS001580:
+    decision: in_scope
+    note: null
+  PGS001581:
+    decision: in_scope
+    note: null
+  PGS001582:
+    decision: in_scope
+    note: null
+  PGS001583:
+    decision: in_scope
+    note: null
+  PGS001584:
+    decision: in_scope
+    note: null
+  PGS001585:
+    decision: in_scope
+    note: null
+  PGS001586:
+    decision: in_scope
+    note: null
+  PGS001587:
+    decision: in_scope
+    note: null
+  PGS001588:
+    decision: in_scope
+    note: null
+  PGS001589:
+    decision: in_scope
+    note: null
+  PGS001590:
+    decision: in_scope
+    note: null
+  PGS001591:
+    decision: in_scope
+    note: null
+  PGS001592:
+    decision: in_scope
+    note: null
+  PGS001593:
+    decision: in_scope
+    note: null
+  PGS001594:
+    decision: in_scope
+    note: null
+  PGS001595:
+    decision: in_scope
+    note: null
+  PGS001596:
+    decision: in_scope
+    note: null
+  PGS001597:
+    decision: in_scope
+    note: null
+  PGS001598:
+    decision: in_scope
+    note: null
+  PGS001599:
+    decision: in_scope
+    note: null
+  PGS001600:
+    decision: in_scope
+    note: null
+  PGS001601:
+    decision: in_scope
+    note: null
+  PGS001602:
+    decision: in_scope
+    note: null
+  PGS001603:
+    decision: in_scope
+    note: null
+  PGS001604:
+    decision: in_scope
+    note: null
+  PGS001605:
+    decision: in_scope
+    note: null
+  PGS001606:
+    decision: in_scope
+    note: null
+  PGS001607:
+    decision: in_scope
+    note: null
+  PGS001608:
+    decision: in_scope
+    note: null
+  PGS001609:
+    decision: in_scope
+    note: null
+  PGS001610:
+    decision: in_scope
+    note: null
+  PGS001611:
+    decision: in_scope
+    note: null
+  PGS001612:
+    decision: in_scope
+    note: null
+  PGS001613:
+    decision: in_scope
+    note: null
+  PGS001614:
+    decision: in_scope
+    note: null
+  PGS001615:
+    decision: in_scope
+    note: null
+  PGS001616:
+    decision: in_scope
+    note: null
+  PGS001617:
+    decision: in_scope
+    note: null
+  PGS001618:
+    decision: in_scope
+    note: null
+  PGS001619:
+    decision: in_scope
+    note: null
+  PGS001620:
+    decision: in_scope
+    note: null
+  PGS001621:
+    decision: in_scope
+    note: null
+  PGS001622:
+    decision: in_scope
+    note: null
+  PGS001623:
+    decision: in_scope
+    note: null
+  PGS001624:
+    decision: in_scope
+    note: null
+  PGS001625:
+    decision: in_scope
+    note: null
+  PGS001626:
+    decision: in_scope
+    note: null
+  PGS001627:
+    decision: in_scope
+    note: null
+  PGS001628:
+    decision: in_scope
+    note: null
+  PGS001629:
+    decision: in_scope
+    note: null
+  PGS001630:
+    decision: in_scope
+    note: null
+  PGS001631:
+    decision: in_scope
+    note: null
+  PGS001632:
+    decision: in_scope
+    note: null
+  PGS001633:
+    decision: in_scope
+    note: null
+  PGS001634:
+    decision: in_scope
+    note: null
+  PGS001635:
+    decision: in_scope
+    note: null
+  PGS001636:
+    decision: in_scope
+    note: null
+  PGS001637:
+    decision: in_scope
+    note: null
+  PGS001638:
+    decision: in_scope
+    note: null
+  PGS001639:
+    decision: in_scope
+    note: null
+  PGS001640:
+    decision: in_scope
+    note: null
+  PGS001641:
+    decision: in_scope
+    note: null
+  PGS001642:
+    decision: in_scope
+    note: null
+  PGS001643:
+    decision: in_scope
+    note: null
+  PGS001644:
+    decision: in_scope
+    note: null
+  PGS001645:
+    decision: in_scope
+    note: null
+  PGS001646:
+    decision: in_scope
+    note: null
+  PGS001647:
+    decision: in_scope
+    note: null
+  PGS001648:
+    decision: in_scope
+    note: null
+  PGS001649:
+    decision: in_scope
+    note: null
+  PGS001650:
+    decision: in_scope
+    note: null
+  PGS001651:
+    decision: in_scope
+    note: null
+  PGS001652:
+    decision: in_scope
+    note: null
+  PGS001653:
+    decision: in_scope
+    note: null
+  PGS001654:
+    decision: in_scope
+    note: null
+  PGS001655:
+    decision: in_scope
+    note: null
+  PGS001656:
+    decision: in_scope
+    note: null
+  PGS001657:
+    decision: in_scope
+    note: null
+  PGS001658:
+    decision: in_scope
+    note: null
+  PGS001659:
+    decision: in_scope
+    note: null
+  PGS001660:
+    decision: in_scope
+    note: null
+  PGS001661:
+    decision: in_scope
+    note: null
+  PGS001662:
+    decision: in_scope
+    note: null
+  PGS001663:
+    decision: in_scope
+    note: null
+  PGS001664:
+    decision: in_scope
+    note: null
+  PGS001665:
+    decision: in_scope
+    note: null
+  PGS001666:
+    decision: in_scope
+    note: null
+  PGS001667:
+    decision: in_scope
+    note: null
+  PGS001668:
+    decision: in_scope
+    note: null
+  PGS001669:
+    decision: in_scope
+    note: null
+  PGS001670:
+    decision: in_scope
+    note: null
+  PGS001671:
+    decision: in_scope
+    note: null
+  PGS001672:
+    decision: in_scope
+    note: null
+  PGS001673:
+    decision: in_scope
+    note: null
+  PGS001674:
+    decision: in_scope
+    note: null
+  PGS001675:
+    decision: in_scope
+    note: null
+  PGS001676:
+    decision: in_scope
+    note: null
+  PGS001677:
+    decision: in_scope
+    note: null
+  PGS001678:
+    decision: in_scope
+    note: null
+  PGS001679:
+    decision: in_scope
+    note: null
+  PGS001680:
+    decision: in_scope
+    note: null
+  PGS001681:
+    decision: in_scope
+    note: null
+  PGS001682:
+    decision: in_scope
+    note: null
+  PGS001683:
+    decision: in_scope
+    note: null
+  PGS001684:
+    decision: in_scope
+    note: null
+  PGS001685:
+    decision: in_scope
+    note: null
+  PGS001686:
+    decision: in_scope
+    note: null
+  PGS001687:
+    decision: in_scope
+    note: null
+  PGS001688:
+    decision: in_scope
+    note: null
+  PGS001689:
+    decision: in_scope
+    note: null
+  PGS001690:
+    decision: in_scope
+    note: null
+  PGS001691:
+    decision: in_scope
+    note: null
+  PGS001692:
+    decision: in_scope
+    note: null
+  PGS001693:
+    decision: in_scope
+    note: null
+  PGS001694:
+    decision: in_scope
+    note: null
+  PGS001695:
+    decision: in_scope
+    note: null
+  PGS001696:
+    decision: in_scope
+    note: null
+  PGS001697:
+    decision: in_scope
+    note: null
+  PGS001698:
+    decision: in_scope
+    note: null
+  PGS001699:
+    decision: in_scope
+    note: null
+  PGS001700:
+    decision: in_scope
+    note: null
+  PGS001701:
+    decision: in_scope
+    note: null
+  PGS001702:
+    decision: in_scope
+    note: null
+  PGS001703:
+    decision: in_scope
+    note: null
+  PGS001704:
+    decision: in_scope
+    note: null
+  PGS001705:
+    decision: in_scope
+    note: null
+  PGS001706:
+    decision: in_scope
+    note: null
+  PGS001707:
+    decision: in_scope
+    note: null
+  PGS001708:
+    decision: in_scope
+    note: null
+  PGS001709:
+    decision: in_scope
+    note: null
+  PGS001710:
+    decision: in_scope
+    note: null
+  PGS001711:
+    decision: in_scope
+    note: null
+  PGS001712:
+    decision: in_scope
+    note: null
+  PGS001713:
+    decision: in_scope
+    note: null
+  PGS001714:
+    decision: in_scope
+    note: null
+  PGS001715:
+    decision: in_scope
+    note: null
+  PGS001716:
+    decision: in_scope
+    note: null
+  PGS001717:
+    decision: in_scope
+    note: null
+  PGS001718:
+    decision: in_scope
+    note: null
+  PGS001719:
+    decision: in_scope
+    note: null
+  PGS001720:
+    decision: in_scope
+    note: null
+  PGS001721:
+    decision: in_scope
+    note: null
+  PGS001722:
+    decision: in_scope
+    note: null
+  PGS001723:
+    decision: in_scope
+    note: null
+  PGS001724:
+    decision: in_scope
+    note: null
+  PGS001725:
+    decision: in_scope
+    note: null
+  PGS001726:
+    decision: in_scope
+    note: null
+  PGS001727:
+    decision: in_scope
+    note: null
+  PGS001728:
+    decision: in_scope
+    note: null
+  PGS001729:
+    decision: in_scope
+    note: null
+  PGS001730:
+    decision: in_scope
+    note: null
+  PGS001731:
+    decision: in_scope
+    note: null
+  PGS001732:
+    decision: in_scope
+    note: null
+  PGS001733:
+    decision: in_scope
+    note: null
+  PGS001734:
+    decision: in_scope
+    note: null
+  PGS001735:
+    decision: in_scope
+    note: null
+  PGS001736:
+    decision: in_scope
+    note: null
+  PGS001737:
+    decision: in_scope
+    note: null
+  PGS001738:
+    decision: in_scope
+    note: null
+  PGS001739:
+    decision: in_scope
+    note: null
+  PGS001740:
+    decision: in_scope
+    note: null
+  PGS001741:
+    decision: in_scope
+    note: null
+  PGS001742:
+    decision: in_scope
+    note: null
+  PGS001743:
+    decision: in_scope
+    note: null
+  PGS001744:
+    decision: in_scope
+    note: null
+  PGS001745:
+    decision: in_scope
+    note: null
+  PGS001746:
+    decision: in_scope
+    note: null
+  PGS001747:
+    decision: in_scope
+    note: null
+  PGS001748:
+    decision: in_scope
+    note: null
+  PGS001749:
+    decision: in_scope
+    note: null
+  PGS001750:
+    decision: in_scope
+    note: null
+  PGS001751:
+    decision: in_scope
+    note: null
+  PGS001752:
+    decision: in_scope
+    note: null
+  PGS001753:
+    decision: in_scope
+    note: null
+  PGS001754:
+    decision: in_scope
+    note: null
+  PGS001755:
+    decision: in_scope
+    note: null
+  PGS001756:
+    decision: in_scope
+    note: null
+  PGS001757:
+    decision: in_scope
+    note: null
+  PGS001758:
+    decision: in_scope
+    note: null
+  PGS001759:
+    decision: in_scope
+    note: null
+  PGS001760:
+    decision: in_scope
+    note: null
+  PGS001761:
+    decision: in_scope
+    note: null
+  PGS001762:
+    decision: in_scope
+    note: null
+  PGS001763:
+    decision: in_scope
+    note: null
+  PGS001764:
+    decision: in_scope
+    note: null
+  PGS001765:
+    decision: in_scope
+    note: null
+  PGS001766:
+    decision: in_scope
+    note: null
+  PGS001767:
+    decision: in_scope
+    note: null
+  PGS001768:
+    decision: in_scope
+    note: null
+  PGS001769:
+    decision: in_scope
+    note: null
+  PGS001770:
+    decision: in_scope
+    note: null
+  PGS001771:
+    decision: in_scope
+    note: null
+  PGS003657:
+    decision: in_scope
+    note: null
+  PGS003658:
+    decision: in_scope
+    note: null
+  PGS003659:
+    decision: in_scope
+    note: null
+  PGS003660:
+    decision: in_scope
+    note: null
+  PGS003661:
+    decision: in_scope
+    note: null
+  PGS003662:
+    decision: in_scope
+    note: null
+  PGS003663:
+    decision: in_scope
+    note: null
+  PGS003664:
+    decision: in_scope
+    note: null
+  PGS003665:
+    decision: in_scope
+    note: null
+  PGS003666:
+    decision: in_scope
+    note: null
+  PGS003667:
+    decision: in_scope
+    note: null
+  PGS003668:
+    decision: in_scope
+    note: null
+  PGS003669:
+    decision: in_scope
+    note: null
+  PGS003670:
+    decision: in_scope
+    note: null
+  PGS003671:
+    decision: in_scope
+    note: null
+  PGS003672:
+    decision: in_scope
+    note: null
+  PGS003673:
+    decision: in_scope
+    note: null
+  PGS003674:
+    decision: in_scope
+    note: null
+summary: |
+  All 355 UK Biobank brain MRI scores are annotated: 337 snpnet scores from Tanigawa 2022 (PGP000244) and 18 hippocampal-volume scores (PGP000464).
+  They sit in 12 neuroimaging concepts (DTI FA/MD/MO, NODDI ICVF/OD/ISOVF, grey matter, subcortical, global and ventricular volume, WMH, T2* iron).
+  For every score a higher percentile means a higher value of that MRI measurement, because each score predicts the measurement directly.
+  The one exception is the head-size scaling factor (PGS001642): a higher value means a smaller head, so it is sign -1 for brain volume. It is sent to review because that sign comes from the UK Biobank field definition and a 1000G correlation (r = -0.70 with total brain volume), not from a quote.
+  The only negative pair (PGS001763 vs PGS001765, r = -0.22) compares two different tracts and is not a sign flip.

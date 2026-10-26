@@ -1,0 +1,431 @@
+pgp_id: PGP000464
+scores:
+  PGS003657:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampus_total_l
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left hippocampus volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left hippocampus volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003658:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampus_total_r
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right hippocampus volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right hippocampus volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003659:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_body_l
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left hippocampal body volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left hippocampal body volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003660:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_head_l
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left hippocampal head volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left hippocampal head volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003661:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_body_r
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right hippocampal body volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right hippocampal body volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003662:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_head_r
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right hippocampal head volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right hippocampal head volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003663:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampus_total_l
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left hippocampus volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left hippocampus volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003664:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampus_total_r
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right hippocampus volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right hippocampus volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003665:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_body_l
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left hippocampal body volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left hippocampal body volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003666:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_head_l
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left hippocampal head volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left hippocampal head volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003667:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_body_r
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right hippocampal body volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right hippocampal body volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003668:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_head_r
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right hippocampal head volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right hippocampal head volume
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    notes: 'Catalog-only: GWAS betas (PRSice C+T) per allele on hippocampal (subfield) volume. Corroborated by 1000G
+      EUR r=0.22-0.37 with PGS001630 (FIRST left hippocampus, PGP000244) and r=0.48-0.79 between trans-ancestry
+      and UKBB EUR versions of the same phenotype.'
+    status: agent_proposed
+  PGS003669:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampus_total_l
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left hippocampus volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left hippocampus volume
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: direction from PGS Catalog beta convention only; paper not open access and EUR correlations ~0
+    notes: CHIMGEN East Asian GWAS betas (PRSice C+T). Paper not open access; the catalog convention (weights =
+      per-allele betas on volume) is the only basis. 1000G EUR r with same-phenotype scores is near 0, as expected
+      for an EAS-only score.
+    status: agent_proposed
+  PGS003670:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampus_total_r
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right hippocampus volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right hippocampus volume
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: direction from PGS Catalog beta convention only; paper not open access and EUR correlations ~0
+    notes: CHIMGEN East Asian GWAS betas (PRSice C+T). Paper not open access; the catalog convention (weights =
+      per-allele betas on volume) is the only basis. 1000G EUR r with same-phenotype scores is near 0, as expected
+      for an EAS-only score.
+    status: agent_proposed
+  PGS003671:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_body_l
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left hippocampal body volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left hippocampal body volume
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: direction from PGS Catalog beta convention only; paper not open access and EUR correlations ~0
+    notes: CHIMGEN East Asian GWAS betas (PRSice C+T). Paper not open access; the catalog convention (weights =
+      per-allele betas on volume) is the only basis. 1000G EUR r with same-phenotype scores is near 0, as expected
+      for an EAS-only score.
+    status: agent_proposed
+  PGS003672:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_head_l
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: left hippocampal head volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left hippocampal head volume
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: direction from PGS Catalog beta convention only; paper not open access and EUR correlations ~0
+    notes: CHIMGEN East Asian GWAS betas (PRSice C+T). Paper not open access; the catalog convention (weights =
+      per-allele betas on volume) is the only basis. 1000G EUR r with same-phenotype scores is near 0, as expected
+      for an EAS-only score.
+    status: agent_proposed
+  PGS003673:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_body_r
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right hippocampal body volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right hippocampal body volume
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: direction from PGS Catalog beta convention only; paper not open access and EUR correlations ~0
+    notes: CHIMGEN East Asian GWAS betas (PRSice C+T). Paper not open access; the catalog convention (weights =
+      per-allele betas on volume) is the only basis. 1000G EUR r with same-phenotype scores is near 0, as expected
+      for an EAS-only score.
+    status: agent_proposed
+  PGS003674:
+    cluster: neuroimaging.subcortical_volume
+    phenotype: hippocampal_head_r
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: right hippocampal head volume
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right hippocampal head volume
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: direction from PGS Catalog beta convention only; paper not open access and EUR correlations ~0
+    notes: CHIMGEN East Asian GWAS betas (PRSice C+T). Paper not open access; the catalog convention (weights =
+      per-allele betas on volume) is the only basis. 1000G EUR r with same-phenotype scores is near 0, as expected
+      for an EAS-only score.
+    status: agent_proposed
+paper:
+  pmid: '37337106'
+  doi: 10.1038/s41588-023-01425-8
+  title: Cross-ancestry genome-wide association meta-analyses of hippocampal and subfield volumes.
+evidence_read:
+  abstract: true
+  full_text: null
+  supplement: []
+exploration_findings: Paper is not open access (Europe PMC); only abstract and PGS Catalog records were read.

@@ -2974,3 +2974,1188 @@ domains:
             aliases:
             - health dissatisfaction
             - happiness with own health
+  neuroimaging:
+    label: Brain imaging measurements
+    concepts:
+      white_matter_fa:
+        label: White matter fractional anisotropy (DTI FA)
+        axis: higher fractional anisotropy
+        valence: neutral
+        valence_basis: FA reflects directional coherence of water diffusion; it varies by tract and is
+          not a health outcome by itself.
+        status: agent_proposed
+        aliases:
+        - white matter integrity
+        - fractional anisotropy
+        - DTI FA
+        - white matter microstructure
+        phenotypes:
+          skeleton_anterior_limb_of_internal_capsule_l:
+            label: Mean FA in anterior limb of internal capsule on FA skeleton (L)
+            sign: 1
+          skeleton_anterior_limb_of_internal_capsule_r:
+            label: Mean FA in anterior limb of internal capsule on FA skeleton (R)
+            sign: 1
+          skeleton_body_of_corpus_callosum:
+            label: Mean FA in body of corpus callosum on FA skeleton
+            sign: 1
+          skeleton_cerebral_peduncle_l:
+            label: Mean FA in cerebral peduncle on FA skeleton (L)
+            sign: 1
+          skeleton_cingulum_cingulate_gyrus_l:
+            label: Mean FA in cingulum cingulate gyrus on FA skeleton (L)
+            sign: 1
+          skeleton_cingulum_cingulate_gyrus_r:
+            label: Mean FA in cingulum cingulate gyrus on FA skeleton (R)
+            sign: 1
+          skeleton_cingulum_hippocampus_l:
+            label: Mean FA in cingulum hippocampus on FA skeleton (L)
+            sign: 1
+          skeleton_cingulum_hippocampus_r:
+            label: Mean FA in cingulum hippocampus on FA skeleton (R)
+            sign: 1
+          skeleton_corticospinal_tract_r:
+            label: Mean FA in corticospinal tract on FA skeleton (R)
+            sign: 1
+          skeleton_external_capsule_r:
+            label: Mean FA in external capsule on FA skeleton (R)
+            sign: 1
+          skeleton_fornix_cres_plus_stria_terminalis_r:
+            label: Mean FA in fornix cres+stria terminalis on FA skeleton (R)
+            sign: 1
+          skeleton_fornix:
+            label: Mean FA in fornix on FA skeleton
+            sign: 1
+          skeleton_genu_of_corpus_callosum:
+            label: Mean FA in genu of corpus callosum on FA skeleton
+            sign: 1
+          skeleton_inferior_cerebellar_peduncle_r:
+            label: Mean FA in inferior cerebellar peduncle on FA skeleton (R)
+            sign: 1
+          skeleton_middle_cerebellar_peduncle:
+            label: Mean FA in middle cerebellar peduncle on FA skeleton
+            sign: 1
+          skeleton_posterior_limb_of_internal_capsule_l:
+            label: Mean FA in posterior limb of internal capsule on FA skeleton (L)
+            sign: 1
+          skeleton_posterior_limb_of_internal_capsule_r:
+            label: Mean FA in posterior limb of internal capsule on FA skeleton (R)
+            sign: 1
+          skeleton_posterior_thalamic_radiation_l:
+            label: Mean FA in posterior thalamic radiation on FA skeleton (L)
+            sign: 1
+          skeleton_posterior_thalamic_radiation_r:
+            label: Mean FA in posterior thalamic radiation on FA skeleton (R)
+            sign: 1
+          skeleton_retrolenticular_part_of_internal_capsule_l:
+            label: Mean FA in retrolenticular part of internal capsule on FA skeleton (L)
+            sign: 1
+          skeleton_retrolenticular_part_of_internal_capsule_r:
+            label: Mean FA in retrolenticular part of internal capsule on FA skeleton (R)
+            sign: 1
+          skeleton_sagittal_stratum_l:
+            label: Mean FA in sagittal stratum on FA skeleton (L)
+            sign: 1
+          skeleton_sagittal_stratum_r:
+            label: Mean FA in sagittal stratum on FA skeleton (R)
+            sign: 1
+          skeleton_splenium_of_corpus_callosum:
+            label: Mean FA in splenium of corpus callosum on FA skeleton
+            sign: 1
+          skeleton_superior_cerebellar_peduncle_l:
+            label: Mean FA in superior cerebellar peduncle on FA skeleton (L)
+            sign: 1
+          skeleton_superior_cerebellar_peduncle_r:
+            label: Mean FA in superior cerebellar peduncle on FA skeleton (R)
+            sign: 1
+          skeleton_superior_corona_radiata_l:
+            label: Mean FA in superior corona radiata on FA skeleton (L)
+            sign: 1
+          skeleton_superior_corona_radiata_r:
+            label: Mean FA in superior corona radiata on FA skeleton (R)
+            sign: 1
+          skeleton_superior_fronto_occipital_fasciculus_l:
+            label: Mean FA in superior fronto-occipital fasciculus on FA skeleton (L)
+            sign: 1
+          skeleton_superior_fronto_occipital_fasciculus_r:
+            label: Mean FA in superior fronto-occipital fasciculus on FA skeleton (R)
+            sign: 1
+          skeleton_superior_longitudinal_fasciculus_l:
+            label: Mean FA in superior longitudinal fasciculus on FA skeleton (L)
+            sign: 1
+          skeleton_superior_longitudinal_fasciculus_r:
+            label: Mean FA in superior longitudinal fasciculus on FA skeleton (R)
+            sign: 1
+          skeleton_tapetum_l:
+            label: Mean FA in tapetum on FA skeleton (L)
+            sign: 1
+          skeleton_tapetum_r:
+            label: Mean FA in tapetum on FA skeleton (R)
+            sign: 1
+          skeleton_uncinate_fasciculus_r:
+            label: Mean FA in uncinate fasciculus on FA skeleton (R)
+            sign: 1
+          tract_acoustic_radiation_l:
+            label: WA FA in tract acoustic radiation (L)
+            sign: 1
+          tract_acoustic_radiation_r:
+            label: WA FA in tract acoustic radiation (R)
+            sign: 1
+          tract_anterior_thalamic_radiation_l:
+            label: WA FA in tract anterior thalamic radiation (L)
+            sign: 1
+          tract_anterior_thalamic_radiation_r:
+            label: WA FA in tract anterior thalamic radiation (R)
+            sign: 1
+          tract_cingulate_gyrus_part_of_cingulum_l:
+            label: WA FA in tract cingulate gyrus part of cingulum (L)
+            sign: 1
+          tract_cingulate_gyrus_part_of_cingulum_r:
+            label: WA FA in tract cingulate gyrus part of cingulum (R)
+            sign: 1
+          tract_corticospinal_tract_r:
+            label: WA FA in tract corticospinal tract (R)
+            sign: 1
+          tract_forceps_major:
+            label: WA FA in tract forceps major
+            sign: 1
+          tract_forceps_minor:
+            label: WA FA in tract forceps minor
+            sign: 1
+          tract_inferior_fronto_occipital_fasciculus_l:
+            label: WA FA in tract inferior fronto-occipital fasciculus (L)
+            sign: 1
+          tract_inferior_fronto_occipital_fasciculus_r:
+            label: WA FA in tract inferior fronto-occipital fasciculus (R)
+            sign: 1
+          tract_inferior_longitudinal_fasciculus_l:
+            label: WA FA in tract inferior longitudinal fasciculus (L)
+            sign: 1
+          tract_inferior_longitudinal_fasciculus_r:
+            label: WA FA in tract inferior longitudinal fasciculus (R)
+            sign: 1
+          tract_posterior_thalamic_radiation_l:
+            label: WA FA in tract posterior thalamic radiation (L)
+            sign: 1
+          tract_posterior_thalamic_radiation_r:
+            label: WA FA in tract posterior thalamic radiation (R)
+            sign: 1
+          tract_superior_longitudinal_fasciculus_l:
+            label: WA FA in tract superior longitudinal fasciculus (L)
+            sign: 1
+          tract_uncinate_fasciculus_l:
+            label: WA FA in tract uncinate fasciculus (L)
+            sign: 1
+          tract_uncinate_fasciculus_r:
+            label: WA FA in tract uncinate fasciculus (R)
+            sign: 1
+      white_matter_diffusivity:
+        label: White matter diffusivity (MD, axial and radial eigenvalues)
+        axis: higher water diffusivity
+        valence: neutral
+        valence_basis: Diffusivity indices are tissue-microstructure measurements without a desirable
+          direction for a healthy person.
+        status: agent_proposed
+        aliases:
+        - mean diffusivity
+        - axial diffusivity
+        - radial diffusivity
+        - DTI MD
+        phenotypes:
+          l1_tract_forceps_minor:
+            label: WA L1 in tract forceps minor
+            sign: 1
+          l1_tract_inferior_fronto_occipital_fasciculus_l:
+            label: WA L1 in tract inferior fronto-occipital fasciculus (L)
+            sign: 1
+          l1_tract_inferior_fronto_occipital_fasciculus_r:
+            label: WA L1 in tract inferior fronto-occipital fasciculus (R)
+            sign: 1
+          l1_tract_inferior_longitudinal_fasciculus_l:
+            label: WA L1 in tract inferior longitudinal fasciculus (L)
+            sign: 1
+          l1_tract_inferior_longitudinal_fasciculus_r:
+            label: WA L1 in tract inferior longitudinal fasciculus (R)
+            sign: 1
+          l1_tract_superior_longitudinal_fasciculus_l:
+            label: WA L1 in tract superior longitudinal fasciculus (L)
+            sign: 1
+          l1_tract_superior_longitudinal_fasciculus_r:
+            label: WA L1 in tract superior longitudinal fasciculus (R)
+            sign: 1
+          l1_tract_superior_thalamic_radiation_l:
+            label: WA L1 in tract superior thalamic radiation (L)
+            sign: 1
+          l1_tract_superior_thalamic_radiation_r:
+            label: WA L1 in tract superior thalamic radiation (R)
+            sign: 1
+          l1_tract_uncinate_fasciculus_l:
+            label: WA L1 in tract uncinate fasciculus (L)
+            sign: 1
+          l2_tract_acoustic_radiation_r:
+            label: WA L2 in tract acoustic radiation (R)
+            sign: 1
+          l2_tract_anterior_thalamic_radiation_l:
+            label: WA L2 in tract anterior thalamic radiation (L)
+            sign: 1
+          l2_tract_anterior_thalamic_radiation_r:
+            label: WA L2 in tract anterior thalamic radiation (R)
+            sign: 1
+          l2_tract_cingulate_gyrus_part_of_cingulum_l:
+            label: WA L2 in tract cingulate gyrus part of cingulum (L)
+            sign: 1
+          l2_tract_cingulate_gyrus_part_of_cingulum_r:
+            label: WA L2 in tract cingulate gyrus part of cingulum (R)
+            sign: 1
+          l2_tract_forceps_major:
+            label: WA L2 in tract forceps major
+            sign: 1
+          l2_tract_forceps_minor:
+            label: WA L2 in tract forceps minor
+            sign: 1
+          l2_tract_inferior_fronto_occipital_fasciculus_l:
+            label: WA L2 in tract inferior fronto-occipital fasciculus (L)
+            sign: 1
+          l2_tract_inferior_fronto_occipital_fasciculus_r:
+            label: WA L2 in tract inferior fronto-occipital fasciculus (R)
+            sign: 1
+          l2_tract_inferior_longitudinal_fasciculus_l:
+            label: WA L2 in tract inferior longitudinal fasciculus (L)
+            sign: 1
+          l2_tract_inferior_longitudinal_fasciculus_r:
+            label: WA L2 in tract inferior longitudinal fasciculus (R)
+            sign: 1
+          l2_tract_superior_longitudinal_fasciculus_l:
+            label: WA L2 in tract superior longitudinal fasciculus (L)
+            sign: 1
+          l2_tract_superior_thalamic_radiation_l:
+            label: WA L2 in tract superior thalamic radiation (L)
+            sign: 1
+          l2_tract_uncinate_fasciculus_l:
+            label: WA L2 in tract uncinate fasciculus (L)
+            sign: 1
+          l2_tract_uncinate_fasciculus_r:
+            label: WA L2 in tract uncinate fasciculus (R)
+            sign: 1
+          l3_tract_acoustic_radiation_r:
+            label: WA L3 in tract acoustic radiation (R)
+            sign: 1
+          l3_tract_anterior_thalamic_radiation_l:
+            label: WA L3 in tract anterior thalamic radiation (L)
+            sign: 1
+          l3_tract_anterior_thalamic_radiation_r:
+            label: WA L3 in tract anterior thalamic radiation (R)
+            sign: 1
+          l3_tract_cingulate_gyrus_part_of_cingulum_l:
+            label: WA L3 in tract cingulate gyrus part of cingulum (L)
+            sign: 1
+          l3_tract_cingulate_gyrus_part_of_cingulum_r:
+            label: WA L3 in tract cingulate gyrus part of cingulum (R)
+            sign: 1
+          l3_tract_forceps_minor:
+            label: WA L3 in tract forceps minor
+            sign: 1
+          l3_tract_inferior_fronto_occipital_fasciculus_l:
+            label: WA L3 in tract inferior fronto-occipital fasciculus (L)
+            sign: 1
+          l3_tract_inferior_fronto_occipital_fasciculus_r:
+            label: WA L3 in tract inferior fronto-occipital fasciculus (R)
+            sign: 1
+          l3_tract_inferior_longitudinal_fasciculus_l:
+            label: WA L3 in tract inferior longitudinal fasciculus (L)
+            sign: 1
+          l3_tract_inferior_longitudinal_fasciculus_r:
+            label: WA L3 in tract inferior longitudinal fasciculus (R)
+            sign: 1
+          l3_tract_superior_longitudinal_fasciculus_l:
+            label: WA L3 in tract superior longitudinal fasciculus (L)
+            sign: 1
+          l3_tract_superior_thalamic_radiation_l:
+            label: WA L3 in tract superior thalamic radiation (L)
+            sign: 1
+          l3_tract_superior_thalamic_radiation_r:
+            label: WA L3 in tract superior thalamic radiation (R)
+            sign: 1
+          l3_tract_uncinate_fasciculus_l:
+            label: WA L3 in tract uncinate fasciculus (L)
+            sign: 1
+          l3_tract_uncinate_fasciculus_r:
+            label: WA L3 in tract uncinate fasciculus (R)
+            sign: 1
+          md_tract_acoustic_radiation_r:
+            label: WA MD in tract acoustic radiation (R)
+            sign: 1
+          md_tract_anterior_thalamic_radiation_l:
+            label: WA MD in tract anterior thalamic radiation (L)
+            sign: 1
+          md_tract_cingulate_gyrus_part_of_cingulum_l:
+            label: WA MD in tract cingulate gyrus part of cingulum (L)
+            sign: 1
+          md_tract_cingulate_gyrus_part_of_cingulum_r:
+            label: WA MD in tract cingulate gyrus part of cingulum (R)
+            sign: 1
+          md_tract_forceps_major:
+            label: WA MD in tract forceps major
+            sign: 1
+          md_tract_forceps_minor:
+            label: WA MD in tract forceps minor
+            sign: 1
+          md_tract_inferior_fronto_occipital_fasciculus_l:
+            label: WA MD in tract inferior fronto-occipital fasciculus (L)
+            sign: 1
+          md_tract_inferior_fronto_occipital_fasciculus_r:
+            label: WA MD in tract inferior fronto-occipital fasciculus (R)
+            sign: 1
+          md_tract_inferior_longitudinal_fasciculus_l:
+            label: WA MD in tract inferior longitudinal fasciculus (L)
+            sign: 1
+          md_tract_inferior_longitudinal_fasciculus_r:
+            label: WA MD in tract inferior longitudinal fasciculus (R)
+            sign: 1
+          md_tract_superior_longitudinal_fasciculus_l:
+            label: WA MD in tract superior longitudinal fasciculus (L)
+            sign: 1
+          md_tract_superior_thalamic_radiation_l:
+            label: WA MD in tract superior thalamic radiation (L)
+            sign: 1
+          md_tract_superior_thalamic_radiation_r:
+            label: WA MD in tract superior thalamic radiation (R)
+            sign: 1
+          md_tract_uncinate_fasciculus_l:
+            label: WA MD in tract uncinate fasciculus (L)
+            sign: 1
+          md_tract_uncinate_fasciculus_r:
+            label: WA MD in tract uncinate fasciculus (R)
+            sign: 1
+      white_matter_anisotropy_mode:
+        label: White matter mode of anisotropy (DTI MO)
+        axis: higher mode of anisotropy (more linear diffusion)
+        valence: neutral
+        valence_basis: Mode of anisotropy describes the shape of diffusion, not a health outcome.
+        status: agent_proposed
+        aliases:
+        - mode of anisotropy
+        - DTI MO
+        - diffusion shape
+        phenotypes:
+          tract_forceps_minor:
+            label: WA MO in tract forceps minor
+            sign: 1
+          tract_medial_lemniscus_r:
+            label: WA MO in tract medial lemniscus (R)
+            sign: 1
+          tract_middle_cerebellar_peduncle:
+            label: WA MO in tract middle cerebellar peduncle
+            sign: 1
+          tract_posterior_thalamic_radiation_l:
+            label: WA MO in tract posterior thalamic radiation (L)
+            sign: 1
+          tract_posterior_thalamic_radiation_r:
+            label: WA MO in tract posterior thalamic radiation (R)
+            sign: 1
+          tract_superior_longitudinal_fasciculus_l:
+            label: WA MO in tract superior longitudinal fasciculus (L)
+            sign: 1
+          tract_superior_thalamic_radiation_r:
+            label: WA MO in tract superior thalamic radiation (R)
+            sign: 1
+      neurite_density:
+        label: Neurite density (NODDI ICVF)
+        axis: higher intra-cellular volume fraction
+        valence: neutral
+        valence_basis: ICVF is a microstructure estimate; normal values vary by tract.
+        status: agent_proposed
+        aliases:
+        - neurite density
+        - intracellular volume fraction
+        - NODDI ICVF
+        - axon density
+        phenotypes:
+          skeleton_anterior_corona_radiata_l:
+            label: Mean ICVF in anterior corona radiata on FA skeleton (L)
+            sign: 1
+          skeleton_anterior_corona_radiata_r:
+            label: Mean ICVF in anterior corona radiata on FA skeleton (R)
+            sign: 1
+          skeleton_anterior_limb_of_internal_capsule_l:
+            label: Mean ICVF in anterior limb of internal capsule on FA skeleton (L)
+            sign: 1
+          skeleton_anterior_limb_of_internal_capsule_r:
+            label: Mean ICVF in anterior limb of internal capsule on FA skeleton (R)
+            sign: 1
+          skeleton_body_of_corpus_callosum:
+            label: Mean ICVF in body of corpus callosum on FA skeleton
+            sign: 1
+          skeleton_cerebral_peduncle_l:
+            label: Mean ICVF in cerebral peduncle on FA skeleton (L)
+            sign: 1
+          skeleton_cerebral_peduncle_r:
+            label: Mean ICVF in cerebral peduncle on FA skeleton (R)
+            sign: 1
+          skeleton_cingulum_cingulate_gyrus_l:
+            label: Mean ICVF in cingulum cingulate gyrus on FA skeleton (L)
+            sign: 1
+          skeleton_cingulum_cingulate_gyrus_r:
+            label: Mean ICVF in cingulum cingulate gyrus on FA skeleton (R)
+            sign: 1
+          skeleton_cingulum_hippocampus_l:
+            label: Mean ICVF in cingulum hippocampus on FA skeleton (L)
+            sign: 1
+          skeleton_cingulum_hippocampus_r:
+            label: Mean ICVF in cingulum hippocampus on FA skeleton (R)
+            sign: 1
+          skeleton_external_capsule_l:
+            label: Mean ICVF in external capsule on FA skeleton (L)
+            sign: 1
+          skeleton_external_capsule_r:
+            label: Mean ICVF in external capsule on FA skeleton (R)
+            sign: 1
+          skeleton_fornix_cres_plus_stria_terminalis_l:
+            label: Mean ICVF in fornix cres+stria terminalis on FA skeleton (L)
+            sign: 1
+          skeleton_fornix_cres_plus_stria_terminalis_r:
+            label: Mean ICVF in fornix cres+stria terminalis on FA skeleton (R)
+            sign: 1
+          skeleton_fornix:
+            label: Mean ICVF in fornix on FA skeleton
+            sign: 1
+          skeleton_genu_of_corpus_callosum:
+            label: Mean ICVF in genu of corpus callosum on FA skeleton
+            sign: 1
+          skeleton_inferior_cerebellar_peduncle_l:
+            label: Mean ICVF in inferior cerebellar peduncle on FA skeleton (L)
+            sign: 1
+          skeleton_inferior_cerebellar_peduncle_r:
+            label: Mean ICVF in inferior cerebellar peduncle on FA skeleton (R)
+            sign: 1
+          skeleton_medial_lemniscus_l:
+            label: Mean ICVF in medial lemniscus on FA skeleton (L)
+            sign: 1
+          skeleton_medial_lemniscus_r:
+            label: Mean ICVF in medial lemniscus on FA skeleton (R)
+            sign: 1
+          skeleton_middle_cerebellar_peduncle:
+            label: Mean ICVF in middle cerebellar peduncle on FA skeleton
+            sign: 1
+          skeleton_posterior_corona_radiata_l:
+            label: Mean ICVF in posterior corona radiata on FA skeleton (L)
+            sign: 1
+          skeleton_posterior_corona_radiata_r:
+            label: Mean ICVF in posterior corona radiata on FA skeleton (R)
+            sign: 1
+          skeleton_posterior_limb_of_internal_capsule_l:
+            label: Mean ICVF in posterior limb of internal capsule on FA skeleton (L)
+            sign: 1
+          skeleton_posterior_limb_of_internal_capsule_r:
+            label: Mean ICVF in posterior limb of internal capsule on FA skeleton (R)
+            sign: 1
+          skeleton_posterior_thalamic_radiation_l:
+            label: Mean ICVF in posterior thalamic radiation on FA skeleton (L)
+            sign: 1
+          skeleton_posterior_thalamic_radiation_r:
+            label: Mean ICVF in posterior thalamic radiation on FA skeleton (R)
+            sign: 1
+          skeleton_retrolenticular_part_of_internal_capsule_l:
+            label: Mean ICVF in retrolenticular part of internal capsule on FA skeleton (L)
+            sign: 1
+          skeleton_retrolenticular_part_of_internal_capsule_r:
+            label: Mean ICVF in retrolenticular part of internal capsule on FA skeleton (R)
+            sign: 1
+          skeleton_sagittal_stratum_l:
+            label: Mean ICVF in sagittal stratum on FA skeleton (L)
+            sign: 1
+          skeleton_sagittal_stratum_r:
+            label: Mean ICVF in sagittal stratum on FA skeleton (R)
+            sign: 1
+          skeleton_superior_cerebellar_peduncle_l:
+            label: Mean ICVF in superior cerebellar peduncle on FA skeleton (L)
+            sign: 1
+          skeleton_superior_cerebellar_peduncle_r:
+            label: Mean ICVF in superior cerebellar peduncle on FA skeleton (R)
+            sign: 1
+          skeleton_superior_corona_radiata_l:
+            label: Mean ICVF in superior corona radiata on FA skeleton (L)
+            sign: 1
+          skeleton_superior_corona_radiata_r:
+            label: Mean ICVF in superior corona radiata on FA skeleton (R)
+            sign: 1
+          skeleton_superior_fronto_occipital_fasciculus_l:
+            label: Mean ICVF in superior fronto-occipital fasciculus on FA skeleton (L)
+            sign: 1
+          skeleton_superior_fronto_occipital_fasciculus_r:
+            label: Mean ICVF in superior fronto-occipital fasciculus on FA skeleton (R)
+            sign: 1
+          skeleton_superior_longitudinal_fasciculus_l:
+            label: Mean ICVF in superior longitudinal fasciculus on FA skeleton (L)
+            sign: 1
+          skeleton_superior_longitudinal_fasciculus_r:
+            label: Mean ICVF in superior longitudinal fasciculus on FA skeleton (R)
+            sign: 1
+          skeleton_tapetum_l:
+            label: Mean ICVF in tapetum on FA skeleton (L)
+            sign: 1
+          skeleton_uncinate_fasciculus_l:
+            label: Mean ICVF in uncinate fasciculus on FA skeleton (L)
+            sign: 1
+          skeleton_uncinate_fasciculus_r:
+            label: Mean ICVF in uncinate fasciculus on FA skeleton (R)
+            sign: 1
+          tract_acoustic_radiation_l:
+            label: WA ICVF in tract acoustic radiation (L)
+            sign: 1
+          tract_acoustic_radiation_r:
+            label: WA ICVF in tract acoustic radiation (R)
+            sign: 1
+          tract_anterior_thalamic_radiation_l:
+            label: WA ICVF in tract anterior thalamic radiation (L)
+            sign: 1
+          tract_anterior_thalamic_radiation_r:
+            label: WA ICVF in tract anterior thalamic radiation (R)
+            sign: 1
+          tract_cingulate_gyrus_part_of_cingulum_l:
+            label: WA ICVF in tract cingulate gyrus part of cingulum (L)
+            sign: 1
+          tract_cingulate_gyrus_part_of_cingulum_r:
+            label: WA ICVF in tract cingulate gyrus part of cingulum (R)
+            sign: 1
+          tract_corticospinal_tract_l:
+            label: WA ICVF in tract corticospinal tract (L)
+            sign: 1
+          tract_corticospinal_tract_r:
+            label: WA ICVF in tract corticospinal tract (R)
+            sign: 1
+          tract_forceps_major:
+            label: WA ICVF in tract forceps major
+            sign: 1
+          tract_forceps_minor:
+            label: WA ICVF in tract forceps minor
+            sign: 1
+          tract_inferior_fronto_occipital_fasciculus_l:
+            label: WA ICVF in tract inferior fronto-occipital fasciculus (L)
+            sign: 1
+          tract_inferior_fronto_occipital_fasciculus_r:
+            label: WA ICVF in tract inferior fronto-occipital fasciculus (R)
+            sign: 1
+          tract_inferior_longitudinal_fasciculus_l:
+            label: WA ICVF in tract inferior longitudinal fasciculus (L)
+            sign: 1
+          tract_inferior_longitudinal_fasciculus_r:
+            label: WA ICVF in tract inferior longitudinal fasciculus (R)
+            sign: 1
+          tract_medial_lemniscus_l:
+            label: WA ICVF in tract medial lemniscus (L)
+            sign: 1
+          tract_medial_lemniscus_r:
+            label: WA ICVF in tract medial lemniscus (R)
+            sign: 1
+          tract_middle_cerebellar_peduncle:
+            label: WA ICVF in tract middle cerebellar peduncle
+            sign: 1
+          tract_parahippocampal_part_of_cingulum_l:
+            label: WA ICVF in tract parahippocampal part of cingulum (L)
+            sign: 1
+          tract_parahippocampal_part_of_cingulum_r:
+            label: WA ICVF in tract parahippocampal part of cingulum (R)
+            sign: 1
+          tract_posterior_thalamic_radiation_l:
+            label: WA ICVF in tract posterior thalamic radiation (L)
+            sign: 1
+          tract_posterior_thalamic_radiation_r:
+            label: WA ICVF in tract posterior thalamic radiation (R)
+            sign: 1
+          tract_superior_longitudinal_fasciculus_l:
+            label: WA ICVF in tract superior longitudinal fasciculus (L)
+            sign: 1
+          tract_superior_longitudinal_fasciculus_r:
+            label: WA ICVF in tract superior longitudinal fasciculus (R)
+            sign: 1
+          tract_superior_thalamic_radiation_l:
+            label: WA ICVF in tract superior thalamic radiation (L)
+            sign: 1
+          tract_superior_thalamic_radiation_r:
+            label: WA ICVF in tract superior thalamic radiation (R)
+            sign: 1
+          tract_uncinate_fasciculus_l:
+            label: WA ICVF in tract uncinate fasciculus (L)
+            sign: 1
+          tract_uncinate_fasciculus_r:
+            label: WA ICVF in tract uncinate fasciculus (R)
+            sign: 1
+      neurite_orientation_dispersion:
+        label: Neurite orientation dispersion (NODDI OD)
+        axis: higher orientation dispersion
+        valence: neutral
+        valence_basis: OD describes fibre fanning/crossing, not a health outcome.
+        status: agent_proposed
+        aliases:
+        - orientation dispersion index
+        - NODDI OD
+        - fibre dispersion
+        phenotypes:
+          tract_corticospinal_tract_l:
+            label: WA OD in tract corticospinal tract (L)
+            sign: 1
+          tract_inferior_longitudinal_fasciculus_r:
+            label: WA OD in tract inferior longitudinal fasciculus (R)
+            sign: 1
+          tract_medial_lemniscus_l:
+            label: WA OD in tract medial lemniscus (L)
+            sign: 1
+          tract_superior_longitudinal_fasciculus_l:
+            label: WA OD in tract superior longitudinal fasciculus (L)
+            sign: 1
+          tract_superior_longitudinal_fasciculus_r:
+            label: WA OD in tract superior longitudinal fasciculus (R)
+            sign: 1
+          tract_superior_thalamic_radiation_r:
+            label: WA OD in tract superior thalamic radiation (R)
+            sign: 1
+      free_water:
+        label: White matter free water (NODDI ISOVF)
+        axis: higher isotropic (free-water) volume fraction
+        valence: neutral
+        valence_basis: ISOVF is a microstructure measurement; interpreted only relative to tract norms.
+        status: agent_proposed
+        aliases:
+        - free water
+        - isotropic volume fraction
+        - NODDI ISOVF
+        - brain water content
+        phenotypes:
+          skeleton_anterior_corona_radiata_l:
+            label: Mean ISOVF in anterior corona radiata on FA skeleton (L)
+            sign: 1
+          skeleton_anterior_corona_radiata_r:
+            label: Mean ISOVF in anterior corona radiata on FA skeleton (R)
+            sign: 1
+          skeleton_body_of_corpus_callosum:
+            label: Mean ISOVF in body of corpus callosum on FA skeleton
+            sign: 1
+          skeleton_cingulum_cingulate_gyrus_l:
+            label: Mean ISOVF in cingulum cingulate gyrus on FA skeleton (L)
+            sign: 1
+          skeleton_cingulum_cingulate_gyrus_r:
+            label: Mean ISOVF in cingulum cingulate gyrus on FA skeleton (R)
+            sign: 1
+          skeleton_external_capsule_l:
+            label: Mean ISOVF in external capsule on FA skeleton (L)
+            sign: 1
+          skeleton_fornix:
+            label: Mean ISOVF in fornix on FA skeleton
+            sign: 1
+          skeleton_posterior_corona_radiata_l:
+            label: Mean ISOVF in posterior corona radiata on FA skeleton (L)
+            sign: 1
+          skeleton_posterior_thalamic_radiation_l:
+            label: Mean ISOVF in posterior thalamic radiation on FA skeleton (L)
+            sign: 1
+          skeleton_sagittal_stratum_l:
+            label: Mean ISOVF in sagittal stratum on FA skeleton (L)
+            sign: 1
+          skeleton_sagittal_stratum_r:
+            label: Mean ISOVF in sagittal stratum on FA skeleton (R)
+            sign: 1
+          skeleton_superior_cerebellar_peduncle_r:
+            label: Mean ISOVF in superior cerebellar peduncle on FA skeleton (R)
+            sign: 1
+          skeleton_superior_corona_radiata_l:
+            label: Mean ISOVF in superior corona radiata on FA skeleton (L)
+            sign: 1
+          skeleton_superior_corona_radiata_r:
+            label: Mean ISOVF in superior corona radiata on FA skeleton (R)
+            sign: 1
+          tract_acoustic_radiation_l:
+            label: WA ISOVF in tract acoustic radiation (L)
+            sign: 1
+          tract_acoustic_radiation_r:
+            label: WA ISOVF in tract acoustic radiation (R)
+            sign: 1
+          tract_anterior_thalamic_radiation_r:
+            label: WA ISOVF in tract anterior thalamic radiation (R)
+            sign: 1
+          tract_cingulate_gyrus_part_of_cingulum_l:
+            label: WA ISOVF in tract cingulate gyrus part of cingulum (L)
+            sign: 1
+          tract_cingulate_gyrus_part_of_cingulum_r:
+            label: WA ISOVF in tract cingulate gyrus part of cingulum (R)
+            sign: 1
+          tract_inferior_fronto_occipital_fasciculus_l:
+            label: WA ISOVF in tract inferior fronto-occipital fasciculus (L)
+            sign: 1
+          tract_inferior_fronto_occipital_fasciculus_r:
+            label: WA ISOVF in tract inferior fronto-occipital fasciculus (R)
+            sign: 1
+          tract_inferior_longitudinal_fasciculus_l:
+            label: WA ISOVF in tract inferior longitudinal fasciculus (L)
+            sign: 1
+          tract_inferior_longitudinal_fasciculus_r:
+            label: WA ISOVF in tract inferior longitudinal fasciculus (R)
+            sign: 1
+          tract_posterior_thalamic_radiation_r:
+            label: WA ISOVF in tract posterior thalamic radiation (R)
+            sign: 1
+          tract_superior_longitudinal_fasciculus_l:
+            label: WA ISOVF in tract superior longitudinal fasciculus (L)
+            sign: 1
+          tract_superior_longitudinal_fasciculus_r:
+            label: WA ISOVF in tract superior longitudinal fasciculus (R)
+            sign: 1
+          tract_superior_thalamic_radiation_l:
+            label: WA ISOVF in tract superior thalamic radiation (L)
+            sign: 1
+          tract_superior_thalamic_radiation_r:
+            label: WA ISOVF in tract superior thalamic radiation (R)
+            sign: 1
+          tract_uncinate_fasciculus_l:
+            label: WA ISOVF in tract uncinate fasciculus (L)
+            sign: 1
+          tract_uncinate_fasciculus_r:
+            label: WA ISOVF in tract uncinate fasciculus (R)
+            sign: 1
+      regional_grey_matter_volume:
+        label: Regional grey matter volume
+        axis: larger regional grey matter volume
+        valence: neutral
+        valence_basis: Regional volumes track head size and anatomy; bigger is not better in itself.
+        status: agent_proposed
+        aliases:
+        - cortical volume
+        - grey matter volume by region
+        - gray matter volume
+        - regional brain volume
+        - brain region size
+        phenotypes:
+          gm_intracalcarine_cortex_r:
+            label: Volume of grey matter in Intracalcarine Cortex (R)
+            sign: 1
+          gm_parietal_operculum_cortex_r:
+            label: Volume of grey matter in Parietal Operculum Cortex (R)
+            sign: 1
+          gm_amygdala_l:
+            label: Volume of grey matter in Amygdala (L)
+            sign: 1
+          gm_brain_stem:
+            label: Volume of grey matter in Brain-Stem
+            sign: 1
+          gm_central_opercular_cortex_l:
+            label: Volume of grey matter in Central Opercular Cortex (L)
+            sign: 1
+          gm_central_opercular_cortex_r:
+            label: Volume of grey matter in Central Opercular Cortex (R)
+            sign: 1
+          gm_cingulate_gyrus_anterior_division_l:
+            label: Volume of grey matter in Cingulate Gyrus, anterior division (L)
+            sign: 1
+          gm_cingulate_gyrus_anterior_division_r:
+            label: Volume of grey matter in Cingulate Gyrus, anterior division (R)
+            sign: 1
+          gm_cingulate_gyrus_posterior_division_r:
+            label: Volume of grey matter in Cingulate Gyrus, posterior division (R)
+            sign: 1
+          gm_crus_i_cerebellum_r:
+            label: Volume of grey matter in Crus I Cerebellum (R)
+            sign: 1
+          gm_crus_ii_cerebellum_l:
+            label: Volume of grey matter in Crus II Cerebellum (L)
+            sign: 1
+          gm_crus_ii_cerebellum_r:
+            label: Volume of grey matter in Crus II Cerebellum (R)
+            sign: 1
+          gm_cuneal_cortex_r:
+            label: Volume of grey matter in Cuneal Cortex (R)
+            sign: 1
+          gm_frontal_operculum_cortex_l:
+            label: Volume of grey matter in Frontal Operculum Cortex (L)
+            sign: 1
+          gm_frontal_orbital_cortex_l:
+            label: Volume of grey matter in Frontal Orbital Cortex (L)
+            sign: 1
+          gm_frontal_orbital_cortex_r:
+            label: Volume of grey matter in Frontal Orbital Cortex (R)
+            sign: 1
+          gm_frontal_pole_l:
+            label: Volume of grey matter in Frontal Pole (L)
+            sign: 1
+          gm_heschl_s_gyrus_includes_h1_and_h2_l:
+            label: Volume of grey matter in Heschl's Gyrus (includes H1 and H2) (L)
+            sign: 1
+          gm_heschl_s_gyrus_includes_h1_and_h2_r:
+            label: Volume of grey matter in Heschl's Gyrus (includes H1 and H2) (R)
+            sign: 1
+          gm_hippocampus_l:
+            label: Volume of grey matter in Hippocampus (L)
+            sign: 1
+          gm_hippocampus_r:
+            label: Volume of grey matter in Hippocampus (R)
+            sign: 1
+          gm_i_iv_cerebellum_l:
+            label: Volume of grey matter in I-IV Cerebellum (L)
+            sign: 1
+          gm_i_iv_cerebellum_r:
+            label: Volume of grey matter in I-IV Cerebellum (R)
+            sign: 1
+          gm_inferior_frontal_gyrus_pars_triangularis_r:
+            label: Volume of grey matter in Inferior Frontal Gyrus, pars triangularis (R)
+            sign: 1
+          gm_inferior_temporal_gyrus_posterior_division_l:
+            label: Volume of grey matter in Inferior Temporal Gyrus, posterior division (L)
+            sign: 1
+          gm_insular_cortex_l:
+            label: Volume of grey matter in Insular Cortex (L)
+            sign: 1
+          gm_insular_cortex_r:
+            label: Volume of grey matter in Insular Cortex (R)
+            sign: 1
+          gm_intracalcarine_cortex_l:
+            label: Volume of grey matter in Intracalcarine Cortex (L)
+            sign: 1
+          gm_ix_cerebellum_l:
+            label: Volume of grey matter in IX Cerebellum (L)
+            sign: 1
+          gm_ix_cerebellum_r:
+            label: Volume of grey matter in IX Cerebellum (R)
+            sign: 1
+          gm_lateral_occipital_cortex_inferior_division_r:
+            label: Volume of grey matter in Lateral Occipital Cortex, inferior division (R)
+            sign: 1
+          gm_lateral_occipital_cortex_superior_division_r:
+            label: Volume of grey matter in Lateral Occipital Cortex, superior division (R)
+            sign: 1
+          gm_lingual_gyrus_r:
+            label: Volume of grey matter in Lingual Gyrus (R)
+            sign: 1
+          gm_middle_frontal_gyrus_l:
+            label: Volume of grey matter in Middle Frontal Gyrus (L)
+            sign: 1
+          gm_middle_frontal_gyrus_r:
+            label: Volume of grey matter in Middle Frontal Gyrus (R)
+            sign: 1
+          gm_middle_temporal_gyrus_posterior_division_r:
+            label: Volume of grey matter in Middle Temporal Gyrus, posterior division (R)
+            sign: 1
+          gm_occipital_fusiform_gyrus_l:
+            label: Volume of grey matter in Occipital Fusiform Gyrus (L)
+            sign: 1
+          gm_occipital_pole_r:
+            label: Volume of grey matter in Occipital Pole (R)
+            sign: 1
+          gm_paracingulate_gyrus_r:
+            label: Volume of grey matter in Paracingulate Gyrus (R)
+            sign: 1
+          gm_parahippocampal_gyrus_anterior_division_l:
+            label: Volume of grey matter in Parahippocampal Gyrus, anterior division (L)
+            sign: 1
+          gm_parahippocampal_gyrus_anterior_division_r:
+            label: Volume of grey matter in Parahippocampal Gyrus, anterior division (R)
+            sign: 1
+          gm_parahippocampal_gyrus_posterior_division_l:
+            label: Volume of grey matter in Parahippocampal Gyrus, posterior division (L)
+            sign: 1
+          gm_parahippocampal_gyrus_posterior_division_r:
+            label: Volume of grey matter in Parahippocampal Gyrus, posterior division (R)
+            sign: 1
+          gm_planum_polare_l:
+            label: Volume of grey matter in Planum Polare (L)
+            sign: 1
+          gm_planum_polare_r:
+            label: Volume of grey matter in Planum Polare (R)
+            sign: 1
+          gm_planum_temporale_l:
+            label: Volume of grey matter in Planum Temporale (L)
+            sign: 1
+          gm_precentral_gyrus_l:
+            label: Volume of grey matter in Precentral Gyrus (L)
+            sign: 1
+          gm_precentral_gyrus_r:
+            label: Volume of grey matter in Precentral Gyrus (R)
+            sign: 1
+          gm_precuneous_cortex_l:
+            label: Volume of grey matter in Precuneous Cortex (L)
+            sign: 1
+          gm_putamen_l:
+            label: Volume of grey matter in Putamen (L)
+            sign: 1
+          gm_putamen_r:
+            label: Volume of grey matter in Putamen (R)
+            sign: 1
+          gm_subcallosal_cortex_l:
+            label: Volume of grey matter in Subcallosal Cortex (L)
+            sign: 1
+          gm_subcallosal_cortex_r:
+            label: Volume of grey matter in Subcallosal Cortex (R)
+            sign: 1
+          gm_superior_frontal_gyrus_l:
+            label: Volume of grey matter in Superior Frontal Gyrus (L)
+            sign: 1
+          gm_superior_frontal_gyrus_r:
+            label: Volume of grey matter in Superior Frontal Gyrus (R)
+            sign: 1
+          gm_superior_temporal_gyrus_anterior_division_l:
+            label: Volume of grey matter in Superior Temporal Gyrus, anterior division (L)
+            sign: 1
+          gm_superior_temporal_gyrus_posterior_division_l:
+            label: Volume of grey matter in Superior Temporal Gyrus, posterior division (L)
+            sign: 1
+          gm_supracalcarine_cortex_l:
+            label: Volume of grey matter in Supracalcarine Cortex (L)
+            sign: 1
+          gm_supracalcarine_cortex_r:
+            label: Volume of grey matter in Supracalcarine Cortex (R)
+            sign: 1
+          gm_temporal_fusiform_cortex_anterior_division_l:
+            label: Volume of grey matter in Temporal Fusiform Cortex, anterior division (L)
+            sign: 1
+          gm_temporal_fusiform_cortex_posterior_division_l:
+            label: Volume of grey matter in Temporal Fusiform Cortex, posterior division (L)
+            sign: 1
+          gm_temporal_fusiform_cortex_posterior_division_r:
+            label: Volume of grey matter in Temporal Fusiform Cortex, posterior division (R)
+            sign: 1
+          gm_temporal_pole_l:
+            label: Volume of grey matter in Temporal Pole (L)
+            sign: 1
+          gm_temporal_pole_r:
+            label: Volume of grey matter in Temporal Pole (R)
+            sign: 1
+          gm_thalamus_l:
+            label: Volume of grey matter in Thalamus (L)
+            sign: 1
+          gm_thalamus_r:
+            label: Volume of grey matter in Thalamus (R)
+            sign: 1
+          gm_v_cerebellum_l:
+            label: Volume of grey matter in V Cerebellum (L)
+            sign: 1
+          gm_v_cerebellum_r:
+            label: Volume of grey matter in V Cerebellum (R)
+            sign: 1
+          gm_ventral_striatum_l:
+            label: Volume of grey matter in Ventral Striatum (L)
+            sign: 1
+          gm_ventral_striatum_r:
+            label: Volume of grey matter in Ventral Striatum (R)
+            sign: 1
+          gm_vermis_crus_ii_cerebellum:
+            label: Volume of grey matter in Vermis Crus II Cerebellum
+            sign: 1
+          gm_vermis_ix_cerebellum:
+            label: Volume of grey matter in Vermis IX Cerebellum
+            sign: 1
+          gm_vermis_vi_cerebellum:
+            label: Volume of grey matter in Vermis VI Cerebellum
+            sign: 1
+          gm_vermis_viib_cerebellum:
+            label: Volume of grey matter in Vermis VIIb Cerebellum
+            sign: 1
+          gm_vermis_viiia_cerebellum:
+            label: Volume of grey matter in Vermis VIIIa Cerebellum
+            sign: 1
+          gm_vermis_viiib_cerebellum:
+            label: Volume of grey matter in Vermis VIIIb Cerebellum
+            sign: 1
+          gm_vermis_x_cerebellum:
+            label: Volume of grey matter in Vermis X Cerebellum
+            sign: 1
+          gm_vi_cerebellum_l:
+            label: Volume of grey matter in VI Cerebellum (L)
+            sign: 1
+          gm_vi_cerebellum_r:
+            label: Volume of grey matter in VI Cerebellum (R)
+            sign: 1
+          gm_viib_cerebellum_l:
+            label: Volume of grey matter in VIIb Cerebellum (L)
+            sign: 1
+          gm_viib_cerebellum_r:
+            label: Volume of grey matter in VIIb Cerebellum (R)
+            sign: 1
+          gm_viiia_cerebellum_l:
+            label: Volume of grey matter in VIIIa Cerebellum (L)
+            sign: 1
+          gm_viiia_cerebellum_r:
+            label: Volume of grey matter in VIIIa Cerebellum (R)
+            sign: 1
+          gm_viiib_cerebellum_l:
+            label: Volume of grey matter in VIIIb Cerebellum (L)
+            sign: 1
+          gm_viiib_cerebellum_r:
+            label: Volume of grey matter in VIIIb Cerebellum (R)
+            sign: 1
+          gm_x_cerebellum_r:
+            label: Volume of grey matter in X Cerebellum (R)
+            sign: 1
+      subcortical_volume:
+        label: Subcortical structure volume
+        axis: larger subcortical structure volume
+        valence: neutral
+        valence_basis: Subcortical volumes vary with head size; a larger structure is not a health goal
+          by itself.
+        status: agent_proposed
+        aliases:
+        - hippocampus size
+        - hippocampal volume
+        - basal ganglia volume
+        - thalamus volume
+        - deep brain structures
+        phenotypes:
+          accumbens_l:
+            label: Volume of accumbens (L)
+            sign: 1
+          accumbens_r:
+            label: Volume of accumbens (R)
+            sign: 1
+          caudate_l:
+            label: Volume of caudate (L)
+            sign: 1
+          caudate_r:
+            label: Volume of caudate (R)
+            sign: 1
+          hippocampus_l:
+            label: Volume of hippocampus (L)
+            sign: 1
+          pallidum_l:
+            label: Volume of pallidum (L)
+            sign: 1
+          pallidum_r:
+            label: Volume of pallidum (R)
+            sign: 1
+          putamen_l:
+            label: Volume of putamen (L)
+            sign: 1
+          putamen_r:
+            label: Volume of putamen (R)
+            sign: 1
+          thalamus_l:
+            label: Volume of thalamus (L)
+            sign: 1
+          thalamus_r:
+            label: Volume of thalamus (R)
+            sign: 1
+          hippocampus_total_l:
+            label: Left hippocampus volume
+            sign: 1
+          hippocampus_total_r:
+            label: Right hippocampus volume
+            sign: 1
+          hippocampal_body_l:
+            label: Left hippocampal body volume
+            sign: 1
+          hippocampal_head_l:
+            label: Left hippocampal head volume
+            sign: 1
+          hippocampal_body_r:
+            label: Right hippocampal body volume
+            sign: 1
+          hippocampal_head_r:
+            label: Right hippocampal head volume
+            sign: 1
+      global_brain_volume:
+        label: Global brain volume
+        axis: larger brain tissue volume
+        valence: neutral
+        valence_basis: Whole-brain volume scales with body and head size; it is a measurement, not a valued
+          outcome.
+        status: agent_proposed
+        aliases:
+        - brain size
+        - total brain volume
+        - head size
+        - brain atrophy
+        - small brain
+        phenotypes:
+          brainstem_4th_ventricle_volume:
+            label: Volume of brain stem + 4th ventricle
+            sign: 1
+          total_brain_volume:
+            label: Volume of brain, grey+white matter
+            sign: 1
+          total_brain_volume_normalised:
+            label: Volume of brain, grey+white matter (normalised for head size)
+            sign: 1
+          total_grey_matter_volume:
+            label: Volume of grey matter
+            sign: 1
+          total_grey_matter_volume_normalised:
+            label: Volume of grey matter (normalised for head size)
+            sign: 1
+          peripheral_cortical_grey_matter_volume:
+            label: Volume of peripheral cortical grey matter
+            sign: 1
+          peripheral_cortical_grey_matter_volume_normalised:
+            label: Volume of peripheral cortical grey matter (normalised for head size)
+            sign: 1
+          total_white_matter_volume:
+            label: Volume of white matter
+            sign: 1
+          total_white_matter_volume_normalised:
+            label: Volume of white matter (normalised for head size)
+            sign: 1
+          head_size_scaling_factor:
+            label: Volumetric scaling from T1 head image to standard space
+            sign: -1
+      ventricular_volume:
+        label: Ventricular CSF volume
+        axis: larger ventricles
+        valence: neutral
+        valence_basis: Ventricle size grows with age and head size; a genetic score alone does not make
+          it good or bad.
+        status: agent_proposed
+        aliases:
+        - brain ventricles
+        - ventricle size
+        - CSF volume
+        - enlarged ventricles
+        phenotypes:
+          ventricular_csf_volume:
+            label: Volume of ventricular cerebrospinal fluid
+            sign: 1
+      white_matter_hyperintensities:
+        label: White matter hyperintensities
+        axis: more white matter hyperintensity volume
+        valence: undesirable
+        valence_basis: White matter hyperintensities mark cerebral small vessel disease and predict stroke
+          and dementia.
+        status: agent_proposed
+        aliases:
+        - white matter lesions
+        - WMH
+        - leukoaraiosis
+        - small vessel disease
+        - brain lesions
+        phenotypes:
+          wmh_total_volume:
+            label: Total Volume of white matter hyperintensities (from T1 and T2 FLAIR images)
+            sign: 1
+      brain_iron_t2star:
+        label: Subcortical T2* (brain iron)
+        axis: longer T2* relaxation time (less iron)
+        valence: neutral
+        valence_basis: T2* in deep grey matter mostly reflects iron content; it is a measurement without
+          a clear desirable direction.
+        status: agent_proposed
+        aliases:
+        - brain iron
+        - T2star
+        - T2*
+        - iron deposition
+        phenotypes:
+          t2star_caudate_l:
+            label: Median T2star in caudate (L)
+            sign: 1
+          t2star_caudate_r:
+            label: Median T2star in caudate (R)
+            sign: 1
+          t2star_pallidum_l:
+            label: Median T2star in pallidum (L)
+            sign: 1
+          t2star_pallidum_r:
+            label: Median T2star in pallidum (R)
+            sign: 1
+          t2star_putamen_l:
+            label: Median T2star in putamen (L)
+            sign: 1
+          t2star_putamen_r:
+            label: Median T2star in putamen (R)
+            sign: 1
+          t2star_thalamus_r:
+            label: Median T2star in thalamus (R)
+            sign: 1

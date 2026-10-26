@@ -1,0 +1,86 @@
+slug: allergic-disease
+query: allergic disease
+match:
+  terms:
+  - allergic disease
+  - allergic rhinitis
+  - allergy
+  - hay fever
+  efo_ids:
+  - MONDO_0005271
+  exclude: []
+anchor: PGS000810
+status: resolved
+concepts:
+- respiratory.asthma
+- immune.allergic_disease
+- immune.allergy_onset_age
+scores:
+  PGS000780:
+    decision: in_scope
+    note: null
+  PGS000800:
+    decision: in_scope
+    note: null
+  PGS000810:
+    decision: in_scope
+    note: null
+  PGS000867:
+    decision: in_scope
+    note: null
+  PGS001109:
+    decision: out_of_scope
+    note: Vasomotor and allergic rhinitis (Tanigawa); belongs to the allergic rhinitis / hay fever ontology group,
+      not MONDO_0005271
+  PGS001259:
+    decision: out_of_scope
+    note: Hayfever/allergic rhinitis (Tanigawa); belongs to the allergic rhinitis ontology group, not MONDO_0005271
+  PGS001283:
+    decision: in_scope
+    note: 'Catalog label says allergic disease but GBE INI3761 is age at diagnosis (UKB 3761): immune.allergy_onset_age'
+  PGS001284:
+    decision: in_scope
+    note: null
+  PGS001285:
+    decision: in_scope
+    note: null
+  PGS001286:
+    decision: in_scope
+    note: null
+  PGS001372:
+    decision: in_scope
+    note: 'Age at doctor-diagnosed hay fever (UKB 22146): immune.allergy_onset_age'
+  PGS001885:
+    decision: out_of_scope
+    note: Penicillin allergy / adverse drug effect (Privé); drug allergy group, a different question
+  PGS002097:
+    decision: out_of_scope
+    note: Penicillin allergy / adverse drug effect; drug allergy group, a different question
+  PGS003458:
+    decision: in_scope
+    note: null
+  PGS003459:
+    decision: out_of_scope
+    note: Atopic eczema or atopic disease (Al-Janabi); belongs to the atopic eczema ontology group
+  PGS003487:
+    decision: in_scope
+    note: IL-4 pathway subset of PRS_AT
+  PGS003488:
+    decision: in_scope
+    note: IL-12 pathway subset of PRS_AT
+  PGS003489:
+    decision: in_scope
+    note: IL-17 pathway subset of PRS_AT
+  PGS004505:
+    decision: out_of_scope
+    note: ICD-10 Z88 personal history of drug allergy (Jung 2024); drug allergy group
+  PGS004575:
+    decision: out_of_scope
+    note: ICD-10 Z88 personal history of drug allergy (Jung 2024); drug allergy group
+summary: '13 in-scope allergic-disease scores, all annotated (12 new, catalog-only or Tanigawa biobank template).
+  Scores built on the shared asthma/hay fever/eczema GWAS (PGS000780, PGS000800, PGS000810, PGS003458 and its IL-4/IL-12/IL-17
+  subsets) sit in respiratory.asthma.allergic_disease; UK Biobank hay fever/eczema scores and the childhood-allergy
+  GRS sit in the new immune.allergic_disease concept. Higher score = more likely allergic. All 16 negative 1000G
+  pairs involve PGS001283 and PGS001372, which are age-at-diagnosis scores (UKB 3761, 22146) despite PGS001283 being
+  labelled "Allergic disease" in the catalog: higher = later diagnosis, so anti-correlation with risk scores is
+  expected, not a sign flip. No lookups were needed.'

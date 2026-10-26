@@ -1,0 +1,36 @@
+pgp_id: PGP000184
+scores:
+  PGS000780:
+    cluster: respiratory.asthma
+    phenotype: allergic_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of allergic disease (asthma, hay fever or eczema)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Allergic disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs61816761-A (FLG loss-of-function, eczema/allergy risk allele) and rs72782676-C carry positive weights,
+        as in PGS000810
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). 135-variant beta-weighted score built from the shared allergic-disease
+      (asthma/hay fever/eczema) GWAS variants; top weights identical to PGS000810 (rs61816761-A FLG +0.202, rs72782676-C
+      +0.265). 1000G EUR r=+0.98 with PGS000810. Catalog evaluations (atopic march, persistent eczema and wheeze)
+      carry no directional metric.
+paper:
+  pmid: '31441980'
+  doi: 10.1111/cea.13485
+  title: Differential associations of allergic disease genetic variants with developmental profiles of eczema, wheeze
+    and rhinitis.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

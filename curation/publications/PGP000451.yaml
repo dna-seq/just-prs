@@ -1,0 +1,115 @@
+pgp_id: PGP000451
+scores:
+  PGS003458:
+    cluster: respiratory.asthma
+    phenotype: allergic_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atopic disease (asthma, hay fever or eczema)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Evaluated on paradoxical eczema in biologic-treated psoriasis patients; more atopic genetic load should
+        raise that risk.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: General atopic disease
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs61816761-A (FLG risk allele) carries a positive weight
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PRS_AT, 124 beta-weighted variants; top weights identical to
+      the shared allergic-disease GWAS (rs61816761-A FLG +0.202). 1000G EUR r=+0.94 with PGS000810; catalog OR 2.24
+      [1.20, 4.17] for paradoxical eczema in biologic-treated psoriasis.
+  PGS003487:
+    cluster: respiratory.asthma
+    phenotype: allergic_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atopic disease (asthma, hay fever or eczema), IL-4-pathway variants only
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Evaluated on paradoxical eczema in biologic-treated psoriasis patients; more atopic genetic load should
+        raise that risk.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: General atopic disease (IL-4 related variants)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Pathway-partitioned subset of PRS_AT (PGS003458) restricted
+      to IL-4-related variants, same betas. 1000G EUR r=+0.32 with PGS000810; catalog OR 2.08 [0.70, 6.06], CI includes
+      1 for paradoxical eczema in biologic-treated psoriasis.
+  PGS003488:
+    cluster: respiratory.asthma
+    phenotype: allergic_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atopic disease (asthma, hay fever or eczema), IL-12-pathway variants only
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Evaluated on paradoxical eczema in biologic-treated psoriasis patients; more atopic genetic load should
+        raise that risk.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: General atopic disease (IL-12 related variants)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Pathway-partitioned subset of PRS_AT (PGS003458) restricted
+      to IL-12-related variants, same betas. 1000G EUR r=+0.32 with PGS000810; catalog OR 4.89 [1.03, 23.29] for
+      paradoxical eczema in biologic-treated psoriasis.
+  PGS003489:
+    cluster: respiratory.asthma
+    phenotype: allergic_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of atopic disease (asthma, hay fever or eczema), IL-17-pathway variants only
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Evaluated on paradoxical eczema in biologic-treated psoriasis patients; more atopic genetic load should
+        raise that risk.
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: General atopic disease (IL-17 related variants)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). Pathway-partitioned subset of PRS_AT (PGS003458) restricted
+      to IL-17-related variants, same betas. 1000G EUR r=+0.25 with PGS000810; catalog OR 1.55 [0.47, 5.14], CI
+      includes 1 for paradoxical eczema in biologic-treated psoriasis.
+paper:
+  pmid: '36804406'
+  doi: 10.1016/j.jid.2023.01.021
+  title: Atopic polygenic risk score is associated with paradoxical eczema developing in psoriasis patients treated
+    with biologics.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

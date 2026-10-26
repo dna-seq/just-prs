@@ -1780,6 +1780,58 @@ domains:
             sign: 1
             aliases:
             - joint involvement in psoriasis
+      allergic_disease:
+        label: Allergic disease (hay fever, allergic rhinitis, eczema, any allergy)
+        axis: higher risk of allergic disease
+        valence: undesirable
+        valence_basis: Hay fever, allergic rhinitis and eczema are chronic allergic conditions with symptoms
+          that lower quality of life.
+        status: agent_proposed
+        aliases:
+        - allergies
+        - atopy
+        - hay fever
+        - allergic rhinitis
+        - no allergies
+        phenotypes:
+          hay_fever_or_eczema:
+            label: Hay fever, allergic rhinitis or eczema (any of these; UK Biobank field 6152, self-reported
+              or doctor-diagnosed)
+            sign: 1
+            aliases:
+            - hay fever or eczema
+          hay_fever:
+            label: Doctor-diagnosed hay fever or allergic rhinitis (UK Biobank field 22126)
+            sign: 1
+            aliases:
+            - seasonal allergies
+            - pollen allergy
+          any_allergy:
+            label: Physician-diagnosed allergy of any kind (childhood cohorts)
+            sign: 1
+            aliases:
+            - childhood allergy
+      allergy_onset_age:
+        label: Age at diagnosis of hay fever, allergic rhinitis or eczema
+        axis: later age at allergy diagnosis
+        valence: context_dependent
+        valence_basis: Only defined for people who have the allergy; a later diagnosis means fewer years
+          affected, but the score says nothing about whether someone develops allergy at all.
+        status: agent_proposed
+        aliases:
+        - allergy age of onset
+        - when did hay fever start
+        - early-onset allergy
+        - late-onset hay fever
+        phenotypes:
+          age_allergy_diagnosed:
+            label: Age (years) when hay fever, rhinitis or eczema was first diagnosed (UK Biobank field
+              3761)
+            sign: 1
+          age_hay_fever_diagnosed:
+            label: Age (years) when hay fever or allergic rhinitis was diagnosed by a doctor (UK Biobank
+              field 22146)
+            sign: 1
   blood:
     label: Blood cells
     concepts:

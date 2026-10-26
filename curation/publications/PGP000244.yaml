@@ -13612,3 +13612,146 @@ scores:
       coding (same pattern as the coffee-type and tanning scores), the paper does not describe FC encoding. Catalog
       evaluation: 7,422 cases vs 59,875 controls, AUROC 0.58. Higher PGS001063 = more likely to have changed diet
       because of illness.'
+  PGS001283:
+    cluster: immune.allergy_onset_age
+    phenotype: age_allergy_diagnosed
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: age at which hay fever, rhinitis or eczema was diagnosed (years)
+      coding: 'UKB 3761 (GBE_INI3761): age in years, cases only'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: performance.trait_reported
+      quote: Age hay fever, rhinitis or eczema diagnosed
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'Not checked against GWAS Catalog. Internally consistent: rs4833095-C carries a large positive weight
+        here and negative weights in the binary hay fever/eczema scores: alleles lowering risk delay diagnosis'
+    status: agent_proposed
+    notes: 'Catalog reported trait reads "Allergic disease (hay fever, rhinitis or eczema)", but the GBE code INI3761
+      and the evaluation label show the trained phenotype is age at diagnosis (UKB 3761), a Gaussian snpnet model:
+      higher score = later diagnosis. Its negative 1000G correlations with the risk scores (r=-0.43 vs PGS000810,
+      down to -0.46 vs PGS001286) are expected for onset age vs risk, not a sign flip.'
+  PGS001284:
+    cluster: immune.allergic_disease
+    phenotype: hay_fever_or_eczema
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hay fever, allergic rhinitis or eczema
+      coding: 'UKB 6152 (GBE_BIN_FC10006152): case if hay fever, allergic rhinitis or eczema reported'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Allergic disease (hay fever, allergic rhinitis, or eczema)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'Not checked against GWAS Catalog. Internally consistent: rs4833095-C (TLR1/6/10) and rs6897932-T (IL7R)
+        carry negative weights, the opposite of the PGS001283/PGS001372 age-at-diagnosis scores, as expected for
+        risk vs onset age'
+    status: agent_proposed
+    notes: Biobank template (snpnet binomial model, higher = case). 1000G EUR r=+0.53 with PGS000810.
+  PGS001285:
+    cluster: immune.allergic_disease
+    phenotype: hay_fever_or_eczema
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of doctor-diagnosed hay fever, rhinitis or eczema
+      coding: 'UKB 6152 (GBE_BIN_FC5006152): case if doctor-diagnosed hay fever, allergic rhinitis or eczema'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Allergic disease (hay fever, rhinitis, or eczema) (diagnosed by doctor)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'Not checked against GWAS Catalog. Internally consistent: rs4833095-C (TLR1/6/10) and rs6897932-T (IL7R)
+        carry negative weights, the opposite of the PGS001283/PGS001372 age-at-diagnosis scores, as expected for
+        risk vs onset age'
+    status: agent_proposed
+    notes: Biobank template (snpnet binomial model, higher = case). 1000G EUR r=+0.55 with PGS000810.
+  PGS001286:
+    cluster: immune.allergic_disease
+    phenotype: hay_fever
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of doctor-diagnosed hay fever or allergic rhinitis
+      coding: 'UKB 22126 (GBE_BIN22126): doctor-diagnosed hay fever or allergic rhinitis'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Allergic disease (hay fever or allergic rhinitis) (diagnosed by doctor)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'Not checked against GWAS Catalog. Internally consistent: rs4833095-C (TLR1/6/10) and rs6897932-T (IL7R)
+        carry negative weights, the opposite of the PGS001283/PGS001372 age-at-diagnosis scores, as expected for
+        risk vs onset age'
+    status: agent_proposed
+    notes: Biobank template (snpnet binomial model, higher = case). 1000G EUR r=+0.47 with PGS000810.
+  PGS001372:
+    cluster: immune.allergy_onset_age
+    phenotype: age_hay_fever_diagnosed
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: age at which hay fever or allergic rhinitis was diagnosed by a doctor (years)
+      coding: 'UKB 22146 (GBE_INI22146): age in years, cases only'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Age hayfever or allergic rhinitis diagnosed by doctor
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 'Not checked against GWAS Catalog. Internally consistent: rs4833095-C carries a large positive weight
+        here and negative weights in the binary hay fever/eczema scores: alleles lowering risk delay diagnosis'
+    status: agent_proposed
+    notes: 'Gaussian snpnet model on age at diagnosis: higher score = later diagnosis. Negative 1000G correlations
+      with the risk scores (r=-0.30 vs PGS000810, -0.38 vs PGS001286) are expected for onset age vs risk, not a
+      sign flip. r=+0.43 with PGS001283 (same onset-age concept).'

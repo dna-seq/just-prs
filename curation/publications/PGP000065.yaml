@@ -1,0 +1,99 @@
+pgp_id: PGP000065
+scores:
+  PGS000133:
+    cluster: psychiatric.schizophrenia
+    phenotype: schizophrenia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of schizophrenia
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Schizophrenia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Zheutlin 2019 PGC-based schizophrenia score in one of four health-care systems; catalog OR 1.69 for
+      schizophrenia, OR 1.38 for psychosis (no CI). The four scores correlate at 1000G EUR r=+0.93 to +0.97 and
+      +0.76 to +0.79 with PGS002785.
+  PGS000134:
+    cluster: psychiatric.schizophrenia
+    phenotype: schizophrenia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of schizophrenia
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Schizophrenia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Zheutlin 2019 PGC-based schizophrenia score in one of four health-care systems; catalog OR 1.48 for
+      schizophrenia (no CI). The four scores correlate at 1000G EUR r=+0.93 to +0.97 and +0.76 to +0.79 with PGS002785.
+  PGS000135:
+    cluster: psychiatric.schizophrenia
+    phenotype: schizophrenia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of schizophrenia
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Schizophrenia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Zheutlin 2019 PGC-based schizophrenia score in one of four health-care systems; catalog AUROC 0.74
+      only (no CI). The four scores correlate at 1000G EUR r=+0.93 to +0.97 and +0.76 to +0.79 with PGS002785.
+  PGS000136:
+    cluster: psychiatric.schizophrenia
+    phenotype: schizophrenia
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of schizophrenia
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Schizophrenia
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Zheutlin 2019 PGC-based schizophrenia score in one of four health-care systems; catalog OR 1.70 for
+      schizophrenia (no CI). The four scores correlate at 1000G EUR r=+0.93 to +0.97 and +0.76 to +0.79 with PGS002785.

@@ -807,6 +807,12 @@ domains:
             label: Addiction risk factor (addiction-rf; genomic SEM common factor across OUD, PAU, problematic
               tobacco use and CUD)
             sign: 1
+          ever_addicted:
+            label: Ever addicted to any substance or behaviour (UKB 20401, yes vs no)
+            sign: 1
+            aliases:
+            - ever been addicted
+            - addiction history
   sleep:
     label: Sleep
     concepts:
@@ -3773,6 +3779,57 @@ domains:
             aliases:
             - health dissatisfaction
             - happiness with own health
+      fatigue:
+        label: Tiredness and lethargy
+        axis: more frequent tiredness
+        valence: undesirable
+        valence_basis: Frequent tiredness or lethargy lowers quality of life and is a common depressive
+          symptom.
+        status: agent_proposed
+        aliases:
+        - tiredness
+        - fatigue
+        - lethargy
+        - low energy
+        - always tired
+        phenotypes:
+          tiredness_frequency:
+            label: Frequency of tiredness / lethargy in the last 2 weeks (UKB 2080, 1 not at all ... 4
+              nearly every day)
+            sign: 1
+      social_connection:
+        label: Social connection, loneliness and social activities
+        axis: more social connection
+        valence: desirable
+        valence_basis: Feeling connected, satisfied with friendships and taking part in group activities
+          is what people want; loneliness harms health.
+        status: agent_proposed
+        aliases:
+        - loneliness
+        - social isolation
+        - lonely
+        - friendships
+        - social life
+        phenotypes:
+          loneliness:
+            label: Often feels lonely (UKB 2020, yes vs no)
+            sign: -1
+            aliases:
+            - feeling lonely
+            - isolation
+          friendship_dissatisfaction:
+            label: Less satisfied with friendships (UKB 4570, 1 extremely happy ... 6 extremely unhappy)
+            sign: -1
+          weekly_social_activity:
+            label: Attends a sports club, gym, pub, social club, religious group, adult education class
+              or other group activity weekly or more (UKB 6160)
+            sign: 1
+          gym_or_sports_club_attendance:
+            label: Regular attendance at a gym or sports club (UKB 6160)
+            sign: 1
+          adult_education_attendance:
+            label: Regular attendance at an adult education class (UKB 6160)
+            sign: 1
   neuroimaging:
     label: Brain imaging measurements
     concepts:
@@ -5000,3 +5057,165 @@ domains:
             aliases:
             - major depression
             - unipolar depression
+          recurrent_major_depression:
+            label: Recurrent major depressive disorder (lifetime MDD with more than one episode)
+            sign: 1
+            aliases:
+            - recurrent depression
+          help_seeking_depression:
+            label: Help-seeking for nerves, anxiety, tension or depression (seen a GP or psychiatrist;
+              minimal phenotyping)
+            sign: 1
+            aliases:
+            - seen a doctor for depression
+            - broad depression
+          probable_depression:
+            label: Probable depression (low mood or anhedonia plus seen a GP or psychiatrist for nerves,
+              anxiety, tension or depression)
+            sign: 1
+          self_reported_depression:
+            label: Self-reported depression or depressive symptoms
+            sign: 1
+          depressive_episode_ever:
+            label: Ever depressed for a whole week (UKB 4598, yes vs no)
+            sign: 1
+            aliases:
+            - ever depressed
+          recent_depressed_mood:
+            label: Recent feelings of depression (UKB 20510 PHQ item, several days or more in the last
+              2 weeks)
+            sign: 1
+            aliases:
+            - feeling down
+            - low mood lately
+          anhedonia_frequency:
+            label: Frequency of unenthusiasm / disinterest in the last 2 weeks (UKB 2060, 1 not at all
+              ... 4 nearly every day)
+            sign: 1
+            aliases:
+            - anhedonia
+            - loss of interest
+          recent_appetite_disturbance:
+            label: Recent poor appetite or overeating (UKB 20511 PHQ item, several days or more in the
+              last 2 weeks)
+            sign: 1
+          trauma_related_depression:
+            label: Depression possibly related to a stressful or traumatic event (UKB 20447, yes vs no)
+            sign: 1
+      neuroticism:
+        label: Neuroticism (tendency toward negative emotions)
+        axis: higher neuroticism
+        valence: undesirable
+        valence_basis: High neuroticism means more frequent worry, anxiety and low mood and predicts depression
+          and anxiety disorders.
+        status: agent_proposed
+        aliases:
+        - emotional instability
+        - emotional stability
+        - moodiness
+        - nervousness
+        - worrying
+        phenotypes:
+          neuroticism_score:
+            label: Neuroticism score (UKB 20127, sum of 12 EPQ-R yes/no items)
+            sign: 1
+          hurt_feelings:
+            label: Feelings easily hurt (UKB 1950, yes vs no)
+            sign: 1
+            aliases:
+            - sensitive
+          suffers_from_nerves:
+            label: Suffers from 'nerves' (UKB 2010, yes vs no)
+            sign: 1
+          worrier:
+            label: Worrier / anxious feelings (UKB 1980, yes vs no)
+            sign: 1
+            aliases:
+            - worry a lot
+          worry_after_embarrassment:
+            label: Worries too long after an embarrassing experience (UKB 2000, yes vs no)
+            sign: 1
+      anxiety:
+        label: Anxiety
+        axis: more anxiety
+        valence: undesirable
+        valence_basis: Anxiety disorders and persistent foreboding are distressing and disabling.
+        status: agent_proposed
+        aliases:
+        - anxiety
+        - anxious
+        - generalized anxiety
+        - panic
+        phenotypes:
+          anxiety_disorder:
+            label: Anxiety disorder (ICD-10 F41 other anxiety disorders, case/control)
+            sign: 1
+          recent_foreboding:
+            label: Recent feelings of foreboding (UKB 20512, several days or more in the last 2 weeks)
+            sign: 1
+      schizophrenia:
+        label: Schizophrenia
+        axis: higher risk of schizophrenia
+        valence: undesirable
+        valence_basis: Schizophrenia is a severe, disabling psychotic disorder.
+        status: agent_proposed
+        aliases:
+        - psychosis
+        - psychotic disorder
+        - schizophrenic
+        phenotypes:
+          schizophrenia:
+            label: Schizophrenia (case/control)
+            sign: 1
+      bipolar_disorder:
+        label: Bipolar disorder
+        axis: higher risk of bipolar disorder
+        valence: undesirable
+        valence_basis: Bipolar disorder is a severe recurrent mood disorder.
+        status: agent_proposed
+        aliases:
+        - manic depression
+        - mania
+        - bipolar
+        phenotypes:
+          bipolar_disorder:
+            label: Bipolar disorder (any subtype, case/control)
+            sign: 1
+          bipolar_i_disorder:
+            label: Bipolar I disorder (case/control)
+            sign: 1
+          bipolar_ii_disorder:
+            label: Bipolar II disorder (case/control)
+            sign: 1
+      autism:
+        label: Autism spectrum disorder
+        axis: higher likelihood of autism spectrum disorder
+        valence: context_dependent
+        valence_basis: Autism is a neurodevelopmental condition; many autistic people do not regard it
+          as a disease, though it can bring substantial support needs.
+        status: agent_proposed
+        aliases:
+        - autism
+        - ASD
+        - Asperger
+        - autistic
+        phenotypes:
+          autism_spectrum_disorder:
+            label: Autism spectrum disorder (case/control)
+            sign: 1
+      self_harm:
+        label: Self-harm and suicidal thoughts
+        axis: more thoughts of self-harm or suicide
+        valence: undesirable
+        valence_basis: Thoughts of self-harm or suicide signal serious distress and risk.
+        status: agent_proposed
+        aliases:
+        - suicidal thoughts
+        - suicidal ideation
+        - self-harm
+        - self injury
+        phenotypes:
+          self_harm_thoughts:
+            label: Ever contemplated self-harm or recent thoughts of suicide or self-harm (UKB 20485 /
+              20513)
+            sign: 1

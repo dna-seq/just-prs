@@ -3177,3 +3177,87 @@ scores:
     notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
       trait (case status). Corroboration: catalog OR 1.49623 (E03 (Other hypothyroidism)); 1000G EUR r=+0.97 with
       PGS004446 (hypothyroidism).'
+  PGS004430:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score (UKB 20127)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Neuroticism score
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: X20127.score
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Jung 2024 UKB field 20127 score. Corroborated by 1000G EUR r=+0.75 with PGS002342 and +0.70 with PGS002213.
+  PGS004451:
+    cluster: psychiatric.anxiety
+    phenotype: anxiety_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of other anxiety disorders (ICD-10 F41)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: F41 (Other anxiety disorders)
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: disease.F41.score
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Jung 2024 disease PRS for ICD-10 F41. Catalog OR 1.19 (no CI) for F41 agrees; 1000G EUR r=+0.67 with
+      PGS004521, +0.16 with Privé foreboding PGS002136.
+  PGS004521:
+    cluster: psychiatric.anxiety
+    phenotype: anxiety_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of other anxiety disorders (ICD-10 F41)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: F41 (Other anxiety disorders)
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: meta.F41.score
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Jung 2024 meta-PRS (disease PRS integrated with risk-factor PRSs) for ICD-10 F41. Catalog OR 1.30 (no
+      CI) for F41 agrees; 1000G EUR r=+0.67 with PGS004451, +0.29 with PGS002136 (foreboding), +0.30 with PGS001016
+      (hurt feelings).

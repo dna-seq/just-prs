@@ -50,3 +50,157 @@ scores:
       trait; Cai 2020 ICD-10 (hospital-record) depression definition, an EHR-based clinical MDD phenotype rather
       than a minimal-phenotyping one. Evaluated on MDD status (AUROC 0.53). 1000G EUR r=+0.21 with PGS004759/PGS004760
       and PGS003579; correlation support is weak, sparse score (21,510 variants).
+  PGS000139:
+    cluster: psychiatric.depression
+    phenotype: recurrent_major_depression
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of recurrent major depressive disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: major_depressive_disorder
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lifetime Major Depressive Disorder (with recurrence)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Cai 2020 minimal-phenotyping depression definition in UK Biobank (case/control), evaluated on MDD status
+      (AUROC only). Corroborated by 1000G EUR r=+0.67 with PGS000138 (lifetime MDD).
+  PGS000140:
+    cluster: psychiatric.depression
+    phenotype: help_seeking_depression
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having seen a GP for nerves, anxiety, tension or depression
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: major_depressive_disorder
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Broad Depression (seen a General Practitioner for nerves, anxiety, tension or depression)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Cai 2020 minimal-phenotyping depression definition in UK Biobank (case/control), evaluated on MDD status
+      (AUROC only). Corroborated by 1000G EUR r=+0.26 with PGS000138, +0.25 with PGS002759 (MDD).
+  PGS000141:
+    cluster: psychiatric.depression
+    phenotype: help_seeking_depression
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having seen a psychiatrist for nerves, anxiety, tension or depression
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: major_depressive_disorder
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Seen a psychiatrist for nerves, anxiety, tension or depression
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Cai 2020 minimal-phenotyping depression definition in UK Biobank (case/control), evaluated on MDD status
+      (AUROC only). Corroborated by 1000G EUR r=+0.43 with PGS004759, +0.42 with PGS003579 (MDD).
+  PGS000142:
+    cluster: psychiatric.depression
+    phenotype: probable_depression
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of probable depression (low mood or anhedonia plus help-seeking)
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: major_depressive_disorder
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Probable Depression (low mood or anhedonia, and seen a GP or psychiatrist for nerves, anxiety, tension
+        or depression)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Cai 2020 minimal-phenotyping depression definition in UK Biobank (case/control), evaluated on MDD status
+      (AUROC only). Corroborated by 1000G EUR r=+0.27 with PGS000138, +0.23 with PGS002759 (MDD).
+  PGS000143:
+    cluster: psychiatric.depression
+    phenotype: help_seeking_depression
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having seen a GP for nerves, anxiety, tension or depression without reporting low mood
+        or anhedonia
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: major_depressive_disorder
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Seen a General Practitioner for nerves, anxiety, tension or depression (without report of low mood
+        or anhedonia)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Cai 2020 minimal-phenotyping depression definition in UK Biobank (case/control), evaluated on MDD status
+      (AUROC only). Corroborated by 1000G EUR r=+0.25 with PGS000140, +0.23 with PGS000907 and +0.21 with PGS004759
+      (MDD).
+  PGS000144:
+    cluster: psychiatric.depression
+    phenotype: self_reported_depression
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of self-reported depression or depressive symptoms
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: major_depressive_disorder
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Self-reported depression or depression symptoms
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Cai 2020 minimal-phenotyping depression definition in UK Biobank (case/control), evaluated on MDD status
+      (AUROC only). Corroborated by 1000G EUR r=+0.31 with PGS000141, +0.26 with PGS000907/PGS004759 (MDD).

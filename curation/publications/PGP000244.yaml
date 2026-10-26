@@ -14854,3 +14854,332 @@ scores:
     status: agent_proposed
     notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
       trait (case status). Corroboration: 1000G EUR r=+0.70 with PGS001814 (nontoxic_goiter).'
+  PGS001016:
+    cluster: psychiatric.neuroticism
+    phenotype: hurt_feelings
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of answering Yes to "are your feelings easily hurt?"
+      coding: 'UKB 1950 (coding 100349): 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Sensitivity / hurt feelings
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100349.html (UKB coding for the neuroticism yes/no items)
+      quote: Prefer not to answer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Snpnet binomial model on GBE BIN1950 (UKB 1950 yes/no item, coding 100349: 1 Yes, 0 No, -1/-3 missing);
+      case = Yes per the paper''s binary-trait rule (GBE page itself unreachable, HTTP 500). 1000G EUR r=+0.36 with
+      PGS001022, +0.30 with F41 PGS004521.'
+  PGS001017:
+    cluster: psychiatric.neuroticism
+    phenotype: suffers_from_nerves
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of answering Yes to "do you suffer from nerves?"
+      coding: 'UKB 2010 (coding 100349): 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Suffer from 'nerves'
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100349.html (UKB coding for the neuroticism yes/no items)
+      quote: Prefer not to answer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Snpnet binomial model on GBE BIN2010 (UKB 2010 yes/no item, coding 100349: 1 Yes, 0 No, -1/-3 missing);
+      case = Yes per the paper''s binary-trait rule (GBE page itself unreachable, HTTP 500). 1000G EUR r=+0.24 with
+      F41 PGS004521, +0.20 with PGS001021.'
+  PGS001021:
+    cluster: psychiatric.neuroticism
+    phenotype: worrier
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of answering Yes to "are you a worrier?"
+      coding: 'UKB 1980 (coding 100349): 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Feelings of worry or anxiety
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100349.html (UKB coding for the neuroticism yes/no items)
+      quote: Prefer not to answer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Snpnet binomial model on GBE BIN1980 (UKB 1980 yes/no item, coding 100349: 1 Yes, 0 No, -1/-3 missing);
+      case = Yes per the paper''s binary-trait rule (GBE page itself unreachable, HTTP 500). 1000G EUR r=+0.32 with
+      PGS001022, +0.29 with PGS001016.'
+  PGS001022:
+    cluster: psychiatric.neuroticism
+    phenotype: worry_after_embarrassment
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of answering Yes to worrying too long after an embarrassing experience
+      coding: 'UKB 2000 (coding 100349): 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Worry too long after an embarrassing experience
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100349.html (UKB coding for the neuroticism yes/no items)
+      quote: Prefer not to answer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Snpnet binomial model on GBE BIN2000 (UKB 2000 yes/no item, coding 100349: 1 Yes, 0 No, -1/-3 missing);
+      case = Yes per the paper''s binary-trait rule (GBE page itself unreachable, HTTP 500). 1000G EUR r=+0.36 with
+      PGS001016, +0.32 with PGS001021.'
+  PGS001091:
+    cluster: wellbeing.social_connection
+    phenotype: loneliness
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of often feeling lonely (UKB 2020 Yes)
+      coding: 'UKB 2020 (coding 100349): 1 Yes, 0 No; case = Yes'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Loneliness
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100349.html (UKB coding for the neuroticism yes/no items)
+      quote: Prefer not to answer
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Snpnet binomial model on GBE BIN2020 (UKB 2020 yes/no item, coding 100349: 1 Yes, 0 No, -1/-3 missing);
+      case = Yes per the paper''s binary-trait rule (GBE page itself unreachable, HTTP 500). 1000G EUR r=+0.31 with
+      PGS001396, +0.27 with PGS004760 (MDD).'
+  PGS001018:
+    cluster: wellbeing.social_connection
+    phenotype: weekly_social_activity
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of attending any group social or leisure activity weekly or more
+      coding: 'UKB 6160 (coding 100328), GBE BIN_FC10006160: case = reports the named activity'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: 'Attending social / leisure activities (attend any of the followings in once a week or more often:
+        sports club, gym, pub, social club, religious group, adult edication class, or other group activity)'
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Snpnet binomial model on GBE BIN_FC10006160 (UKB 6160 leisure/social activities, case = the named activity).
+      Case definition from the catalog trait_reported; GBE page unreachable. 1000G EUR r=+0.58 with PGS001019, +0.21
+      with PGS001020.
+  PGS001019:
+    cluster: wellbeing.social_connection
+    phenotype: gym_or_sports_club_attendance
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of regular attendance at a gym or sports club
+      coding: 'UKB 6160 (coding 100328), GBE BIN_FC20006160: case = reports the named activity'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Attending social / leisure activities (regular attendance at a gym or sports club)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Snpnet binomial model on GBE BIN_FC20006160 (UKB 6160 leisure/social activities, case = the named activity).
+      Case definition from the catalog trait_reported; GBE page unreachable. 1000G EUR r=+0.58 with PGS001018; r=-0.25
+      with MDD PGS004760.
+  PGS001020:
+    cluster: wellbeing.social_connection
+    phenotype: adult_education_attendance
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of regular attendance at an adult education class
+      coding: 'UKB 6160 (coding 100328), GBE BIN_FC50006160: case = reports the named activity'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Attending social / leisure activities (regular attendance at an adult education class)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Snpnet binomial model on GBE BIN_FC50006160 (UKB 6160 leisure/social activities, case = the named activity).
+      Case definition from the catalog trait_reported; GBE page unreachable. 1000G EUR r=+0.21 with PGS001018; r=-0.12
+      with PGS001396 (anhedonia).
+  PGS001080:
+    cluster: wellbeing.fatigue
+    phenotype: tiredness_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: frequency of tiredness or lethargy in the last 2 weeks
+      coding: 'UKB 2080 (coding 100484): 1 Not at all, 2 Several days, 3 More than half the days, 4 Nearly every
+        day; raw order assumed kept by GBE QT_FC'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: GBE_QT_FC1002080
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100484.html (UKB coding for 2050-2080)
+      quote: Nearly every day
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: GBE QT_FC value order undocumented; raw order inferred from correlations with depression scores
+      and one BMI locus
+    status: agent_proposed
+    notes: Snpnet Gaussian model on GBE QT_FC1002080; GBE does not document whether QT_FC keeps the raw order (GBE
+      page unreachable). Raw order (higher = more frequent) inferred from 1000G EUR r=+0.31 with PGS004760 and +0.24
+      with PGS003333 (MDD), +0.26 with PGS001091 (loneliness, Yes = case), and the BMI-raising rs34811474-G allele
+      raising the score.
+  PGS001396:
+    cluster: psychiatric.depression
+    phenotype: anhedonia_frequency
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: frequency of unenthusiasm or disinterest in the last 2 weeks
+      coding: 'UKB 2060 (coding 100484): 1 Not at all, 2 Several days, 3 More than half the days, 4 Nearly every
+        day; raw order assumed kept by GBE QT_FC'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: GBE_QT_FC1002060
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_100484.html (UKB coding for 2050-2080)
+      quote: Nearly every day
+      confidence: low
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: GBE QT_FC value order undocumented; raw order inferred from correlations with depression scores
+      and one BMI locus
+    status: agent_proposed
+    notes: Snpnet Gaussian model on GBE QT_FC1002060; GBE does not document whether QT_FC keeps the raw order (GBE
+      page unreachable). Raw order (higher = more frequent) inferred from 1000G EUR r=+0.28 with PGS004760 and PGS003581
+      (MDD), +0.31 with PGS001091 (loneliness), and the BMI-raising rs34811474-G allele raising the score.
+  PGS001398:
+    score_effect: null
+    unannotated_reason: GBE QT_FC1004570 value order undocumented and GBE page unreachable; 1000G correlations (r=+0.11
+      to +0.15 with MDD and worry scores) suggest raw order (higher = less satisfied) but the top variant rs3737240
+      suggests the reverse; too weak to decide.

@@ -1,0 +1,25 @@
+pgp_id: PGP000098
+scores:
+  PGS000327:
+    cluster: psychiatric.autism
+    phenotype: autism_spectrum_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of autism spectrum disorder
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Autism spectrum disorder
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Grove 2019 ASD score; catalog OR 1.33 [1.30, 1.36] for ASD excludes the null.

@@ -4080,6 +4080,485 @@ scores:
     status: agent_proposed
     notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
       trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS001814 (nontoxic_goiter).'
+  PGS001829:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of depression (UKB PheCode 296.2)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Depression
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_296.2
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Privé 2022 PLR score on UKB PheCode 296.2 (Depression, EHR/ICD-based case status), grouped with ICD-defined
+      depression as clinical MDD. 1000G EUR r=+0.63 between PGS001829 and PGS002036; PGS002036 r=+0.28 with PGS000138
+      and +0.29 with PGS000139 (lifetime MDD).
+  PGS002036:
+    cluster: psychiatric.depression
+    phenotype: major_depressive_disorder
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of depression (UKB PheCode 296.2)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Depression
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_296.2
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; Privé 2022 ldpred2 score on UKB PheCode 296.2 (Depression, EHR/ICD-based case status), grouped with
+      ICD-defined depression as clinical MDD. 1000G EUR r=+0.63 between PGS001829 and PGS002036; PGS002036 r=+0.28
+      with PGS000138 and +0.29 with PGS000139 (lifetime MDD).
+  PGS001898:
+    cluster: psychiatric.depression
+    phenotype: depressive_episode_ever
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having ever been depressed for a whole week (UKB 4598 yes)
+      coding: 'UKB 4598: 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_depressed_for_1w
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Ever depressed for a whole week (4598)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/depressed_for_1w.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 0)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé PLR binary score; script codes UKB 4598 as TRUE when the answer is Yes (1), negatives (do not know
+      / prefer not) missing. 1000G EUR r=+0.61 between the two Privé scores, +0.27 with PGS004759 (MDD).
+  PGS002111:
+    cluster: psychiatric.depression
+    phenotype: depressive_episode_ever
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having ever been depressed for a whole week (UKB 4598 yes)
+      coding: 'UKB 4598: 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_depressed_for_1w
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Ever depressed for a whole week (4598)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/depressed_for_1w.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 0)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; script codes UKB 4598 as TRUE when the answer is Yes (1), negatives (do not
+      know / prefer not) missing. 1000G EUR r=+0.61 between the two Privé scores, +0.27 with PGS004759 (MDD).
+  PGS001899:
+    cluster: psychiatric.depression
+    phenotype: recent_depressed_mood
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of feeling down, depressed or hopeless on several days or more in the last 2 weeks (UKB
+        20510)
+      coding: 'UKB 20510 (coding 504): 1 Not at all ... 4 Nearly every day; case = value > 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_depression_feelings
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Recent feelings of depression (20510)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/depression_feelings.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé PLR binary score; UKB 20510 (1 Not at all, 2 Several days, 3 More than half the days, 4 Nearly
+      every day) dichotomised as >1. 1000G EUR r=+0.44 between the two Privé scores; PGS002112 r=+0.24 with PGS000138
+      (MDD).
+  PGS002112:
+    cluster: psychiatric.depression
+    phenotype: recent_depressed_mood
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of feeling down, depressed or hopeless on several days or more in the last 2 weeks (UKB
+        20510)
+      coding: 'UKB 20510 (coding 504): 1 Not at all ... 4 Nearly every day; case = value > 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_depression_feelings
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Recent feelings of depression (20510)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/depression_feelings.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; UKB 20510 (1 Not at all, 2 Several days, 3 More than half the days, 4 Nearly
+      every day) dichotomised as >1. 1000G EUR r=+0.44 between the two Privé scores; PGS002112 r=+0.24 with PGS000138
+      (MDD).
+  PGS001920:
+    cluster: psychiatric.anxiety
+    phenotype: recent_foreboding
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of recent feelings of foreboding on several days or more in the last 2 weeks (UKB 20512)
+      coding: 'UKB 20512: 1 Not at all ... 4 Nearly every day; case = value > 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_foreboding_feelings
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Recent feelings of foreboding (20512)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/foreboding_feelings.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé PLR binary score; UKB 20512 dichotomised as >1 (several days or more). 1000G EUR r=+0.50 between
+      the two Privé scores; PGS002136 r=+0.29 with F41 anxiety PGS004521.
+  PGS002136:
+    cluster: psychiatric.anxiety
+    phenotype: recent_foreboding
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of recent feelings of foreboding on several days or more in the last 2 weeks (UKB 20512)
+      coding: 'UKB 20512: 1 Not at all ... 4 Nearly every day; case = value > 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_foreboding_feelings
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Recent feelings of foreboding (20512)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/foreboding_feelings.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; UKB 20512 dichotomised as >1 (several days or more). 1000G EUR r=+0.50 between
+      the two Privé scores; PGS002136 r=+0.29 with F41 anxiety PGS004521.
+  PGS001996:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score (UKB 20127)
+      coding: 'UKB 20127: 0-12, number of neuroticism items answered Yes; raw value used'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_neuroticism
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Neuroticism score (20127)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-quant-pheno/neuroticism.rds")
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé PLR continuous score on the raw UKB 20127 neuroticism score (count of yes answers to 12 items,
+      higher = more neurotic). 1000G EUR r=+0.91 between the two Privé scores, +0.87 to +0.93 with Weissbrod and
+      Ding neuroticism scores.
+  PGS002213:
+    cluster: psychiatric.neuroticism
+    phenotype: neuroticism_score
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: neuroticism score (UKB 20127)
+      coding: 'UKB 20127: 0-12, number of neuroticism items answered Yes; raw value used'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_neuroticism
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Neuroticism score (20127)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-quant-pheno/neuroticism.rds")
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 continuous score on the raw UKB 20127 neuroticism score (count of yes answers to 12 items,
+      higher = more neurotic). 1000G EUR r=+0.91 between the two Privé scores, +0.87 to +0.93 with Weissbrod and
+      Ding neuroticism scores.
+  PGS002098:
+    cluster: psychiatric.depression
+    phenotype: recent_appetite_disturbance
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of poor appetite or overeating on several days or more in the last 2 weeks (UKB 20511)
+      coding: 'UKB 20511: 1 Not at all ... 4 Nearly every day; case = value > 1'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_abnormal_appetite
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Recent poor appetite or overeating (20511)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/abnormal_appetite.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score on the PHQ-9 appetite item; filed under depression (a depressive symptom item)
+      rather than eating disorder, despite the catalog EFO term. 1000G EUR r=+0.40 with PGS002112 (recent depressed
+      mood), +0.37 with PGS004760 (MDD).
+  PGS002113:
+    cluster: psychiatric.depression
+    phenotype: trauma_related_depression
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of depression possibly related to a stressful or traumatic event (UKB 20447 yes)
+      coding: 'UKB 20447: 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_depression_stress_trauma
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Depression possibly related to stressful or traumatic event (20447)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/depression_stress_trauma.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 0)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; UKB 20447 is asked in the online mental health questionnaire, yes = case.
+      Weak 1000G EUR correlation with every other depression score (max |r| about 0.16), so it carries little shared
+      depression signal; direction rests on the coding script.
+  PGS002124:
+    cluster: substance_use.addiction_liability
+    phenotype: ever_addicted
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of ever having been addicted to any substance or behaviour (UKB 20401 yes)
+      coding: 'UKB 20401: 1 Yes, 0 No; case = Yes'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_ever_addicted
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Ever addicted to any substance or behaviour (20401)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/ever_addicted.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y < 0, NA, y > 0)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; yes = case. 1000G EUR r=+0.21 with PGS002222 (self-harm thoughts), +0.16
+      with F41 anxiety.
+  PGS002222:
+    cluster: psychiatric.self_harm
+    phenotype: self_harm_thoughts
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of having contemplated self-harm or recent thoughts of suicide or self-harm (UKB 20485
+        / 20513)
+      coding: UKB 20485 yes or UKB 20513 > 1 (several days or more) = case
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_self_harm_thoughts
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: '# Ever contemplated self-harm (20485)'
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-binary-pheno/self_harm_thoughts.rds")
+      confidence: high
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: y <- ifelse(y1 < 0 & y2 < 0, NA, y1 > 0 | y2 > 1)
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Privé ldpred2 binary score; case = ever contemplated self-harm (20485 yes) or recent thoughts of suicide/self-harm
+      on several days or more (20513 > 1). 1000G EUR r=+0.34 with PGS002036 (depression), +0.31 with PGS004760 (MDD).
 template:
   rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
     PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged

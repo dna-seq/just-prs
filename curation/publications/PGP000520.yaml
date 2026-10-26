@@ -1113,6 +1113,126 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR r=+0.90 with read anchor PGS000667. Sparse ML predictor (lpa_5), one of five
       near-identical training replicates.
+  PGS004206:
+    cluster: hepatic.bilirubin
+    phenotype: direct_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: direct serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Direct bilirubin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.98 with PGS000681.
+  PGS004207:
+    cluster: hepatic.bilirubin
+    phenotype: direct_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: direct serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Direct bilirubin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.97 with PGS000681.
+  PGS004208:
+    cluster: hepatic.bilirubin
+    phenotype: direct_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: direct serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Direct bilirubin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.98 with PGS000681.
+  PGS004209:
+    cluster: hepatic.bilirubin
+    phenotype: direct_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: direct serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Direct bilirubin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.98 with PGS000681.
+  PGS004210:
+    cluster: hepatic.bilirubin
+    phenotype: direct_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: direct serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Direct bilirubin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.98 with PGS000681.
 paper:
   pmid: '37468507'
   doi: 10.1038/s41598-023-37580-5

@@ -15183,3 +15183,61 @@ scores:
     unannotated_reason: GBE QT_FC1004570 value order undocumented and GBE page unreachable; 1000G correlations (r=+0.11
       to +0.15 with MDD and worry scores) suggest raw order (higher = less satisfied) but the top variant rs3737240
       suggests the reverse; too weak to decide.
+  PGS000924:
+    cluster: hepatic.bilirubin
+    phenotype: bilirubin_metabolism_disorder
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of a disorder of porphyrin or bilirubin metabolism (mostly Gilbert syndrome)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Disorders of porphyrin and bilirubin metabolism (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: UGT1A1 rs6742078 T and rs887829 T positive
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Tanigawa 2022 paper-wide rule (case status); the time-to-event setup is not described in the paper. Dominated
+      by UGT1A1 (Gilbert) loci; 1000G EUR r=+0.92 with total bilirubin PGS000697.
+  PGS001293:
+    cluster: hepatic.fatty_liver
+    phenotype: chronic_liver_disease
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of other diseases of liver (ICD-10 K76, mostly fatty liver)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other diseases of liver (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: PNPLA3 rs738409 G and TM6SF2 rs58542926 T positive
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Tanigawa 2022 paper-wide rule (case status); time-to-event setup not described in the paper. ICD-10 K76
+      block (mostly fatty liver). 1000G EUR r=+0.50 with PGS012549, +0.85 with PGS000655.

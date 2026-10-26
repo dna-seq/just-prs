@@ -5219,3 +5219,143 @@ domains:
             label: Ever contemplated self-harm or recent thoughts of suicide or self-harm (UKB 20485 /
               20513)
             sign: 1
+  hepatic:
+    label: Liver
+    concepts:
+      liver_enzymes:
+        label: Liver enzyme levels
+        axis: higher measured liver enzyme level
+        valence: neutral
+        valence_basis: Within the normal range the blood level of a liver enzyme is not good or bad on
+          its own; only marked elevation signals liver injury.
+        status: agent_proposed
+        aliases:
+        - liver function test
+        - LFT
+        - liver enzymes
+        - transaminases
+        - elevated liver enzymes
+        phenotypes:
+          alt_level:
+            label: Serum alanine aminotransferase (ALT) level
+            sign: 1
+            aliases:
+            - ALT
+            - SGPT
+          ast_level:
+            label: Serum aspartate aminotransferase (AST) level
+            sign: 1
+            aliases:
+            - AST
+            - SGOT
+          ggt_level:
+            label: Serum gamma-glutamyl transferase (GGT) level
+            sign: 1
+            aliases:
+            - GGT
+            - gamma GT
+          alp_level:
+            label: Serum alkaline phosphatase (ALP) level
+            sign: 1
+            aliases:
+            - ALP
+            - alk phos
+      ast_alt_ratio:
+        label: AST to ALT ratio
+        axis: relatively more AST than ALT in blood
+        valence: neutral
+        valence_basis: The ratio is a diagnostic pattern (high in alcoholic or advanced liver disease,
+          low in fatty liver), not good or bad on its own.
+        status: agent_proposed
+        aliases:
+        - De Ritis ratio
+        - AST/ALT
+        - liver enzyme ratio
+        phenotypes:
+          ast_alt_ratio:
+            label: AST to ALT ratio (log AST minus log ALT; higher = relatively more AST)
+            sign: 1
+      serum_albumin:
+        label: Serum albumin
+        axis: higher serum albumin level
+        valence: neutral
+        valence_basis: Albumin within the normal range carries no clear benefit or harm; only low albumin
+          in liver or kidney disease is a warning sign.
+        status: agent_proposed
+        aliases:
+        - albumin
+        - blood albumin
+        - liver protein synthesis
+        phenotypes:
+          serum_albumin:
+            label: Serum albumin level
+            sign: 1
+      bilirubin:
+        label: Bilirubin
+        axis: higher blood bilirubin
+        valence: neutral
+        valence_basis: Mildly high bilirubin is mostly Gilbert syndrome, which is harmless; only very
+          high levels mean jaundice from disease.
+        status: agent_proposed
+        aliases:
+        - jaundice
+        - Gilbert syndrome
+        - yellow skin
+        - UGT1A1
+        phenotypes:
+          total_bilirubin:
+            label: Total serum bilirubin
+            sign: 1
+          direct_bilirubin:
+            label: Direct (conjugated) serum bilirubin
+            sign: 1
+          bilirubin_metabolism_disorder:
+            label: Disorder of bilirubin excretion or metabolism (mostly Gilbert syndrome)
+            sign: 1
+      fatty_liver:
+        label: Fatty liver disease
+        axis: more liver fat and higher risk of fatty liver disease
+        valence: undesirable
+        valence_basis: Liver fat accumulation (MASLD/NAFLD) can progress to inflammation, fibrosis and
+          cirrhosis.
+        status: agent_proposed
+        aliases:
+        - fatty liver
+        - NAFLD
+        - MASLD
+        - hepatic steatosis
+        - healthy liver
+        phenotypes:
+          masld:
+            label: Metabolic dysfunction-associated (non-alcoholic) fatty liver disease
+            sign: 1
+          masld_severity:
+            label: NAFLD activity score (histological severity)
+            sign: 1
+          liver_fat:
+            label: Hepatic fat content (MRI or biopsy)
+            sign: 1
+          chronic_alt_elevation:
+            label: Unexplained chronic ALT elevation (NAFLD proxy)
+            sign: 1
+          chronic_liver_disease:
+            label: Other chronic non-alcoholic liver disease (phecode / ICD-10 K76, mostly fatty liver)
+            sign: 1
+      cirrhosis:
+        label: Liver cirrhosis
+        axis: higher risk of liver cirrhosis
+        valence: undesirable
+        valence_basis: Cirrhosis is end-stage scarring of the liver.
+        status: agent_proposed
+        aliases:
+        - cirrhosis
+        - liver scarring
+        - liver fibrosis
+        - alcoholic liver disease
+        phenotypes:
+          cirrhosis:
+            label: Liver cirrhosis (all causes)
+            sign: 1
+          alcoholic_cirrhosis:
+            label: Alcohol-related cirrhosis
+            sign: 1

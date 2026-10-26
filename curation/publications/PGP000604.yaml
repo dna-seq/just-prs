@@ -2825,6 +2825,438 @@ scores:
     status: agent_proposed
     notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
       trait (case status). Corroboration: 1000G EUR r=+0.89 with PGS004789 (hypothyroidism).'
+  PGS004715:
+    cluster: hepatic.liver_enzymes
+    phenotype: alt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alanine aminotransferase (ALT) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alanine aminotransferase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.73 with PGS000816.
+  PGS004716:
+    cluster: hepatic.liver_enzymes
+    phenotype: alt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alanine aminotransferase (ALT) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alanine aminotransferase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.76 with PGS000668.
+  PGS004717:
+    cluster: hepatic.liver_enzymes
+    phenotype: alt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alanine aminotransferase (ALT) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alanine aminotransferase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.47 with PGS000668.
+  PGS004718:
+    cluster: hepatic.liver_enzymes
+    phenotype: alt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alanine aminotransferase (ALT) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alanine aminotransferase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.76 with PGS000668.
+  PGS004719:
+    cluster: hepatic.liver_enzymes
+    phenotype: ast_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum aspartate aminotransferase (AST) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Aspartate aminotransferase level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.76 with PGS000673.
+  PGS004720:
+    cluster: hepatic.liver_enzymes
+    phenotype: ast_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum aspartate aminotransferase (AST) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Aspartate aminotransferase level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.86 with PGS000673.
+  PGS004721:
+    cluster: hepatic.liver_enzymes
+    phenotype: ast_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum aspartate aminotransferase (AST) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Aspartate aminotransferase level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.52 with PGS000673.
+  PGS004722:
+    cluster: hepatic.liver_enzymes
+    phenotype: ast_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum aspartate aminotransferase (AST) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Aspartate aminotransferase level
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.87 with PGS000673.
+  PGS004711:
+    cluster: hepatic.liver_enzymes
+    phenotype: alp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alkaline phosphatase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alkaline phosphatase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.90 with PGS000670.
+  PGS004712:
+    cluster: hepatic.liver_enzymes
+    phenotype: alp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alkaline phosphatase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alkaline phosphatase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.94 with PGS000670.
+  PGS004713:
+    cluster: hepatic.liver_enzymes
+    phenotype: alp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alkaline phosphatase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alkaline phosphatase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.87 with PGS000670.
+  PGS004714:
+    cluster: hepatic.liver_enzymes
+    phenotype: alp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alkaline phosphatase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alkaline phosphatase
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.94 with PGS000670.
+  PGS004707:
+    cluster: hepatic.serum_albumin
+    phenotype: serum_albumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum albumin level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: serum albumin amount
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.83 with PGS000669.
+  PGS004708:
+    cluster: hepatic.serum_albumin
+    phenotype: serum_albumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum albumin level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: serum albumin amount
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.80 with PGS000669.
+  PGS004709:
+    cluster: hepatic.serum_albumin
+    phenotype: serum_albumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum albumin level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: serum albumin amount
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.64 with PGS000669.
+  PGS004710:
+    cluster: hepatic.serum_albumin
+    phenotype: serum_albumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum albumin level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: serum albumin amount
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.80 with PGS000669.
+  PGS004731:
+    cluster: hepatic.bilirubin
+    phenotype: total_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total bilirubin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.94 with PGS000697.
+  PGS004732:
+    cluster: hepatic.bilirubin
+    phenotype: total_bilirubin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: total serum bilirubin
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Total bilirubin
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.91 with PGS000697.
 paper:
   pmid: '38508198'
   doi: 10.1016/j.xgen.2024.100523

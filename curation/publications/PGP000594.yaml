@@ -1,0 +1,34 @@
+pgp_id: PGP000594
+scores:
+  PGS004621:
+    cluster: hepatic.cirrhosis
+    phenotype: cirrhosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of liver cirrhosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Cohorts, association testing and meta-analysis
+      quote: Cases were defined using hospital or registry records (ICD-9 or ICD-10). Controls were defined as individuals
+        without a known history of cirrhosis.
+      confidence: high
+    - source: full_text
+      locator: 'Results > PRS and hepatobiliary outcomes (subject: PRSEUR)'
+      quote: 'had the highest OR for HCC, for which a 1 s.d. higher PRS conferred an OR of 1.67 (95% CI: 1.52–1.82),
+        followed by liver-related death (OR: 1.56 (95% CI: 1.44–1.69)) and alcoholic cirrhosis (OR: 1.47 (95% CI:
+        1.39–1.57)).'
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: PNPLA3 rs738408 C and rs10401969 T (non-risk alleles) negative
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Genome-wide European PRS (PRSEUR, PRS-CS/PRS-CSx on the stage-1 cirrhosis meta-GWAS without UKB). The
+      catalog OR 1.42 matches the paper's 15-SNP score, not PRSEUR; the direction (higher = more risk) holds either
+      way.

@@ -1,0 +1,27 @@
+pgp_id: PGP000136
+scores:
+  PGS000726:
+    cluster: hepatic.cirrhosis
+    phenotype: cirrhosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of liver cirrhosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: cirrhosis of liver
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: SERPINA1 Z rs28929474 T, PNPLA3 rs738409 G, TM6SF2 rs58542926 T positive; HSD17B13 rs6834314 G negative
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; catalog OR 1.32 for cirrhosis (no CI) and OR >1 for biopsy-confirmed cirrhosis, varices, HCC and liver
+      death; 1000G EUR r=+0.41 with PGS004621. Emdin 2020 12-variant log(OR) score.

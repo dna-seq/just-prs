@@ -1,0 +1,33 @@
+pgp_id: PGP000645
+scores:
+  PGS004913:
+    cluster: hepatic.cirrhosis
+    phenotype: alcoholic_cirrhosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of alcohol-related cirrhosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract > Results
+      quote: 'A 20-single-nucleotide polymorphisms PRS for ALC (PRSALC) was generated that stratified risk for ALC
+        comparing the top and bottom deciles of PRS in the 2 validation cohorts (ORs: 2.83 [95% CI: 1.82 -4.39]
+        in UK Biobank; 4.40 [1.56 -12.44] in Indiana Biobank Liver cohort).'
+      confidence: high
+    - source: full_text
+      locator: Methods > GenomALC cohort
+      quote: chronic heavy drinkers who reported consuming ≥80 g of alcohol/day (male) or 50 g/d (female) for ≥10
+        years with cirrhosis (cases) or without significant alcohol-associated liver disease (controls) were recruited.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: SERPINA1 Z T and PNPLA3 rs2294915 T positive; protective alleles negative, matching Table 1 ORs
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Cases = alcohol-associated cirrhosis vs heavy drinkers without liver disease; weights = ln(OR) per effect
+      allele (Table 1), protective alleles negative. Also top-vs-bottom decile OR 3.94 for MASLD-cirrhosis.

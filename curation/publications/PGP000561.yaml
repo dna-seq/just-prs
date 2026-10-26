@@ -3261,3 +3261,99 @@ scores:
       trait; Jung 2024 meta-PRS (disease PRS integrated with risk-factor PRSs) for ICD-10 F41. Catalog OR 1.30 (no
       CI) for F41 agrees; 1000G EUR r=+0.67 with PGS004451, +0.29 with PGS002136 (foreboding), +0.30 with PGS001016
       (hurt feelings).
+  PGS004329:
+    cluster: hepatic.liver_enzymes
+    phenotype: alt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum alanine aminotransferase (ALT) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Alanine aminotransferase (U/L)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.43 with PGS000668.
+  PGS004330:
+    cluster: hepatic.liver_enzymes
+    phenotype: ast_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum aspartate aminotransferase (AST) level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Aspartate aminotransferase (U/L)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.45 with PGS000673.
+  PGS004336:
+    cluster: hepatic.liver_enzymes
+    phenotype: ggt_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum gamma-glutamyl transferase level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Gamma glutamyltransferase (U/L)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.43 with PGS000683.
+  PGS004328:
+    cluster: hepatic.serum_albumin
+    phenotype: serum_albumin
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: serum albumin level
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_efo
+      quote: serum albumin amount
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; quantitative biomarker, higher score = higher measured level; 1000G EUR r=+0.41 with PGS000669.

@@ -2320,3 +2320,61 @@ scores:
       heart attack/angina/stroke/TIA (50,111 cases vs 47,174 for CAD), so it maps to composite CVD, not CAD. Corroborated
       by OR 1.34 per SD (Supplementary Tables 6/7, p < 1e-180) and 1000G EUR r = +0.91 with PGS004529 and +0.63
       with PGS004443 (CAD, same paper).
+  PGS004476:
+    cluster: digestive.gallstones
+    phenotype: gallstones
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of ICD-10 K80 (cholelithiasis)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (disease definition)
+      quote: Disease cases were identified by matching the first three characteristics of ICD-10 codes.
+      confidence: medium
+    - source: full_text
+      locator: Results (risk stratification)
+      quote: For disease PRSs, those in the top 10% PRS had an average 1.56-fold higher risk of disease compared
+        to those in the remaining 90% PRS.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: Top weights are ABCG5/ABCG8 rs4953023-A and rs41360247-C (both positive); these are LDL-lowering alleles
+        at the ABCG5/8 sterol-export locus, the same side as the gallstone-risk D19H allele. Indirect (no direct
+        gallstone association in GWAS Catalog for these rsIDs).
+    review_reason: null
+    status: agent_proposed
+    notes: Disease PRS (name disease.K80.score) trained on UK Biobank K80 case status. Catalog OR 1.22 per SD (no
+      CI). r = +0.77 with PGS004546; only +0.13 with PGS001174 (million-variant vs sparse score), not opposite.
+  PGS004546:
+    cluster: digestive.gallstones
+    phenotype: gallstones
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of ICD-10 K80 (cholelithiasis), meta PRS combining disease and risk-factor PRSs
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (disease definition)
+      quote: Disease cases were identified by matching the first three characteristics of ICD-10 codes.
+      confidence: medium
+    - source: full_text
+      locator: Results (risk stratification)
+      quote: For RFDiseasemetaPRSs, the top 10% had an average 1.76-fold higher risk.
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: ABCG5/ABCG8 rs41360247-C and rs4953023-A carry positive weights, as in PGS004476 (LDL-lowering alleles,
+        gallstone-risk side of the locus); indirect.
+    review_reason: null
+    status: agent_proposed
+    notes: Risk-factor + disease meta-PRS (name meta.K80.score). Catalog OR 1.30 per SD (no CI). r = +0.77 with
+      PGS004476.

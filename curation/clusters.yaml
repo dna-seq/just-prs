@@ -4541,3 +4541,22 @@ domains:
           t2star_thalamus_r:
             label: Median T2star in thalamus (R)
             sign: 1
+  digestive:
+    label: Digestive system
+    concepts:
+      gallstones:
+        label: Gallstones (cholelithiasis)
+        axis: higher risk of gallstones
+        valence: undesirable
+        valence_basis: Gallstones cause biliary colic, cholecystitis and pancreatitis and often lead to
+          gallbladder removal.
+        status: agent_proposed
+        aliases:
+        - gallbladder stones
+        - cholelithiasis
+        - biliary colic
+        - gallstone disease
+        phenotypes:
+          gallstones:
+            label: Gallstones / cholelithiasis (ICD-10 K80, diagnosis or treatment)
+            sign: 1

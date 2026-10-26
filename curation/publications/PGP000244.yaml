@@ -13816,3 +13816,38 @@ scores:
     notes: 'Catalog-only via the Tanigawa paper template (snpnet binomial model on case status; higher = more likely
       case). Score GBE_BIN_FC4006150 (UKB 6150 vascular/heart problems, answer High blood pressure): hypertension,
       not composite CVD. Lead variants agree.'
+  PGS001174:
+    cluster: digestive.gallstones
+    phenotype: gallstones
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of gallstones (cholelithiasis)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Cholelithiasis (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: 'ABCG8 D19H rs11887534 (chr2:43839108 GRCh38) C allele carries the largest weight (+0.596); GWAS Catalog
+        (Verma A) gives the G allele as lowering cholelithiasis risk, so C = risk. ABCG8 rs4245791 T +0.144 (GWAS
+        Catalog Joshi AD: T raises gallstone disease, OR 1.28).'
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet binomial model on gallstone case status (paper template; HC1125). The time-to-event label refers
+      to the catalog evaluation (AUROC only). 1000G EUR r=+0.80 with PGS001861 and +0.91 with PGS000942.

@@ -414,6 +414,65 @@ scores:
     notes: Same pattern as this paper's asthma PRS-CS/PRS-CSx deposits (PGS005141/PGS005148, recorded as inverted).
       Scoring file has only rsID/effect_allele/effect_weight, so the effect allele was probably mislabelled at deposit.
       As computed from the PGS Catalog file, a higher PGS005156 means LOWER stroke risk.
+  PGS005150:
+    cluster: digestive.gallstones
+    phenotype: gallstones
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: risk of gallstones (cholelithiasis), as the deposited scoring file behaves (suspected inverted effect
+        alleles)
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Disease selections
+      quote: 'For asthma, cataract, cholelithiasis, colon polyp, and stroke, cases were chosen if they met any of
+        these criteria: a diagnosis of each respective disease, taking medication for the same, or undergoing treatment
+        for it.'
+      confidence: low
+    - source: full_text
+      locator: Methods > Statistical analysis
+      quote: The perSD OR was derived using this logistic regression.
+      confidence: low
+    lead_variant_check:
+      status: agree
+      note: 'Relative to the recorded ''decreases'': all 6 variants shared with PGS001174 (D19H-anchored UKB gallstone
+        score) carry the opposite sign, incl. UGT1A1 rs4148325-T (bilirubin/gallstone risk) -0.0033 vs +0.0099,
+        GCKR rs1260326-C -0.0143 vs +0.0457, TM4SF4 rs2290846-A -0.0077 vs +0.0761; ABCG5/8 rs4953023-A -0.119 and
+        rs41360247-C -0.114 vs positive in both UKB K80 scores (PGS004476/PGS004546).'
+    review_reason: 'Suspected inverted deposit: paper reports perSD OR 1.19 [1.14-1.25] for cholelithiasis PRS-CSx
+      (Table 3) but the deposited file''s weights at shared/canonical loci are opposite to the UKB gallstone scores
+      and it correlates -0.33 in 1000G EUR with PGS001174/PGS001861/PGS002072; direction recorded as the file behaves.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (higher score = lower gallstone risk); the paper
+        says higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: 'Paper Table 3: PRS-CSx cholelithiasis perSD OR 1.19 [1.14-1.25]. File: 6/6 variants shared with
+        PGS001174 opposite (UGT1A1 rs4148325, GCKR rs1260326, TM4SF4 rs2290846/rs3749574, rs1105879, rs7908745);
+        ABCG5/8 rs4953023-A/rs41360247-C negative vs positive in PGS004476/4546; 1000G EUR r = -0.33 vs three UKB
+        gallstone scores. Same pattern as this paper''s asthma (PGS005141/5148) and stroke (PGS005156) deposits.'
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics (OR/AUROC) describe the authors' own score, not this inverted file,
+        so they must not raise its quality tier.
+      paper_direction: null
+      evidence: Catalog BETA 1.19 is the paper's perSD OR for its non-inverted score; the deposited file behaves
+        as its negation.
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: PRS-CSx (EAS+EUR) cholelithiasis score evaluated in Korean HEXA (1,784 cases). As computed from the PGS
+      Catalog file, a higher score means LOWER gallstone risk. Anti-correlation is moderate (-0.33, EUR panel, cross-ancestry
+      score), so a human should confirm; the sign evidence at shared loci is unanimous.
 paper:
   pmid: '40045046'
   doi: 10.1038/s42003-025-07767-9

@@ -1,0 +1,49 @@
+slug: cholelithiasis
+query: gallstones
+match:
+  terms:
+  - calculus of gallbladder
+  - cholecystitis
+  - cholelithiasis
+  - gallstone
+  efo_ids:
+  - MONDO_0012672
+  exclude: []
+anchor: PGS000707
+status: resolved
+concepts:
+- digestive.gallstones
+scores:
+  PGS000707:
+    decision: out_of_scope
+    note: 'cholecystitis (own ontology group "cholecystitis"; inflammation, not stones)'
+  PGS000942:
+    decision: out_of_scope
+    note: 'cholecystitis (own ontology group "cholecystitis")'
+  PGS000943:
+    decision: out_of_scope
+    note: 'cholecystitis time-to-event (own ontology group "cholecystitis")'
+  PGS001174:
+    decision: in_scope
+    note: null
+  PGS001861:
+    decision: out_of_scope
+    note: '"Cholelithiasis and cholecystitis" combined (own ontology group); fits digestive.gallstones if that group reuses it'
+  PGS002072:
+    decision: out_of_scope
+    note: '"Cholelithiasis and cholecystitis" combined (own ontology group); fits digestive.gallstones if that group reuses it'
+  PGS004476:
+    decision: in_scope
+    note: null
+  PGS004546:
+    decision: in_scope
+    note: null
+  PGS005150:
+    decision: in_scope
+    note: 'suspected inverted deposit (file behaves as lower gallstone risk); in review'
+summary: 'Four gallstone (cholelithiasis) scores, all in digestive.gallstones. PGS001174 (UKB snpnet, D19H rs11887534-C
+  top weight), PGS004476 and PGS004546 (UKB K80 disease / meta PRS, OR 1.22 / 1.30) mean higher = more gallstone risk.
+  PGS005150 (PRS-CSx EAS+EUR, Jung 2025) is the odd one: the paper reports perSD OR 1.19 but every variant shared with
+  PGS001174 carries the opposite sign and it correlates -0.33 with the UKB scores, so it is recorded as an inverted
+  deposit (higher file score = lower risk) and sent to review, like the same paper''s asthma and stroke files.
+  Cholecystitis and combined gallstones+cholecystitis scores are left to their own groups.'

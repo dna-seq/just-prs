@@ -1,0 +1,46 @@
+pgp_id: PGP000641
+scores:
+  PGS004909:
+    cluster: substance_use.nicotine_metabolism
+    phenotype: nicotine_metabolite_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: nicotine metabolite ratio (CYP2A6 activity); reduced-function alleles carry negative weights
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: nicotine_metabolite_ratio
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (wGRS construction)
+      quote: the number of risk alleles were summed using their assigned weights (Table 1); this summed value was
+        then adjusted by the addition of 2.0
+      confidence: high
+    - source: full_text
+      locator: Table 1
+      quote: '*4 (CYP2A6 deletion) - Deletion Deletion of exons 1–9 −1.707 −0.350'
+      confidence: high
+    - source: full_text
+      locator: Figure 2 legend
+      quote: The wGRS explained 33.8% of the variance in log-NMR in both cohorts.
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: CYP2A6*4 -0.35, *12 -0.272, *2 -0.25, *9 -0.16 (loss-of-function alleles negative); rs56113850-C +0.135
+        matches the GWAS NMR-raising allele; weights match paper Table 1
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: European 7-variant CYP2A6 wGRS (deposited without the +2.0 intercept, which does not affect percentiles).
+      Higher = higher NMR = faster metabolizer; low wGRS identifies slow metabolizers (NMR < 0.31). Star-allele
+      effect alleles have no rsID and may not be scorable from a VCF.
+paper:
+  pmid: '30815984'
+  doi: 10.1111/adb.12741
+  title: Evaluation of a weighted genetic risk score for the prediction of biomarkers of CYP2A6 activity.
+evidence_read:
+  abstract: true
+  full_text: pmc_author_manuscript
+  supplement: []

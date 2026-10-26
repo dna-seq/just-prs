@@ -112,6 +112,62 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). Corroborated by 1000G EUR r = +0.82 with PGS002752 and +0.83
       with PGS000203; catalog beta 0.13 on BMI-adjusted drinks per week has no CI.
+  PGS005215:
+    cluster: substance_use.addiction_liability
+    phenotype: addiction_risk_factor
+    measurement_kind: composite
+    score_effect:
+      direction: decreases
+      target: general addiction liability (addiction-rf, genomic SEM common factor of substance use disorders)
+      coding: As distributed the file is inverted; higher score = lower addiction liability.
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: abstract
+      locator: Abstract > Methods
+      quote: we examined genome-wide PRSs for the Alcohol Use Disorders Identification Test (AUDIT), drinks per
+        week, alcohol use disorder (AUD), problematic alcohol use (PAU), and general addiction, in relation to 42
+        curated phenotypes.
+      confidence: medium
+    - source: abstract
+      locator: Abstract > Results
+      quote: All PRSs were positively associated with alcohol reinforcing value and drinking motives
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Addiction risk factors
+      confidence: medium
+    lead_variant_check:
+      status: disagree
+      note: 'top 8: 5 have GWAS Catalog addiction/alcohol/OUD data and all 5 are opposite (rs1813006 T+, Hatoum
+        risk G; rs3114045 C-, Hatoum T decreases; rs1260326 C-, Hatoum T decreases; rs1799971 G+, OUD risk A; rs34333163
+        G+, SUD risk A); 3 not in GWAS Catalog'
+    review_reason: Suspected inverted deposit; direction recorded as the file is distributed, opposite to the paper.
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (higher score = lower addiction liability); the
+        paper says all PRSs, including general addiction, were positively associated. Weights are not modified.
+      paper_direction: increases
+      evidence: 'Paper abstract: all PRSs positively associated with alcohol reinforcing value and drinking motives.
+        File: 5/5 lead loci with GWAS Catalog data carry the non-risk allele as the positive-weight allele (rs1813006,
+        rs3114045, rs1260326 match Hatoum 2023 addiction-rf Table 1 with opposite sign; OPRM1 rs1799971 G weighted
+        up although A is the OUD risk allele). 1000G EUR r = -0.73 with PGS003849 (Hatoum addiction-rf PRS-CS).'
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The catalog beta (0.01 on AUDIT-P) describes the authors' own score, not this inverted file.
+      evidence: Deposited file is the negation of the authors' score (see deposit_inverted).
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: lassosum PRS from the Hatoum 2023 addiction-rf GWAS (catalog method lassosum, pseudo-validation). Only
+      the abstract was readable. As distributed, a high percentile means LOWER genetic addiction liability. Report
+      to PGS Catalog.
 paper:
   pmid: '38261344'
   doi: 10.1093/alcalc/agad093

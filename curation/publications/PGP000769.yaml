@@ -1,0 +1,57 @@
+pgp_id: PGP000769
+scores:
+  PGS005323:
+    cluster: respiratory.pulmonary_fibrosis
+    phenotype: idiopathic_pulmonary_fibrosis
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: 'risk of idiopathic pulmonary fibrosis AS DISTRIBUTED (allele-inverted: higher score = lower IPF risk)'
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: performance.trait_reported
+      quote: incident idiopathic pulmonary fibrosis cases
+      confidence: low
+    lead_variant_check:
+      status: disagree
+      note: 'Canonical IPF risk alleles carry negative weights: DSP rs2076295 G -0.0435 (GWAS risk G, OR 1.44-1.49),
+        DPP9 rs12610495 G -0.035 (GWAS risk G, OR 1.28-1.31); TOLLIP rs5743890 C +0.054 (GWAS risk allele A/T, OR
+        1.64). rs35678986 and rs5744034 are opposite to PGS001791.'
+    review_reason: Suspected inverted deposit; direction recorded as the file is distributed, opposite to the paper's
+      HR 1.61.
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (higher score = lower IPF risk); the paper reports
+        HR 1.61 for incident IPF, i.e. higher = increases. Weights are not modified.
+      paper_direction: increases
+      evidence: 'Paper (PGS Catalog performance): HR 1.61, AUROC 0.77 for incident IPF. File: DSP rs2076295 G and
+        DPP9 rs12610495 G (GWAS Catalog IPF risk alleles) carry negative weights, TOLLIP rs5743890 protective C
+        positive. 1000G EUR r = -0.47 with PGS012550, -0.50 with PGS004695, -0.21/-0.24 with PGS001030/PGS001251,
+        -0.10 with PGS001791; all other IPF scores correlate positively with each other.'
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's HR 1.61 and AUROC 0.77 describe the authors' score, not this inverted file.
+      evidence: Deposited file is the negation of the authors' score (see deposit_inverted).
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: PRS-CS (phi = 1e-4) IPF score; paper is a non-open-access research letter, not read. As distributed,
+      a high percentile means LOWER genetic IPF risk. Same pattern as the PRS-CSx stroke deposit PGS005156. Report
+      to PGS Catalog.
+paper:
+  pmid: '41151026'
+  doi: 10.1164/rccm.202505-1202rl
+  title: Plasma Proteomic Biomarkers Underlying Polygenic Risk of Idiopathic Pulmonary Fibrosis.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

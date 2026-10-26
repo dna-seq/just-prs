@@ -1,0 +1,32 @@
+pgp_id: PGP000448
+scores:
+  PGS003450:
+    cluster: cancer.multiple_myeloma
+    phenotype: multiple_myeloma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of multiple myeloma
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: MM PRS evaluated on CLL/NHL subtypes in Berndt 2022; shared B-cell susceptibility, OR>1 expected
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Multiple myeloma
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs4487645 C, rs4273077 G (TNFRSF13B), rs6066835 C carry positive weights = GWAS Catalog MM risk alleles
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are log(OR) per-allele effects on MM from
+      published GWAS; catalog metrics are evaluations on NHL subtypes (OR 1.09 [1.02, 1.16] on CLL), not on MM.
+      Corroborated by 1000G EUR r=+0.87 with PGS000653 (OR 1.33 on MM).
+paper:
+  pmid: '36273105'
+  doi: 10.1038/s41375-022-01711-0
+  title: Distinct germline genetic susceptibility profiles identified for common non-Hodgkin lymphoma subtypes.

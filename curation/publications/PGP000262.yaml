@@ -205,6 +205,44 @@ scores:
       PGS001793/PGS001798, +0.44/+0.47 with PGS004942 (HR 1.18 on ischaemic stroke), +0.33 to +0.37 with PGP000517
       scores. Its only 1000G EUR anti-correlation inside the stroke concept is with PGS005156 (PRS-CSx EAS+EUR,
       PGP000704), which anti-correlates with every stroke score and is recorded as an inverted deposit.
+  PGS001791:
+    cluster: respiratory.pulmonary_fibrosis
+    phenotype: idiopathic_pulmonary_fibrosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of idiopathic pulmonary fibrosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > PRS-CS
+      quote: We ran PRS-CS using both the grid model and automated optimization model (referred to as auto model)
+      confidence: medium
+    - source: full_text
+      locator: Data and code availability
+      quote: The PRS weights re-estimated using PRC-CS-auto for multi-ancestry GWAS including all biobanks and leave-UKBB-out
+        multi-ancestry GWAS have been uploaded to PGS Catalog
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Idiopathic pulmonary fibrosis
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: DSP rs2076295 G (IPF risk, GWAS Catalog OR 1.44-1.49) +0.0315 here; TERT rs10069690 C (increases postinflammatory
+        pulmonary fibrosis, PMID 39024449) +0.0357. MUC5B rs35705950 is not among the top 40 weights (likely absent
+        from the HapMap3-based PRS-CS set). rs35678986 / rs5744034 have no GWAS Catalog record; both are opposite
+        to the inverted PGS005323.
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: GBMI leave-UKBB-out IPF meta-analysis, PRS-CS-auto (1KG-EUR LD). The paper does not state the effect
+      allele; direction follows PRS-CS posterior effects on IPF risk and the DSP/TERT lead loci. 1000G EUR r is
+      weak with the other IPF scores (+0.12 to +0.17) because the sparse scores are dominated by MUC5B rs35705950,
+      which this file lacks; r = -0.10 with the inverted PGS005323.
 paper:
   pmid: '36777179'
   doi: 10.1016/j.xgen.2022.100241

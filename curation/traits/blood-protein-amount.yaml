@@ -1,0 +1,348 @@
+slug: blood-protein-amount
+query: blood protein amount
+match:
+  terms:
+  - plasma protein levels
+  - protein levels
+  - serum levels
+  efo_ids:
+  - OBA_VT0005416
+  exclude: []
+anchor: PGS000295
+status: resolved
+concepts:
+- circulating_proteins.adm
+- circulating_proteins.agrp
+- circulating_proteins.ca_125
+- circulating_proteins.ccl20
+- circulating_proteins.ccl3
+- circulating_proteins.ccl4
+- circulating_proteins.cd40
+- circulating_proteins.chi3l1
+- circulating_proteins.csf_1
+- circulating_proteins.cstb
+- circulating_proteins.ctsd
+- circulating_proteins.ctsl1
+- circulating_proteins.cx3cl1
+- circulating_proteins.cxcl1
+- circulating_proteins.cxcl16
+- circulating_proteins.cxcl6
+- circulating_proteins.dkk_1
+- circulating_proteins.ecp
+- circulating_proteins.egf
+- circulating_proteins.esm_1
+- circulating_proteins.fabp4
+- circulating_proteins.fas
+- circulating_proteins.fgf_23
+- circulating_proteins.fs
+- circulating_proteins.gal
+- circulating_proteins.gal_3
+- circulating_proteins.gdf_15
+- circulating_proteins.gh
+- circulating_proteins.hb_egf
+- circulating_proteins.hgf
+- circulating_proteins.hk11
+- circulating_proteins.hsp_27
+- circulating_proteins.il_18
+- circulating_proteins.il_1ra
+- circulating_proteins.il_27
+- circulating_proteins.il_6
+- circulating_proteins.il_6ra
+- circulating_proteins.il_8
+- circulating_proteins.il16
+- circulating_proteins.itgb1bp2
+- circulating_proteins.kim_1
+- circulating_proteins.klk6
+- circulating_proteins.lep
+- circulating_proteins.lox_1
+- circulating_proteins.mamp
+- circulating_proteins.mb
+- circulating_proteins.mcp_1
+- circulating_proteins.mmp_1
+- circulating_proteins.mmp_10
+- circulating_proteins.mmp_12
+- circulating_proteins.mmp_3
+- circulating_proteins.mmp_7
+- circulating_proteins.mpo
+- circulating_proteins.nt_pro_bnp
+- circulating_proteins.opg
+- circulating_proteins.pappa
+- circulating_proteins.par_1
+- circulating_proteins.pdgf_subunit_b
+- circulating_proteins.pecam_1
+- circulating_proteins.plgf
+- circulating_proteins.psgl_1
+- circulating_proteins.ptx3
+- circulating_proteins.rage
+- circulating_proteins.ren
+- circulating_proteins.retn
+- circulating_proteins.scf
+- circulating_proteins.spon1
+- circulating_proteins.st2
+- circulating_proteins.tf
+- circulating_proteins.tm
+- circulating_proteins.tnf_r1
+- circulating_proteins.tnf_r2
+- circulating_proteins.tnfsf14
+- circulating_proteins.trail
+- circulating_proteins.trail_r2
+- circulating_proteins.trance
+- circulating_proteins.u_par
+- circulating_proteins.vegf_a
+- circulating_proteins.vegf_d
+- infection_serology.jc_polyomavirus_antibody
+- infection_serology.merkel_cell_polyomavirus_antibody
+- infection_serology.htlv1_antibody
+scores:
+  PGS000217:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000218:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000219:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000220:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000221:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000222:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000223:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000224:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000225:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000226:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000227:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000228:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000229:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000230:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000231:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000232:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000233:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000234:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000235:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000236:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000237:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000238:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000239:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000240:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000241:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000242:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000243:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000244:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000245:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000246:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000247:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000248:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000249:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000250:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000251:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000252:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000253:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000254:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000255:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000256:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000257:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000258:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000259:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000260:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000261:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000262:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000263:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000264:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000265:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000266:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000267:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000268:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000269:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000270:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000271:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000272:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000273:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000274:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000275:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000276:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000277:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000278:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000279:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000280:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000281:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000282:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000283:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000284:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000285:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000286:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000287:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000288:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000289:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000290:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000291:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000292:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000293:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000294:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS000295:
+    decision: in_scope
+    note: one Olink CVD-I protein level; own concept per protein
+  PGS001081:
+    decision: in_scope
+    note: antibody (serology MFI) level to a viral antigen; own concept per virus
+  PGS001082:
+    decision: in_scope
+    note: antibody (serology MFI) level to a viral antigen; own concept per virus
+  PGS001407:
+    decision: in_scope
+    note: antibody (serology MFI) level to a viral antigen; own concept per virus
+summary: '82 scores: 79 LDpred scores for single Olink CVD-I proteins (Folkersen 2020, SCALLOP) and 3 UK Biobank
+  serology antibody levels (Tanigawa 2022 snpnet). Each protein or virus is its own concept with one + phenotype;
+  higher score = higher circulating level. Directions come from the papers'' construction (LDpred on protein GWAS;
+  Gaussian snpnet on the median MFI), with the ST2 Mendelian-randomization passage stating it explicitly. Negative
+  1000G correlations are all between different proteins, so no sign flips. Allele-level lead-variant checks were
+  not run; top variants sit at the expected cis loci where looked at.'

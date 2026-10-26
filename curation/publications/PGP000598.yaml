@@ -1,0 +1,37 @@
+pgp_id: PGP000598
+scores:
+  PGS004695:
+    cluster: respiratory.pulmonary_fibrosis
+    phenotype: idiopathic_pulmonary_fibrosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of idiopathic pulmonary fibrosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Idiopathic pulmonary fibrosis
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: MUC5B rs35705950 T log(OR) +1.577; DSP rs2076295 G +0.378; KIF15 rs78238620 A +0.432 (all canonical
+        IPF risk alleles).
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). 23-SNP log(OR) score; PGS Catalog weights are per-allele effects
+      on the reported trait; no directional metric, corroborated by 1000G EUR r=+0.92 with PGS012550 (HR 1.7 [1.62,
+      1.78] on incident IPF).
+paper:
+  pmid: '37414299'
+  doi: 10.1016/j.chemosphere.2023.139362
+  title: 'Low-level ambient sulfur dioxide exposure and genetic susceptibility associated with incidence of idiopathic
+    pulmonary fibrosis: A national prospective cohort study.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

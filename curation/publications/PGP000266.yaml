@@ -1,0 +1,109 @@
+pgp_id: PGP000266
+scores:
+  PGS002233:
+    cluster: substance_use.nicotine_metabolism
+    phenotype: nicotine_metabolite_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: nicotine metabolite ratio (3'-hydroxycotinine/cotinine), i.e. faster CYP2A6 nicotine metabolism
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: nicotine_metabolite_ratio
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results (ARIC, Table 2)
+      quote: In ARIC, higher NMR PRS, which indicated faster metabolism, were associated with higher number of cigarettes
+        smoked per day
+      confidence: high
+    - source: full_text
+      locator: Table 1 (Loukola PRS row, log NMR)
+      quote: Loukola PRS 0.15 0.046–0.26 6.0E-03 0.092
+      confidence: high
+    - source: full_text
+      locator: Methods
+      quote: A total of 27 SNPs were used in PRS from Loukola
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: rs56113850-C +0.653 (C raises NMR per GWAS Catalog and El-Boraie wGRS PGS004909); rs4001921-T +0.575
+        (opposite to PGS002234's rs4001921-C); all top loci in CYP2A6 region; 1000G r = +0.66 with PGS004922, +0.72
+        with PGS004909
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Loukola et al. 2015 NMR GWAS weights (27 SNPs, PRSice). Higher score = higher NMR = faster nicotine metabolism.
+  PGS002234:
+    cluster: substance_use.nicotine_metabolism
+    phenotype: nicotine_metabolite_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: decreases
+      target: nicotine metabolite ratio (3'-hydroxycotinine/cotinine), as the deposited weights are oriented (higher
+        file score = slower metabolism)
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: Catalog beta 2.38 (log NMR) was computed by the authors on their own Baurley PRS (higher = faster metabolism),
+        not on the deposited file, so it stays positive.
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results (ARIC, Table 2)
+      quote: In ARIC, higher NMR PRS, which indicated faster metabolism, were associated with higher number of cigarettes
+        smoked per day
+      confidence: high
+    - source: full_text
+      locator: Table 1 (Baurley PRS row, log NMR)
+      quote: Baurley PRS 0.23 0.12–0.35 1.8E-04 0.16
+      confidence: high
+    lead_variant_check:
+      status: disagree
+      note: rs56113850-T +0.327 (T lowers NMR per GWAS Catalog; PGS002233 and PGS004909 weight C positive); rs4001921-C
+        +0.312 (PGS002233 weights T +0.575); rs12459249-T +0.313 (rs12459249-C raises NMR per GWAS Catalog PMID
+        28921760 and PGS004922 weights C +0.107)
+    review_reason: 'Suspected inverted deposit: 3 canonical CYP2A6 loci opposite and 1000G r = -0.94 vs PGS004922
+      (-0.68 vs PGS002233, -0.81 vs PGS004909) while the paper says higher PRS = faster metabolism.'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction/polarity describe the file as distributed (higher score = lower NMR, slower metabolism);
+        the paper says higher = increases NMR. Weights are not modified.
+      paper_direction: increases
+      evidence: rs56113850-T +0.327, rs4001921-C +0.312, rs12459249-T +0.313 are the NMR-lowering alleles (opposite
+        to PGS002233 from the same paper, to PGS004909/PGS004922 and to GWAS Catalog NMR associations); 1000G EUR
+        r = -0.94 vs PGS004922, -0.81 vs PGS004909, -0.68 vs PGS002233. The paper reports a positive beta of the
+        Baurley PRS on log NMR (Table 1) and calls higher PRS faster metabolism. Supplementary Table 3 (weights)
+        could not be downloaded.
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: The paper's performance metrics describe the authors' own score, not this inverted file, so they must
+        not raise its quality tier.
+      paper_direction: null
+      evidence: Metrics (beta 2.38 on log NMR) were reported for the non-inverted Baurley PRS; the deposited file
+        behaves as its negation.
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Baurley et al. 2016 NMR GWAS weights (10 SNPs). The deposit appears coded on the NMR-lowering alleles,
+      so as distributed a high percentile means a slower nicotine metabolizer (lower NMR).
+paper:
+  pmid: '30442082'
+  doi: 10.2217/pgs-2018-0081
+  title: Use of polygenic risk scores of nicotine metabolism in predicting smoking behaviors.
+evidence_read:
+  abstract: true
+  full_text: pmc_author_manuscript
+  supplement: []
+exploration_findings: 'Supplementary Tables 2-3 with the allele coding were not downloadable (publisher returned
+  HTML); the inversion call for PGS002234 rests on lead loci and 1000G anti-correlation plus the paper''s stated
+  direction.
+
+  '

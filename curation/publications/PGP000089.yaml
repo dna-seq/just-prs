@@ -1,0 +1,2487 @@
+pgp_id: PGP000089
+scores:
+  PGS000217:
+    cluster: circulating_proteins.adm
+    phenotype: adm_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating ADM level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000218:
+    cluster: circulating_proteins.agrp
+    phenotype: agrp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating AGRP level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000219:
+    cluster: circulating_proteins.ca_125
+    phenotype: ca_125_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CA-125 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000220:
+    cluster: circulating_proteins.ccl20
+    phenotype: ccl20_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CCL20 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000221:
+    cluster: circulating_proteins.ccl3
+    phenotype: ccl3_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CCL3 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000222:
+    cluster: circulating_proteins.ccl4
+    phenotype: ccl4_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CCL4 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000223:
+    cluster: circulating_proteins.cd40
+    phenotype: cd40_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CD40 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000224:
+    cluster: circulating_proteins.chi3l1
+    phenotype: chi3l1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CHI3L1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000225:
+    cluster: circulating_proteins.csf_1
+    phenotype: csf_1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CSF-1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000226:
+    cluster: circulating_proteins.cstb
+    phenotype: cstb_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CSTB level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000227:
+    cluster: circulating_proteins.ctsd
+    phenotype: ctsd_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CTSD level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000228:
+    cluster: circulating_proteins.ctsl1
+    phenotype: ctsl1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CTSL1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000229:
+    cluster: circulating_proteins.cx3cl1
+    phenotype: cx3cl1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CX3CL1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000230:
+    cluster: circulating_proteins.cxcl1
+    phenotype: cxcl1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CXCL1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000231:
+    cluster: circulating_proteins.cxcl16
+    phenotype: cxcl16_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CXCL16 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000232:
+    cluster: circulating_proteins.cxcl6
+    phenotype: cxcl6_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating CXCL6 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000233:
+    cluster: circulating_proteins.dkk_1
+    phenotype: dkk_1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating Dkk-1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000234:
+    cluster: circulating_proteins.ecp
+    phenotype: ecp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating ECP level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000235:
+    cluster: circulating_proteins.egf
+    phenotype: egf_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating EGF level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000236:
+    cluster: circulating_proteins.esm_1
+    phenotype: esm_1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating ESM-1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000237:
+    cluster: circulating_proteins.fabp4
+    phenotype: fabp4_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating FABP4 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000238:
+    cluster: circulating_proteins.fas
+    phenotype: fas_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating FAS level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000239:
+    cluster: circulating_proteins.fgf_23
+    phenotype: fgf_23_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating FGF-23 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000240:
+    cluster: circulating_proteins.fs
+    phenotype: fs_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating FS level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000241:
+    cluster: circulating_proteins.gal
+    phenotype: gal_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating GAL level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000242:
+    cluster: circulating_proteins.gal_3
+    phenotype: gal_3_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating Gal-3 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000243:
+    cluster: circulating_proteins.gdf_15
+    phenotype: gdf_15_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating GDF-15 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000244:
+    cluster: circulating_proteins.gh
+    phenotype: gh_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating GH level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000245:
+    cluster: circulating_proteins.hb_egf
+    phenotype: hb_egf_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating HB-EGF level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000246:
+    cluster: circulating_proteins.hgf
+    phenotype: hgf_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating HGF level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000247:
+    cluster: circulating_proteins.hk11
+    phenotype: hk11_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating hK11 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000248:
+    cluster: circulating_proteins.hsp_27
+    phenotype: hsp_27_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating HSP 27 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000249:
+    cluster: circulating_proteins.il_18
+    phenotype: il_18_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating IL-18 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000250:
+    cluster: circulating_proteins.il_1ra
+    phenotype: il_1ra_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating IL-1ra level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000251:
+    cluster: circulating_proteins.il_27
+    phenotype: il_27_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating IL-27 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000252:
+    cluster: circulating_proteins.il_6
+    phenotype: il_6_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating IL-6 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000253:
+    cluster: circulating_proteins.il_6ra
+    phenotype: il_6ra_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating IL-6RA level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top 5 variants all at the IL6R cis locus (chr1:154.5 Mb); allele direction not checked against GWAS
+        Catalog
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000254:
+    cluster: circulating_proteins.il_8
+    phenotype: il_8_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating IL-8 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000255:
+    cluster: circulating_proteins.il16
+    phenotype: il16_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating IL16 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000256:
+    cluster: circulating_proteins.itgb1bp2
+    phenotype: itgb1bp2_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating ITGB1BP2 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000257:
+    cluster: circulating_proteins.kim_1
+    phenotype: kim_1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating KIM-1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000258:
+    cluster: circulating_proteins.klk6
+    phenotype: klk6_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating KLK6 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000259:
+    cluster: circulating_proteins.lep
+    phenotype: lep_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating LEP level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000260:
+    cluster: circulating_proteins.lox_1
+    phenotype: lox_1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating LOX-1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000261:
+    cluster: circulating_proteins.mamp
+    phenotype: mamp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating mAmP level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000262:
+    cluster: circulating_proteins.mb
+    phenotype: mb_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating MB level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000263:
+    cluster: circulating_proteins.mcp_1
+    phenotype: mcp_1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating MCP-1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top 5 variants at the CCR2/CCR5 locus (chr3:46.3 Mb), a known MCP-1 pQTL; allele direction not checked
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000264:
+    cluster: circulating_proteins.mmp_1
+    phenotype: mmp_1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating MMP-1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000265:
+    cluster: circulating_proteins.mmp_10
+    phenotype: mmp_10_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating MMP-10 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000266:
+    cluster: circulating_proteins.mmp_12
+    phenotype: mmp_12_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating MMP-12 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000267:
+    cluster: circulating_proteins.mmp_3
+    phenotype: mmp_3_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating MMP-3 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000268:
+    cluster: circulating_proteins.mmp_7
+    phenotype: mmp_7_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating MMP-7 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000269:
+    cluster: circulating_proteins.mpo
+    phenotype: mpo_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating MPO level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000270:
+    cluster: circulating_proteins.nt_pro_bnp
+    phenotype: nt_pro_bnp_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating NT-pro BNP level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000271:
+    cluster: circulating_proteins.opg
+    phenotype: opg_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating OPG level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000272:
+    cluster: circulating_proteins.pappa
+    phenotype: pappa_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PAPPA level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000273:
+    cluster: circulating_proteins.par_1
+    phenotype: par_1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PAR-1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000274:
+    cluster: circulating_proteins.pdgf_subunit_b
+    phenotype: pdgf_subunit_b_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PDGF subunit B level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000275:
+    cluster: circulating_proteins.pecam_1
+    phenotype: pecam_1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PECAM-1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000276:
+    cluster: circulating_proteins.plgf
+    phenotype: plgf_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PlGF level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000277:
+    cluster: circulating_proteins.psgl_1
+    phenotype: psgl_1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PSGL-1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000278:
+    cluster: circulating_proteins.ptx3
+    phenotype: ptx3_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating PTX3 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000279:
+    cluster: circulating_proteins.rage
+    phenotype: rage_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating RAGE level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000280:
+    cluster: circulating_proteins.ren
+    phenotype: ren_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating REN level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000281:
+    cluster: circulating_proteins.retn
+    phenotype: retn_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating RETN level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000282:
+    cluster: circulating_proteins.scf
+    phenotype: scf_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating SCF level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000283:
+    cluster: circulating_proteins.spon1
+    phenotype: spon1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating SPON1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000284:
+    cluster: circulating_proteins.st2
+    phenotype: st2_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating ST2 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    - source: full_text
+      locator: Results > Mendelian randomization using polygenic risk scores
+      quote: an increase in the PRS equivalent to a 1 standard deviation higher circulating ST2, corresponded to
+        a 8.6 % (95%CI 3.8%, 13.2%; P=0.004) reduction in the relative risk of asthma
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: top 5 variants at the IL1RL1 cis locus (chr2:102.3 Mb); allele direction not checked
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000285:
+    cluster: circulating_proteins.tf
+    phenotype: tf_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating TF level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000286:
+    cluster: circulating_proteins.tm
+    phenotype: tm_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating TM level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000287:
+    cluster: circulating_proteins.tnf_r1
+    phenotype: tnf_r1_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating TNF-R1 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000288:
+    cluster: circulating_proteins.tnf_r2
+    phenotype: tnf_r2_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating TNF-R2 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000289:
+    cluster: circulating_proteins.tnfsf14
+    phenotype: tnfsf14_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating TNFSF14 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000290:
+    cluster: circulating_proteins.trail
+    phenotype: trail_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating TRAIL level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000291:
+    cluster: circulating_proteins.trail_r2
+    phenotype: trail_r2_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating TRAIL-R2 level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000292:
+    cluster: circulating_proteins.trance
+    phenotype: trance_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating TRANCE level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000293:
+    cluster: circulating_proteins.u_par
+    phenotype: u_par_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating U-PAR level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000294:
+    cluster: circulating_proteins.vegf_a
+    phenotype: vegf_a_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating VEGF-A level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+  PGS000295:
+    cluster: circulating_proteins.vegf_d
+    phenotype: vegf_d_level
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: circulating VEGF-D level (Olink NPX, rank-inverse normalised)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Polygenic risk score calculation
+      quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP
+        allele for those of other SNP alleles in linkage disequilibrium (LD) with it
+      confidence: medium
+    - source: full_text
+      locator: Abstract/Introduction
+      quote: protein-centric polygenic risk scores (PRS) can predict a substantial fraction of inter-individual
+        variability in circulating protein levels
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: not run; direction follows the LDpred construction on protein-level GWAS
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: LDpred score trained on SCALLOP GWAS of this protein; higher score = higher predicted protein level (variance-explained
+      evaluation in MDC, no directional metric). Different proteins are separate concepts, so anti-correlation with
+      other proteins' scores is expected.
+paper:
+  pmid: '33067605'
+  doi: 10.1038/s42255-020-00287-2
+  title: Genomic and drug target evaluation of 90 cardiovascular proteins in 30,931 individuals.
+evidence_read:
+  abstract: true
+  full_text: pmc_html
+  supplement: []
+template:
+  rule: Each score is an LDpred polygenic score built from SCALLOP GWAS summary statistics of one Olink CVD-I protein
+    (NPX, rank-inverse normalised); a higher score means a higher predicted circulating level of that protein.
+  provenance:
+  - source: full_text
+    locator: Methods > Polygenic risk score calculation
+    quote: Polygenic risk scores were derived using LDpred algorithm 45 , which adjusts the effect of each SNP allele
+      for those of other SNP alleles in linkage disequilibrium (LD) with it
+    confidence: medium
+  - source: full_text
+    locator: Methods > GWAS cohort analyses
+    quote: NPX values of proteins (on the log 2 scale) were rank-based inverse normal transformed and/or standardised
+      to unit variance
+    confidence: medium
+  - source: full_text
+    locator: Results > Mendelian randomization using polygenic risk scores
+    quote: an increase in the PRS equivalent to a 1 standard deviation higher circulating ST2, corresponded to a
+      8.6 % (95%CI 3.8%, 13.2%; P=0.004) reduction in the relative risk of asthma
+    confidence: high
+exploration_findings: 79 per-protein scores in one paper; no directional metric in the catalog (variance explained
+  only). Each protein is its own concept, so the many negative 1000G correlations between different proteins' scores
+  are not sign flips.

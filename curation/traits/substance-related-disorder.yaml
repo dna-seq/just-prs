@@ -1,0 +1,28 @@
+slug: substance-related-disorder
+query: substance-related disorder
+match:
+  terms:
+  - addiction
+  - addiction risk factor
+  - problematic substance use
+  - substance use disorder
+  efo_ids:
+  - MONDO_0002494
+  exclude: []
+anchor: PGS003849
+status: resolved
+concepts:
+- substance_use.addiction_liability
+scores:
+  PGS003849:
+    decision: in_scope
+    note: Hatoum 2023 addiction-rf PRS-CS score (general substance use disorder liability).
+  PGS005215:
+    decision: in_scope
+    note: lassosum score on the same addiction-rf GWAS (Deng 2024); deposited file appears inverted.
+summary: Two "Addiction risk factors" scores, both built on the Hatoum 2023 addiction-rf GWAS (a genomic
+  SEM factor shared by opioid, alcohol, tobacco and cannabis use disorders), form a new concept
+  substance_use.addiction_liability. PGS003849 reads as published, so a higher score means higher general
+  addiction liability (ORs 1.41-1.73 for each SUD). PGS005215 anti-correlates with it (r = -0.74), and all five
+  of its lead loci with GWAS data carry the non-risk allele, so it is recorded as an inverted deposit. As
+  distributed, a higher PGS005215 means lower liability. It stays in review and should be reported to PGS Catalog.

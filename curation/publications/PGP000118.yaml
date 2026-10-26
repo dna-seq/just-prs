@@ -3910,6 +3910,75 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by OR 1.114 [1.009, 1.23] on cancer of bronchus; lung; r=+0.5 with PGS000393.
+  PGS000652:
+    cluster: cancer.multiple_myeloma
+    phenotype: multiple_myeloma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of multiple myeloma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Multiple myeloma
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: 27-variant P+T score from MGI; top variants lack rsIDs and are not canonical MM loci (weights ~0.001)
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.24 [1.005, 1.529] on Multiple myeloma (MGI). Weakly correlated with other MM scores
+      in 1000G EUR (r=+0.11 with PGS003450).
+  PGS000653:
+    cluster: cancer.multiple_myeloma
+    phenotype: multiple_myeloma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of multiple myeloma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Multiple myeloma
+      confidence: medium
+    lead_variant_check: &id001
+      status: agree
+      note: rs4487645 C (7p15.3 CDCA7L), rs6066835 C (20q13 PREX1), rs10936599 C (TERC) carry positive weights =
+        GWAS Catalog MM risk alleles
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.327 [1.165, 1.511] on Multiple myeloma; 1000G EUR r=+0.87 with PGS003450.
+  PGS000654:
+    cluster: cancer.multiple_myeloma
+    phenotype: multiple_myeloma
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of multiple myeloma
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Multiple myeloma
+      confidence: medium
+    lead_variant_check: *id001
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by OR 1.316 [1.156, 1.499] on Multiple myeloma; 1000G EUR r=+0.86 with PGS003450.
 paper:
   pmid: '32991828'
   doi: 10.1016/j.ajhg.2020.08.025

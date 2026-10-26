@@ -2702,6 +2702,150 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; LDpred2 UKB PheCode score (portability-ldpred2_433); no directional metric; corroborated by 1000G EUR
       r=+0.27 to +0.28 with PGS001798, PGS004154, PGS004098 (OR 1.15 on stroke).
+  PGS001935:
+    cluster: wellbeing.self_rated_health
+    phenotype: unhappiness_with_health
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: unhappiness with own health (UKB 20459 raw value)
+      coding: 'UKB 20459 coding 537: 1 Extremely happy ... 6 Extremely unhappy; raw value used'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_less_happy_with_health
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: General happiness with own health
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-quant-pheno/less_happy_with_health.rds")
+      confidence: high
+    - source: supplement
+      locator: ukb_coding_537.html (UKB showcase coding)
+      quote: Extremely unhappy
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: no canonical lead locus for self-rated health checked
+    review_reason: null
+    status: agent_proposed
+    notes: Penalized regression. prepare-pheno-fields.R reads field 20459-0.0, sets negative codes to NA and saves
+      the raw value as less_happy_with_health.rds, so higher = less happy with own health. 1000G EUR r=+0.62 with
+      LDpred2 PGS002153 and +0.59 with Ding PGS003519.
+  PGS002000:
+    cluster: wellbeing.self_rated_health
+    phenotype: poorer_overall_health
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: poorer self-rated overall health (UKB 2178 raw value)
+      coding: 'UKB 2178 coding 100508: 1 Excellent, 2 Good, 3 Fair, 4 Poor; raw value used'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-PLR_poorer_health
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Overall health rating
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-quant-pheno/poorer_health.rds")
+      confidence: high
+    - source: supplement
+      locator: ukb_coding_100508.html (UKB showcase coding)
+      quote: Overall health rating
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: no canonical lead locus for self-rated health checked
+    review_reason: null
+    status: agent_proposed
+    notes: Penalized regression. prepare-pheno-fields.R reads field 2178-0.0, sets negative codes to NA and saves
+      the raw value as poorer_health.rds, so higher = poorer self-rated health. 1000G EUR r=+0.88 with LDpred2 PGS002218;
+      -0.62 with GBE PGS001008, whose phenotype is reversed (expected, not a flip).
+  PGS002153:
+    cluster: wellbeing.self_rated_health
+    phenotype: unhappiness_with_health
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: unhappiness with own health (UKB 20459 raw value)
+      coding: 'UKB 20459 coding 537: 1 Extremely happy ... 6 Extremely unhappy; raw value used'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_less_happy_with_health
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: General happiness with own health
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-quant-pheno/less_happy_with_health.rds")
+      confidence: high
+    - source: supplement
+      locator: ukb_coding_537.html (UKB showcase coding)
+      quote: Extremely unhappy
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: no canonical lead locus for self-rated health checked
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2. prepare-pheno-fields.R reads field 20459-0.0, sets negative codes to NA and saves the raw value
+      as less_happy_with_health.rds, so higher = less happy with own health. 1000G EUR r=+0.92 with Ding PGS003519
+      and +0.62 with PGS001935.
+  PGS002218:
+    cluster: wellbeing.self_rated_health
+    phenotype: poorer_overall_health
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: poorer self-rated overall health (UKB 2178 raw value)
+      coding: 'UKB 2178 coding 100508: 1 Excellent, 2 Good, 3 Fair, 4 Poor; raw value used'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.name
+      quote: portability-ldpred2_poorer_health
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Overall health rating
+      confidence: medium
+    - source: supplement
+      locator: github_prepare-pheno-fields.R (Privé et al. phenotype script)
+      quote: saveRDS(y, "data/ukbb-quant-pheno/poorer_health.rds")
+      confidence: high
+    - source: supplement
+      locator: ukb_coding_100508.html (UKB showcase coding)
+      quote: Overall health rating
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: no canonical lead locus for self-rated health checked
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2. prepare-pheno-fields.R reads field 2178-0.0, sets negative codes to NA and saves the raw value
+      as poorer_health.rds, so higher = poorer self-rated health. 1000G EUR r=+0.88 with PGS002000; -0.61 with GBE
+      PGS001008 (reversed phenotype, expected).
 template:
   rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
     PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged

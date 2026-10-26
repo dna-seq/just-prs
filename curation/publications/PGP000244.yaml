@@ -3862,3 +3862,216 @@ scores:
       label matching the UKB coding. Higher PGS001125 = more likely an instant-coffee drinker, which sits on the
       low (instant) end of the coffee_type axis. 1000G EUR r=-0.30 with PGS001124 (ground coffee), expected for
       opposite answers; r~0 with the intake scores.
+  PGS001081:
+    cluster: infection_serology.jc_polyomavirus_antibody
+    phenotype: jc_polyomavirus_antibody_mfi
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: jc polyomavirus antibody level (serology MFI)
+      coding: 'UKB INI23027: antibody MFI to JCV VP1 antigen'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weights at HLA class II and (JCV) FUT2 rs601338, known serology loci; allele direction not checked
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: GBE quantitative (INI) serology trait; snpnet Gaussian model on the median raw MFI, so higher score =
+      higher antibody level (paper template).
+  PGS001082:
+    cluster: infection_serology.merkel_cell_polyomavirus_antibody
+    phenotype: merkel_cell_polyomavirus_antibody_mfi
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: merkel cell polyomavirus antibody level (serology MFI)
+      coding: 'UKB INI23028: antibody MFI to MCV VP1 antigen'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weights at HLA class II and (JCV) FUT2 rs601338, known serology loci; allele direction not checked
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: GBE quantitative (INI) serology trait; snpnet Gaussian model on the median raw MFI, so higher score =
+      higher antibody level (paper template).
+  PGS001407:
+    cluster: infection_serology.htlv1_antibody
+    phenotype: htlv1_antibody_mfi
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: htlv-1 antibody level (serology MFI)
+      coding: 'UKB INI23022: antibody MFI to HTLV-1 gag antigen'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: For quantitative traits, we took the median of non-NA values, as described elsewhere [ 55 ].
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top weights at HLA class II and (JCV) FUT2 rs601338, known serology loci; allele direction not checked
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: GBE quantitative (INI) serology trait; snpnet Gaussian model on the median raw MFI, so higher score =
+      higher antibody level (paper template).
+  PGS001008:
+    cluster: wellbeing.self_rated_health
+    phenotype: poorer_overall_health
+    measurement_kind: ordinal
+    score_effect:
+      direction: decreases
+      target: poorer self-rated overall health (GBE QT_FC1002178, which runs toward better health)
+      coding: 'UKB 2178 raw coding 100508: 1 Excellent, 2 Good, 3 Fair, 4 Poor; GBE QT_FC1002178 appears reversed
+        (higher = better health)'
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: ukb_coding_100508.html (UKB showcase coding for field 2178)
+      quote: Overall health rating
+      confidence: medium
+    - source: supplement
+      locator: gbe_QT_FC1002178.html, rs1421085 (FTO) row
+      quote: '"alt": "C", "beta": -0.0123'
+      confidence: medium
+    - source: supplement
+      locator: gbe_QT_FC1002178.html, rs34811474 row
+      quote: '"alt": "A", "beta": 0.0177'
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: top 5 file weights (rs34811474 A +, rs2279574 A +, rs2256057 C -, rs2250377 G +, rs613872 T -) have
+        the same signs as GBE GWAS betas for QT_FC1002178
+    review_reason: GBE QT_FC1002178 value order undocumented; reversal inferred from FTO GWAS signs and 1000G correlations
+    status: agent_proposed
+    notes: Snpnet Gaussian on GBE QT_FC1002178. No source states the QT_FC value order; GBE GWAS gives BMI-raising
+      FTO alleles (rs9939609 A -0.0114, rs1421085 C -0.0123) and SLC39A8 rs13107325 T (-0.0186) negative betas,
+      and higher BMI goes with poorer self-rated health, so the GBE phenotype runs toward BETTER health (reversed
+      from raw 2178). Agrees with 1000G EUR r = -0.62/-0.61 with the raw-coded Privé poorer_health scores PGS002000/PGS002218
+      and -0.31 with PGS001401. Higher PGS001008 = better self-rated health.
+  PGS001401:
+    cluster: wellbeing.self_rated_health
+    phenotype: unhappiness_with_health
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: unhappiness with own health (GBE QT_FC1004548, raw order kept)
+      coding: 'UKB 4548 raw coding 100478: 1 Extremely happy ... 6 Extremely unhappy; GBE QT_FC1004548 appears to
+        keep the raw order'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: ukb_coding_100478.html (UKB showcase coding for field 4548)
+      quote: Extremely unhappy
+      confidence: medium
+    - source: supplement
+      locator: gbe_QT_FC1004548.html, rs1421085 (FTO) row
+      quote: '"alt": "C", "beta": 0.0179'
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top file variants not on the GBE page (only 38 SNPs shown); rs34811474 A weight -0.0087 is opposite
+        to PGS001008, consistent with opposite phenotype orientation
+    review_reason: GBE QT_FC1004548 value order undocumented; raw order inferred from FTO GWAS signs and 1000G correlations
+    status: agent_proposed
+    notes: Snpnet Gaussian on GBE QT_FC1004548. No source states the QT_FC value order; GBE GWAS gives BMI-raising
+      FTO alleles positive betas (rs9939609 A +0.0162, rs1421085 C +0.0179), opposite to QT_FC1002178, so this phenotype
+      runs toward LESS happy with health (raw order). Agrees with 1000G EUR r = +0.23 to +0.25 with the raw-coded
+      Privé poorer_health scores and +0.08 to +0.11 with the less_happy_with_health scores. Higher PGS001401 = less
+      satisfied with own health.
+  PGS001030:
+    cluster: respiratory.pulmonary_fibrosis
+    phenotype: pulmonary_fibrosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of pulmonary fibrosis (UKB HC84 case status)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: full_text
+      locator: Methods (model families)
+      quote: we used the binomial family and the AUC-ROC metric for the binary traits
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: MUC5B rs35705950 T (canonical IPF risk allele) is the top weight, +0.344; DSP/TERT not in top 5.
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: snpnet binomial score on UKB pulmonary fibrosis cases (template rule). 1000G EUR r=+0.58 with PGS012550
+      (HR 1.7 on incident IPF), +0.91 with PGS001251.
+  PGS001251:
+    cluster: respiratory.pulmonary_fibrosis
+    phenotype: interstitial_lung_disease
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: hazard of other interstitial pulmonary disease (ICD-10 J84, time-to-event)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > Phenotype definitions
+      quote: Briefly, for binary traits, we performed manual curation of phenotypic definitions and assigned “case”
+        status if the participants are classified as the case in at least one of their visits and “control” otherwise.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other interstitial pulmonary diseases (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: MUC5B rs35705950 T (canonical IPF risk allele) is the top weight, +0.385.
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Time-to-event version of UKB ICD-10 J84 (includes IPF, J84.1). Positive weight = higher hazard, confirmed
+      by the MUC5B lead variant. 1000G EUR r=+0.63 with PGS012550 and +0.91 with PGS001030.

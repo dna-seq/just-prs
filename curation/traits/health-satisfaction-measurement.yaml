@@ -1,0 +1,46 @@
+slug: health-satisfaction-measurement
+query: health satisfaction measurement
+match:
+  terms:
+  - happiness with own health
+  - health rating
+  - health satisfaction
+  - overall health rating
+  - self-rated health
+  - self-reported health
+  efo_ids:
+  - EFO_0009724
+  exclude: []
+anchor: PGS001008
+status: resolved
+concepts:
+- wellbeing.self_rated_health
+scores:
+  PGS001008:
+    decision: in_scope
+    note: UKB 2178 overall health rating (GBE QT_FC, reversed so higher = better)
+  PGS001401:
+    decision: in_scope
+    note: UKB 4548 health satisfaction (GBE QT_FC, raw order)
+  PGS001935:
+    decision: in_scope
+    note: UKB 20459 happiness with own health, raw
+  PGS002000:
+    decision: in_scope
+    note: UKB 2178 overall health rating, raw (poorer_health)
+  PGS002153:
+    decision: in_scope
+    note: UKB 20459 happiness with own health, raw
+  PGS002218:
+    decision: in_scope
+    note: UKB 2178 overall health rating, raw (poorer_health)
+  PGS003519:
+    decision: in_scope
+    note: UKB 20459 happiness with own health, raw
+summary: >-
+  All 7 scores (Tanigawa/GBE, Privé, Ding; all UK Biobank) measure self-rated health and sit in one
+  concept, wellbeing.self_rated_health. The Privé and Ding scores use raw UKB codings (2178 1 excellent ... 4 poor;
+  20459 1 extremely happy ... 6 extremely unhappy), so higher = poorer health or less happy with health. GBE's PGS001008
+  (QT_FC1002178) is reversed: higher = better health; its negative 1000G correlations with the rest are this coding,
+  not an inverted file. PGS001401 (QT_FC1004548) keeps the raw order. The two GBE orientations rest on GWAS signs at FTO
+  and correlations, not a stated definition, so they are flagged for review.

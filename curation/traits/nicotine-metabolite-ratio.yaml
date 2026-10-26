@@ -1,0 +1,35 @@
+slug: nicotine-metabolite-ratio
+query: nicotine metabolite ratio
+match:
+  terms:
+  - 3-hydroxycotinine
+  - cotinine
+  - nicotine metabolism
+  - nicotine metabolite ratio
+  efo_ids:
+  - EFO_0007794
+  exclude: []
+anchor: PGS004922
+status: needs_review
+concepts:
+- substance_use.nicotine_metabolism
+scores:
+  PGS002233:
+    decision: in_scope
+    note: null
+  PGS002234:
+    decision: in_scope
+    note: suspected inverted deposit; recorded as distributed (higher = lower NMR)
+  PGS004909:
+    decision: in_scope
+    note: null
+  PGS004922:
+    decision: in_scope
+    note: null
+summary: All four nicotine metabolite ratio (NMR, 3'-hydroxycotinine/cotinine) scores are CYP2A6-region scores in
+  one new concept, substance_use.nicotine_metabolism (higher = faster nicotine metabolism). PGS002233 (Loukola PRS27),
+  PGS004909 (El-Boraie EUR wGRS) and PGS004922 (El-Boraie AFR wGRS) raise NMR; the two wGRS files give loss-of-function
+  star alleles (*4, *2, *9, *12, *17, *20) negative weights. PGS002234 (Baurley PRS10, Chen 2018) is anti-correlated
+  with all three (r -0.68 to -0.93) and carries the NMR-lowering allele at rs56113850, rs4001921 and rs12459249,
+  although the paper calls a higher PRS faster metabolism; it is recorded as distributed (higher = lower NMR) with
+  a deposit_inverted correction and stays in review until a human confirms it against Supplementary Table 3.

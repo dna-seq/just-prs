@@ -1,0 +1,38 @@
+slug: idiopathic-pulmonary-fibrosis
+query: idiopathic pulmonary fibrosis
+match:
+  terms:
+  - IPF
+  - interstitial lung disease
+  - pulmonary fibrosis
+  efo_ids:
+  - EFO_0000768
+  exclude: []
+anchor: PGS012550
+status: needs_review
+concepts:
+- respiratory.pulmonary_fibrosis
+scores:
+  PGS001030:
+    decision: in_scope
+    note: UKB pulmonary fibrosis (any cause), Tanigawa snpnet; MUC5B-led.
+  PGS001251:
+    decision: in_scope
+    note: UKB ICD-10 J84 other interstitial pulmonary diseases (includes IPF), time-to-event.
+  PGS001791:
+    decision: in_scope
+    note: null
+  PGS004695:
+    decision: in_scope
+    note: null
+  PGS005323:
+    decision: in_scope
+    note: Suspected inverted deposit; recorded as distributed (higher = lower IPF risk).
+  PGS012550:
+    decision: in_scope
+    note: null
+summary: |
+  Six scores, all on one axis (higher risk of pulmonary fibrosis): four IPF scores, one UKB pulmonary fibrosis and one UKB interstitial lung disease (J84) score.
+  Five point the expected way: higher percentile = higher genetic risk, led by MUC5B rs35705950 T (or DSP rs2076295 G for the PRS-CS score PGS001791).
+  PGS005323 (PRS-CS, Zhu 2025 letter, HR 1.61 reported) anti-correlates with every other score and gives DSP rs2076295 G and DPP9 rs12610495 G negative weights,
+  so it is recorded as an inverted deposit: as distributed, a high PGS005323 percentile means LOWER IPF risk. It stays in review until a human verifies and it is reported to PGS Catalog.

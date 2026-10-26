@@ -66,6 +66,9 @@ domains:
             aliases:
             - insulin secretion
             - beta cell function
+            - insulin response
+            - insulin secretion rate
+            - poor insulin production
       glycemia:
         label: Blood sugar (glycemia)
         axis: higher blood sugar
@@ -425,6 +428,43 @@ domains:
           tobacco_use_disorder:
             label: Tobacco use disorder / ICD-10 F17 / nicotine dependence diagnosis
             sign: 1
+      nicotine_metabolism:
+        label: Nicotine metabolism rate (CYP2A6 activity)
+        axis: faster nicotine metabolism
+        valence: context_dependent
+        valence_basis: Faster metabolizers tend to smoke more and quit less easily on nicotine patch,
+          but the rate itself is a drug-metabolism trait, not a disease.
+        status: agent_proposed
+        aliases:
+        - CYP2A6 activity
+        - nicotine clearance
+        - slow nicotine metabolizer
+        - fast nicotine metabolizer
+        - 3-hydroxycotinine to cotinine ratio
+        phenotypes:
+          nicotine_metabolite_ratio:
+            label: Nicotine metabolite ratio (3'-hydroxycotinine / cotinine)
+            sign: 1
+            aliases:
+            - NMR
+      addiction_liability:
+        label: General addiction liability (substance use disorders)
+        axis: higher general risk of addiction
+        valence: undesirable
+        valence_basis: A shared genetic liability to alcohol, tobacco, opioid, cannabis and cocaine use
+          disorders.
+        status: agent_proposed
+        aliases:
+        - addiction
+        - substance use disorder
+        - drug addiction
+        - addictive behaviour
+        - polysubstance use
+        phenotypes:
+          addiction_risk_factor:
+            label: Addiction risk factor (addiction-rf; genomic SEM common factor across OUD, PAU, problematic
+              tobacco use and CUD)
+            sign: 1
   sleep:
     label: Sleep
     concepts:
@@ -619,6 +659,33 @@ domains:
           age_asthma_diagnosed:
             label: Age (years) when asthma was first diagnosed (UK Biobank field 3786)
             sign: 1
+      pulmonary_fibrosis:
+        label: Pulmonary fibrosis and interstitial lung disease
+        axis: higher risk of pulmonary fibrosis
+        valence: undesirable
+        valence_basis: Pulmonary fibrosis is progressive scarring of the lungs that limits breathing.
+        status: agent_proposed
+        aliases:
+        - IPF
+        - lung scarring
+        - scarred lungs
+        - interstitial lung disease
+        - fibrotic lung disease
+        phenotypes:
+          idiopathic_pulmonary_fibrosis:
+            label: Idiopathic pulmonary fibrosis (diagnosis or incident)
+            sign: 1
+            aliases:
+            - IPF
+            - cryptogenic fibrosing alveolitis
+          pulmonary_fibrosis:
+            label: Pulmonary fibrosis of any cause (diagnosis)
+            sign: 1
+          interstitial_lung_disease:
+            label: Interstitial lung disease (ICD-10 J84, includes IPF)
+            sign: 1
+            aliases:
+            - ILD
   lipids:
     label: Blood lipids
     concepts:
@@ -1247,6 +1314,21 @@ domains:
             sign: 1
             aliases:
             - parent with lung cancer
+      multiple_myeloma:
+        label: Multiple myeloma
+        axis: higher risk of multiple myeloma
+        valence: undesirable
+        valence_basis: Multiple myeloma is a blood cancer; higher risk is not wanted.
+        status: agent_proposed
+        aliases:
+        - myeloma
+        - plasma cell cancer
+        - bone marrow cancer
+        - Kahler disease
+        phenotypes:
+          multiple_myeloma:
+            label: Multiple myeloma (plasma cell myeloma)
+            sign: 1
   neurology:
     label: Brain and nervous system
     concepts:
@@ -1563,3 +1645,1332 @@ domains:
             aliases:
             - broken bones
             - hip fracture
+  circulating_proteins:
+    label: Circulating proteins
+    concepts:
+      adm:
+        label: Adrenomedullin (ADM) blood level
+        axis: higher circulating ADM
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - ADM
+        - Adrenomedullin
+        - ADM blood level
+        phenotypes:
+          adm_level:
+            label: Circulating Adrenomedullin (ADM) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      agrp:
+        label: Agouti-related protein (AGRP) blood level
+        axis: higher circulating AGRP
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - AGRP
+        - Agouti-related protein
+        - AGRP blood level
+        phenotypes:
+          agrp_level:
+            label: Circulating Agouti-related protein (AGRP) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      ca_125:
+        label: Ovarian cancer-related tumor marker CA 125 (CA-125) blood level
+        axis: higher circulating CA-125
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CA-125
+        - Ovarian cancer-related tumor marker CA 125
+        - CA-125 blood level
+        phenotypes:
+          ca_125_level:
+            label: Circulating Ovarian cancer-related tumor marker CA 125 (CA-125) level, Olink NPX (log2)
+              rank-inverse normalised
+            sign: 1
+      ccl20:
+        label: C-C motif chemokine 20 (CCL20) blood level
+        axis: higher circulating CCL20
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CCL20
+        - C-C motif chemokine 20
+        - CCL20 blood level
+        phenotypes:
+          ccl20_level:
+            label: Circulating C-C motif chemokine 20 (CCL20) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      ccl3:
+        label: C-C motif chemokine 3 (CCL3) blood level
+        axis: higher circulating CCL3
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CCL3
+        - C-C motif chemokine 3
+        - CCL3 blood level
+        phenotypes:
+          ccl3_level:
+            label: Circulating C-C motif chemokine 3 (CCL3) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      ccl4:
+        label: C-C motif chemokine 4 (CCL4) blood level
+        axis: higher circulating CCL4
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CCL4
+        - C-C motif chemokine 4
+        - CCL4 blood level
+        phenotypes:
+          ccl4_level:
+            label: Circulating C-C motif chemokine 4 (CCL4) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      cd40:
+        label: Tumor necrosis factor receptor superfamily member 5 (CD40) blood level
+        axis: higher circulating CD40
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CD40
+        - Tumor necrosis factor receptor superfamily member 5
+        - CD40 blood level
+        phenotypes:
+          cd40_level:
+            label: Circulating Tumor necrosis factor receptor superfamily member 5 (CD40) level, Olink
+              NPX (log2) rank-inverse normalised
+            sign: 1
+      chi3l1:
+        label: Chitinase-3-like protein 1 (CHI3L1) blood level
+        axis: higher circulating CHI3L1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CHI3L1
+        - Chitinase-3-like protein 1
+        - CHI3L1 blood level
+        phenotypes:
+          chi3l1_level:
+            label: Circulating Chitinase-3-like protein 1 (CHI3L1) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      csf_1:
+        label: Macrophage colony-stimulating factor 1 (CSF-1) blood level
+        axis: higher circulating CSF-1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CSF-1
+        - Macrophage colony-stimulating factor 1
+        - CSF-1 blood level
+        phenotypes:
+          csf_1_level:
+            label: Circulating Macrophage colony-stimulating factor 1 (CSF-1) level, Olink NPX (log2)
+              rank-inverse normalised
+            sign: 1
+      cstb:
+        label: Cystatin-B (CSTB) blood level
+        axis: higher circulating CSTB
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CSTB
+        - Cystatin-B
+        - CSTB blood level
+        phenotypes:
+          cstb_level:
+            label: Circulating Cystatin-B (CSTB) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      ctsd:
+        label: Cathepsin D (CTSD) blood level
+        axis: higher circulating CTSD
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CTSD
+        - Cathepsin D
+        - CTSD blood level
+        phenotypes:
+          ctsd_level:
+            label: Circulating Cathepsin D (CTSD) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      ctsl1:
+        label: Cathepsin L1 (CTSL1) blood level
+        axis: higher circulating CTSL1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CTSL1
+        - Cathepsin L1
+        - CTSL1 blood level
+        phenotypes:
+          ctsl1_level:
+            label: Circulating Cathepsin L1 (CTSL1) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      cx3cl1:
+        label: Fractalkine (CX3CL1) blood level
+        axis: higher circulating CX3CL1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CX3CL1
+        - Fractalkine
+        - CX3CL1 blood level
+        phenotypes:
+          cx3cl1_level:
+            label: Circulating Fractalkine (CX3CL1) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      cxcl1:
+        label: C-X-C motif chemokine 1 (CXCL1) blood level
+        axis: higher circulating CXCL1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CXCL1
+        - C-X-C motif chemokine 1
+        - CXCL1 blood level
+        phenotypes:
+          cxcl1_level:
+            label: Circulating C-X-C motif chemokine 1 (CXCL1) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      cxcl16:
+        label: C-X-C motif chemokine 16 (CXCL16) blood level
+        axis: higher circulating CXCL16
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CXCL16
+        - C-X-C motif chemokine 16
+        - CXCL16 blood level
+        phenotypes:
+          cxcl16_level:
+            label: Circulating C-X-C motif chemokine 16 (CXCL16) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      cxcl6:
+        label: C-X-C motif chemokine 6 (CXCL6) blood level
+        axis: higher circulating CXCL6
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - CXCL6
+        - C-X-C motif chemokine 6
+        - CXCL6 blood level
+        phenotypes:
+          cxcl6_level:
+            label: Circulating C-X-C motif chemokine 6 (CXCL6) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      dkk_1:
+        label: Dickkopf-related protein 1 (Dkk-1) blood level
+        axis: higher circulating Dkk-1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - Dkk-1
+        - Dickkopf-related protein 1
+        - Dkk-1 blood level
+        phenotypes:
+          dkk_1_level:
+            label: Circulating Dickkopf-related protein 1 (Dkk-1) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      ecp:
+        label: Eosinophil cationic protein (ECP) blood level
+        axis: higher circulating ECP
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - ECP
+        - Eosinophil cationic protein
+        - ECP blood level
+        phenotypes:
+          ecp_level:
+            label: Circulating Eosinophil cationic protein (ECP) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      egf:
+        label: Epidermal growth factor (EGF) blood level
+        axis: higher circulating EGF
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - EGF
+        - Epidermal growth factor
+        - EGF blood level
+        phenotypes:
+          egf_level:
+            label: Circulating Epidermal growth factor (EGF) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      esm_1:
+        label: Endothelial cell-specific molecule 1 (ESM-1) blood level
+        axis: higher circulating ESM-1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - ESM-1
+        - Endothelial cell-specific molecule 1
+        - ESM-1 blood level
+        phenotypes:
+          esm_1_level:
+            label: Circulating Endothelial cell-specific molecule 1 (ESM-1) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      fabp4:
+        label: Fatty acid-binding protein, adipocyte (FABP4) blood level
+        axis: higher circulating FABP4
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - FABP4
+        - Fatty acid-binding protein, adipocyte
+        - FABP4 blood level
+        phenotypes:
+          fabp4_level:
+            label: Circulating Fatty acid-binding protein, adipocyte (FABP4) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      fas:
+        label: Tumor necrosis factor receptor superfamily member 6 (FAS) blood level
+        axis: higher circulating FAS
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - FAS
+        - Tumor necrosis factor receptor superfamily member 6
+        - FAS blood level
+        phenotypes:
+          fas_level:
+            label: Circulating Tumor necrosis factor receptor superfamily member 6 (FAS) level, Olink
+              NPX (log2) rank-inverse normalised
+            sign: 1
+      fgf_23:
+        label: Fibroblast growth factor 23 (FGF-23) blood level
+        axis: higher circulating FGF-23
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - FGF-23
+        - Fibroblast growth factor 23
+        - FGF-23 blood level
+        - FGF23
+        phenotypes:
+          fgf_23_level:
+            label: Circulating Fibroblast growth factor 23 (FGF-23) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      fs:
+        label: Follistatin (FS) blood level
+        axis: higher circulating FS
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - FS
+        - Follistatin
+        - FS blood level
+        phenotypes:
+          fs_level:
+            label: Circulating Follistatin (FS) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      gal:
+        label: Galanin peptides (GAL) blood level
+        axis: higher circulating GAL
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - GAL
+        - Galanin peptides
+        - GAL blood level
+        phenotypes:
+          gal_level:
+            label: Circulating Galanin peptides (GAL) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      gal_3:
+        label: Galectin-3 (Gal-3) blood level
+        axis: higher circulating Gal-3
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - Gal-3
+        - Galectin-3
+        - Gal-3 blood level
+        phenotypes:
+          gal_3_level:
+            label: Circulating Galectin-3 (Gal-3) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      gdf_15:
+        label: Growth/differentiation factor 15 (GDF-15) blood level
+        axis: higher circulating GDF-15
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - GDF-15
+        - Growth/differentiation factor 15
+        - GDF-15 blood level
+        - GDF15
+        - MIC-1
+        phenotypes:
+          gdf_15_level:
+            label: Circulating Growth/differentiation factor 15 (GDF-15) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      gh:
+        label: Growth hormone (GH) blood level
+        axis: higher circulating GH
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - GH
+        - Growth hormone
+        - GH blood level
+        - growth hormone
+        - somatotropin
+        phenotypes:
+          gh_level:
+            label: Circulating Growth hormone (GH) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      hb_egf:
+        label: Proheparin-binding EGF-like growth factor (HB-EGF) blood level
+        axis: higher circulating HB-EGF
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - HB-EGF
+        - Proheparin-binding EGF-like growth factor
+        - HB-EGF blood level
+        phenotypes:
+          hb_egf_level:
+            label: Circulating Proheparin-binding EGF-like growth factor (HB-EGF) level, Olink NPX (log2)
+              rank-inverse normalised
+            sign: 1
+      hgf:
+        label: Hepatocyte growth factor (HGF) blood level
+        axis: higher circulating HGF
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - HGF
+        - Hepatocyte growth factor
+        - HGF blood level
+        phenotypes:
+          hgf_level:
+            label: Circulating Hepatocyte growth factor (HGF) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      hk11:
+        label: Kallikrein-11 (hK11) blood level
+        axis: higher circulating hK11
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - hK11
+        - Kallikrein-11
+        - hK11 blood level
+        phenotypes:
+          hk11_level:
+            label: Circulating Kallikrein-11 (hK11) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      hsp_27:
+        label: Heat shock 27 kDa protein (HSP 27) blood level
+        axis: higher circulating HSP 27
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - HSP 27
+        - Heat shock 27 kDa protein
+        - HSP 27 blood level
+        phenotypes:
+          hsp_27_level:
+            label: Circulating Heat shock 27 kDa protein (HSP 27) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      il_18:
+        label: Interleukin-18 (IL-18) blood level
+        axis: higher circulating IL-18
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - IL-18
+        - Interleukin-18
+        - IL-18 blood level
+        phenotypes:
+          il_18_level:
+            label: Circulating Interleukin-18 (IL-18) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      il_1ra:
+        label: Interleukin-1 receptor antagonist protein (IL-1ra) blood level
+        axis: higher circulating IL-1ra
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - IL-1ra
+        - Interleukin-1 receptor antagonist protein
+        - IL-1ra blood level
+        phenotypes:
+          il_1ra_level:
+            label: Circulating Interleukin-1 receptor antagonist protein (IL-1ra) level, Olink NPX (log2)
+              rank-inverse normalised
+            sign: 1
+      il_27:
+        label: Interleukin-27 (IL-27) blood level
+        axis: higher circulating IL-27
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - IL-27
+        - Interleukin-27
+        - IL-27 blood level
+        phenotypes:
+          il_27_level:
+            label: Circulating Interleukin-27 (IL-27) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      il_6:
+        label: Interleukin-6 (IL-6) blood level
+        axis: higher circulating IL-6
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - IL-6
+        - Interleukin-6
+        - IL-6 blood level
+        - interleukin 6
+        - IL6
+        phenotypes:
+          il_6_level:
+            label: Circulating Interleukin-6 (IL-6) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      il_6ra:
+        label: Interleukin-6 receptor subunit alpha (IL-6RA) blood level
+        axis: higher circulating IL-6RA
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - IL-6RA
+        - Interleukin-6 receptor subunit alpha
+        - IL-6RA blood level
+        - soluble IL-6 receptor
+        - sIL-6R
+        phenotypes:
+          il_6ra_level:
+            label: Circulating Interleukin-6 receptor subunit alpha (IL-6RA) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      il_8:
+        label: Interleukin-8 (IL-8) blood level
+        axis: higher circulating IL-8
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - IL-8
+        - Interleukin-8
+        - IL-8 blood level
+        phenotypes:
+          il_8_level:
+            label: Circulating Interleukin-8 (IL-8) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      il16:
+        label: Pro-interleukin-16 (IL16) blood level
+        axis: higher circulating IL16
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - IL16
+        - Pro-interleukin-16
+        - IL16 blood level
+        phenotypes:
+          il16_level:
+            label: Circulating Pro-interleukin-16 (IL16) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      itgb1bp2:
+        label: Melusin (ITGB1BP2) blood level
+        axis: higher circulating ITGB1BP2
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - ITGB1BP2
+        - Melusin
+        - ITGB1BP2 blood level
+        phenotypes:
+          itgb1bp2_level:
+            label: Circulating Melusin (ITGB1BP2) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      kim_1:
+        label: Kidney injury molecule 1 (KIM-1) blood level
+        axis: higher circulating KIM-1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - KIM-1
+        - Kidney injury molecule 1
+        - KIM-1 blood level
+        phenotypes:
+          kim_1_level:
+            label: Circulating Kidney injury molecule 1 (KIM-1) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      klk6:
+        label: Kallikrein-6 (KLK6) blood level
+        axis: higher circulating KLK6
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - KLK6
+        - Kallikrein-6
+        - KLK6 blood level
+        phenotypes:
+          klk6_level:
+            label: Circulating Kallikrein-6 (KLK6) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      lep:
+        label: Leptin (LEP) blood level
+        axis: higher circulating LEP
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - LEP
+        - Leptin
+        - LEP blood level
+        - leptin
+        - satiety hormone
+        phenotypes:
+          lep_level:
+            label: Circulating Leptin (LEP) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      lox_1:
+        label: Lectin-like oxidized LDL receptor 1 (LOX-1) blood level
+        axis: higher circulating LOX-1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - LOX-1
+        - Lectin-like oxidized LDL receptor 1
+        - LOX-1 blood level
+        phenotypes:
+          lox_1_level:
+            label: Circulating Lectin-like oxidized LDL receptor 1 (LOX-1) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      mamp:
+        label: Membrane-bound aminopeptidase P (mAmP) blood level
+        axis: higher circulating mAmP
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - mAmP
+        - Membrane-bound aminopeptidase P
+        - mAmP blood level
+        phenotypes:
+          mamp_level:
+            label: Circulating Membrane-bound aminopeptidase P (mAmP) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      mb:
+        label: Myoglobin (MB) blood level
+        axis: higher circulating MB
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - MB
+        - Myoglobin
+        - MB blood level
+        phenotypes:
+          mb_level:
+            label: Circulating Myoglobin (MB) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      mcp_1:
+        label: Monocyte chemotactic protein 1 (MCP-1) blood level
+        axis: higher circulating MCP-1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - MCP-1
+        - Monocyte chemotactic protein 1
+        - MCP-1 blood level
+        - CCL2
+        - MCP1
+        phenotypes:
+          mcp_1_level:
+            label: Circulating Monocyte chemotactic protein 1 (MCP-1) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      mmp_1:
+        label: Matrix metalloproteinase-1 (MMP-1) blood level
+        axis: higher circulating MMP-1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - MMP-1
+        - Matrix metalloproteinase-1
+        - MMP-1 blood level
+        phenotypes:
+          mmp_1_level:
+            label: Circulating Matrix metalloproteinase-1 (MMP-1) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      mmp_10:
+        label: Matrix metalloproteinase-10 (MMP-10) blood level
+        axis: higher circulating MMP-10
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - MMP-10
+        - Matrix metalloproteinase-10
+        - MMP-10 blood level
+        phenotypes:
+          mmp_10_level:
+            label: Circulating Matrix metalloproteinase-10 (MMP-10) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      mmp_12:
+        label: Matrix metalloproteinase-12 (MMP-12) blood level
+        axis: higher circulating MMP-12
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - MMP-12
+        - Matrix metalloproteinase-12
+        - MMP-12 blood level
+        phenotypes:
+          mmp_12_level:
+            label: Circulating Matrix metalloproteinase-12 (MMP-12) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      mmp_3:
+        label: Matrix metalloproteinase-3 (MMP-3) blood level
+        axis: higher circulating MMP-3
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - MMP-3
+        - Matrix metalloproteinase-3
+        - MMP-3 blood level
+        phenotypes:
+          mmp_3_level:
+            label: Circulating Matrix metalloproteinase-3 (MMP-3) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      mmp_7:
+        label: Matrix metalloproteinase-7 (MMP-7) blood level
+        axis: higher circulating MMP-7
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - MMP-7
+        - Matrix metalloproteinase-7
+        - MMP-7 blood level
+        phenotypes:
+          mmp_7_level:
+            label: Circulating Matrix metalloproteinase-7 (MMP-7) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      mpo:
+        label: Myeloperoxidase (MPO) blood level
+        axis: higher circulating MPO
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - MPO
+        - Myeloperoxidase
+        - MPO blood level
+        - myeloperoxidase
+        phenotypes:
+          mpo_level:
+            label: Circulating Myeloperoxidase (MPO) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      nt_pro_bnp:
+        label: N-terminal prohormone brain natriuretic peptide (NT-pro BNP) blood level
+        axis: higher circulating NT-pro BNP
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - NT-pro BNP
+        - N-terminal prohormone brain natriuretic peptide
+        - NT-pro BNP blood level
+        - BNP
+        - natriuretic peptide
+        phenotypes:
+          nt_pro_bnp_level:
+            label: Circulating N-terminal prohormone brain natriuretic peptide (NT-pro BNP) level, Olink
+              NPX (log2) rank-inverse normalised
+            sign: 1
+      opg:
+        label: Osteoprotegerin (OPG) blood level
+        axis: higher circulating OPG
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - OPG
+        - Osteoprotegerin
+        - OPG blood level
+        phenotypes:
+          opg_level:
+            label: Circulating Osteoprotegerin (OPG) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      pappa:
+        label: Pappalysin-1 (PAPPA) blood level
+        axis: higher circulating PAPPA
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - PAPPA
+        - Pappalysin-1
+        - PAPPA blood level
+        phenotypes:
+          pappa_level:
+            label: Circulating Pappalysin-1 (PAPPA) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      par_1:
+        label: Proteinase-activated receptor 1 (PAR-1) blood level
+        axis: higher circulating PAR-1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - PAR-1
+        - Proteinase-activated receptor 1
+        - PAR-1 blood level
+        phenotypes:
+          par_1_level:
+            label: Circulating Proteinase-activated receptor 1 (PAR-1) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      pdgf_subunit_b:
+        label: Platelet-derived growth factor subunit B (PDGF subunit B) blood level
+        axis: higher circulating PDGF subunit B
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - PDGF subunit B
+        - Platelet-derived growth factor subunit B
+        - PDGF subunit B blood level
+        phenotypes:
+          pdgf_subunit_b_level:
+            label: Circulating Platelet-derived growth factor subunit B (PDGF subunit B) level, Olink
+              NPX (log2) rank-inverse normalised
+            sign: 1
+      pecam_1:
+        label: Platelet endothelial cell adhesion molecule (PECAM-1) blood level
+        axis: higher circulating PECAM-1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - PECAM-1
+        - Platelet endothelial cell adhesion molecule
+        - PECAM-1 blood level
+        phenotypes:
+          pecam_1_level:
+            label: Circulating Platelet endothelial cell adhesion molecule (PECAM-1) level, Olink NPX
+              (log2) rank-inverse normalised
+            sign: 1
+      plgf:
+        label: Placenta growth factor (PlGF) blood level
+        axis: higher circulating PlGF
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - PlGF
+        - Placenta growth factor
+        - PlGF blood level
+        phenotypes:
+          plgf_level:
+            label: Circulating Placenta growth factor (PlGF) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      psgl_1:
+        label: P-selectin glycoprotein ligand 1 (PSGL-1) blood level
+        axis: higher circulating PSGL-1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - PSGL-1
+        - P-selectin glycoprotein ligand 1
+        - PSGL-1 blood level
+        phenotypes:
+          psgl_1_level:
+            label: Circulating P-selectin glycoprotein ligand 1 (PSGL-1) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      ptx3:
+        label: Pentraxin-related protein PTX3 (PTX3) blood level
+        axis: higher circulating PTX3
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - PTX3
+        - Pentraxin-related protein PTX3
+        - PTX3 blood level
+        phenotypes:
+          ptx3_level:
+            label: Circulating Pentraxin-related protein PTX3 (PTX3) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      rage:
+        label: Receptor for advanced glycosylation end products (RAGE) blood level
+        axis: higher circulating RAGE
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - RAGE
+        - Receptor for advanced glycosylation end products
+        - RAGE blood level
+        phenotypes:
+          rage_level:
+            label: Circulating Receptor for advanced glycosylation end products (RAGE) level, Olink NPX
+              (log2) rank-inverse normalised
+            sign: 1
+      ren:
+        label: Renin (REN) blood level
+        axis: higher circulating REN
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - REN
+        - Renin
+        - REN blood level
+        - renin
+        phenotypes:
+          ren_level:
+            label: Circulating Renin (REN) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      retn:
+        label: Resistin (RETN) blood level
+        axis: higher circulating RETN
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - RETN
+        - Resistin
+        - RETN blood level
+        phenotypes:
+          retn_level:
+            label: Circulating Resistin (RETN) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      scf:
+        label: Stem cell factor (SCF) blood level
+        axis: higher circulating SCF
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - SCF
+        - Stem cell factor
+        - SCF blood level
+        phenotypes:
+          scf_level:
+            label: Circulating Stem cell factor (SCF) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      spon1:
+        label: Spondin-1 (SPON1) blood level
+        axis: higher circulating SPON1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - SPON1
+        - Spondin-1
+        - SPON1 blood level
+        phenotypes:
+          spon1_level:
+            label: Circulating Spondin-1 (SPON1) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      st2:
+        label: ST2 protein (ST2) blood level
+        axis: higher circulating ST2
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - ST2
+        - ST2 protein
+        - ST2 blood level
+        - IL1RL1
+        - soluble ST2
+        phenotypes:
+          st2_level:
+            label: Circulating ST2 protein (ST2) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      tf:
+        label: Tissue factor (TF) blood level
+        axis: higher circulating TF
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - TF
+        - Tissue factor
+        - TF blood level
+        - tissue factor
+        - coagulation factor III
+        phenotypes:
+          tf_level:
+            label: Circulating Tissue factor (TF) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      tm:
+        label: Thrombomodulin (TM) blood level
+        axis: higher circulating TM
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - TM
+        - Thrombomodulin
+        - TM blood level
+        phenotypes:
+          tm_level:
+            label: Circulating Thrombomodulin (TM) level, Olink NPX (log2) rank-inverse normalised
+            sign: 1
+      tnf_r1:
+        label: Tumor necrosis factor receptor 1 (TNF-R1) blood level
+        axis: higher circulating TNF-R1
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - TNF-R1
+        - Tumor necrosis factor receptor 1
+        - TNF-R1 blood level
+        phenotypes:
+          tnf_r1_level:
+            label: Circulating Tumor necrosis factor receptor 1 (TNF-R1) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      tnf_r2:
+        label: Tumor necrosis factor receptor 2 (TNF-R2) blood level
+        axis: higher circulating TNF-R2
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - TNF-R2
+        - Tumor necrosis factor receptor 2
+        - TNF-R2 blood level
+        phenotypes:
+          tnf_r2_level:
+            label: Circulating Tumor necrosis factor receptor 2 (TNF-R2) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      tnfsf14:
+        label: Tumor necrosis factor ligand superfamily member 14 (TNFSF14) blood level
+        axis: higher circulating TNFSF14
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - TNFSF14
+        - Tumor necrosis factor ligand superfamily member 14
+        - TNFSF14 blood level
+        phenotypes:
+          tnfsf14_level:
+            label: Circulating Tumor necrosis factor ligand superfamily member 14 (TNFSF14) level, Olink
+              NPX (log2) rank-inverse normalised
+            sign: 1
+      trail:
+        label: TNF-related apoptosis-inducing ligand (TRAIL) blood level
+        axis: higher circulating TRAIL
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - TRAIL
+        - TNF-related apoptosis-inducing ligand
+        - TRAIL blood level
+        phenotypes:
+          trail_level:
+            label: Circulating TNF-related apoptosis-inducing ligand (TRAIL) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      trail_r2:
+        label: TNF-related apoptosis-inducing ligand receptor 2 (TRAIL-R2) blood level
+        axis: higher circulating TRAIL-R2
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - TRAIL-R2
+        - TNF-related apoptosis-inducing ligand receptor 2
+        - TRAIL-R2 blood level
+        phenotypes:
+          trail_r2_level:
+            label: Circulating TNF-related apoptosis-inducing ligand receptor 2 (TRAIL-R2) level, Olink
+              NPX (log2) rank-inverse normalised
+            sign: 1
+      trance:
+        label: TNF-related activation-induced cytokine (TRANCE) blood level
+        axis: higher circulating TRANCE
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - TRANCE
+        - TNF-related activation-induced cytokine
+        - TRANCE blood level
+        phenotypes:
+          trance_level:
+            label: Circulating TNF-related activation-induced cytokine (TRANCE) level, Olink NPX (log2)
+              rank-inverse normalised
+            sign: 1
+      u_par:
+        label: Urokinase plasminogen activator surface receptor (U-PAR) blood level
+        axis: higher circulating U-PAR
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - U-PAR
+        - Urokinase plasminogen activator surface receptor
+        - U-PAR blood level
+        - suPAR
+        - uPAR
+        phenotypes:
+          u_par_level:
+            label: Circulating Urokinase plasminogen activator surface receptor (U-PAR) level, Olink NPX
+              (log2) rank-inverse normalised
+            sign: 1
+      vegf_a:
+        label: Vascular endothelial growth factor A (VEGF-A) blood level
+        axis: higher circulating VEGF-A
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - VEGF-A
+        - Vascular endothelial growth factor A
+        - VEGF-A blood level
+        phenotypes:
+          vegf_a_level:
+            label: Circulating Vascular endothelial growth factor A (VEGF-A) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+      vegf_d:
+        label: Vascular endothelial growth factor D (VEGF-D) blood level
+        axis: higher circulating VEGF-D
+        valence: neutral
+        valence_basis: A genetically higher circulating level of this protein is not good or bad in itself;
+          its health meaning depends on the disease context.
+        status: agent_proposed
+        aliases:
+        - VEGF-D
+        - Vascular endothelial growth factor D
+        - VEGF-D blood level
+        phenotypes:
+          vegf_d_level:
+            label: Circulating Vascular endothelial growth factor D (VEGF-D) level, Olink NPX (log2) rank-inverse
+              normalised
+            sign: 1
+  infection_serology:
+    label: Antibodies to infections
+    concepts:
+      jc_polyomavirus_antibody:
+        label: JC polyomavirus antibody level
+        axis: higher antibody level against JC polyomavirus VP1
+        valence: neutral
+        valence_basis: Antibody level reflects past exposure and immune response to the virus; a higher
+          level is not good or bad in itself.
+        status: agent_proposed
+        aliases:
+        - JCV antibodies
+        - JC virus serology
+        - JCV VP1 antibody
+        phenotypes:
+          jc_polyomavirus_antibody_mfi:
+            label: JC polyomavirus antibody level (UK Biobank multiplex serology, median fluorescence
+              intensity)
+            sign: 1
+      merkel_cell_polyomavirus_antibody:
+        label: Merkel cell polyomavirus antibody level
+        axis: higher antibody level against Merkel cell polyomavirus VP1
+        valence: neutral
+        valence_basis: Antibody level reflects past exposure and immune response to the virus; a higher
+          level is not good or bad in itself.
+        status: agent_proposed
+        aliases:
+        - MCPyV antibodies
+        - Merkel cell virus serology
+        - MCV VP1 antibody
+        phenotypes:
+          merkel_cell_polyomavirus_antibody_mfi:
+            label: Merkel cell polyomavirus antibody level (UK Biobank multiplex serology, median fluorescence
+              intensity)
+            sign: 1
+      htlv1_antibody:
+        label: HTLV-1 antibody level
+        axis: higher antibody level against HTLV-1 gag
+        valence: neutral
+        valence_basis: Antibody level reflects past exposure and immune response to the virus; a higher
+          level is not good or bad in itself.
+        status: agent_proposed
+        aliases:
+        - HTLV-1 serology
+        - human T-lymphotropic virus antibodies
+        - HTLV-1 gag antibody
+        phenotypes:
+          htlv1_antibody_mfi:
+            label: HTLV-1 antibody level (UK Biobank multiplex serology, median fluorescence intensity)
+            sign: 1
+  wellbeing:
+    label: Well-being
+    concepts:
+      self_rated_health:
+        label: Self-rated health and satisfaction with own health
+        axis: better self-rated health
+        valence: desirable
+        valence_basis: Rating one's own health as good and being happy with it is the outcome people want.
+        status: agent_proposed
+        aliases:
+        - self-rated health
+        - how healthy do I feel
+        - poor health rating
+        - unhappy with my health
+        - health satisfaction
+        phenotypes:
+          poorer_overall_health:
+            label: Poorer self-rated overall health (UKB 2178, 1 excellent ... 4 poor)
+            sign: -1
+            aliases:
+            - poor self-rated health
+            - overall health rating
+          unhappiness_with_health:
+            label: Less happy with own health (UKB 4548 / 20459, 1 extremely happy ... 6 extremely unhappy)
+            sign: -1
+            aliases:
+            - health dissatisfaction
+            - happiness with own health

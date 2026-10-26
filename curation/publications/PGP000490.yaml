@@ -1,0 +1,45 @@
+pgp_id: PGP000490
+scores:
+  PGS003849:
+    cluster: substance_use.addiction_liability
+    phenotype: addiction_risk_factor
+    measurement_kind: composite
+    score_effect:
+      direction: increases
+      target: general addiction liability (addiction-rf, genomic SEM common factor of OUD, PAU, PTU and CUD)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Results > European ancestry GWAS
+      quote: we estimated a single factor model, scaled the variance of addiction-rf to 1, and allowed loadings
+        to be estimated freely.
+      confidence: high
+    - source: full_text
+      locator: Figure 4 legend
+      quote: (A) Polygenic risk score (PRS) of the addiction-rf predicts lifetime alcohol (AUD), cannabis (CUD),
+        opioid (OUD), tobacco (TD), and cocaine (CoUD) use disorders
+      confidence: high
+    - source: full_text
+      locator: Results > Polygenic risk score (PRS) analyses
+      quote: Odds ratios varied from 1.41 for CUD to 1.73 for OUD.
+      confidence: high
+    lead_variant_check:
+      status: not_run
+      note: Top deposited variants (rs13126505, rs13114738, rs7285118, rs518853) are not in the paper text or Table
+        1; catalog ORs 1.41-1.73 (>1) on all five SUDs in Yale-Penn 3 corroborate the sign.
+    status: agent_proposed
+    notes: PRS-CS auto PRS of the addiction-rf factor. Higher score = higher liability to substance use disorders
+      in general (alcohol, tobacco, opioid, cannabis, cocaine). Anti-correlates r = -0.73 with PGS005215, which
+      appears to be an inverted deposit of a PRS built on the same GWAS.
+paper:
+  pmid: '37250466'
+  doi: 10.1038/s44220-023-00034-y
+  title: Multivariate genome-wide association meta-analysis of over 1 million subjects identifies loci underlying
+    multiple substance use disorders.
+evidence_read:
+  abstract: true
+  full_text: pmc_html
+  supplement: []

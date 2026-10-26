@@ -1,0 +1,43 @@
+pgp_id: PGP000655
+scores:
+  PGS004922:
+    cluster: substance_use.nicotine_metabolism
+    phenotype: nicotine_metabolite_ratio
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: nicotine metabolite ratio (CYP2A6 activity); reduced-function alleles carry negative weights
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      phenotype: nicotine_metabolite_ratio
+    strata:
+      ancestry: african
+    provenance:
+    - source: full_text
+      locator: Results (ROC analysis)
+      quote: The Youden index J statistic indicated an optimal cut-point wGRS≥2.089 to best identify normal metabolizers
+        (NMR≥0.31)
+      confidence: high
+    - source: full_text
+      locator: Results
+      quote: The final wGRS model explained 32.4% of log-NMR variance in the training set
+      confidence: high
+    lead_variant_check:
+      status: agree
+      note: CYP2A6*20 -0.156, *4 -0.148, *25/26/27 -0.129, *17 -0.124 (loss-of-function negative), *1x2 duplication
+        +0.065; rs12459249-C +0.107 matches GWAS Catalog NMR-raising allele
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: African-ancestry CYP2A6 wGRS (12 variants); higher = higher NMR = faster metabolizer; wGRS >= 2.089 (with
+      +2.0 intercept) marks normal metabolizers. Many effect alleles are star alleles without rsIDs.
+paper:
+  pmid: '33300144'
+  doi: 10.1002/cpt.2135
+  title: Transferability of Ancestry-Specific and Cross-Ancestry CYP2A6 Activity Genetic Risk Scores in African
+    and European Populations.
+evidence_read:
+  abstract: true
+  full_text: pmc_author_manuscript
+  supplement: []

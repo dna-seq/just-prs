@@ -1,0 +1,41 @@
+slug: plasma-cell-myeloma
+query: plasma cell myeloma
+match:
+  terms:
+  - MGUS
+  - monoclonal gammopathy
+  - multiple myeloma
+  - myeloma
+  - plasma cell
+  efo_ids:
+  - MONDO_0009693
+  exclude: []
+anchor: PGS003450
+status: resolved
+concepts:
+- cancer.multiple_myeloma
+scores:
+  PGS000652:
+    decision: in_scope
+    note: null
+  PGS000653:
+    decision: in_scope
+    note: null
+  PGS000654:
+    decision: in_scope
+    note: null
+  PGS002281:
+    decision: in_scope
+    note: null
+  PGS002306:
+    decision: in_scope
+    note: null
+  PGS003450:
+    decision: in_scope
+    note: null
+summary: 'All 6 multiple myeloma scores are in scope under one concept, cancer.multiple_myeloma. Five scores raise
+  MM risk as distributed: four catalog-only with OR or lead-locus support, and PGS002306 from its abstract. PGS002281
+  (Canzian 2021) is a suspected inverted deposit. Its effect alleles are the protective alleles at 4 canonical loci,
+  and it correlates r=-0.88 with PGS002306. It is recorded as distributed (higher = lower MM risk) with deposit_inverted
+  and discount_metrics corrections, and it goes to review. PGS000652 is a weak 27-variant P+T score from MGI (r
+  about +0.1 with the others).'

@@ -1,0 +1,35 @@
+pgp_id: PGP000793
+scores:
+  PGS012550:
+    cluster: respiratory.pulmonary_fibrosis
+    phenotype: idiopathic_pulmonary_fibrosis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of idiopathic pulmonary fibrosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: performance.trait_reported
+      quote: Incident idiopathic pulmonary fibrosis
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: MUC5B rs35705950 T log(OR) +1.577 (canonical risk allele, OR ~4.8); DSP rs2076295 G +0.378 (GWAS Catalog
+        risk allele G, OR 1.44-1.49).
+    review_reason: null
+    corrections: []
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). 13-SNP log(OR) score; PGS Catalog weights are per-allele effects
+      on the reported trait; HR 1.7 [1.62, 1.78] for incident IPF. Same weights as PGS004695 for shared SNPs (r=+0.92).
+paper:
+  pmid: '38154569'
+  doi: 10.1016/j.envres.2023.117984
+  title: 'Residential greenness and incident idiopathic pulmonary fibrosis: A prospective study.'
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

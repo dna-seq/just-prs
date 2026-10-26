@@ -1,0 +1,58 @@
+pgp_id: PGP000310
+scores:
+  PGS002281:
+    cluster: cancer.multiple_myeloma
+    phenotype: multiple_myeloma
+    measurement_kind: binary
+    score_effect:
+      direction: decreases
+      target: risk of multiple myeloma
+      coding: null
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS construction
+      quote: the number of alleles associated with higher MM risk were counted and added up for each study subject
+      confidence: high
+    lead_variant_check:
+      status: disagree
+      note: deposited effect alleles rs4487645 A, rs4273077 A, rs6066835 T, rs10936599 A carry positive weights;
+        GWAS Catalog MM risk alleles are C, G, C, C. The file copies Supp Table 1's risk-allele column; the paper's
+        own Supp Table 2 worked example counts rs4487645 C as risk.
+    review_reason: 'Suspected inverted deposit: file''s lead alleles are the protective ones; direction recorded
+      as distributed (opposite to paper).'
+    corrections:
+    - kind: deposit_inverted
+      action: polarity_as_distributed
+      effect: Direction describes the file as distributed (higher = lower MM risk); the paper says higher = increases
+        MM risk.
+      paper_direction: increases
+      evidence: 4/4 canonical MM loci (rs4487645, rs4273077, rs6066835, rs10936599) weight the non-risk allele;
+        r=-0.88 vs PGS002306, -0.68 vs PGS003450, -0.61 vs PGS000653 in 1000G EUR
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    - kind: metric_not_from_file
+      action: discount_metrics
+      effect: Paper AUROC 0.644 and quintile ORs describe the authors' correctly oriented score, not the deposited
+        file.
+      evidence: see deposit_inverted
+      recorded: '2026-10-26'
+      by: agent
+      upstream_report: null
+    status: agent_proposed
+    notes: Paper (Canzian 2021, IMMEnSE) states higher PRS = higher MM risk (Q5 vs Q1 OR 3.44). The deposited file
+      has the risk/other alleles swapped at the canonical loci and correlates r=-0.88 with PGS002306 and -0.68 with
+      PGS003450 in 1000G EUR, so as distributed a higher score means LOWER MM risk. Recorded as distributed.
+paper:
+  pmid: '34845334'
+  doi: 10.1038/s41431-021-00986-8
+  title: A polygenic risk score for multiple myeloma risk prediction.
+evidence_read:
+  abstract: true
+  full_text: europepmc
+  supplement:
+  - Supplementary Table 1
+  - Supplementary Table 2

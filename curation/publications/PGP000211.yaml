@@ -496,3 +496,56 @@ scores:
       Catalog weights are per-allele effects on the reported trait. The catalog metrics are diabetes-subtype ORs,
       not glucose (e.g. OR 1.33 [1.26, 1.41] for MARD, 1.33 [1.24, 1.42] for SIDD), consistent with the direction.
       Corroborated by 1000G EUR r = +0.42 with PGS000305 and +0.31 with PGS001350 (both read).
+  PGS000835:
+    cluster: endocrine.type_2_diabetes
+    phenotype: genetic_beta_cell_function
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: genetically predicted insulin secretion rate (beta cell function)
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: Catalog ORs are for diabetes subtypes (MARD, SIDD) vs controls; higher genetic insulin secretion should
+        lower diabetes risk.
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Insulin secretion rate
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: rs10830963 C (MTNR1B non-risk allele; G is the T2D-risk, secretion-lowering allele) +0.232 and rs7756992
+        A (CDKAL1 non-risk allele) +0.232 both raise the score.
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog OR 0.88 [0.83, 0.92] for MARD and 0.84 [0.78, 0.90] for SIDD (higher secretion,
+      lower diabetes risk) and by 1000G EUR r=+0.28 with PGS002277 (genetic beta cell function, read). Its r=-0.27
+      with PGS000871 is expected, since PGS000871 counts T2D-risk (secretion-lowering) alleles.
+  PGS000834:
+    cluster: endocrine.type_2_diabetes
+    phenotype: genetic_beta_cell_function
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: genetically predicted corrected insulin response at 30 min of an OGTT (beta cell function)
+      coding: null
+    polarity: -1
+    evaluation_outcome:
+      expected_metric_sign: -1
+      basis: Catalog ORs are for diabetes subtypes (MARD, SIDD, MOD) vs controls; a higher genetic insulin response
+        should lower diabetes risk.
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Corrected insulin response (at 30mins during OGTT)
+      confidence: medium
+    lead_variant_check:
+      status: agree
+      note: top weight rs10830963 C (MTNR1B non-risk allele) +0.18 raises the score, as expected for an insulin-response
+        score.
+    status: agent_proposed
+    notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
+      trait; corroborated by catalog OR 0.82 [0.77, 0.86] for MARD and 0.76 [0.71, 0.82] for SIDD and by 1000G EUR
+      r=+0.31 with PGS002277 (genetic beta cell function, read).

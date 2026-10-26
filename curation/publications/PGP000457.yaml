@@ -671,3 +671,36 @@ scores:
     status: agent_proposed
     notes: LDpred2-auto on the paper's own GWAS of log Lp(a), so the sign follows the phenotype. 1000G EUR r=+0.70
       with anchor PGS000667.
+  PGS003519:
+    cluster: wellbeing.self_rated_health
+    phenotype: unhappiness_with_health
+    measurement_kind: ordinal
+    score_effect:
+      direction: increases
+      target: unhappiness with own health (UKB 20459, trait code less_happy_with_health)
+      coding: 'UKB 20459 coding 537: 1 Extremely happy ... 6 Extremely unhappy; raw order, shared trait code with
+        Privé et al.'
+    polarity: -1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: supplement
+      locator: Supplementary Table 1 (supp_MOESM4_ESM.Supplementary_Table_1.csv)
+      quote: less_happy_with_health,General happiness with own health
+      confidence: medium
+    - source: catalog
+      locator: scores.name
+      quote: cont-decay-less_happy_with_health
+      confidence: medium
+    - source: supplement
+      locator: ukb_coding_537.html (UKB showcase coding)
+      quote: Extremely unhappy
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: top variants lack rsIDs; no canonical lead locus checked
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the papers own GWAS of less_happy_with_health, the same trait code as Privé et al. (raw
+      field 20459). 1000G EUR r=+0.92 with PGS002153 and +0.59 with PGS001935. Higher PGS003519 = less happy with
+      own health.

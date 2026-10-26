@@ -4849,6 +4849,9 @@ domains:
         aliases:
         - hippocampus size
         - hippocampal volume
+        - hippocampal subfields
+        - dentate gyrus volume
+        - subiculum volume
         - basal ganglia volume
         - thalamus volume
         - deep brain structures
@@ -4903,6 +4906,42 @@ domains:
             sign: 1
           hippocampal_head_r:
             label: Right hippocampal head volume
+            sign: 1
+          hippocampal_dentate_gyrus:
+            label: Granule cell and molecular layer of the dentate gyrus volume
+            sign: 1
+          hippocampal_hata:
+            label: Hippocampus-amygdala transition area volume
+            sign: 1
+          hippocampal_ca1:
+            label: Hippocampal CA1 volume
+            sign: 1
+          hippocampal_ca3:
+            label: Hippocampal CA3 volume
+            sign: 1
+          hippocampal_ca4:
+            label: Hippocampal CA4 volume
+            sign: 1
+          hippocampal_fissure:
+            label: Hippocampal fissure volume (CSF space)
+            sign: 1
+          hippocampal_tail:
+            label: Hippocampal tail volume
+            sign: 1
+          hippocampal_fimbria:
+            label: Fimbria volume
+            sign: 1
+          hippocampal_molecular_layer:
+            label: Molecular layer of the hippocampus proper volume
+            sign: 1
+          parasubiculum:
+            label: Parasubiculum volume
+            sign: 1
+          presubiculum:
+            label: Presubiculum volume
+            sign: 1
+          subiculum:
+            label: Subiculum volume
             sign: 1
       global_brain_volume:
         label: Global brain volume

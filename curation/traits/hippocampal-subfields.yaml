@@ -1,0 +1,377 @@
+slug: hippocampal-subfields
+query: hippocampal subfield volumes
+match:
+  terms:
+  - dentate gyrus
+  - hippocampal fissure
+  - hippocampal subfield
+  - subiculum
+  efo_ids:
+  - EFO_0009394
+  - EFO_0009395
+  - EFO_0009396
+  - EFO_0009401
+  - OBA_2045237
+  - OBA_2045244
+  - OBA_2045245
+  - OBA_2050005
+  - OBA_2050024
+  - OBA_2050043
+  - OBA_2050049
+  - OBA_2050050
+  exclude: []
+anchor: PGS003722
+status: resolved
+concepts:
+- neuroimaging.subcortical_volume
+scores:
+  PGS003591:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003592:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003593:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003594:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003595:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003596:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003597:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003598:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003599:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003600:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003601:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003602:
+    decision: in_scope
+    note: hippocampal_dentate_gyrus (Liu 2023 subfield, sign +1)
+  PGS003603:
+    decision: in_scope
+    note: hippocampal_hata (Liu 2023 subfield, sign +1)
+  PGS003604:
+    decision: in_scope
+    note: hippocampal_hata (Liu 2023 subfield, sign +1)
+  PGS003605:
+    decision: in_scope
+    note: hippocampal_hata (Liu 2023 subfield, sign +1)
+  PGS003606:
+    decision: in_scope
+    note: hippocampal_hata (Liu 2023 subfield, sign +1)
+  PGS003607:
+    decision: in_scope
+    note: hippocampal_hata (Liu 2023 subfield, sign +1)
+  PGS003608:
+    decision: in_scope
+    note: hippocampal_hata (Liu 2023 subfield, sign +1)
+  PGS003609:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003610:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003611:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003612:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003613:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003614:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003615:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003616:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003617:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003618:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003619:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003620:
+    decision: in_scope
+    note: hippocampal_ca1 (Liu 2023 subfield, sign +1)
+  PGS003621:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003622:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003623:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003624:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003625:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003626:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003627:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003628:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003629:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003630:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003631:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003632:
+    decision: in_scope
+    note: hippocampal_ca3 (Liu 2023 subfield, sign +1)
+  PGS003633:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003634:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003635:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003636:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003637:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003638:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003639:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003640:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003641:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003642:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003643:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003644:
+    decision: in_scope
+    note: hippocampal_ca4 (Liu 2023 subfield, sign +1)
+  PGS003645:
+    decision: in_scope
+    note: hippocampal_fissure (Liu 2023 subfield, sign +1)
+  PGS003646:
+    decision: in_scope
+    note: hippocampal_fissure (Liu 2023 subfield, sign +1)
+  PGS003647:
+    decision: in_scope
+    note: hippocampal_fissure (Liu 2023 subfield, sign +1)
+  PGS003648:
+    decision: in_scope
+    note: hippocampal_fissure (Liu 2023 subfield, sign +1)
+  PGS003649:
+    decision: in_scope
+    note: hippocampal_fissure (Liu 2023 subfield, sign +1)
+  PGS003650:
+    decision: in_scope
+    note: hippocampal_fissure (Liu 2023 subfield, sign +1)
+  PGS003651:
+    decision: in_scope
+    note: hippocampal_tail (Liu 2023 subfield, sign +1)
+  PGS003652:
+    decision: in_scope
+    note: hippocampal_tail (Liu 2023 subfield, sign +1)
+  PGS003653:
+    decision: in_scope
+    note: hippocampal_tail (Liu 2023 subfield, sign +1)
+  PGS003654:
+    decision: in_scope
+    note: hippocampal_tail (Liu 2023 subfield, sign +1)
+  PGS003655:
+    decision: in_scope
+    note: hippocampal_tail (Liu 2023 subfield, sign +1)
+  PGS003656:
+    decision: in_scope
+    note: hippocampal_tail (Liu 2023 subfield, sign +1)
+  PGS003675:
+    decision: in_scope
+    note: hippocampal_fimbria (Liu 2023 subfield, sign +1)
+  PGS003676:
+    decision: in_scope
+    note: hippocampal_fimbria (Liu 2023 subfield, sign +1)
+  PGS003677:
+    decision: in_scope
+    note: hippocampal_fimbria (Liu 2023 subfield, sign +1)
+  PGS003678:
+    decision: in_scope
+    note: hippocampal_fimbria (Liu 2023 subfield, sign +1)
+  PGS003679:
+    decision: in_scope
+    note: hippocampal_fimbria (Liu 2023 subfield, sign +1)
+  PGS003680:
+    decision: in_scope
+    note: hippocampal_fimbria (Liu 2023 subfield, sign +1)
+  PGS003681:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003682:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003683:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003684:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003685:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003686:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003687:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003688:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003689:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003690:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003691:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003692:
+    decision: in_scope
+    note: hippocampal_molecular_layer (Liu 2023 subfield, sign +1)
+  PGS003693:
+    decision: in_scope
+    note: parasubiculum (Liu 2023 subfield, sign +1)
+  PGS003694:
+    decision: in_scope
+    note: parasubiculum (Liu 2023 subfield, sign +1)
+  PGS003695:
+    decision: in_scope
+    note: parasubiculum (Liu 2023 subfield, sign +1)
+  PGS003696:
+    decision: in_scope
+    note: parasubiculum (Liu 2023 subfield, sign +1)
+  PGS003697:
+    decision: in_scope
+    note: parasubiculum (Liu 2023 subfield, sign +1)
+  PGS003698:
+    decision: in_scope
+    note: parasubiculum (Liu 2023 subfield, sign +1)
+  PGS003699:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003700:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003701:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003702:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003703:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003704:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003705:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003706:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003707:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003708:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003709:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003710:
+    decision: in_scope
+    note: presubiculum (Liu 2023 subfield, sign +1)
+  PGS003711:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003712:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003713:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003714:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003715:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003716:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003717:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003718:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003719:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003720:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003721:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+  PGS003722:
+    decision: in_scope
+    note: subiculum (Liu 2023 subfield, sign +1)
+summary: >-
+  All 114 Liu 2023 (PGP000464) hippocampal subfield scores are in scope under neuroimaging.subcortical_volume,
+  one phenotype per subfield (CA1, CA3, CA4, dentate gyrus, HATA, fimbria, fissure, tail, molecular layer,
+  subiculum, presubiculum, parasubiculum), all sign +1: a higher score means a larger subfield volume.
+  Annotated catalog-only (PGS Catalog beta convention, PRSice C+T). 74 trans-ancestry/UKBB EUR scores are
+  medium confidence, corroborated by 1000G EUR r >= 0.2 with a same-subfield score; 38 CHIMGEN EAS scores and
+  2 tiny EUR scores (PGS003613, PGS003686) are low confidence with a review_reason. The hippocampal fissure is a
+  CSF space, so its higher score means a larger fissure, not more tissue. No aligned-correlation conflicts.

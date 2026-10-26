@@ -1,0 +1,65 @@
+pgp_id: PGP000164
+scores:
+  PGS000759:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: HR for immune-checkpoint (anti-PD-L1) induced hypothyroidism in cancer patients; same disease, higher
+        score expected to raise risk
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: catalog HR 1.52 [1.31, 1.74] (anti-PD-L1 induced hypothyroidism in cancer
+      patients); 1000G EUR r=+0.77 with PGS002653 (hypothyroidism).'
+  PGS000761:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome:
+      expected_metric_sign: 1
+      basis: HR for immune-checkpoint (anti-PD-L1) induced hypothyroidism in cancer patients; same disease, higher
+        score expected to raise risk
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: catalog HR 1.49 [1.3, 1.71] (anti-PD-L1 induced hypothyroidism in cancer
+      patients); 1000G EUR r=+0.87 with PGS004789 (hypothyroidism).'
+paper:
+  pmid: '34099659'
+  doi: 10.1038/s41467-021-23661-4
+  title: Genetic variation associated with thyroid autoimmunity shapes the systemic immune response to PD-1 checkpoint
+    blockade.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

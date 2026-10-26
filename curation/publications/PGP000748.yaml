@@ -133,6 +133,282 @@ scores:
     status: agent_proposed
     notes: European-ancestry version of PGS005273. Construction (difference score vs case-only GWAS) not stated
       for the PRS-CS file; either way higher = nodule more likely malignant. 1000G EUR r=+0.27 with anchor PGS000087.
+  PGS005267:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.142 (hypothyroidism); 1000G EUR r=+0.62 with PGS005268 (hypothyroidism).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005268:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.65809 (hypothyroidism); 1000G EUR r=+0.97 with PGS005269 (hypothyroidism).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005269:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.6521 (hypothyroidism); 1000G EUR r=+0.97 with PGS005268 (hypothyroidism).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005270:
+    cluster: endocrine.hypothyroidism
+    phenotype: autoimmune_thyroiditis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of lymphocytic (Hashimoto) thyroiditis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.037 (lymphocytic thyroiditis); 1000G EUR r=+0.41 with PGS005271 (autoimmune_thyroiditis).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005271:
+    cluster: endocrine.hypothyroidism
+    phenotype: autoimmune_thyroiditis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of lymphocytic (Hashimoto) thyroiditis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.54908 (lymphocytic thyroiditis); 1000G EUR r=+0.91 with PGS005272 (autoimmune_thyroiditis).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005272:
+    cluster: endocrine.hypothyroidism
+    phenotype: autoimmune_thyroiditis
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of lymphocytic (Hashimoto) thyroiditis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.41698 (lymphocytic thyroiditis); 1000G EUR r=+0.91 with PGS005271 (autoimmune_thyroiditis).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005264:
+    cluster: endocrine.hyperthyroidism
+    phenotype: graves_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Graves' disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.008 (graves'' disease); 1000G EUR r=+0.50 with PGS005265 (graves_disease).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005265:
+    cluster: endocrine.hyperthyroidism
+    phenotype: graves_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Graves' disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.62508 (graves'' disease); 1000G EUR r=+0.93 with PGS005266 (graves_disease).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005266:
+    cluster: endocrine.hyperthyroidism
+    phenotype: graves_disease
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of Graves' disease
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.54333 (graves'' disease); 1000G EUR r=+0.93 with PGS005265 (graves_disease).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005261:
+    cluster: endocrine.goiter
+    phenotype: benign_nodular_goiter
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of benign nodular goiter
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.048 (benign nodular gioter); 1000G EUR r=+0.63 with PGS005263 (benign_nodular_goiter).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005262:
+    cluster: endocrine.goiter
+    phenotype: benign_nodular_goiter
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of benign nodular goiter
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.40839 (benign nodular gioter); 1000G EUR r=+0.92 with PGS005263 (benign_nodular_goiter).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
+  PGS005263:
+    cluster: endocrine.goiter
+    phenotype: benign_nodular_goiter
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of benign nodular goiter
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods > PRS calculation and evaluation
+      quote: The PRS was calculated as a weighted sum of independent genome-wide significant risk alleles.
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Corroboration: catalog OR 1.362 (benign nodular gioter); 1000G EUR r=+0.92 with PGS005262 (benign_nodular_goiter).
+      Global thyroid GWAS consortium (Nature Genetics PMID 41644669); catalog OR has no stated unit or CI.'
 paper:
   pmid: '41644669'
   doi: 10.1101/2025.05.15.25327513

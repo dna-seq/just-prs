@@ -1,0 +1,34 @@
+pgp_id: PGP000733
+scores:
+  PGS005218:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: catalog OR 2.01 [1.99, 2.03] (Hypothyroidism); 1000G EUR r=+0.86 with
+      PGS005269 (hypothyroidism).'
+paper:
+  pmid: '41238958'
+  doi: 10.1038/s41588-025-02410-z
+  title: Genome-wide association study and polygenic risk prediction of hypothyroidism.
+evidence_read:
+  abstract: false
+  full_text: null
+  supplement: []

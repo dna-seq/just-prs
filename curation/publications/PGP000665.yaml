@@ -132,6 +132,30 @@ scores:
     status: agent_proposed
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by OR 1.52 (CI 1.35-1.71) against 'Gout'; 1000G EUR r=+0.24 with anchor PGS004871.
+  PGS004935:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: catalog OR 1.5 [1.41, 1.6] (Hypothyroidism); 1000G EUR r=+0.74 with PGS001181
+      (hypothyroidism).'
 paper:
   pmid: '39218908'
   doi: 10.1186/s40246-024-00664-y

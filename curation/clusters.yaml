@@ -129,6 +129,96 @@ domains:
             - uric acid
             - serum uric acid
             - blood urate
+      hypothyroidism:
+        label: Hypothyroidism (underactive thyroid)
+        axis: higher risk of an underactive thyroid
+        valence: undesirable
+        valence_basis: Hypothyroidism is a chronic disease needing lifelong hormone replacement.
+        status: agent_proposed
+        aliases:
+        - underactive thyroid
+        - low thyroid
+        - Hashimoto
+        - levothyroxine
+        - myxoedema
+        phenotypes:
+          hypothyroidism:
+            label: Hypothyroidism (diagnosed, self-reported or time to diagnosis)
+            sign: 1
+          autoimmune_thyroiditis:
+            label: Lymphocytic (Hashimoto) thyroiditis, the autoimmune cause of hypothyroidism
+            sign: 1
+            aliases:
+            - Hashimoto's thyroiditis
+            - autoimmune thyroiditis
+          thyroid_medication_use:
+            label: Thyroid medication use (mostly levothyroxine replacement)
+            sign: 1
+            aliases:
+            - thyroxine tablets
+          thyroid_disorder_self_reported:
+            label: Any self-reported thyroid condition (UK Biobank; mostly hypothyroidism)
+            sign: 1
+            aliases:
+            - thyroid problem
+      hyperthyroidism:
+        label: Hyperthyroidism (overactive thyroid)
+        axis: higher risk of an overactive thyroid
+        valence: undesirable
+        valence_basis: Hyperthyroidism and Graves' disease cause heart, bone and eye complications.
+        status: agent_proposed
+        aliases:
+        - overactive thyroid
+        - Graves
+        - thyrotoxicosis
+        - toxic goitre
+        phenotypes:
+          hyperthyroidism:
+            label: Hyperthyroidism or thyrotoxicosis (with or without goitre)
+            sign: 1
+          graves_disease:
+            label: Graves' disease (autoimmune hyperthyroidism)
+            sign: 1
+            aliases:
+            - Basedow disease
+      goiter:
+        label: Goitre and thyroid nodules
+        axis: higher risk of an enlarged or nodular thyroid
+        valence: undesirable
+        valence_basis: Goitre and nodules need monitoring and sometimes surgery.
+        status: agent_proposed
+        aliases:
+        - goiter
+        - enlarged thyroid
+        - thyroid nodules
+        - multinodular goitre
+        phenotypes:
+          nontoxic_goiter:
+            label: Non-toxic (multinodular) goitre
+            sign: 1
+          benign_nodular_goiter:
+            label: Benign nodular goiter
+            sign: 1
+      thyroid_function:
+        label: Thyroid hormone levels (thyroid function)
+        axis: more thyroid hormone activity (higher free T4, lower TSH)
+        valence: context_dependent
+        valence_basis: Both too little and too much thyroid hormone are harmful; the normal range is best.
+        status: agent_proposed
+        aliases:
+        - thyroid function test
+        - TSH
+        - free T4
+        - thyroxine level
+        phenotypes:
+          free_thyroxine:
+            label: Free thyroxine (FT4) concentration
+            sign: 1
+          tsh_level:
+            label: Thyroid stimulating hormone (TSH) concentration; high TSH signals an underactive thyroid
+            sign: -1
+            aliases:
+            - thyrotropin
   cognition:
     label: Cognition
     concepts:

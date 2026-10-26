@@ -14739,3 +14739,118 @@ scores:
     notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
       GBE_INI30180. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
       r=+0.74 with already-annotated same-phenotype seed PGS000098 (PGP000051).
+  PGS000965:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism/myxoedema
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.98 with PGS001181 (hypothyroidism).'
+  PGS001181:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism (time to diagnosis)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other hypothyroidism (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.98 with PGS000965 (hypothyroidism).'
+  PGS001042:
+    cluster: endocrine.hyperthyroidism
+    phenotype: hyperthyroidism
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of hyperthyroidism/thyrotoxicosis (time to diagnosis)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyrotoxicosis [hyperthyroidism] (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.92 with PGS001043 (hyperthyroidism).'
+  PGS001043:
+    cluster: endocrine.hyperthyroidism
+    phenotype: hyperthyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hyperthyroidism/thyrotoxicosis
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hyperthyroidism, thyrotoxicosis
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.92 with PGS001042 (hyperthyroidism).'
+  PGS000928:
+    cluster: endocrine.goiter
+    phenotype: nontoxic_goiter
+    measurement_kind: time_to_event
+    score_effect:
+      direction: increases
+      target: risk of non-toxic (multinodular) goitre (time to diagnosis)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Other non-toxic goitre (time-to-event)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.70 with PGS001814 (nontoxic_goiter).'

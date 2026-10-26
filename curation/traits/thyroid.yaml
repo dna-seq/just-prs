@@ -1,0 +1,197 @@
+slug: thyroid
+query: thyroid disease and thyroid function
+match:
+  terms:
+  - Graves
+  - goitre
+  - hyperthyroidism
+  - hypothyroidism
+  - thyroid stimulating hormone
+  - thyrotoxicosis
+  efo_ids:
+  - EFO_0002751
+  - EFO_0009933
+  - MONDO_0000334
+  - MONDO_0001658
+  - MONDO_0003240
+  - MONDO_0004425
+  - MONDO_0005420
+  - MONDO_0006869
+  - MONDO_0007699
+  - MONDO_0009718
+  - MONDO_0010138
+  - OBA_1000983
+  - OBA_1001010
+  exclude:
+  - cancer|carcinoma
+anchor: PGS005218
+status: resolved
+concepts:
+- endocrine.hypothyroidism
+- endocrine.hyperthyroidism
+- endocrine.goiter
+- endocrine.thyroid_function
+scores:
+  PGS000759:
+    decision: in_scope
+    note: null
+  PGS000761:
+    decision: in_scope
+    note: null
+  PGS000820:
+    decision: in_scope
+    note: null
+  PGS000821:
+    decision: in_scope
+    note: null
+  PGS000928:
+    decision: in_scope
+    note: null
+  PGS000965:
+    decision: in_scope
+    note: null
+  PGS001042:
+    decision: in_scope
+    note: null
+  PGS001043:
+    decision: in_scope
+    note: null
+  PGS001181:
+    decision: in_scope
+    note: null
+  PGS001814:
+    decision: in_scope
+    note: null
+  PGS001815:
+    decision: in_scope
+    note: null
+  PGS001816:
+    decision: in_scope
+    note: null
+  PGS002022:
+    decision: in_scope
+    note: null
+  PGS002023:
+    decision: in_scope
+    note: null
+  PGS002024:
+    decision: in_scope
+    note: null
+  PGS002336:
+    decision: in_scope
+    note: null
+  PGS002351:
+    decision: in_scope
+    note: null
+  PGS002408:
+    decision: in_scope
+    note: null
+  PGS002423:
+    decision: in_scope
+    note: null
+  PGS002457:
+    decision: in_scope
+    note: null
+  PGS002472:
+    decision: in_scope
+    note: null
+  PGS002506:
+    decision: in_scope
+    note: null
+  PGS002521:
+    decision: in_scope
+    note: null
+  PGS002555:
+    decision: in_scope
+    note: null
+  PGS002570:
+    decision: in_scope
+    note: null
+  PGS002604:
+    decision: in_scope
+    note: null
+  PGS002619:
+    decision: in_scope
+    note: null
+  PGS002653:
+    decision: in_scope
+    note: null
+  PGS002668:
+    decision: in_scope
+    note: null
+  PGS002702:
+    decision: in_scope
+    note: null
+  PGS002717:
+    decision: in_scope
+    note: null
+  PGS002766:
+    decision: in_scope
+    note: null
+  PGS004446:
+    decision: in_scope
+    note: null
+  PGS004516:
+    decision: in_scope
+    note: null
+  PGS004789:
+    decision: in_scope
+    note: null
+  PGS004790:
+    decision: in_scope
+    note: null
+  PGS004906:
+    decision: in_scope
+    note: null
+  PGS004907:
+    decision: in_scope
+    note: null
+  PGS004935:
+    decision: in_scope
+    note: null
+  PGS005218:
+    decision: in_scope
+    note: null
+  PGS005261:
+    decision: in_scope
+    note: null
+  PGS005262:
+    decision: in_scope
+    note: null
+  PGS005263:
+    decision: in_scope
+    note: null
+  PGS005264:
+    decision: in_scope
+    note: "Graves' disease pulled in by the Graves term; placed under endocrine.hyperthyroidism"
+  PGS005265:
+    decision: in_scope
+    note: "Graves' disease pulled in by the Graves term; placed under endocrine.hyperthyroidism"
+  PGS005266:
+    decision: in_scope
+    note: "Graves' disease pulled in by the Graves term; placed under endocrine.hyperthyroidism"
+  PGS005267:
+    decision: in_scope
+    note: null
+  PGS005268:
+    decision: in_scope
+    note: null
+  PGS005269:
+    decision: in_scope
+    note: null
+  PGS005270:
+    decision: in_scope
+    note: null
+  PGS005271:
+    decision: in_scope
+    note: null
+  PGS005272:
+    decision: in_scope
+    note: null
+  PGS005273:
+    decision: out_of_scope
+    note: thyroid cancer vs benign nodular goiter case-case score; belongs to cancer.thyroid_cancer (already annotated)
+  PGS005274:
+    decision: out_of_scope
+    note: thyroid cancer vs benign nodular goiter case-case score; belongs to cancer.thyroid_cancer (already annotated)
+summary: 52 thyroid scores in scope, all annotated as higher score = more of the reported condition or level. Hypothyroidism (25 scores, plus Hashimoto thyroiditis, thyroid medication use and self-reported thyroid condition) forms one coherent block (1000G r 0.2-0.86 with OR-confirmed anchors). Hyperthyroidism/thyrotoxicosis and Graves' disease, goitre (non-toxic and benign nodular) get their own concepts; they correlate only weakly with hypothyroidism. TSH and free T4 (Mulder 2023, children) sit on one thyroid-function axis with TSH sign -1; their scores are nearly uncorrelated (r=+0.07). Goitre scores anti-correlate with the TSH score (r -0.3 to -0.4), consistent with low-TSH alleles raising goitre risk, not a sign flip. Most entries are catalog-only (medium confidence); the self-reported thyroid-condition definition (Weissbrod) was not found in sources.

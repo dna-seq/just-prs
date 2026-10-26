@@ -3129,3 +3129,51 @@ scores:
     notes: Catalog-only annotation (paper not read), score X30210.score. PGS Catalog weights are per-allele effects
       on the reported trait; corroborated by 1000G EUR r=+0.59 with already-annotated same-phenotype seed PGS000091
       (PGP000051).
+  PGS004446:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: E03 (Other hypothyroidism)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: catalog OR 1.47851 (E03 (Other hypothyroidism)); 1000G EUR r=+0.97 with
+      PGS004516 (hypothyroidism).'
+  PGS004516:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: E03 (Other hypothyroidism)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: catalog OR 1.49623 (E03 (Other hypothyroidism)); 1000G EUR r=+0.97 with
+      PGS004446 (hypothyroidism).'

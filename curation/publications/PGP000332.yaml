@@ -6592,6 +6592,390 @@ scores:
     notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.SBayesR. PGS Catalog weights are
       per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.77 with already-annotated same-phenotype
       seed PGS000097 (PGP000051).
+  PGS002336:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS004789 (hypothyroidism).'
+  PGS002408:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.83 with PGS002457 (hypothyroidism).'
+  PGS002457:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.83 with PGS002408 (hypothyroidism).'
+  PGS002506:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.79 with PGS002457 (hypothyroidism).'
+  PGS002555:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.83 with PGS002604 (hypothyroidism).'
+  PGS002604:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.83 with PGS002555 (hypothyroidism).'
+  PGS002653:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.82 with PGS002702 (hypothyroidism).'
+  PGS002702:
+    cluster: endocrine.hypothyroidism
+    phenotype: hypothyroidism
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: risk of hypothyroidism
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Hypothyroidism
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS002336 (hypothyroidism).'
+  PGS002351:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS002717 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002423:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.85 with PGS002472 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002472:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.85 with PGS002423 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002521:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.84 with PGS002472 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002570:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.93 with PGS002619 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002619:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.93 with PGS002570 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002668:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.82 with PGS002717 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
+  PGS002717:
+    cluster: endocrine.hypothyroidism
+    phenotype: thyroid_disorder_self_reported
+    measurement_kind: binary
+    score_effect:
+      direction: increases
+      target: likelihood of a self-reported thyroid condition
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Thyroid (self-reported conditions)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: 'Catalog-only annotation (paper not read): PGS Catalog weights are per-allele effects on the reported
+      trait (case status). Corroboration: 1000G EUR r=+0.88 with PGS002351 (thyroid_disorder_self_reported). UKB
+      self-reported thyroid condition (Price-lab trait disease_THYROID_ANY_SELF_REP); exact field-20002 codes not
+      found in reachable sources, presumably dominated by hypothyroidism (code 1226).'
 paper:
   pmid: '35393596'
   doi: 10.1038/s41588-022-01036-9

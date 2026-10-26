@@ -14595,3 +14595,147 @@ scores:
     status: agent_proposed
     notes: snpnet Gaussian regression on the median UK Biobank value (paper template); read anchor score for this
       phenotype. min r with other in-scope plateletcrit (share of blood volume taken up by platelets) scores +0.53.
+  PGS001076:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil percentage
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30210. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.78 with already-annotated same-phenotype seed PGS000091 (PGP000051).
+  PGS001172:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30150. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.77 with already-annotated same-phenotype seed PGS000090 (PGP000051).
+  PGS001199:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30120. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.58 with already-annotated same-phenotype seed PGS000097 (PGP000051).
+  PGS001377:
+    cluster: blood.basophil_count
+    phenotype: basophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: basophil percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Basophil percentage
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30220. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.61 with already-annotated same-phenotype seed PGS000089 (PGP000051).
+  PGS001378:
+    cluster: blood.basophil_count
+    phenotype: basophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: basophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Basophil count
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30160. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.62 with already-annotated same-phenotype seed PGS000163 (PGP000078).
+  PGS001414:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte %
+      confidence: medium
+    notes: Catalog-only annotation under the paper template (snpnet Gaussian model on the median raw value), score
+      GBE_INI30180. PGS Catalog weights are per-allele effects on the reported trait; corroborated by 1000G EUR
+      r=+0.74 with already-annotated same-phenotype seed PGS000098 (PGP000051).

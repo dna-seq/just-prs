@@ -2587,6 +2587,198 @@ scores:
     notes: Catalog-only annotation (paper not read), score WBC_PRSmixPlus_sas. PGS Catalog weights are per-allele
       effects on the reported trait; corroborated by 1000G EUR r=+0.79 with already-annotated same-phenotype seed
       PGS000113 (PGP000051).
+  PGS004727:
+    cluster: blood.basophil_count
+    phenotype: basophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: basophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Basophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score Basophils_PRSmix_eur. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.79 with already-annotated same-phenotype seed
+      PGS000088 (PGP000051).
+  PGS004728:
+    cluster: blood.basophil_count
+    phenotype: basophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: basophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Basophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score Basophils_PRSmix_sas. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.60 with already-annotated same-phenotype seed
+      PGS000088 (PGP000051). PRSmix weights tuned for South Asian ancestry.
+  PGS004729:
+    cluster: blood.basophil_count
+    phenotype: basophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: basophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Basophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score Basophils_PRSmixPlus_eur. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.56 with already-annotated same-phenotype seed
+      PGS000088 (PGP000051).
+  PGS004730:
+    cluster: blood.basophil_count
+    phenotype: basophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: basophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Basophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score Basophils_PRSmixPlus_sas. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.60 with already-annotated same-phenotype seed
+      PGS000088 (PGP000051). PRSmix weights tuned for South Asian ancestry.
+  PGS004761:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score Eosinophils_PRSmix_eur. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.82 with already-annotated same-phenotype seed
+      PGS000090 (PGP000051).
+  PGS004762:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score Eosinophils_PRSmix_sas. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.83 with already-annotated same-phenotype seed
+      PGS000090 (PGP000051). PRSmix weights tuned for South Asian ancestry.
+  PGS004763:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score Eosinophils_PRSmixPlus_eur. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.79 with already-annotated same-phenotype seed
+      PGS000090 (PGP000051).
+  PGS004764:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score Eosinophils_PRSmixPlus_sas. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.84 with already-annotated same-phenotype seed
+      PGS000090 (PGP000051). PRSmix weights tuned for South Asian ancestry.
 paper:
   pmid: '38508198'
   doi: 10.1016/j.xgen.2024.100523

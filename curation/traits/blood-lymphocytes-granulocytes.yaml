@@ -1,0 +1,238 @@
+slug: blood-lymphocytes-granulocytes
+query: lymphocytes, eosinophils and basophils
+match:
+  terms:
+  - basophil count
+  - basophil percentage
+  - eosinophil count
+  - eosinophil percentage
+  - lymphocyte count
+  - lymphocyte percentage
+  efo_ids:
+  - EFO_0004587
+  - EFO_0004842
+  - EFO_0005090
+  - EFO_0007991
+  - EFO_0007992
+  - EFO_0007993
+  exclude: []
+anchor: PGS000098
+status: resolved
+concepts:
+- blood.lymphocyte_count
+- blood.eosinophil_count
+- blood.basophil_count
+scores:
+  PGS000088:
+    decision: in_scope
+    note: null
+  PGS000089:
+    decision: in_scope
+    note: null
+  PGS000090:
+    decision: in_scope
+    note: null
+  PGS000091:
+    decision: in_scope
+    note: null
+  PGS000097:
+    decision: in_scope
+    note: null
+  PGS000098:
+    decision: in_scope
+    note: null
+  PGS000163:
+    decision: in_scope
+    note: null
+  PGS000164:
+    decision: in_scope
+    note: null
+  PGS000165:
+    decision: in_scope
+    note: null
+  PGS000166:
+    decision: in_scope
+    note: null
+  PGS000172:
+    decision: in_scope
+    note: null
+  PGS000173:
+    decision: in_scope
+    note: null
+  PGS001076:
+    decision: in_scope
+    note: null
+  PGS001172:
+    decision: in_scope
+    note: null
+  PGS001199:
+    decision: in_scope
+    note: null
+  PGS001377:
+    decision: in_scope
+    note: null
+  PGS001378:
+    decision: in_scope
+    note: null
+  PGS001414:
+    decision: in_scope
+    note: null
+  PGS001949:
+    decision: in_scope
+    note: null
+  PGS001965:
+    decision: in_scope
+    note: null
+  PGS001986:
+    decision: in_scope
+    note: null
+  PGS002167:
+    decision: in_scope
+    note: null
+  PGS002183:
+    decision: in_scope
+    note: null
+  PGS002203:
+    decision: in_scope
+    note: null
+  PGS002325:
+    decision: in_scope
+    note: null
+  PGS002338:
+    decision: in_scope
+    note: null
+  PGS002364:
+    decision: in_scope
+    note: null
+  PGS002370:
+    decision: in_scope
+    note: null
+  PGS002397:
+    decision: in_scope
+    note: null
+  PGS002410:
+    decision: in_scope
+    note: null
+  PGS002446:
+    decision: in_scope
+    note: null
+  PGS002459:
+    decision: in_scope
+    note: null
+  PGS002495:
+    decision: in_scope
+    note: null
+  PGS002508:
+    decision: in_scope
+    note: null
+  PGS002544:
+    decision: in_scope
+    note: null
+  PGS002557:
+    decision: in_scope
+    note: null
+  PGS002593:
+    decision: in_scope
+    note: null
+  PGS002606:
+    decision: in_scope
+    note: null
+  PGS002642:
+    decision: in_scope
+    note: null
+  PGS002655:
+    decision: in_scope
+    note: null
+  PGS002691:
+    decision: in_scope
+    note: null
+  PGS002704:
+    decision: in_scope
+    note: null
+  PGS003464:
+    decision: in_scope
+    note: null
+  PGS003475:
+    decision: in_scope
+    note: null
+  PGS003530:
+    decision: in_scope
+    note: null
+  PGS003557:
+    decision: in_scope
+    note: null
+  PGS003936:
+    decision: in_scope
+    note: null
+  PGS003939:
+    decision: in_scope
+    note: null
+  PGS003940:
+    decision: in_scope
+    note: null
+  PGS003941:
+    decision: in_scope
+    note: null
+  PGS003944:
+    decision: in_scope
+    note: null
+  PGS003945:
+    decision: in_scope
+    note: null
+  PGS004356:
+    decision: in_scope
+    note: null
+  PGS004359:
+    decision: in_scope
+    note: null
+  PGS004362:
+    decision: in_scope
+    note: null
+  PGS004727:
+    decision: in_scope
+    note: null
+  PGS004728:
+    decision: in_scope
+    note: null
+  PGS004729:
+    decision: in_scope
+    note: null
+  PGS004730:
+    decision: in_scope
+    note: null
+  PGS004761:
+    decision: in_scope
+    note: null
+  PGS004762:
+    decision: in_scope
+    note: null
+  PGS004763:
+    decision: in_scope
+    note: null
+  PGS004764:
+    decision: in_scope
+    note: null
+  PGS005174:
+    decision: out_of_scope
+    note: 'variance (vQTL) score from PGP000723: predicts within-genotype variability of the cell count, not its level'
+  PGS005175:
+    decision: out_of_scope
+    note: 'variance (vQTL) score from PGP000723: predicts within-genotype variability of the cell count, not its level'
+  PGS005181:
+    decision: out_of_scope
+    note: 'variance (vQTL) score from PGP000723: predicts within-genotype variability of the cell count, not its level'
+  PGS005182:
+    decision: out_of_scope
+    note: 'variance (vQTL) score from PGP000723: predicts within-genotype variability of the cell count, not its level'
+  PGS005183:
+    decision: out_of_scope
+    note: 'variance (vQTL) score from PGP000723: predicts within-genotype variability of the cell count, not its level'
+  PGS005184:
+    decision: out_of_scope
+    note: 'variance (vQTL) score from PGP000723: predicts within-genotype variability of the cell count, not its level'
+summary: Three new blood concepts (lymphocyte, eosinophil, basophil count), each with a count and a percentage-of-white-cells
+  phenotype, sign +1, neutral valence. All 63 in-scope scores read as higher score = more of that cell type. Seeds are the
+  Xu 2022 elastic-net (PGP000051) and Vuckovic 2020 (PGP000078) scores; the other 51 are catalog-only with 1000G EUR r >=
+  +0.4 to a same-phenotype seed, except two Biobank Japan BOLT-LMM scores from Weissbrod 2022. PGS002364 (eosinophils) is
+  backed by lead-weight sign concordance with the EUR score; PGS002370 (lymphocytes) is only weakly corroborated and sits
+  in review. The six PGP000723 variance (vQTL) scores are out of scope. No negative same-concept pairs.

@@ -6154,6 +6154,444 @@ scores:
       trait; corroborated by 1000G EUR r=+0.88 with PGS001200 (read), same phenotype; min r with other in-scope
       mean platelet volume scores +0.63. Genetically anti-correlated with platelet count (r about -0.4 to -0.6),
       as expected biologically, hence a separate concept.
+  PGS002325:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.BOLT-LMM. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.81 with already-annotated same-phenotype
+      seed PGS000090 (PGP000051).
+  PGS002338:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.BOLT-LMM. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.79 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002364:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: agree
+      note: 'top 40 BBJ weights vs EUR BOLT-LMM PGS002325 at the same positions: 35 same sign, 4 opposite (no rsIDs
+        in file)'
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.BOLT-LMM-BBJ. PGS Catalog weights
+      are per-allele effects on the reported trait. Weights from a Biobank Japan (East Asian) GWAS, so 1000G EUR
+      correlation with European-trained scores is weak but positive (r=+0.14 with seed PGS000165; +0.21 with PGS004762);
+      the 40 largest BBJ weights carry the same sign as the EUR BOLT-LMM score PGS002325 at the same positions in
+      35 of 39 aligned cases.
+  PGS002370:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: mixed
+      note: 'top 40 BBJ weights vs EUR BOLT-LMM PGS002338: 26 same sign, 14 opposite; top 200: 115/200 same sign'
+    review_reason: Direction rests on weak positive EUR correlation (r<=0.21) and 58% lead-weight sign concordance
+      for an East Asian-trained score.
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.BOLT-LMM-BBJ. PGS Catalog weights
+      are per-allele effects on the reported trait. Weights from a Biobank Japan (East Asian) GWAS. 1000G EUR correlation
+      with European-trained lymphocyte scores is weak (r=+0.17 with seed PGS000172; best +0.21 with PGS003475),
+      and the 200 largest BBJ weights share sign with the EUR BOLT-LMM score PGS002338 in only 115 of 200 positions
+      (weight correlation +0.09). Positive throughout, so not a flip, but weakly corroborated.
+  PGS002397:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.P+T.0.0001. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.69 with already-annotated same-phenotype
+      seed PGS000165 (PGP000078).
+  PGS002410:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.P+T.0.0001. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.65 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002446:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.P+T.0.001. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.68 with already-annotated same-phenotype
+      seed PGS000090 (PGP000051).
+  PGS002459:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.P+T.0.001. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.64 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002495:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.P+T.0.01. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.59 with already-annotated same-phenotype
+      seed PGS000090 (PGP000051).
+  PGS002508:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.P+T.0.01. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.58 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002544:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.P+T.1e-06. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.67 with already-annotated same-phenotype
+      seed PGS000165 (PGP000078).
+  PGS002557:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.P+T.1e-06. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.64 with already-annotated same-phenotype
+      seed PGS000172 (PGP000078).
+  PGS002593:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.P+T.5e-08. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.66 with already-annotated same-phenotype
+      seed PGS000165 (PGP000078).
+  PGS002606:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.P+T.5e-08. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.62 with already-annotated same-phenotype
+      seed PGS000172 (PGP000078).
+  PGS002642:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.PolyFun-pred. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.80 with already-annotated same-phenotype
+      seed PGS000090 (PGP000051).
+  PGS002655:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.PolyFun-pred. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.77 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
+  PGS002691:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_EOSINOPHIL_COUNT.SBayesR. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.79 with already-annotated same-phenotype
+      seed PGS000090 (PGP000051).
+  PGS002704:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score blood_LYMPHOCYTE_COUNT.SBayesR. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.77 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051).
 paper:
   pmid: '35393596'
   doi: 10.1038/s41588-022-01036-9

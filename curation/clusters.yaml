@@ -2212,6 +2212,86 @@ domains:
           platelet_distribution_width_variability:
             label: Variability of platelet distribution width around the mean (vQTL-based vPGS)
             sign: 1
+      lymphocyte_count:
+        label: Lymphocyte count and percentage
+        axis: more lymphocytes (higher absolute count or share of white cells)
+        valence: neutral
+        valence_basis: Lymphocytes vary within a normal range in healthy people; very low counts (lymphopenia)
+          accompany immune deficiency or illness and very high counts accompany infection or blood cancers,
+          but the polygenic range reflects normal variation, where neither end is better.
+        status: agent_proposed
+        aliases:
+        - lymphocytes
+        - lymphopenia
+        - low lymphocytes
+        - high lymphocytes
+        - lymph count
+        phenotypes:
+          lymphocyte_count:
+            label: Absolute lymphocyte count (raw or log-transformed)
+            sign: 1
+            aliases:
+            - absolute lymphocyte count
+            - lymphocyte level
+          lymphocyte_percentage:
+            label: Lymphocytes as a percentage of white blood cells
+            sign: 1
+            aliases:
+            - lymphocyte percent
+            - lymphocyte %
+      eosinophil_count:
+        label: Eosinophil count and percentage
+        axis: more eosinophils (higher absolute count or share of white cells)
+        valence: neutral
+        valence_basis: Eosinophils vary within a normal range in healthy people; raised counts (eosinophilia)
+          go with allergy, asthma and parasitic infection, but the polygenic range reflects normal variation,
+          where neither end is clearly better.
+        status: agent_proposed
+        aliases:
+        - eosinophils
+        - eosinophilia
+        - high eosinophils
+        - eos count
+        - allergy white cells
+        phenotypes:
+          eosinophil_count:
+            label: Absolute eosinophil count (raw or log-transformed)
+            sign: 1
+            aliases:
+            - absolute eosinophil count
+            - eosinophil level
+          eosinophil_percentage:
+            label: Eosinophils as a percentage of white blood cells
+            sign: 1
+            aliases:
+            - eosinophil percent
+            - eosinophil %
+      basophil_count:
+        label: Basophil count and percentage
+        axis: more basophils (higher absolute count or share of white cells)
+        valence: neutral
+        valence_basis: Basophils are the rarest white cells and vary within a narrow normal range in healthy
+          people; raised counts (basophilia) are uncommon and usually secondary, so neither end of the
+          polygenic range is better.
+        status: agent_proposed
+        aliases:
+        - basophils
+        - basophilia
+        - high basophils
+        - baso count
+        phenotypes:
+          basophil_count:
+            label: Absolute basophil count (raw or log-transformed)
+            sign: 1
+            aliases:
+            - absolute basophil count
+            - basophil level
+          basophil_percentage:
+            label: Basophils as a percentage of white blood cells
+            sign: 1
+            aliases:
+            - basophil percent
+            - basophil %
   musculoskeletal:
     label: Bones, joints and muscles
     concepts:

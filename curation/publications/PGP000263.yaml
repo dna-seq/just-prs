@@ -3798,6 +3798,150 @@ scores:
     notes: Catalog-only annotation (paper not read). PGS Catalog weights are per-allele effects on the reported
       trait; corroborated by 1000G EUR r=+0.78 with PGS001517 (read), same phenotype; min r with other in-scope
       plateletcrit (share of blood volume taken up by platelets) scores +0.58.
+  PGS001949:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil percentage
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-PLR_log_eosinophil_perc. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.72 with already-annotated same-phenotype
+      seed PGS000166 (PGP000078). Trained on log-transformed values (monotonic, same direction).
+  PGS001965:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-PLR_log_lymphocyte. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.81 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051). Trained on log-transformed values (monotonic, same direction).
+  PGS001986:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte percentage
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-PLR_lymphocyte_perc. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.80 with already-annotated same-phenotype
+      seed PGS000098 (PGP000051).
+  PGS002167:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil percentage
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-ldpred2_log_eosinophil_perc. PGS Catalog
+      weights are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.68 with already-annotated
+      same-phenotype seed PGS000166 (PGP000078). Trained on log-transformed values (monotonic, same direction).
+  PGS002183:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte count
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-ldpred2_log_lymphocyte. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.79 with already-annotated same-phenotype
+      seed PGS000097 (PGP000051). Trained on log-transformed values (monotonic, same direction).
+  PGS002203:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte percentage
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score portability-ldpred2_lymphocyte_perc. PGS Catalog weights
+      are per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.77 with already-annotated same-phenotype
+      seed PGS000098 (PGP000051).
 template:
   rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
     PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged

@@ -672,6 +672,210 @@ scores:
       on the level (paper text read for the reticulocyte and hemoglobin scores of the same batch); higher score
       = higher value. 1000G EUR r=+0.78 with PGS001517; min r with other in-scope plateletcrit (share of blood volume
       taken up by platelets) scores +0.52.
+  PGS000088:
+    cluster: blood.basophil_count
+    phenotype: basophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: basophil count (covariate-adjusted)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    notes: Seed score. Elastic net fitted to the adjusted trait level (UK Biobank), so weights are per-allele effects
+      on the level; higher score = higher value. The paper does not restate the direction in words. 1000G EUR r=+0.70
+      with the independently derived Vuckovic 2020 score PGS000163 (PGP000078).
+  PGS000089:
+    cluster: blood.basophil_count
+    phenotype: basophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: basophil percentage of white blood cells (covariate-adjusted)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    notes: Seed score. Elastic net fitted to the adjusted trait level (UK Biobank), so weights are per-allele effects
+      on the level; higher score = higher value. The paper does not restate the direction in words. 1000G EUR r=+0.76
+      with the independently derived Vuckovic 2020 score PGS000164 (PGP000078).
+  PGS000090:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil count (covariate-adjusted)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    notes: Seed score. Elastic net fitted to the adjusted trait level (UK Biobank), so weights are per-allele effects
+      on the level; higher score = higher value. The paper does not restate the direction in words. 1000G EUR r=+0.73
+      with the independently derived Vuckovic 2020 score PGS000165 (PGP000078).
+  PGS000091:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil percentage of white blood cells (covariate-adjusted)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    notes: Seed score. Elastic net fitted to the adjusted trait level (UK Biobank), so weights are per-allele effects
+      on the level; higher score = higher value. The paper does not restate the direction in words. 1000G EUR r=+0.73
+      with the independently derived Vuckovic 2020 score PGS000166 (PGP000078).
+  PGS000097:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_count
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte count (covariate-adjusted)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    notes: Seed score. Elastic net fitted to the adjusted trait level (UK Biobank), so weights are per-allele effects
+      on the level; higher score = higher value. The paper does not restate the direction in words. 1000G EUR r=+0.70
+      with the independently derived Vuckovic 2020 score PGS000172 (PGP000078).
+  PGS000098:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte percentage of white blood cells (covariate-adjusted)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: full_text
+      locator: STAR Methods > Elastic net
+      quote: These effect sizes are estimated by minimizing the penalized squared loss function
+      confidence: medium
+    - source: full_text
+      locator: Discussion
+      quote: we have made the blood cell trait PGSs constructed using EN (on the expanded variant set with p value
+        threshold = 1 and trained on UK Biobank) publicly available at the PGS Catalog
+      confidence: medium
+    - source: full_text
+      locator: Results > Comparing estimated SNP effect sizes between univariate analysis and machine learning
+      quote: effect sizes of most variants using BR or EN are the same or similar to those from the univariate analysis
+        in GWAS
+      confidence: medium
+    notes: Seed score. Elastic net fitted to the adjusted trait level (UK Biobank), so weights are per-allele effects
+      on the level; higher score = higher value. The paper does not restate the direction in words. 1000G EUR r=+0.68
+      with the independently derived Vuckovic 2020 score PGS000173 (PGP000078).
 paper:
   pmid: '35072137'
   doi: 10.1016/j.xgen.2021.100086

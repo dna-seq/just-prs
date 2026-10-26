@@ -1189,3 +1189,51 @@ scores:
     notes: LDpred2-auto on the paper's own plink2 GWAS of the phenotype (paper template), so the sign follows the
       phenotype. 1000G EUR r=+0.79 with PGS001517; min r with other in-scope plateletcrit (share of blood volume
       taken up by platelets) scores +0.58.
+  PGS003530:
+    cluster: blood.eosinophil_count
+    phenotype: eosinophil_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: eosinophil percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Eosinophil percentage
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score cont-decay-log_eosinophil_perc. PGS Catalog weights are
+      per-allele effects on the reported trait; corroborated by 1000G EUR r=+0.67 with already-annotated same-phenotype
+      seed PGS000166 (PGP000078). Trained on log-transformed values (monotonic, same direction).
+  PGS003557:
+    cluster: blood.lymphocyte_count
+    phenotype: lymphocyte_percentage
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: lymphocyte percentage of white blood cells
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Lymphocyte percentage
+      confidence: medium
+    notes: Catalog-only annotation (paper not read), score cont-decay-lymphocyte_perc. PGS Catalog weights are per-allele
+      effects on the reported trait; corroborated by 1000G EUR r=+0.77 with already-annotated same-phenotype seed
+      PGS000098 (PGP000051).

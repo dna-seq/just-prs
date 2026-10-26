@@ -13851,3 +13851,87 @@ scores:
     status: agent_proposed
     notes: snpnet binomial model on gallstone case status (paper template; HC1125). The time-to-event label refers
       to the catalog evaluation (AUROC only). 1000G EUR r=+0.80 with PGS001861 and +0.91 with PGS000942.
+  PGS001002:
+    cluster: anthropometry.lean_mass
+    phenotype: body_water_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body water mass (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body water mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank measurement (paper template), so higher score = more body
+      water. 1000G EUR r = +0.88 with PGS003901 (fat-free mass, annotated) and +0.75 with PGS001950.
+  PGS001234:
+    cluster: anthropometry.lean_mass
+    phenotype: predicted_muscle_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: impedance-predicted mass of the arm (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Left arm mass (predicted)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank measurement (paper template), so higher score = more predicted
+      arm mass. 1000G EUR r = +0.84 with PGS003901 (whole-body fat-free mass, annotated).
+  PGS001235:
+    cluster: anthropometry.lean_mass
+    phenotype: predicted_muscle_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: impedance-predicted mass of the arm (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (model families)
+      quote: We used the Gaussian family and the R 2 metric for quantitative traits, whereas we used the binomial
+        family and the AUC-ROC metric for the binary traits [ 10 ].
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Right arm mass (predicted)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: snpnet Gaussian regression on the UK Biobank measurement (paper template), so higher score = more predicted
+      arm mass. 1000G EUR r = +0.83 with PGS003901 (whole-body fat-free mass, annotated).

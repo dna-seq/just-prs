@@ -704,3 +704,31 @@ scores:
     notes: LDpred2-auto on the papers own GWAS of less_happy_with_health, the same trait code as Privé et al. (raw
       field 20459). 1000G EUR r=+0.92 with PGS002153 and +0.59 with PGS001935. Higher PGS003519 = less happy with
       own health.
+  PGS003556:
+    cluster: anthropometry.lean_mass
+    phenotype: body_water_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body water mass (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: full_text
+      locator: Methods (GWAS on training individuals)
+      quote: First, we obtain GWAS summary statistics by carrying out GWAS on the training individuals with plink2
+        using sex, age and precomputed PC1–16 as covariates.
+      confidence: medium
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body water mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: LDpred2-auto on the paper's own UK Biobank GWAS of the measurement, so the sign follows the measured
+      value. 1000G EUR r = +1.00 with PGS003531 (fat-free mass, same paper, annotated).

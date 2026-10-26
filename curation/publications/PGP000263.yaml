@@ -2966,6 +2966,52 @@ scores:
     status: agent_proposed
     notes: LDpred2 on the raw field 1528 value. Higher = more water. 1000G EUR r=+0.89 with PGS002011 and +0.51
       with PGS001069.
+  PGS001984:
+    cluster: anthropometry.lean_mass
+    phenotype: body_water_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body water mass (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body water mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +1.00 with PGS001950 (fat-free mass, same paper, annotated) and +0.89 with PGS003531.
+  PGS002202:
+    cluster: anthropometry.lean_mass
+    phenotype: body_water_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body water mass (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body water mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +1.00 with PGS002168 (fat-free mass, same paper, annotated) and +0.95 with PGS003531.
 template:
   rule: Biobank-style batch of LDL-family scores; each score predicts the reported lipid measurement itself, with
     PGS Catalog weights as per-allele effects on that measurement (higher score = higher level). Scores flagged

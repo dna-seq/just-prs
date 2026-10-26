@@ -2378,3 +2378,141 @@ scores:
     status: agent_proposed
     notes: Risk-factor + disease meta-PRS (name meta.K80.score). Catalog OR 1.30 per SD (no CI). r = +0.77 with
       PGS004476.
+  PGS004377:
+    cluster: anthropometry.lean_mass
+    phenotype: body_water_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: whole-body water mass (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Whole body water mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +1.00 with PGS004376 (fat-free mass, same paper, annotated).
+  PGS004388:
+    cluster: anthropometry.lean_mass
+    phenotype: predicted_muscle_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: impedance-predicted mass of the leg (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg predicted mass (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.96 with PGS004376 (whole-body fat-free mass, annotated).
+  PGS004392:
+    cluster: anthropometry.lean_mass
+    phenotype: predicted_muscle_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: impedance-predicted mass of the leg (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Leg predicted mass (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.96 with PGS004376 (whole-body fat-free mass, annotated).
+  PGS004396:
+    cluster: anthropometry.lean_mass
+    phenotype: predicted_muscle_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: impedance-predicted mass of the arm (right) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm predicted mass (right)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.97 with PGS004376 (whole-body fat-free mass, annotated).
+  PGS004400:
+    cluster: anthropometry.lean_mass
+    phenotype: predicted_muscle_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: impedance-predicted mass of the arm (left) (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Arm predicted mass (left)
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.97 with PGS004376 (whole-body fat-free mass, annotated).
+  PGS004404:
+    cluster: anthropometry.lean_mass
+    phenotype: predicted_muscle_mass
+    measurement_kind: continuous
+    score_effect:
+      direction: increases
+      target: impedance-predicted mass of the trunk (UK Biobank bioimpedance)
+      coding: null
+    polarity: 1
+    evaluation_outcome: null
+    strata: {}
+    provenance:
+    - source: catalog
+      locator: scores.trait_reported
+      quote: Trunk predicted mass
+      confidence: medium
+    lead_variant_check:
+      status: not_run
+      note: null
+    review_reason: null
+    status: agent_proposed
+    notes: Catalog-only annotation (PGS Catalog weights are per-allele effects on the reported trait). 1000G EUR
+      r = +0.98 with PGS004376 (whole-body fat-free mass, annotated).

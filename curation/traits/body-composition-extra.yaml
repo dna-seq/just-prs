@@ -1,0 +1,124 @@
+slug: body-composition-extra
+query: whole body water mass and body segment measures
+match:
+  terms:
+  - Whole body fat-free mass
+  - ankle spacing
+  - arm mass
+  - body water
+  - leg predicted mass
+  - whole body water mass
+  efo_ids:
+  - EFO_0004324
+  - EFO_0009805
+  exclude: []
+anchor: PGS003902
+status: resolved
+concepts:
+- anthropometry.lean_mass
+scores:
+  PGS001002:
+    decision: in_scope
+    note: null
+  PGS001234:
+    decision: in_scope
+    note: null
+  PGS001235:
+    decision: in_scope
+    note: null
+  PGS001241:
+    decision: out_of_scope
+    note: 'Ankle spacing width: a set-up measurement of the UK Biobank heel quantitative-ultrasound device (foot
+      placement), not a body-composition trait; belongs with bone ultrasound (bone_density), left unannotated here.'
+  PGS001242:
+    decision: out_of_scope
+    note: 'Ankle spacing width: a set-up measurement of the UK Biobank heel quantitative-ultrasound device (foot
+      placement), not a body-composition trait; belongs with bone ultrasound (bone_density), left unannotated here.'
+  PGS001243:
+    decision: out_of_scope
+    note: 'Ankle spacing width: a set-up measurement of the UK Biobank heel quantitative-ultrasound device (foot
+      placement), not a body-composition trait; belongs with bone ultrasound (bone_density), left unannotated here.'
+  PGS001887:
+    decision: out_of_scope
+    note: 'Ankle spacing width: a set-up measurement of the UK Biobank heel quantitative-ultrasound device (foot
+      placement), not a body-composition trait; belongs with bone ultrasound (bone_density), left unannotated here.'
+  PGS001984:
+    decision: in_scope
+    note: null
+  PGS002100:
+    decision: out_of_scope
+    note: 'Ankle spacing width: a set-up measurement of the UK Biobank heel quantitative-ultrasound device (foot
+      placement), not a body-composition trait; belongs with bone ultrasound (bone_density), left unannotated here.'
+  PGS002202:
+    decision: in_scope
+    note: null
+  PGS003490:
+    decision: out_of_scope
+    note: 'Ankle spacing width: a set-up measurement of the UK Biobank heel quantitative-ultrasound device (foot
+      placement), not a body-composition trait; belongs with bone ultrasound (bone_density), left unannotated here.'
+  PGS003540:
+    decision: in_scope
+    note: Already annotated (lean_mass.body_impedance, polarity -1); the source of every water-mass negative pair
+      (r down to -0.61), which is expected physiology, not a flipped deposit.
+  PGS003556:
+    decision: in_scope
+    note: null
+  PGS003902:
+    decision: in_scope
+    note: null
+  PGS004377:
+    decision: in_scope
+    note: null
+  PGS004388:
+    decision: in_scope
+    note: null
+  PGS004392:
+    decision: in_scope
+    note: null
+  PGS004396:
+    decision: in_scope
+    note: null
+  PGS004400:
+    decision: in_scope
+    note: null
+  PGS004404:
+    decision: in_scope
+    note: null
+  PGS004412:
+    decision: out_of_scope
+    note: 'Ankle spacing width: a set-up measurement of the UK Biobank heel quantitative-ultrasound device (foot
+      placement), not a body-composition trait; belongs with bone ultrasound (bone_density), left unannotated here.'
+  PGS004416:
+    decision: out_of_scope
+    note: 'Ankle spacing width: a set-up measurement of the UK Biobank heel quantitative-ultrasound device (foot
+      placement), not a body-composition trait; belongs with bone ultrasound (bone_density), left unannotated here.'
+  PGS004421:
+    decision: out_of_scope
+    note: 'Ankle spacing width: a set-up measurement of the UK Biobank heel quantitative-ultrasound device (foot
+      placement), not a body-composition trait; belongs with bone ultrasound (bone_density), left unannotated here.'
+  PGS001950:
+    decision: in_scope
+    note: Already annotated (lean_mass.fat_free_mass, previous body-composition batch); reused as the correlation
+      reference for water and predicted mass.
+  PGS002168:
+    decision: in_scope
+    note: Already annotated (lean_mass.fat_free_mass, previous body-composition batch); reused as the correlation
+      reference for water and predicted mass.
+  PGS003531:
+    decision: in_scope
+    note: Already annotated (lean_mass.fat_free_mass, previous body-composition batch); reused as the correlation
+      reference for water and predicted mass.
+  PGS003901:
+    decision: in_scope
+    note: Already annotated (lean_mass.fat_free_mass, previous body-composition batch); reused as the correlation
+      reference for water and predicted mass.
+  PGS004376:
+    decision: in_scope
+    note: Already annotated (lean_mass.fat_free_mass, previous body-composition batch); reused as the correlation
+      reference for water and predicted mass.
+summary: Six whole-body water mass scores and seven impedance-predicted segment mass scores (arms, legs, trunk)
+  all go under anthropometry.lean_mass at polarity +1 (new phenotype body_water_mass; predicted_muscle_mass widened
+  to arms). Each correlates +0.6 to +1.0 with an annotated fat-free mass score, and water mass is r = +1.00 with
+  fat-free mass from the same paper. The negative pairs (min r = -0.61) are all against the impedance score PGS003540,
+  which runs opposite to lean mass by design; PGS003902 is not an inverted deposit (FTO and MC4R lead alleles point
+  to more mass). Nine ankle spacing width scores are a heel-ultrasound set-up measure and are out of scope.

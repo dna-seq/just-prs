@@ -1397,8 +1397,13 @@ domains:
             - arm muscle
             - leg muscle
           predicted_muscle_mass:
-            label: Impedance-predicted (muscle) mass of a leg or the trunk (UK Biobank bioimpedance output)
+            label: Impedance-predicted (muscle) mass of an arm, a leg or the trunk (UK Biobank bioimpedance
+              output)
             sign: 1
+            aliases:
+            - arm mass
+            - leg mass
+            - segmental mass
           appendicular_lean_mass:
             label: Appendicular lean mass (arms plus legs, mostly skeletal muscle)
             sign: 1
@@ -1411,6 +1416,12 @@ domains:
             sign: -1
             aliases:
             - bioimpedance
+          body_water_mass:
+            label: Whole-body water mass (bioimpedance); lean tissue holds most body water, so it tracks
+              fat-free mass
+            sign: 1
+            aliases:
+            - total body water
             - body water
   cancer:
     label: Cancer

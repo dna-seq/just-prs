@@ -32,6 +32,17 @@ from just_prs.prs import PRSEngine, compute_prs, compute_prs_duckdb
 from just_prs.prs_catalog import PRSCatalog
 from just_prs.reference import SUPERPOPULATIONS
 from just_prs.sample_scores import lookup_precomputed_prs
+from just_prs.score_direction import (
+    SCORE_DIRECTION_COLUMNS,
+    axis_tone,
+    curation_badge,
+    curation_status,
+    direction_detail,
+    direction_tone,
+    has_inverted_deposit,
+    higher_score_means,
+    legacy_percentile_tone,
+)
 from just_prs.scoring import resolve_cache_dir
 from just_prs.trait_summary import (
     NO_MAPPED_H2,
@@ -112,24 +123,35 @@ _DISTRIBUTIONS_DF: pl.DataFrame | None = None
 _TRAIT_CHART_CACHE: dict[str, dict[str, Any]] = {}
 
 
+TRAIT_GROUP_BY_CONCEPT = "concept"
 TRAIT_GROUP_BY_ONTOLOGY = "ontology"
 TRAIT_GROUP_BY_REPORTED = "reported"
-TRAIT_GROUP_BY_VALUES = (TRAIT_GROUP_BY_ONTOLOGY, TRAIT_GROUP_BY_REPORTED)
+TRAIT_GROUP_BY_VALUES = (TRAIT_GROUP_BY_CONCEPT, TRAIT_GROUP_BY_ONTOLOGY, TRAIT_GROUP_BY_REPORTED)
 
 
 def normalize_trait_group_by(value: str | list[str] | None) -> str:
-    """Accept a radio/segmented value and fall back to mapped-ontology grouping."""
-    raw = value if isinstance(value, str) else (value[0] if value else TRAIT_GROUP_BY_ONTOLOGY)
-    return raw if raw in TRAIT_GROUP_BY_VALUES else TRAIT_GROUP_BY_ONTOLOGY
+    """Accept a radio/segmented value and fall back to curated-concept grouping."""
+    raw = value if isinstance(value, str) else (value[0] if value else TRAIT_GROUP_BY_CONCEPT)
+    return raw if raw in TRAIT_GROUP_BY_VALUES else TRAIT_GROUP_BY_CONCEPT
 
 
 def trait_group_label_expr(group_by: str) -> pl.Expr:
-    """Polars expression for the By-Trait selector group label."""
+    """Polars expression for the By-Trait selector group label.
+
+    ``concept`` (default) titles a curated score with its concept label and falls
+    back to the ontology label for scores without a concept, exactly like
+    :func:`_trait_group_key` groups computed rows.
+    """
     reported = pl.col("trait_reported").fill_null("").cast(pl.Utf8)
     efo = pl.col("trait_efo").fill_null("").cast(pl.Utf8)
-    if normalize_trait_group_by(group_by) == TRAIT_GROUP_BY_REPORTED:
+    mode = normalize_trait_group_by(group_by)
+    if mode == TRAIT_GROUP_BY_REPORTED:
         return pl.when(reported != "").then(reported).otherwise(efo).alias("trait")
-    return pl.when(efo != "").then(efo).otherwise(reported).alias("trait")
+    ontology = pl.when(efo != "").then(efo).otherwise(reported)
+    if mode == TRAIT_GROUP_BY_CONCEPT:
+        concept = pl.col("concept_label").fill_null("").cast(pl.Utf8)
+        return pl.when(concept != "").then(concept).otherwise(ontology).alias("trait")
+    return ontology.alias("trait")
 
 
 def trait_chart_cache_key(
@@ -347,6 +369,22 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
                 "color": "#1565c0",
             },
         },
+        "higher_percentile_means": {
+            "minWidth": 240,
+            "flex": 1,
+            "headerName": "Higher score means",
+            "description": "Curated from the score's paper; empty when the direction is not curated yet.",
+        },
+        "curation_status": {
+            "width": 130,
+            "headerName": "Direction",
+            "cellRendererType": "badge",
+            "cellRendererConfig": {
+                "colorMap": {"resolved": "#1565c0", "in_review": "#e65100", "no_direction": "#e65100"},
+                "bgColorMap": {"resolved": "#e3f2fd", "in_review": "#fff3e0", "no_direction": "#fff3e0"},
+            },
+        },
+        "concept_label": {"minWidth": 160, "headerName": "Curated concept"},
         # hidden columns
         "is_harmonized": {"hide": True},
         "name": {"hide": True},
@@ -354,6 +392,11 @@ def _compute_score_column_overrides() -> dict[str, dict[str, Any]]:
         "ftp_link_ebi": {"hide": True},
         "scoring_parquet_filename": {"hide": True},
         "scoring_parquet_path": {"hide": True},
+        **{
+            column: {"hide": True}
+            for column in SCORE_DIRECTION_COLUMNS
+            if column not in ("higher_percentile_means", "curation_status", "concept_label")
+        },
     }
 
 
@@ -538,6 +581,8 @@ def _enriched_to_row_dict(enriched: Any) -> dict[str, Any]:
     for sp in ("AFR", "AMR", "EAS", "EUR", "SAS"):
         val = getattr(enriched, f"pct_{sp}", None)
         row[f"pct_{sp}"] = f"{val:.1f}" if val is not None else ""
+    for column in SCORE_DIRECTION_COLUMNS:
+        row[column] = getattr(enriched, column, None)
     return row
 
 
@@ -772,9 +817,13 @@ def _trait_group_key(
     and a partially-computed group would lose members across rows.
     """
     reported = _row_reported_trait(row)
-    if normalize_trait_group_by(group_by) == TRAIT_GROUP_BY_REPORTED:
+    mode = normalize_trait_group_by(group_by)
+    if mode == TRAIT_GROUP_BY_REPORTED:
         key = reported or str(row.get("trait_efo") or "Unlabeled trait").strip()
         return key.casefold()
+    concept = str(row.get("concept_label") or "").strip()
+    if mode == TRAIT_GROUP_BY_CONCEPT and concept:
+        return concept.casefold()
     key = str(row.get("trait_efo") or "").strip()
     if not key:
         key = reported or "Unlabeled trait"
@@ -816,6 +865,9 @@ def _trait_group_display_label(
             else "Unlabeled trait"
         )
         return label, reported_traits
+    concept_labels = _unique_nonempty_values(rows, "concept_label")
+    if normalize_trait_group_by(group_by) == TRAIT_GROUP_BY_CONCEPT and concept_labels:
+        return concept_labels[0], reported_traits
     label = (
         _concise_trait_label(efo_labels[0])
         if efo_labels
@@ -827,16 +879,20 @@ def _trait_group_display_label(
 
 
 def _percentile_tone(percentile: float | None) -> str:
-    """Semantic tone for citizen-facing percentile interpretation."""
+    """Tone for a percentile with no curated direction (high = more of the reported trait).
+
+    Rows with a curated direction use ``score_direction.direction_tone`` instead.
+    """
+    return legacy_percentile_tone(percentile)
+
+
+def _stats_percentile_tone(stats: Any, percentile: float | None) -> str:
+    """Tone for a trait-summary percentile: the concept valence on a curated axis, legacy otherwise."""
     if percentile is None:
         return "neutral"
-    if percentile >= 90:
-        return "danger"
-    if percentile >= 75:
-        return "warning"
-    if percentile < 25:
-        return "good"
-    return "neutral"
+    if stats.axis_aligned:
+        return axis_tone(percentile, stats.curated_valence)
+    return _percentile_tone(percentile)
 
 
 def _percentile_summary(percentile: float | None) -> str:
@@ -913,7 +969,48 @@ def _trait_signal_tone(signal: str) -> str:
         "Possible outlier": "warning",
         "Only one model": "neutral",
         "Mostly average": "good",
+        "Consistently high (favourable)": "good",
+        "High in some models (favourable)": "good",
+        "Consistently high": "info",
+        "High in some models": "info",
     }.get(signal, "neutral")
+
+
+_CURATION_BADGE_COLORS: dict[str, tuple[str, str]] = {
+    "Curated": ("#1565c0", "#e3f2fd"),
+    "Curated · verified": ("#2e7d32", "#e8f5e9"),
+    "Curated · inverted deposit": ("#e65100", "#fff3e0"),
+    "In review": ("#e65100", "#fff3e0"),
+    "No direction": ("#e65100", "#fff3e0"),
+    "Not curated": ("#757575", "#f5f5f5"),
+}
+_CURATION_BADGE_STYLE: dict[str, dict[str, str]] = {
+    "colorMap": {label: fg for label, (fg, _bg) in _CURATION_BADGE_COLORS.items()},
+    "bgColorMap": {label: bg for label, (_fg, bg) in _CURATION_BADGE_COLORS.items()},
+}
+
+_FAVOURABLE_SIGNALS: dict[str, str] = {
+    "Consistently elevated": "Consistently high (favourable)",
+    "Elevated in some models": "High in some models (favourable)",
+}
+_NEUTRAL_SIGNALS: dict[str, str] = {
+    "Consistently elevated": "Consistently high",
+    "Elevated in some models": "High in some models",
+}
+
+
+def curated_trait_signal(signal: str, axis_aligned: bool, valence: str) -> str:
+    """Reword "elevated" on a curated axis whose high end is not the unwanted one.
+
+    Only an ``undesirable`` axis (or an uncurated group) keeps the alarming
+    "elevated" wording; a desirable axis reads "favourable", neutral and
+    context-dependent axes read plain "high".
+    """
+    if not axis_aligned or valence == "undesirable":
+        return signal
+    if valence == "desirable":
+        return _FAVOURABLE_SIGNALS.get(signal, signal)
+    return _NEUTRAL_SIGNALS.get(signal, signal)
 
 
 def _trait_consistency_tone(consistency: str) -> str:
@@ -1668,7 +1765,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
     trait_model_scope: str = "high_moderate"
     trait_percentile_source: str = "native"
     trait_dashboard_population: str = "native"
-    trait_group_by: str = TRAIT_GROUP_BY_ONTOLOGY
+    trait_group_by: str = TRAIT_GROUP_BY_CONCEPT
     compute_all_populations: bool = False
     selected_reference_populations: list[str] = []
     show_reference_AFR: bool = False
@@ -2258,6 +2355,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             "Possible outlier": "#6a1b9a",
             "Only one model": "#757575",
             "Mostly average": "#2e7d32",
+            "Consistently high (favourable)": "#2e7d32",
+            "High in some models (favourable)": "#2e7d32",
+            "Consistently high": "#1565c0",
+            "High in some models": "#1565c0",
         }
         _SIGNAL_BG: dict[str, str] = {
             "Consistently elevated": "#ffebee",
@@ -2266,6 +2367,10 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             "Possible outlier": "#f3e5f5",
             "Only one model": "#f5f5f5",
             "Mostly average": "#e8f5e9",
+            "Consistently high (favourable)": "#e8f5e9",
+            "High in some models (favourable)": "#e8f5e9",
+            "Consistently high": "#e3f2fd",
+            "High in some models": "#e3f2fd",
         }
         _CONSISTENCY_COLORS: dict[str, str] = {
             "Consistent": "#2e7d32",
@@ -2313,6 +2418,21 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
         columns = [
             ColumnDef(field="trait", header_name="Trait", min_width=180, flex=1),
+            ColumnDef(
+                field="higher_percentile_means",
+                header_name="Higher percentile means",
+                min_width=220,
+                flex=1,
+                description=(
+                    "The curated concept axis the percentiles are aligned to. Models that "
+                    "point the other way are flipped; models in curation review or without a "
+                    "curated direction are listed but not counted."
+                ),
+            ),
+            ColumnDef(
+                field="not_counted", header_name="Not counted", type="number", min_width=110,
+                description="Models listed in the group but left out of its numbers (in review, uncurated, or another concept).",
+            ),
             ColumnDef(
                 field="reported_traits",
                 header_name="Reported Trait",
@@ -2611,7 +2731,9 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             spread = stats.spread
             outliers = stats.outliers
             outlier_detail = stats.outlier_detail
-            overall_signal = stats.overall_signal
+            overall_signal = curated_trait_signal(
+                stats.overall_signal, stats.axis_aligned, stats.curated_valence
+            )
             n_usable = stats.n_usable
             reliability = stats.reliability
             high_confidence_rows = stats.high_quality_rows
@@ -2745,7 +2867,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     )
                     if sample_stats
                     else (
-                        f"{len(pct_by_id)} models plotted. "
+                        f"{stats.direction_note} "
+                        + f"{len(pct_by_id)} models plotted. "
                         + (f"Range: {min_pct:.1f}–{max_pct:.1f}. " if min_pct is not None and max_pct is not None else "")
                         + (f"Outliers marked: {', '.join(model_outlier_labels)}. " if model_outlier_labels else "No outliers detected. ")
                         + "Shape = model quality (\u2605 High, \u2B1F Normal, \u25A0 Moderate, \u25BC Low). "
@@ -2775,6 +2898,13 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     else f"{stats.scope_label} ({len(rows)} total)"
                 ),
             }]
+            if stats.axis_aligned:
+                trait_header.append({
+                    "label": "Curated concept",
+                    "value": stats.curated_concept,
+                    "tone": "info",
+                    "subtext": f"Axis: {stats.curated_axis}" if stats.curated_axis else stats.curated_cluster,
+                })
 
             # Key metrics as structured data for metric_list renderer.  Keep
             # four headline cards first so the expanded trait panel scans well.
@@ -2808,11 +2938,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                             if s_stats.median_pct is not None
                             else "N/A"
                         ),
-                        "tone": (
-                            _percentile_tone(s_stats.median_pct)
-                            if s_stats.median_pct is not None
-                            else "neutral"
-                        ),
+                        "tone": s_stats.median_tone if s_stats.median_pct is not None else "neutral",
                         "subtext": f"{s_stats.scope_label} · {s_label}",
                     })
             else:
@@ -2823,7 +2949,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                         if median_pct is not None
                         else "N/A"
                     ),
-                    "tone": _percentile_tone(median_pct) if median_pct is not None else "neutral",
+                    "tone": stats.median_tone if median_pct is not None else "neutral",
                     "subtext": stats.scope_label,
                 })
             if best_model_pctl is not None:
@@ -2831,7 +2957,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 headline_metrics.append({
                     "label": f"Most Reliable Model ({best_usable_id})",
                     "value": format_percentile_with_panel(best_model_pctl, stats.best_model_panel),
-                    "tone": _percentile_tone(best_model_pctl),
+                    "tone": _stats_percentile_tone(stats, best_model_pctl),
                     "subtext": f"Most reliable of {stats.n_scoped} {stats.model_scope.replace('_', '-')} model(s)",
                 })
             else:
@@ -2885,7 +3011,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 secondary_metrics.append({
                     "label": "Mean Percentile",
                     "value": f"{mean_pct:.1f}",
-                    "tone": _percentile_tone(mean_pct),
+                    "tone": _stats_percentile_tone(stats, mean_pct),
                     "subtext": stats.scope_label,
                 })
             if std_pct is not None:
@@ -2949,7 +3075,34 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "tone": _quality_distribution_tone(quality_dist),
                     "subtext": "Counts by PRS model quality label",
                 })
-            key_metrics = reliability_metrics + headline_metrics + secondary_metrics
+            direction_metrics: list[dict[str, Any]] = [{
+                "label": "What the percentiles mean",
+                "value": (
+                    f"Higher = {stats.curated_axis or stats.curated_concept}"
+                    if stats.axis_aligned
+                    else "Direction not curated"
+                ),
+                "tone": "info" if stats.axis_aligned else "neutral",
+                "subtext": stats.direction_note,
+            }]
+            if stats.not_counted:
+                direction_metrics.append({
+                    "label": "Listed, not counted",
+                    "value": f"{len(stats.not_counted)} of {stats.n_total} models",
+                    "tone": "warning",
+                    "subtext": "; ".join(
+                        f"{item['pgs_id']}{' · ' + item['sample'] if item['sample'] else ''}: {item['reason']}"
+                        for item in stats.not_counted
+                    ),
+                })
+            if stats.risk_phenotype and stats.n_risk_models:
+                direction_metrics.append({
+                    "label": "Absolute risk basis",
+                    "value": stats.risk_phenotype.replace("_", " "),
+                    "tone": "neutral",
+                    "subtext": "Risk cards use this phenotype's models only; opposite phenotypes' risks do not compare.",
+                })
+            key_metrics = reliability_metrics + direction_metrics + headline_metrics + secondary_metrics
 
             quick_flags: list[dict[str, Any]] = [
                 {"label": overall_signal, "tone": _trait_signal_tone(overall_signal)},
@@ -2959,7 +3112,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 },
                 {
                     "label": _percentile_badge_label(median_pct),
-                    "tone": _percentile_tone(median_pct),
+                    "tone": stats.median_tone,
                 },
                 {
                     "label": (
@@ -3019,10 +3172,42 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "label": f"Ontology group includes: {'; '.join(reported_traits)}",
                     "tone": "info",
                 })
+            if stats.axis_aligned:
+                quick_flags.insert(0, {
+                    "label": f"Curated axis: higher = {stats.curated_axis or stats.curated_concept}",
+                    "tone": "info",
+                })
+                if stats.flipped_ids:
+                    quick_flags.append({
+                        "label": f"{len(stats.flipped_ids)} model(s) point the other way, flipped onto the axis",
+                        "tone": "info",
+                    })
+                in_review = [item for item in stats.not_counted if "review" in item["reason"]]
+                if in_review:
+                    quick_flags.append({
+                        "label": f"{len(in_review)} model(s) in curation review, not counted",
+                        "tone": "warning",
+                    })
+            else:
+                quick_flags.append({
+                    "label": "Direction not curated: percentiles at face value",
+                    "tone": "neutral",
+                })
+            if stats.inverted_deposit_ids:
+                quick_flags.append({
+                    "label": f"Inverted deposit: {', '.join(stats.inverted_deposit_ids)}",
+                    "tone": "warning",
+                })
 
             summary_rows.append({
                 "id": index,
                 "trait": trait,
+                "higher_percentile_means": (
+                    f"Higher = {stats.curated_axis or stats.curated_concept}"
+                    if stats.axis_aligned
+                    else "Not curated (face value)"
+                ),
+                "not_counted": len(stats.not_counted),
                 "reported_traits": "; ".join(reported_traits),
                 "trait_efo_id": efo_id,
                 "reliability": reliability,
@@ -3160,6 +3345,23 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     "Ontology term curators mapped this score to. Several reported "
                     "phenotypes can share one mapped trait."
                 ),
+            ),
+            ColumnDef(
+                field="higher_score_means",
+                header_name="Higher score means",
+                min_width=240,
+                flex=1,
+                description=(
+                    "What a higher percentile means for this score, curated from its paper "
+                    "with a verbatim quote. Colours follow the concept's valence: green is the "
+                    "favourable end, red only the alarming one."
+                ),
+            ),
+            ColumnDef(
+                field="curation_badge", header_name="Direction", min_width=150,
+                description="Curation state of the score's direction (in review = shown, never coloured or counted).",
+                cell_renderer_type="badge",
+                cell_renderer_config=_CURATION_BADGE_STYLE,
             ),
             ColumnDef(
                 field="heritability",
@@ -3406,7 +3608,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                     percentile_items.append({
                         "label": label,
                         "value": pct_for_pop,
-                        "tone": _percentile_tone(pct_for_pop),
+                        "tone": direction_tone(pct_for_pop, r),
                     })
                     if pct_for_pop >= 90 or pct_for_pop < 10:
                         percentile_outliers.append(SUPERPOPULATION_LABELS.get(sp, sp))
@@ -3415,7 +3617,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 percentile_items.append({
                     "label": SUPERPOPULATION_LABELS.get(selected_pop, selected_pop),
                     "value": pct_num,
-                    "tone": _percentile_tone(pct_num),
+                    "tone": direction_tone(pct_num, r),
                 })
                 if pct_num >= 90 or pct_num < 10:
                     percentile_outliers.append(SUPERPOPULATION_LABELS.get(selected_pop, selected_pop))
@@ -3487,10 +3689,20 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             row_summary = str(r.get("summary") or "").strip()
             if row_summary and row_summary not in chart_takeaway:
                 chart_takeaway = f"{chart_takeaway} {row_summary}"
+            means_text = higher_score_means(r)
+            badge_label, badge_tone = curation_badge(r)
+            if curation_status(r) is not None:
+                chart_takeaway = f"{means_text}. {chart_takeaway}"
             h2_summary, _, h2_metrics = _trait_heritability_summary(
                 [r], selected_ancestry=self._sample_ancestry_for_row(r),
             )
             percentile_side_items: list[dict[str, Any]] = [
+                {
+                    "label": "Higher score means",
+                    "value": badge_label,
+                    "tone": badge_tone,
+                    "subtext": means_text,
+                },
                 {
                     "label": "Your percentile",
                     "value": (
@@ -3498,7 +3710,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                         if percentile_value is not None
                         else "Not available"
                     ),
-                    "tone": _percentile_tone(percentile_value),
+                    "tone": direction_tone(percentile_value, r),
                     "subtext": _percentile_badge_label(percentile_value),
                 },
                 {
@@ -3689,6 +3901,12 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 match_tone = "good"
             model_context_items: list[dict[str, Any]] = [
                 {
+                    "label": "Curated direction",
+                    "value": badge_label,
+                    "tone": badge_tone,
+                    "subtext": f"{means_text}. {direction_detail(r)}",
+                },
+                {
                     "label": "Model quality",
                     "value": r.get("quality_label", "N/A") or "N/A",
                     "tone": _quality_tone(str(r.get("quality_label") or "")),
@@ -3803,8 +4021,18 @@ class PRSComputeStateMixin(rx.State, mixin=True):
 
             suggestion_badges = [{
                 "label": _percentile_badge_label(pct_num if isinstance(pct_num, float) else None),
-                "tone": _percentile_tone(pct_num if isinstance(pct_num, float) else None),
+                "tone": direction_tone(pct_num if isinstance(pct_num, float) else None, r),
             }]
+            if curation_status(r) in ("in_review", "no_direction"):
+                suggestion_badges.insert(0, {
+                    "label": "Direction in curation review — not coloured or counted in trait summaries",
+                    "tone": "warning",
+                })
+            if has_inverted_deposit(r):
+                suggestion_badges.insert(0, {
+                    "label": "Inverted deposit: the direction describes the file you scored, not its paper",
+                    "tone": "warning",
+                })
             if match_rate < 10:
                 suggestion_badges.insert(0, {
                     "label": "⚠ UNRELIABLE — very low match, percentile is meaningless",
@@ -3853,6 +4081,8 @@ class PRSComputeStateMixin(rx.State, mixin=True):
                 "trait": r.get("trait_reported") or r.get("trait", ""),
                 "trait_reported": r.get("trait_reported") or r.get("trait", ""),
                 "trait_efo": r.get("trait_efo", ""),
+                "higher_score_means": means_text,
+                "curation_badge": badge_label,
                 "score": r.get("score", 0),
                 "percentile_num": pct_num,
                 "percentile_method": method_label,
@@ -4414,6 +4644,7 @@ class PRSComputeStateMixin(rx.State, mixin=True):
             "reference_audit_warning_count",
             "reference_audit_error_count",
             "reference_audit_issues",
+            *SCORE_DIRECTION_COLUMNS,
         ]
         buf = io.StringIO()
         writer = csv.DictWriter(buf, fieldnames=columns, extrasaction="ignore")

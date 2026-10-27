@@ -9,6 +9,8 @@ Loading priority: local cleaned parquet -> HF pull -> raw FTP download + cleanup
 
 import logging
 import math
+import os
+import time
 from pathlib import Path
 
 import polars as pl
@@ -23,14 +25,18 @@ from just_prs.cleanup import (
 )
 from just_prs.ftp import download_metadata_sheet, _atomic_write_parquet
 from just_prs.hf import (
+    distributions_by_sex_filename,
     distributions_filename,
     pull_ancestry_model,
     pull_catalog_scoring_flags,
     pull_chip_coverage,
     needs_pull,
     pull_cleaned_parquets,
+    pull_curation_tables,
     pull_reference_distributions,
+    pull_reference_distributions_by_sex,
 )
+from just_prs.karyotype import XChromosomeCoding, reference_curve_sex
 from just_prs.models import (
     AbsoluteRisk,
     AbsoluteRiskBundle,
@@ -57,6 +63,7 @@ from just_prs.sample_scores import (
     resolve_official_prs,
 )
 from just_prs.reference import reference_distribution_audit_issues
+from just_prs.score_direction import SCORE_DIRECTION_COLUMNS, score_direction_table
 from just_prs.scoring import DEFAULT_CACHE_DIR, resolve_cache_dir
 
 logger = logging.getLogger(__name__)
@@ -74,6 +81,27 @@ DEV_ANCESTRY_FILE = "score_development_ancestry.parquet"
 _DEV_ANCESTRY_REQUIRED_COLUMNS = {"pgs_id", "dev_ancestry_broad", "dev_ancestry_distribution"}
 # Lean development-ancestry columns joined into the wide scores sheet.
 _DEV_ANCESTRY_SCORES_COLS = ["pgs_id", "dev_ancestry_broad", "dev_sample_size", "dev_is_multi_ancestry"]
+
+# Curated score directions (AGENTS.md "Consuming curated directions", rule 1).
+# PRS_CURATION_DIR reads a local `prs curation build` output instead of the HF copy;
+# PRS_CURATION_MAX_AGE_HOURS re-pulls an older HF copy (0 = once per catalog instance).
+CURATION_DIR_ENV = "PRS_CURATION_DIR"
+CURATION_MAX_AGE_ENV = "PRS_CURATION_MAX_AGE_HOURS"
+DEFAULT_CURATION_MAX_AGE_HOURS = 24.0
+# Written on every pull attempt, so an offline host waits a full max-age before retrying.
+_CURATION_PULL_STAMP = ".pulled_at"
+
+
+def _curation_max_age_hours() -> float:
+    raw = os.environ.get(CURATION_MAX_AGE_ENV, "").strip()
+    if not raw:
+        return DEFAULT_CURATION_MAX_AGE_HOURS
+    try:
+        return max(0.0, float(raw))
+    except ValueError:
+        logger.warning("Ignoring %s=%r (not a number)", CURATION_MAX_AGE_ENV, raw)
+        return DEFAULT_CURATION_MAX_AGE_HOURS
+
 
 # Genome build each ancestry-panel model is built in (samples are lifted to it at inference).
 # The 1000G/HGDP models are GRCh38; the AADR Human Origins panel is GRCh37 (hg19).
@@ -165,11 +193,16 @@ class PRSCatalog:
         self._quality_lf: pl.LazyFrame | None = None
         self._chip_coverage_lf: pl.LazyFrame | None = None
         self._chip_coverage_loaded = False
+        self._score_directions_df: pl.DataFrame | None = None
+        self._score_directions_loaded = False
+        self._curation_checked_at: float | None = None
+        self._search_terms_df: pl.DataFrame | None = None
         self._catalog_flags_lf: pl.LazyFrame | None = None
         self._catalog_flags_loaded = False
         self._prevalence_lf: pl.LazyFrame | None = None
         self._heritability_lf: pl.LazyFrame | None = None
         self._ref_dist_cache: dict[str, pl.LazyFrame] = {}
+        self._ref_dist_by_sex_cache: dict[str, pl.LazyFrame | None] = {}
         self._ref_dist_refresh_attempted: set[str] = set()
         self._ref_dist_source: dict[str, str] = {}
 
@@ -341,6 +374,121 @@ class PRSCatalog:
                     rename_map[src] = dst
         wide = wide.rename(rename_map)
         return wide.lazy()
+
+    @property
+    def curation_dir(self) -> Path:
+        """Where the curation tables are read: ``PRS_CURATION_DIR`` or ``<cache>/metadata/curation``."""
+        override = os.environ.get(CURATION_DIR_ENV, "").strip()
+        return Path(override).expanduser() if override else self.metadata_dir / "curation"
+
+    def _curation_pull_due(self, directory: Path) -> bool:
+        """Whether the HF copy must be (re-)pulled: unreadable/missing, or older than the max age."""
+        if needs_pull(directory / "score_annotations.parquet"):
+            return True
+        stamp = directory / _CURATION_PULL_STAMP
+        if not stamp.exists():
+            return True
+        age_hours = (time.time() - stamp.stat().st_mtime) / 3600.0
+        return age_hours >= _curation_max_age_hours()
+
+    def refresh_curation(self, force: bool = False) -> Path | None:
+        """Pull the published curation tables when due (or ``force``); return their directory.
+
+        A failed pull keeps the last good copy and is not retried until the max age has
+        passed again. With ``PRS_CURATION_DIR`` set nothing is pulled: the local build is
+        used as is. Returns None when no curation tables are available at all.
+        """
+        directory = self.curation_dir
+        # Freshness is checked once per max-age period, so a long-running server picks up
+        # new curation without a restart (max age 0: once per catalog instance).
+        now = time.time()
+        max_age_hours = _curation_max_age_hours()
+        recheck = self._curation_checked_at is None or (
+            max_age_hours > 0 and now - self._curation_checked_at >= max_age_hours * 3600.0
+        )
+        if recheck:
+            self._curation_checked_at = now
+        due = force or (recheck and self._curation_pull_due(directory))
+        if not os.environ.get(CURATION_DIR_ENV, "").strip() and due:
+            directory.mkdir(parents=True, exist_ok=True)
+            with start_action(action_type="prs_catalog:refresh_curation", directory=str(directory), force=force):
+                try:
+                    pull_curation_tables(directory)
+                except Exception as exc:  # offline / HF outage: the last good copy stays in use
+                    log_message(message_type="prs_catalog:curation_pull_failed", error=str(exc))
+                    logger.debug("Curation HF pull failed: %s", exc)
+                (directory / _CURATION_PULL_STAMP).touch()
+            self._score_directions_df = None
+            self._score_directions_loaded = False
+            self._search_terms_df = None
+        if not (directory / "score_annotations.parquet").exists():
+            return None
+        return directory
+
+    def _read_curation_table(self, name: str) -> pl.DataFrame | None:
+        directory = self.refresh_curation()
+        if directory is None:
+            return None
+        path = directory / name
+        if not path.exists():
+            return None
+        try:
+            return pl.read_parquet(path)
+        except (pl.exceptions.ComputeError, OSError) as exc:
+            logger.warning("Unreadable curation table %s (%s); ignoring it.", path, exc)
+            return None
+
+    def score_directions(self) -> pl.DataFrame:
+        """Curated direction per PGS ID (``score_direction.SCORE_DIRECTION_COLUMNS`` + ``pgs_id``).
+
+        Resolved rows come from ``score_annotations.parquet``, ``in_review`` /
+        ``no_direction`` rows from ``curation_review.parquet``. Empty when no curation
+        is available, so every consumer degrades to "not curated".
+        """
+        if not self._score_directions_loaded:
+            self._score_directions_df = score_direction_table(
+                self._read_curation_table("score_annotations.parquet"),
+                self._read_curation_table("curation_review.parquet"),
+            )
+            self._score_directions_loaded = True
+        assert self._score_directions_df is not None
+        return self._score_directions_df
+
+    def score_direction(self, pgs_id: str) -> dict[str, object] | None:
+        """Curated direction of one score, or None when it is not curated."""
+        rows = self.score_directions().filter(pl.col("pgs_id") == pgs_id.upper())
+        return rows.row(0, named=True) if rows.height else None
+
+    def curation_tables(self) -> dict[str, pl.DataFrame]:
+        """Published curation tables keyed by short name: ``annotations``, ``review``, ``clusters``, ``search_terms``.
+
+        Missing tables are absent from the dict (e.g. offline before the first pull).
+        """
+        names = {
+            "annotations": "score_annotations.parquet",
+            "review": "curation_review.parquet",
+            "clusters": "trait_clusters.parquet",
+            "search_terms": "concept_search_terms.parquet",
+        }
+        tables: dict[str, pl.DataFrame] = {}
+        for key, filename in names.items():
+            frame = self._read_curation_table(filename)
+            if frame is not None:
+                tables[key] = frame
+        return tables
+
+    def curation_manifest(self) -> dict[str, object]:
+        """``curation_manifest.json`` of the tables in use (empty when unavailable)."""
+        import json
+
+        directory = self.refresh_curation()
+        path = directory / "curation_manifest.json" if directory is not None else None
+        if path is None or not path.exists():
+            return {}
+        try:
+            return json.loads(path.read_text())
+        except (ValueError, OSError):
+            return {}
 
     def _load_catalog_flags(self) -> pl.LazyFrame | None:
         """Load catalog scoring flags (canary-collapse exclusions), pulling from HF on miss."""
@@ -571,20 +719,12 @@ class PRSCatalog:
             self._ref_dist_source[panel] = "local_cache"
 
         df = pl.read_parquet(local)
-        issue_path = local.with_name(f"{panel}_distribution_quality_issues.parquet")
-        quality_path = local.with_name(f"{panel}_quality.parquet")
-        if issue_path.exists():
-            issue_df = pl.read_parquet(issue_path)
-        else:
-            quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
-            issue_df = reference_distribution_audit_issues(df, quality_df)
-        error_issue_df = issue_df.filter(pl.col("severity") == "ERROR")
-        if error_issue_df.height > 0:
-            bad_ids = error_issue_df.select("pgs_id").unique()
-            df = df.join(bad_ids, on="pgs_id", how="anti")
+        bad_ids = self._reference_error_ids(panel, df)
+        if bad_ids:
+            df = df.filter(~pl.col("pgs_id").is_in(bad_ids))
             logger.warning(
                 "Filtered %s untrustworthy reference PGS IDs from %s.",
-                bad_ids.height,
+                len(bad_ids),
                 local,
             )
         excluded = self.excluded_catalog_pgs_ids()
@@ -602,6 +742,50 @@ class PRSCatalog:
         self._ref_dist_cache[panel] = lf
         return lf
 
+    def _reference_error_ids(self, panel: str, legacy_df: pl.DataFrame) -> set[str]:
+        """PGS IDs with an ERROR-severity reference audit issue (the audit sidecar, else recomputed)."""
+        issue_path = self.percentiles_dir / f"{panel}_distribution_quality_issues.parquet"
+        quality_path = self.percentiles_dir / f"{panel}_quality.parquet"
+        if issue_path.exists():
+            issue_df = pl.read_parquet(issue_path)
+        else:
+            quality_df = pl.read_parquet(quality_path) if quality_path.exists() else None
+            issue_df = reference_distribution_audit_issues(legacy_df, quality_df)
+        return set(issue_df.filter(pl.col("severity") == "ERROR")["pgs_id"].unique().to_list())
+
+    def reference_distributions_by_sex(self, panel: str = "1000g") -> pl.LazyFrame | None:
+        """Per-sex, per-X-coding reference curves, or None when none are published.
+
+        Columns: pgs_id, superpopulation, sex (``all``/``male``/``female``), x_coding
+        (``copies``/``dosage_compensation``), mean, std, n, median, p5, p25, p75, p95.
+        Pulled from HuggingFace on a local miss. The same PGS IDs are dropped as from
+        :meth:`reference_distributions` (ERROR audit issues and canary exclusions), so
+        a score quarantined there never gets a percentile from here either.
+        """
+        if panel in self._ref_dist_by_sex_cache:
+            return self._ref_dist_by_sex_cache[panel]
+        from huggingface_hub.errors import HfHubHTTPError, LocalEntryNotFoundError
+
+        local = self.percentiles_dir / distributions_by_sex_filename(panel)
+        if needs_pull(local):
+            try:
+                pulled = pull_reference_distributions_by_sex(self.percentiles_dir, panel=panel)
+            except (HfHubHTTPError, LocalEntryNotFoundError, OSError) as exc:
+                # The legacy curves still answer; the caller falls back to them.
+                log_message(message_type="prs_catalog:by_sex_pull_failed", panel=panel, error=str(exc))
+                pulled = None
+            if pulled is None or not local.exists():
+                self._ref_dist_by_sex_cache[panel] = None
+                return None
+
+        self.reference_distributions(panel=panel)  # pulls the audit sidecars when missing
+        legacy = self.percentiles_dir / distributions_filename(panel)
+        legacy_df = pl.read_parquet(legacy) if legacy.exists() else pl.read_parquet(local).head(0)
+        excluded = self._reference_error_ids(panel, legacy_df) | set(self.excluded_catalog_pgs_ids())
+        lf = pl.read_parquet(local).filter(~pl.col("pgs_id").is_in(excluded)).lazy()
+        self._ref_dist_by_sex_cache[panel] = lf
+        return lf
+
     def _refresh_reference_distributions(self, panel: str = "1000g") -> None:
         """Pull the latest reference distributions parquet from HF and reload cache.
 
@@ -616,12 +800,14 @@ class PRSCatalog:
             pulled = pull_reference_distributions(self.percentiles_dir, panel=panel)
             if pulled is not None:
                 self._ref_dist_cache.pop(panel, None)
+                self._ref_dist_by_sex_cache.pop(panel, None)
                 self._ref_dist_source[panel] = "hf_sync"
 
     def refresh_reference_cache(self, panel: str = "1000g") -> None:
         """Force-pull reference distributions and audit sidecars from HuggingFace."""
         self._ref_dist_refresh_attempted.discard(panel)
         self._ref_dist_cache.pop(panel, None)
+        self._ref_dist_by_sex_cache.pop(panel, None)
         self._refresh_reference_distributions(panel=panel)
 
     def reload(self) -> None:
@@ -631,12 +817,17 @@ class PRSCatalog:
         self._best_perf_lf = None
         self._publications_lf = None
         self._ref_dist_cache.clear()
+        self._ref_dist_by_sex_cache.clear()
         self._ref_dist_refresh_attempted.clear()
         self._ref_dist_source.clear()
         self._catalog_flags_lf = None
         self._catalog_flags_loaded = False
         self._chip_coverage_lf = None
         self._chip_coverage_loaded = False
+        self._score_directions_df = None
+        self._score_directions_loaded = False
+        self._curation_checked_at = None
+        self._search_terms_df = None
         for p in self.metadata_dir.glob("*.parquet"):
             p.unlink()
         raw_dir = self.raw_metadata_dir
@@ -697,6 +888,8 @@ class PRSCatalog:
                 [c for c in _DEV_ANCESTRY_SCORES_COLS if c in self._dev_ancestry_lf.collect_schema().names()]
             )
             lf = lf.join(dev_cols, on="pgs_id", how="left")
+        # Curated direction columns are always present (null = not curated) so consumers never branch on schema.
+        lf = lf.join(self.score_directions().lazy(), on="pgs_id", how="left")
         if not include_excluded:
             excluded = self.excluded_catalog_pgs_ids()
             if excluded:
@@ -784,8 +977,11 @@ class PRSCatalog:
     ) -> pl.LazyFrame:
         """Search scores by text query across pgs_id, name, trait_reported, and trait_efo.
 
-        Case-insensitive substring match. Returns cleaned scores LazyFrame
-        filtered to matching rows.
+        Case-insensitive substring match, plus the synonym-aware match of
+        :meth:`search_pgs_ids` (every word of the query among a score's names,
+        including the labels and aliases of its curated concept), so "night owl"
+        finds chronotype scores. Returns cleaned scores LazyFrame filtered to
+        matching rows.
 
         Args:
             query: Search term (case-insensitive substring match)
@@ -796,12 +992,41 @@ class PRSCatalog:
         term = query.strip().lower()
         if not term:
             return lf
-        return lf.filter(
+        matched = (
             pl.col("pgs_id").str.to_lowercase().str.contains(term, literal=True)
             | pl.col("name").str.to_lowercase().str.contains(term, literal=True)
             | pl.col("trait_reported").str.to_lowercase().str.contains(term, literal=True)
             | pl.col("trait_efo").str.to_lowercase().str.contains(term, literal=True)
         )
+        synonym_ids = self.search_pgs_ids(query)
+        if synonym_ids:
+            matched = matched | pl.col("pgs_id").is_in(sorted(synonym_ids))
+        return lf.filter(matched)
+
+    def search_terms(self) -> pl.DataFrame:
+        """Every searchable name of every score (``trait_search.score_search_terms``), cached.
+
+        Catalog names plus, for curated scores, all terms of their concept from
+        ``concept_search_terms.parquet``.
+        """
+        if self._search_terms_df is None:
+            from just_prs.trait_search import score_search_terms
+
+            scores = (
+                self._ensure_scores()
+                .select("pgs_id", "name", "trait_reported", "trait_efo", "trait_efo_id")
+                .collect()
+            )
+            concept_terms = self.curation_tables().get("search_terms")
+            score_concepts = self.score_directions().filter(pl.col("cluster").is_not_null()).select("pgs_id", "cluster")
+            self._search_terms_df = score_search_terms(scores, concept_terms, score_concepts)
+        return self._search_terms_df
+
+    def search_pgs_ids(self, query: str) -> set[str]:
+        """PGS IDs whose names (catalog + curated concept terms) contain every word of ``query``."""
+        from just_prs.trait_search import matching_pgs_ids
+
+        return matching_pgs_ids(self.search_terms(), query)
 
     def score_info_row(
         self, pgs_id: str, genome_build: str | None = None
@@ -831,6 +1056,8 @@ class PRSCatalog:
             if dev_rows.height:
                 dev = dev_rows.row(0, named=True)
                 row.update({k: v for k, v in dev.items() if k != "pgs_id"})
+        direction = self.score_direction(pgs_id) or {}
+        row.update({column: direction.get(column) for column in SCORE_DIRECTION_COLUMNS})
         return row
 
     @property
@@ -1638,6 +1865,8 @@ class PRSCatalog:
         mean: float = 0.0,
         std: float | None = None,
         panel: str = "1000g",
+        karyotype: str | None = None,
+        x_coding: str | None = None,
     ) -> tuple[float | None, str]:
         """Estimate population percentile for a given PRS score (3-tier fallback).
 
@@ -1646,7 +1875,8 @@ class PRSCatalog:
         true z-score / reference mean-std and the coverage-aware reliability verdict.
         """
         res = self.percentile_full(
-            prs_score, pgs_id, ancestry=ancestry, mean=mean, std=std, panel=panel
+            prs_score, pgs_id, ancestry=ancestry, mean=mean, std=std, panel=panel,
+            karyotype=karyotype, x_coding=x_coding,
         )
         return res.percentile, res.method
 
@@ -1674,6 +1904,8 @@ class PRSCatalog:
         panel: str = "1000g",
         weight_mass_coverage: float | None = None,
         user_match_rate: float | None = None,
+        karyotype: str | None = None,
+        x_coding: str | None = None,
     ) -> PercentileResult:
         """Estimate population percentile and expose the statistics behind it.
 
@@ -1705,6 +1937,14 @@ class PRSCatalog:
                 (0-1). Compared against the reference panel's match rate to detect
                 coverage mismatch that makes the raw score incomparable to the
                 reference distribution.
+            karyotype: The sample's karyotype (``PRSResult.karyotype``). With it, or
+                with ``x_coding``, Tier 1 reads the per-sex curves
+                (:meth:`reference_distributions_by_sex`): XX the female curve, XY the
+                male one, anything else both sexes; a score without non-PAR X or Y
+                rows has only the both-sexes curve. Falls back to the legacy curve
+                when the score has no curve there at all.
+            x_coding: The coding the score was computed under
+                (``PRSResult.x_coding``); default ``copies``.
 
         Returns:
             A :class:`PercentileResult`.
@@ -1716,6 +1956,8 @@ class PRSCatalog:
         z: float | None = None
         ref_mean: float | None = None
         ref_std: float | None = None
+        reference_sex: str | None = None
+        reference_x_coding: str | None = None
 
         if std is not None and std > 0:
             z = (prs_score - mean) / std
@@ -1723,8 +1965,27 @@ class PRSCatalog:
             method = "theoretical"
             ref_mean, ref_std = mean, std
         else:
-            ref_lf = self.reference_distributions(panel=panel)
-            stats = ancestry_distribution_stats(pgs_id, ancestry, ref_lf)
+            stats = None
+            if karyotype is not None or x_coding is not None:
+                by_sex = self.reference_distributions_by_sex(panel=panel)
+                if by_sex is not None:
+                    reference_x_coding = XChromosomeCoding(x_coding or XChromosomeCoding.COPIES).value
+                    # A score with no non-PAR X or Y rows has only the both-sexes curve.
+                    for reference_sex in dict.fromkeys([reference_curve_sex(karyotype), "all"]):
+                        stats = ancestry_distribution_stats(
+                            pgs_id,
+                            ancestry,
+                            by_sex.filter(
+                                (pl.col("sex") == reference_sex) & (pl.col("x_coding") == reference_x_coding)
+                            ),
+                        )
+                        if stats is not None:
+                            break
+                    if stats is None:
+                        reference_sex = reference_x_coding = None
+            if stats is None:
+                ref_lf = self.reference_distributions(panel=panel)
+                stats = ancestry_distribution_stats(pgs_id, ancestry, ref_lf)
             if stats is None:
                 self._refresh_reference_distributions(panel=panel)
                 ref_lf = self.reference_distributions(panel=panel)
@@ -1788,6 +2049,8 @@ class PRSCatalog:
             panel=used_panel,
             reliable=reliable,
             caveat=caveat,
+            reference_sex=reference_sex if method == "reference_panel" else None,
+            reference_x_coding=reference_x_coding if method == "reference_panel" else None,
         )
 
     def absolute_risk_from_score(

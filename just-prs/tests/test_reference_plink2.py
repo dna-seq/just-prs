@@ -9,6 +9,7 @@ Tests are skipped automatically if the reference panel is not available.
 Run with: ``uv run pytest --run-plink2 -m plink2 just-prs/tests/test_reference_plink2.py -v``
 """
 
+import gzip
 import tempfile
 from pathlib import Path
 
@@ -18,7 +19,6 @@ import pytest
 from just_prs.reference import (
     SUPERPOPULATIONS,
     _prepare_plink2_score_input,
-    _resolve_other_allele_col,
     compute_reference_prs_plink2,
     reference_panel_dir,
 )
@@ -116,24 +116,36 @@ class TestPrepareScoreInput:
             assert df["effect_weight"].dtype in (pl.Float64, pl.Float32, pl.Int64)
 
 
-class TestResolveOtherAlleleCol:
-    """Tests for _resolve_other_allele_col helper."""
+class TestOtherAllelePrecedence:
+    """The other allele is chosen per row: other_allele, else hm_inferOtherAllele,
+    else reference_allele; with none of them the ID falls back to CHROM:POS."""
 
-    def test_prefers_other_allele(self) -> None:
-        df = pl.DataFrame({"other_allele": ["C"], "hm_inferOtherAllele": ["G"]})
-        assert _resolve_other_allele_col(df) == "other_allele"
+    @staticmethod
+    def _score_input(tmp_path: Path, columns: dict[str, list[str | None]]) -> pl.DataFrame:
+        base = {"hm_chr": ["1", "1"], "hm_pos": ["100", "200"], "effect_allele": ["A", "A"], "effect_weight": ["0.5", "0.25"]}
+        frame = pl.DataFrame({**base, **columns})
+        scoring_file = tmp_path / "PGS999999_hmPOS_GRCh38.txt.gz"
+        with gzip.open(scoring_file, "wt") as fh:
+            fh.write("###PGS CATALOG SCORING FILE\n#pgs_id=PGS999999\n")
+            fh.write(frame.write_csv(separator="\t", null_value=""))
+        result = _prepare_plink2_score_input(scoring_file, "PGS999999", tmp_path)
+        assert result is not None
+        return pl.read_csv(result, separator="\t")
 
-    def test_falls_back_to_hm_infer(self) -> None:
-        df = pl.DataFrame({"hm_inferOtherAllele": ["G"], "effect_allele": ["A"]})
-        assert _resolve_other_allele_col(df) == "hm_inferOtherAllele"
+    def test_other_allele_wins_and_null_rows_fall_back_to_inferred(self, tmp_path: Path) -> None:
+        df = self._score_input(tmp_path, {"other_allele": ["C", None], "hm_inferOtherAllele": ["G", "T/G"]})
+        assert set(df["variant_id"]) == {
+            "1:100:C:A", "1:100:A:C",
+            "1:200:T:A", "1:200:A:T", "1:200:G:A", "1:200:A:G",
+        }
 
-    def test_falls_back_to_reference_allele(self) -> None:
-        df = pl.DataFrame({"reference_allele": ["T"], "effect_allele": ["A"]})
-        assert _resolve_other_allele_col(df) == "reference_allele"
+    def test_reference_allele_is_the_last_resort(self, tmp_path: Path) -> None:
+        df = self._score_input(tmp_path, {"reference_allele": ["T", "T"]})
+        assert "1:100:T:A" in set(df["variant_id"])
 
-    def test_returns_none_when_missing(self) -> None:
-        df = pl.DataFrame({"effect_allele": ["A"], "effect_weight": [0.5]})
-        assert _resolve_other_allele_col(df) is None
+    def test_no_other_allele_falls_back_to_two_part_ids(self, tmp_path: Path) -> None:
+        df = self._score_input(tmp_path, {})
+        assert set(df["variant_id"]) == {"1:100", "1:200"}
 
 
 # ---------------------------------------------------------------------------

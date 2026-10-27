@@ -12,7 +12,7 @@ import polars as pl
 import pytest
 
 from just_prs.arrays import detect_array_format, normalize_array
-from just_prs.prs import compute_prs
+from just_prs.prs import compute_prs, compute_prs_duckdb
 
 # A tiny 23andMe export: het, hom-alt, hom-ref, no-call, and a chrX letter chrom.
 _23ANDME = """\
@@ -149,6 +149,33 @@ def test_dosage_via_compute_prs(tmp_path: Path) -> None:
     assert result.variants_matched == 4
     assert result.variants_total == 4
     assert result.score == pytest.approx(6.0)
+
+
+def test_one_letter_male_x_call_is_one_copy(tmp_path: Path) -> None:
+    """23andMe writes a male X/Y/MT call as one letter: one allele, one copy at most."""
+    text = _23ANDME + "rs600\tX\t6000\tG\nrs700\tMT\t700\tT\n"
+    geno = normalize_array(_write(tmp_path / "male.txt", text), tmp_path / "male.parquet")
+    rows = {r["rsid"]: r for r in pl.read_parquet(geno).iter_rows(named=True)}
+    assert (rows["rs600"]["GT"], rows["rs600"]["genotype"]) == ("1", ["G"])
+    assert (rows["rs700"]["GT"], rows["rs700"]["genotype"]) == ("1", ["T"])
+
+    scoring = pl.DataFrame({
+        "hm_chr": ["X", "MT", "X"],
+        "hm_pos": [6000, 700, 6000],
+        "effect_allele": ["G", "T", "A"],
+        "other_allele": ["A", "C", "G"],
+        "effect_weight": [1.0, 10.0, 100.0],
+    }).lazy()
+    scores = [
+        engine(vcf_path="", scoring_file=scoring, genome_build="GRCh37", cache_dir=tmp_path,
+               pgs_id="PGSTEST", **kwargs).score
+        for engine, kwargs in (
+            (compute_prs, {"genotypes_lf": pl.scan_parquet(geno)}),
+            (compute_prs_duckdb, {"genotypes_parquet": geno}),
+        )
+    ]
+    # G on X once (+1), T on MT once (+10), A absent from the X call (+0).
+    assert scores == [pytest.approx(11.0), pytest.approx(11.0)]
 
 
 def _write(path: Path, text: str) -> Path:

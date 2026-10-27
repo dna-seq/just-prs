@@ -29,6 +29,7 @@ from just_prs.ftp import (
 )
 from just_prs.normalize import VcfFilterConfig, normalize_vcf
 from just_prs.scoring import ensure_scoring_file
+from just_prs.trait_search import group_aliases
 from just_prs.vcf import detect_genome_build
 from just_prs.viz import (
     FINE_POPULATION_LABELS,
@@ -45,6 +46,7 @@ from prs_ui.curation_browser import (
     find_curation_root,
     prepare_cluster_display,
     prepare_score_display,
+    published_curation_browser,
     score_column_overrides,
 )
 from prs_ui.mixin import (
@@ -697,6 +699,20 @@ def _build_trait_column_overrides() -> dict[str, dict[str, Any]]:
     _grade_col = {"width": 75, "cellRendererType": "badge"}
     return {
         "trait": {"minWidth": 200, "flex": 2},
+        "also_known_as": {
+            "minWidth": 240,
+            "flex": 2,
+            "headerName": "Also known as",
+            "description": (
+                "Other names of the group's scores: curated concept aliases, reported traits and "
+                "ontology labels. The search box above matches all of them."
+            ),
+        },
+        "n_curated": {
+            "width": 110,
+            "headerName": "Curated",
+            "description": "Scores whose direction is curated and published (counted in trait summaries).",
+        },
         "n_models": {"width": 90, "headerName": "Models"},
         "n_high": {
             **_grade_col,
@@ -748,6 +764,7 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
 
     selected_traits: list[str] = []
     traits_loaded: bool = False
+    trait_query: str = ""
 
     _trait_to_pgs: dict[str, list[str]] = {}
     _trait_scores_lf: pl.LazyFrame | None = None
@@ -760,13 +777,29 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
         self._trait_scores_lf = lf
         df = lf.select(
             "pgs_id", "trait_reported", "trait_efo", "trait_efo_id",
-            "n_variants", "quality_label",
+            "n_variants", "quality_label", "concept_label", "curation_status",
         ).collect()
 
         df = df.with_columns(trait_group_label_expr(self.trait_group_by))
+        query = self.trait_query.strip()
+        if query:
+            # Synonym-aware: a group is shown whole when any of its scores matches
+            # (catalog names or the curated concept's labels and aliases), or its label does.
+            matched_ids = set(
+                _catalog.search(
+                    query,
+                    genome_build=self.genome_build,  # type: ignore[attr-defined]
+                    include_harmonized=self.include_harmonized,  # type: ignore[attr-defined]
+                ).select("pgs_id").collect()["pgs_id"]
+            )
+            matched_traits = set(df.filter(pl.col("pgs_id").is_in(sorted(matched_ids)))["trait"]) | set(
+                df.filter(pl.col("trait").str.to_lowercase().str.contains(query.lower(), literal=True))["trait"]
+            )
+            df = df.filter(pl.col("trait").is_in(sorted(matched_traits)))
 
         grouped = df.group_by("trait").agg(
             pl.col("pgs_id").count().alias("n_models"),
+            (pl.col("curation_status") == "resolved").sum().cast(pl.Int64).alias("n_curated"),
             pl.col("pgs_id").alias("_pgs_list"),
             pl.col("trait_efo_id").first().alias("trait_efo_id"),
             pl.col("n_variants").mean().cast(pl.Int64).alias("avg_variants"),
@@ -784,9 +817,15 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
 
         self._trait_to_pgs = mapping
 
-        result = grouped.with_columns(
-            pl.col("_pgs_list").list.join(", ").alias("pgs_ids"),
-        ).drop("_pgs_list")
+        aliases = group_aliases(_catalog.search_terms(), df.select("pgs_id", "trait"))
+        result = (
+            grouped.with_columns(
+                pl.col("_pgs_list").list.join(", ").alias("pgs_ids"),
+            )
+            .drop("_pgs_list")
+            .join(aliases, on="trait", how="left")
+            .with_columns(pl.col("also_known_as").fill_null(""))
+        )
 
         for col in ("n_high", "n_normal", "n_moderate", "n_low"):
             result = result.with_columns(
@@ -794,12 +833,25 @@ class TraitBrowserState(PRSComputeStateMixin, LazyFrameGridMixin, AppState):
             )
 
         result = result.select(
-            "trait", "n_models", "n_high", "n_normal", "n_moderate", "n_low",
+            "trait", "also_known_as", "n_models", "n_curated", "n_high", "n_normal", "n_moderate", "n_low",
             "avg_variants", "min_variants", "max_variants",
             "pgs_ids", "trait_efo_id",
         )
 
         return result
+
+    def set_trait_query(self, value: str) -> None:
+        """Store the By Trait search text (applied on Enter / Search)."""
+        self.trait_query = value
+
+    def apply_trait_query(self) -> Any:
+        """Reload the trait grid filtered by the synonym-aware search."""
+        yield from self.load_traits()
+
+    def clear_trait_query(self) -> Any:
+        """Clear the trait search and reload every trait group."""
+        self.trait_query = ""
+        yield from self.load_traits()
 
     def load_traits(self) -> Any:
         """Load trait-grouped data into the grid."""
@@ -984,11 +1036,12 @@ _CURATION_BROWSER: dict[str, CurationBrowserData] = {}
 
 
 class CurationGridState(LazyFrameGridMixin, AppState):
-    """Browse compiled curation: resolved scores, the review queue, and clusters.
+    """Browse the curation: resolved scores, the review queue, and clusters.
 
-    The grid is filled from ``curation/`` via ``compile_curation_browser``. It does
-    not join those columns into By PRS or By Trait results. Selected PGS IDs can
-    be handed to ``ComputeGridState`` for scoring.
+    Inside a checkout the grid compiles ``curation/`` (``compile_curation_browser``);
+    otherwise it shows the published tables ``PRSCatalog`` pulled from HF
+    (``published_curation_browser``), the same data By PRS and By Trait results
+    use. Selected PGS IDs can be handed to ``ComputeGridState`` for scoring.
     """
 
     curation_view: str = "scores"
@@ -1003,34 +1056,39 @@ class CurationGridState(LazyFrameGridMixin, AppState):
     n_review: int = 0
 
     def load_curation(self) -> Any:
-        """Compile ``curation/`` and show the current view."""
+        """Compile local ``curation/`` (or read the published tables) and show the current view."""
         if self.curation_loading:
             return
         self.curation_loading = True
-        self.curation_message = "Reading curation files..."
+        self.curation_message = "Reading curation..."
         self.curation_error = ""
         yield
         root = find_curation_root(_workspace_root())
-        if root is None:
-            self.curation_loading = False
-            self.curation_error = (
-                "No curation directory found. Expected curation/clusters.yaml in the workspace."
-            )
-            self.curation_message = "Curation files were not found."
-            return
-        try:
-            data = compile_curation_browser(root)
-        except CurationBuildError as exc:
-            self.curation_loading = False
-            self.curation_error = str(exc)
-            self.curation_message = "Curation files did not compile."
-            return
+        if root is not None:
+            try:
+                data = compile_curation_browser(root)
+            except CurationBuildError as exc:
+                self.curation_loading = False
+                self.curation_error = str(exc)
+                self.curation_message = "Curation files did not compile."
+                return
+        else:
+            published = published_curation_browser(_catalog)
+            if published is None:
+                self.curation_loading = False
+                self.curation_error = (
+                    "No local curation/ directory and the published curation tables could not be "
+                    "read from just-dna-seq/pgs-catalog (offline?)."
+                )
+                self.curation_message = "Curation is not available."
+                return
+            data = published
         _CURATION_BROWSER["data"] = data
         self.n_verified = data.n_verified
         self.n_unreviewed = data.n_unreviewed
         self.n_review = data.n_review
         self.curation_loaded = True
-        self.curation_message = f"Compiled from {data.source}"
+        self.curation_message = data.description
         yield from self._show_curation_view()
         self.curation_loading = False
 

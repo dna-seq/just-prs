@@ -238,6 +238,27 @@ Unannotated entries are exported with `annotated = false` and their reason, so "
 "no direction found" stay distinguishable. `rejected` entries are never exported. Consumers
 show `agent_proposed` rows as unreviewed; `--verified-only` builds a reviewed-only release.
 The Curated tab in the app compiles this directory on open (Reload picks up edits) and
-browses the same resolved, review, and cluster tables.
+browses the same resolved, review, and cluster tables; outside a clone it shows the
+published tables instead.
+
+## How the apps use what you publish
+
+A push changes what users see, so curate with the consumer in mind (full policy: AGENTS.md,
+"Consuming curated directions"; code: `just_prs.score_direction`):
+
+- `PRSCatalog` (just-prs, prs-ui, just-dna-lite) pulls the published tables and re-pulls a copy
+  older than `PRS_CURATION_MAX_AGE_HOURS` (default 24). `prs curation pull` refreshes now;
+  `PRS_CURATION_DIR=data/output/curation` previews a local `prs curation build` without pushing.
+- Every result row shows `higher_percentile_means`. Only **resolved** rows (published, not in
+  `curation_review.parquet`) get valence colour: green for the favourable end, red only for the
+  alarming end, none for `neutral` / `context_dependent` concepts.
+- Trait summaries group by concept and put every resolved score on the concept axis
+  (percentile × `polarity`). Review-queue rows (including every unconfirmed `deposit_inverted`),
+  rows without a direction, uncurated scores and other concepts' scores are listed but not counted.
+  A wrong `polarity` therefore flips a user's number; a wrong `valence` turns red into green.
+- A `deposit_inverted` correction stays in review until a human verifies it; once verified the
+  score is counted with its as-distributed direction and always shows an "inverted deposit" flag.
+- Concept `aliases` feed the By Trait search and `PRSCatalog.search()`: add the words people type
+  ("night owl", "bad cholesterol").
 Push only when the user asks. Curation is incremental: curate any slice, push, and later pushes
 add to it. Uncurated scores simply have no row.

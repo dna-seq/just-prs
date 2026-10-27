@@ -201,23 +201,181 @@ def read_genotypes(vcf_path: Path | str) -> pl.LazyFrame:
         return lf
 
 
+def record_alleles_expr(ref_col: str = "ref", alt_col: str = "alt") -> pl.Expr:
+    """``[REF, ALT1, ALT2, ...]`` for a VCF record, so a GT index selects its allele.
+
+    polars-bio joins multi-allelic ALTs with ``|`` (``"G|T"``); VCF text and
+    other producers use ``,``. Both are split, so allele index ``i`` of the GT
+    string is ``list[i]``.
+    """
+    alts = (
+        pl.col(alt_col).cast(pl.Utf8).fill_null("")
+        .str.replace_all(",", "|", literal=True)
+        .str.split("|")
+    )
+    return pl.concat_list([pl.col(ref_col).cast(pl.Utf8), alts])
+
+
+def gt_allele_indices(gt_col: str = "GT") -> tuple[pl.Expr, pl.Expr]:
+    """The allele indices of a GT string; the second is null for a haploid call.
+
+    A haploid GT (``"1"``, written on male chrX/chrY and on chrM) is one allele,
+    so it contributes one copy at most: a man has one X. A missing allele (``.``)
+    or an unparseable index also gives ``None``; :func:`gt_no_call_expr` tells
+    the two apart.
+    """
+    parts = pl.col(gt_col).cast(pl.Utf8).str.replace_all("|", "/", literal=True).str.split_exact("/", 1)
+    first = parts.struct.field("field_0").cast(pl.Int64, strict=False)
+    second = parts.struct.field("field_1").cast(pl.Int64, strict=False)
+    return first, second
+
+
+def gt_is_haploid_expr(gt_col: str = "GT") -> pl.Expr:
+    """True for a one-allele GT (no ``/`` or ``|`` separator)."""
+    return ~pl.col(gt_col).cast(pl.Utf8).str.contains(r"[/|]")
+
+
+def gt_no_call_expr(gt_col: str = "GT") -> pl.Expr:
+    """True for a missing GT, ``.``/``./.``, a half call (``./1``) or a bad index."""
+    first, second = gt_allele_indices(gt_col)
+    return (
+        pl.col(gt_col).is_null()
+        | first.is_null()
+        | (second.is_null() & ~gt_is_haploid_expr(gt_col))
+    )
+
+
+def _called_alts_expr(alt_col: str) -> pl.Expr:
+    """ALT alleles that are real sequence: no ``<NON_REF>``-style symbols, ``*`` or ``.``."""
+    element = pl.element()
+    return (
+        pl.col(alt_col).cast(pl.Utf8).fill_null("")
+        .str.replace_all(",", "|", literal=True)
+        .str.split("|")
+        .list.eval(
+            element.filter(
+                (element != "") & (element != ".") & (element != "*") & ~element.str.starts_with("<")
+            )
+        )
+    )
+
+
+def record_is_snv_expr(ref_col: str = "ref", alt_col: str = "alt") -> pl.Expr:
+    """True when REF is one base and the record carries an SNV allele.
+
+    A multi-allelic record mixing an SNV and an indel ALT (``REF=G, ALT=A|AA``)
+    qualifies: the SNV allele is counted and the indel allele, compared as a
+    string, never equals a single-base effect allele. A pure insertion
+    (``REF=A, ALT=AT``) does not. A gVCF reference block (``ALT=<NON_REF>``)
+    has no sequence ALT and qualifies, so its hom-ref call still scores.
+    """
+    alts = _called_alts_expr(alt_col)
+    return (pl.col(ref_col).cast(pl.Utf8).str.len_chars() == 1) & (
+        (alts.list.len() == 0) | alts.list.eval(pl.element().str.len_chars() == 1).list.any()
+    )
+
+
+def other_alleles_expr(
+    candidates_col: str = "other_candidates", effect_allele_col: str = "effect_allele"
+) -> pl.Expr:
+    """The ``/``-separated other-allele candidates as a list, without the effect allele."""
+    return (
+        pl.col(candidates_col).cast(pl.Utf8).fill_null("").str.split("/")
+        .list.set_difference(pl.concat_list([pl.col(effect_allele_col).cast(pl.Utf8), pl.lit("")]))
+    )
+
+
+def biallelic_snv_record_expr(ref_col: str = "ref", alt_col: str = "alt") -> pl.Expr:
+    """One-base REF and one-character ALT: decided without splitting any list."""
+    return (pl.col(ref_col).str.len_chars() == 1) & (pl.col(alt_col).str.len_chars() == 1)
+
+
+def allele_compatible_expr(
+    ref_col: str = "ref",
+    alt_col: str = "alt",
+    effect_allele_col: str = "effect_allele",
+    other_candidates_col: str = "other_candidates",
+    effect_is_snv_col: str = "effect_is_snv",
+) -> pl.Expr:
+    """Whether a VCF record describes the same variant as a scoring row.
+
+    Position alone is not identity: an indel shares its anchor base with any SNV
+    at that position, so a position-only join counts an SNV allele against an
+    indel allele string.
+
+    * An SNV row (single-base effect allele and other alleles) is scored only
+      from a record with a one-base REF and an SNV allele (``record_is_snv_expr``).
+      Its dose is the count of the effect base, so a third allele (scoring
+      ``T/C``, sample ``T/G``) still counts the REF copy.
+    * An indel row needs its effect allele among the record's alleles and, when
+      an other allele is known (``other_allele`` or ``hm_inferOtherAllele``), one
+      of those too. A record with fewer than two distinct alleles (a consumer
+      array's homozygous ``ref=alt`` encoding) skips the other-allele check.
+
+    The row-side columns come from ``prs._normalize_scoring_columns``. This
+    splits lists, so engines apply it only to rows that
+    :func:`biallelic_snv_record_expr` does not already decide.
+    """
+    alleles = record_alleles_expr(ref_col, alt_col)
+    others = other_alleles_expr(other_candidates_col, effect_allele_col)
+    no_other = others.list.len().fill_null(0) == 0
+    other_present = others.list.set_intersection(alleles).list.len() > 0
+    monomorphic = alleles.list.unique().list.len() < 2
+    indel_ok = alleles.list.contains(pl.col(effect_allele_col)) & (no_other | monomorphic | other_present)
+    return (
+        pl.when(pl.col(effect_is_snv_col))
+        .then(record_is_snv_expr(ref_col, alt_col))
+        .otherwise(indel_ok)
+        .fill_null(False)
+    )
+
+
+def biallelic_dosage_expr(
+    gt_col: str = "GT",
+    ref_col: str = "ref",
+    alt_col: str = "alt",
+    effect_allele_col: str = "effect_allele",
+) -> pl.Expr:
+    """:func:`compute_dosage_expr` for a record with one ALT, without list operations.
+
+    Only valid where ALT holds a single allele; a multi-allelic record needs
+    :func:`compute_dosage_expr`. The GT is parsed once here.
+    """
+    first, second = gt_allele_indices(gt_col)
+    effect = pl.col(effect_allele_col)
+    effect_is_ref = pl.col(ref_col) == effect
+    effect_is_alt = pl.col(alt_col) == effect
+
+    def copies(index: pl.Expr) -> pl.Expr:
+        return (
+            ((index == 0) & effect_is_ref).cast(pl.Int64) + ((index == 1) & effect_is_alt).cast(pl.Int64)
+        ).fill_null(0)
+
+    return (
+        pl.when(gt_no_call_expr(gt_col))
+        .then(pl.lit(0, dtype=pl.Int64))
+        .otherwise(copies(first) + copies(second))
+        .cast(pl.Int64)
+        .alias("dosage")
+    )
+
+
 def compute_dosage_expr(
     gt_col: str = "GT",
     ref_col: str = "ref",
     alt_col: str = "alt",
     effect_allele_col: str = "effect_allele",
 ) -> pl.Expr:
-    """Build a Polars expression that computes effect allele dosage from a GT string.
+    """Build a Polars expression that counts the effect allele in a GT string.
 
-    The GT field is a string like "0/0", "0/1", "1/1", "0|1", etc.
-    Each allele index: 0 = ref, 1 = first alt, 2 = second alt, etc.
+    Each GT index selects an allele from ``[REF, ALT1, ALT2, ...]`` (multi-allelic
+    ALTs are split, see :func:`record_alleles_expr`), and the dosage is the number
+    of selected alleles equal to the effect allele. A haploid GT has one allele,
+    so it gives 0 or 1 (see :func:`gt_allele_indices`). A no-call gives 0; callers that need to tell a
+    no-call from a true 0 use :func:`gt_no_call_expr`.
 
-    Dosage = count of alleles in the genotype that match the effect allele.
-
-    For biallelic sites:
-    - If effect_allele == alt: dosage = number of '1' alleles in GT
-    - If effect_allele == ref: dosage = number of '0' alleles in GT
-    - Otherwise: dosage = 0 (allele not found)
+    This compares allele strings only. Whether the record is the scoring row's
+    variant at all is :func:`allele_compatible_expr`'s job.
 
     Args:
         gt_col: Name of the GT column
@@ -228,39 +386,59 @@ def compute_dosage_expr(
     Returns:
         Polars expression computing dosage as Int64
     """
-    gt = pl.col(gt_col)
-    ref = pl.col(ref_col)
-    alt = pl.col(alt_col)
+    first, second = gt_allele_indices(gt_col)
+    alleles = record_alleles_expr(ref_col, alt_col)
     effect = pl.col(effect_allele_col)
-
-    gt_normalized = gt.str.replace_all(r"\|", "/")
-    allele_1 = gt_normalized.str.split("/").list.get(0)
-    allele_2 = gt_normalized.str.split("/").list.get(1)
-
-    allele_1_int = allele_1.cast(pl.Int64, strict=False)
-    allele_2_int = allele_2.cast(pl.Int64, strict=False)
-
-    is_missing = allele_1_int.is_null() | allele_2_int.is_null()
-    effect_is_alt = effect == alt
-    effect_is_ref = effect == ref
-
-    dosage_when_alt = (
-        allele_1_int.eq(1).cast(pl.Int64).fill_null(0)
-        + allele_2_int.eq(1).cast(pl.Int64).fill_null(0)
-    )
-    dosage_when_ref = (
-        allele_1_int.eq(0).cast(pl.Int64).fill_null(0)
-        + allele_2_int.eq(0).cast(pl.Int64).fill_null(0)
-    )
-
+    allele_1 = alleles.list.get(first, null_on_oob=True)
+    allele_2 = alleles.list.get(second, null_on_oob=True)
+    dosage = (allele_1 == effect).cast(pl.Int64).fill_null(0) + (allele_2 == effect).cast(pl.Int64).fill_null(0)
     return (
-        pl.when(is_missing)
+        pl.when(gt_no_call_expr(gt_col))
         .then(pl.lit(0))
-        .when(effect_is_alt)
-        .then(dosage_when_alt)
-        .when(effect_is_ref)
-        .then(dosage_when_ref)
-        .otherwise(pl.lit(0))
+        .otherwise(dosage)
         .cast(pl.Int64)
         .alias("dosage")
     )
+
+
+_DRAGEN_VERSION = re.compile(r'##DRAGENCommandLine=<ID=dragen,Version="([^"]+)"')
+_GATK_LINE = re.compile(r'##GATKCommandLine(?:\.[\w-]+)?=<ID=([\w-]+).*?Version="?([^",>]+)')
+
+
+def read_vcf_provenance(path: Path | str) -> dict[str, str]:
+    """Caller, caller version and declared karyotype from a VCF header.
+
+    A caller's ploidy convention is not in the GT: DeepVariant 1.1.0 writes a
+    man's X diploid (``1/1``), DRAGEN writes it sex-aware and declares
+    ``##referenceSexKaryotype``. Recording which caller wrote a file is what
+    lets a reader interpret its X and Y calls later. Keys present only when
+    found: ``vcf_format``, ``caller``, ``caller_version``, ``source``,
+    ``declared_karyotype``. Reads the header only.
+    """
+    found: dict[str, str] = {}
+    with open_maybe_compressed(path) as handle:
+        for line in handle:
+            if not line.startswith("##"):
+                break
+            line = line.rstrip("\n")
+            if line.startswith("##fileformat="):
+                found["vcf_format"] = line.split("=", 1)[1]
+            elif (match := _DRAGEN_VERSION.match(line)) is not None:
+                found["caller"], found["caller_version"] = "DRAGEN", match.group(1)
+            elif line.startswith("##DeepVariant_version=") and found.get("caller") != "DRAGEN":
+                found["caller"], found["caller_version"] = "DeepVariant", line.split("=", 1)[1]
+            elif (match := _GATK_LINE.match(line)) is not None and "caller" not in found:
+                found["caller"], found["caller_version"] = f"GATK {match.group(1)}", match.group(2)
+            elif line.startswith("##bcftools_callVersion=") and "caller" not in found:
+                found["caller"], found["caller_version"] = "bcftools call", line.split("=", 1)[1]
+            elif line.startswith("##source="):
+                found.setdefault("source", line.split("=", 1)[1])
+            elif line.startswith("##source_version="):
+                found.setdefault("source_version", line.split("=", 1)[1])
+            elif line.startswith("##referenceSexKaryotype="):
+                found["declared_karyotype"] = line.split("=", 1)[1]
+    if "caller" not in found and "source" in found:
+        found["caller"] = found["source"]
+        if "source_version" in found:
+            found["caller_version"] = found["source_version"]
+    return found

@@ -1,18 +1,35 @@
 """Canonical trait-level aggregation for dashboards, CLI plots, and AI prompts.
 
 ``summarize_trait_rows`` is the single source of truth for usable/all/high-quality
-scope, best-model pick, absolute-risk pick, percentile-panel resolution, and
-ancestry-ordered heritability.  The UI mixin, ``just_prs.viz`` prompt builders,
-HTML reports, and just-prs-mcp must consume this module instead of re-implementing
-the same rules.
+scope, best-model pick, absolute-risk pick, percentile-panel resolution,
+ancestry-ordered heritability, and curated-axis alignment.  The UI mixin,
+``just_prs.viz`` prompt builders, HTML reports, and just-prs-mcp must consume this
+module instead of re-implementing the same rules.
+
+Curated axis (AGENTS.md "Consuming curated directions", rule 5): when a group's rows
+carry resolved curated directions, the headline numbers are computed on the concept
+axis (``score_direction.axis_percentile``) from resolved rows of the group's concept
+only; every other row is listed in ``not_counted`` with its reason.
 """
 
 from __future__ import annotations
 
 import math
+from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from typing import Any, Literal
+
+from just_prs.score_direction import (
+    CurationStatus,
+    axis_percentile,
+    axis_tone,
+    curation_status,
+    has_inverted_deposit,
+    is_resolved,
+    legacy_percentile_tone,
+    row_polarity,
+)
 
 ModelScope = Literal["usable", "all", "high_quality", "high_moderate"]
 PercentileSource = Literal["native", "selected"]
@@ -563,6 +580,94 @@ class TraitSummaryStats:
     heritability_detail: str = ""
     heritability_metrics: list[dict[str, Any]] = field(default_factory=list)
     high_quality_median: float | None = None
+    # Curated axis (rule 5). ``axis_aligned`` False = legacy face-value aggregation.
+    axis_aligned: bool = False
+    curated_cluster: str = ""
+    curated_concept: str = ""
+    curated_axis: str = ""
+    curated_valence: str = ""
+    n_counted: int = 0
+    raw_pct_by_id: dict[str, float] = field(default_factory=dict)
+    flipped_ids: list[str] = field(default_factory=list)
+    inverted_deposit_ids: list[str] = field(default_factory=list)
+    not_counted: list[dict[str, str]] = field(default_factory=list)
+    risk_phenotype: str = ""
+    median_tone: str = "neutral"
+    direction_note: str = ""
+
+
+def curated_group_axis(rows: list[dict[str, Any]]) -> dict[str, str] | None:
+    """The concept a group is aggregated on: the cluster shared by most resolved rows.
+
+    Ties keep the first-seen cluster. Returns None when no row has a resolved
+    direction (the group then keeps the face-value aggregation).
+    """
+    resolved = [row for row in rows if is_resolved(row) and row.get("cluster")]
+    if not resolved:
+        return None
+    cluster = Counter(str(row["cluster"]) for row in resolved).most_common(1)[0][0]
+    first = next(row for row in resolved if str(row["cluster"]) == cluster)
+    return {
+        "cluster": cluster,
+        "concept_label": str(first.get("concept_label") or cluster),
+        "axis": str(first.get("axis") or ""),
+        "valence": str(first.get("valence") or ""),
+    }
+
+
+def curated_exclusion_reason(row: dict[str, Any], cluster: str) -> str | None:
+    """Why a row is listed but not counted on ``cluster``'s axis (None = counted)."""
+    status = curation_status(row)
+    if status is None:
+        return "direction not curated"
+    if status == CurationStatus.NO_DIRECTION.value:
+        return "no direction found yet (in review)"
+    if status == CurationStatus.IN_REVIEW.value:
+        return "inverted deposit, in review" if has_inverted_deposit(row) else "direction in review"
+    if not is_resolved(row):
+        return "direction not curated"
+    if str(row.get("cluster") or "") != cluster:
+        return f"another concept: {row.get('concept_label') or row.get('cluster')}"
+    return None
+
+
+def axis_aligned_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Copies of a trait group's rows prepared for charts and reports on the curated axis.
+
+    Rows counted on the group's concept with polarity -1 get ``percentile``, every
+    ``pct_<POP>`` and ``z_score`` flipped (``100 - p``, ``-z``) and ``axis_flipped``
+    set; the raw percentile stays in ``percentile_raw``. Rows not counted keep their
+    values and get ``axis_not_counted`` (the reason). Groups without a resolved
+    curated row come back unchanged. :func:`summarize_trait_rows` recognises
+    ``axis_flipped`` and never flips a row twice.
+    """
+    axis_info = curated_group_axis(rows)
+    if axis_info is None:
+        return list(rows)
+    aligned: list[dict[str, Any]] = []
+    for row in rows:
+        reason = curated_exclusion_reason(row, axis_info["cluster"])
+        out = dict(row)
+        if reason is not None:
+            out["axis_not_counted"] = reason
+        elif row_polarity(row) == -1 and not row.get("axis_flipped"):
+            out["percentile_raw"] = row.get("percentile")
+            for key, value in row.items():
+                if key == "percentile" or (key.startswith("pct_") and len(key) == 7):
+                    pct = parse_percentile(value)
+                    if pct is not None:
+                        out[key] = 100.0 - pct
+            z = _finite_number(row.get("z_score"))
+            if z is not None:
+                out["z_score"] = -z
+            out["axis_flipped"] = True
+        aligned.append(out)
+    return aligned
+
+
+def _axis_polarity(row: dict[str, Any]) -> int | None:
+    """Polarity still to apply: rows already flipped by :func:`axis_aligned_rows` are on the axis."""
+    return 1 if row.get("axis_flipped") else row_polarity(row)
 
 
 def summarize_trait_rows(
@@ -571,6 +676,7 @@ def summarize_trait_rows(
     selected_ancestry: str = "EUR",
     percentile_source: str = "native",
     sample_ancestries: Iterable[str] | None = None,
+    curated_axis: bool = True,
 ) -> TraitSummaryStats:
     """Aggregate one trait group's models under a single explicit scope.
 
@@ -584,24 +690,58 @@ def summarize_trait_rows(
     ``best_risk_row`` is the representative row closest to that median ratio.
     Heritability lists ancestries detected in *sample_ancestries* (or the
     selected population when none were detected). Combined is fallback-only.
+
+    With ``curated_axis`` (default) and at least one resolved curated row, the
+    statistics are on the concept axis of :func:`curated_group_axis`: only resolved
+    rows of that concept are counted, their percentiles are flipped by polarity
+    (``pct_by_id`` is on the axis, ``raw_pct_by_id`` keeps the model's own), and
+    absolute risk uses the most common phenotype among the scoped rows.
     """
     scope = _normalize_scope(model_scope)
     source = _normalize_percentile_source(percentile_source)
     ancestry = ancestry_code(selected_ancestry) or (selected_ancestry or "EUR").upper()
 
-    usable_rows = [row for row in rows if is_usable_model(row)]
-    high_quality_rows = [row for row in rows if is_high_quality_model(row)]
-    scoped_rows = filter_rows_by_scope(rows, scope)
+    axis_info = curated_group_axis(rows) if curated_axis else None
+    not_counted: list[dict[str, str]] = []
+    if axis_info is None:
+        counted_rows = list(rows)
+    else:
+        counted_rows = []
+        for row in rows:
+            reason = curated_exclusion_reason(row, axis_info["cluster"])
+            if reason is None:
+                counted_rows.append(row)
+            else:
+                not_counted.append({
+                    "pgs_id": str(row.get("pgs_id") or ""),
+                    "sample": str(row.get("sample") or ""),
+                    "reason": reason,
+                    "higher_percentile_means": str(row.get("higher_percentile_means") or ""),
+                })
+
+    usable_rows = [row for row in counted_rows if is_usable_model(row)]
+    high_quality_rows = [row for row in counted_rows if is_high_quality_model(row)]
+    scoped_rows = filter_rows_by_scope(counted_rows, scope)
+
+    def _pct(row: dict[str, Any]) -> tuple[float | None, str]:
+        raw, panel = resolve_row_percentile(row, percentile_source=source, selected_ancestry=ancestry)
+        if axis_info is None:
+            return raw, panel
+        return axis_percentile(raw, _axis_polarity(row)), panel
 
     pct_by_id: dict[str, float] = {}
+    raw_pct_by_id: dict[str, float] = {}
     panel_by_id: dict[str, str] = {}
     for row in scoped_rows:
         pgs_id = str(row.get("pgs_id") or "")
-        pct, panel = resolve_row_percentile(
+        raw, panel = resolve_row_percentile(
             row, percentile_source=source, selected_ancestry=ancestry,
         )
-        if pgs_id and pct is not None:
+        pct = raw if axis_info is None else axis_percentile(raw, _axis_polarity(row))
+        if pgs_id and pct is not None and raw is not None:
             pct_by_id[pgs_id] = pct
+            # axis_aligned_rows already flipped this row: undo it for the model's own percentile.
+            raw_pct_by_id[pgs_id] = 100.0 - raw if row.get("axis_flipped") else raw
             panel_by_id[pgs_id] = panel
 
     pct_values = list(pct_by_id.values())
@@ -628,14 +768,21 @@ def summarize_trait_rows(
     reliability = _reliability_label(
         scope=scope,
         n_scoped=len(scoped_rows),
-        n_total=len(rows),
+        n_total=len(counted_rows),
         n_with_percentile=len(pct_by_id),
     )
 
     best_row = pick_best_model(scoped_rows)
     worst_row = min(scoped_rows, key=_best_model_key) if scoped_rows else None
-    risk_rows = [row for row in scoped_rows if row_has_absolute_risk(row)]
-    best_risk_row = pick_median_risk_row(scoped_rows)
+    # Risks of opposite phenotypes (mortality vs longevity) do not compare: on a
+    # curated axis only the most common phenotype's rows feed the risk cards.
+    risk_phenotype = ""
+    risk_candidates = scoped_rows
+    if axis_info is not None and scoped_rows:
+        risk_phenotype = Counter(str(row.get("phenotype") or "") for row in scoped_rows).most_common(1)[0][0]
+        risk_candidates = [row for row in scoped_rows if str(row.get("phenotype") or "") == risk_phenotype]
+    risk_rows = [row for row in risk_candidates if row_has_absolute_risk(row)]
+    best_risk_row = pick_median_risk_row(risk_candidates)
     best_model_pctl: float | None = None
     best_model_panel = ""
     if best_row is not None:
@@ -643,9 +790,7 @@ def summarize_trait_rows(
         best_model_pctl = pct_by_id.get(pgs_id)
         best_model_panel = panel_by_id.get(pgs_id, "")
         if best_model_pctl is None:
-            best_model_pctl, best_model_panel = resolve_row_percentile(
-                best_row, percentile_source=source, selected_ancestry=ancestry,
-            )
+            best_model_pctl, best_model_panel = _pct(best_row)
 
     typical_panel = _typical_panel(panel_by_id, source, ancestry)
     absolute_risk, population_average, risk_vs_average, user_risk, pop_avg, risk_agreement = (
@@ -662,8 +807,31 @@ def summarize_trait_rows(
     high_quality_pcts = [
         pct
         for row in high_quality_rows
-        if (pct := resolve_row_percentile(row, source, ancestry)[0]) is not None
+        if (pct := _pct(row)[0]) is not None
     ]
+
+    flipped_ids = [
+        str(row.get("pgs_id") or "")
+        for row in scoped_rows
+        if axis_info is not None and row_polarity(row) == -1
+    ]
+    inverted_ids = [str(row.get("pgs_id") or "") for row in rows if has_inverted_deposit(row)]
+    if axis_info is None:
+        median_tone = legacy_percentile_tone(median_pct)
+        direction_note = (
+            "Direction not curated: percentiles are taken at face value "
+            "(a higher percentile is read as more of the reported trait)."
+        )
+    else:
+        median_tone = axis_tone(median_pct, axis_info["valence"])
+        axis_text = axis_info["axis"] or axis_info["concept_label"]
+        direction_note = f"Percentiles on the curated axis of {axis_info['concept_label']}: higher percentile = {axis_text}."
+        if flipped_ids:
+            direction_note += (
+                f" {len(flipped_ids)} model(s) point the other way and are flipped (100 − percentile)."
+            )
+        if not_counted:
+            direction_note += f" {len(not_counted)} model(s) listed but not counted."
 
     return TraitSummaryStats(
         model_scope=scope,
@@ -707,6 +875,19 @@ def summarize_trait_rows(
         heritability_detail=h_detail,
         heritability_metrics=h_metrics,
         high_quality_median=_median(high_quality_pcts),
+        axis_aligned=axis_info is not None,
+        curated_cluster=(axis_info or {}).get("cluster", ""),
+        curated_concept=(axis_info or {}).get("concept_label", ""),
+        curated_axis=(axis_info or {}).get("axis", ""),
+        curated_valence=(axis_info or {}).get("valence", ""),
+        n_counted=len(counted_rows),
+        raw_pct_by_id=raw_pct_by_id,
+        flipped_ids=flipped_ids,
+        inverted_deposit_ids=inverted_ids,
+        not_counted=not_counted,
+        risk_phenotype=risk_phenotype,
+        median_tone=median_tone,
+        direction_note=direction_note,
     )
 
 

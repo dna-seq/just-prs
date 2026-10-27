@@ -69,6 +69,73 @@ markers). Arrays actually report *all typed sites* (incl. hom-ref), so "absent" 
 *untyped/off-chip*, which must **not** be blanket hom-ref — that's why restoration is
 **scope-gated** (below) rather than applied to every absent locus.
 
+## Which record is a scoring row's variant (allele-aware matching)
+
+Both engines join on `(chrom, pos)` and then check that the record is the scoring
+row's variant (`vcf.allele_compatible_expr`, mirrored in SQL by
+`prs._duckdb_matched_sql`). Position alone is not identity: an indel shares its
+anchor base with any SNV at the same position.
+
+| scoring row | record | result |
+|---|---|---|
+| SNV (single-base effect and other alleles) | one-base REF with an SNV ALT (incl. `REF=G, ALT=A\|AA`) | dose = called alleles equal to the effect base |
+| SNV | deletion / MNV (`REF=AT, ALT=A`) or pure insertion (`REF=A, ALT=AT`) | allele mismatch |
+| indel | record whose alleles include the effect allele and a known other allele | dose counted |
+| indel | a different indel (`CAAA>C` vs scored `CAAAA/C`) | allele mismatch |
+
+- The other allele is `other_allele`, or else the `/`-separated
+  `hm_inferOtherAllele` candidates. With none known, an indel row needs only its
+  effect allele among the record's alleles.
+- Multi-allelic ALTs (`G|T` from polars-bio, `G,T` in VCF text) are split, so a
+  GT index selects its own allele. A third allele at an SNV (scoring `T/C`,
+  sample `T/G`) still counts the REF copy.
+- A position whose only records fail the check is scored as an **absent** locus
+  (hom-ref when `reference_allele` is known, otherwise unscorable) and counted in
+  `variants_allele_mismatch`. Several records at one position never score a row twice.
+- A consumer array's homozygous encoding (`ref=alt`) skips the other-allele check.
+- **Copies follow the karyotype.** A man has one X. Many callers do not write it
+  that way: DeepVariant 1.1.0 writes anton's non-PAR X as 99,903 `1/1` and 4,818
+  `0/1` and has no haploid GT, while DRAGEN writes it sex-aware and declares
+  `##referenceSexKaryotype`. So the engines do not trust the GT's length.
+  `just_prs.karyotype` infers XX / XY / XXY / X0 from the non-PAR X het rate
+  (relative to the autosomes) and the called Y records, or takes
+  `sample_karyotype=`. In a one-copy region (a man's non-PAR X and Y, MT in
+  anyone), `1` and `1/1` both count once, a het (or any call on Y without a Y) is
+  a no-call counted in `variants_ploidy_conflict`, and an absent hom-ref locus
+  counts one copy. PAR is diploid. `unknown` scores every GT as written.
+- **Coding.** `x_coding="copies"` (default) counts copies, 0..1 on a man's X.
+  `"dosage_compensation"` counts a man's non-PAR X 0..2 (one active X in either
+  sex), as PLINK2's default `--xchr-model 2` and many GWAS do; Y and MT stay one
+  copy, because PLINK2 counts them once under every model (measured on a6.33 with
+  anton marked male: 10 hom-alt X sites score 10 under `--xchr-model 1` and 20
+  under `2`; Y and MT score 1 per site under both). `copies` is `--xchr-model 1`.
+- **The legacy 1000G curves count every one-copy call twice.** pgenlib returns a
+  haploid call as `{0, 2}` (a read of the GRCh38 panel: a man's non-PAR X `{0, 2}`
+  with 3 hets in 2.4M calls, his Y `{0, 2}`, a woman's Y missing, MT `{0, 2}` in
+  both sexes with ~430 hets each), and the scorer summed it as two copies. A
+  result with any one-copy row that is not doubled carries
+  `reference_coding_mismatch=True` against `{panel}_distributions.parquet`.
+- **Per-sex curves.** The reference scorer also writes each 1000G sample's
+  `copies` and `dosage_compensation` score, and the batch publishes
+  `{panel}_distributions_by_sex.parquet` beside the unchanged legacy file: a
+  both-sexes curve per coding for every score, and a male and a female curve only
+  for a score with non-PAR X or Y rows (elsewhere the sexes score alike, and a
+  curve of 224 to 459 people per sex and superpopulation only adds noise). A
+  percentile lookup that knows the karyotype reads the matching curve (XX female,
+  XY male, else both sexes) and says which one in
+  `PercentileResult.reference_sex` / `reference_x_coding`; the flag above then
+  no longer applies to that percentile. The panel's PAR1/PAR2 contigs, never
+  matched before, now score as two copies in either sex.
+- **Provenance.** `normalize_vcf` stores the caller, its version, the declared
+  karyotype, the caller's ploidy model (`sex_aware` / `diploid`) and the
+  inferred karyotype as parquet metadata; read them with
+  `normalize.read_genotype_provenance`.
+- No strand flipping: harmonized scoring files are on the forward strand. An
+  effect allele that is neither REF nor any ALT of an SNV record scores 0.
+- Scores the additive sum only approximates (dominant/recessive/interaction/
+  diplotype/haplotype rows, ratio-scale weights, ignored per-dosage weights) are
+  still summed additively, and listed in `PRSResult.model_flags`.
+
 ## Reference restoration scope
 
 `reference_restoration` (on `compute_prs` / `compute_prs_duckdb` / `compute_prs_batch` /

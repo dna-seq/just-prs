@@ -94,6 +94,28 @@ class TestReferencePanelResolution:
 
         assert result == expected
 
+    def test_skips_macos_appledouble_copies(self, tmp_path: Path) -> None:
+        # "._" files sort first and carry the build token, but hold Finder metadata.
+        (tmp_path / "._GRCh38_HGDP+1kGP_ALL.psam").touch()
+        expected = tmp_path / "GRCh38_HGDP+1kGP_ALL.psam"
+        expected.touch()
+
+        assert _find_reference_panel_file(tmp_path, "GRCh38", ".psam") == expected
+
+    def test_resolved_panel_reads_the_build_sample_file(self) -> None:
+        """pgsc_1000G_v1 ships GRCh37 (2,504 samples) and GRCh38 (3,202) psam side by side;
+        pairing the GRCh38 pgen with the first psam by name read the wrong samples."""
+        from just_prs.reference import _ResolvedRefPanel, parse_psam, reference_panel_dir
+
+        ref_dir = reference_panel_dir(resolve_cache_dir(), "1000g")
+        if not (any(ref_dir.glob("GRCh38*.pgen")) and any(ref_dir.glob("GRCh37*.psam"))):
+            pytest.skip(f"both builds of the 1000G panel are not present at {ref_dir}")
+        panel = _ResolvedRefPanel(ref_dir, "GRCh38")
+        expected = parse_psam(_find_reference_panel_file(ref_dir, "GRCh38", ".psam"))
+
+        assert panel.psam_df["iid"].to_list() == expected["iid"].to_list()
+        assert panel.psam_df.height == 3202
+
     def test_incomplete_panel_is_not_valid(self, tmp_path: Path) -> None:
         (tmp_path / "GRCh37_1000G_ALL.pgen").touch()
         (tmp_path / "GRCh37_1000G_ALL.pvar.zst").touch()

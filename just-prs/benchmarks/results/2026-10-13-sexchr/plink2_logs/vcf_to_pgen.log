@@ -1,0 +1,46 @@
+PLINK v2.0.0-a.6.33LM 64-bit Intel (28 Feb 2026)
+Options in effect:
+  --chr 1-22,X,Y,PAR1,PAR2,MT
+  --make-pgen
+  --new-id-max-allele-len 10000
+  --out /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr
+  --set-all-var-ids @:#:$r:$a
+  --split-par hg38
+  --threads 4
+  --update-sex /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr.sex.txt
+  --var-filter
+  --vcf /data/just-dna-cache/prs-benchmark/vcf/antonkulaga.vcf
+
+Hostname: October
+Working directory: /data/sources/just-prs
+Start time: Tue Oct 13 00:13:45 2026
+
+Random number seed: 1791843225
+64241 MiB RAM detected, ~44076 available; reserving 32120 MiB for main
+workspace.
+Using up to 4 compute threads.
+--vcf: 5989673 variants scanned (90071 skipped).
+--vcf:
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr-temporary.pgen
++
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr-temporary.pvar.zst
++
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr-temporary.psam
+written.
+1 sample (0 females, 0 males, 1 ambiguous; 1 founder) loaded from
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr-temporary.psam.
+--split-par: 14837 chromosome codes changed.
+Note: 145 nonstandard chromosome codes present.
+4638710 out of 5989673 variants loaded from
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr-temporary.pvar.zst.
+Note: No phenotype data present.
+--update-sex: 1 sample updated.
+4638710 variants remaining after main filters.
+Writing /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr.psam
+... done.
+Writing /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr.pvar
+... done.
+Writing /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr.pgen
+... done.
+
+End time: Tue Oct 13 00:14:13 2026

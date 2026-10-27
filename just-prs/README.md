@@ -4,7 +4,7 @@
 [![PyPI version](https://badge.fury.io/py/prs-ui.svg)](https://pypi.org/project/prs-ui/)
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 
-A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (PRS)** from the [PGS Catalog](https://www.pgscatalog.org/) (~5,385 published scores). 1000 Genomes reference percentiles are precomputed for essentially the full catalog; sample population is inferred from 1000G; SNP heritability (h²) is mapped for many traits.
+A [Polars](https://pola.rs/)-bio based tool to compute **Polygenic Risk Scores (PRS)** from the [PGS Catalog](https://www.pgscatalog.org/) (the PGS Catalog had 6,991 scores at its 2026-09-17 release; the bundled metadata snapshot covers the 5,337 published up to 2026-05-07). 1000 Genomes reference percentiles are precomputed for essentially the full catalog; sample population is inferred from 1000G; SNP heritability (h²) is mapped for many traits.
 
 ## Project Structure
 
@@ -63,6 +63,7 @@ Stream any harmonized scoring file by PGS ID directly from EBI FTP and view it i
 ## Features
 
 - **`PRSCatalog`** — search scores, compute PRS, and look up evaluation performance using cleaned bulk metadata (no REST API calls needed)
+- **Curated score direction** — `PRSCatalog.scores()`, `score_info_row()` and enriched results carry what a higher score means, its concept, axis, valence and review status (`just_prs.score_direction`); `summarize_trait_rows` aggregates opposite-direction scores on the concept axis; `search()` matches curated synonyms. `prs curation pull` refreshes the published tables
 - **Genetic ancestry inference** — infer a sample's super-population, admixture-style proportions, fine within-continent populations (HGDP `Russian`, AADR Slavic/Balkan), and a Bayesian cross-panel/method consensus, all pure-Python at runtime (`prs ancestry infer`; `PRSCatalog.infer_ancestry` / `infer_ancestry_consensus` / `infer_ancestry_prive` / `assess_ancestry_coherence`). See [docs/sample-ancestry-methodology.md](../docs/sample-ancestry-methodology.md)
 - **Reusable Reflex UI components** — `prs_section()` and sub-components (`prs_scores_selector`, `prs_results_table`, etc.) can be embedded in any Reflex app via `PRSComputeStateMixin`
 - **VCF normalization** — `normalize_vcf()` strips chr prefix, renames id→rsid, computes genotype from GT, applies configurable quality filters (FILTER, DP, QUAL), warns on chrY for females, and writes zstd-compressed Parquet

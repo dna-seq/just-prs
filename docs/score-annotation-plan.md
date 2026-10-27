@@ -204,17 +204,21 @@ reader, then to human review.
 - **Build**: a compile step turns `curation/` into `score_annotations.parquet` (grain `pgs_id`) and
   `trait_clusters.parquet` (grain: cluster node), validated by Pydantic models and a blocking
   Dagster asset check, published to `just-dna-seq/pgs-catalog` `data/metadata/` alongside
-  `trait_prevalence.parquet`. It is listed in `hf.CLEANED_PARQUET_FILES`.
-- **`PRSCatalog`**: `scores()` left-joins the lean columns (`cluster`, `polarity`,
-  `direction`, `annotation_status`); `score_info_row()` merges the full record with provenance.
-- **Trait summary** (`just_prs.trait_summary`, the single home for aggregation): a new grouping mode
-  by cluster; percentiles are aligned to the cluster axis before the median, and each flipped model
-  is labeled (e.g. "mortality score, shown as longevity").
-- **UI browse tab**: the Curated tab compiles `curation/` and shows resolved scores, the review
-  queue, and clusters, with "higher score means …", an unreviewed / human-verified marker, and the
-  provenance quote. Computed By PRS / By Trait rows do not yet color from valence or flip percentiles.
-- **UI / reports / prompts** (still planned on scored rows): "higher percentile means …" text on every
-  result row, green/red from the cluster valence only (neutral traits stay uncolored).
+  `trait_prevalence.parquet`, as `hf.CURATION_FILES` (pulled by `PRSCatalog` on its own schedule,
+  deliberately not in `hf.CLEANED_PARQUET_FILES`).
+- **`PRSCatalog`** (built): `scores()` and `score_info_row()` join `curation_status`,
+  `higher_percentile_means`, direction, target, concept, axis, valence, phenotype, polarity,
+  review reason and `correction_kinds` (`just_prs.score_direction.SCORE_DIRECTION_COLUMNS`).
+- **Trait summary** (built; `just_prs.trait_summary`, the single home for aggregation): the default
+  grouping is the curated concept; percentiles are aligned to the concept axis before the median,
+  flipped models are counted and named, and review-queue or uncurated models are listed, not counted.
+- **UI browse tab**: the Curated tab compiles `curation/` (or, outside a clone, shows the published
+  tables) with resolved scores, the review queue, and clusters, "higher score means …", an
+  unreviewed / human-verified marker, and the provenance quote.
+- **UI / reports / prompts** (built; policy in AGENTS.md "Consuming curated directions"):
+  "higher score means …" on every result row, green/red from the concept valence only (neutral
+  traits stay uncolored, review-queue rows uncoloured), concept grouping with axis-aligned
+  medians in `trait_summary`, and the same alignment in `viz` charts, HTML reports and prompts.
 - **Retire the regex default**: `trait_contexts.high_percentile_means` is derived from the
   annotations, or left `null` when a score is not annotated, never hardcoded.
 

@@ -24,6 +24,12 @@ from just_prs.quality import (
     synthetic_quality_tier,
 )
 from just_prs.reference import SUPERPOPULATIONS
+from just_prs.score_direction import (
+    SCORE_DIRECTION_COLUMNS,
+    curation_status,
+    direction_tone,
+    is_resolved,
+)
 
 if TYPE_CHECKING:
     from just_prs.prs_catalog import PRSCatalog
@@ -125,6 +131,8 @@ def enrich_prs_result(
             result.pgs_id,
             ancestry=selected_ancestry,
             weight_mass_coverage=result.weight_mass_coverage,
+            karyotype=result.karyotype,
+            x_coding=result.x_coding,
         )
         pct_value = pr.percentile
         pct_method = pr.method
@@ -156,7 +164,9 @@ def enrich_prs_result(
     # --- Per-population percentiles ---
     all_pop_values: dict[str, float] = {}
     if compute_all_populations and percentile_allowed:
-        all_pop_values = _all_population_percentiles(catalog, result.score, result.pgs_id)
+        all_pop_values = _all_population_percentiles(
+            catalog, result.score, result.pgs_id, karyotype=result.karyotype, x_coding=result.x_coding
+        )
     all_pop_text = (
         ", ".join(f"{sp}: {pct:.1f}%" for sp, pct in sorted(all_pop_values.items()))
         if all_pop_values
@@ -248,13 +258,17 @@ def enrich_prs_result(
         f"precomputed ({', '.join(ref_superpops)})" if ref_has_data else "not precomputed"
     )
 
+    # --- Curated direction (AGENTS.md "Consuming curated directions", rule 4) ---
+    curated = {column: (score_info or {}).get(column) for column in SCORE_DIRECTION_COLUMNS}
+
     # --- Risk level ---
-    risk_level, risk_level_color = _risk_level_from_percentile(pct_value)
+    risk_level, risk_level_color = _risk_level_from_percentile(pct_value, curated)
 
     # --- Risk hint ---
     risk_hint = _build_risk_hint(
         result, pct_value, risk_level, ancestry_str, selected_ancestry,
         all_pop_text, ref_has_data, ref_source_label, compute_all_populations,
+        curated,
     )
 
     # --- Absolute risk & heritability ---
@@ -339,6 +353,7 @@ def enrich_prs_result(
         risk_agreement=abs_risk["risk_agreement"],
         risk_estimates_by_method=abs_risk["risk_estimates_by_method"],
         risk_estimate_methods=abs_risk["risk_estimate_methods"],
+        **curated,
     )
 
 
@@ -347,11 +362,15 @@ def enrich_prs_result(
 # ---------------------------------------------------------------------------
 
 def _all_population_percentiles(
-    catalog: PRSCatalog, score: float, pgs_id: str
+    catalog: PRSCatalog,
+    score: float,
+    pgs_id: str,
+    karyotype: str | None = None,
+    x_coding: str | None = None,
 ) -> dict[str, float]:
     values: dict[str, float] = {}
     for sp in SUPERPOPULATIONS:
-        pct, method = catalog.percentile(score, pgs_id, ancestry=sp)
+        pct, method = catalog.percentile(score, pgs_id, ancestry=sp, karyotype=karyotype, x_coding=x_coding)
         if pct is not None and method == "reference_panel":
             values[sp] = round(pct, 1)
     return values
@@ -372,9 +391,34 @@ def _compute_z_score(pct_value: float | None) -> float | None:
         return None
 
 
-def _risk_level_from_percentile(pct_value: float | None) -> tuple[str, str]:
+_TONE_COLORS: dict[str, str] = {"danger": "red", "warning": "orange", "good": "green", "neutral": "gray"}
+
+
+def _risk_level_from_percentile(
+    pct_value: float | None, curated: dict[str, Any] | None = None
+) -> tuple[str, str]:
+    """Percentile band label + colour.
+
+    A score with a resolved curated direction is described by what its percentile
+    means ("High score: more LDL cholesterol") and coloured by valence (red only for
+    the alarming end, green for the favourable end, grey for neutral concepts).
+    Uncurated scores keep the legacy predisposition wording.
+    """
     if pct_value is None:
         return "", "gray"
+    if curated and is_resolved(curated):
+        target = str(curated.get("target") or "").strip()
+        increases = str(curated.get("direction") or "") == "increases"
+        if pct_value >= 90:
+            band, high = "High score", True
+        elif pct_value >= 75:
+            band, high = "Above-average score", True
+        elif pct_value >= 25:
+            band, high = "Average score", None
+        else:
+            band, high = "Below-average score", False
+        label = band if high is None or not target else f"{band}: {'more' if high == increases else 'less'} {target}"
+        return label, _TONE_COLORS[direction_tone(pct_value, curated)]
     if pct_value >= 90:
         return "High predisposition", "red"
     if pct_value >= 75:
@@ -394,6 +438,7 @@ def _build_risk_hint(
     ref_has_data: bool,
     ref_source_label: str,
     compute_all_populations: bool,
+    curated: dict[str, Any] | None = None,
 ) -> str:
     trait_name = result.trait_reported or result.pgs_id
     pop_label = ancestry_str or selected_ancestry or "the reference population"
@@ -403,11 +448,21 @@ def _build_risk_hint(
         sfx = "th"
         if pct_int % 100 not in (11, 12, 13):
             sfx = {1: "st", 2: "nd", 3: "rd"}.get(pct_int % 10, "th")
+        status = curation_status(curated or {})
+        means = str((curated or {}).get("higher_percentile_means") or "")
+        if status == "resolved" and means:
+            direction_sentence = f"For this score, {means} (curated from its paper)."
+        elif status == "in_review" and means:
+            direction_sentence = f"Proposed for this score, still in curation review: {means}."
+        else:
+            direction_sentence = (
+                "This score's direction is not curated yet; for most PRS models a higher "
+                "percentile means more genetic variants associated with increased risk."
+            )
         hint = (
             f"Your PRS for {trait_name} is at the {pct_int}{sfx} percentile — "
             f"{risk_level.lower()} compared to the {pop_label} reference population. "
-            "For standard PRS models, higher percentile = more genetic variants "
-            "associated with increased risk."
+            f"{direction_sentence}"
         )
         if all_pop_text:
             hint += f" Available 1000G population percentiles: {all_pop_text}."

@@ -1638,6 +1638,28 @@ def push(
     typer.echo(f"pushed {', '.join(uploaded)} to {repo_id}/data/metadata/")
 
 
+@app.command()
+def pull() -> None:
+    """Refresh the published curation tables in the cache: what PRSCatalog, the UI and just-dna-lite read.
+
+    The catalog also re-pulls on its own once the copy is older than PRS_CURATION_MAX_AGE_HOURS
+    (default 24). With PRS_CURATION_DIR set, that local build is used and nothing is pulled.
+    """
+    catalog = PRSCatalog()
+    directory = catalog.refresh_curation(force=True)
+    if directory is None:
+        typer.echo("no curation tables available (offline, or nothing published yet).", err=True)
+        raise typer.Exit(1)
+    manifest = catalog.curation_manifest()
+    statuses = catalog.score_directions().group_by("curation_status").len()
+    counts = {row["curation_status"]: row["len"] for row in statuses.iter_rows(named=True)}
+    typer.echo(
+        f"{directory}: {counts.get('resolved', 0)} resolved, {counts.get('in_review', 0)} in review, "
+        f"{counts.get('no_direction', 0)} without a direction (built {manifest.get('built_at', '?')}, "
+        f"source {manifest.get('source_commit') or 'unknown'})"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Prioritization (no LLM): which trait groups most need review
 # ---------------------------------------------------------------------------

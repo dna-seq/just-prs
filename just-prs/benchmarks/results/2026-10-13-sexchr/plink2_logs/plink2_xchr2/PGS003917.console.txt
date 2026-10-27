@@ -1,0 +1,26 @@
+PLINK v2.0.0-a.6.33LM 64-bit Intel (28 Feb 2026)    cog-genomics.org/plink/2.0/
+(C) 2005-2026 Shaun Purcell, Christopher Chang    GNU General Public License v3
+Logging to /tmp/tmpv7rky01p/PGS003917.log.
+Options in effect:
+  --out /tmp/tmpv7rky01p/PGS003917
+  --pfile /data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr
+  --score /tmp/tmpv7rky01p/PGS003917_score_input.txt 1 2 3 header no-mean-imputation cols=scoresums
+  --threads 4
+  --xchr-model 2
+
+Start time: Tue Oct 13 19:45:36 2026
+64241 MiB RAM detected, ~48950 available; reserving 32120 MiB for main
+workspace.
+Using up to 4 compute threads.
+1 sample (0 females, 1 male; 1 founder) loaded from
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr.psam.
+4638710 variants loaded from
+/data/just-dna-cache/prs-benchmark/pgen/benchmark_pgen_pass_sexchr.pvar.
+Note: No phenotype data present.
+--score: 10k variants processed.--score: 20k variants processed.Warning: --score: 54485 entries in /tmp/tmpv7rky01p/PGS003917_score_input.txt
+were skipped due to missing variant IDs.
+(Add the 'list-variants' modifier to see which variants were actually used for
+scoring.)
+--score: 22813 variants processed.
+--score: Results written to /tmp/tmpv7rky01p/PGS003917.sscore .
+End time: Tue Oct 13 19:45:37 2026

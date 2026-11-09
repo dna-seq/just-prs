@@ -82,7 +82,8 @@ def test_expand_trait_ids_from_alias_columns_recovers_canonical_efo() -> None:
     assert expanded == ["MONDO_0005147", "EFO_0001359"]
 
 
-def test_absolute_risk_bundle_uses_alias_mapped_heritability(tmp_path: Path) -> None:
+def _write_alias_risk_fixture(tmp_path: Path) -> Path:
+    """Catalog cache where risk metadata needs a runtime MONDO -> EFO alias."""
     metadata_dir = tmp_path / "metadata"
     metadata_dir.mkdir(parents=True)
 
@@ -164,6 +165,12 @@ def test_absolute_risk_bundle_uses_alias_mapped_heritability(tmp_path: Path) -> 
         '"aliases": ["Orphanet_243377"], "icd10_codes": ["E10"]}'
     )
 
+    return metadata_dir
+
+
+def test_absolute_risk_bundle_uses_alias_mapped_heritability(tmp_path: Path) -> None:
+    _write_alias_risk_fixture(tmp_path)
+
     catalog = PRSCatalog(cache_dir=tmp_path)
     bundle = catalog.absolute_risk_bundle("PGS_TEST", 1.0)
 
@@ -172,3 +179,44 @@ def test_absolute_risk_bundle_uses_alias_mapped_heritability(tmp_path: Path) -> 
     assert "EFO_0001359" in bundle.heritability_trait_ids
     assert bundle.best_estimate is not None
     assert bundle.best_estimate.method == "h2_liability"
+
+
+def test_alias_enrichment_rewrites_shared_metadata_atomically(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Alias rows are persisted via temp file + rename, never written in place.
+
+    Several processes share one cache; an in-place ``write_parquet`` lets a concurrent
+    reader hit a truncated file ("parquet: File out of specification").
+    """
+    import just_prs.prs_catalog as prs_catalog_module
+
+    metadata_dir = _write_alias_risk_fixture(tmp_path)
+    atomic_targets: list[Path] = []
+    real_atomic = prs_catalog_module._atomic_write_parquet
+
+    def spy_atomic(df: pl.DataFrame, dest: Path) -> None:
+        atomic_targets.append(Path(dest))
+        real_atomic(df, dest)
+
+    shared = {
+        (metadata_dir / "trait_heritability.parquet").resolve(),
+        (metadata_dir / "trait_prevalence.parquet").resolve(),
+    }
+    real_write = pl.DataFrame.write_parquet
+
+    def guarded_write(self: pl.DataFrame, file, *args, **kwargs):  # type: ignore[no-untyped-def]
+        if isinstance(file, (str, Path)) and Path(file).resolve() in shared:
+            raise AssertionError(f"in-place write to shared cache file {file}")
+        return real_write(self, file, *args, **kwargs)
+
+    monkeypatch.setattr(prs_catalog_module, "_atomic_write_parquet", spy_atomic)
+    monkeypatch.setattr(pl.DataFrame, "write_parquet", guarded_write)
+
+    bundle = PRSCatalog(cache_dir=tmp_path).absolute_risk_bundle("PGS_TEST", 1.0)
+
+    assert bundle.heritability_status == "used"
+    assert {p.resolve() for p in atomic_targets} & shared
+    assert not list(metadata_dir.glob("*.tmp"))
+    h2 = pl.read_parquet(metadata_dir / "trait_heritability.parquet")
+    assert "MONDO_0005147" in h2["efo_id"].to_list()

@@ -2190,8 +2190,9 @@ class PRSCatalog:
                 allow_network=False,
             )
             if enriched.height > df.height:
-                local_path.parent.mkdir(parents=True, exist_ok=True)
-                enriched.write_parquet(local_path)
+                # Atomic: concurrent readers (other processes sharing the cache) must never
+                # see a half-written parquet ("File out of specification").
+                _atomic_write_parquet(enriched, local_path)
                 if local_path.name == "trait_heritability.parquet":
                     self._heritability_lf = pl.scan_parquet(local_path)
                 elif local_path.name == "trait_prevalence.parquet":
@@ -2214,8 +2215,9 @@ class PRSCatalog:
                 allow_network=True,
             )
             if enriched.height > df.height:
-                local_path.parent.mkdir(parents=True, exist_ok=True)
-                enriched.write_parquet(local_path)
+                # Atomic: concurrent readers (other processes sharing the cache) must never
+                # see a half-written parquet ("File out of specification").
+                _atomic_write_parquet(enriched, local_path)
                 if local_path.name == "trait_heritability.parquet":
                     self._heritability_lf = pl.scan_parquet(local_path)
                 elif local_path.name == "trait_prevalence.parquet":
